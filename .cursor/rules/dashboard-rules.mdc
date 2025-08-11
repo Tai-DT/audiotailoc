@@ -1,0 +1,84 @@
+# Cursor Rules – Dashboard (Next.js 15)
+
+Mục tiêu: Sinh code quản trị `apps/dashboard` với Auth + RBAC, CRUD, bảng server-side, realtime cơ bản.
+
+---
+
+## 1) Phạm vi & Stack
+- Next.js 15 (App Router), TypeScript strict
+- NextAuth (credentials) + JWT session
+- RBAC: Admin/Staff (ẩn/hiện nút theo role)
+- TailwindCSS + shadcn/ui
+- react-hook-form + zod
+- DataTable server-side pagination/sort
+- Socket.IO (kênh `admin`)
+
+---
+
+## 2) Quy ước mã nguồn
+- Thư mục: `apps/dashboard/src/app/(admin)/...`
+- Alias: `@/*`
+- Middleware bảo vệ routes admin
+- Không gọi HTTP trực tiếp từ UI khi có `api-sdk`
+
+---
+
+## 3) Auth & Guards
+- NextAuth credentials provider
+- Session JWT
+- Middleware/HOC bảo vệ trang admin
+- RBAC: ẩn/hiện nút theo role (Admin/Staff)
+
+---
+
+## 4) Forms & Bảng
+- Forms: `react-hook-form` + `zod` (schema validation)
+- Optimistic UI + toasts rõ ràng
+- DataTable: server-side pagination/sort/filter
+- Upload ảnh: S3 presigned URL
+
+---
+
+## 5) Realtime
+- Socket.IO channel `admin` nhận sự kiện: đơn hàng mới, low stock
+
+---
+
+## 6) Khu vực tối thiểu
+- Products: CRUD + variant/price/media
+- Orders: lọc, cập nhật trạng thái, fulfillment, refund
+- Inventory: nhập/xuất
+- Promotions, Users, CMS, Settings (VNPay/MoMo/SMTP)
+
+---
+
+## 7) Testing
+- Form validation (zod) và hành vi bảng lọc/sort/paginate
+
+---
+
+## 8) ENV gợi ý (`apps/dashboard/.env.example`)
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+NEXTAUTH_URL=http://localhost:3002
+NEXTAUTH_SECRET=changeme
+S3_ENDPOINT=http://localhost:9000
+S3_BUCKET=uploads
+S3_ACCESS_KEY=minio
+S3_SECRET_KEY=miniosecret
+```
+
+---
+
+## 9) Acceptance Criteria mẫu
+- Products create/edit:
+  - Form zod validation, upload ảnh (presigned URL)
+  - Toasts khi lưu/thất bại, optimistic update danh sách
+  - RBAC: chỉ Admin thấy nút Delete
+
+---
+
+## 10) Scripts & Chạy dev
+- Dev: `pnpm --filter dashboard dev`
+- Lint: `pnpm --filter dashboard lint`
+- Build: `pnpm --filter dashboard build`

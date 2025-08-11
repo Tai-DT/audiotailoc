@@ -1,0 +1,91 @@
+# Cursor Rules – Frontend (Next.js 15)
+
+Mục tiêu: Sinh code chuẩn cho `apps/frontend` tập trung SEO, hiệu năng, PWA, i18n, tính năng TMĐT.
+
+---
+
+## 1) Phạm vi & Stack
+- Next.js 15 (App Router), TypeScript strict
+- TailwindCSS + shadcn/ui
+- next-intl (i18n vi/en)
+- React Query, Zustand (state UI nhẹ)
+- PWA (`next-pwa`), `next/image`
+- ESLint + Prettier
+
+---
+
+## 2) Quy ước mã nguồn
+- Thư mục: `apps/frontend/src/app`
+- Alias: `@/*`
+- Không hard-code text → dùng `next-intl`
+- Phân định server component (SEO) vs client component (tương tác)
+- Tách UI ↔ hooks ↔ (sau này) `packages/api-sdk`
+
+---
+
+## 3) Data fetching & State
+- SEO pages (Home/Category/Product): SSR/ISR
+- Runtime (cart/checkout): React Query + optimistic update
+- Zustand chỉ cho UI nhẹ (drawer, modal)
+
+---
+
+## 4) SEO, i18n, A11y
+- `generateMetadata` + OG tags + canonical
+- Text qua messages i18n, không hard-code
+- A11y: label/alt/focus ring/role/aria khi cần
+
+---
+
+## 5) Hiệu năng & PWA
+- `next/image` (remotePatterns/CDN)
+- Prefetch link hợp lý, dynamic import khi cần
+- JS client mỗi trang < 180KB gzip nếu có thể
+- `next-pwa`: cache tĩnh; tránh cache nhầm API
+
+---
+
+## 6) Xử lý lỗi & UX
+- `notFound()` cho slug sai
+- `error.tsx` và `loading.tsx`/skeleton
+- Toasts cho hành động quan trọng
+
+---
+
+## 7) Components & Hooks bắt buộc
+- Components tái dùng: `Card`, `Price`, `Rating`, `Badge`
+- Hooks: `useProduct`, `useCart`, `useCheckout` (UI không gọi HTTP trực tiếp khi có `api-sdk`)
+
+---
+
+## 8) Testing
+- Unit tests: logic giỏ hàng, format giá
+- Framework: Vitest/RTL hoặc Jest/RTL
+
+---
+
+## 9) ENV gợi ý (`apps/frontend/.env.example`)
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+NEXT_PUBLIC_MEILI_URL=http://localhost:7700
+NEXT_PUBLIC_MEILI_PUBLIC_KEY=meili_public_key
+NEXT_PUBLIC_IMAGE_CDN=https://cdn.example.com
+```
+
+---
+
+## 10) Acceptance Criteria mẫu
+- Category page:
+  - SSR lấy danh sách sản phẩm theo slug category
+  - Facets: brand, price range
+  - Pagination (query param)
+  - `generateMetadata` đầy đủ
+  - Skeleton khi chuyển trang
+  - Test đơn vị cho format giá
+
+---
+
+## 11) Scripts & Chạy dev
+- Dev: `pnpm --filter frontend dev`
+- Lint: `pnpm --filter frontend lint`
+- Build: `pnpm --filter frontend build`

@@ -1,0 +1,111 @@
+# Cursor Rules – Backend (NestJS)
+
+Mục tiêu: Sinh code backend `apps/backend` chuẩn NestJS, bảo mật, idempotent, dễ mở rộng.
+
+---
+
+## 1) Phạm vi & Stack
+- NestJS (Node 20 LTS), TypeScript strict
+- PostgreSQL + Prisma ORM
+- Redis (cache, rate-limit), BullMQ (tương lai)
+- Meilisearch, MinIO/S3, SMTP (dev: Mailhog)
+- Socket.IO, OpenAPI/Swagger, Pino JSON
+
+---
+
+## 2) Kiến trúc & Quy ước
+- Modules Phase 1: `auth`, `users`, `catalog`, `cart`, `checkout`, `orders`, `payments`, `search`, `files`, `webhooks`
+- DTO: `class-validator` + `class-transformer`
+- Guards/Interceptors/Filters cho auth, logging, exception
+- Config module đọc ENV; không commit `.env`
+- CORS + Helmet + Rate-limit
+
+---
+
+## 3) Prisma & Dữ liệu
+- Chuẩn hoá model: users/roles, products/variants/images, categories, prices, inventories, carts, orders, payments
+- Index cần thiết: slug, category path, price, createdAt
+- Migration bằng Prisma; seed khi cần
+
+---
+
+## 4) Thanh toán (VNPay/MoMo)
+- Provider service tách riêng
+- `create`: ký tham số, trả redirect URL
+- `callback`: verify signature, idempotent theo `transactionRef`
+- Cập nhật `payment` + `order`, commit stock reservation, emit event
+
+Mẫu (rút gọn):
+```ts
+async createIntent(orderId: string, provider: 'vnpay'|'momo') {
+  const order = await this.orders.assertPayable(orderId)
+  const intent = await this.repo.createIntent(order, provider)
+  const { url } = this.providers[provider].sign(intent, order)
+  return { intentId: intent.id, redirectUrl: url }
+}
+
+async handleCallback(provider: 'vnpay'|'momo', payload: any) {
+  this.providers[provider].assertSignature(payload)
+  const intent = await this.repo.findByRef(payload.txnRef)
+  if (intent.status === 'SUCCEEDED') return
+  await this.tx.run(async () => {
+    await this.repo.markSucceeded(intent.id, payload)
+    await this.orders.markPaid(intent.orderId)
+    await this.inventory.commitReservation(intent.orderId)
+  })
+  this.events.emit('payment.succeeded', { orderId: intent.orderId })
+}
+```
+
+---
+
+## 5) API & Tài liệu
+- Swagger bật theo ENV, group theo module
+- Healthcheck: `GET /healthz`
+- Lỗi trả mã lỗi máy-đọc được + message người dùng
+
+---
+
+## 6) Cache & Search
+- Redis cache: listing, category tree, homepage (TTL 5–15 phút); bust theo event
+- Meilisearch: `/search` trả facets; indexer (Phase 2)
+
+---
+
+## 7) Testing & Chất lượng
+- Unit: `orders`, `payments` ≥ 70% coverage (Phase 1)
+- E2E: `checkout → payment create → callback → order=PAID`
+
+---
+
+## 8) ENV gợi ý (`apps/backend/.env.example`)
+```
+PORT=3001
+NODE_ENV=development
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atl
+REDIS_URL=redis://localhost:6379
+MEILI_URL=http://localhost:7700
+MEILI_MASTER_KEY=master_key
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_ACCESS_KEY=minio
+MINIO_SECRET_KEY=miniosecret
+SMTP_HOST=localhost
+SMTP_PORT=1025
+JWT_ACCESS_SECRET=changeme
+JWT_REFRESH_SECRET=changeme2
+VNPAY_TMN_CODE=xxx
+VNPAY_HASH_SECRET=xxx
+VNPAY_RETURN_URL=http://localhost:3000/payments/vnpay/return
+MOMO_PARTNER_CODE=xxx
+MOMO_ACCESS_KEY=xxx
+MOMO_SECRET_KEY=xxx
+MOMO_RETURN_URL=http://localhost:3000/payments/momo/return
+```
+
+---
+
+## 9) Scripts & Chạy dev
+- Dev: `pnpm --filter backend start:dev`
+- Lint: `pnpm --filter backend lint`
+- Test: `pnpm --filter backend test` / `test:e2e`
+- Build: `pnpm --filter backend build`
