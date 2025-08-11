@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2021"],
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "../node_modules/@types", "../../node_modules/@types"],
+    "noEmitOnError": true
+  },
+  "include": ["src/**/*"]
+}

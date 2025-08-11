@@ -1,0 +1,29 @@
+{
+  "name": "audiotailoc-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "dashboard",
+    "shared/api-sdk"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev": "concurrently -n back,front,dash -c blue,green,magenta \"npm run -w backend dev\" \"npm run -w frontend dev\" \"npm run -w dashboard dev\"",
+    "lint": "npm run -ws lint"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-unused-imports": "^3.2.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
