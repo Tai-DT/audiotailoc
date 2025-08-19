@@ -9,7 +9,16 @@ type CartItem = {
 
 export default async function CartPage() {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-  const res = await fetch(`${base}/cart`, { cache: 'no-store', headers: {} });
+  const { cookies } = await import('next/headers');
+  const c = await cookies();
+  const token = c.get('accessToken')?.value;
+  
+  const headers: HeadersInit = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(`${base}/cart`, { cache: 'no-store', headers });
   if (!res.ok) {
     return (
       <main style={{ padding: 24 }}>

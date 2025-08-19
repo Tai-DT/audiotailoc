@@ -1,3 +1,6 @@
 {
-  "/api/healthz/route": "app/api/healthz/route.js"
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/products/page": "app/products/page.js",
+  "/products/new/page": "app/products/new/page.js"
 }
