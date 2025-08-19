@@ -26,6 +26,14 @@
         "nxtPslug": "nxtPslug"
       },
       "namedRegex": "^/products/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/services/[type]",
+      "regex": "^/services/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPtype": "nxtPtype"
+      },
+      "namedRegex": "^/services/(?<nxtPtype>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -76,6 +84,12 @@
       "regex": "^/products(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/products(?:/)?$"
+    },
+    {
+      "page": "/services",
+      "regex": "^/services(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/services(?:/)?$"
     }
   ],
   "dataRoutes": [],

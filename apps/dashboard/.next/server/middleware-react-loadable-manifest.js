@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/RealtimeNotice.tsx -> socket.io-client":{"id":1821,"files":["static/chunks/821.3eb5b6037e94f03a.js"]}}';
