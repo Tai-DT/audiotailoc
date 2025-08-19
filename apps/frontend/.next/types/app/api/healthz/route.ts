@@ -1,4 +1,4 @@
-// File: /Users/macbook/Desktop/Code/audiotailoc/apps/frontend/app/api/healthz/route.ts
+// File: /mnt/persist/workspace/apps/frontend/app/api/healthz/route.ts
 import * as entry from '../../../../../app/api/healthz/route.js'
 import type { NextRequest } from 'next/server.js'
 

@@ -16,6 +16,7 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const jwt_guard_1 = require("./jwt.guard");
+const users_service_1 = require("../users/users.service");
 const class_validator_1 = require("class-validator");
 class RegisterDto {
 }
@@ -44,8 +45,9 @@ __decorate([
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
 let AuthController = class AuthController {
-    constructor(auth) {
+    constructor(auth, users) {
         this.auth = auth;
+        this.users = users;
     }
     async register(dto) {
         if (!dto.email || !dto.password)
@@ -59,8 +61,12 @@ let AuthController = class AuthController {
         });
         return tokens;
     }
-    me(req) {
-        return { userId: req.user?.sub };
+    async me(req) {
+        const userId = req.user?.sub;
+        if (!userId)
+            return { userId: null };
+        const u = await this.users.findById(userId);
+        return { userId, email: u?.email ?? null, role: u?.role ?? null };
     }
 };
 exports.AuthController = AuthController;
@@ -84,10 +90,10 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "me", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService, users_service_1.UsersService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

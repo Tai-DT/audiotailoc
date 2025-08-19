@@ -2,7 +2,7 @@ const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
-  { ignores: ['dist/**'] },
+  { ignores: ['dist/**', 'test/**', 'jest.config.ts'] },
   {
     files: ['**/*.ts'],
     languageOptions: {
