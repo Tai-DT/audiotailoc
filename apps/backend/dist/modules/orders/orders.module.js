@@ -12,11 +12,13 @@ const orders_service_1 = require("./orders.service");
 const orders_controller_1 = require("./orders.controller");
 const orders_gateway_1 = require("./orders.gateway");
 const mail_service_1 = require("../notifications/mail.service");
+const auth_module_1 = require("../auth/auth.module");
 let OrdersModule = class OrdersModule {
 };
 exports.OrdersModule = OrdersModule;
 exports.OrdersModule = OrdersModule = __decorate([
     (0, common_1.Module)({
+        imports: [auth_module_1.AuthModule],
         providers: [orders_service_1.OrdersService, orders_gateway_1.OrdersGateway, mail_service_1.MailService],
         controllers: [orders_controller_1.OrdersController],
         exports: [orders_service_1.OrdersService],

@@ -29,19 +29,19 @@
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/app/api/ai/chat/route-8a09c30950efaf1c.js"
     ],
-    "/api/ai/escalate/route": [
-      "static/chunks/webpack-078f6dfb37dff419.js",
-      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
-      "static/chunks/698-4092c433addf4e62.js",
-      "static/chunks/main-app-2a70cb700d7d0ec6.js",
-      "static/chunks/app/api/ai/escalate/route-8a09c30950efaf1c.js"
-    ],
     "/api/auth/login/route": [
       "static/chunks/webpack-078f6dfb37dff419.js",
       "static/chunks/827c5df7-60c4bc9e44648bc3.js",
       "static/chunks/698-4092c433addf4e62.js",
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/app/api/auth/login/route-8a09c30950efaf1c.js"
+    ],
+    "/api/ai/escalate/route": [
+      "static/chunks/webpack-078f6dfb37dff419.js",
+      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
+      "static/chunks/698-4092c433addf4e62.js",
+      "static/chunks/main-app-2a70cb700d7d0ec6.js",
+      "static/chunks/app/api/ai/escalate/route-8a09c30950efaf1c.js"
     ],
     "/api/auth/logout/route": [
       "static/chunks/webpack-078f6dfb37dff419.js",

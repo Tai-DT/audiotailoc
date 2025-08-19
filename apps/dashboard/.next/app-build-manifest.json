@@ -36,19 +36,19 @@
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/app/api/auth/logout/route-d333972d98ab4be6.js"
     ],
-    "/api/auth/me/route": [
-      "static/chunks/webpack-45772f11fe01608a.js",
-      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
-      "static/chunks/698-4092c433addf4e62.js",
-      "static/chunks/main-app-2a70cb700d7d0ec6.js",
-      "static/chunks/app/api/auth/me/route-d333972d98ab4be6.js"
-    ],
     "/api/healthz/route": [
       "static/chunks/webpack-45772f11fe01608a.js",
       "static/chunks/827c5df7-60c4bc9e44648bc3.js",
       "static/chunks/698-4092c433addf4e62.js",
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/app/api/healthz/route-d333972d98ab4be6.js"
+    ],
+    "/api/auth/me/route": [
+      "static/chunks/webpack-45772f11fe01608a.js",
+      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
+      "static/chunks/698-4092c433addf4e62.js",
+      "static/chunks/main-app-2a70cb700d7d0ec6.js",
+      "static/chunks/app/api/auth/me/route-d333972d98ab4be6.js"
     ],
     "/conversations/[id]/page": [
       "static/chunks/webpack-45772f11fe01608a.js",
@@ -101,13 +101,6 @@
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/app/page-4d68860a4f98e743.js"
     ],
-    "/products/page": [
-      "static/chunks/webpack-45772f11fe01608a.js",
-      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
-      "static/chunks/698-4092c433addf4e62.js",
-      "static/chunks/main-app-2a70cb700d7d0ec6.js",
-      "static/chunks/app/products/page-d0c40d8333459d90.js"
-    ],
     "/settings/page": [
       "static/chunks/webpack-45772f11fe01608a.js",
       "static/chunks/827c5df7-60c4bc9e44648bc3.js",
@@ -115,6 +108,13 @@
       "static/chunks/main-app-2a70cb700d7d0ec6.js",
       "static/chunks/599-c907cb6eefc8ca4a.js",
       "static/chunks/app/settings/page-fe2892eae1d12fd4.js"
+    ],
+    "/products/page": [
+      "static/chunks/webpack-45772f11fe01608a.js",
+      "static/chunks/827c5df7-60c4bc9e44648bc3.js",
+      "static/chunks/698-4092c433addf4e62.js",
+      "static/chunks/main-app-2a70cb700d7d0ec6.js",
+      "static/chunks/app/products/page-d0c40d8333459d90.js"
     ],
     "/settings/payments/page": [
       "static/chunks/webpack-45772f11fe01608a.js",

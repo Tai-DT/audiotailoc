@@ -1,8 +1,8 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/api/ai/chat/route": "app/api/ai/chat/route.js",
-  "/api/ai/escalate/route": "app/api/ai/escalate/route.js",
   "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/ai/escalate/route": "app/api/ai/escalate/route.js",
   "/api/auth/logout/route": "app/api/auth/logout/route.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
   "/api/healthz/route": "app/api/healthz/route.js",
