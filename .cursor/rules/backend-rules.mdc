@@ -1,9 +1,39 @@
-# Cursor Rules – Backend (NestJS)
+## Backend Rules
 
-Mục tiêu: Sinh code backend `apps/backend` chuẩn NestJS, bảo mật, idempotent, dễ mở rộng.
+<!-- MODULES_START -->auth, users, catalog, cart, checkout, orders, payments, search, files, webhooks<!-- MODULES_END -->
+
+### ENV
+<!-- ENV_BACKEND_START -->
+```
+PORT=3001
+NODE_ENV=development
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atl
+REDIS_URL=redis://localhost:6379
+MEILI_URL=http://localhost:7700
+MEILI_MASTER_KEY=master_key
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_ACCESS_KEY=minio
+MINIO_SECRET_KEY=miniosecret
+SMTP_HOST=localhost
+SMTP_PORT=1025
+JWT_ACCESS_SECRET=changeme
+JWT_REFRESH_SECRET=changeme2
+PAYOS_CLIENT_ID=xxx
+PAYOS_API_KEY=xxx
+PAYOS_CHECKSUM_KEY=xxx
+PAYOS_RETURN_URL=http://localhost:3000/payments/payos/return
+PAYOS_CANCEL_URL=http://localhost:3000/payments/payos/cancel
+WEBHOOK_SECRET_OPTIONAL=changeme
+```
+<!-- ENV_BACKEND_END -->
+
+<!-- SHARED_CONVENTIONS_START -->
+Stack: NestJS, PostgreSQL + Prisma, Redis, Meilisearch, MinIO/S3, Socket.IO, Pino JSON
+<!-- SHARED_CONVENTIONS_END -->
 
 ---
-
+alwaysApply: true
+---
 ## 1) Phạm vi & Stack
 - NestJS (Node 20 LTS), TypeScript strict
 - PostgreSQL + Prisma ORM
@@ -29,33 +59,50 @@ Mục tiêu: Sinh code backend `apps/backend` chuẩn NestJS, bảo mật, idemp
 
 ---
 
-## 4) Thanh toán (VNPay/MoMo)
-- Provider service tách riêng
-- `create`: ký tham số, trả redirect URL
-- `callback`: verify signature, idempotent theo `transactionRef`
-- Cập nhật `payment` + `order`, commit stock reservation, emit event
+## 4) Thanh toán (PayOS ONLY)
+- Loại bỏ VNPay/MoMo. Chỉ tích hợp PayOS với flow:
+  1. `createIntent(orderId)` -> Gọi PayOS API tạo payment link (hoặc embed) sử dụng checksum ký.
+  2. Trả về `paymentId`, `checkoutUrl` cho frontend.
+  3. Webhook PayOS gọi vào endpoint `/webhooks/payos`:
+     - Verify HMAC/checksum.
+     - Idempotent theo `payosOrderCode` hoặc `transactionId`.
+     - Cập nhật payment + order status = PAID nếu thành công.
+  4. Phát sự kiện `payment.succeeded` để commit inventory reservation & bust cache liên quan.
 
 Mẫu (rút gọn):
 ```ts
-async createIntent(orderId: string, provider: 'vnpay'|'momo') {
-  const order = await this.orders.assertPayable(orderId)
-  const intent = await this.repo.createIntent(order, provider)
-  const { url } = this.providers[provider].sign(intent, order)
-  return { intentId: intent.id, redirectUrl: url }
+async createIntent(orderId: string) {
+  const order = await this.orders.assertPayable(orderId);
+  const intent = await this.repo.createPending(orderId, order.totalAmount);
+  const payload = this.payos.signCreateLink({
+    orderCode: intent.id,
+    amount: order.totalAmount,
+    returnUrl: this.cfg.payos.returnUrl,
+    cancelUrl: this.cfg.payos.cancelUrl,
+  });
+  const { checkoutUrl } = await this.payos.requestLink(payload);
+  return { paymentId: intent.id, checkoutUrl };
 }
 
-async handleCallback(provider: 'vnpay'|'momo', payload: any) {
-  this.providers[provider].assertSignature(payload)
-  const intent = await this.repo.findByRef(payload.txnRef)
-  if (intent.status === 'SUCCEEDED') return
+async handleWebhook(rawBody: string, headers: any) {
+  const signature = headers['x-payos-signature'];
+  this.payos.assertSignature(rawBody, signature);
+  const parsed = JSON.parse(rawBody);
+  const payment = await this.repo.findByRef(parsed.orderCode);
+  if (!payment || payment.status === 'SUCCEEDED') return;
   await this.tx.run(async () => {
-    await this.repo.markSucceeded(intent.id, payload)
-    await this.orders.markPaid(intent.orderId)
-    await this.inventory.commitReservation(intent.orderId)
-  })
-  this.events.emit('payment.succeeded', { orderId: intent.orderId })
+    await this.repo.markSucceeded(payment.id, parsed);
+    await this.orders.markPaid(payment.orderId);
+    await this.inventory.commitReservation(payment.orderId);
+  });
+  this.events.emit('payment.succeeded', { orderId: payment.orderId });
 }
 ```
+
+Yêu cầu bảo mật:
+- Luôn verify signature trước khi cập nhật.
+- Dùng queue (tương lai) nếu cần retry lỗi tạm thời.
+- Log structured (event=payos.webhook, status, durationMs).
 
 ---
 
@@ -74,7 +121,7 @@ async handleCallback(provider: 'vnpay'|'momo', payload: any) {
 
 ## 7) Testing & Chất lượng
 - Unit: `orders`, `payments` ≥ 70% coverage (Phase 1)
-- E2E: `checkout → payment create → callback → order=PAID`
+- E2E: `checkout → payment create → webhook → order=PAID`
 
 ---
 
@@ -93,19 +140,78 @@ SMTP_HOST=localhost
 SMTP_PORT=1025
 JWT_ACCESS_SECRET=changeme
 JWT_REFRESH_SECRET=changeme2
-VNPAY_TMN_CODE=xxx
-VNPAY_HASH_SECRET=xxx
-VNPAY_RETURN_URL=http://localhost:3000/payments/vnpay/return
-MOMO_PARTNER_CODE=xxx
-MOMO_ACCESS_KEY=xxx
-MOMO_SECRET_KEY=xxx
-MOMO_RETURN_URL=http://localhost:3000/payments/momo/return
+PAYOS_CLIENT_ID=xxx
+PAYOS_API_KEY=xxx
+PAYOS_CHECKSUM_KEY=xxx
+PAYOS_RETURN_URL=http://localhost:3000/payments/payos/return
+PAYOS_CANCEL_URL=http://localhost:3000/payments/payos/cancel
+WEBHOOK_SECRET_OPTIONAL=changeme
 ```
 
 ---
 
 ## 9) Scripts & Chạy dev
-- Dev: `pnpm --filter backend start:dev`
-- Lint: `pnpm --filter backend lint`
-- Test: `pnpm --filter backend test` / `test:e2e`
-- Build: `pnpm --filter backend build`
+- Dev: `pnpm --filter @audiotailoc/backend start:dev`
+- Lint: `pnpm --filter @audiotailoc/backend lint`
+- Test: `pnpm --filter @audiotailoc/backend test` / `test:e2e`
+- Build: `pnpm --filter @audiotailoc/backend build`
+
+---
+
+## 10) Quy trình Auto-Update Rule
+Mục tiêu: Khi thêm module / env / event mới, update file rule tự động hoặc bán tự động.
+
+Chiến lược:
+1. Script `scripts/update-backend-rules.ts`:
+   - Quét thư mục `backend/src` tìm các thư mục cấp 1 (modules) -> cập nhật dòng Modules Phase 1.
+   - Quét file config ENV (ví dụ `backend/.env.example`) -> cập nhật khối ENV gợi ý giữ thứ tự alpha.
+   - Gắn timestamp vào cuối file trong phần CHANGELOG.
+2. Hook Git (optional): pre-commit chạy script và add lại file.
+3. Commit message convention: `feat(module): add inventory adjustments` -> script chèn bullet vào CHANGELOG.
+4. Marker trong file: `<!-- MODULES_START --> ... <!-- MODULES_END -->` để script dễ thay thế.
+
+Markers đề xuất thêm vào (cần chèn thủ công lần đầu nếu chưa có):
+```md
+<!-- MODULES_START -->auth, users, catalog, cart, checkout, orders, payments, search, files, webhooks, services, projects<!-- MODULES_END -->
+```
+
+Script pseudo:
+```ts
+// scripts/update-backend-rules.ts
+import fs from 'fs';
+const path = '.cursor/rules/backend-rules.mdc';
+let text = fs.readFileSync(path, 'utf8');
+// 1) cập nhật modules
+const modules = fs.readdirSync('backend/src').filter(f => fs.statSync(`backend/src/${f}`).isDirectory());
+text = text.replace(/<!-- MODULES_START -->[\s\S]*?<!-- MODULES_END -->/, `<!-- MODULES_START -->${modules.join(', ')}<!-- MODULES_END -->`);
+// 2) cập nhật ENV
+const env = fs.readFileSync('backend/.env.example','utf8')
+  .split('\n').filter(l=>l && !l.startsWith('#'));
+text = text.replace(/```\nPORT=[\s\S]*?```/, '```\n'+env.join('\n')+'\n```');
+// 3) append changelog
+const stamp = new Date().toISOString();
+if(!/## CHANGELOG/.test(text)) text += '\n\n## CHANGELOG\n';
+text += `- auto-update: ${stamp}\n`;
+fs.writeFileSync(path, text);
+```
+
+---
+
+## 11) Bảo mật
+- Không log full raw webhook payload chứa PII (mask field nhạy cảm)
+- Chỉ lưu checksum valid boolean + truncated payload (<=4KB)
+- Rate limit endpoint webhook (per IP / signature) để tránh flood
+
+---
+
+## 12) Observability
+- Pino logger JSON: include requestId, userId
+- Metrics: counters payments.created, payments.succeeded, gauge inventory.reserved
+- Tracing (phase 2): OpenTelemetry exporter (optional)
+
+---
+
+## 13) Roadmap (Ngắn)
+- Phase 1: Orders + PayOS payment + basic search (DB)
+- Phase 2: Meilisearch indexing, inventory events, retries queue
+- Phase 3: Promotions engine, advanced reporting

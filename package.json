@@ -1,0 +1,23 @@
+{
+  "name": "audiotailoc",
+  "private": true,
+  "packageManager": "pnpm@9.7.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build",
+    "start": "pnpm -r run start",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "format": "prettier -w .",
+    "backend:dev": "pnpm --filter @audiotailoc/backend start:dev",
+    "backend:build": "pnpm --filter @audiotailoc/backend build",
+    "frontend:build": "pnpm --filter @audiotailoc/frontend build",
+    "dashboard:build": "pnpm --filter @audiotailoc/dashboard build"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

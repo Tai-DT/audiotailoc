@@ -1,25 +1,111 @@
-# Cursor Rules – Dashboard (Next.js 15)
+## Dashboard Rules
 
-Mục tiêu: Sinh code quản trị `apps/dashboard` với Auth + RBAC, CRUD, bảng server-side, realtime cơ bản.
+### ENV
+<!-- ENV_DASHBOARD_START -->
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+NEXTAUTH_URL=http://localhost:3002
+NEXTAUTH_SECRET=changeme
+S3_ENDPOINT=http://localhost:9000
+S3_BUCKET=uploads
+S3_ACCESS_KEY=minio
+S3_SECRET_KEY=miniosecret
+```
+<!-- ENV_DASHBOARD_END -->
+
+<!-- SHARED_CONVENTIONS_DASH_START -->
+Xem bảng chuẩn trong backend-rules (đồng bộ tự động).
+<!-- SHARED_CONVENTIONS_DASH_END -->
 
 ---
-
-## 1) Phạm vi & Stack
-- Next.js 15 (App Router), TypeScript strict
-- NextAuth (credentials) + JWT session
-- RBAC: Admin/Staff (ẩn/hiện nút theo role)
-- TailwindCSS + shadcn/ui
-- react-hook-form + zod
-- DataTable server-side pagination/sort
-- Socket.IO (kênh `admin`)
-
+alwaysApply: true
 ---
+## 1) Kiến trúc & Stack (Next.js 15 App Router – cập nhật theo docs)
+- Next.js 15 App Router (React Server Components mặc định) + TypeScript strict
+- KHÔNG dùng thư mục `src/` (cấu trúc root-based) => tất cả đặt trực tiếp dưới `dashboard/`
+- SSR + Static + Incremental (ISR) tùy per-route qua `revalidate` & Route Segment Config
+- Partial Prerendering (nếu bật experimental) cho trang ít động -> cân nhắc cho landing admin
+- Route Handlers trong `app/api/*` cho tác vụ nhẹ (upload presign, metrics)
+- Server Actions cho form mutation nội bộ (ví dụ cập nhật trạng thái order) thay vì gọi client fetch thủ công khi đủ đơn giản
+- React Server Component (RSC) ưu tiên; chỉ thêm `"use client"` cho component có state/hook browser
+- Styling: TailwindCSS + shadcn/ui – generate vào `components/ui`
+- Auth: NextAuth credentials provider; session JWT qua middleware; bảo vệ route bằng middleware + server helpers
+- Socket.IO client (admin channel) lazy load trong component client riêng
+- ESLint + `next lint` + Prettier; bật `strictMode` & `typescript.ignoreBuildErrors=false`
+- `next.config.ts` (TypeScript) cấu hình images, experimental, reactStrictMode, serverActions bodySizeLimit nếu cần
+- ENV phân chia: runtime server (process.env.SECRET_*) vs client (NEXT_PUBLIC_*)
+
+### Mục tiêu phi chức năng
+- Hiệu năng: TTFB < 200ms nội bộ, hydration minimal (đa số component server)
+- Bảo trì: module hoá (lib/, components/, features/). Code splitting tự động qua RSC.
+- Bảo mật: không lộ secret qua client; chặn route admin bằng middleware.
 
 ## 2) Quy ước mã nguồn
-- Thư mục: `apps/dashboard/src/app/(admin)/...`
+- Thư mục: `dashboard/app/(admin)/...` (không dùng src/)
 - Alias: `@/*`
-- Middleware bảo vệ routes admin
+- Middleware bảo vệ routes admin (`middleware.ts` ở root dự án)
 - Không gọi HTTP trực tiếp từ UI khi có `api-sdk`
+  - `lib/api-client.ts` wrap fetch baseURL + auth token
+  - Mutation đơn giản: Server Actions trong cùng file RSC hoặc tách `actions/`
+
+### Cấu trúc đề xuất mở rộng (root-based)
+```
+dashboard/
+  app/
+    layout.tsx
+    (admin)/
+      products/page.tsx
+      orders/[id]/page.tsx
+    api/healthz/route.ts
+    global-error.tsx
+  components/
+    ui/...
+    data-table.tsx
+    protected.tsx
+  features/
+    orders/
+      actions/updateStatus.ts
+      components/OrderStatusForm.tsx
+      lib/normalizers.ts
+  lib/
+    auth.ts
+    rbac.ts
+    api-client.ts
+    validators/
+  types/
+  public/ (assets nếu cần)
+  middleware.ts
+```
+
+### Phân biệt Server vs Client
+- Mặc định file trong `app/` là Server Component.
+- Thêm `"use client"` nếu: state/effect, event handlers trực tiếp, context client.
+- Tách phần UI realtime/websocket ra component client nhỏ.
+
+### Route Segment Config
+- `export const dynamic = 'force-dynamic'` cho trang cần realtime (orders listing).
+- `export const revalidate = 60` cho trang thống kê nhẹ.
+
+### Data Fetching
+- `fetch(url, { cache: 'no-store' })` hoặc `{ next: { revalidate: N }}` tùy bảng.
+- Prefetch `<Link>` mặc định; tắt khi danh sách lớn.
+
+### Server Actions (ví dụ)
+```ts
+// app/(admin)/orders/[id]/actions.ts (hoặc features/orders/actions/updateStatus.ts)
+"use server";
+export async function updateOrderStatus(id: string, status: string) {
+  // validate & call backend
+}
+```
+Form: `<form action={updateOrderStatus}>...</form>`.
+
+### Testing mở rộng
+- Unit: rbac.ts, api-client retry logic, data-table query builder.
+- E2E: đăng nhập, cập nhật trạng thái order.
+
+### Logging & Observability
+- Optional: `/app/api/healthz/route.ts`; tích hợp Sentry / OpenTelemetry sau.
 
 ---
 
@@ -32,32 +118,30 @@ Mục tiêu: Sinh code quản trị `apps/dashboard` với Auth + RBAC, CRUD, b�
 ---
 
 ## 4) Forms & Bảng
-- Forms: `react-hook-form` + `zod` (schema validation)
-- Optimistic UI + toasts rõ ràng
-- DataTable: server-side pagination/sort/filter
-- Upload ảnh: S3 presigned URL
+- `react-hook-form` + `zod`
+- Optimistic UI hoặc Server Action redirect/`revalidatePath`
+- DataTable server-side pagination/sort/filter
+- Upload ảnh: presigned URL (fetch backend) hoặc edge route handler tạm
 
 ---
 
 ## 5) Realtime
-- Socket.IO channel `admin` nhận sự kiện: đơn hàng mới, low stock
+- Socket.IO client duy nhất -> context provider (client component) wrap phần admin
 
 ---
 
 ## 6) Khu vực tối thiểu
-- Products: CRUD + variant/price/media
-- Orders: lọc, cập nhật trạng thái, fulfillment, refund
-- Inventory: nhập/xuất
-- Promotions, Users, CMS, Settings (VNPay/MoMo/SMTP)
+- Products, Orders, Inventory, Promotions, Users, CMS, Settings
 
 ---
 
 ## 7) Testing
-- Form validation (zod) và hành vi bảng lọc/sort/paginate
+- Form validation + bảng lọc/sort/paginate
 
 ---
 
-## 8) ENV gợi ý (`apps/dashboard/.env.example`)
+## 8) ENV gợi ý (`dashboard/.env.example`)
+<!-- ENV_DASHBOARD_START -->
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXTAUTH_URL=http://localhost:3002
@@ -67,18 +151,30 @@ S3_BUCKET=uploads
 S3_ACCESS_KEY=minio
 S3_SECRET_KEY=miniosecret
 ```
+<!-- ENV_DASHBOARD_END -->
 
 ---
 
 ## 9) Acceptance Criteria mẫu
-- Products create/edit:
-  - Form zod validation, upload ảnh (presigned URL)
-  - Toasts khi lưu/thất bại, optimistic update danh sách
-  - RBAC: chỉ Admin thấy nút Delete
+- Products create/edit với zod, presigned upload, RBAC delete
 
 ---
 
-## 10) Scripts & Chạy dev
-- Dev: `pnpm --filter dashboard dev`
-- Lint: `pnpm --filter dashboard lint`
-- Build: `pnpm --filter dashboard build`
+### 1.1 Chuẩn dùng chung (Shared Conventions)
+<!-- SHARED_CONVENTIONS_DASH_START -->
+Theo bảng ở backend-rules. Điểm bổ sung Dashboard:
+- RBAC client hydrate minimal (chỉ role + permissions cần thiết).
+- Forward header `x-request-id` trong fetch nội bộ (lib/api-client.ts).
+- Thống nhất xử lý lỗi 401 → redirect login, 403 → thông báo quyền.
+<!-- SHARED_CONVENTIONS_DASH_END -->
+
+## 10) Scripts & Chạy dev (yarn workspaces)
+- Dev: `yarn workspace @atl/dashboard dev`
+- Lint: `yarn workspace @atl/dashboard lint`
+- Test: `yarn workspace @atl/dashboard test`
+- Build: `yarn workspace @atl/dashboard build`
+
+## 11) Đồng bộ hoá Backend & Frontend
+- Dùng chung naming module/api path.
+- Admin cập nhật trạng thái order → dùng Server Action gọi backend, sau khi thành công `revalidatePath('/(admin)/orders')`.
+- Realtime: subscribe `payments.succeeded`, `orders.updated`.

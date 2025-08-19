@@ -1,0 +1,28 @@
+{
+  "name": "@audiotailoc/frontend",
+  "private": true,
+  "version": "0.1.0",
+  "engines": { "node": ">=20 <21" },
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "test": "echo \"no tests yet\""
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^9.9.0",
+    "eslint-config-next": "^15.0.0",
+    "typescript": "^5.5.4"
+  }
+}
+
+

@@ -1,91 +1,196 @@
-# Cursor Rules – Frontend (Next.js 15)
+## Frontend Rules
 
-Mục tiêu: Sinh code chuẩn cho `apps/frontend` tập trung SEO, hiệu năng, PWA, i18n, tính năng TMĐT.
-
----
-
-## 1) Phạm vi & Stack
-- Next.js 15 (App Router), TypeScript strict
-- TailwindCSS + shadcn/ui
-- next-intl (i18n vi/en)
-- React Query, Zustand (state UI nhẹ)
-- PWA (`next-pwa`), `next/image`
-- ESLint + Prettier
-
----
-
-## 2) Quy ước mã nguồn
-- Thư mục: `apps/frontend/src/app`
-- Alias: `@/*`
-- Không hard-code text → dùng `next-intl`
-- Phân định server component (SEO) vs client component (tương tác)
-- Tách UI ↔ hooks ↔ (sau này) `packages/api-sdk`
-
----
-
-## 3) Data fetching & State
-- SEO pages (Home/Category/Product): SSR/ISR
-- Runtime (cart/checkout): React Query + optimistic update
-- Zustand chỉ cho UI nhẹ (drawer, modal)
-
----
-
-## 4) SEO, i18n, A11y
-- `generateMetadata` + OG tags + canonical
-- Text qua messages i18n, không hard-code
-- A11y: label/alt/focus ring/role/aria khi cần
-
----
-
-## 5) Hiệu năng & PWA
-- `next/image` (remotePatterns/CDN)
-- Prefetch link hợp lý, dynamic import khi cần
-- JS client mỗi trang < 180KB gzip nếu có thể
-- `next-pwa`: cache tĩnh; tránh cache nhầm API
-
----
-
-## 6) Xử lý lỗi & UX
-- `notFound()` cho slug sai
-- `error.tsx` và `loading.tsx`/skeleton
-- Toasts cho hành động quan trọng
-
----
-
-## 7) Components & Hooks bắt buộc
-- Components tái dùng: `Card`, `Price`, `Rating`, `Badge`
-- Hooks: `useProduct`, `useCart`, `useCheckout` (UI không gọi HTTP trực tiếp khi có `api-sdk`)
-
----
-
-## 8) Testing
-- Unit tests: logic giỏ hàng, format giá
-- Framework: Vitest/RTL hoặc Jest/RTL
-
----
-
-## 9) ENV gợi ý (`apps/frontend/.env.example`)
+### ENV
+<!-- ENV_FRONTEND_START -->
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_MEILI_URL=http://localhost:7700
 NEXT_PUBLIC_MEILI_PUBLIC_KEY=meili_public_key
 NEXT_PUBLIC_IMAGE_CDN=https://cdn.example.com
 ```
+<!-- ENV_FRONTEND_END -->
+
+<!-- SHARED_CONVENTIONS_FE_START -->
+Xem bảng chuẩn trong backend-rules (đồng bộ tự động).
+<!-- SHARED_CONVENTIONS_FE_END -->
+
+---
+alwaysApply: true
+---
+## 1) Kiến trúc & Stack (Next.js 15 – Storefront)
+- Next.js 15 App Router, RSC ưu tiên, TypeScript strict
+- KHÔNG dùng thư mục `src/` (root-based). Mọi thứ đặt trực tiếp trong `frontend/app`, `frontend/components`, `frontend/lib`...
+- SEO pages: Home / Category / Product: ISR (`revalidate`), có thể Partial Prerendering (experimental) cho home
+- Dynamic runtime: Cart / Checkout → Server Actions + (tùy) React Query cho optimistic UI phức tạp
+- i18n: next-intl (middleware locale detection) – messages trong `public/locales/{vi,en}`
+- Images: `next/image` + remotePatterns / loader CDN (ENV `NEXT_PUBLIC_IMAGE_CDN`)
+- Caching chiến lược:
+  - Product detail: `revalidate = 300` hoặc tag-based revalidation
+  - Category listing: `fetch(..., { next: { revalidate: 120 } })`
+  - Cart & session: `cache: 'no-store'`
+- Server Actions cho add-to-cart / update-quantity (giảm JS client)
+- Performance: ưu tiên RSC, code-split widget nặng (reviews, recommendations)
+- Security: không lộ secret; chỉ `NEXT_PUBLIC_*` cho client
+
+### Mục tiêu
+- LCP < 2.0s (desktop), <2.5s (mobile), CLS < 0.1
+- JS client < 180KB gzip mỗi trang chính
+
+## 2) Quy ước mã nguồn
+- Thư mục gốc: `frontend/app` (không `src/app`)
+- Alias: `@/*`
+- Không hard-code text → dùng `next-intl`
+- Phân định server vs client rõ bằng `"use client"`
+- Tách UI ↔ hooks ↔ features ↔ lib (fetcher, price, validation)
+  - `features/` cho domain: cart, product, checkout
+  - `lib/validation` chứa schema zod dùng chung server action + client
+
+### Thư mục đề xuất
+```
+frontend/
+  app/
+    (catalog)/category/[slug]/page.tsx
+    (product)/product/[slug]/page.tsx
+    cart/page.tsx
+    checkout/page.tsx
+    not-found.tsx
+    global-error.tsx
+    layout.tsx
+    loading.tsx
+  features/
+    cart/
+      actions/addItem.ts
+      components/CartButton.tsx
+      hooks/useCartState.ts
+    product/
+      components/ProductGallery.tsx
+  components/
+    ui/...
+    product-card.tsx
+    price.tsx
+  lib/
+    price.ts
+    seo.ts
+    fetcher.ts
+    cart.store.ts
+    validation/
+  hooks/
+  types/
+  public/locales/en/common.json
+  public/locales/vi/common.json
+```
+
+### Server vs Client Component
+- Pages/progressive server components; filter bar / cart widget client.
+
+### Route Segment Config & Data Fetching
+- Dùng `revalidate` / tags để kiểm soát ISR.
+- `fetch(url, { next: { tags: ['product', id] } })` cho selective revalidate.
+- Pricing realtime → route handler riêng hoặc `no-store` fetch.
+
+### Server Actions
+```ts
+// features/cart/actions/addItem.ts
+"use server";
+import { z } from 'zod';
+const schema = z.object({ productId: z.string(), qty: z.number().min(1) });
+export async function addItem(formData: FormData) {
+  const parsed = schema.parse({ productId: formData.get('productId'), qty: Number(formData.get('qty')) });
+  // Call backend API
+}
+```
+
+### SEO & Metadata
+- `generateMetadata` + OpenGraph + canonical + i18n alternates.
+- JSON-LD qua server component.
+
+### i18n
+- Middleware chọn locale; wrap root layout với `NextIntlClientProvider`.
+
+### Performance
+- Dynamic import widgets nặng.
+- `prefetch={false}` khi danh sách link dài.
+- Optimize images; fallback blur.
+
+### Testing
+- Unit: price formatter, cart store, i18n fallback
+- E2E: category filters, add to cart, checkout stub
+
+### Observability
+- web vitals reporting + optional analytics lazy.
+
+---
+
+## 3) Data fetching & State
+- SEO pages SSR/ISR; cart/checkout no-store
+- React Query chỉ khi cần caching client phức tạp; ưu tiên Server Actions
+- Zustand cho UI state nhỏ (drawer, modal)
+
+---
+
+## 4) SEO, i18n, A11y
+- `generateMetadata` + OG tags + canonical
+- i18n messages; alt/aria label
+
+---
+
+## 5) Hiệu năng & PWA
+- `next/image` + remotePatterns
+- Dynamic import widgets nặng
+- `next-pwa` cấu hình cache tĩnh (không cache API nhạy)
+
+---
+
+## 6) Xử lý lỗi & UX
+- `notFound()` cho slug sai
+- `error.tsx` & `loading.tsx`
+- Toasts quan trọng (add to cart, checkout)
+
+---
+
+## 7) Components & Hooks bắt buộc
+- `Card`, `Price`, `Rating`, `Badge`
+- Hooks: `useProduct`, `useCart`, `useCheckout`
+
+---
+
+## 8) Testing
+- Unit: cart logic, price format
+- Vitest/Jest + RTL
+
+---
+
+## 9) ENV gợi ý (`frontend/.env.example`)
+<!-- ENV_FRONTEND_START -->
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+NEXT_PUBLIC_MEILI_URL=http://localhost:7700
+NEXT_PUBLIC_MEILI_PUBLIC_KEY=meili_public_key
+NEXT_PUBLIC_IMAGE_CDN=https://cdn.example.com
+```
+<!-- ENV_FRONTEND_END -->
 
 ---
 
 ## 10) Acceptance Criteria mẫu
-- Category page:
-  - SSR lấy danh sách sản phẩm theo slug category
-  - Facets: brand, price range
-  - Pagination (query param)
-  - `generateMetadata` đầy đủ
-  - Skeleton khi chuyển trang
-  - Test đơn vị cho format giá
+- Category page: SSR + facets + pagination + skeleton + metadata + test format giá
 
 ---
 
-## 11) Scripts & Chạy dev
-- Dev: `pnpm --filter frontend dev`
-- Lint: `pnpm --filter frontend lint`
-- Build: `pnpm --filter frontend build`
+### 1.1 Chuẩn dùng chung (Shared Conventions)
+<!-- SHARED_CONVENTIONS_FE_START -->
+Xem bảng trong backend-rules. Các điểm riêng FE:
+- Fetch wrapper thêm header `x-request-id` nếu nhận từ server để chuỗi hoá log.
+- Propagate 429 hiển thị toast nhẹ.
+<!-- SHARED_CONVENTIONS_FE_END -->
+
+## 11) Scripts & Chạy dev (yarn workspaces)
+- Dev: `yarn workspace @atl/frontend dev`
+- Lint: `yarn workspace @atl/frontend lint`
+- Test: `yarn workspace @atl/frontend test`
+- Build: `yarn workspace @atl/frontend build`
+
+## 12) Đồng bộ hoá Backend
+- Endpoint mapping theo module cùng tên (services, projects...)
+- Payment flow: gọi `POST /payments/intent` trả về `checkoutUrl`.
+- Khi thanh toán thành công → FE gọi `GET /orders/:id` để refresh; tương lai dùng event `payments.succeeded`.
