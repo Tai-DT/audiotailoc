@@ -23,12 +23,16 @@ const payments_module_1 = require("./payments/payments.module");
 const search_module_1 = require("./search/search.module");
 const files_module_1 = require("./files/files.module");
 const webhooks_module_1 = require("./webhooks/webhooks.module");
+const ai_module_1 = require("./ai/ai.module");
+const maps_module_1 = require("./maps/maps.module");
+const chat_module_1 = require("./chat/chat.module");
+const inventory_module_1 = require("./inventory/inventory.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), logger_module_1.LoggerModule, prisma_module_1.PrismaModule, health_module_1.HealthModule, auth_module_1.AuthModule, users_module_1.UsersModule, catalog_module_1.CatalogModule, cart_module_1.CartModule, checkout_module_1.CheckoutModule, orders_module_1.OrdersModule, payments_module_1.PaymentsModule, search_module_1.SearchModule, files_module_1.FilesModule, webhooks_module_1.WebhooksModule],
+        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), logger_module_1.LoggerModule, prisma_module_1.PrismaModule, health_module_1.HealthModule, auth_module_1.AuthModule, users_module_1.UsersModule, catalog_module_1.CatalogModule, cart_module_1.CartModule, checkout_module_1.CheckoutModule, orders_module_1.OrdersModule, payments_module_1.PaymentsModule, search_module_1.SearchModule, files_module_1.FilesModule, webhooks_module_1.WebhooksModule, inventory_module_1.InventoryModule, ai_module_1.AiModule, maps_module_1.MapsModule, chat_module_1.ChatModule],
         controllers: [app_controller_1.AppController],
     })
 ], AppModule);
