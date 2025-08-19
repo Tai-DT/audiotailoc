@@ -152,6 +152,32 @@ model Promotion {
   updatedAt          DateTime       @updatedAt
 }
 
+model ServiceRequest {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  address     String?
+  serviceType ServiceType
+  message     String?
+  status      ServiceStatus @default(NEW)
+  createdAt   DateTime @default(now())
+}
+
+enum ServiceType {
+  REPAIR
+  RENTAL
+  INSTALLATION
+  TV_INSTALLATION
+}
+
+enum ServiceStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  CANCELED
+}
+
 enum Role {
   USER
   ADMIN
