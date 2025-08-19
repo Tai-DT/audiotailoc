@@ -14,6 +14,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <nav style={{ display: 'flex', gap: 12 }}>
             <Link href="/">Trang chủ</Link>
             <Link href="/products">Sản phẩm</Link>
+            <Link href="/services">Dịch vụ</Link>
+            <Link href="/about">Giới thiệu</Link>
+            <Link href="/contact">Liên hệ</Link>
           </nav>
           <nav style={{ marginLeft: 'auto' }}>
             <Link href="/login">Đăng nhập</Link>

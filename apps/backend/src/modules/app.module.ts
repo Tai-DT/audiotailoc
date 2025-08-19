@@ -18,9 +18,10 @@ import { AiModule } from './ai/ai.module';
 import { MapsModule } from './maps/maps.module';
 import { ChatModule } from './chat/chat.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, PrismaModule, HealthModule, AuthModule, UsersModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, SearchModule, FilesModule, WebhooksModule, InventoryModule, AiModule, MapsModule, ChatModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, PrismaModule, HealthModule, AuthModule, UsersModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, SearchModule, FilesModule, WebhooksModule, InventoryModule, AiModule, MapsModule, ChatModule, ServicesModule],
   controllers: [AppController],
 })
 export class AppModule {}
