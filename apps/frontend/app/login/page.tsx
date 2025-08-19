@@ -8,10 +8,8 @@ export default function LoginPage() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) {
-      return { error: 'Đăng nhập thất bại' };
-    }
-    return { ok: true };
+    if (!res.ok) return;
+    return;
   }
 
   return (

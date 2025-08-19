@@ -4,6 +4,7 @@ export const metadata = {
 };
 
 import Link from 'next/link';
+import ChatWidget from './components/ChatWidget';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </nav>
         </header>
         {children}
+        <ChatWidget />
       </body>
     </html>
   );

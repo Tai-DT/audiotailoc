@@ -5,13 +5,15 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditProductPage({ params }: { params: { slug: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const p = await params;
   const me = await apiFetch<{ role?: string }>('/auth/me').catch(() => null);
   if (me?.role !== 'ADMIN') {
-    cookies().set('flash', JSON.stringify({ type: 'error', message: 'Bạn không có quyền truy cập' }), { path: '/', httpOnly: true, maxAge: 10 });
+    const c = await cookies();
+    c.set('flash', JSON.stringify({ type: 'error', message: 'Bạn không có quyền truy cập' }), { path: '/', httpOnly: true, maxAge: 10 });
     redirect('/products');
   }
-  const product = await fetchProduct(params.slug);
+  const product = await fetchProduct(p.slug);
 
   async function action(form: FormData) {
     'use server';
@@ -29,18 +31,20 @@ export default async function EditProductPage({ params }: { params: { slug: stri
         imageUrl = up.url;
       }
 
-      await updateProduct(params.slug, { name, slug, description, priceCents, imageUrl });
-      cookies().set('flash', JSON.stringify({ type: 'success', message: 'Cập nhật sản phẩm thành công' }), { path: '/', httpOnly: true, maxAge: 10 });
+      await updateProduct(p.slug, { name, slug, description, priceCents, imageUrl });
+      const c = await cookies();
+      c.set('flash', JSON.stringify({ type: 'success', message: 'Cập nhật sản phẩm thành công' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect(`/products`);
     } catch (e) {
-      cookies().set('flash', JSON.stringify({ type: 'error', message: 'Cập nhật sản phẩm thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
-      redirect(`/products/${encodeURIComponent(params.slug)}/edit`);
+      const c = await cookies();
+      c.set('flash', JSON.stringify({ type: 'error', message: 'Cập nhật sản phẩm thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
+      redirect(`/products/${encodeURIComponent(p.slug)}/edit`);
     }
   }
 
   return (
     <main style={{ padding: 24, maxWidth: 640 }}>
-      <h1>Chỉnh sửa: {params.slug}</h1>
+      <h1>Chỉnh sửa: {p.slug}</h1>
       <form action={action} style={{ display: 'grid', gap: 12 }}>
         <label>
           Tên

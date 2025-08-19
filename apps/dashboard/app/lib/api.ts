@@ -6,8 +6,9 @@ export function getApiBase(): string {
   return base;
 }
 
-export function getAuthHeaders(): HeadersInit {
-  const token = cookies().get('accessToken')?.value;
+export async function getAuthHeaders(): Promise<HeadersInit> {
+  const c = await cookies();
+  const token = c.get('accessToken')?.value;
   const headers: HeadersInit = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
@@ -16,7 +17,7 @@ export function getAuthHeaders(): HeadersInit {
 export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
   const base = getApiBase();
   const headers = new Headers(init.headers || {});
-  const auth = getAuthHeaders();
+  const auth = await getAuthHeaders();
   Object.entries(auth).forEach(([k, v]) => headers.set(k, String(v)));
   const res = await fetch(`${base}${path}`, { ...init, headers, cache: 'no-store' });
   if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -25,7 +26,7 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
 
 export async function uploadFile(file: File | Blob): Promise<{ key: string; url: string }> {
   const base = getApiBase();
-  const headers = new Headers(getAuthHeaders());
+  const headers = new Headers(await getAuthHeaders());
   const fd = new FormData();
   // @ts-ignore appease TS: Next.js File extends Blob in server runtime
   fd.append('file', file as any, (file as any).name || 'upload.bin');

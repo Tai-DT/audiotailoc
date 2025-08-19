@@ -18,12 +18,13 @@ async function fetchProducts(): Promise<Product[]> {
   return data;
 }
 
-export default async function DashboardProductsPage({ searchParams }: { searchParams: { q?: string; page?: string; pageSize?: string; sortBy?: string; sortOrder?: string } }) {
-  const q = searchParams?.q ?? '';
-  const page = Math.max(1, parseInt(String(searchParams?.page ?? '1'), 10) || 1);
-  const pageSize = Math.min(100, Math.max(1, parseInt(String(searchParams?.pageSize ?? '20'), 10) || 20));
-  const sortBy = (searchParams?.sortBy ?? 'createdAt') as 'createdAt' | 'name' | 'priceCents';
-  const sortOrder = (searchParams?.sortOrder ?? 'desc') as 'asc' | 'desc';
+export default async function DashboardProductsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string; pageSize?: string; sortBy?: string; sortOrder?: string }> }) {
+  const sp = await searchParams;
+  const q = sp?.q ?? '';
+  const page = Math.max(1, parseInt(String(sp?.page ?? '1'), 10) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(String(sp?.pageSize ?? '20'), 10) || 20));
+  const sortBy = (sp?.sortBy ?? 'createdAt') as 'createdAt' | 'name' | 'priceCents';
+  const sortOrder = (sp?.sortOrder ?? 'desc') as 'asc' | 'desc';
   let products: Product[] = [];
   let total = 0;
   if (q) {
@@ -61,18 +62,20 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
     const slug = String(formData.get('slug') || '');
     const returnTo = String(formData.get('returnTo') || '/products');
     const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    const token = (await import('next/headers')).cookies().get('accessToken')?.value;
+    const { cookies } = await import('next/headers');
+    const c = await cookies();
+    const token = c.get('accessToken')?.value;
     const res = await fetch(`${base}/catalog/products/${encodeURIComponent(slug)}`, {
       method: 'DELETE',
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-    const { cookies } = await import('next/headers');
+    const { cookies: c2 } = await import('next/headers');
     const { redirect } = await import('next/navigation');
     if (!res.ok) {
-      cookies().set('flash', JSON.stringify({ type: 'error', message: 'Xóa thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
+      (await c2()).set('flash', JSON.stringify({ type: 'error', message: 'Xóa thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect(returnTo);
     }
-    cookies().set('flash', JSON.stringify({ type: 'success', message: 'Đã xóa sản phẩm' }), { path: '/', httpOnly: true, maxAge: 10 });
+    (await c2()).set('flash', JSON.stringify({ type: 'success', message: 'Đã xóa sản phẩm' }), { path: '/', httpOnly: true, maxAge: 10 });
     redirect(returnTo);
   }
   async function bulkDeleteAction(formData: FormData) {
@@ -80,10 +83,12 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
     const { cookies } = await import('next/headers');
     const { redirect } = await import('next/navigation');
     const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    const token = (await import('next/headers')).cookies().get('accessToken')?.value;
+    const { cookies: ck } = await import('next/headers');
+    const cc = await ck();
+    const token = cc.get('accessToken')?.value;
     const slugs = new Set<string>(formData.getAll('slugs').map((v) => String(v)));
     // Merge with cookie selection across pages
-    const cookieSel = cookies().get('adminSel')?.value;
+    const cookieSel = (await cookies()).get('adminSel')?.value;
     if (cookieSel) {
       try {
         const arr = JSON.parse(cookieSel) as string[];
@@ -92,7 +97,7 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
     }
     const returnTo = String(formData.get('returnTo') || '/products');
     if (slugs.size === 0) {
-      cookies().set('flash', JSON.stringify({ type: 'error', message: 'Chưa chọn sản phẩm nào' }), { path: '/', httpOnly: true, maxAge: 10 });
+      (await cookies()).set('flash', JSON.stringify({ type: 'error', message: 'Chưa chọn sản phẩm nào' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect(returnTo);
     }
     // Use backend batch endpoint
@@ -105,13 +110,13 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
       body: JSON.stringify({ slugs: Array.from(slugs) }),
     });
     if (!res.ok) {
-      cookies().set('flash', JSON.stringify({ type: 'error', message: 'Xóa thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
+      (await cookies()).set('flash', JSON.stringify({ type: 'error', message: 'Xóa thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect(returnTo);
     }
     const data = (await res.json()) as { deleted: number };
-    cookies().set('flash', JSON.stringify({ type: 'success', message: `Đã xóa ${data.deleted} sản phẩm` }), { path: '/', httpOnly: true, maxAge: 10 });
+    (await cookies()).set('flash', JSON.stringify({ type: 'success', message: `Đã xóa ${data.deleted} sản phẩm` }), { path: '/', httpOnly: true, maxAge: 10 });
     // Clear selection cookie after batch action
-    cookies().set('adminSel', '', { path: '/', httpOnly: true, maxAge: 0 });
+    (await cookies()).set('adminSel', '', { path: '/', httpOnly: true, maxAge: 0 });
     redirect(returnTo);
   }
   const ConfirmDeleteButton = (await import('./ConfirmDeleteButton')).default;
@@ -224,7 +229,6 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
           </tbody>
         </table>
       </form>
-import { apiFetch } from '../lib/api';
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>

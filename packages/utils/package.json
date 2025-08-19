@@ -1,0 +1,21 @@
+{
+  "name": "@audiotailoc/utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for Audio Tài Lộc",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@audiotailoc/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "files": [
+    "dist"
+  ]
+}

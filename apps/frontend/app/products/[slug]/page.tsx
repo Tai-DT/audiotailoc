@@ -18,8 +18,29 @@ async function fetchProduct(slug: string): Promise<Product> {
 
 import Link from 'next/link';
 
-export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const product = await fetchProduct(params.slug);
+export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const p = await params;
+  const product = await fetchProduct(p.slug);
+  async function addToCart(formData: FormData) {
+    'use server';
+    const slug = String(formData.get('slug') || '');
+    const qty = parseInt(String(formData.get('quantity') || '1'), 10) || 1;
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
+    const { cookies } = await import('next/headers');
+    const c = await cookies();
+    const token = c.get('accessToken')?.value;
+    await fetch(`${base}/cart/items`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ slug, quantity: qty }),
+      cache: 'no-store',
+    });
+    const { redirect } = await import('next/navigation');
+    redirect('/cart');
+  }
   return (
     <main style={{ padding: 24, maxWidth: 840, margin: '0 auto' }}>
       <Link href="/products">← Quay lại</Link>
@@ -34,7 +55,11 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           <div style={{ fontSize: 20, fontWeight: 700, margin: '12px 0' }}>
             {(product.priceCents / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
           </div>
-          <button type="button" style={{ padding: '10px 16px', borderRadius: 6, border: '1px solid #222' }}>Thêm vào giỏ</button>
+          <form action={addToCart} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input type="hidden" name="slug" value={product.slug} />
+            <input type="number" name="quantity" min={1} defaultValue={1} style={{ width: 80 }} />
+            <button type="submit" style={{ padding: '10px 16px', borderRadius: 6, border: '1px solid #222' }}>Thêm vào giỏ</button>
+          </form>
         </div>
       </div>
     </main>

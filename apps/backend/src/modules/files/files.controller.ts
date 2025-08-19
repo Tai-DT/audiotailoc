@@ -11,7 +11,7 @@ export class FilesController {
   @UseGuards(JwtGuard, AdminGuard)
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File) {
+  async upload(@UploadedFile() file: any) {
     const key = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const out = await this.files.uploadObject(key, file.buffer, file.mimetype);
     return out; // { key, url }

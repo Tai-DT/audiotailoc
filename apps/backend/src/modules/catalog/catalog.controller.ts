@@ -35,6 +35,10 @@ class ListQueryDto {
   @IsOptional()
   @IsInt()
   maxPrice?: number;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 }
 
 class CreateProductDto {
@@ -89,12 +93,17 @@ class DeleteManyDto {
 
 @Controller('catalog')
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService, private readonly search: SearchService) {}
+  constructor(private readonly catalog: CatalogService, private readonly searchService: SearchService) {}
 
   @Get('products')
   list(@Query() query: ListQueryDto) {
     const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder } = query;
     return this.catalog.listProducts({ page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder });
+  }
+
+  @Get('categories')
+  listCategories() {
+    return this.catalog.listCategories();
   }
 
   @Get('products/:slug')
@@ -103,10 +112,12 @@ export class CatalogController {
   }
 
   @Get('search')
-  search(@Query('q') q = '', @Query('page') page = '1', @Query('pageSize') pageSize = '20') {
+  search(@Query('q') q = '', @Query('page') page = '1', @Query('pageSize') pageSize = '20', @Query('categoryId') categoryId?: string, @Query('minPrice') minPrice?: string, @Query('maxPrice') maxPrice?: string) {
     const p = Math.max(1, parseInt(String(page), 10) || 1);
     const ps = Math.min(100, Math.max(1, parseInt(String(pageSize), 10) || 20));
-    return this.search.search(q, p, ps);
+    const min = typeof minPrice === 'string' ? Number(minPrice) : undefined;
+    const max = typeof maxPrice === 'string' ? Number(maxPrice) : undefined;
+    return this.searchService.search(q, p, ps, { categoryId: categoryId || undefined, minPrice: isNaN(min as any) ? undefined : min, maxPrice: isNaN(max as any) ? undefined : max });
   }
 
   @UseGuards(JwtGuard, AdminGuard)

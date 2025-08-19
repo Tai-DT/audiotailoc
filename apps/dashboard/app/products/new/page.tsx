@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 export default async function NewProductPage() {
   const me = await apiFetch<{ role?: string }>('/auth/me').catch(() => null);
   if (me?.role !== 'ADMIN') {
-    cookies().set('flash', JSON.stringify({ type: 'error', message: 'Bạn không có quyền truy cập' }), { path: '/', httpOnly: true, maxAge: 10 });
+    const c = await cookies();
+    c.set('flash', JSON.stringify({ type: 'error', message: 'Bạn không có quyền truy cập' }), { path: '/', httpOnly: true, maxAge: 10 });
     redirect('/products');
   }
   async function action(form: FormData) {
@@ -28,10 +29,12 @@ export default async function NewProductPage() {
       }
 
       await createProduct({ name, slug, description, priceCents, imageUrl });
-      cookies().set('flash', JSON.stringify({ type: 'success', message: 'Tạo sản phẩm thành công' }), { path: '/', httpOnly: true, maxAge: 10 });
+      const c = await cookies();
+      c.set('flash', JSON.stringify({ type: 'success', message: 'Tạo sản phẩm thành công' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect('/products');
     } catch (e) {
-      cookies().set('flash', JSON.stringify({ type: 'error', message: 'Tạo sản phẩm thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
+      const c = await cookies();
+      c.set('flash', JSON.stringify({ type: 'error', message: 'Tạo sản phẩm thất bại' }), { path: '/', httpOnly: true, maxAge: 10 });
       redirect('/products/new');
     }
   }

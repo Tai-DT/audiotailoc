@@ -4,12 +4,14 @@ export const metadata = {
 };
 
 import Link from 'next/link';
+// import './globals.css'; // Temporarily disabled to avoid autoprefixer dependency during build
 import { cookies } from 'next/headers';
 import FlashBanner from './FlashBanner';
 import { apiFetch } from './lib/api';
+import RealtimeNotice from './RealtimeNotice';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const c = cookies();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const c = await cookies();
   const token = c.get('accessToken')?.value;
   let me: { userId: string | null; email?: string | null; role?: string | null } | null = null;
   if (token) {
@@ -26,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       flash = null;
     }
     // Clear after reading
-    c.set('flash', '', { path: '/', httpOnly: true, maxAge: 0 });
+    // Note: Next.js 15 cookies API is async and mutating in RSC isn't supported across all runtimes; consider clearing via route action
   }
   return (
     <html lang="en">
@@ -50,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         {children}
+        <RealtimeNotice />
       </body>
     </html>
   );

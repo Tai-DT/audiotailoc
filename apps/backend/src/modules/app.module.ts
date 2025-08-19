@@ -14,11 +14,14 @@ import { PaymentsModule } from './payments/payments.module';
 import { SearchModule } from './search/search.module';
 import { FilesModule } from './files/files.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { AiModule } from './ai/ai.module';
+import { MapsModule } from './maps/maps.module';
+import { ChatModule } from './chat/chat.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, PrismaModule, HealthModule, AuthModule, UsersModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, SearchModule, FilesModule, WebhooksModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, PrismaModule, HealthModule, AuthModule, UsersModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, SearchModule, FilesModule, WebhooksModule, InventoryModule, AiModule, MapsModule, ChatModule],
   controllers: [AppController],
 })
 export class AppModule {}
-
 

@@ -27,6 +27,14 @@ export class SearchService {
       headers: this.headers(),
       body: JSON.stringify({ primaryKey: 'id' } satisfies MeiliIndexSettings),
     });
+    // Try to set filterable attributes for facets/filters
+    try {
+      await fetch(`${this.url}/indexes/${this.indexName}/settings`, {
+        method: 'PATCH',
+        headers: this.headers(),
+        body: JSON.stringify({ filterableAttributes: ['categoryId', 'priceCents'] }),
+      });
+    } catch {}
   }
 
   async indexDocuments(docs: unknown[]): Promise<void> {
@@ -46,16 +54,25 @@ export class SearchService {
     });
   }
 
-  async search(q: string, page: number, pageSize: number): Promise<{ hits: unknown[]; estimatedTotalHits?: number; page: number; pageSize: number }> {
+  async search(
+    q: string,
+    page: number,
+    pageSize: number,
+    filters?: { categoryId?: string; minPrice?: number; maxPrice?: number },
+  ): Promise<{ hits: unknown[]; estimatedTotalHits?: number; page: number; pageSize: number; facetDistribution?: Record<string, any> }> {
     await this.ensureIndex();
     const offset = (page - 1) * pageSize;
+    const filterClauses: string[] = [];
+    if (filters?.categoryId) filterClauses.push(`categoryId = ${JSON.stringify(filters.categoryId)}`);
+    if (typeof filters?.minPrice === 'number') filterClauses.push(`priceCents >= ${filters.minPrice}`);
+    if (typeof filters?.maxPrice === 'number') filterClauses.push(`priceCents <= ${filters.maxPrice}`);
+    const filter = filterClauses.length ? filterClauses.join(' AND ') : undefined;
     const res = await fetch(`${this.url}/indexes/${this.indexName}/search`, {
       method: 'POST',
       headers: this.headers(),
-      body: JSON.stringify({ q, offset, limit: pageSize }),
+      body: JSON.stringify({ q, offset, limit: pageSize, filter, facets: ['categoryId'] }),
     });
-    const data = (await res.json()) as { hits: unknown[]; estimatedTotalHits?: number };
+    const data = (await res.json()) as { hits: unknown[]; estimatedTotalHits?: number; facetDistribution?: Record<string, any> };
     return { ...data, page, pageSize };
   }
 }
-

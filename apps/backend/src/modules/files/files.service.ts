@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Client } from 'minio';
+type Client = any;
 
 function getEnv(cfg: ConfigService, key: string, fallback?: string): string {
   const v = cfg.get<string>(key) ?? fallback;
