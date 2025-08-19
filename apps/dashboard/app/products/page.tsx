@@ -1,4 +1,5 @@
 import { apiFetch } from '../lib/api';
+import AdminNotice from '../AdminNotice';
 
 type Product = {
   id: string;
@@ -120,11 +121,7 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
   return (
     <main style={{ padding: 24 }}>
       <h1>Sản phẩm (Admin)</h1>
-      {!isAdmin ? (
-        <p style={{ background: '#fffbe6', border: '1px solid #ffe58f', padding: '8px 12px', borderRadius: 8, color: '#614700' }}>
-          Khu vực quản trị viên: bạn đang ở chế độ xem chỉ đọc.
-        </p>
-      ) : null}
+      {!isAdmin ? <AdminNotice /> : null}
       <form style={{ margin: '12px 0', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <input type="text" name="q" placeholder="Tìm kiếm..." defaultValue={q} />
         <label>
