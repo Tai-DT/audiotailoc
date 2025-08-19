@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/RealtimeNotice.tsx -> socket.io-client":{"id":1821,"files":["static/chunks/821.3eb5b6037e94f03a.js"]}}';
+self.__REACT_LOADABLE_MANIFEST="{\"app/RealtimeNotice.tsx -> socket.io-client\":{\"id\":\"app/RealtimeNotice.tsx -> socket.io-client\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_pnpm_socket_io-client_4_8_1_node_modules_socket_io-client_bui-bc3f01.js\"]}}"
