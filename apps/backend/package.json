@@ -14,7 +14,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "ts-node src/seed.ts",
-    "lint": "eslint --ext .ts src",
+    "lint": "eslint .",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:unit": "jest --config jest.config.ts --runTestsByPath test/unit",
