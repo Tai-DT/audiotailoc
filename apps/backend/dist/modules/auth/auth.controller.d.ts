@@ -1,4 +1,5 @@
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 declare class RegisterDto {
     email: string;
     password: string;
@@ -10,7 +11,8 @@ declare class LoginDto {
 }
 export declare class AuthController {
     private readonly auth;
-    constructor(auth: AuthService);
+    private readonly users;
+    constructor(auth: AuthService, users: UsersService);
     register(dto: RegisterDto): Promise<{
         user: {
             id: string;
@@ -22,8 +24,14 @@ export declare class AuthController {
         accessToken: string;
         refreshToken: string;
     }>;
-    me(req: any): {
-        userId: any;
-    };
+    me(req: any): Promise<{
+        userId: null;
+        email?: undefined;
+        role?: undefined;
+    } | {
+        userId: string;
+        email: string | null;
+        role: any;
+    }>;
 }
 export {};

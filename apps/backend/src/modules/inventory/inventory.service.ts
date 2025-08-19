@@ -11,8 +11,7 @@ export class InventoryService {
     // Prisma doesn't support field-to-field comparisons in filters. We'll fetch
     // with a coarse where and filter in memory when lowStockOnly is requested.
     const baseWhere: any = params.lowStockOnly ? { lowStockThreshold: { gt: 0 } } : {};
-    const [totalAll, itemsPage] = await this.prisma.$transaction([
-      this.prisma.inventory.findMany({ where: baseWhere, include: { product: true }, orderBy: { updatedAt: 'desc' } }),
+    const [totalAll] = await this.prisma.$transaction([
       this.prisma.inventory.findMany({ where: baseWhere, include: { product: true }, orderBy: { updatedAt: 'desc' } }),
     ]);
     const all = totalAll;

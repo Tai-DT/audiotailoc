@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtGuard } from '../auth/jwt.guard';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsString, Min } from 'class-validator';
 
 class AddItemDto {
   @IsString()

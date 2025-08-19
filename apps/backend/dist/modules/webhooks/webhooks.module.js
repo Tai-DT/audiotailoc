@@ -8,10 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebhooksModule = void 0;
 const common_1 = require("@nestjs/common");
+const zalo_controller_1 = require("./zalo.controller");
+const zalo_service_1 = require("./zalo.service");
 let WebhooksModule = class WebhooksModule {
 };
 exports.WebhooksModule = WebhooksModule;
 exports.WebhooksModule = WebhooksModule = __decorate([
-    (0, common_1.Module)({})
+    (0, common_1.Module)({
+        controllers: [zalo_controller_1.ZaloWebhookController],
+        providers: [zalo_service_1.ZaloService],
+    })
 ], WebhooksModule);
 //# sourceMappingURL=webhooks.module.js.map
