@@ -15,6 +15,9 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
+  carts     Cart[]
+  chatSessions ChatSession[]
 }
 
 model Product {
@@ -26,9 +29,222 @@ model Product {
   imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  inventory   Inventory?
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  kbEntries   KnowledgeBaseEntry[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  parentId  String?
+  parent    Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToCategory")
+  products  Product[]
+}
+
+model Inventory {
+  id                 String   @id @default(cuid())
+  productId          String   @unique
+  product            Product  @relation(fields: [productId], references: [id])
+  stock              Int      @default(0)
+  reserved           Int      @default(0)
+  lowStockThreshold  Int      @default(0)
+  updatedAt          DateTime @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id])
+  status    CartStatus @default(ACTIVE)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  unitPrice Int     @default(0)
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  orderNo          String        @unique
+  userId           String?
+  user             User?         @relation(fields: [userId], references: [id])
+  status           OrderStatus   @default(PENDING)
+  subtotalCents    Int           @default(0)
+  discountCents    Int           @default(0)
+  shippingCents    Int           @default(0)
+  totalCents       Int           @default(0)
+  currency         String        @default("VND")
+  promotionCode    String?
+  shippingAddress  Json?
+  items            OrderItem[]
+  payments         Payment[]
+  paymentIntents   PaymentIntent[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product @relation(fields: [productId], references: [id])
+  name       String
+  quantity   Int     @default(1)
+  unitPrice  Int     @default(0)
+  imageUrl   String?
+}
+
+model PaymentIntent {
+  id             String          @id @default(cuid())
+  provider       PaymentProvider
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id])
+  amountCents    Int
+  currency       String          @default("VND")
+  status         PaymentStatus   @default(PENDING)
+  providerRef    String?
+  idempotencyKey String          @unique
+  returnUrl      String?
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Payment {
+  id            String          @id @default(cuid())
+  provider      PaymentProvider
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id])
+  intentId      String?
+  amountCents   Int
+  status        PaymentStatus   @default(PENDING)
+  transactionId String?
+  raw           Json?
+  createdAt     DateTime        @default(now())
+}
+
+model Promotion {
+  id                 String         @id @default(cuid())
+  code               String         @unique
+  type               PromotionType
+  value              Int            // percent (1-100) if PERCENT, amount in cents if FIXED
+  startsAt           DateTime?
+  endsAt             DateTime?
+  minSubtotalCents   Int            @default(0)
+  maxUses            Int?
+  usedCount          Int            @default(0)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  VNPAY
+  MOMO
+  PAYOS
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+
+// AI / Chat / Knowledge Base
+model KnowledgeBaseEntry {
+  id         String   @id @default(cuid())
+  kind       KBKind
+  title      String
+  content    String
+  embedding  Json?
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum KBKind {
+  PRODUCT
+  FAQ
+  DOC
+}
+
+model ChatSession {
+  id         String        @id @default(cuid())
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id])
+  source     ChatSource    @default(WEB)
+  status     ChatStatus    @default(OPEN)
+  assignedTo String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  messages   ChatMessage[]
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  sessionId  String
+  session    ChatSession @relation(fields: [sessionId], references: [id])
+  role       ChatRole
+  text       String
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  STAFF
+  SYSTEM
+}
+
+enum ChatSource {
+  WEB
+  ZALO
+}
+
+enum ChatStatus {
+  OPEN
+  ESCALATED
+  CLOSED
 }

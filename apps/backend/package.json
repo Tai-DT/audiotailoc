@@ -15,7 +15,10 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "ts-node src/seed.ts",
     "lint": "eslint --ext .ts src",
-    "test": "echo \"no tests yet\""
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:unit": "jest --config jest.config.ts --runTestsByPath test/unit",
+    "test:e2e": "jest --config jest.config.ts --runTestsByPath test/e2e"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
@@ -54,6 +57,9 @@
     "@types/minio": "^7.1.7",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "@types/jest": "^29.5.12"
   }
 }
