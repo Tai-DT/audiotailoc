@@ -1,169 +1,459 @@
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { apiFetch, getApiBase } from '../lib/api';
+"use client"
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { formatPrice } from '@/lib/utils';
+import { CreditCard, Wallet, QrCode, Truck, Shield, Clock } from 'lucide-react';
 
-// Fetch cart data for checkout summary
-async function fetchCart() {
-  try {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!base) return null;
-    const res = await fetch(`${base}/cart`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+interface CartItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  priceCents: number;
+  quantity: number;
 }
 
-export default async function CheckoutPage() {
-  const cartData = await fetchCart();
-  async function action(form: FormData) {
-    'use server';
-    const promo = String(form.get('promotionCode') || '');
-    // Ensure logged in
-    const { cookies } = await import('next/headers');
-    const c = await cookies();
-    if (!c.get('accessToken')) {
-      redirect('/login');
+interface Cart {
+  id: string;
+  items: CartItem[];
+  subtotalCents: number;
+  shippingCents: number;
+  taxCents: number;
+  totalCents: number;
+}
+
+interface CheckoutForm {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingDistrict: string;
+  shippingWard: string;
+  notes: string;
+  paymentMethod: 'VNPAY' | 'MOMO' | 'PAYOS' | 'COD';
+}
+
+const paymentMethods = [
+  {
+    id: 'VNPAY',
+    name: 'VNPAY',
+    icon: <CreditCard className="h-5 w-5" />,
+    description: 'Thanh toán qua thẻ ngân hàng',
+    color: 'bg-blue-500'
+  },
+  {
+    id: 'MOMO',
+    name: 'MOMO',
+    icon: <QrCode className="h-5 w-5" />,
+    description: 'Thanh toán qua ví MOMO',
+    color: 'bg-pink-500'
+  },
+  {
+    id: 'PAYOS',
+    name: 'PAYOS',
+    icon: <Wallet className="h-5 w-5" />,
+    description: 'Thanh toán qua PayOS',
+    color: 'bg-green-500'
+  },
+  {
+    id: 'COD',
+    name: 'Thanh toán khi nhận hàng',
+    icon: <Truck className="h-5 w-5" />,
+    description: 'Thanh toán tiền mặt khi nhận hàng',
+    color: 'bg-gray-500'
+  }
+];
+
+export default function CheckoutPage() {
+  const router = useRouter();
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState<CheckoutForm>({
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    shippingAddress: '',
+    shippingCity: '',
+    shippingDistrict: '',
+    shippingWard: '',
+    notes: '',
+    paymentMethod: 'VNPAY'
+  });
+
+  // Fetch cart data
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!base) {
+          setError('API không khả dụng');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${base}/cart`, {
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const cartData = await response.json();
+          setCart(cartData);
+        } else {
+          setError('Không thể tải giỏ hàng');
+        }
+      } catch (error) {
+        setError('Lỗi kết nối');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, []);
+
+  const handleInputChange = (field: keyof CheckoutForm, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!base) throw new Error('API không khả dụng');
+
+      // Create order
+      const orderResponse = await fetch(`${base}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          customerName: formData.customerName,
+          customerEmail: formData.customerEmail,
+          customerPhone: formData.customerPhone,
+          shippingAddress: `${formData.shippingAddress}, ${formData.shippingWard}, ${formData.shippingDistrict}, ${formData.shippingCity}`,
+          notes: formData.notes,
+          items: cart?.items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            priceCents: item.priceCents
+          })) || []
+        }),
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Không thể tạo đơn hàng');
+      }
+
+      const orderData = await orderResponse.json();
+
+      // Handle payment based on method
+      if (formData.paymentMethod === 'COD') {
+        // Cash on delivery - redirect to success page
+        router.push(`/orders/${orderData.id}/success`);
+      } else {
+        // Online payment - create payment intent
+        const paymentResponse = await fetch(`${base}/payments/intents`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            orderId: orderData.id,
+            amountCents: cart?.totalCents || 0,
+            provider: formData.paymentMethod,
+            returnUrl: `${window.location.origin}/orders/${orderData.id}/success`,
+            cancelUrl: `${window.location.origin}/checkout`
+          }),
+        });
+
+        if (!paymentResponse.ok) {
+          throw new Error('Không thể tạo thanh toán');
+        }
+
+        const paymentData = await paymentResponse.json();
+        
+        // Redirect to payment gateway
+        if (paymentData.redirectUrl) {
+          window.location.href = paymentData.redirectUrl;
+        } else {
+          router.push(`/orders/${orderData.id}/success`);
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setError('Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setProcessing(false);
     }
-    // 1) Create order
-    const orderRes = await apiFetch<{ order: { id: string; orderNo: string; totalCents: number } }>(
-      '/checkout/create-order',
-      { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ promotionCode: promo || undefined }) },
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4">Đang tải...</p>
+        </div>
+      </div>
     );
-    const order = orderRes.order;
-    // 2) Create payment intent with PayOS
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const returnUrl = `${origin}/checkout/return?orderNo=${encodeURIComponent(order.orderNo)}`;
-    const intent = await apiFetch<{ intentId: string; redirectUrl: string }>('/payments/intents', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ orderId: order.id, provider: 'PAYOS', idempotencyKey: `${order.id}`, returnUrl }),
-    });
-    redirect(intent.redirectUrl);
   }
 
-  // Redirect to cart if no items
-  if (!cartData || cartData.items.length === 0) {
-    redirect('/cart');
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button asChild>
+            <a href="/cart">Quay lại giỏ hàng</a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">🛒</div>
+          <h2 className="text-2xl font-bold mb-2">Giỏ hàng trống</h2>
+          <p className="text-gray-600 mb-4">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
+          <Button asChild>
+            <a href="/products">Mua sắm ngay</a>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Thanh toán</h1>
-        <Link href="/cart" className="text-blue-600 hover:text-blue-800 transition-colors">
-          ← Quay lại giỏ hàng
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Order Summary */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Tóm tắt đơn hàng</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {cartData.items.map((item: any) => (
-                <div key={item.id} className="flex items-center space-x-4 p-3 border rounded-lg">
-                  <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center relative overflow-hidden">
-                    {item.product?.imageUrl ? (
-                      <Image
-                        src={item.product.imageUrl}
-                        alt={item.product.name}
-                        fill
-                        className="object-cover rounded-md"
-                        sizes="48px"
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-sm">🎵</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.product?.name || item.productId}</h4>
-                    <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {(item.unitPrice / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between">
-                  <span>Tạm tính:</span>
-                  <span>{(cartData.subtotalCents / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Phí vận chuyển:</span>
-                  <span>Miễn phí</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Tổng cộng:</span>
-                  <span className="text-blue-600">
-                    {(cartData.subtotalCents / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Thanh toán</h1>
+          <p className="text-gray-600">Hoàn tất đơn hàng của bạn</p>
         </div>
 
-        {/* Payment Form */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin thanh toán</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form action={action} className="space-y-6">
-                <div>
-                  <label htmlFor="promotionCode" className="block text-sm font-medium text-gray-700 mb-2">
-                    Mã khuyến mãi (tùy chọn)
-                  </label>
-                  <Input
-                    name="promotionCode"
-                    id="promotionCode"
-                    placeholder="VD: WELCOME10"
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">Phương thức thanh toán</h3>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">P</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Checkout Form */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin giao hàng</CardTitle>
+                <CardDescription>
+                  Điền thông tin để hoàn tất đơn hàng
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Customer Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerName">Họ tên *</Label>
+                      <Input
+                        id="customerName"
+                        value={formData.customerName}
+                        onChange={(e) => handleInputChange('customerName', e.target.value)}
+                        placeholder="Nhập họ tên"
+                        required
+                      />
                     </div>
-                    <span className="text-blue-900">PayOS - Thanh toán trực tuyến an toàn</span>
+                    <div className="space-y-2">
+                      <Label htmlFor="customerPhone">Số điện thoại *</Label>
+                      <Input
+                        id="customerPhone"
+                        value={formData.customerPhone}
+                        onChange={(e) => handleInputChange('customerPhone', e.target.value)}
+                        placeholder="Nhập số điện thoại"
+                        required
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm text-blue-700 mt-2">
-                    Hỗ trợ thanh toán qua thẻ ATM, Visa, MasterCard, QR Code
-                  </p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customerEmail">Email</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      value={formData.customerEmail}
+                      onChange={(e) => handleInputChange('customerEmail', e.target.value)}
+                      placeholder="Nhập email (không bắt buộc)"
+                    />
+                  </div>
+
+                  {/* Shipping Address */}
+                  <div className="space-y-2">
+                    <Label htmlFor="shippingAddress">Địa chỉ *</Label>
+                    <Input
+                      id="shippingAddress"
+                      value={formData.shippingAddress}
+                      onChange={(e) => handleInputChange('shippingAddress', e.target.value)}
+                      placeholder="Số nhà, tên đường"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="shippingWard">Phường/Xã *</Label>
+                      <Input
+                        id="shippingWard"
+                        value={formData.shippingWard}
+                        onChange={(e) => handleInputChange('shippingWard', e.target.value)}
+                        placeholder="Phường/Xã"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="shippingDistrict">Quận/Huyện *</Label>
+                      <Input
+                        id="shippingDistrict"
+                        value={formData.shippingDistrict}
+                        onChange={(e) => handleInputChange('shippingDistrict', e.target.value)}
+                        placeholder="Quận/Huyện"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="shippingCity">Tỉnh/Thành phố *</Label>
+                      <Input
+                        id="shippingCity"
+                        value={formData.shippingCity}
+                        onChange={(e) => handleInputChange('shippingCity', e.target.value)}
+                        placeholder="Tỉnh/Thành phố"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Ghi chú</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => handleInputChange('notes', e.target.value)}
+                      placeholder="Ghi chú cho đơn hàng (không bắt buộc)"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="space-y-4">
+                    <Label>Phương thức thanh toán *</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {paymentMethods.map((method) => (
+                        <div
+                          key={method.id}
+                          className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+                            formData.paymentMethod === method.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleInputChange('paymentMethod', method.id)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-2 rounded-full text-white ${method.color}`}>
+                              {method.icon}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">{method.name}</h3>
+                              <p className="text-sm text-gray-600">{method.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={processing}
+                  >
+                    {processing ? 'Đang xử lý...' : `Thanh toán ${formatPrice(cart.totalCents)}`}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Đơn hàng của bạn</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Order Items */}
+                <div className="space-y-3">
+                  {cart.items.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">{item.productName}</h4>
+                        <p className="text-sm text-gray-500">Số lượng: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatPrice(item.priceCents * item.quantity)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Lưu ý:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Đơn hàng sẽ được xử lý sau khi thanh toán thành công</li>
-                    <li>• Thời gian giao hàng: 2-5 ngày làm việc</li>
-                    <li>• Miễn phí vận chuyển cho đơn hàng trên 500.000đ</li>
-                  </ul>
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Tạm tính:</span>
+                    <span>{formatPrice(cart.subtotalCents)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Phí vận chuyển:</span>
+                    <span>{formatPrice(cart.shippingCents)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Thuế:</span>
+                    <span>{formatPrice(cart.taxCents)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Tổng cộng:</span>
+                    <span>{formatPrice(cart.totalCents)}</span>
+                  </div>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
-                  Tiến hành thanh toán
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                {/* Security Info */}
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Shield className="h-4 w-4 text-green-500" />
+                    <span>Thanh toán an toàn</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <span>Giao hàng trong 24-48h</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

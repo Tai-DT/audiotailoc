@@ -38,10 +38,11 @@ export default function Navbar() {
   const navigationItems = [
     { href: '/', label: 'Trang chủ', icon: '🏠' },
     { href: '/products', label: 'Sản phẩm', icon: '🎵' },
-    { href: '/categories', label: 'Danh mục', icon: '��' },
+    { href: '/categories', label: 'Danh mục', icon: '📂' },
     { href: '/services', label: 'Dịch vụ', icon: '🔧' },
     { href: '/projects', label: 'Dự án', icon: '🏗️' },
     { href: '/booking', label: 'Đặt lịch', icon: '📅' },
+    { href: '/orders', label: 'Đơn hàng', icon: '📦' },
     { href: '/about', label: 'Giới thiệu', icon: 'ℹ️' },
     { href: '/support', label: 'Hỗ trợ', icon: '💬' },
   ];
