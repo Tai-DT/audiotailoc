@@ -1,0 +1,40 @@
+[Prisma] DATABASE_URL = postgresql:***@127.0.0.1:5432/audiotailoc
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLoggerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPromotionsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLoggerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[31m[Nest] 8049  - [39m08/21/2025, 1:16:54 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39m[31mNest can't resolve dependencies of the AdminGuard (?, ConfigService). Please make sure that the argument UsersService at index [0] is available in the InventoryModule context.
+
+Potential solutions:
+- Is InventoryModule a valid NestJS module?
+- If UsersService is a provider, is it part of the current InventoryModule?
+- If UsersService is exported from a separate @Module, is that module imported within InventoryModule?
+  @Module({
+    imports: [ /* the Module containing UsersService */ ]
+  })
+[39m
+Error: Nest can't resolve dependencies of the AdminGuard (?, ConfigService). Please make sure that the argument UsersService at index [0] is available in the InventoryModule context.
+
+Potential solutions:
+- Is InventoryModule a valid NestJS module?
+- If UsersService is a provider, is it part of the current InventoryModule?
+- If UsersService is exported from a separate @Module, is that module imported within InventoryModule?
+  @Module({
+    imports: [ /* the Module containing UsersService */ ]
+  })
+
+    at Injector.lookupComponentInParentModules (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:262:19)
+    at async Injector.resolveComponentInstance (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:215:33)
+    at async resolveParam (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:129:38)
+    at async Promise.all (index 0)
+    at async Injector.resolveConstructorParams (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:144:27)
+    at async Injector.loadInstance (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:70:13)
+    at async Injector.loadInjectable (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/injector.js:94:9)
+    at async /workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/instance-loader.js:80:13
+    at async Promise.all (index 1)
+    at async InstanceLoader.createInstancesOfInjectables (/workspace/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_class-transformer@0.5.1_class-validator@0.14.2_re_k7huez7iho2aizymvhasmfsdim/node_modules/@nestjs/core/injector/instance-loader.js:79:9)
