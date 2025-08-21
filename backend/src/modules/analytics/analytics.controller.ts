@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
 import { AnalyticsService, AnalyticsFilters } from './analytics.service';
 import { AdminGuard } from '../auth/admin.guard';
-import { IsOptional, IsDateString, IsArray, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsDateString, IsArray, IsString } from 'class-validator';
 
 class AnalyticsQueryDto {
   @IsOptional()

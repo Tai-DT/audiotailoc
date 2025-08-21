@@ -5,6 +5,31 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// BigInt serializer for JSON
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'bigint') {
+    return Number(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt);
+  }
+  
+  if (typeof obj === 'object') {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = serializeBigInt(value);
+    }
+    return result;
+  }
+  
+  return obj;
+}
+
 export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded';
   timestamp: Date;
@@ -161,13 +186,8 @@ export class HealthService {
 
       const responseTime = Date.now() - startTime;
       
-      // Convert BigInt to number to avoid serialization issues
-      const details = (stats as any)[0];
-      if (details) {
-        details.table_count = Number(details.table_count);
-        details.active_connections = Number(details.active_connections);
-        details.database_size = Number(details.database_size);
-      }
+      // Use BigInt serializer to handle all BigInt values
+      const details = serializeBigInt((stats as any)[0]);
       
       return {
         status: 'healthy',

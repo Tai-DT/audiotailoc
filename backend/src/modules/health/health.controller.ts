@@ -2,7 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthService } from './health.service';
 import { JwtGuard } from '../auth/jwt.guard';
-// import { AdminGuard } from '../auth/admin.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
 @ApiTags('Health')
 @Controller('health')
@@ -18,23 +18,17 @@ export class HealthController {
   }
 
   @Get('detailed')
-  // @UseGuards(JwtGuard, AdminGuard) // Commented out due to errors
-  // @ApiBearerAuth() // Commented out due to errors
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Detailed health check (Admin only)' })
   @ApiResponse({ status: 200, description: 'Detailed health information' })
   async detailedHealth() {
-    // Temporarily disabled due to BigInt serialization issues
-    return {
-      status: 'healthy',
-      message: 'Detailed health check temporarily disabled',
-      timestamp: new Date(),
-    };
-    // return this.healthService.checkDetailedHealth();
+    return this.healthService.checkDetailedHealth();
   }
 
   @Get('database')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Database health check' })
   @ApiResponse({ status: 200, description: 'Database health information' })
   async databaseHealth() {
@@ -42,8 +36,8 @@ export class HealthController {
   }
 
   @Get('performance')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Performance metrics' })
   @ApiResponse({ status: 200, description: 'Performance information' })
   async performanceMetrics() {
@@ -51,8 +45,8 @@ export class HealthController {
   }
 
   @Get('system')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'System information' })
   @ApiResponse({ status: 200, description: 'System information' })
   async systemInfo() {
@@ -60,8 +54,8 @@ export class HealthController {
   }
 
   @Get('memory')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Memory usage information' })
   @ApiResponse({ status: 200, description: 'Memory usage details' })
   async memoryUsage() {
@@ -83,8 +77,8 @@ export class HealthController {
   }
 
   @Get('dependencies')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Dependencies health check' })
   @ApiResponse({ status: 200, description: 'Dependencies status' })
   async dependenciesHealth() {
@@ -92,8 +86,8 @@ export class HealthController {
   }
 
   @Get('logs')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Recent application logs' })
   @ApiResponse({ status: 200, description: 'Recent logs' })
   async recentLogs(@Query('lines') lines: string = '100') {

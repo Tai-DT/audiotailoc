@@ -9,7 +9,7 @@ import { JwtGuard } from './jwt.guard';
   imports: [UsersModule],
   providers: [AuthService, AdminGuard, JwtGuard],
   controllers: [AuthController],
-  exports: [AdminGuard, JwtGuard],
+  exports: [AdminGuard, JwtGuard, UsersModule],
 })
 export class AuthModule {}
 
