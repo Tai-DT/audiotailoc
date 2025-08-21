@@ -38,7 +38,10 @@ export default function Navbar() {
   const navigationItems = [
     { href: '/', label: 'Trang chủ', icon: '🏠' },
     { href: '/products', label: 'Sản phẩm', icon: '🎵' },
-    { href: '/categories', label: 'Danh mục', icon: '📂' },
+    { href: '/categories', label: 'Danh mục', icon: '��' },
+    { href: '/services', label: 'Dịch vụ', icon: '🔧' },
+    { href: '/projects', label: 'Dự án', icon: '🏗️' },
+    { href: '/booking', label: 'Đặt lịch', icon: '📅' },
     { href: '/about', label: 'Giới thiệu', icon: 'ℹ️' },
     { href: '/support', label: 'Hỗ trợ', icon: '💬' },
   ];
@@ -53,44 +56,33 @@ export default function Navbar() {
   return (
     <>
       {/* Main Navbar */}
-      <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200'
-            : 'bg-white border-b border-gray-100'
-        }`}
-      >
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white'
+      }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <Link href="/" className="flex items-center space-x-2 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold group-hover:scale-105 transition-transform">
-                  🎵
-                </div>
-                <div className="hidden sm:block">
-                  <span className="text-xl font-bold text-gray-900">Audio Tài Lộc</span>
-                  <div className="text-xs text-gray-500">Nâng tầm âm thanh</div>
-                </div>
-              </Link>
-            </div>
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="text-2xl">🎵</div>
+              <span className="text-xl font-bold text-gray-900">Audio Tài Lộc</span>
+            </Link>
 
-            {/* Desktop Navigation (Shadcn NavigationMenu) */}
-            <div className="hidden lg:flex items-center">
-              <NavigationMenu viewport={false}>
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-8">
+              <NavigationMenu>
                 <NavigationMenuList>
                   {navigationItems.map((item) => (
                     <NavigationMenuItem key={item.href}>
                       <Link href={item.href} legacyBehavior passHref>
                         <NavigationMenuLink
-                          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             isActive(item.href)
-                              ? 'bg-accent text-accent-foreground'
-                              : 'text-foreground/80 hover:bg-accent hover:text-accent-foreground'
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          <span className="text-base">{item.icon}</span>
-                          <span>{item.label}</span>
+                          <span className="mr-1">{item.icon}</span>
+                          {item.label}
                         </NavigationMenuLink>
                       </Link>
                     </NavigationMenuItem>
@@ -99,73 +91,68 @@ export default function Navbar() {
               </NavigationMenu>
             </div>
 
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-md mx-6">
-              <SearchSuggestions
-                onSearch={(query) => {
-                  if (typeof window !== 'undefined') {
-                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                  }
-                }}
-                placeholder="Tìm kiếm sản phẩm..."
-                className="w-full"
-              />
-            </div>
-
             {/* Right side actions */}
-            <div className="flex items-center space-x-2">
-              {/* Language Switcher */}
-              <LanguageSwitcher currentLocale="vi" className="hidden sm:block" />
-              
-              {/* Notifications */}
-              <NotificationCenter userId="user-id-placeholder" />
-              
-              {/* Cart */}
-              <Link href="/cart" className="relative">
-                <Button variant="secondary" size="icon" className="relative">
-                  <span className="text-lg">🛒</span>
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                    0
-                  </span>
-                </Button>
-                <span className="sr-only">Giỏ hàng</span>
-              </Link>
-
-              {/* User Menu */}
-              <div className="relative hidden sm:block">
-                <Link href="/login">
-                  <Button className="gap-2">
-                    <span>👤</span>
-                    <span>Đăng nhập</span>
-                  </Button>
-                </Link>
+            <div className="hidden lg:flex items-center space-x-4">
+              {/* Search */}
+              <div className="w-64">
+                <SearchSuggestions
+                  onSearch={(query) => {
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                  }}
+                  placeholder="Tìm kiếm sản phẩm..."
+                />
               </div>
 
-              {/* Mobile menu button */}
-              <Sheet>
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* Notifications */}
+              <NotificationCenter />
+
+              {/* Cart */}
+              <Button asChild variant="outline" size="sm">
+                <Link href="/cart" className="flex items-center space-x-1">
+                  <span>🛒</span>
+                  <span>Giỏ hàng</span>
+                </Link>
+              </Button>
+
+              {/* Login/Register */}
+              <div className="flex items-center space-x-2">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/login">Đăng nhập</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/register">Đăng ký</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="lg:hidden">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="lg:hidden">
+                  <Button variant="ghost" size="sm">
                     <span className="text-xl">☰</span>
-                    <span className="sr-only">Mở menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left">
+                <SheetContent side="right" className="w-80">
                   <SheetHeader>
                     <SheetTitle>Menu</SheetTitle>
                   </SheetHeader>
-                  <div className="p-4 space-y-4">
+                  <div className="mt-6 space-y-4">
                     {/* Mobile Search */}
-                    <SearchSuggestions
-                      onSearch={(query) => {
-                        if (typeof window !== 'undefined') {
+                    <div className="mb-6">
+                      <SearchSuggestions
+                        onSearch={(query) => {
+                          setIsMobileMenuOpen(false);
                           window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                        }
-                      }}
-                      placeholder="Tìm kiếm sản phẩm..."
-                      className="w-full"
-                    />
+                        }}
+                        placeholder="Tìm kiếm..."
+                      />
+                    </div>
 
-                    {/* Mobile Navigation Items */}
+                    {/* Mobile Navigation */}
                     <nav className="space-y-2">
                       {navigationItems.map((item) => (
                         <Link
@@ -173,31 +160,51 @@ export default function Navbar() {
                           href={item.href}
                           className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             isActive(item.href)
-                              ? 'bg-accent text-accent-foreground'
-                              : 'text-foreground/80 hover:bg-accent hover:text-accent-foreground'
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                           }`}
+                          onClick={() => setIsMobileMenuOpen(false)}
                         >
                           <span className="text-lg">{item.icon}</span>
                           <span>{item.label}</span>
                         </Link>
                       ))}
-
-                      {/* Mobile Login */}
-                      <Link href="/login">
-                        <Button className="w-full gap-2">
-                          <span>👤</span>
-                          <span>Đăng nhập</span>
-                        </Button>
-                      </Link>
                     </nav>
+
+                    {/* Mobile Actions */}
+                    <div className="pt-4 border-t space-y-2">
+                      <Button asChild variant="outline" className="w-full justify-start">
+                        <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                          <span className="mr-2">🛒</span>
+                          Giỏ hàng
+                        </Link>
+                      </Button>
+                      <Button asChild variant="ghost" className="w-full justify-start">
+                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                          Đăng nhập
+                        </Link>
+                      </Button>
+                      <Button asChild className="w-full justify-start">
+                        <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                          Đăng ký
+                        </Link>
+                      </Button>
+                    </div>
+
+                    {/* Language Switcher Mobile */}
+                    <div className="pt-4 border-t">
+                      <LanguageSwitcher />
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
           </div>
         </div>
+      </nav>
 
-      </header>
+      {/* Spacer to prevent content from being hidden behind fixed navbar */}
+      <div className="h-16"></div>
     </>
   );
 }

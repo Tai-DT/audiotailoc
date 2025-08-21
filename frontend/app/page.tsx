@@ -19,11 +19,16 @@ async function fetchFeaturedProducts() {
   try {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!base) return [];
-    const res = await fetch(`${base}/catalog/products?pageSize=6`, {
+
+    const response = await fetch(`${base}/catalog/products?featured=true&pageSize=6`, {
       next: { revalidate: 300 }
     });
-    if (!res.ok) return [];
-    const data = await res.json();
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
     return data.items || [];
   } catch {
     return [];
@@ -35,20 +40,66 @@ async function fetchCategories() {
   try {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!base) return [];
+
     const res = await fetch(`${base}/catalog/categories`, {
       next: { revalidate: 600 }
     });
+
     if (!res.ok) return [];
+
     return await res.json();
   } catch {
     return [];
   }
 }
 
+// Fetch featured services
+async function fetchFeaturedServices() {
+  try {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!base) return [];
+
+    const response = await fetch(`${base}/services?isActive=true&pageSize=3`, {
+      next: { revalidate: 300 }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.items || [];
+  } catch {
+    return [];
+  }
+}
+
+// Fetch featured projects
+async function fetchFeaturedProjects() {
+  try {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!base) return [];
+
+    const response = await fetch(`${base}/projects?featured=true`, {
+      next: { revalidate: 600 }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [featuredProducts, categories] = await Promise.all([
+  const [featuredProducts, categories, featuredServices, featuredProjects] = await Promise.all([
     fetchFeaturedProducts(),
-    fetchCategories()
+    fetchCategories(),
+    fetchFeaturedServices(),
+    fetchFeaturedProjects()
   ]);
 
   // Structured data for SEO
@@ -108,71 +159,108 @@ export default async function HomePage() {
                 <Link href="/products">🎧 Khám phá sản phẩm</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600 w-full sm:w-auto text-lg px-8 py-4">
-                <Link href="/products?featured=true">⭐ Sản phẩm nổi bật</Link>
+                <Link href="/services">🔧 Dịch vụ chuyên nghiệp</Link>
               </Button>
             </div>
           </div>
           
           {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="text-4xl mb-4">🚚</div>
-              <h3 className="text-xl font-bold mb-2">Giao hàng miễn phí</h3>
-              <p className="text-blue-100">Cho đơn hàng từ 500k</p>
+              <h3 className="text-lg font-semibold mb-2">Giao hàng nhanh</h3>
+              <p className="text-sm opacity-90">Giao hàng toàn quốc trong 24-48h</p>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-4">🛡️</div>
-              <h3 className="text-xl font-bold mb-2">Bảo hành chính hãng</h3>
-              <p className="text-blue-100">12-24 tháng</p>
+              <h3 className="text-lg font-semibold mb-2">Bảo hành chính hãng</h3>
+              <p className="text-sm opacity-90">Bảo hành từ 12-24 tháng</p>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-4">💬</div>
-              <h3 className="text-xl font-bold mb-2">Hỗ trợ 24/7</h3>
-              <p className="text-blue-100">Tư vấn chuyên nghiệp</p>
+              <h3 className="text-lg font-semibold mb-2">Hỗ trợ 24/7</h3>
+              <p className="text-sm opacity-90">Tư vấn và hỗ trợ mọi lúc</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+      {/* Categories Section */}
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">Sản phẩm nổi bật</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-              Khám phá những sản phẩm audio được yêu thích nhất tại Audio Tài Lộc
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Danh mục sản phẩm</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Khám phá các danh mục sản phẩm đa dạng với chất lượng cao
             </p>
           </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.slice(0, 6).map((category: any) => (
+              <Link key={category.id} href={`/categories/${category.slug}`}>
+                <Card className="text-center hover:shadow-lg transition-shadow cursor-pointer group">
+                  <CardContent className="p-6">
+                    <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
+                      {category.icon || '📂'}
+                    </div>
+                    <h3 className="font-semibold text-sm group-hover:text-blue-600 transition-colors">
+                      {category.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {category.productCount || 0} sản phẩm
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          
+          <div className="text-center mt-8">
+            <Button asChild variant="outline">
+              <Link href="/categories">Xem tất cả danh mục</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            {featuredProducts.slice(0, 6).map((product: any) => (
-              <Card key={product.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="p-0">
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <Image
-                      src={product.imageUrl || 'https://placehold.co/400x400?text=Audio+Product'}
-                      alt={product.name}
-                      fill
-                      className="object-cover hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <CardTitle className="text-lg mb-2 line-clamp-2">
-                    <Link href={`/products/${product.slug}`} className="hover:text-blue-600">
-                      {product.name}
-                    </Link>
+      {/* Featured Products Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Sản phẩm nổi bật</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Những sản phẩm được yêu thích nhất với chất lượng và giá cả tốt nhất
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredProducts.map((product: any) => (
+              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={product.imageUrl || 'https://placehold.co/400x300?text=Product'}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                    {product.name}
                   </CardTitle>
-                  <CardDescription className="mb-3 line-clamp-2">
-                    {product.description || 'Sản phẩm audio chất lượng cao'}
+                  <CardDescription className="line-clamp-2">
+                    {product.description}
                   </CardDescription>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-600">
-                      {(product.priceCents / 100).toLocaleString('vi-VN', {
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xl font-bold text-blue-600">
+                      {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',
-                        currency: 'VND'
-                      })}
+                        currency: 'VND',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(product.priceCents)}
                     </span>
                     <Button asChild size="sm">
                       <Link href={`/products/${product.slug}`}>Xem chi tiết</Link>
@@ -182,164 +270,171 @@ export default async function HomePage() {
               </Card>
             ))}
           </div>
-
-          <div className="text-center">
-            <Button asChild variant="outline" size="lg">
+          
+          <div className="text-center mt-8">
+            <Button asChild>
               <Link href="/products">Xem tất cả sản phẩm</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-16 bg-white">
+      {/* Services Section */}
+      {featuredServices.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Dịch vụ chuyên nghiệp</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Đội ngũ kỹ thuật viên giàu kinh nghiệm với các dịch vụ âm thanh chất lượng cao
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {featuredServices.map((service: any) => (
+                <Card key={service.id} className="text-center hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="text-4xl mb-4">🔧</div>
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                    <CardDescription>
+                      {service.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-blue-600">
+                        {new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }).format(service.basePriceCents)}
+                      </span>
+                    </div>
+                    <Button asChild className="w-full">
+                      <Link href={`/booking?service=${service.id}`}>Đặt lịch ngay</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            <div className="text-center mt-8">
+              <Button asChild variant="outline">
+                <Link href="/services">Xem tất cả dịch vụ</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Projects Section */}
+      {featuredProjects.length > 0 && (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Dự án đã hoàn thành</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Khám phá các dự án âm thanh chuyên nghiệp mà chúng tôi đã thực hiện
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProjects.slice(0, 3).map((project: any) => (
+                <Card key={project.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
+                  {project.images && project.images.length > 0 && (
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={project.images[0]}
+                        alt={project.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors duration-300" />
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                      {project.name}
+                    </CardTitle>
+                    {project.description && (
+                      <CardDescription className="line-clamp-2">
+                        {project.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full">
+                      <Link href={`/projects/${project.slug}`}>Xem chi tiết</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            <div className="text-center mt-8">
+              <Button asChild variant="outline">
+                <Link href="/projects">Xem tất cả dự án</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 bg-blue-600 text-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Danh mục sản phẩm</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Khám phá các danh mục sản phẩm audio đa dạng với chất lượng cao nhất
+            <h2 className="text-3xl font-bold mb-4">Tại sao chọn Audio Tài Lộc?</h2>
+            <p className="text-blue-100 max-w-2xl mx-auto">
+              Chúng tôi cam kết mang đến trải nghiệm âm thanh tốt nhất cho khách hàng
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { name: 'Tai nghe', icon: '🎧', description: 'Tai nghe chất lượng cao', href: '/products?category=headphones', color: 'from-blue-500 to-purple-600' },
-              { name: 'Loa', icon: '🔊', description: 'Loa công suất cao', href: '/products?category=speakers', color: 'from-green-500 to-blue-600' },
-              { name: 'Ampli', icon: '⚡', description: 'Ampli công suất', href: '/products?category=amplifiers', color: 'from-orange-500 to-red-600' },
-              { name: 'Microphone', icon: '🎤', description: 'Microphone chuyên nghiệp', href: '/products?category=microphones', color: 'from-purple-500 to-pink-600' },
-              { name: 'Phụ kiện', icon: '🔌', description: 'Phụ kiện âm thanh', href: '/products?category=accessories', color: 'from-gray-500 to-gray-700' },
-              { name: 'Karaoke', icon: '🎤🎵', description: 'Hệ thống karaoke', href: '/products?category=karaoke', color: 'from-pink-500 to-red-600' }
-            ].map((category, index) => (
-              <Link key={index} href={category.href} className="group">
-                <div className={`bg-gradient-to-r ${category.color} rounded-xl p-8 text-white hover:shadow-xl transition-all duration-300 group-hover:scale-105`}>
-                  <div className="text-6xl mb-4">{category.icon}</div>
-                  <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
-                  <p className="text-blue-100 mb-4">{category.description}</p>
-                  <div className="flex items-center text-blue-100 group-hover:text-white transition-colors">
-                    <span className="font-semibold">Khám phá ngay</span>
-                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
-              <Link href="/categories">Xem tất cả danh mục</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">Tại sao chọn Audio Tài Lộc?</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎵</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Chất lượng cao</h3>
-              <p className="text-gray-600">Sản phẩm audio chính hãng với chất lượng âm thanh tuyệt vời</p>
+              <div className="text-5xl mb-4">🏆</div>
+              <h3 className="text-xl font-semibold mb-2">Chất lượng hàng đầu</h3>
+              <p className="text-blue-100">Sản phẩm chính hãng với chất lượng được kiểm định</p>
             </div>
-
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚚</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Giao hàng nhanh</h3>
-              <p className="text-gray-600">Giao hàng toàn quốc, nhanh chóng và an toàn</p>
+              <div className="text-5xl mb-4">👨‍🔧</div>
+              <h3 className="text-xl font-semibold mb-2">Kỹ thuật viên chuyên nghiệp</h3>
+              <p className="text-blue-100">Đội ngũ kỹ thuật viên giàu kinh nghiệm</p>
             </div>
-
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💬</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Hỗ trợ 24/7</h3>
-              <p className="text-gray-600">Đội ngũ hỗ trợ khách hàng chuyên nghiệp, sẵn sàng giúp đỡ</p>
+              <div className="text-5xl mb-4">💰</div>
+              <h3 className="text-xl font-semibold mb-2">Giá cả hợp lý</h3>
+              <p className="text-blue-100">Cam kết giá tốt nhất thị trường</p>
             </div>
-          </div>
-                </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Khách hàng nói gì về chúng tôi</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Những đánh giá chân thực từ khách hàng đã sử dụng sản phẩm của Audio Tài Lộc
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                name: 'Nguyễn Văn A',
-                role: 'Nhạc sĩ',
-                content: 'Chất lượng âm thanh tuyệt vời! Tôi rất hài lòng với tai nghe studio mà tôi mua tại đây.',
-                rating: 5,
-                avatar: '👨‍🎤'
-              },
-              {
-                name: 'Trần Thị B',
-                role: 'DJ',
-                content: 'Hệ thống loa công suất cao thực sự ấn tượng. Âm thanh sống động và chân thực.',
-                rating: 5,
-                avatar: '👩‍🎧'
-              },
-              {
-                name: 'Lê Văn C',
-                role: 'Kỹ sư âm thanh',
-                content: 'Dịch vụ tư vấn chuyên nghiệp, sản phẩm chất lượng cao. Tôi sẽ quay lại mua sắm.',
-                rating: 5,
-                avatar: '👨‍🔧'
-              }
-            ].map((testimonial, index) => (
-              <div key={index} className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center mb-4">
-                  <div className="text-4xl mr-4">{testimonial.avatar}</div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{testimonial.name}</h3>
-                    <p className="text-gray-600 text-sm">{testimonial.role}</p>
-                  </div>
-                </div>
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-400 text-xl">⭐</span>
-                  ))}
-                </div>
-                <p className="text-gray-700 italic">"{testimonial.content}"</p>
-              </div>
-            ))}
+            <div className="text-center">
+              <div className="text-5xl mb-4">🤝</div>
+              <h3 className="text-xl font-semibold mb-2">Dịch vụ tận tâm</h3>
+              <p className="text-blue-100">Hỗ trợ khách hàng 24/7</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-blue-600 text-white">
+      <section className="py-16 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Sẵn sàng trải nghiệm âm thanh tuyệt vời?</h2>
+          <h2 className="text-3xl font-bold mb-4">Sẵn sàng nâng tầm âm thanh?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Hãy đến với Audio Tài Lộc để được tư vấn và trải nghiệm những sản phẩm âm thanh chất lượng cao nhất.
+            Liên hệ với chúng tôi ngay hôm nay để được tư vấn miễn phí
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
-              <Link href="/products">🎧 Khám phá sản phẩm</Link>
+            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+              <Link href="/contact">Liên hệ ngay</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-4">
-              <Link href="/support/contact">💬 Liên hệ tư vấn</Link>
+            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600">
+              <Link href="/booking">Đặt lịch tư vấn</Link>
             </Button>
           </div>
         </div>
       </section>
     </div>
-  </>
+    </>
   );
 }
 
