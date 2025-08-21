@@ -81,6 +81,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/analytics" className="flex items-center px-6 py-2 text-sm hover:bg-gray-800 transition-colors">
                       📈 Thống kê
                     </Link>
+                    <Link href="/marketing" className="flex items-center px-6 py-2 text-sm hover:bg-gray-800 transition-colors">
+                      📧 Marketing
+                    </Link>
+                    <Link href="/settings" className="flex items-center px-6 py-2 text-sm hover:bg-gray-800 transition-colors">
+                      ⚙️ Cài đặt
+                    </Link>
                   </>
                 )}
               </div>

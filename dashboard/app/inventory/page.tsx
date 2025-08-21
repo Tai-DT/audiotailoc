@@ -1,76 +1,170 @@
-type InvItem = { productId: string; stock: number; reserved: number; lowStockThreshold: number; product: { name: string; slug: string } };
+"use client"
 
-async function fetchInventory(params: { page?: number; pageSize?: number }) {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  const u = new URL(`${base}/inventory`);
-  if (params.page) u.searchParams.set('page', String(params.page));
-  if (params.pageSize) u.searchParams.set('pageSize', String(params.pageSize));
-  const res = await fetch(u.toString(), { cache: 'no-store' });
-  if (!res.ok) throw new Error('Không thể tải tồn kho');
-  return (await res.json()) as { total: number; page: number; pageSize: number; items: InvItem[] };
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Package, AlertTriangle, Search, Plus, Edit, Trash2 } from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  stockQuantity: number;
+  availableQuantity: number;
+  minStockLevel: number;
+  sellingPrice: number;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock';
 }
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const sp = await searchParams;
-  const page = Math.max(1, parseInt(String(sp?.page ?? '1'), 10) || 1);
-  const pageSize = 20;
-  const data = await fetchInventory({ page, pageSize });
-  const totalPages = Math.max(1, Math.ceil(data.total / pageSize));
+export default function InventoryPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  async function adjust(form: FormData) {
-    'use server';
-    const productId = String(form.get('productId') || '');
-    const delta = parseInt(String(form.get('stockDelta') || '0'), 10) || 0;
-    const low = parseInt(String(form.get('lowStockThreshold') || ''), 10);
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    await fetch(`${base}/inventory/${encodeURIComponent(productId)}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ stockDelta: delta, lowStockThreshold: isNaN(low) ? undefined : low }),
-    });
-  }
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      // Mock data for now
+      const mockProducts: Product[] = [
+        {
+          id: '1',
+          name: 'Loa Bluetooth JBL GO 2',
+          sku: 'JBL-GO2-BLK',
+          stockQuantity: 45,
+          availableQuantity: 40,
+          minStockLevel: 10,
+          sellingPrice: 1200000,
+          status: 'in_stock'
+        },
+        {
+          id: '2',
+          name: 'Tai nghe Sony WH-1000XM4',
+          sku: 'SONY-WH1000XM4',
+          stockQuantity: 8,
+          availableQuantity: 6,
+          minStockLevel: 10,
+          sellingPrice: 3800000,
+          status: 'low_stock'
+        }
+      ];
+      setProducts(mockProducts);
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusBadge = (status: Product['status']) => {
+    const config = {
+      in_stock: { color: 'bg-green-100 text-green-800', label: 'Còn hàng' },
+      low_stock: { color: 'bg-yellow-100 text-yellow-800', label: 'Sắp hết' },
+      out_of_stock: { color: 'bg-red-100 text-red-800', label: 'Hết hàng' }
+    };
+    const { color, label } = config[status];
+    return <Badge className={color}>{label}</Badge>;
+  };
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Tồn kho</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Sản phẩm</th>
-            <th style={{ textAlign: 'right', borderBottom: '1px solid #eee', padding: 8 }}>Tồn</th>
-            <th style={{ textAlign: 'right', borderBottom: '1px solid #eee', padding: 8 }}>Giữ chỗ</th>
-            <th style={{ textAlign: 'right', borderBottom: '1px solid #eee', padding: 8 }}>Cảnh báo</th>
-            <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Điều chỉnh</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.items.map((i) => (
-            <tr key={i.productId}>
-              <td style={{ padding: 8 }}>{i.product.name}</td>
-              <td style={{ padding: 8, textAlign: 'right' }}>{i.stock}</td>
-              <td style={{ padding: 8, textAlign: 'right' }}>{i.reserved}</td>
-              <td style={{ padding: 8, textAlign: 'right' }}>{i.lowStockThreshold}</td>
-              <td style={{ padding: 8 }}>
-                <form action={adjust as any} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input type="hidden" name="productId" value={i.productId} />
-                  <input name="stockDelta" type="number" placeholder="± số lượng" style={{ width: 120 }} />
-                  <input name="lowStockThreshold" type="number" placeholder="Ngưỡng cảnh báo" style={{ width: 160 }} />
-                  <button type="submit">Lưu</button>
-                </form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        {page > 1 ? <a href={`?page=${page - 1}`}>← Trước</a> : <span />}
-        <span>
-          Trang {page}/{totalPages}
-        </span>
-        {page < totalPages ? <a href={`?page=${page + 1}`}>Sau →</a> : <span />}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Quản lý kho</h1>
+          <p className="text-gray-600">Theo dõi và quản lý tồn kho sản phẩm</p>
+        </div>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Thêm sản phẩm
+        </Button>
       </div>
-    </main>
+
+      {/* Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm sản phẩm hoặc SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Products List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách sản phẩm</CardTitle>
+          <CardDescription>
+            Quản lý tồn kho từng sản phẩm
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2">Đang tải...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredProducts.map((product) => (
+                <div key={product.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="font-semibold">{product.name}</h3>
+                        {getStatusBadge(product.status)}
+                      </div>
+                      <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Tồn kho</p>
+                      <p className="font-semibold">{product.stockQuantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Có thể bán</p>
+                      <p className="font-semibold">{product.availableQuantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Ngưỡng tối thiểu</p>
+                      <p className="font-semibold">{product.minStockLevel}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Giá bán</p>
+                      <p className="font-semibold">
+                        {(product.sellingPrice / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-
