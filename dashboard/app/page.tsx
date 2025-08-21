@@ -11,7 +11,7 @@ async function fetchAnalytics() {
     const [products, orders, users] = await Promise.all([
       apiFetch<CountResponse>('/catalog/products?pageSize=1').catch((): CountResponse => ({ totalCount: 0 })),
       apiFetch<CountResponse>('/orders?pageSize=1').catch((): CountResponse => ({ totalCount: 0 })),
-      apiFetch<CountResponse>('/admin/users?pageSize=1').catch((): CountResponse => ({ totalCount: 0 }))
+      apiFetch<CountResponse>('/users?pageSize=1').catch((): CountResponse => ({ totalCount: 0 }))
     ]);
 
     // Calculate revenue from recent orders

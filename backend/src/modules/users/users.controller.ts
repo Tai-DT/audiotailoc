@@ -42,7 +42,7 @@ class UpdateUserDto {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Get()
   async findAll(@Query('page') page = '1', @Query('limit') limit = '10') {
     return this.usersService.findAll({
@@ -63,7 +63,7 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -75,19 +75,19 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Get('stats/overview')
   async getStats() {
     return this.usersService.getStats();
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Get('stats/activity')
   async getActivityStats(@Query('days') days = '30') {
     return this.usersService.getActivityStats(parseInt(days));

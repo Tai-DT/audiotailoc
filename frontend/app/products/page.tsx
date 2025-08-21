@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 async function fetchCategories(): Promise<Category[]> {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  const res = await fetch(`${base}/catalog/categories`, { cache: 'no-store' });
+  const res = await fetch(`${base}/catalog/categories`);
   if (!res.ok) throw new Error('Không thể tải danh mục');
   return (await res.json()) as Category[];
 }
@@ -51,7 +51,7 @@ async function searchProducts(params: { q?: string; page?: number; pageSize?: nu
     try {
       const u1 = new URL(`${base}/ai/search`);
       u1.searchParams.set('q', String(params.q));
-      const ai = await fetch(u1.toString(), { cache: 'no-store' }).then((r) => r.json());
+      const ai = await fetch(u1.toString()).then((r) => r.json());
       const items = Array.isArray(ai.items) ? ai.items : ai;
       const hits = (items || []).map((it: any) => ({
         id: it.product?.id || it.id,
@@ -72,7 +72,7 @@ async function searchProducts(params: { q?: string; page?: number; pageSize?: nu
   if (params.categoryId) u.searchParams.set('categoryId', params.categoryId);
   if (typeof params.minPrice === 'number') u.searchParams.set('minPrice', String(params.minPrice));
   if (typeof params.maxPrice === 'number') u.searchParams.set('maxPrice', String(params.maxPrice));
-  const res = await fetch(u.toString(), { cache: 'no-store' });
+  const res = await fetch(u.toString());
   if (!res.ok) throw new Error('Không thể tìm kiếm');
   return (await res.json()) as { hits: Product[]; estimatedTotalHits?: number; page: number; pageSize: number; facetDistribution?: { categoryId?: Record<string, number> } };
 }

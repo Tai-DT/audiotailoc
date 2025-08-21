@@ -20,7 +20,6 @@ async function fetchFeaturedProducts() {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!base) return [];
     const res = await fetch(`${base}/catalog/products?pageSize=6`, {
-      cache: 'no-store',
       next: { revalidate: 300 }
     });
     if (!res.ok) return [];
@@ -37,7 +36,6 @@ async function fetchCategories() {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!base) return [];
     const res = await fetch(`${base}/catalog/categories`, {
-      cache: 'no-store',
       next: { revalidate: 600 }
     });
     if (!res.ok) return [];

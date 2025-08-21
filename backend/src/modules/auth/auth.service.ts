@@ -9,8 +9,7 @@ export class AuthService {
   constructor(private readonly users: UsersService, private readonly config: ConfigService) {}
 
   async register(dto: { email: string; password: string; name?: string }) {
-    const hashed = await bcrypt.hash(dto.password, 10);
-    return this.users.create({ email: dto.email, password: hashed, name: dto.name ?? '' });
+    return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
   }
 
   async login(dto: { email: string; password: string }) {
