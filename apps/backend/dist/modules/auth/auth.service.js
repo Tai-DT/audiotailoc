@@ -66,7 +66,7 @@ let AuthService = class AuthService {
             throw new Error('bad pass');
         const accessSecret = this.config.get('JWT_ACCESS_SECRET') || 'dev_access';
         const refreshSecret = this.config.get('JWT_REFRESH_SECRET') || 'dev_refresh';
-        const accessToken = jwt.sign({ sub: user.id }, accessSecret, { expiresIn: '15m' });
+        const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
         const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: '7d' });
         return { accessToken, refreshToken };
     }

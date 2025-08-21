@@ -4,11 +4,21 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     findByEmail(email: string): Promise<{
         id: string;
-        email: string;
-        password: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
+        name: string | null;
+        email: string;
+        password: string;
+        role: import("@prisma/client").$Enums.Role;
+    } | null>;
+    findById(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string | null;
+        email: string;
+        password: string;
+        role: import("@prisma/client").$Enums.Role;
     } | null>;
     createUser(params: {
         email: string;
@@ -16,10 +26,11 @@ export declare class UsersService {
         name?: string | null;
     }): Promise<{
         id: string;
-        email: string;
-        password: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
+        name: string | null;
+        email: string;
+        password: string;
+        role: import("@prisma/client").$Enums.Role;
     }>;
 }
