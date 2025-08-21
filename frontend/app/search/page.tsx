@@ -1,284 +1,331 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import AdvancedSearch from '@/components/AdvancedSearch';
-import ProductCard from '@/components/ProductCard';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface SearchFilters {
-  q?: string;
-  categoryId?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  brand?: string;
-  inStock?: boolean;
-  featured?: boolean;
-  tags?: string[];
-  sortBy?: string;
-  page?: number;
-  pageSize?: number;
-}
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { formatPrice } from '@/lib/utils';
+import { Search, Filter, Grid, List, Star } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 interface SearchResult {
-  hits: any[];
-  estimatedTotalHits?: number;
-  page: number;
-  pageSize: number;
-  facetDistribution?: Record<string, any>;
-  processingTimeMs?: number;
-  query?: string;
+  id: string;
+  type: 'product' | 'service' | 'project';
+  title: string;
+  description: string;
+  image?: string;
+  priceCents?: number;
+  slug?: string;
+  category?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const query = searchParams.get('q') || '';
   
-  const [results, setResults] = useState<SearchResult | null>(null);
-  const [facets, setFacets] = useState<Record<string, any>>({});
+  const [searchTerm, setSearchTerm] = useState(query);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filters, setFilters] = useState({
+    type: 'all',
+    category: 'all',
+    priceRange: 'all'
+  });
 
-  // Parse initial filters from URL
-  const getFiltersFromParams = useCallback((): SearchFilters => {
-    const filters: SearchFilters = {};
-    
-    if (searchParams.get('q')) filters.q = searchParams.get('q')!;
-    if (searchParams.get('categoryId')) filters.categoryId = searchParams.get('categoryId')!;
-    if (searchParams.get('minPrice')) filters.minPrice = parseInt(searchParams.get('minPrice')!);
-    if (searchParams.get('maxPrice')) filters.maxPrice = parseInt(searchParams.get('maxPrice')!);
-    if (searchParams.get('brand')) filters.brand = searchParams.get('brand')!;
-    if (searchParams.get('inStock')) filters.inStock = searchParams.get('inStock') === 'true';
-    if (searchParams.get('featured')) filters.featured = searchParams.get('featured') === 'true';
-    if (searchParams.get('tags')) filters.tags = searchParams.get('tags')!.split(',');
-    if (searchParams.get('sortBy')) filters.sortBy = searchParams.get('sortBy')!;
-    if (searchParams.get('page')) filters.page = parseInt(searchParams.get('page')!);
-    
-    filters.pageSize = 20; // Default page size
-    
-    return filters;
-  }, [searchParams]);
+  useEffect(() => {
+    if (query) {
+      performSearch(query);
+    }
+  }, [query]);
 
-  // Update URL with filters
-  const updateURL = (filters: SearchFilters) => {
-    const params = new URLSearchParams();
-    
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        if (Array.isArray(value)) {
-          if (value.length > 0) params.set(key, value.join(','));
-        } else {
-          params.set(key, value.toString());
-        }
-      }
-    });
-
-    router.push(`/search?${params.toString()}`);
-  };
-
-  // Perform search
-  const performSearch = async (filters: SearchFilters) => {
+  const performSearch = async (searchQuery: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(v => params.append(key, v));
-          } else {
-            params.set(key, value.toString());
-          }
-        }
-      });
-
-      const response = await fetch(`/api/catalog/search/advanced?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error('Search request failed');
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!base) {
+        setError('API không khả dụng');
+        setLoading(false);
+        return;
       }
 
-      const data = await response.json();
-      setResults(data);
+      const response = await fetch(`${base}/catalog/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
       
-      // Update facets if available
-      if (data.facetDistribution) {
-        setFacets(data.facetDistribution);
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data.items || []);
+      } else {
+        setError('Không thể tải kết quả tìm kiếm');
       }
-    } catch (err) {
-      setError('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.');
-      console.error('Search error:', err);
+    } catch (error) {
+      console.error('Search error:', error);
+      setError('Lỗi kết nối');
     } finally {
       setLoading(false);
     }
   };
 
-  // Load initial facets
-  const loadFacets = async () => {
-    try {
-      const response = await fetch('/api/catalog/search/facets');
-      if (response.ok) {
-        const data = await response.json();
-        setFacets(data);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('q', searchTerm.trim());
+      window.history.pushState({}, '', url.toString());
+      performSearch(searchTerm.trim());
+    }
+  };
+
+  const filteredResults = results.filter(item => {
+    if (filters.type !== 'all' && item.type !== filters.type) return false;
+    if (filters.category !== 'all' && item.category !== filters.category) return false;
+    if (filters.priceRange !== 'all' && item.priceCents) {
+      const price = item.priceCents / 100;
+      switch (filters.priceRange) {
+        case 'under-100k':
+          return price < 100000;
+        case '100k-500k':
+          return price >= 100000 && price < 500000;
+        case '500k-1m':
+          return price >= 500000 && price < 1000000;
+        case 'over-1m':
+          return price >= 1000000;
+        default:
+          return true;
       }
-    } catch (err) {
-      console.error('Failed to load facets:', err);
+    }
+    return true;
+  });
+
+  const getItemLink = (item: SearchResult) => {
+    switch (item.type) {
+      case 'product':
+        return `/products/${item.slug}`;
+      case 'service':
+        return `/services/${item.slug}`;
+      case 'project':
+        return `/projects/${item.slug}`;
+      default:
+        return '#';
     }
   };
 
-  // Handle search
-  const handleSearch = (filters: SearchFilters) => {
-    const searchFilters = { ...filters, page: 1 }; // Reset to first page
-    updateURL(searchFilters);
-    performSearch(searchFilters);
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    const currentFilters = getFiltersFromParams();
-    const newFilters = { ...currentFilters, page };
-    updateURL(newFilters);
-    performSearch(newFilters);
-  };
-
-  // Initial load
-  useEffect(() => {
-    loadFacets();
-    const filters = getFiltersFromParams();
-    if (Object.keys(filters).length > 1 || filters.q) { // Has filters or query
-      performSearch(filters);
+  const getItemIcon = (type: string) => {
+    switch (type) {
+      case 'product':
+        return '🎵';
+      case 'service':
+        return '🔧';
+      case 'project':
+        return '🏗️';
+      default:
+        return '📄';
     }
-  }, [getFiltersFromParams]);
-
-  const currentFilters = getFiltersFromParams();
-  const hasResults = results && results.hits.length > 0;
-  const totalPages = results ? Math.ceil((results.estimatedTotalHits || 0) / results.pageSize) : 0;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Tìm kiếm sản phẩm</h1>
-        <p className="text-gray-600">Tìm kiếm và lọc sản phẩm theo nhu cầu của bạn</p>
-      </div>
-
-      {/* Advanced Search Component */}
-      <AdvancedSearch
-        onSearch={handleSearch}
-        initialFilters={currentFilters}
-        facets={facets}
-      />
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Đang tìm kiếm...</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              <p>{error}</p>
-              <Button 
-                variant="outline" 
-                onClick={() => performSearch(currentFilters)}
-                className="mt-2"
-              >
-                Thử lại
+      <div className="max-w-7xl mx-auto">
+        {/* Search Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">Tìm kiếm</h1>
+          
+          {/* Search Form */}
+          <form onSubmit={handleSearch} className="max-w-2xl mb-6">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Tìm kiếm sản phẩm, dịch vụ, dự án..."
+                  className="pl-10"
+                />
+              </div>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Đang tìm...' : 'Tìm kiếm'}
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </form>
 
-      {/* Results */}
-      {!loading && results && (
-        <>
-          {/* Results Summary */}
-          <div className="mb-6">
+          {/* Search Results Summary */}
+          {query && (
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600">
-                  {results.estimatedTotalHits === 0 ? (
-                    'Không tìm thấy sản phẩm nào'
-                  ) : (
-                    <>
-                      Tìm thấy <strong>{results.estimatedTotalHits}</strong> sản phẩm
-                      {results.query && (
-                        <> cho &quot;<strong>{results.query}</strong>&quot;</>
-                      )}
-                    </>
-                  )}
-                </p>
-                {results.processingTimeMs && (
-                  <p className="text-sm text-gray-500">
-                    Thời gian xử lý: {results.processingTimeMs}ms
-                  </p>
-                )}
+              <p className="text-gray-600">
+                Kết quả tìm kiếm cho "{query}": {filteredResults.length} kết quả
+              </p>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Bộ lọc
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Type Filter */}
+                <div>
+                  <h4 className="font-medium mb-2">Loại</h4>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'all', label: 'Tất cả' },
+                      { value: 'product', label: 'Sản phẩm' },
+                      { value: 'service', label: 'Dịch vụ' },
+                      { value: 'project', label: 'Dự án' }
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="type"
+                          value={option.value}
+                          checked={filters.type === option.value}
+                          onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                          className="mr-2"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range Filter */}
+                <div>
+                  <h4 className="font-medium mb-2">Khoảng giá</h4>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'all', label: 'Tất cả' },
+                      { value: 'under-100k', label: 'Dưới 100k' },
+                      { value: '100k-500k', label: '100k - 500k' },
+                      { value: '500k-1m', label: '500k - 1M' },
+                      { value: 'over-1m', label: 'Trên 1M' }
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="priceRange"
+                          value={option.value}
+                          checked={filters.priceRange === option.value}
+                          onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value }))}
+                          className="mr-2"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Products Grid */}
-          {hasResults ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                {results.hits.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+          {/* Search Results */}
+          <div className="lg:col-span-3">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4">Đang tìm kiếm...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <div className="text-red-500 text-6xl mb-4">❌</div>
+                <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <Button onClick={() => performSearch(query)}>Thử lại</Button>
+              </div>
+            ) : filteredResults.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">🔍</div>
+                <h2 className="text-2xl font-bold mb-2">Không tìm thấy kết quả</h2>
+                <p className="text-gray-600 mb-4">
+                  Thử tìm kiếm với từ khóa khác hoặc kiểm tra chính tả
+                </p>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredResults.map((item) => (
+                  <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{getItemIcon(item.type)}</span>
+                          <div>
+                            <CardTitle className="text-lg">
+                              <Link href={getItemLink(item)} className="hover:text-blue-600">
+                                {item.title}
+                              </Link>
+                            </CardTitle>
+                            <Badge variant="outline" className="mt-1">
+                              {item.type === 'product' ? 'Sản phẩm' : 
+                               item.type === 'service' ? 'Dịch vụ' : 'Dự án'}
+                            </Badge>
+                          </div>
+                        </div>
+                        {item.priceCents && (
+                          <div className="text-right">
+                            <p className="font-bold text-lg">{formatPrice(item.priceCents)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {item.description}
+                      </p>
+                      
+                      {item.rating && (
+                        <div className="flex items-center gap-1 mb-3">
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                          <span className="text-sm font-medium">{item.rating}</span>
+                          {item.reviewCount && (
+                            <span className="text-sm text-gray-500">({item.reviewCount} đánh giá)</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <Button asChild className="w-full">
+                        <Link href={getItemLink(item)}>
+                          Xem chi tiết
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(results.page - 1)}
-                    disabled={results.page <= 1}
-                  >
-                    ← Trang trước
-                  </Button>
-                  
-                  <span className="flex items-center px-4 py-2 text-sm text-gray-600">
-                    Trang {results.page} / {totalPages}
-                  </span>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(results.page + 1)}
-                    disabled={results.page >= totalPages}
-                  >
-                    Trang sau →
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            !loading && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold mb-2">Không tìm thấy sản phẩm</h3>
-                    <p className="text-gray-600 mb-4">
-                      Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
-                    </p>
-                    <Button onClick={() => handleSearch({})}>
-                      Xóa tất cả bộ lọc
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          )}
-        </>
-      )}
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
