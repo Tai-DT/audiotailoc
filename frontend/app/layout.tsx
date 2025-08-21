@@ -49,6 +49,7 @@ export const metadata: Metadata = {
 import Link from 'next/link';
 import Navbar from './components/Navbar';
 import SubNavbar from './components/SubNavbar';
+import Footer from './components/Footer';
 import ChatWidget from './components/ChatWidget';
 import RealTimeChatWidget from './components/RealTimeChatWidget';
 import NotificationCenter from './components/NotificationCenter';
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <SubNavbar />
         <main className="flex-1">{children}</main>
+        <Footer />
         <ChatWidget />
         <RealTimeChatWidget />
       </body>

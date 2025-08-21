@@ -1,3 +1,13 @@
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { formatPrice } from '@/lib/utils';
+import ProductCard from '../../components/ProductCard';
+
 type Product = {
   id: string;
   slug: string;
@@ -5,121 +15,105 @@ type Product = {
   description?: string | null;
   priceCents: number;
   imageUrl?: string | null;
+  images?: string[];
+  categoryId?: string;
+  inStock?: boolean;
+  featured?: boolean;
+  viewCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type Category = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
 };
 
 async function fetchProduct(slug: string): Promise<Product> {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  const res = await fetch(`${base}/catalog/products/${encodeURIComponent(slug)}`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Không thể tải sản phẩm');
-  const data = (await res.json()) as Product;
-  return data;
+  
+  const res = await fetch(`${base}/catalog/products/${slug}`, {
+    next: { revalidate: 300 }
+  });
+  
+  if (!res.ok) {
+    throw new Error('Product not found');
+  }
+  
+  return res.json();
 }
 
-import Link from 'next/link';
-import Image from 'next/image';
-import type { Metadata } from 'next';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
-// Generate metadata for SEO
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+async function fetchRelatedProducts(categoryId?: string, excludeSlug?: string): Promise<Product[]> {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!base) return [];
+  
   try {
-    const { slug } = await params;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!base) {
-      return {
-        title: 'Sản phẩm không tìm thấy',
-        description: 'Sản phẩm bạn đang tìm kiếm không tồn tại.',
-      };
-    }
-
-    const res = await fetch(`${base}/catalog/products/by-slug/${slug}`, {
-      cache: 'no-store'
+    const url = new URL(`${base}/catalog/products`);
+    url.searchParams.set('pageSize', '4');
+    if (categoryId) url.searchParams.set('categoryId', categoryId);
+    
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 300 }
     });
-
-    if (!res.ok) {
-      return {
-        title: 'Sản phẩm không tìm thấy',
-        description: 'Sản phẩm bạn đang tìm kiếm không tồn tại.',
-      };
-    }
-
-    const product = await res.json();
-
-    return {
-      title: product.name,
-      description: product.description || `${product.name} - Sản phẩm audio chất lượng cao tại Audio Tài Lộc`,
-      openGraph: {
-        title: `${product.name} - Audio Tài Lộc`,
-        description: product.description || `${product.name} - Sản phẩm audio chất lượng cao`,
-        url: `/products/${slug}`,
-        images: product.imageUrl ? [
-          {
-            url: product.imageUrl,
-            width: 800,
-            height: 600,
-            alt: product.name,
-          }
-        ] : [],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${product.name} - Audio Tài Lộc`,
-        description: product.description || `${product.name} - Sản phẩm audio chất lượng cao`,
-        images: product.imageUrl ? [product.imageUrl] : [],
-      },
-    };
+    
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    return data.items?.filter((product: Product) => product.slug !== excludeSlug) || [];
   } catch {
-    return {
-      title: 'Sản phẩm không tìm thấy',
-      description: 'Sản phẩm bạn đang tìm kiếm không tồn tại.',
-    };
+    return [];
   }
 }
 
-export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const p = await params;
-  const product = await fetchProduct(p.slug);
-  async function addToCart(formData: FormData) {
-    'use server';
-    const slug = String(formData.get('slug') || '');
-    const qty = parseInt(String(formData.get('quantity') || '1'), 10) || 1;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    const { cookies } = await import('next/headers');
-    const c = await cookies();
-    const token = c.get('accessToken')?.value;
-    await fetch(`${base}/cart/items`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ slug, quantity: qty }),
-      cache: 'no-store',
+async function fetchCategory(categoryId?: string): Promise<Category | null> {
+  if (!categoryId) return null;
+  
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!base) return null;
+  
+  try {
+    const res = await fetch(`${base}/catalog/categories/${categoryId}`, {
+      next: { revalidate: 600 }
     });
-    const { redirect } = await import('next/navigation');
-    redirect('/cart');
+    
+    if (!res.ok) return null;
+    
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  let product: Product;
+  let category: Category | null = null;
+  let relatedProducts: Product[] = [];
+
+  try {
+    product = await fetchProduct(params.slug);
+    category = await fetchCategory(product.categoryId);
+    relatedProducts = await fetchRelatedProducts(product.categoryId, params.slug);
+  } catch (error) {
+    notFound();
   }
 
-  // Structured data for product
+  // Structured data for SEO
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
     "description": product.description,
     "image": product.imageUrl,
-    "sku": product.id,
     "offers": {
       "@type": "Offer",
       "price": product.priceCents / 100,
       "priceCurrency": "VND",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "Audio Tài Lộc"
-      }
+      "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
     },
+    "category": category?.name,
     "brand": {
       "@type": "Brand",
       "name": "Audio Tài Lộc"
@@ -132,73 +126,168 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-6">
-        <Link href="/products" className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
-          ← Quay lại danh sách sản phẩm
-        </Link>
-      </div>
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
+          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
+          <span>/</span>
+          <Link href="/products" className="hover:text-blue-600">Sản phẩm</Link>
+          {category && (
+            <>
+              <span>/</span>
+              <Link href={`/categories/${category.slug}`} className="hover:text-blue-600">
+                {category.name}
+              </Link>
+            </>
+          )}
+          <span>/</span>
+          <span className="text-gray-900">{product.name}</span>
+        </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-4">
-          <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100">
-            <Image
-              src={product.imageUrl ?? 'https://placehold.co/800x600?text=No+Image'}
-              alt={product.name}
-              fill
-              className="object-cover hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
-            <p className="text-gray-600 text-lg leading-relaxed">
-              {product.description ?? 'Không có mô tả'}
-            </p>
-          </div>
-
-          <div className="border-t border-b py-4">
-            <div className="text-3xl font-bold text-blue-600">
-              {(product.priceCents / 100).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Product Images */}
+          <div className="space-y-4">
+            <div className="aspect-square relative overflow-hidden rounded-lg border">
+              {product.imageUrl ? (
+                <Image
+                  src={product.imageUrl}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-400">Không có hình ảnh</span>
+                </div>
+              )}
+              {product.featured && (
+                <Badge className="absolute top-4 left-4 bg-yellow-500">
+                  Nổi bật
+                </Badge>
+              )}
             </div>
+            
+            {/* Additional Images */}
+            {product.images && product.images.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {product.images.slice(0, 4).map((image, index) => (
+                  <div key={index} className="aspect-square relative overflow-hidden rounded border">
+                    <Image
+                      src={image}
+                      alt={`${product.name} - Hình ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 25vw, 12vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <form action={addToCart} className="space-y-4">
-            <input type="hidden" name="slug" value={product.slug} />
+          {/* Product Info */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              {category && (
+                <Link href={`/categories/${category.slug}`} className="text-blue-600 hover:underline">
+                  {category.name}
+                </Link>
+              )}
+            </div>
+
             <div className="flex items-center space-x-4">
-              <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
-                Số lượng:
-              </label>
-              <Input
-                type="number"
-                name="quantity"
-                id="quantity"
-                min={1}
-                defaultValue={1}
-                className="w-20"
-              />
+              <span className="text-3xl font-bold text-blue-600">
+                {formatPrice(product.priceCents)}
+              </span>
+              {product.inStock !== undefined && (
+                <Badge variant={product.inStock ? "default" : "destructive"}>
+                  {product.inStock ? 'Còn hàng' : 'Hết hàng'}
+                </Badge>
+              )}
             </div>
-            <Button type="submit" size="lg" className="w-full sm:w-auto">
-              Thêm vào giỏ hàng
-            </Button>
-          </form>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Thông tin sản phẩm</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>✓ Sản phẩm chính hãng</li>
-              <li>✓ Bảo hành theo chính sách nhà sản xuất</li>
-              <li>✓ Giao hàng toàn quốc</li>
-              <li>✓ Hỗ trợ kỹ thuật 24/7</li>
-            </ul>
+            {product.description && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Mô tả sản phẩm</h3>
+                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <Button size="lg" className="w-full" disabled={!product.inStock}>
+                {product.inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+              </Button>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="lg">
+                  ❤️ Yêu thích
+                </Button>
+                <Button variant="outline" size="lg">
+                  📞 Tư vấn
+                </Button>
+              </div>
+            </div>
+
+            {/* Product Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin sản phẩm</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Mã sản phẩm:</span>
+                  <span className="font-medium">{product.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Danh mục:</span>
+                  <span className="font-medium">{category?.name || 'Chưa phân loại'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Lượt xem:</span>
+                  <span className="font-medium">{product.viewCount || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Ngày đăng:</span>
+                  <span className="font-medium">
+                    {product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Sản phẩm liên quan</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Đánh giá sản phẩm</h2>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center text-gray-500 py-8">
+                <p>Chưa có đánh giá nào cho sản phẩm này</p>
+                <Button variant="outline" className="mt-4">
+                  Viết đánh giá đầu tiên
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
     </>
   );
 }
