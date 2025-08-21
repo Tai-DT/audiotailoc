@@ -1,291 +1,362 @@
-# Audio Tài Lộc 🎵💰
+# 🎵 Audio Tài Lộc - E-commerce Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10+-red.svg)](https://nestjs.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14+-black.svg)](https://nextjs.org/)
 
-Hệ thống quản lý và bán hàng audio chuyên nghiệp với kiến trúc microservices hiện đại.
+A comprehensive e-commerce platform for audio equipment with modern architecture, built using NestJS backend, Next.js frontend, and a professional admin dashboard.
 
-## 🎯 Mục tiêu
+## 🚀 Features
 
-Audio Tài Lộc là nền tảng toàn diện cho việc quản lý và bán các sản phẩm audio chất lượng cao, bao gồm:
-- **Quản lý sản phẩm**: Dashboard admin với CRUD đầy đủ
-- **Cửa hàng trực tuyến**: Storefront hiện đại với UX tối ưu
-- **Hệ thống xác thực**: Bảo mật đa lớp với JWT
-- **API mạnh mẽ**: RESTful API với NestJS và Prisma
+### Backend (NestJS)
+- **Authentication & Authorization**: JWT-based auth with role-based access control
+- **Product Management**: Complete CRUD operations for products and categories
+- **Order Processing**: Shopping cart, checkout, and order management
+- **Payment Integration**: VNPAY, MOMO, PAYOS payment gateways
+- **File Management**: Image upload, processing, and storage
+- **Webhooks**: Payment and order status webhooks
+- **Internationalization**: Multi-language support (VI, EN, ZH)
+- **Health Monitoring**: Comprehensive health checks and monitoring
+- **Backup System**: Database backup and restore functionality
+- **API Documentation**: Swagger/OpenAPI documentation
 
-## 🏗️ Kiến trúc
+### Frontend (Next.js)
+- **Modern UI/UX**: Professional e-commerce interface
+- **Product Catalog**: Browse, search, and filter products
+- **Shopping Cart**: Full cart management with real-time updates
+- **User Authentication**: Login/logout with session management
+- **Responsive Design**: Mobile-first responsive design
+- **Vietnamese Localization**: Complete Vietnamese interface
+
+### Dashboard (Next.js Admin)
+- **Admin Panel**: Role-based admin interface
+- **Product Management**: Create, edit, and manage products
+- **Order Management**: View and process orders
+- **Analytics**: Sales and performance metrics
+- **User Management**: Customer and admin user management
+
+## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Dashboard     │    │   Storefront    │    │   Mobile App    │
-│   (Next.js)     │    │   (Next.js)     │    │   (Future)      │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼─────────────┐
-                    │      Backend API          │
-                    │     (NestJS + Prisma)     │
-                    └─────────────┬─────────────┘
-                                  │
-                    ┌─────────────▼─────────────┐
-                    │      Database             │
-                    │     (SQLite/PostgreSQL)   │
-                    └───────────────────────────┘
+audiotailoc/
+├── backend/                 # NestJS API Server
+│   ├── src/
+│   │   ├── modules/         # Feature modules
+│   │   ├── prisma/          # Database ORM
+│   │   └── main.ts          # Application entry point
+│   ├── prisma/              # Database schema
+│   └── test/                # Unit and E2E tests
+├── frontend/                # Next.js Customer Store
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   ├── pages/           # Next.js pages
+│   │   └── styles/          # CSS and styling
+│   └── public/              # Static assets
+├── dashboard/               # Next.js Admin Panel
+│   ├── src/
+│   │   ├── components/      # Admin components
+│   │   ├── pages/           # Admin pages
+│   │   └── styles/          # Admin styling
+│   └── public/              # Admin assets
+└── shared/                  # Shared utilities and types
 ```
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **Framework**: [NestJS](https://nestjs.com/) - Progressive Node.js framework
-- **Database**: [Prisma](https://www.prisma.io/) - Next-generation ORM
-- **Authentication**: JWT với refresh token rotation
-- **Validation**: class-validator + class-transformer
+- **Framework**: NestJS 10+
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT with bcryptjs
+- **File Processing**: Sharp for image processing
+- **Payment**: VNPAY, MOMO, PAYOS integration
+- **Testing**: Jest for unit and E2E tests
 - **Documentation**: Swagger/OpenAPI
 
-### Frontend
-- **Framework**: [Next.js 14](https://nextjs.org/) với App Router
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **State Management**: React Query (TanStack Query)
-- **Forms**: React Hook Form + Zod validation
+### Frontend & Dashboard
+- **Framework**: Next.js 14+
+- **Styling**: Tailwind CSS
+- **State Management**: React Context + Hooks
+- **HTTP Client**: Axios
+- **Icons**: Lucide React
+- **Forms**: React Hook Form
 
-### DevOps & Tools
-- **Package Manager**: [pnpm](https://pnpm.io/) với workspaces
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Code Quality**: ESLint + Prettier + Husky
-- **Testing**: Jest + Playwright (E2E)
+### DevOps
+- **Package Manager**: pnpm
+- **CI/CD**: GitHub Actions
+- **Containerization**: Docker
+- **Monitoring**: Health checks and logging
 
-## 📁 Cấu trúc Dự án
+## 📦 Installation
 
-```
-audiotailoc/
-├── apps/
-│   ├── backend/          # NestJS API server
-│   │   ├── src/
-│   │   │   ├── modules/  # Feature modules
-│   │   │   ├── prisma/   # Database schema & migrations
-│   │   │   └── main.ts   # Application entry point
-│   │   └── prisma/
-│   │       └── schema.prisma
-│   ├── dashboard/        # Admin dashboard (Next.js)
-│   │   ├── app/         # App Router pages
-│   │   └── components/  # Reusable components
-│   └── frontend/        # Public storefront (Next.js)
-│       ├── app/         # App Router pages
-│       └── components/  # Store components
-├── packages/            # Shared packages (future)
-├── scripts/            # Build & deployment scripts
-└── docker-compose.yml  # Development environment
-```
-
-## 🚀 Hướng dẫn Nhanh
-
-### Yêu cầu Hệ thống
+### Prerequisites
 - Node.js 18+ 
-- pnpm 9.7.0+
-- Git
+- pnpm
+- PostgreSQL 15+
+- Redis (optional, for caching)
 
-### Cài đặt
+### Quick Start
 
-1. **Clone repository**
+1. **Clone the repository**
 ```bash
-git clone https://github.com/your-username/audiotailoc.git
+git clone https://github.com/Tai-DT/audiotailoc.git
 cd audiotailoc
 ```
 
-2. **Cài đặt dependencies**
+2. **Install dependencies**
 ```bash
 pnpm install
 ```
 
-3. **Cấu hình môi trường**
+3. **Set up environment variables**
 ```bash
 # Backend
-cp apps/backend/.env.example apps/backend/.env
+cp backend/.env.example backend/.env
+# Frontend
+cp frontend/.env.example frontend/.env
 # Dashboard
-cp apps/dashboard/.env.example apps/dashboard/.env.local
-# Frontend  
-cp apps/frontend/.env.example apps/frontend/.env.local
+cp dashboard/.env.example dashboard/.env
 ```
 
-4. **Khởi tạo database**
+4. **Set up database**
 ```bash
-# Migrate database
-pnpm --filter @audiotailoc/backend prisma:migrate:dev
-
-# Generate Prisma client
-pnpm --filter @audiotailoc/backend prisma:generate
-
-# Seed dữ liệu mẫu
-pnpm --filter @audiotailoc/backend seed
+cd backend
+npx prisma generate
+npx prisma db push
+npx prisma db seed
 ```
 
-5. **Chạy development**
+5. **Start development servers**
 ```bash
-# Chạy tất cả services
-pnpm dev
+# Terminal 1: Backend
+cd backend && pnpm run start:dev
 
-# Hoặc chạy riêng lẻ
-pnpm backend:dev      # Backend API (port 3010)
-pnpm dashboard:dev    # Admin Dashboard (port 3001)
-pnpm frontend:dev     # Storefront (port 3000)
+# Terminal 2: Frontend
+cd frontend && pnpm run dev
+
+# Terminal 3: Dashboard
+cd dashboard && pnpm run dev
 ```
 
-### Truy cập ứng dụng
-- **Storefront**: http://localhost:3000
-- **Dashboard**: http://localhost:3001
-- **API Docs**: http://localhost:3010/docs
-- **Health Check**: http://localhost:3010/health
+## 🌐 Access Points
 
-## 🔧 Cấu hình Môi trường
+- **Backend API**: http://localhost:3010
+- **API Documentation**: http://localhost:3010/docs
+- **Frontend Store**: http://localhost:3000
+- **Admin Dashboard**: http://localhost:3001
+- **Health Check**: http://localhost:3010/api/v1/health
 
-### Backend (.env)
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Backend (.env)
 ```env
 # Database
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://user:password@localhost:5432/audiotailoc"
 
 # JWT
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_REFRESH_SECRET="your-super-secret-refresh-key"
+JWT_ACCESS_SECRET="your-access-secret"
+JWT_REFRESH_SECRET="your-refresh-secret"
 
-# Admin
-ADMIN_EMAILS="admin@example.com,admin2@example.com"
+# Payment Gateways
+VNPAY_TMN_CODE="your-vnpay-code"
+VNPAY_HASH_SECRET="your-vnpay-secret"
+MOMO_ACCESS_KEY="your-momo-key"
+PAYOS_CLIENT_ID="your-payos-id"
 
-# Server
-PORT=3010
-NODE_ENV=development
+# File Storage
+UPLOAD_DIR="./uploads"
+CDN_URL="https://your-cdn.com"
+
+# Redis (optional)
+REDIS_URL="redis://localhost:6379"
 ```
 
-### Dashboard (.env.local)
+#### Frontend (.env)
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3010
+NEXT_PUBLIC_API_URL="http://localhost:3010/api/v1"
+NEXT_PUBLIC_APP_NAME="Audio Tài Lộc"
 ```
 
-### Frontend (.env.local)
+#### Dashboard (.env)
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3010
+NEXT_PUBLIC_API_URL="http://localhost:3010/api/v1"
+NEXT_PUBLIC_APP_NAME="Audio Tài Lộc Admin"
 ```
-
-## 📚 API Documentation
-
-API được tài liệu hóa đầy đủ với Swagger UI:
-- **Development**: http://localhost:3010/docs
-- **Production**: https://api.audiotailoc.com/docs
-
-### Endpoints chính
-- `POST /auth/login` - Đăng nhập
-- `POST /auth/refresh` - Refresh token
-- `GET /products` - Danh sách sản phẩm
-- `POST /products` - Tạo sản phẩm (Admin)
-- `PUT /products/:id` - Cập nhật sản phẩm (Admin)
-- `DELETE /products/:id` - Xóa sản phẩm (Admin)
 
 ## 🧪 Testing
 
+### Backend Tests
 ```bash
+cd backend
+
 # Unit tests
-pnpm test
+pnpm run test
 
 # E2E tests
-pnpm test:e2e
+pnpm run test:e2e
 
 # Test coverage
-pnpm test:cov
+pnpm run test:cov
 ```
 
-## 🏗️ Build & Deploy
-
+### Frontend Tests
 ```bash
-# Build tất cả
-pnpm build
-
-# Build riêng lẻ
-pnpm backend:build
-pnpm dashboard:build
-pnpm frontend:build
-
-# Production
-pnpm start
+cd frontend
+pnpm run test
 ```
 
-## 🔒 Bảo mật
+## 🚀 Deployment
 
-- **Authentication**: JWT với refresh token rotation
-- **Authorization**: Role-based access control (RBAC)
-- **Input Validation**: Strict validation với class-validator
-- **Rate Limiting**: API rate limiting
-- **CORS**: Cross-origin resource sharing được cấu hình
-- **Helmet**: Security headers
+### Docker Deployment
+```bash
+# Build images
+docker-compose build
 
-## 📈 Monitoring & Health
+# Start services
+docker-compose up -d
+```
 
-- **Health Check**: `/health` endpoint
-- **Metrics**: Prometheus metrics (future)
-- **Logging**: Structured JSON logging
-- **Error Tracking**: Global exception filter
+### Manual Deployment
+```bash
+# Backend
+cd backend
+pnpm run build
+pnpm run start:prod
+
+# Frontend
+cd frontend
+pnpm run build
+pnpm run start
+
+# Dashboard
+cd dashboard
+pnpm run build
+pnpm run start
+```
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/refresh` - Refresh token
+- `GET /api/v1/auth/profile` - Get user profile
+
+### Products
+- `GET /api/v1/catalog/products` - List products
+- `GET /api/v1/catalog/products/:id` - Get product details
+- `POST /api/v1/catalog/products` - Create product (Admin)
+- `PUT /api/v1/catalog/products/:id` - Update product (Admin)
+- `DELETE /api/v1/catalog/products/:id` - Delete product (Admin)
+
+### Orders
+- `GET /api/v1/orders` - List orders
+- `GET /api/v1/orders/:id` - Get order details
+- `POST /api/v1/checkout/create-order` - Create order
+
+### Payments
+- `POST /api/v1/payments/create-intent` - Create payment intent
+- `POST /api/v1/webhooks/vnpay` - VNPAY webhook
+- `POST /api/v1/webhooks/momo` - MOMO webhook
+
+### Files
+- `POST /api/v1/files/upload` - Upload file
+- `GET /api/v1/files` - List files
+- `DELETE /api/v1/files/:id` - Delete file
+
+### Health
+- `GET /api/v1/health` - Basic health check
+- `GET /api/v1/health/detailed` - Detailed health check
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Role-based Access Control**: Admin and user role management
+- **Input Validation**: Comprehensive request validation
+- **CORS Protection**: Configurable cross-origin resource sharing
+- **Rate Limiting**: API rate limiting to prevent abuse
+- **Helmet Security**: Security headers and middleware
+- **SQL Injection Protection**: Prisma ORM with parameterized queries
+
+## 📈 Performance Features
+
+- **Database Indexing**: Optimized database queries
+- **Caching**: Redis-based caching for frequently accessed data
+- **Image Optimization**: Automatic image compression and resizing
+- **Lazy Loading**: Component and route lazy loading
+- **CDN Integration**: Content delivery network support
+
+## 🌍 Internationalization
+
+The platform supports multiple languages:
+- **Vietnamese (VI)** - Default language
+- **English (EN)** - International support
+- **Chinese (ZH)** - Asian market support
+
+Translation management through database-driven system with context-aware translations.
+
+## 🔄 CI/CD Pipeline
+
+GitHub Actions workflow includes:
+- **Linting**: ESLint and Prettier checks
+- **Testing**: Unit, integration, and E2E tests
+- **Security**: Vulnerability scanning
+- **Build**: Docker image building
+- **Deployment**: Automated deployment to staging/production
 
 ## 🤝 Contributing
 
-Chúng tôi hoan nghênh mọi đóng góp! Vui lòng đọc:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-1. [Code of Conduct](CODE_OF_CONDUCT.md)
-2. [Contributing Guide](CONTRIBUTING.md)
-3. [Issue Templates](.github/ISSUE_TEMPLATE/)
-4. [Pull Request Template](.github/pull_request_template.md)
+## 📝 License
 
-### Quy ước Code
-- **Naming**: camelCase cho variables, PascalCase cho classes
-- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/)
-- **Branches**: `feature/`, `bugfix/`, `hotfix/` prefixes
-- **PR**: Require reviews, CI checks
-
-## 📋 Roadmap
-
-### Ngắn hạn (1-2 tuần)
-- [x] Cấu trúc monorepo cơ bản
-- [x] Authentication system
-- [x] CRUD products
-- [ ] Enhanced README & documentation
-- [ ] CI/CD pipeline
-- [ ] Testing framework
-
-### Trung hạn (3-6 tuần)
-- [ ] Advanced auth (refresh rotation)
-- [ ] Shared packages (@audiotailoc/types)
-- [ ] Image upload service (S3/Cloudinary)
-- [ ] Caching layer (Redis)
-- [ ] Search & filtering
-- [ ] Role-based permissions
-
-### Dài hạn
-- [ ] Mobile app
-- [ ] Analytics dashboard
-- [ ] Multi-language support
-- [ ] Advanced SEO
-- [ ] Performance optimization
-- [ ] Microservices architecture
-
-## 📄 License
-
-Dự án này được cấp phép theo [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/audiotailoc/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/audiotailoc/discussions)
-- **Email**: support@audiotailoc.com
+- **Documentation**: [API Docs](http://localhost:3010/docs)
+- **Issues**: [GitHub Issues](https://github.com/Tai-DT/audiotailoc/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Tai-DT/audiotailoc/discussions)
+
+## 🎯 Roadmap
+
+### Phase 1 (Completed ✅)
+- [x] Basic e-commerce functionality
+- [x] User authentication and authorization
+- [x] Product catalog and management
+- [x] Shopping cart and checkout
+- [x] Payment integration
+
+### Phase 2 (Completed ✅)
+- [x] File upload and management
+- [x] Webhooks system
+- [x] Internationalization
+- [x] Health monitoring
+- [x] Backup system
+- [x] CI/CD pipeline
+
+### Phase 3 (Planned 🚧)
+- [ ] Advanced analytics and reporting
+- [ ] Mobile app development
+- [ ] AI-powered recommendations
+- [ ] Multi-vendor marketplace
+- [ ] Advanced inventory management
+- [ ] Customer support system
 
 ## 🙏 Acknowledgments
 
-- [NestJS](https://nestjs.com/) team cho framework tuyệt vời
-- [Prisma](https://www.prisma.io/) cho ORM hiện đại
-- [Next.js](https://nextjs.org/) team cho React framework
-- [Vercel](https://vercel.com/) cho hosting platform
+- **NestJS Team** for the excellent backend framework
+- **Vercel** for Next.js and deployment platform
+- **Prisma** for the modern database toolkit
+- **Tailwind CSS** for the utility-first CSS framework
 
 ---
 
-**Audio Tài Lộc** - Nâng tầm trải nghiệm audio của bạn! 🎵✨
-
+**Audio Tài Lộc** - Bringing premium audio equipment to Vietnam and beyond! 🎵✨

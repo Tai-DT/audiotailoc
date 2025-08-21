@@ -1,0 +1,723 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  phone     String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+  carts     Cart[]
+  chatSessions ChatSession[]
+  reviews      ProductReview[]
+  wishlistItems WishlistItem[]
+  views       ProductView[]
+  serviceBookings ServiceBooking[]
+  searchLogs      SearchLog[]
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  unitPrice Int     @default(0)
+
+  @@unique([cartId, productId])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  nameEn      String?  // English name
+  description String?
+  descriptionEn String? // English description
+  priceCents  Int      @default(0)
+  imageUrl    String?
+  images      String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  inventory   Inventory?
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  kbEntries   KnowledgeBaseEntry[]
+  reviews     ProductReview[]
+  wishlistItems WishlistItem[]
+  tags        ProductTag[]
+  views       ProductView[]
+  featured    Boolean  @default(false)
+  viewCount   Int      @default(0)
+  
+  // SEO fields
+  metaTitle       String?
+  metaTitleEn     String?
+  metaDescription String?
+  metaDescriptionEn String?
+  metaKeywords    String?
+  metaKeywordsEn  String?
+  canonicalUrl    String?
+  ogImage         String?
+  ogTitle         String?
+  ogTitleEn       String?
+  ogDescription   String?
+  ogDescriptionEn String?
+}
+
+// Simple CMS Pages
+model Page {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  titleEn   String?  // English title
+  content   String
+  contentEn String?  // English content
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // SEO fields
+  metaTitle       String?
+  metaTitleEn     String?
+  metaDescription String?
+  metaDescriptionEn String?
+  metaKeywords    String?
+  metaKeywordsEn  String?
+  canonicalUrl    String?
+  ogImage         String?
+  ogTitle         String?
+  ogTitleEn       String?
+  ogDescription   String?
+  ogDescriptionEn String?
+}
+
+// Portfolio Projects
+model Project {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  nameEn      String?  // English name
+  description String?
+  descriptionEn String? // English description
+  content     String?
+  contentEn   String?  // English content
+  imageUrl    String?
+  images      String[]
+  tags        String[]
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // SEO fields
+  metaTitle       String?
+  metaTitleEn     String?
+  metaDescription String?
+  metaDescriptionEn String?
+  metaKeywords    String?
+  metaKeywordsEn  String?
+  canonicalUrl    String?
+  ogImage         String?
+  ogTitle         String?
+  ogTitleEn       String?
+  ogDescription   String?
+  ogDescriptionEn String?
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  products  Product[]
+}
+
+model ProductView {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  viewedAt  DateTime @default(now())
+  viewCount Int      @default(1)
+
+  @@unique([userId, productId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  nameEn      String?  // English name
+  description String?
+  descriptionEn String? // English description
+  imageUrl    String?
+  parentId    String?
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // SEO fields
+  metaTitle       String?
+  metaTitleEn     String?
+  metaDescription String?
+  metaDescriptionEn String?
+  metaKeywords    String?
+  metaKeywordsEn  String?
+  canonicalUrl    String?
+}
+
+model Inventory {
+  id                 String   @id @default(cuid())
+  productId          String   @unique
+  product            Product  @relation(fields: [productId], references: [id])
+  stock              Int      @default(0)
+  reserved           Int      @default(0)
+  lowStockThreshold  Int      @default(0)
+  updatedAt          DateTime @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id])
+  guestId   String?    // For guest carts
+  status    CartStatus @default(ACTIVE)
+  expiresAt DateTime?  // For guest carts
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+
+
+model Order {
+  id               String        @id @default(cuid())
+  orderNo          String        @unique
+  userId           String?
+  user             User?         @relation(fields: [userId], references: [id])
+  status           OrderStatus   @default(PENDING)
+  subtotalCents    Int           @default(0)
+  discountCents    Int           @default(0)
+  shippingCents    Int           @default(0)
+  totalCents       Int           @default(0)
+  currency         String        @default("VND")
+  promotionCode    String?
+  shippingAddress  Json?
+  items            OrderItem[]
+  payments         Payment[]
+  paymentIntents   PaymentIntent[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product @relation(fields: [productId], references: [id])
+  name       String
+  quantity   Int     @default(1)
+  unitPrice  Int     @default(0)
+  imageUrl   String?
+}
+
+model PaymentIntent {
+  id             String          @id @default(cuid())
+  provider       PaymentProvider
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id])
+  amountCents    Int
+  currency       String          @default("VND")
+  status         PaymentStatus   @default(PENDING)
+  providerRef    String?
+  idempotencyKey String          @unique
+  returnUrl      String?
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Payment {
+  id            String          @id @default(cuid())
+  provider      PaymentProvider
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id])
+  intentId      String?
+  amountCents   Int
+  status        PaymentStatus   @default(PENDING)
+  transactionId String?
+  raw           Json?
+  createdAt     DateTime        @default(now())
+  refunds       Refund[]
+}
+
+model Refund {
+  id                String        @id @default(cuid())
+  paymentId         String
+  payment           Payment        @relation(fields: [paymentId], references: [id])
+  amountCents       Int
+  reason            String?
+  status            RefundStatus   @default(PENDING)
+  providerRefundId  String?
+  processedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model Promotion {
+  id                 String         @id @default(cuid())
+  code               String         @unique
+  type               PromotionType
+  value              Int            // percent (1-100) if PERCENT, amount in cents if FIXED
+  startsAt           DateTime?
+  endsAt             DateTime?
+  minSubtotalCents   Int            @default(0)
+  maxUses            Int?
+  usedCount          Int            @default(0)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model ProductReview {
+  id          String        @id @default(cuid())
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id])
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  rating      Int
+  comment     String?
+  verified    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  votes       ProductReviewVote[]
+  reports     ProductReviewReport[]
+  upvotes     Int           @default(0)
+  downvotes   Int           @default(0)
+}
+
+model ProductReviewVote {
+  id          String        @id @default(cuid())
+  reviewId    String
+  review      ProductReview @relation(fields: [reviewId], references: [id])
+  userId      String
+  isUpvote    Boolean
+  createdAt   DateTime      @default(now())
+
+  @@unique([reviewId, userId])
+}
+
+model ProductReviewReport {
+  id          String        @id @default(cuid())
+  reviewId    String
+  review      ProductReview @relation(fields: [reviewId], references: [id])
+  userId      String
+  reason      String
+  createdAt   DateTime      @default(now())
+}
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
+  REFUNDED
+  COMPLETED
+  DELIVERED
+}
+
+enum PaymentProvider {
+  VNPAY
+  MOMO
+  PAYOS
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+
+// AI / Chat / Knowledge Base
+model KnowledgeBaseEntry {
+  id         String   @id @default(cuid())
+  kind       KBKind
+  title      String
+  content    String
+  embedding  Json?
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum KBKind {
+  PRODUCT
+  FAQ
+  DOC
+}
+
+model ChatSession {
+  id         String        @id @default(cuid())
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id])
+  source     ChatSource    @default(WEB)
+  status     ChatStatus    @default(OPEN)
+  assignedTo String?
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  messages   ChatMessage[]
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  sessionId  String
+  session    ChatSession @relation(fields: [sessionId], references: [id])
+  role       ChatRole
+  text       String
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  STAFF
+  SYSTEM
+}
+
+enum ChatSource {
+  WEB
+  ZALO
+}
+
+enum ChatStatus {
+  OPEN
+  ESCALATED
+  CLOSED
+}
+
+// Service Management Models
+model Service {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String?
+  category    ServiceCategory
+  type        ServiceType
+  basePriceCents Int        @default(0)
+  estimatedDuration Int     @default(60) // minutes
+  isActive    Boolean       @default(true)
+  requirements String?      // JSON string of requirements
+  features    String?       // JSON string of features
+  imageUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  bookings    ServiceBooking[]
+  items       ServiceItem[]
+}
+
+model ServiceItem {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  name        String
+  description String?
+  priceCents  Int      @default(0)
+  isRequired  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  bookingItems ServiceBookingItem[]
+}
+
+model ServiceBooking {
+  id              String            @id @default(cuid())
+  bookingNo       String            @unique
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id])
+  userId          String?
+  user            User?             @relation(fields: [userId], references: [id])
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  customerAddress String
+  scheduledDate   DateTime
+  scheduledTime   String            // HH:mm format
+  status          ServiceBookingStatus @default(PENDING)
+  technicianId    String?
+  technician      Technician?       @relation(fields: [technicianId], references: [id])
+  notes           String?
+  estimatedCosts  Int               @default(0) // cents
+  actualCosts     Int?              // cents
+  completedAt     DateTime?
+  items           ServiceBookingItem[]
+  statusHistory   ServiceStatusHistory[]
+  payments        ServicePayment[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ServiceBookingItem {
+  id        String          @id @default(cuid())
+  bookingId String
+  booking   ServiceBooking  @relation(fields: [bookingId], references: [id])
+  itemId    String
+  item      ServiceItem     @relation(fields: [itemId], references: [id])
+  quantity  Int             @default(1)
+  unitPrice Int             @default(0)
+  totalPrice Int            @default(0)
+}
+
+model Technician {
+  id          String            @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  specialties ServiceCategory[]
+  isActive    Boolean           @default(true)
+  schedule    TechnicianSchedule[]
+  bookings    ServiceBooking[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model TechnicianSchedule {
+  id           String     @id @default(cuid())
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  dayOfWeek    Int        // 0 = Sunday, 1 = Monday, etc.
+  startTime    String     // HH:mm format
+  endTime      String     // HH:mm format
+  isAvailable  Boolean    @default(true)
+}
+
+model ServiceStatusHistory {
+  id        String             @id @default(cuid())
+  bookingId String
+  booking   ServiceBooking     @relation(fields: [bookingId], references: [id])
+  status    ServiceBookingStatus
+  note      String?
+  changedBy String?            // User ID who made the change
+  createdAt DateTime           @default(now())
+}
+
+model ServicePayment {
+  id            String          @id @default(cuid())
+  bookingId     String
+  booking       ServiceBooking  @relation(fields: [bookingId], references: [id])
+  amountCents   Int
+  paymentMethod PaymentProvider
+  status        PaymentStatus   @default(PENDING)
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime        @default(now())
+}
+
+enum ServiceCategory {
+  INSTALLATION    // Lắp đặt
+  MAINTENANCE     // Bảo trì
+  REPAIR          // Sửa chữa
+  LIQUIDATION     // Thanh lý
+  RENTAL          // Cho thuê
+  CONSULTATION    // Tư vấn
+  DELIVERY        // Giao hàng
+  OTHER           // Khác
+}
+
+enum ServiceType {
+  AUDIO_EQUIPMENT     // Thiết bị âm thanh
+  HOME_THEATER        // Rạp hát tại nhà
+  PROFESSIONAL_SOUND  // Âm thanh chuyên nghiệp
+  LIGHTING            // Ánh sáng
+  CONSULTATION        // Tư vấn
+  MAINTENANCE         // Bảo trì
+  OTHER               // Khác
+}
+
+enum ServiceBookingStatus {
+  PENDING         // Chờ xác nhận
+  CONFIRMED       // Đã xác nhận
+  ASSIGNED        // Đã phân công
+  IN_PROGRESS     // Đang thực hiện
+  COMPLETED       // Hoàn thành
+  CANCELLED       // Đã hủy
+  RESCHEDULED     // Đã dời lịch
+}
+
+// Marketing Models
+model Campaign {
+  id              String        @id @default(cuid())
+  name            String
+  description     String
+  type            CampaignType
+  targetAudience  String?
+  discountPercent Int?
+  discountAmount  Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  status          CampaignStatus @default(DRAFT)
+  sentAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  recipients      CampaignRecipient[]
+  opens           CampaignOpen[]
+  clicks          CampaignClick[]
+}
+
+model CampaignRecipient {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  email      String
+  name       String?
+  status     String   @default("PENDING") // PENDING, SENT, FAILED
+  sentAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model CampaignOpen {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  email      String
+  openedAt   DateTime @default(now())
+  userAgent  String?
+  ipAddress  String?
+}
+
+model CampaignClick {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  email      String
+  url        String
+  clickedAt  DateTime @default(now())
+  userAgent  String?
+  ipAddress  String?
+}
+
+model EmailLog {
+  id             String   @id @default(cuid())
+  campaignId     String?
+  recipientEmail String
+  subject        String
+  status         String   // SENT, FAILED, BOUNCED
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime @default(now())
+}
+
+enum CampaignType {
+  EMAIL
+  SMS
+  PUSH
+  SOCIAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+// Search Analytics
+model SearchLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  query      String
+  filters    Json?
+  resultCount Int
+  timestamp  DateTime @default(now())
+}
+
+// File Management
+model File {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  url          String
+  thumbnailUrl String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Translation Management
+model Translation {
+  id        String   @id @default(cuid())
+  key       String
+  value     String
+  locale    String
+  context   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+}
+
+// Backup Management
+model Backup {
+  id        String   @id @default(cuid())
+  filename  String
+  size      Int
+  checksum  String
+  status    String   // success, failed
+  error     String?
+  createdAt DateTime @default(now())
+}
