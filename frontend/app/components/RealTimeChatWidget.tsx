@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function RealTimeChatWidget() {
+  const enabled = process.env.NEXT_PUBLIC_ENABLE_REALTIME_CHAT === 'true';
+  if (!enabled) return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [sessionId] = useState(`session_${Date.now()}`);

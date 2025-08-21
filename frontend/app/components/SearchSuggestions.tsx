@@ -24,6 +24,8 @@ export default function SearchSuggestions({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   // Fetch popular searches on mount
   useEffect(() => {
     fetchPopularSearches();
@@ -45,13 +47,22 @@ export default function SearchSuggestions({
   const fetchSuggestions = async (q: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/catalog/search/suggestions?q=${encodeURIComponent(q)}&limit=5`);
+      if (!base) return;
+      // Try backend catalog search by name
+      const url = new URL(`${base}/catalog/products`);
+      url.searchParams.set('q', q);
+      url.searchParams.set('pageSize', '5');
+      const response = await fetch(url.toString());
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data || []);
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setSuggestions(items.map((it: any) => it?.name).filter(Boolean));
+      } else {
+        setSuggestions([]);
       }
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
@@ -59,13 +70,22 @@ export default function SearchSuggestions({
 
   const fetchPopularSearches = async () => {
     try {
-      const response = await fetch('/api/catalog/search/popular?limit=8');
+      if (!base) {
+        setPopularSearches(["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]); 
+        return;
+      }
+      // Use categories as popular search seeds
+      const response = await fetch(`${base}/catalog/categories`);
       if (response.ok) {
         const data = await response.json();
-        setPopularSearches(data || []);
+        const names = (Array.isArray(data) ? data : []).map((c: any) => c?.name).filter(Boolean);
+        setPopularSearches(names.slice(0, 8));
+      } else {
+        setPopularSearches(["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]);
       }
     } catch (error) {
       console.error('Failed to fetch popular searches:', error);
+      setPopularSearches(["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]);
     }
   };
 

@@ -26,6 +26,9 @@ export function useSocket(options: UseSocketOptions = {}) {
   const connect = () => {
     if (socketRef.current?.connected) return;
 
+    // Do not connect if feature flag disabled
+    if (process.env.NEXT_PUBLIC_ENABLE_REALTIME_CHAT !== 'true') return;
+
     setState(prev => ({ ...prev, connecting: true, error: null }));
 
     const socket = io(process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000', {
@@ -83,7 +86,7 @@ export function useSocket(options: UseSocketOptions = {}) {
     return () => {
       disconnect();
     };
-  }, [autoConnect, token]);
+  }, [autoConnect, token, process.env.NEXT_PUBLIC_ENABLE_REALTIME_CHAT]);
 
   return {
     socket: socketRef.current,
