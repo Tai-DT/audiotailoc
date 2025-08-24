@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-08-24T16:03:41.830Z",
+  "tests": {
+    "configuration": true,
+    "authentication": true,
+    "singleUpload": false,
+    "multipleUpload": false,
+    "productUpload": false,
+    "avatarUpload": false,
+    "listFiles": false,
+    "validation": false
+  },
+  "results": {
+    "single": null,
+    "multiple": null,
+    "product": null,
+    "avatar": null,
+    "list": null
+  },
+  "summary": {
+    "allPassed": null,
+    "totalTests": 8,
+    "passedTests": 2
+  }
+}

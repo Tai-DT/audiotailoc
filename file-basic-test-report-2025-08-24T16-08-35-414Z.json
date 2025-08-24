@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-08-24T16:08:35.417Z",
+  "tests": {
+    "health": true,
+    "authentication": true,
+    "endpoints": true,
+    "upload": true,
+    "fileTypes": [
+      {
+        "file": "test.txt",
+        "success": false,
+        "error": "{\"statusCode\":400,\"message\":\"Validation failed (current file type is text/plain, expected type is .(jpg|jpeg|png|gif|pdf|doc|docx))\",\"error\":\"Bad Request\",\"timestamp\":\"2025-08-24T16:08:35.247Z\",\"path\":\"/api/v1/files/upload\"}"
+      },
+      {
+        "file": "test.json",
+        "success": false,
+        "error": "{\"statusCode\":400,\"message\":\"Validation failed (current file type is application/json, expected type is .(jpg|jpeg|png|gif|pdf|doc|docx))\",\"error\":\"Bad Request\",\"timestamp\":\"2025-08-24T16:08:35.273Z\",\"path\":\"/api/v1/files/upload\"}"
+      },
+      {
+        "file": "test.csv",
+        "success": false,
+        "error": "{\"statusCode\":400,\"message\":\"Validation failed (current file type is text/csv, expected type is .(jpg|jpeg|png|gif|pdf|doc|docx))\",\"error\":\"Bad Request\",\"timestamp\":\"2025-08-24T16:08:35.292Z\",\"path\":\"/api/v1/files/upload\"}"
+      }
+    ],
+    "validation": [
+      {
+        "test": "Large File (10MB)",
+        "success": true,
+        "status": "rejected"
+      },
+      {
+        "test": "Invalid File Type",
+        "success": true,
+        "status": "rejected"
+      }
+    ]
+  },
+  "summary": {
+    "totalTests": 6,
+    "passedTests": 5
+  }
+}
