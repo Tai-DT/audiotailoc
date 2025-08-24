@@ -1,147 +1,356 @@
 #!/usr/bin/env node
 
-const express = require('express');
-const axios = require('axios');
-const path = require('path');
+/**
+ * 📊 Monitoring Dashboard Script
+ * Real-time system monitoring and metrics visualization
+ */
 
-const app = express();
-const PORT = 3001;
+const fetch = require('node-fetch');
+const fs = require('fs');
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'dashboard')));
+const API_BASE = 'http://localhost:8000/api/v1';
 
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
+// Metrics collection
+const metrics = {
+  timestamp: new Date().toISOString(),
+  system: {},
+  api: {},
+  performance: {},
+  errors: []
+};
+
+/**
+ * Get system health metrics
+ */
+async function getSystemHealth() {
   try {
-    const backendHealth = await axios.get('http://localhost:3010/api/v1/health', { timeout: 5000 });
-    const frontendHealth = await axios.get('http://localhost:3000', { timeout: 10000 });
-
-    res.json({
-      status: 'healthy',
-      backend: backendHealth.status,
-      frontend: frontendHealth.status,
-      timestamp: new Date().toISOString()
-    });
+    const response = await fetch(`${API_BASE}/health`);
+    const data = await response.json();
+    
+    metrics.system = {
+      status: data.data?.status || 'unknown',
+      uptime: data.data?.uptime || 0,
+      memory: data.data?.memory || {},
+      database: data.data?.database || {},
+      redis: data.data?.redis || {}
+    };
+    
+    return true;
   } catch (error) {
-    res.status(503).json({
-      status: 'unhealthy',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    metrics.errors.push(`System Health Error: ${error.message}`);
+    return false;
   }
-});
+}
 
-// System metrics endpoint
-app.get('/api/metrics', async (req, res) => {
-  try {
-    const [products, categories] = await Promise.all([
-      axios.get('http://localhost:3010/api/v1/catalog/products'),
-      axios.get('http://localhost:3010/api/v1/catalog/categories')
-    ]);
+/**
+ * Get API performance metrics
+ */
+async function getAPIMetrics() {
+  const endpoints = [
+    '/health',
+    '/catalog/products',
+    '/catalog/categories',
+    '/search/products',
+    '/ai/health',
+    '/support/kb/articles'
+  ];
 
-    res.json({
-      productsCount: products.data.data?.items?.length || 0,
-      categoriesCount: categories.data.data?.items?.length || 0,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(503).json({
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+  const results = [];
+  
+  for (const endpoint of endpoints) {
+    try {
+      const startTime = Date.now();
+      const response = await fetch(`${API_BASE}${endpoint}`);
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      
+      results.push({
+        endpoint,
+        status: response.status,
+        responseTime,
+        success: response.ok
+      });
+    } catch (error) {
+      results.push({
+        endpoint,
+        status: 'ERROR',
+        responseTime: 0,
+        success: false,
+        error: error.message
+      });
+    }
   }
-});
+  
+  metrics.api = {
+    totalEndpoints: endpoints.length,
+    successful: results.filter(r => r.success).length,
+    failed: results.filter(r => !r.success).length,
+    averageResponseTime: results.reduce((sum, r) => sum + r.responseTime, 0) / results.length,
+    endpoints: results
+  };
+  
+  return results;
+}
 
-// Dashboard HTML
-app.get('/', (req, res) => {
-  res.send(`
+/**
+ * Get performance metrics
+ */
+async function getPerformanceMetrics() {
+  const performance = {
+    timestamp: new Date().toISOString(),
+    memory: process.memoryUsage(),
+    cpu: process.cpuUsage(),
+    uptime: process.uptime()
+  };
+  
+  metrics.performance = performance;
+  return performance;
+}
+
+/**
+ * Generate dashboard HTML
+ */
+function generateDashboardHTML() {
+  const successRate = ((metrics.api.successful / metrics.api.totalEndpoints) * 100).toFixed(1);
+  const avgResponseTime = metrics.api.averageResponseTime.toFixed(0);
+  
+  const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Audio Tài Lộc - System Monitor</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Tài Lộc - System Monitoring</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .dashboard { max-width: 1200px; margin: 0 auto; }
-        .card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .status { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; }
-        .healthy { background: #4CAF50; }
-        .unhealthy { background: #f44336; }
-        .metric { font-size: 24px; font-weight: bold; color: #333; }
-        .refresh { background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .metric-card h3 { color: #333; margin-bottom: 15px; font-size: 1.3em; }
+        .metric-value { font-size: 2.5em; font-weight: bold; margin-bottom: 10px; }
+        .metric-label { color: #666; font-size: 0.9em; }
+        .status-good { color: #10b981; }
+        .status-warning { color: #f59e0b; }
+        .status-error { color: #ef4444; }
+        .endpoints-table { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .endpoints-table h3 { padding: 20px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 20px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 500; }
+        .status-200 { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+        .refresh-info { text-align: center; color: #666; margin-top: 20px; font-size: 0.9em; }
+        .auto-refresh { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <h1>🎵 Audio Tài Lộc - System Monitor</h1>
-
-        <div class="card">
-            <h2>System Health</h2>
-            <div id="health-status">Loading...</div>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Audio Tài Lộc</h1>
+            <p>System Monitoring Dashboard</p>
         </div>
-
-        <div class="card">
-            <h2>System Metrics</h2>
-            <div id="metrics">Loading...</div>
+        
+        <button class="auto-refresh" onclick="location.reload()">🔄 Refresh Dashboard</button>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>System Status</h3>
+                <div class="metric-value status-${metrics.system.status === 'ok' ? 'good' : 'error'}">
+                    ${metrics.system.status === 'ok' ? '🟢' : '🔴'} ${metrics.system.status.toUpperCase()}
+                </div>
+                <div class="metric-label">Overall System Health</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>API Success Rate</h3>
+                <div class="metric-value status-${successRate >= 90 ? 'good' : successRate >= 70 ? 'warning' : 'error'}">
+                    ${successRate}%
+                </div>
+                <div class="metric-label">${metrics.api.successful}/${metrics.api.totalEndpoints} endpoints working</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Average Response Time</h3>
+                <div class="metric-value status-${avgResponseTime < 100 ? 'good' : avgResponseTime < 500 ? 'warning' : 'error'}">
+                    ${avgResponseTime}ms
+                </div>
+                <div class="metric-label">API Response Performance</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>System Uptime</h3>
+                <div class="metric-value status-good">
+                    ${Math.floor(metrics.performance.uptime / 3600)}h ${Math.floor((metrics.performance.uptime % 3600) / 60)}m
+                </div>
+                <div class="metric-label">Process Uptime</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Memory Usage</h3>
+                <div class="metric-value status-${metrics.performance.memory.heapUsed / 1024 / 1024 < 100 ? 'good' : 'warning'}">
+                    ${Math.round(metrics.performance.memory.heapUsed / 1024 / 1024)}MB
+                </div>
+                <div class="metric-label">Heap Memory Used</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Last Updated</h3>
+                <div class="metric-value status-good">
+                    ${new Date(metrics.timestamp).toLocaleTimeString()}
+                </div>
+                <div class="metric-label">${new Date(metrics.timestamp).toLocaleDateString()}</div>
+            </div>
         </div>
-
-        <button class="refresh" onclick="refreshData()">🔄 Refresh</button>
+        
+        <div class="endpoints-table">
+            <h3>API Endpoints Status</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Status</th>
+                        <th>Response Time</th>
+                        <th>Last Check</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${metrics.api.endpoints.map(endpoint => `
+                        <tr>
+                            <td><code>${endpoint.endpoint}</code></td>
+                            <td>
+                                <span class="status-badge status-${endpoint.success ? '200' : 'error'}">
+                                    ${endpoint.success ? '✅ 200' : `❌ ${endpoint.status}`}
+                                </span>
+                            </td>
+                            <td>${endpoint.responseTime}ms</td>
+                            <td>${new Date().toLocaleTimeString()}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="refresh-info">
+            <p>Dashboard auto-refreshes every 30 seconds | Last updated: ${new Date().toLocaleString()}</p>
+        </div>
     </div>
-
+    
     <script>
-        async function loadHealth() {
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-
-                const status = document.getElementById('health-status');
-                status.innerHTML = `
-                    <p><strong>Backend:</strong> <span class="status ${data.backend === 200 ? 'healthy' : 'unhealthy'}">${data.backend}</span></p>
-                    <p><strong>Frontend:</strong> <span class="status ${data.frontend === 200 ? 'healthy' : 'unhealthy'}">${data.frontend}</span></p>
-                    <p><strong>Last Check:</strong> ${data.timestamp}</p>
-                `;
-            } catch (error) {
-                document.getElementById('health-status').innerHTML = '<p class="status unhealthy">Unable to connect</p>';
-            }
-        }
-
-        async function loadMetrics() {
-            try {
-                const response = await fetch('/api/metrics');
-                const data = await response.json();
-
-                const metrics = document.getElementById('metrics');
-                metrics.innerHTML = `
-                    <p class="metric">${data.productsCount} <small>Products</small></p>
-                    <p class="metric">${data.categoriesCount} <small>Categories</small></p>
-                    <p><strong>Last Updated:</strong> ${data.timestamp}</p>
-                `;
-            } catch (error) {
-                document.getElementById('metrics').innerHTML = '<p class="status unhealthy">Unable to load metrics</p>';
-            }
-        }
-
-        function refreshData() {
-            loadHealth();
-            loadMetrics();
-        }
-
-        // Auto refresh every 30 seconds
-        setInterval(refreshData, 30000);
-
-        // Initial load
-        loadHealth();
-        loadMetrics();
+        // Auto-refresh every 30 seconds
+        setTimeout(() => location.reload(), 30000);
     </script>
 </body>
-</html>
-  `);
-});
+</html>`;
 
-app.listen(PORT, () => {
-  console.log(`🎛️ Audio Tài Lộc Monitoring Dashboard running on http://localhost:${PORT}`);
-});
+  return html;
+}
 
-console.log('🎛️ Starting Audio Tài Lộc Monitoring Dashboard...');
-console.log(`Dashboard will be available at: http://localhost:${PORT}`);
+/**
+ * Save metrics to file
+ */
+function saveMetrics() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const metricsFile = `metrics-${timestamp}.json`;
+  
+  fs.writeFileSync(metricsFile, JSON.stringify(metrics, null, 2));
+  
+  // Generate and save dashboard HTML
+  const dashboardHTML = generateDashboardHTML();
+  fs.writeFileSync('monitoring-dashboard.html', dashboardHTML);
+  
+  return { metricsFile, dashboardHTML: 'monitoring-dashboard.html' };
+}
+
+/**
+ * Display console dashboard
+ */
+function displayConsoleDashboard() {
+  console.clear();
+  console.log('🎵 Audio Tài Lộc - System Monitoring Dashboard');
+  console.log('='.repeat(60));
+  console.log(`📊 Last Updated: ${new Date(metrics.timestamp).toLocaleString()}`);
+  console.log('');
+  
+  // System Status
+  console.log('🔧 System Status:');
+  console.log(`   Status: ${metrics.system.status === 'ok' ? '🟢 OK' : '🔴 ERROR'}`);
+  console.log(`   Uptime: ${Math.floor(metrics.performance.uptime / 3600)}h ${Math.floor((metrics.performance.uptime % 3600) / 60)}m`);
+  console.log(`   Memory: ${Math.round(metrics.performance.memory.heapUsed / 1024 / 1024)}MB`);
+  console.log('');
+  
+  // API Metrics
+  const successRate = ((metrics.api.successful / metrics.api.totalEndpoints) * 100).toFixed(1);
+  const avgResponseTime = metrics.api.averageResponseTime.toFixed(0);
+  
+  console.log('🌐 API Performance:');
+  console.log(`   Success Rate: ${successRate}% (${metrics.api.successful}/${metrics.api.totalEndpoints})`);
+  console.log(`   Avg Response: ${avgResponseTime}ms`);
+  console.log(`   Failed: ${metrics.api.failed}`);
+  console.log('');
+  
+  // Endpoint Status
+  console.log('📡 Endpoint Status:');
+  metrics.api.endpoints.forEach(endpoint => {
+    const status = endpoint.success ? '✅' : '❌';
+    console.log(`   ${status} ${endpoint.endpoint} - ${endpoint.responseTime}ms`);
+  });
+  
+  if (metrics.errors.length > 0) {
+    console.log('');
+    console.log('❌ Errors:');
+    metrics.errors.forEach(error => console.log(`   ${error}`));
+  }
+  
+  console.log('');
+  console.log('💡 Dashboard saved to: monitoring-dashboard.html');
+  console.log('🔄 Auto-refresh in 30 seconds...');
+}
+
+/**
+ * Main monitoring function
+ */
+async function runMonitoring() {
+  console.log('🚀 Starting Audio Tài Lộc Monitoring Dashboard...\n');
+  
+  // Collect metrics
+  await getSystemHealth();
+  await getAPIMetrics();
+  await getPerformanceMetrics();
+  
+  // Save and display
+  const files = saveMetrics();
+  displayConsoleDashboard();
+  
+  return metrics;
+}
+
+/**
+ * Continuous monitoring
+ */
+async function startContinuousMonitoring() {
+  while (true) {
+    try {
+      await runMonitoring();
+      await new Promise(resolve => setTimeout(resolve, 30000)); // 30 seconds
+    } catch (error) {
+      console.error('Monitoring error:', error);
+      await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds on error
+    }
+  }
+}
+
+// Run if executed directly
+if (require.main === module) {
+  if (process.argv.includes('--continuous')) {
+    startContinuousMonitoring();
+  } else {
+    runMonitoring();
+  }
+}
+
+module.exports = { runMonitoring, getSystemHealth, getAPIMetrics, getPerformanceMetrics };

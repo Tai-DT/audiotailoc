@@ -1,0 +1,792 @@
+{
+  "timestamp": "2025-08-24T14:59:19.386Z",
+  "summary": {
+    "total": 29,
+    "passed": 20,
+    "failed": 9,
+    "successRate": "69.0%"
+  },
+  "details": [
+    {
+      "endpoint": "API Root",
+      "path": "/",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "25ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/",
+      "data": {
+        "success": true,
+        "data": {
+          "name": "audiotailoc-backend",
+          "version": "0.1.0"
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:13.947Z",
+        "path": "/api/v1/",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Health Check",
+      "path": "/health",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "9ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/health",
+      "data": {
+        "success": true,
+        "data": {
+          "status": "ok",
+          "timestamp": "2025-08-24T14:59:14.060Z"
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:14.061Z",
+        "path": "/api/v1/health",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Auth Status",
+      "path": "/auth/status",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "7ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/auth/status",
+      "data": {
+        "success": true,
+        "data": {
+          "authenticated": false,
+          "message": "Authentication status endpoint",
+          "timestamp": "2025-08-24T14:59:14.170Z"
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:14.170Z",
+        "path": "/api/v1/auth/status",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "User Registration",
+      "path": "/auth/register",
+      "method": "POST",
+      "status": 201,
+      "statusText": "Created",
+      "responseTime": "370ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/auth/register",
+      "data": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": "cmeptdgzx0000jdqle4ew1yr6",
+            "email": "test@example.com",
+            "name": "Test User"
+          }
+        },
+        "message": "Resource created successfully",
+        "timestamp": "2025-08-24T14:59:14.642Z",
+        "path": "/api/v1/auth/register",
+        "method": "POST"
+      }
+    },
+    {
+      "endpoint": "User Login",
+      "path": "/auth/login",
+      "method": "POST",
+      "status": 201,
+      "statusText": "Created",
+      "responseTime": "327ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/auth/login",
+      "data": {
+        "success": true,
+        "data": {
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbWVwdGRnengwMDAwamRxbGU0ZXcxeXI2IiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NTYwNDc1NTUsImV4cCI6MTc1NjA0ODQ1NX0.P-ZekvxxkekEy1SH1M4iI3pUBAAFGy1YB18Orii_DI8",
+          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbWVwdGRnengwMDAwamRxbGU0ZXcxeXI2IiwiaWF0IjoxNzU2MDQ3NTU1LCJleHAiOjE3NTY2NTIzNTV9.JqRqfKfh_uNnX3R3tzw1AVzc8pXgzT8-0wzc352TNTQ"
+        },
+        "message": "Resource created successfully",
+        "timestamp": "2025-08-24T14:59:15.069Z",
+        "path": "/api/v1/auth/login",
+        "method": "POST"
+      }
+    },
+    {
+      "endpoint": "Current User",
+      "path": "/auth/me",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "9ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "List Users",
+      "path": "/users",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "6ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "User Profile",
+      "path": "/users/profile",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "8ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/profile",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "User Stats Overview",
+      "path": "/users/stats/overview",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "4ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/stats/overview",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "User Activity Stats",
+      "path": "/users/stats/activity",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "4ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/stats/activity",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "AI Health Check",
+      "path": "/ai/health",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "423ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/ai/health",
+      "data": {
+        "success": true,
+        "data": {
+          "success": true,
+          "status": "degraded",
+          "services": {
+            "gemini": "unhealthy",
+            "embedding": "healthy",
+            "database": "healthy"
+          },
+          "timestamp": "2025-08-24T14:59:16.129Z",
+          "version": "1.0.0"
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:16.129Z",
+        "path": "/api/v1/ai/health",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "AI Capabilities",
+      "path": "/ai/capabilities",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "6ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/ai/capabilities",
+      "data": {
+        "success": true,
+        "data": {
+          "success": true,
+          "capabilities": [
+            {
+              "name": "content_generation",
+              "description": "Tạo nội dung tự động",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            },
+            {
+              "name": "sentiment_analysis",
+              "description": "Phân tích cảm xúc",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            },
+            {
+              "name": "text_classification",
+              "description": "Phân loại văn bản",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            },
+            {
+              "name": "translation",
+              "description": "Dịch thuật đa ngôn ngữ",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            },
+            {
+              "name": "customer_intent",
+              "description": "Phân tích ý định khách hàng",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            },
+            {
+              "name": "personalization",
+              "description": "Gợi ý sản phẩm cá nhân hóa",
+              "enabled": true,
+              "models": [
+                "gemini-pro"
+              ]
+            }
+          ],
+          "models": {
+            "gemini-pro": {
+              "status": "active",
+              "maxTokens": 32000,
+              "supportedFeatures": [
+                "text",
+                "code",
+                "reasoning"
+              ]
+            }
+          }
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:16.235Z",
+        "path": "/api/v1/ai/capabilities",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "AI Chat",
+      "path": "/ai/chat",
+      "method": "POST",
+      "status": 500,
+      "statusText": "Internal Server Error",
+      "responseTime": "1239ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/ai/chat",
+      "error": "HTTP 500: Internal Server Error"
+    },
+    {
+      "endpoint": "AI Search",
+      "path": "/ai/search",
+      "method": "GET",
+      "status": 422,
+      "statusText": "Unprocessable Entity",
+      "responseTime": "5ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/ai/search",
+      "error": "HTTP 422: Unprocessable Entity"
+    },
+    {
+      "endpoint": "Chat Sessions",
+      "path": "/ai/chat-sessions",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "6ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/ai/chat-sessions",
+      "data": {
+        "success": true,
+        "data": [
+          {
+            "id": "cmeptdibb0002jdqlri8bbvfk",
+            "userId": null,
+            "guestId": null,
+            "status": "OPEN",
+            "source": "WEB",
+            "assignedTo": null,
+            "metadata": null,
+            "createdAt": "2025-08-24T14:59:16.342Z",
+            "updatedAt": "2025-08-24T14:59:16.342Z",
+            "messages": [
+              {
+                "id": "cmeptdibf0004jdqlk786d8s8",
+                "sessionId": "cmeptdibb0002jdqlri8bbvfk",
+                "role": "USER",
+                "text": "Hello, how are you?",
+                "metadata": null,
+                "createdAt": "2025-08-24T14:59:16.347Z",
+                "updatedAt": "2025-08-24T14:59:16.347Z"
+              }
+            ],
+            "user": null
+          }
+        ],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:17.787Z",
+        "path": "/api/v1/ai/chat-sessions",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "List Products",
+      "path": "/catalog/products",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "24ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/catalog/products",
+      "data": {
+        "success": true,
+        "data": {
+          "items": [],
+          "total": 0,
+          "page": 1,
+          "pageSize": 20
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:17.911Z",
+        "path": "/api/v1/catalog/products",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "List Categories",
+      "path": "/catalog/categories",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "7ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/catalog/categories",
+      "data": {
+        "success": true,
+        "data": [],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.019Z",
+        "path": "/api/v1/catalog/categories",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Search Products",
+      "path": "/search/products",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "11ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/products",
+      "data": {
+        "success": true,
+        "data": {
+          "hits": [],
+          "estimatedTotalHits": 0,
+          "page": 1,
+          "pageSize": 20,
+          "facetDistribution": {},
+          "query": ""
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.131Z",
+        "path": "/api/v1/search/products",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Search Services",
+      "path": "/search/services",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "5ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/services",
+      "data": {
+        "success": true,
+        "data": {
+          "services": [],
+          "pagination": {
+            "page": 1,
+            "pageSize": 20,
+            "total": 0,
+            "totalPages": 0
+          }
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.237Z",
+        "path": "/api/v1/search/services",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Global Search",
+      "path": "/search/global",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "6ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/global",
+      "data": {
+        "success": true,
+        "data": {
+          "hits": [],
+          "estimatedTotalHits": 0,
+          "page": 1,
+          "pageSize": 20,
+          "facetDistribution": {},
+          "query": ""
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.344Z",
+        "path": "/api/v1/search/global",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Search Suggestions",
+      "path": "/search/suggestions",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "3ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/suggestions",
+      "data": {
+        "success": true,
+        "data": [],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.448Z",
+        "path": "/api/v1/search/suggestions",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Popular Searches",
+      "path": "/search/popular",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "4ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/popular",
+      "data": {
+        "success": true,
+        "data": [
+          "tai nghe",
+          "loa bluetooth",
+          "ampli",
+          "sony",
+          "audio technica",
+          "sennheiser",
+          "bose",
+          "jbl",
+          "focal",
+          "beyerdynamic"
+        ],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.552Z",
+        "path": "/api/v1/search/popular",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Search History",
+      "path": "/search/history",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "4ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/history",
+      "data": {
+        "success": true,
+        "data": [],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.657Z",
+        "path": "/api/v1/search/history",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Available Filters",
+      "path": "/search/filters",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "6ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/search/filters",
+      "data": {
+        "success": true,
+        "data": {},
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.764Z",
+        "path": "/api/v1/search/filters",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "List Files",
+      "path": "/files",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "3ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/files",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "Knowledge Base Articles",
+      "path": "/support/kb/articles",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "4ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/support/kb/articles",
+      "data": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "kb_1",
+              "title": "Cách chọn tai nghe phù hợp",
+              "content": "Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...",
+              "category": "Hướng dẫn mua hàng",
+              "tags": [
+                "tai nghe",
+                "hướng dẫn"
+              ],
+              "published": true,
+              "viewCount": 150,
+              "helpful": 12,
+              "notHelpful": 2,
+              "createdAt": "2024-01-01T00:00:00.000Z",
+              "updatedAt": "2024-01-01T00:00:00.000Z"
+            },
+            {
+              "id": "kb_2",
+              "title": "Chính sách bảo hành sản phẩm",
+              "content": "Thông tin về chính sách bảo hành và hỗ trợ sau bán hàng...",
+              "category": "Chính sách",
+              "tags": [
+                "bảo hành",
+                "chính sách"
+              ],
+              "published": true,
+              "viewCount": 89,
+              "helpful": 8,
+              "notHelpful": 1,
+              "createdAt": "2024-01-02T00:00:00.000Z",
+              "updatedAt": "2024-01-02T00:00:00.000Z"
+            }
+          ],
+          "totalCount": 2,
+          "page": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:18.972Z",
+        "path": "/api/v1/support/kb/articles",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "KB Categories",
+      "path": "/support/kb/categories",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "2ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/support/kb/categories",
+      "data": {
+        "success": true,
+        "data": [
+          "Hướng dẫn mua hàng",
+          "Chính sách",
+          "Kỹ thuật",
+          "Thanh toán",
+          "Giao hàng",
+          "Bảo hành"
+        ],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:19.076Z",
+        "path": "/api/v1/support/kb/categories",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "FAQ List",
+      "path": "/support/faq",
+      "method": "GET",
+      "status": 200,
+      "statusText": "OK",
+      "responseTime": "2ms",
+      "success": true,
+      "url": "http://localhost:8000/api/v1/support/faq",
+      "data": {
+        "success": true,
+        "data": [
+          {
+            "id": "faq_1",
+            "question": "Làm thế nào để đặt hàng?",
+            "answer": "Bạn có thể đặt hàng bằng cách thêm sản phẩm vào giỏ hàng và tiến hành thanh toán.",
+            "category": "Đặt hàng",
+            "order": 1,
+            "published": true,
+            "createdAt": "2024-01-01T00:00:00.000Z",
+            "updatedAt": "2024-01-01T00:00:00.000Z"
+          },
+          {
+            "id": "faq_2",
+            "question": "Thời gian giao hàng là bao lâu?",
+            "answer": "Thời gian giao hàng thông thường là 2-3 ngày làm việc trong nội thành.",
+            "category": "Giao hàng",
+            "order": 1,
+            "published": true,
+            "createdAt": "2024-01-02T00:00:00.000Z",
+            "updatedAt": "2024-01-02T00:00:00.000Z"
+          }
+        ],
+        "message": "Data retrieved successfully",
+        "timestamp": "2025-08-24T14:59:19.179Z",
+        "path": "/api/v1/support/faq",
+        "method": "GET"
+      }
+    },
+    {
+      "endpoint": "Support Tickets",
+      "path": "/support/tickets",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "3ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/support/tickets",
+      "error": "HTTP 401: Unauthorized"
+    }
+  ],
+  "errors": [
+    {
+      "endpoint": "Current User",
+      "path": "/auth/me",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "9ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "List Users",
+      "path": "/users",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "6ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "User Profile",
+      "path": "/users/profile",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "8ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/profile",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "User Stats Overview",
+      "path": "/users/stats/overview",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "4ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/stats/overview",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "User Activity Stats",
+      "path": "/users/stats/activity",
+      "method": "GET",
+      "status": 403,
+      "statusText": "Forbidden",
+      "responseTime": "4ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/users/stats/activity",
+      "error": "HTTP 403: Forbidden"
+    },
+    {
+      "endpoint": "AI Chat",
+      "path": "/ai/chat",
+      "method": "POST",
+      "status": 500,
+      "statusText": "Internal Server Error",
+      "responseTime": "1239ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/ai/chat",
+      "error": "HTTP 500: Internal Server Error"
+    },
+    {
+      "endpoint": "AI Search",
+      "path": "/ai/search",
+      "method": "GET",
+      "status": 422,
+      "statusText": "Unprocessable Entity",
+      "responseTime": "5ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/ai/search",
+      "error": "HTTP 422: Unprocessable Entity"
+    },
+    {
+      "endpoint": "List Files",
+      "path": "/files",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "3ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/files",
+      "error": "HTTP 401: Unauthorized"
+    },
+    {
+      "endpoint": "Support Tickets",
+      "path": "/support/tickets",
+      "method": "GET",
+      "status": 401,
+      "statusText": "Unauthorized",
+      "responseTime": "3ms",
+      "success": false,
+      "url": "http://localhost:8000/api/v1/support/tickets",
+      "error": "HTTP 401: Unauthorized"
+    }
+  ]
+}

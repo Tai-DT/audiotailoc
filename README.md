@@ -58,8 +58,8 @@ A modern, full-stack e-commerce platform for audio services built with cutting-e
 
 ### 1. Clone and Install
 ```bash
-git clone <repository-url>
-cd audio-tailoc
+git clone https://github.com/Tai-DT/audiotailoc.git
+cd audiotailoc
 
 # Install all dependencies
 npm install
@@ -67,20 +67,32 @@ npm install
 
 ### 2. Environment Setup
 ```bash
-# Copy environment file
-cp frontend/.env.local.example frontend/.env.local
+# Backend environment
+cd backend
+cp env-template.txt .env
+# Edit .env with your actual credentials
 
-# Update database connection
-# Edit DATABASE_URL in your environment
+# Frontend environment
+cd ../frontend
+cp .env.local.example .env.local
+# Edit .env.local with your API URLs
+
+# Dashboard environment
+cd ../dashboard
+cp .env.local.example .env.local
+# Edit .env.local with your API URLs
 ```
 
 ### 3. Database Setup
 ```bash
 # Using Docker (Recommended)
-docker-compose up -d postgres meilisearch
+docker-compose up -d postgres redis
 
 # Or using local PostgreSQL
-# Make sure PostgreSQL is running
+# Make sure PostgreSQL is running and update DATABASE_URL in .env
+
+# For development (SQLite)
+# DATABASE_URL="file:./dev.db" (already configured)
 ```
 
 ### 4. Run Migrations
@@ -88,6 +100,10 @@ docker-compose up -d postgres meilisearch
 cd backend
 npm run db:push
 npm run db:seed
+
+# Or for development (SQLite)
+npx prisma db push
+npx prisma generate
 ```
 
 ### 5. Start Development
@@ -98,13 +114,77 @@ npm run dev
 # Or start services separately
 npm run dev:backend
 npm run dev:frontend
+npm run dev:dashboard
+
+# Or start individual services
+cd backend && npm run start:dev
+cd frontend && npm run dev
+cd dashboard && npm run dev
 ```
 
 ### 6. Access Application
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3010/api/v1
-- **Monitoring**: http://localhost:3001
-- **API Docs**: http://localhost:3010/api
+- **Backend API**: http://localhost:8000/api/v1
+- **Dashboard**: http://localhost:3001
+- **API Docs**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/api/v1/health
+
+## 🔧 Environment Variables
+
+### Required Environment Variables
+
+#### Backend (.env)
+```bash
+# Database
+DATABASE_URL="file:./dev.db"  # SQLite for development
+# DATABASE_URL="postgresql://user:pass@localhost:5432/audiotailoc"  # PostgreSQL for production
+
+# JWT Authentication
+JWT_ACCESS_SECRET="your-jwt-access-secret-key-change-in-production"
+JWT_REFRESH_SECRET="your-jwt-refresh-secret-key-change-in-production"
+JWT_ACCESS_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# Server
+PORT="8000"
+NODE_ENV="development"
+
+# Redis (Cache)
+REDIS_URL="redis://localhost:6379"
+
+# Google AI (Gemini)
+GOOGLE_AI_API_KEY="your-google-ai-api-key"
+GEMINI_MODEL="gemini-1.5-pro"
+
+# PayOS Payment
+PAYOS_CLIENT_ID="your-payos-client-id"
+PAYOS_API_KEY="your-payos-api-key"
+PAYOS_CHECKSUM_KEY="your-payos-checksum-key"
+PAYOS_PARTNER_CODE="your-payos-partner-code"
+```
+
+#### Frontend (.env.local)
+```bash
+NEXT_PUBLIC_API_URL="http://localhost:8000/api/v1"
+NEXT_PUBLIC_WS_URL="ws://localhost:8000"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret"
+```
+
+#### Dashboard (.env.local)
+```bash
+NEXT_PUBLIC_API_URL="http://localhost:8000/api/v1"
+NEXT_PUBLIC_WS_URL="ws://localhost:8000"
+NEXTAUTH_URL="http://localhost:3001"
+NEXTAUTH_SECRET="your-nextauth-secret"
+```
+
+### Optional Environment Variables
+- **Email**: SMTP configuration for notifications
+- **File Storage**: Cloudinary or MinIO for file uploads
+- **Search**: MeiliSearch for advanced search
+- **Maps**: Google Maps API for location services
+- **Monitoring**: Prometheus/Grafana for metrics
 
 ## 📊 Monitoring & Analytics
 
