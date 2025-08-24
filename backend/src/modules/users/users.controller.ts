@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsString, IsEmail, IsOptional, IsEnum, MinLength } from 'class-validator';
 
 class CreateUserDto {
@@ -42,7 +42,7 @@ class UpdateUserDto {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @Get()
   async findAll(@Query('page') page = '1', @Query('limit') limit = '10') {
     return this.usersService.findAll({
@@ -63,7 +63,7 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -75,19 +75,19 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @Get('stats/overview')
   async getStats() {
     return this.usersService.getStats();
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @Get('stats/activity')
   async getActivityStats(@Query('days') days = '30') {
     return this.usersService.getActivityStats(parseInt(days));

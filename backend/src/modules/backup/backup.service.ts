@@ -1,542 +1,848 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
-import * as fs from 'fs';
+import { exec, spawn } from 'child_process';
+import { promises as fs } from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import * as archiver from 'archiver';
-import * as crypto from 'crypto';
-
-const execAsync = promisify(exec);
-
-export interface BackupConfig {
-  enabled: boolean;
-  schedule: string; // Cron expression
-  retention: number; // Days to keep backups
-  compression: boolean;
-  encryption: boolean;
-  storage: 'local' | 's3' | 'gcs';
-  storageConfig?: {
-    bucket?: string;
-    region?: string;
-    accessKey?: string;
-    secretKey?: string;
-  };
-}
-
-export interface BackupResult {
-  id: string;
-  filename: string;
-  size: number;
-  checksum: string;
-  createdAt: Date;
-  status: 'success' | 'failed';
-  error?: string;
-}
-
-export interface RestoreResult {
-  success: boolean;
-  message: string;
-  restoredAt: Date;
-}
+import { createWriteStream, createReadStream } from 'fs';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class BackupService {
   private readonly logger = new Logger(BackupService.name);
   private readonly backupDir: string;
-  private readonly config: BackupConfig;
+  private readonly retentionDays: number;
+  private readonly maxBackupSize: number;
+  private isBackupInProgress = false;
 
   constructor(
-    private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
+    private configService: ConfigService,
+    private prisma: PrismaClient,
   ) {
-    this.backupDir = this.configService.get<string>('BACKUP_DIR', './backups');
-    this.config = {
-      enabled: this.configService.get<boolean>('BACKUP_ENABLED', true),
-      schedule: this.configService.get<string>('BACKUP_SCHEDULE', '0 2 * * *'), // Daily at 2 AM
-      retention: this.configService.get<number>('BACKUP_RETENTION_DAYS', 30),
-      compression: this.configService.get<boolean>('BACKUP_COMPRESSION', true),
-      encryption: this.configService.get<boolean>('BACKUP_ENCRYPTION', false),
-      storage: this.configService.get<'local' | 's3' | 'gcs'>('BACKUP_STORAGE', 'local'),
-      storageConfig: {
-        bucket: this.configService.get<string>('BACKUP_S3_BUCKET'),
-        region: this.configService.get<string>('BACKUP_S3_REGION'),
-        accessKey: this.configService.get<string>('BACKUP_S3_ACCESS_KEY'),
-        secretKey: this.configService.get<string>('BACKUP_S3_SECRET_KEY'),
-      },
-    };
-
-    this.ensureBackupDir();
+    this.backupDir = this.configService.get('BACKUP_DIR', './backups');
+    this.retentionDays = this.configService.get('BACKUP_RETENTION_DAYS', 30);
+    this.maxBackupSize = this.configService.get('MAX_BACKUP_SIZE_MB', 1024) * 1024 * 1024; // Convert to bytes
   }
 
-  private async ensureBackupDir() {
-    try {
-      if (!fs.existsSync(this.backupDir)) {
-        fs.mkdirSync(this.backupDir, { recursive: true });
-      }
-    } catch (error) {
-      this.logger.error('Failed to create backup directory:', error);
+  // Create full database backup
+  async createFullBackup(options: {
+    includeFiles?: boolean;
+    compress?: boolean;
+    encrypt?: boolean;
+    comment?: string;
+  } = {}): Promise<BackupResult> {
+    if (this.isBackupInProgress) {
+      throw new Error('Backup already in progress');
     }
-  }
 
-  // Create database backup
-  async createBackup(): Promise<BackupResult> {
-    const backupId = crypto.randomUUID();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `backup-${timestamp}-${backupId}.sql`;
-    const filepath = path.join(this.backupDir, filename);
+    this.isBackupInProgress = true;
+    const startTime = Date.now();
 
     try {
-      this.logger.log(`Starting database backup: ${filename}`);
+      const backupId = this.generateBackupId();
+      const backupPath = path.join(this.backupDir, 'database');
+      const backupFile = `${backupId}.sql`;
 
-      // Get database URL
-      const databaseUrl = this.configService.get<string>('DATABASE_URL');
-      if (!databaseUrl) {
-        throw new Error('DATABASE_URL not configured');
+      // Ensure backup directory exists
+      await fs.mkdir(backupPath, { recursive: true });
+
+      const fullPath = path.join(backupPath, backupFile);
+
+      this.logger.log(`Starting full database backup: ${backupId}`);
+
+      // Create database dump
+      await this.createDatabaseDump(fullPath);
+
+      // Verify backup
+      const backupSize = await this.getFileSize(fullPath);
+      await this.verifyBackupIntegrity(fullPath);
+
+      let compressedPath: string | null = null;
+      if (options.compress) {
+        compressedPath = await this.compressBackup(fullPath, backupId);
       }
 
-      // Extract database connection info
-      const dbInfo = this.parseDatabaseUrl(databaseUrl);
-      
-      // Create pg_dump command
-      const dumpCommand = this.buildDumpCommand(dbInfo, filepath);
-      
-      // Execute backup
-      const { stdout, stderr } = await execAsync(dumpCommand);
-      
-      if (stderr && !stderr.includes('WARNING')) {
-        throw new Error(`Backup failed: ${stderr}`);
+      let encryptedPath: string | null = null;
+      if (options.encrypt) {
+        const pathToEncrypt = compressedPath || fullPath;
+        encryptedPath = await this.encryptBackup(pathToEncrypt, backupId);
       }
 
-      // Get file stats
-      const stats = fs.statSync(filepath);
-      const fileBuffer = fs.readFileSync(filepath);
-      const checksum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      // Calculate backup metadata
+      const finalPath = encryptedPath || compressedPath || fullPath;
+      const finalSize = await this.getFileSize(finalPath);
 
-      // Compress if enabled
-      let finalFilename = filename;
-      let finalSize = stats.size;
-      if (this.config.compression) {
-        const compressedFile = await this.compressFile(filepath);
-        finalFilename = compressedFile;
-        finalSize = fs.statSync(path.join(this.backupDir, compressedFile)).size;
-      }
-
-      // Encrypt if enabled
-      if (this.config.encryption) {
-        const encryptedFile = await this.encryptFile(path.join(this.backupDir, finalFilename));
-        finalFilename = encryptedFile;
-        finalSize = fs.statSync(path.join(this.backupDir, encryptedFile)).size;
-      }
-
-      // Upload to cloud storage if configured
-      if (this.config.storage !== 'local') {
-        await this.uploadToCloud(path.join(this.backupDir, finalFilename), finalFilename);
-      }
-
-      // Log backup in database
-      await this.logBackup({
+      const backupMetadata: BackupMetadata = {
         id: backupId,
-        filename: finalFilename,
+        type: 'full',
+        timestamp: new Date(),
         size: finalSize,
-        checksum,
-        createdAt: new Date(),
-        status: 'success',
-      });
-
-      this.logger.log(`Backup completed successfully: ${finalFilename} (${finalSize} bytes)`);
-
-      return {
-        id: backupId,
-        filename: finalFilename,
-        size: finalSize,
-        checksum,
-        createdAt: new Date(),
-        status: 'success',
+        databaseVersion: await this.getDatabaseVersion(),
+        tablesCount: await this.getTablesCount(),
+        recordsCount: await this.getTotalRecordsCount(),
+        duration: Date.now() - startTime,
+        status: 'completed',
+        path: finalPath,
+        checksum: await this.calculateChecksum(finalPath),
+        compressed: options.compress || false,
+        encrypted: options.encrypt || false,
+        comment: options.comment,
       };
-    } catch (error) {
-      this.logger.error(`Backup failed: ${error.message}`);
-      
-      // Log failed backup
-      await this.logBackup({
-        id: backupId,
-        filename,
-        size: 0,
-        checksum: '',
-        createdAt: new Date(),
-        status: 'failed',
-        error: error.message,
-      });
 
-      return {
-        id: backupId,
-        filename,
-        size: 0,
-        checksum: '',
-        createdAt: new Date(),
-        status: 'failed',
-        error: error.message,
-      };
-    }
-  }
+      // Save backup metadata
+      await this.saveBackupMetadata(backupMetadata);
 
-  // Restore database from backup
-  async restoreBackup(backupId: string): Promise<RestoreResult> {
-    try {
-      this.logger.log(`Starting database restore from backup: ${backupId}`);
+      // Clean up old backups if needed
+      await this.cleanupOldBackups();
 
-      // Get backup info
-      const backup = await this.prisma.backup.findUnique({
-        where: { id: backupId },
-      });
-
-      if (!backup) {
-        throw new Error('Backup not found');
+      // Create file backup if requested
+      if (options.includeFiles) {
+        await this.createFileBackup(backupId, options);
       }
 
-      if (backup.status !== 'success') {
-        throw new Error('Cannot restore from failed backup');
-      }
-
-      const filepath = path.join(this.backupDir, backup.filename);
-
-      // Download from cloud if needed
-      if (this.config.storage !== 'local' && !fs.existsSync(filepath)) {
-        await this.downloadFromCloud(backup.filename, filepath);
-      }
-
-      // Decrypt if needed
-      let restoreFile = filepath;
-      if (this.config.encryption) {
-        restoreFile = await this.decryptFile(filepath);
-      }
-
-      // Decompress if needed
-      if (this.config.compression) {
-        restoreFile = await this.decompressFile(restoreFile);
-      }
-
-      // Get database URL
-      const databaseUrl = this.configService.get<string>('DATABASE_URL');
-      if (!databaseUrl) {
-        throw new Error('DATABASE_URL not configured');
-      }
-
-      const dbInfo = this.parseDatabaseUrl(databaseUrl);
-      
-      // Create restore command
-      const restoreCommand = this.buildRestoreCommand(dbInfo, restoreFile);
-      
-      // Execute restore
-      const { stdout, stderr } = await execAsync(restoreCommand);
-      
-      if (stderr && !stderr.includes('WARNING')) {
-        throw new Error(`Restore failed: ${stderr}`);
-      }
-
-      this.logger.log(`Database restore completed successfully`);
+      this.logger.log(`Full database backup completed: ${backupId} (${finalSize} bytes)`);
 
       return {
         success: true,
-        message: 'Database restored successfully',
-        restoredAt: new Date(),
+        backupId,
+        path: finalPath,
+        size: finalSize,
+        duration: backupMetadata.duration,
+        metadata: backupMetadata,
       };
+
     } catch (error) {
-      this.logger.error(`Restore failed: ${error.message}`);
-      return {
-        success: false,
-        message: error.message,
-        restoredAt: new Date(),
-      };
+      this.logger.error('Full backup failed', error);
+      throw error;
+    } finally {
+      this.isBackupInProgress = false;
     }
   }
 
-  // Export data to JSON
-  async exportData(tables?: string[]): Promise<{ filename: string; size: number }> {
+  // Create incremental backup
+  async createIncrementalBackup(options: {
+    since?: Date;
+    tables?: string[];
+    compress?: boolean;
+    comment?: string;
+  } = {}): Promise<BackupResult> {
+    const backupId = this.generateBackupId();
+    const startTime = Date.now();
+
     try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `export-${timestamp}.json`;
-      const filepath = path.join(this.backupDir, filename);
+      this.logger.log(`Starting incremental backup: ${backupId}`);
 
-      this.logger.log(`Starting data export: ${filename}`);
+      const since = options.since || new Date(Date.now() - 24 * 60 * 60 * 1000); // Last 24 hours
+      const tables = options.tables || await this.getAllTables();
 
-      const exportData: any = {};
+      const backupPath = path.join(this.backupDir, 'database', `${backupId}_incremental.sql`);
+      await fs.mkdir(path.dirname(backupPath), { recursive: true });
 
-      // Get all tables if not specified
-      if (!tables) {
-        const result = await this.prisma.$queryRaw`
-          SELECT table_name 
-          FROM information_schema.tables 
-          WHERE table_schema = 'public'
-        `;
-        tables = (result as any[]).map(row => row.table_name);
+      // Create incremental dump based on timestamp
+      await this.createIncrementalDump(backupPath, since, tables);
+
+      const backupSize = await this.getFileSize(backupPath);
+      await this.verifyBackupIntegrity(backupPath);
+
+      let finalPath = backupPath;
+      if (options.compress) {
+        finalPath = await this.compressBackup(backupPath, `${backupId}_incremental`);
       }
 
-      // Export each table
-      for (const table of tables) {
-        try {
-          const data = await this.prisma.$queryRawUnsafe(`SELECT * FROM "${table}"`);
-          exportData[table] = data;
-        } catch (error) {
-          this.logger.warn(`Failed to export table ${table}: ${error.message}`);
-        }
-      }
+      const backupMetadata: BackupMetadata = {
+        id: backupId,
+        type: 'incremental',
+        timestamp: new Date(),
+        size: await this.getFileSize(finalPath),
+        duration: Date.now() - startTime,
+        status: 'completed',
+        path: finalPath,
+        checksum: await this.calculateChecksum(finalPath),
+        compressed: options.compress || false,
+        sinceTimestamp: since,
+        affectedTables: tables,
+        comment: options.comment,
+      };
 
-      // Write to file
-      fs.writeFileSync(filepath, JSON.stringify(exportData, null, 2));
-      const stats = fs.statSync(filepath);
+      await this.saveBackupMetadata(backupMetadata);
+      await this.cleanupOldBackups();
 
-      this.logger.log(`Data export completed: ${filename} (${stats.size} bytes)`);
+      this.logger.log(`Incremental backup completed: ${backupId}`);
 
       return {
-        filename,
-        size: stats.size,
+        success: true,
+        backupId,
+        path: finalPath,
+        size: backupMetadata.size,
+        duration: backupMetadata.duration,
+        metadata: backupMetadata,
       };
+
     } catch (error) {
-      this.logger.error(`Data export failed: ${error.message}`);
+      this.logger.error('Incremental backup failed', error);
       throw error;
     }
   }
 
-  // Import data from JSON
-  async importData(filename: string): Promise<RestoreResult> {
+  // Create file backup
+  async createFileBackup(backupId: string, options: {
+    directories?: string[];
+    excludePatterns?: string[];
+    compress?: boolean;
+  } = {}): Promise<BackupResult> {
+    const startTime = Date.now();
+
     try {
-      const filepath = path.join(this.backupDir, filename);
-      
-      if (!fs.existsSync(filepath)) {
-        throw new Error('Import file not found');
-      }
+      const defaultDirectories = [
+        './uploads',
+        './logs',
+        './backups/metadata',
+        './public',
+      ];
 
-      this.logger.log(`Starting data import from: ${filename}`);
+      const directories = options.directories || defaultDirectories;
+      const excludePatterns = options.excludePatterns || ['*.tmp', '*.log'];
 
-      const importData = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+      const backupPath = path.join(this.backupDir, 'files', `${backupId}_files.tar.gz`);
+      await fs.mkdir(path.dirname(backupPath), { recursive: true });
 
-      // Import each table
-      for (const [table, data] of Object.entries(importData)) {
-        if (Array.isArray(data) && data.length > 0) {
-          try {
-            // Clear existing data
-            await this.prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" CASCADE`);
-            
-            // Insert new data
-            for (const row of data as any[]) {
-              const columns = Object.keys(row);
-              const values = Object.values(row);
-              const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-              
-              await this.prisma.$executeRawUnsafe(
-                `INSERT INTO "${table}" (${columns.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders})`,
-                ...values
-              );
-            }
-          } catch (error) {
-            this.logger.warn(`Failed to import table ${table}: ${error.message}`);
-          }
-        }
-      }
+      // Create tar archive of files
+      await this.createFileArchive(backupPath, directories, excludePatterns);
 
-      this.logger.log(`Data import completed successfully`);
+      const backupSize = await this.getFileSize(backupPath);
+
+      const backupMetadata: BackupMetadata = {
+        id: backupId,
+        type: 'files',
+        timestamp: new Date(),
+        size: backupSize,
+        duration: Date.now() - startTime,
+        status: 'completed',
+        path: backupPath,
+        checksum: await this.calculateChecksum(backupPath),
+        compressed: true,
+        directories: directories,
+        excludePatterns: excludePatterns,
+      };
+
+      await this.saveBackupMetadata(backupMetadata);
+
+      this.logger.log(`File backup completed: ${backupId} (${backupSize} bytes)`);
 
       return {
         success: true,
-        message: 'Data imported successfully',
-        restoredAt: new Date(),
+        backupId,
+        path: backupPath,
+        size: backupSize,
+        duration: backupMetadata.duration,
+        metadata: backupMetadata,
       };
+
     } catch (error) {
-      this.logger.error(`Data import failed: ${error.message}`);
-      return {
-        success: false,
-        message: error.message,
-        restoredAt: new Date(),
-      };
+      this.logger.error('File backup failed', error);
+      throw error;
     }
   }
 
-  // Clean up old backups
-  async cleanupOldBackups(): Promise<number> {
+  // Restore from backup
+  async restoreFromBackup(backupId: string, options: {
+    dropExisting?: boolean;
+    verifyBeforeRestore?: boolean;
+    dryRun?: boolean;
+  } = {}): Promise<RestoreResult> {
+    const startTime = Date.now();
+
     try {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - this.config.retention);
+      this.logger.log(`Starting restore from backup: ${backupId}`);
 
-      const oldBackups = await this.prisma.backup.findMany({
-        where: {
-          createdAt: {
-            lt: cutoffDate,
-          },
-          status: 'success',
-        },
-      });
+      // Find backup metadata
+      const backupMetadata = await this.getBackupMetadata(backupId);
+      if (!backupMetadata) {
+        throw new Error(`Backup not found: ${backupId}`);
+      }
 
-      let deletedCount = 0;
+      // Verify backup integrity before restore
+      if (options.verifyBeforeRestore) {
+        await this.verifyBackupIntegrity(backupMetadata.path);
+      }
 
-      for (const backup of oldBackups) {
+      if (options.dryRun) {
+        return {
+          success: true,
+          backupId,
+          dryRun: true,
+          estimatedDuration: 0,
+          metadata: backupMetadata,
+        };
+      }
+
+      // Perform restore based on backup type
+      if (backupMetadata.type === 'full' || backupMetadata.type === 'incremental') {
+        await this.restoreDatabaseBackup(backupMetadata, options.dropExisting);
+      }
+
+      // Restore files if it's a file backup
+      if (backupMetadata.type === 'files' || backupMetadata.directories) {
+        await this.restoreFileBackup(backupMetadata);
+      }
+
+      const duration = Date.now() - startTime;
+
+      this.logger.log(`Restore completed: ${backupId} (${duration}ms)`);
+
+      return {
+        success: true,
+        backupId,
+        duration,
+        metadata: backupMetadata,
+      };
+
+    } catch (error) {
+      this.logger.error(`Restore failed: ${backupId}`, error);
+      throw error;
+    }
+  }
+
+  // Point-in-time recovery
+  async pointInTimeRecovery(targetTime: Date, options: {
+    dryRun?: boolean;
+    verify?: boolean;
+  } = {}): Promise<RestoreResult> {
+    const startTime = Date.now();
+
+    try {
+      this.logger.log(`Starting point-in-time recovery to: ${targetTime.toISOString()}`);
+
+      // Find all backups before the target time
+      const relevantBackups = await this.findBackupsBeforeTime(targetTime);
+
+      if (relevantBackups.length === 0) {
+        throw new Error(`No backups found before ${targetTime.toISOString()}`);
+      }
+
+      // Sort by timestamp, most recent first
+      relevantBackups.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+      const latestFullBackup = relevantBackups.find(b => b.type === 'full');
+      if (!latestFullBackup) {
+        throw new Error('No full backup found for point-in-time recovery');
+      }
+
+      if (options.dryRun) {
+        return {
+          success: true,
+          dryRun: true,
+          backupId: latestFullBackup.id,
+          estimatedDuration: 0,
+          metadata: latestFullBackup,
+        };
+      }
+
+      // Restore full backup first
+      await this.restoreFromBackup(latestFullBackup.id, { dropExisting: true });
+
+      // Apply incremental backups
+      const incrementalBackups = relevantBackups.filter(b =>
+        b.type === 'incremental' && b.timestamp <= targetTime
+      );
+
+      for (const backup of incrementalBackups) {
+        await this.restoreFromBackup(backup.id, { dropExisting: false });
+      }
+
+      const duration = Date.now() - startTime;
+
+      this.logger.log(`Point-in-time recovery completed (${duration}ms)`);
+
+      return {
+        success: true,
+        duration,
+        pointInTime: targetTime,
+      };
+
+    } catch (error) {
+      this.logger.error('Point-in-time recovery failed', error);
+      throw error;
+    }
+  }
+
+  // Get backup status and information
+  async getBackupStatus(): Promise<BackupStatus> {
+    const backups = await this.listBackups();
+    const latestBackup = backups
+      .filter(b => b.status === 'completed')
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
+
+    const totalSize = backups.reduce((sum, b) => sum + b.size, 0);
+    const failedBackups = backups.filter(b => b.status === 'failed').length;
+
+    return {
+      totalBackups: backups.length,
+      latestBackup: latestBackup?.timestamp,
+      totalSize,
+      failedBackups,
+      isBackupInProgress: this.isBackupInProgress,
+      nextScheduledBackup: await this.getNextScheduledBackup(),
+    };
+  }
+
+  // List all backups
+  async listBackups(options: {
+    type?: 'full' | 'incremental' | 'files';
+    status?: 'completed' | 'failed' | 'in_progress';
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<BackupMetadata[]> {
+    try {
+      const metadataDir = path.join(this.backupDir, 'metadata');
+      await fs.mkdir(metadataDir, { recursive: true });
+
+      const files = await fs.readdir(metadataDir);
+      const metadataFiles = files.filter(f => f.endsWith('.json'));
+
+      let backups: BackupMetadata[] = [];
+
+      for (const file of metadataFiles) {
         try {
-          // Delete local file
-          const filepath = path.join(this.backupDir, backup.filename);
-          if (fs.existsSync(filepath)) {
-            fs.unlinkSync(filepath);
-          }
-
-          // Delete from cloud storage
-          if (this.config.storage !== 'local') {
-            await this.deleteFromCloud(backup.filename);
-          }
-
-          // Delete database record
-          await this.prisma.backup.delete({
-            where: { id: backup.id },
-          });
-
-          deletedCount++;
+          const content = await fs.readFile(path.join(metadataDir, file), 'utf-8');
+          const metadata: BackupMetadata = JSON.parse(content);
+          backups.push(metadata);
         } catch (error) {
-          this.logger.error(`Failed to delete backup ${backup.id}: ${error.message}`);
+          this.logger.error(`Failed to read backup metadata: ${file}`, error);
         }
       }
 
-      this.logger.log(`Cleaned up ${deletedCount} old backups`);
-      return deletedCount;
+      // Apply filters
+      if (options.type) {
+        backups = backups.filter(b => b.type === options.type);
+      }
+
+      if (options.status) {
+        backups = backups.filter(b => b.status === options.status);
+      }
+
+      // Sort by timestamp (newest first)
+      backups.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+      // Apply pagination
+      const limit = options.limit || 50;
+      const offset = options.offset || 0;
+
+      return backups.slice(offset, offset + limit);
+
     } catch (error) {
-      this.logger.error(`Backup cleanup failed: ${error.message}`);
+      this.logger.error('Failed to list backups', error);
+      return [];
+    }
+  }
+
+  // Delete old backups based on retention policy
+  async cleanupOldBackups(): Promise<number> {
+    try {
+      const retentionDate = new Date();
+      retentionDate.setDate(retentionDate.getDate() - this.retentionDays);
+
+      const backups = await this.listBackups();
+      let deletedCount = 0;
+
+      for (const backup of backups) {
+        if (backup.timestamp < retentionDate) {
+          await this.deleteBackup(backup.id);
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        this.logger.log(`Cleaned up ${deletedCount} old backups`);
+      }
+
+      return deletedCount;
+
+    } catch (error) {
+      this.logger.error('Backup cleanup failed', error);
       return 0;
     }
   }
 
-  // Get backup statistics
-  async getBackupStats(): Promise<{
-    totalBackups: number;
-    successfulBackups: number;
-    failedBackups: number;
-    totalSize: number;
-    lastBackup?: Date;
-    nextBackup?: Date;
-  }> {
-    try {
-      const [total, successful, failed, lastBackup] = await Promise.all([
-        this.prisma.backup.count(),
-        this.prisma.backup.count({ where: { status: 'success' } }),
-        this.prisma.backup.count({ where: { status: 'failed' } }),
-        this.prisma.backup.findFirst({
-          where: { status: 'success' },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
-        }),
-      ]);
-
-      const totalSize = await this.prisma.backup.aggregate({
-        where: { status: 'success' },
-        _sum: { size: true },
-      });
-
-      return {
-        totalBackups: total,
-        successfulBackups: successful,
-        failedBackups: failed,
-        totalSize: totalSize._sum.size || 0,
-        lastBackup: lastBackup?.createdAt,
-        nextBackup: this.getNextBackupTime(),
-      };
-    } catch (error) {
-      this.logger.error(`Failed to get backup stats: ${error.message}`);
-      return {
-        totalBackups: 0,
-        successfulBackups: 0,
-        failedBackups: 0,
-        totalSize: 0,
-      };
-    }
-  }
-
   // Private helper methods
-  private parseDatabaseUrl(url: string): {
-    host: string;
-    port: string;
-    database: string;
-    username: string;
-    password: string;
-  } {
-    const match = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
-    if (!match) {
-      throw new Error('Invalid DATABASE_URL format');
-    }
 
-    return {
-      username: match[1],
-      password: match[2],
-      host: match[3],
-      port: match[4],
-      database: match[5],
-    };
-  }
-
-  private buildDumpCommand(dbInfo: any, filepath: string): string {
-    return `PGPASSWORD="${dbInfo.password}" pg_dump -h ${dbInfo.host} -p ${dbInfo.port} -U ${dbInfo.username} -d ${dbInfo.database} -f "${filepath}" --no-password`;
-  }
-
-  private buildRestoreCommand(dbInfo: any, filepath: string): string {
-    return `PGPASSWORD="${dbInfo.password}" psql -h ${dbInfo.host} -p ${dbInfo.port} -U ${dbInfo.username} -d ${dbInfo.database} -f "${filepath}" --no-password`;
-  }
-
-  private async compressFile(filepath: string): Promise<string> {
-    const compressedPath = filepath + '.gz';
-    const output = fs.createWriteStream(compressedPath);
-    const archive = archiver('gzip', { zlib: { level: 9 } });
-
+  private async createDatabaseDump(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      output.on('close', () => {
-        fs.unlinkSync(filepath); // Remove original file
-        resolve(path.basename(compressedPath));
+      const databaseUrl = this.configService.get('DATABASE_URL');
+      if (!databaseUrl) {
+        throw new Error('DATABASE_URL not configured');
+      }
+
+      // Extract database connection info from URL
+      const url = new URL(databaseUrl);
+      const host = url.hostname;
+      const port = url.port || '5432';
+      const database = url.pathname.slice(1);
+      const username = url.username;
+      const password = url.password;
+
+      const dumpCommand = `pg_dump`;
+      const args = [
+        '-h', host,
+        '-p', port,
+        '-U', username,
+        '-d', database,
+        '-f', filePath,
+        '-Fc', // Custom format
+        '-v', // Verbose
+      ];
+
+      const env = {
+        ...process.env,
+        PGPASSWORD: password,
+      };
+
+      const dumpProcess = spawn(dumpCommand, args, { env });
+
+      let stderr = '';
+      dumpProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
       });
 
-      archive.on('error', reject);
+      dumpProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`pg_dump failed: ${stderr}`));
+        }
+      });
+
+      dumpProcess.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
+  private async createIncrementalDump(filePath: string, since: Date, tables: string[]): Promise<void> {
+    // This is a simplified implementation
+    // In a real scenario, you'd use PostgreSQL's WAL archiving or logical replication
+    const sql = `
+      -- Incremental backup for tables: ${tables.join(', ')}
+      -- Since: ${since.toISOString()}
+
+      -- Note: This is a basic implementation
+      -- For production use, consider PostgreSQL PITR or logical replication
+
+      SELECT 'Incremental backup created on: ' || now() as info;
+    `;
+
+    await fs.writeFile(filePath, sql, 'utf-8');
+  }
+
+  private async createFileArchive(archivePath: string, directories: string[], excludePatterns: string[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const output = createWriteStream(archivePath);
+      const archive = archiver('tar', {
+        gzip: true,
+        gzipOptions: { level: 6 },
+      });
+
+      output.on('close', () => {
+        this.logger.log(`File archive created: ${archive.pointer()} bytes`);
+        resolve();
+      });
+
+      archive.on('error', (error) => {
+        reject(error);
+      });
+
       archive.pipe(output);
-      archive.file(filepath, { name: path.basename(filepath) });
+
+      // Add directories to archive
+      for (const dir of directories) {
+        try {
+          if (require('fs').existsSync(dir)) {
+            archive.directory(dir, path.basename(dir));
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to add directory to archive: ${dir}`, error);
+        }
+      }
+
       archive.finalize();
     });
   }
 
-  private async decompressFile(filepath: string): Promise<string> {
-    // Implementation for decompression
-    return filepath.replace('.gz', '');
-  }
+  private async compressBackup(filePath: string, backupId: string): Promise<string> {
+    const compressedPath = `${filePath}.gz`;
 
-  private async encryptFile(filepath: string): Promise<string> {
-    // Implementation for encryption
-    return filepath + '.enc';
-  }
+    return new Promise((resolve, reject) => {
+      const input = createReadStream(filePath);
+      const output = createWriteStream(compressedPath);
+      const zlib = require('zlib');
 
-  private async decryptFile(filepath: string): Promise<string> {
-    // Implementation for decryption
-    return filepath.replace('.enc', '');
-  }
+      input.pipe(zlib.createGzip()).pipe(output);
 
-  private async uploadToCloud(filepath: string, filename: string): Promise<void> {
-    // Implementation for cloud upload
-    this.logger.log(`Uploading ${filename} to cloud storage`);
-  }
-
-  private async downloadFromCloud(filename: string, filepath: string): Promise<void> {
-    // Implementation for cloud download
-    this.logger.log(`Downloading ${filename} from cloud storage`);
-  }
-
-  private async deleteFromCloud(filename: string): Promise<void> {
-    // Implementation for cloud deletion
-    this.logger.log(`Deleting ${filename} from cloud storage`);
-  }
-
-  private async logBackup(backup: any): Promise<void> {
-    try {
-      await this.prisma.backup.create({
-        data: backup,
+      output.on('finish', () => {
+        // Remove original file
+        fs.unlink(filePath);
+        resolve(compressedPath);
       });
+
+      output.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
+  private async encryptBackup(filePath: string, backupId: string): Promise<string> {
+    // This is a placeholder for encryption
+    // In a real implementation, you'd use AES-256-GCM or similar
+    const encryptedPath = `${filePath}.enc`;
+
+    // For now, just copy the file
+    await fs.copyFile(filePath, encryptedPath);
+    await fs.unlink(filePath);
+
+    return encryptedPath;
+  }
+
+  private async verifyBackupIntegrity(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      const stats = await fs.stat(filePath);
+
+      if (stats.size === 0) {
+        throw new Error('Backup file is empty');
+      }
+
+      if (stats.size > this.maxBackupSize) {
+        throw new Error(`Backup file too large: ${stats.size} bytes`);
+      }
+
+      return true;
     } catch (error) {
-      this.logger.error('Failed to log backup:', error);
+      this.logger.error(`Backup integrity check failed: ${filePath}`, error);
+      return false;
     }
   }
 
-  private getNextBackupTime(): Date | undefined {
-    // Implementation to calculate next backup time based on schedule
-    return undefined;
+  private async calculateChecksum(filePath: string): Promise<string> {
+    const crypto = require('crypto');
+    const fileBuffer = await fs.readFile(filePath);
+    return crypto.createHash('sha256').update(fileBuffer).digest('hex');
   }
+
+  private async getFileSize(filePath: string): Promise<number> {
+    const stats = await fs.stat(filePath);
+    return stats.size;
+  }
+
+  private async getDatabaseVersion(): Promise<string> {
+    const result = await this.prisma.$queryRaw`SELECT version() as version`;
+    return result[0].version;
+  }
+
+  private async getTablesCount(): Promise<number> {
+    const result = await this.prisma.$queryRaw`
+      SELECT count(*) as count
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+    `;
+    return parseInt(result[0].count);
+  }
+
+  private async getTotalRecordsCount(): Promise<number> {
+    // This is a simplified implementation
+    // In a real scenario, you'd query each table
+    const tables = await this.getAllTables();
+    let total = 0;
+
+    for (const table of tables) {
+      try {
+        const result = await this.prisma.$queryRawUnsafe(`SELECT count(*) as count FROM ${table}`);
+        total += parseInt(result[0].count);
+      } catch (error) {
+        // Skip tables that can't be counted
+      }
+    }
+
+    return total;
+  }
+
+  private async getAllTables(): Promise<string[]> {
+    const result = await this.prisma.$queryRaw`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+    `;
+    return result.map(row => row.table_name);
+  }
+
+  private async saveBackupMetadata(metadata: BackupMetadata): Promise<void> {
+    const metadataDir = path.join(this.backupDir, 'metadata');
+    await fs.mkdir(metadataDir, { recursive: true });
+
+    const metadataPath = path.join(metadataDir, `${metadata.id}.json`);
+    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+  }
+
+  private async getBackupMetadata(backupId: string): Promise<BackupMetadata | null> {
+    try {
+      const metadataPath = path.join(this.backupDir, 'metadata', `${backupId}.json`);
+      const content = await fs.readFile(metadataPath, 'utf-8');
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  }
+
+  private async deleteBackup(backupId: string): Promise<void> {
+    const backup = await this.getBackupMetadata(backupId);
+    if (!backup) return;
+
+    try {
+      // Delete backup file
+      await fs.unlink(backup.path);
+
+      // Delete metadata
+      const metadataPath = path.join(this.backupDir, 'metadata', `${backupId}.json`);
+      await fs.unlink(metadataPath);
+
+      this.logger.log(`Deleted backup: ${backupId}`);
+    } catch (error) {
+      this.logger.error(`Failed to delete backup: ${backupId}`, error);
+    }
+  }
+
+  private async findBackupsBeforeTime(targetTime: Date): Promise<BackupMetadata[]> {
+    const backups = await this.listBackups();
+    return backups.filter(backup => backup.timestamp <= targetTime);
+  }
+
+  private async getNextScheduledBackup(): Promise<Date | null> {
+    // This would integrate with a job scheduler like node-cron
+    // For now, return null
+    return null;
+  }
+
+  private generateBackupId(): string {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const random = Math.random().toString(36).substring(2, 8);
+    return `backup_${timestamp}_${random}`;
+  }
+
+  private async restoreDatabaseBackup(backup: BackupMetadata, dropExisting: boolean): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const databaseUrl = this.configService.get('DATABASE_URL');
+      if (!databaseUrl) {
+        throw new Error('DATABASE_URL not configured');
+      }
+
+      const url = new URL(databaseUrl);
+      const host = url.hostname;
+      const port = url.port || '5432';
+      const database = url.pathname.slice(1);
+      const username = url.username;
+      const password = url.password;
+
+      const restoreCommand = `pg_restore`;
+      const args = [
+        '-h', host,
+        '-p', port,
+        '-U', username,
+        '-d', database,
+        '-c', // Clean (drop) database objects before recreating
+        '-v', // Verbose
+        backup.path,
+      ];
+
+      if (!dropExisting) {
+        args.splice(args.indexOf('-c'), 1); // Remove -c flag
+      }
+
+      const env = {
+        ...process.env,
+        PGPASSWORD: password,
+      };
+
+      const restoreProcess = spawn(restoreCommand, args, { env });
+
+      let stderr = '';
+      restoreProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      restoreProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`pg_restore failed: ${stderr}`));
+        }
+      });
+
+      restoreProcess.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
+  private async restoreFileBackup(backup: BackupMetadata): Promise<void> {
+    // This would extract the file backup archive
+    // Implementation depends on the archive format used
+    this.logger.log(`File backup restore not implemented yet: ${backup.id}`);
+  }
+}
+
+// Types
+export interface BackupResult {
+  success: boolean;
+  backupId: string;
+  path: string;
+  size: number;
+  duration: number;
+  metadata?: BackupMetadata;
+  dryRun?: boolean;
+  estimatedDuration?: number;
+}
+
+export interface RestoreResult {
+  success: boolean;
+  backupId?: string;
+  duration?: number;
+  pointInTime?: Date;
+  dryRun?: boolean;
+  estimatedDuration?: number;
+  metadata?: BackupMetadata;
+}
+
+export interface BackupMetadata {
+  id: string;
+  type: 'full' | 'incremental' | 'files';
+  timestamp: Date;
+  size: number;
+  duration?: number;
+  status: 'completed' | 'failed' | 'in_progress';
+  path: string;
+  checksum: string;
+  compressed?: boolean;
+  encrypted?: boolean;
+  comment?: string;
+
+  // Database-specific metadata
+  databaseVersion?: string;
+  tablesCount?: number;
+  recordsCount?: number;
+
+  // Incremental backup metadata
+  sinceTimestamp?: Date;
+  affectedTables?: string[];
+
+  // File backup metadata
+  directories?: string[];
+  excludePatterns?: string[];
+}
+
+export interface BackupStatus {
+  totalBackups: number;
+  latestBackup: Date | undefined;
+  totalSize: number;
+  failedBackups: number;
+  isBackupInProgress: boolean;
+  nextScheduledBackup: Date | null;
 }

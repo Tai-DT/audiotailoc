@@ -1,387 +1,432 @@
-"use client"
+'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import {
+  CalendarIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  UserIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  DocumentTextIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@/lib/utils';
-import { Calendar, Clock, MapPin, Phone, Mail, User } from 'lucide-react';
+import { api } from '@/lib/api-client';
+import { Service } from '@/lib/api-client';
 
-interface Service {
-  id: string;
-  name: string;
-  description?: string;
-  basePriceCents: number;
-  estimatedDuration: number;
-  category: string;
-  type: string;
-}
-
-interface BookingForm {
+interface BookingFormData {
   serviceId: string;
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
+  customerEmail?: string;
   customerAddress: string;
   scheduledDate: string;
   scheduledTime: string;
-  notes: string;
+  notes?: string;
 }
 
 export default function BookingPage() {
   const searchParams = useSearchParams();
-  const preSelectedServiceId = searchParams.get('service');
-  
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  
-  const [formData, setFormData] = useState<BookingForm>({
-    serviceId: preSelectedServiceId || '',
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-    customerAddress: '',
-    scheduledDate: '',
-    scheduledTime: '',
-    notes: ''
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch services
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<BookingFormData>();
+
+  const serviceId = watch('serviceId');
+  const selectedItems = searchParams.get('items')?.split(',').filter(Boolean) || [];
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-        if (!base) return;
+        setIsLoading(true);
+        const response = await api.services.getAll({ isActive: true });
+        const servicesData = response.data.data;
+        setServices(servicesData);
 
-        const response = await fetch(`${base}/services?isActive=true`);
-        if (response.ok) {
-          const data = await response.json();
-          setServices(data.items || []);
-          
-          // Auto-select service if pre-selected
-          if (preSelectedServiceId) {
-            const service = data.items?.find((s: Service) => s.id === preSelectedServiceId);
-            if (service) {
-              setSelectedService(service);
-              setFormData(prev => ({ ...prev, serviceId: service.id }));
-            }
+        const preSelectedServiceId = searchParams.get('serviceId');
+        if (preSelectedServiceId) {
+          const service = servicesData.find((s: Service) => s.id === preSelectedServiceId);
+          if (service) {
+            setSelectedService(service);
+            setValue('serviceId', service.id);
           }
         }
       } catch (error) {
         console.error('Failed to fetch services:', error);
+        toast.error('Không thể tải danh sách dịch vụ');
+      } finally {
+        setIsLoading(false);
       }
     };
-
     fetchServices();
-  }, [preSelectedServiceId]);
+  }, [searchParams, setValue]);
 
-  // Update selected service when serviceId changes
   useEffect(() => {
-    if (formData.serviceId) {
-      const service = services.find(s => s.id === formData.serviceId);
+    if (serviceId) {
+      const service = services.find(s => s.id === serviceId);
       setSelectedService(service || null);
     } else {
       setSelectedService(null);
     }
-  }, [formData.serviceId, services]);
+  }, [serviceId, services]);
 
-  const handleInputChange = (field: keyof BookingForm, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitStatus('loading');
-
+  const onSubmit = async (data: BookingFormData) => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API base URL not configured');
+      setIsSubmitting(true);
 
-      const response = await fetch(`${base}/bookings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          scheduledDate: `${formData.scheduledDate}T${formData.scheduledTime}:00.000Z`
-        }),
-      });
+      const bookingData = {
+        ...data,
+        items: selectedItems.map(itemId => ({ itemId, quantity: 1 }))
+      };
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        // Reset form
-        setFormData({
-          serviceId: '',
-          customerName: '',
-          customerPhone: '',
-          customerEmail: '',
-          customerAddress: '',
-          scheduledDate: '',
-          scheduledTime: '',
-          notes: ''
-        });
-        setSelectedService(null);
-      } else {
-        throw new Error('Booking failed');
-      }
-    } catch (error) {
+      await api.bookings.create(bookingData);
+      toast.success('Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
+      router.push('/account/bookings');
+    } catch (error: any) {
       console.error('Booking error:', error);
-      setSubmitStatus('error');
+      toast.error(error.response?.data?.message || 'Đặt lịch thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const timeSlots = [
-    '08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'
-  ];
+  const calculateTotalPrice = () => {
+    if (!selectedService) return 0;
+    
+    const basePrice = selectedService.basePriceCents;
+    const itemsPrice = selectedService.items
+      .filter(item => selectedItems.includes(item.id))
+      .reduce((sum, item) => sum + item.priceCents, 0);
+    
+    return basePrice + itemsPrice;
+  };
 
-  // Get minimum date (today)
-  const today = new Date().toISOString().split('T')[0];
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Đặt lịch dịch vụ</h1>
-          <p className="text-xl text-gray-600">
-            Chọn dịch vụ và thời gian phù hợp với bạn
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Booking Form */}
-          <div className="lg:col-span-2">
-            <Card>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="animate-pulse">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Thông tin đặt lịch
-                </CardTitle>
-                <CardDescription>
-                  Điền thông tin để đặt lịch dịch vụ
-                </CardDescription>
+                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i}>
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <Card className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="h-32 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Đặt lịch dịch vụ</h1>
+            <p className="text-gray-600">Điền thông tin để đặt lịch dịch vụ của chúng tôi</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Booking Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin đặt lịch</CardTitle>
+                <CardDescription>Vui lòng điền đầy đủ thông tin bên dưới</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   {/* Service Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="service">Chọn dịch vụ *</Label>
-                    <Select value={formData.serviceId} onValueChange={(value) => handleInputChange('serviceId', value)}>
+                    <Label htmlFor="serviceId">Chọn dịch vụ *</Label>
+                    <Select value={serviceId} onValueChange={(value) => setValue('serviceId', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn dịch vụ bạn cần" />
+                        <SelectValue placeholder="Chọn dịch vụ" />
                       </SelectTrigger>
                       <SelectContent>
                         {services.map((service) => (
                           <SelectItem key={service.id} value={service.id}>
-                            <div className="flex justify-between items-center w-full">
-                              <span>{service.name}</span>
-                              <Badge variant="outline" className="ml-2">
-                                {formatPrice(service.basePriceCents)}
-                              </Badge>
-                            </div>
+                            {service.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.serviceId && (
+                      <p className="text-sm text-red-600">{errors.serviceId.message}</p>
+                    )}
                   </div>
 
-                  {/* Customer Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="customerName">Họ tên *</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="customerName"
-                          value={formData.customerName}
-                          onChange={(e) => handleInputChange('customerName', e.target.value)}
-                          placeholder="Nhập họ tên"
-                          className="pl-10"
-                          required
-                        />
-                      </div>
+                  {/* Customer Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Họ và tên *</Label>
+                    <div className="relative">
+                      <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        {...register('customerName', { required: 'Vui lòng nhập họ và tên' })}
+                        placeholder="Nhập họ và tên"
+                        className="pl-10"
+                      />
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone">Số điện thoại *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="customerPhone"
-                          value={formData.customerPhone}
-                          onChange={(e) => handleInputChange('customerPhone', e.target.value)}
-                          placeholder="Nhập số điện thoại"
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
+                    {errors.customerName && (
+                      <p className="text-sm text-red-600">{errors.customerName.message}</p>
+                    )}
                   </div>
 
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="customerPhone">Số điện thoại *</Label>
+                    <div className="relative">
+                      <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        {...register('customerPhone', { required: 'Vui lòng nhập số điện thoại' })}
+                        placeholder="Nhập số điện thoại"
+                        className="pl-10"
+                      />
+                    </div>
+                    {errors.customerPhone && (
+                      <p className="text-sm text-red-600">{errors.customerPhone.message}</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="customerEmail">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <Input
-                        id="customerEmail"
+                        {...register('customerEmail')}
                         type="email"
-                        value={formData.customerEmail}
-                        onChange={(e) => handleInputChange('customerEmail', e.target.value)}
-                        placeholder="Nhập email (không bắt buộc)"
+                        placeholder="Nhập email (tùy chọn)"
                         className="pl-10"
                       />
                     </div>
                   </div>
 
+                  {/* Address */}
                   <div className="space-y-2">
                     <Label htmlFor="customerAddress">Địa chỉ *</Label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <Input
-                        id="customerAddress"
-                        value={formData.customerAddress}
-                        onChange={(e) => handleInputChange('customerAddress', e.target.value)}
+                        {...register('customerAddress', { required: 'Vui lòng nhập địa chỉ' })}
                         placeholder="Nhập địa chỉ"
                         className="pl-10"
-                        required
                       />
                     </div>
+                    {errors.customerAddress && (
+                      <p className="text-sm text-red-600">{errors.customerAddress.message}</p>
+                    )}
                   </div>
 
-                  {/* Schedule */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Date and Time */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="scheduledDate">Ngày *</Label>
-                      <Input
-                        id="scheduledDate"
-                        type="date"
-                        value={formData.scheduledDate}
-                        onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
-                        min={today}
-                        required
-                      />
+                      <div className="relative">
+                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          {...register('scheduledDate', { required: 'Vui lòng chọn ngày' })}
+                          type="date"
+                          className="pl-10"
+                        />
+                      </div>
+                      {errors.scheduledDate && (
+                        <p className="text-sm text-red-600">{errors.scheduledDate.message}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="scheduledTime">Thời gian *</Label>
-                      <Select value={formData.scheduledTime} onValueChange={(value) => handleInputChange('scheduledTime', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn thời gian" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((time) => (
-                            <SelectItem key={time} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="scheduledTime">Giờ *</Label>
+                      <div className="relative">
+                        <ClockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          {...register('scheduledTime', { required: 'Vui lòng chọn giờ' })}
+                          type="time"
+                          className="pl-10"
+                        />
+                      </div>
+                      {errors.scheduledTime && (
+                        <p className="text-sm text-red-600">{errors.scheduledTime.message}</p>
+                      )}
                     </div>
                   </div>
 
+                  {/* Notes */}
                   <div className="space-y-2">
                     <Label htmlFor="notes">Ghi chú</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => handleInputChange('notes', e.target.value)}
-                      placeholder="Mô tả thêm về yêu cầu của bạn (không bắt buộc)"
-                      rows={3}
-                    />
+                    <div className="relative">
+                      <DocumentTextIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <Textarea
+                        {...register('notes')}
+                        placeholder="Ghi chú thêm (tùy chọn)"
+                        className="pl-10"
+                        rows={3}
+                      />
+                    </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={submitStatus === 'loading'}
-                  >
-                    {submitStatus === 'loading' ? 'Đang đặt lịch...' : 'Đặt lịch ngay'}
+                  <Button type="submit" disabled={isSubmitting} className="w-full">
+                    {isSubmitting ? 'Đang xử lý...' : 'Đặt lịch ngay'}
                   </Button>
-
-                  {submitStatus === 'success' && (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-green-800">Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
-                    </div>
-                  )}
-
-                  {submitStatus === 'error' && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-red-800">Có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ trực tiếp.</p>
-                    </div>
-                  )}
                 </form>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Service Details */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chi tiết dịch vụ</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedService ? (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{selectedService.name}</h3>
-                      <p className="text-gray-600 text-sm">{selectedService.description}</p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Giá dịch vụ:</span>
-                        <span className="font-semibold text-lg">{formatPrice(selectedService.basePriceCents)}</span>
+            {/* Service Details */}
+            <div className="space-y-6">
+              {selectedService && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Chi tiết dịch vụ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">{selectedService.name}</h3>
+                        {selectedService.description && (
+                          <p className="text-gray-600 text-sm mt-1">{selectedService.description}</p>
+                        )}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Thời gian ước tính:</span>
-                        <span>{selectedService.estimatedDuration} phút</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Loại dịch vụ:</span>
-                        <Badge variant="outline">{selectedService.type}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Chọn dịch vụ để xem chi tiết</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Contact Info */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Liên hệ hỗ trợ</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span>024.1234.5678</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span>booking@audiotailoc.com</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-gray-400" />
-                  <span>123 Đường ABC, Hà Nội</span>
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">Thời gian ước tính:</span>
+                        <span className="font-medium">{selectedService.estimatedDuration} phút</span>
+                      </div>
+
+                      {selectedService.items && selectedService.items.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Hạng mục dịch vụ:</h4>
+                          <div className="space-y-2">
+                            {selectedService.items.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={item.id}
+                                    checked={selectedItems.includes(item.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        selectedItems.push(item.id);
+                                      } else {
+                                        const index = selectedItems.indexOf(item.id);
+                                        if (index > -1) {
+                                          selectedItems.splice(index, 1);
+                                        }
+                                      }
+                                    }}
+                                    className="rounded border-gray-300"
+                                  />
+                                  <Label htmlFor={item.id} className="text-sm">
+                                    {item.name}
+                                  </Label>
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {item.priceCents.toLocaleString()} VND
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between text-lg font-bold">
+                          <span>Tổng cộng:</span>
+                          <span className="text-primary-600">
+                            {calculateTotalPrice().toLocaleString()} VND
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Booking Info */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thông tin đặt lịch</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium">Xác nhận đặt lịch</h4>
+                        <p className="text-sm text-gray-600">Chúng tôi sẽ liên hệ xác nhận trong vòng 24h</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-3">
+                      <CurrencyDollarIcon className="w-5 h-5 text-blue-500 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium">Thanh toán</h4>
+                        <p className="text-sm text-gray-600">Thanh toán sau khi hoàn thành dịch vụ</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-3">
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium">Bảo hành</h4>
+                        <p className="text-sm text-gray-600">Bảo hành 12 tháng cho tất cả dịch vụ</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

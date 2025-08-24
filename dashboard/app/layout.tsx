@@ -34,9 +34,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     } catch {
       flash = null;
     }
-    // Clear after reading
-    // Note: Next.js 15 cookies API is async and mutating in RSC isn't supported across all runtimes; consider clearing via route action
   }
+
   return (
     <html lang="vi">
       <body className="min-h-screen bg-background font-sans antialiased">

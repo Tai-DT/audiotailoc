@@ -21,8 +21,8 @@ export class UsersService {
         _count: {
           select: {
             orders: true,
-            reviews: true,
-            wishlistItems: true
+            // reviews: true, // Field not available in SQLite schema
+            // wishlistItems: true // Field not available in SQLite schema
           }
         }
       }
@@ -52,7 +52,7 @@ export class UsersService {
           _count: {
             select: {
               orders: true,
-              reviews: true
+                             // reviews: true // Field not available in SQLite schema
             }
           }
         },
@@ -101,7 +101,13 @@ export class UsersService {
 
   // Backward-compatible alias
   async createUser(params: { email: string; password: string; name?: string | null }) {
-    return this.prisma.user.create({ data: { email: params.email, password: params.password, name: params.name ?? '' } });
+    const existingUser = await this.findByEmail(params.email);
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(params.password, 12);
+    return this.prisma.user.create({ data: { email: params.email, password: hashedPassword, name: params.name ?? '' } });
   }
 
   async update(id: string, updateUserDto: { name?: string; phone?: string; role?: 'USER' | 'ADMIN' }) {
@@ -184,6 +190,24 @@ export class UsersService {
       date: stat.createdAt.toISOString().split('T')[0],
       newUsers: stat._count.id
     }));
+  }
+
+  async updatePassword(userId: string, hashedPassword: string) {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        updatedAt: true
+      }
+    });
   }
 }
 

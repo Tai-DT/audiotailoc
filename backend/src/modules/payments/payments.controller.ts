@@ -29,11 +29,59 @@ class CreateRefundDto {
   reason?: string;
 }
 
-@UseGuards(JwtGuard)
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
+  @Get('methods')
+  getPaymentMethods() {
+    return {
+      methods: [
+        {
+          id: 'VNPAY',
+          name: 'VNPAY',
+          description: 'Thanh toán qua VNPAY',
+          logo: '/images/payment/vnpay.png',
+          enabled: true
+        },
+        {
+          id: 'MOMO',
+          name: 'MoMo',
+          description: 'Thanh toán qua MoMo',
+          logo: '/images/payment/momo.png',
+          enabled: true
+        },
+        {
+          id: 'PAYOS',
+          name: 'PayOS',
+          description: 'Thanh toán qua PayOS',
+          logo: '/images/payment/payos.png',
+          enabled: true
+        }
+      ]
+    };
+  }
+
+  @Get('status')
+  getPaymentStatus() {
+    return {
+      status: 'active',
+      message: 'Payment system is operational',
+      timestamp: new Date().toISOString(),
+      supportedProviders: ['VNPAY', 'MOMO', 'PAYOS']
+    };
+  }
+
+  @Get('intents')
+  getPaymentIntents() {
+    return {
+      intents: [],
+      message: 'Payment intents endpoint',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @UseGuards(JwtGuard)
   @Post('intents')
   createIntent(@Body() dto: CreateIntentDto) {
     return this.payments.createIntent(dto);

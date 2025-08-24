@@ -160,7 +160,7 @@ export default function SearchPage() {
           {query && (
             <div className="flex items-center justify-between">
               <p className="text-gray-600">
-                Kết quả tìm kiếm cho "{query}": {filteredResults.length} kết quả
+                Kết quả tìm kiếm cho &ldquo;{query}&rdquo;: {filteredResults.length} kết quả
               </p>
               
               {/* View Mode Toggle */}

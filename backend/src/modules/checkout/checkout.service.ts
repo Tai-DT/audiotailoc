@@ -8,22 +8,7 @@ import { MailService } from '../notifications/mail.service';
 export class CheckoutService {
   constructor(private readonly prisma: PrismaService, private readonly cart: CartService, private readonly promos: PromotionService, private readonly mail: MailService) {}
 
-  async createOrder(userId: string, params: { promotionCode?: string; shippingAddress?: any; idempotencyKey?: string }) {
-    // Check idempotency to prevent duplicate orders
-    if (params.idempotencyKey) {
-      const existingOrder = await this.prisma.order.findFirst({
-        where: { 
-          userId,
-          // Store idempotency key in metadata or create separate table
-          // For now, check by order creation time within 5 minutes
-          createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) }
-        }
-      });
-      if (existingOrder) {
-        return existingOrder; // Return existing order if duplicate request
-      }
-    }
-
+  async createOrder(userId: string, params: { promotionCode?: string; shippingAddress?: any }) {
     const { cart, items, subtotalCents } = await this.cart.getCartWithTotals(userId);
     if (items.length === 0) throw new BadRequestException('Giỏ hàng trống');
     const promo = await this.promos.validate(params.promotionCode);
@@ -47,17 +32,8 @@ export class CheckoutService {
           shippingAddress: params.shippingAddress ?? null,
         },
       });
-      // Copy items and adjust inventory with stock checks
+      // Copy items and adjust inventory
       for (const i of items) {
-        // Ensure enough stock (and reserved) before decrement
-        const updated = await tx.inventory.updateMany({
-          where: { productId: i.productId, stock: { gte: i.quantity }, reserved: { gte: i.quantity } },
-          data: { stock: { decrement: i.quantity }, reserved: { decrement: i.quantity } },
-        });
-        if (updated.count !== 1) {
-          throw new BadRequestException(`Sản phẩm tạm hết hàng: ${i.product?.name || i.productId}`);
-        }
-
         await tx.orderItem.create({
           data: {
             orderId: order.id,
@@ -68,6 +44,7 @@ export class CheckoutService {
             imageUrl: i.product.imageUrl ?? null,
           },
         });
+        await tx.inventory.update({ where: { productId: i.productId }, data: { stock: { decrement: i.quantity }, reserved: { decrement: i.quantity } } });
       }
       // Mark cart checked out
       await tx.cart.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });

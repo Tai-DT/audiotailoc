@@ -49,6 +49,21 @@ export class ChatController {
   escalate(@Param('id') id: string) {
     return this.chat.escalate(id);
   }
+
+  @Patch('sessions/:id/close')
+  closeSession(@Param('id') id: string) {
+    return this.chat.closeSession(id);
+  }
+
+  @Get('sessions/:id/analytics')
+  getSessionAnalytics(@Param('id') id: string) {
+    return this.chat.getSessionAnalytics(id);
+  }
+
+  @Get('stats')
+  getStats() {
+    return this.chat.getChatStats();
+  }
 }
 
 

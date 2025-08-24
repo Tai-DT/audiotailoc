@@ -16,9 +16,7 @@ export class CartService {
     const guestCart = await this.prisma.cart.create({
       data: {
         userId: null, // Guest cart
-        guestId: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         status: 'ACTIVE',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       },
       include: {
         items: {
@@ -27,10 +25,10 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                priceCents: true,
+                price: true,
                 images: true,
                 imageUrl: true,
-                featured: true
+
               }
             }
           }
@@ -38,18 +36,16 @@ export class CartService {
       }
     });
 
-    this.logger.log(`Guest cart created: ${guestCart.guestId}`);
+    this.logger.log(`Guest cart created: ${guestCart.id}`);
     return guestCart;
   }
 
-  async getGuestCart(guestId: string) {
+  async getGuestCart(cartId: string) {
     const cart = await this.prisma.cart.findFirst({
       where: {
-        guestId,
-        status: 'ACTIVE',
-        expiresAt: {
-          gt: new Date()
-        }
+        id: cartId,
+        userId: null, // Guest cart
+        status: 'ACTIVE'
       },
       include: {
         items: {
@@ -58,10 +54,10 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                priceCents: true,
+                price: true,
                 images: true,
                 imageUrl: true,
-                featured: true
+
               }
             }
           }
@@ -70,41 +66,44 @@ export class CartService {
     });
 
     if (!cart) {
-      throw new NotFoundException('Guest cart not found or expired');
+      throw new NotFoundException('Guest cart not found');
     }
 
     return this.calculateCartTotals(cart);
   }
 
-  async addToGuestCart(guestId: string, productId: string, quantity: number = 1) {
+  async addToGuestCart(cartId: string, productId: string, quantity: number = 1) {
     // Check if guest cart exists
     let cart = await this.prisma.cart.findFirst({
       where: {
-        guestId,
-        status: 'ACTIVE',
-        expiresAt: {
-          gt: new Date()
-        }
+        id: cartId,
+        userId: null,
+        status: 'ACTIVE'
       }
     });
 
     if (!cart) {
-      cart = await this.createGuestCart();
+      throw new NotFoundException('Guest cart not found');
     }
 
     // Check if product exists and is available
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: { inventory: true }
+      where: { id: productId }
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    if ((product.inventory?.stock ?? 0) < quantity) {
-      throw new Error('Insufficient stock');
-    }
+    // TODO: Implement inventory tracking in SQLite schema
+    // Stock check disabled for SQLite schema
+    // if ((product.inventory?.stock ?? 0) < quantity) {
+    //   throw new Error('Insufficient stock');
+    // }
+    // await this.prisma.inventory.update({
+    //   where: { productId: productId },
+    //   data: { reserved: { increment: quantity } },
+    // });
 
     // Check if item already exists in cart
     const existingItem = await this.prisma.cartItem.findFirst({
@@ -132,13 +131,13 @@ export class CartService {
       });
     }
 
-    this.logger.log(`Added ${quantity} of product ${productId} to guest cart ${guestId}`);
-    return this.getGuestCart(guestId);
+    this.logger.log(`Added ${quantity} of product ${productId} to guest cart ${cartId}`);
+    return this.getGuestCart(cartId);
   }
 
-  async updateGuestCartItem(guestId: string, productId: string, quantity: number) {
+  async updateGuestCartItem(cartId: string, productId: string, quantity: number) {
     const cart = await this.prisma.cart.findFirst({
-      where: { guestId, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' }
     });
 
     if (!cart) {
@@ -156,6 +155,17 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
+    const delta = quantity - cartItem.quantity;
+    if (delta !== 0) {
+      // Adjust reservation based on quantity change
+      await this.prisma.inventory.update({
+        where: { productId },
+        data: {
+          reserved: delta > 0 ? { increment: delta } : { decrement: -delta }
+        }
+      });
+    }
+
     if (quantity <= 0) {
       // Remove item
       await this.prisma.cartItem.delete({
@@ -169,48 +179,55 @@ export class CartService {
       });
     }
 
-    return this.getGuestCart(guestId);
+    return this.getGuestCart(cartId);
   }
 
-  async removeFromGuestCart(guestId: string, productId: string) {
+  async removeFromGuestCart(cartId: string, productId: string) {
     const cart = await this.prisma.cart.findFirst({
-      where: { guestId, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' }
     });
 
     if (!cart) {
       throw new NotFoundException('Guest cart not found');
     }
 
-    await this.prisma.cartItem.deleteMany({
-      where: {
-        cartId: cart.id,
-        productId
-      }
-    });
+    const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
+    if (item) {
+      await this.prisma.inventory.update({
+        where: { productId },
+        data: { reserved: { decrement: item.quantity } }
+      });
+      await this.prisma.cartItem.delete({ where: { id: item.id } });
+    }
 
-    return this.getGuestCart(guestId);
+    return this.getGuestCart(cartId);
   }
 
-  async clearGuestCart(guestId: string) {
+  async clearGuestCart(cartId: string) {
     const cart = await this.prisma.cart.findFirst({
-      where: { guestId, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' }
     });
 
     if (!cart) {
       throw new NotFoundException('Guest cart not found');
     }
 
-    await this.prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
-    });
+    const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
+    for (const item of items) {
+      await this.prisma.inventory.update({
+        where: { productId: item.productId },
+        data: { reserved: { decrement: item.quantity } }
+      });
+      await this.prisma.cartItem.delete({ where: { id: item.id } });
+    }
 
-    return this.getGuestCart(guestId);
+    return this.getGuestCart(cartId);
   }
 
   // Convert guest cart to user cart
-  async convertGuestCartToUserCart(guestId: string, userId: string) {
+  async convertGuestCartToUserCart(cartId: string, userId: string) {
     const guestCart = await this.prisma.cart.findFirst({
-      where: { guestId, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' }
     });
 
     if (!guestCart) {
@@ -266,9 +283,7 @@ export class CartService {
       await this.prisma.cart.update({
         where: { id: guestCart.id },
         data: {
-          userId,
-          guestId: null,
-          expiresAt: null
+          userId
         }
       });
 
@@ -290,7 +305,7 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                priceCents: true,
+                price: true,
                 images: true,
                 inventory: { select: { stock: true } },
               }
@@ -321,7 +336,7 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                priceCents: true,
+                price: true,
                 images: true,
                 inventory: { select: { stock: true } },
               }
@@ -407,6 +422,16 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
+    const delta = quantity - cartItem.quantity;
+    if (delta !== 0) {
+      await this.prisma.inventory.update({
+        where: { productId },
+        data: {
+          reserved: delta > 0 ? { increment: delta } : { decrement: -delta }
+        }
+      });
+    }
+
     if (quantity <= 0) {
       await this.prisma.cartItem.delete({
         where: { id: cartItem.id }
@@ -430,12 +455,14 @@ export class CartService {
       throw new NotFoundException('User cart not found');
     }
 
-    await this.prisma.cartItem.deleteMany({
-      where: {
-        cartId: cart.id,
-        productId
-      }
-    });
+    const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
+    if (item) {
+      await this.prisma.inventory.update({
+        where: { productId },
+        data: { reserved: { decrement: item.quantity } }
+      });
+      await this.prisma.cartItem.delete({ where: { id: item.id } });
+    }
 
     return this.getUserCart(userId);
   }
@@ -449,9 +476,14 @@ export class CartService {
       throw new NotFoundException('User cart not found');
     }
 
-    await this.prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
-    });
+    const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
+    for (const item of items) {
+      await this.prisma.inventory.update({
+        where: { productId: item.productId },
+        data: { reserved: { decrement: item.quantity } }
+      });
+      await this.prisma.cartItem.delete({ where: { id: item.id } });
+    }
 
     return this.getUserCart(userId);
   }
@@ -478,12 +510,13 @@ export class CartService {
     };
   }
 
-  // Clean up expired guest carts
+  // Clean up old guest carts (older than 7 days)
   async cleanupExpiredGuestCarts() {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const expiredCarts = await this.prisma.cart.findMany({
       where: {
-        guestId: { not: null },
-        expiresAt: { lt: new Date() },
+        userId: null, // Guest carts
+        createdAt: { lt: sevenDaysAgo },
         status: 'ACTIVE'
       }
     });

@@ -1,13 +1,68 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtGuard } from '../auth/jwt.guard';
+import { IsString, IsNumber, Min, IsOptional } from 'class-validator';
 
-class AddToCartDto { productId!: string; quantity!: number; }
-class UpdateCartItemDto { quantity!: number; }
+class AddToCartDto { 
+  @IsString()
+  productId!: string; 
+  
+  @IsNumber()
+  @Min(1)
+  quantity!: number; 
+}
+
+class UpdateCartItemDto { 
+  @IsNumber()
+  @Min(1)
+  quantity!: number; 
+}
 
 @Controller('cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
+
+  // Simple Cart Endpoint for Frontend
+  @Get()
+  async getCart(@Query('cartId') cartId?: string, @Query('userId') userId?: string) {
+    if (cartId) {
+      return this.cartService.getGuestCart(cartId);
+    }
+    if (userId) {
+      return this.cartService.getUserCart(userId);
+    }
+    return {
+      items: [],
+      total: 0,
+      message: 'No cart ID provided'
+    };
+  }
+
+  @Post('items')
+  async addToCart(
+    @Body() addToCartDto: AddToCartDto,
+    @Query('cartId') cartId?: string,
+    @Query('userId') userId?: string
+  ) {
+    if (cartId) {
+      return this.cartService.addToGuestCart(
+        cartId,
+        addToCartDto.productId,
+        addToCartDto.quantity
+      );
+    }
+    if (userId) {
+      return this.cartService.addToUserCart(
+        userId,
+        addToCartDto.productId,
+        addToCartDto.quantity
+      );
+    }
+    return {
+      success: false,
+      message: 'No cart ID provided'
+    };
+  }
 
   // Guest Cart Endpoints
   @Post('guest')
@@ -15,55 +70,55 @@ export class CartController {
     return this.cartService.createGuestCart();
   }
 
-  @Get('guest/:guestId')
-  async getGuestCart(@Param('guestId') guestId: string) {
-    return this.cartService.getGuestCart(guestId);
+  @Get('guest/:cartId')
+  async getGuestCart(@Param('cartId') cartId: string) {
+    return this.cartService.getGuestCart(cartId);
   }
 
-  @Post('guest/:guestId/items')
+  @Post('guest/:cartId/items')
   async addToGuestCart(
-    @Param('guestId') guestId: string,
+    @Param('cartId') cartId: string,
     @Body() addToCartDto: AddToCartDto
   ) {
     return this.cartService.addToGuestCart(
-      guestId,
+      cartId,
       addToCartDto.productId,
       addToCartDto.quantity
     );
   }
 
-  @Put('guest/:guestId/items/:productId')
+  @Put('guest/:cartId/items/:productId')
   async updateGuestCartItem(
-    @Param('guestId') guestId: string,
+    @Param('cartId') cartId: string,
     @Param('productId') productId: string,
     @Body() updateCartItemDto: UpdateCartItemDto
   ) {
     return this.cartService.updateGuestCartItem(
-      guestId,
+      cartId,
       productId,
       updateCartItemDto.quantity
     );
   }
 
-  @Delete('guest/:guestId/items/:productId')
+  @Delete('guest/:cartId/items/:productId')
   async removeFromGuestCart(
-    @Param('guestId') guestId: string,
+    @Param('cartId') cartId: string,
     @Param('productId') productId: string
   ) {
-    return this.cartService.removeFromGuestCart(guestId, productId);
+    return this.cartService.removeFromGuestCart(cartId, productId);
   }
 
-  @Delete('guest/:guestId/clear')
-  async clearGuestCart(@Param('guestId') guestId: string) {
-    return this.cartService.clearGuestCart(guestId);
+  @Delete('guest/:cartId/clear')
+  async clearGuestCart(@Param('cartId') cartId: string) {
+    return this.cartService.clearGuestCart(cartId);
   }
 
-  @Post('guest/:guestId/convert/:userId')
+  @Post('guest/:cartId/convert/:userId')
   async convertGuestCartToUserCart(
-    @Param('guestId') guestId: string,
+    @Param('cartId') cartId: string,
     @Param('userId') userId: string
   ) {
-    return this.cartService.convertGuestCartToUserCart(guestId, userId);
+    return this.cartService.convertGuestCartToUserCart(cartId, userId);
   }
 
   // User Cart Endpoints (Protected)
@@ -113,49 +168,6 @@ export class CartController {
   @Delete('user/clear')
   async clearUserCart(@Query('userId') userId: string) {
     return this.cartService.clearUserCart(userId);
-  }
-
-  // Legacy endpoints for backward compatibility
-  @UseGuards(JwtGuard)
-  @Get()
-  async getCart(@Query('userId') userId: string) {
-    return this.cartService.getUserCart(userId);
-  }
-
-  @UseGuards(JwtGuard)
-  @Post('items')
-  async addItem(
-    @Query('userId') userId: string,
-    @Body() addToCartDto: AddToCartDto
-  ) {
-    return this.cartService.addToUserCart(
-      userId,
-      addToCartDto.productId,
-      addToCartDto.quantity
-    );
-  }
-
-  @UseGuards(JwtGuard)
-  @Put('items/:productId')
-  async updateItem(
-    @Query('userId') userId: string,
-    @Param('productId') productId: string,
-    @Body() updateCartItemDto: UpdateCartItemDto
-  ) {
-    return this.cartService.updateUserCartItem(
-      userId,
-      productId,
-      updateCartItemDto.quantity
-    );
-  }
-
-  @UseGuards(JwtGuard)
-  @Delete('items/:productId')
-  async removeItem(
-    @Query('userId') userId: string,
-    @Param('productId') productId: string
-  ) {
-    return this.cartService.removeFromUserCart(userId, productId);
   }
 }
 

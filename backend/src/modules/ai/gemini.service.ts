@@ -9,14 +9,14 @@ export class GeminiService {
   private model?: any;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY');
+    const apiKey = this.config.get<string>('GOOGLE_AI_API_KEY');
     if (!apiKey) {
-      this.logger.warn('GEMINI_API_KEY not configured');
+      this.logger.warn('GOOGLE_AI_API_KEY not configured');
       return;
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     this.logger.log('Gemini AI service initialized');
   }
 
@@ -33,8 +33,22 @@ export class GeminiService {
       const result = await this.model.generateContent(fullPrompt);
       const response = await result.response;
       return response.text();
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to generate Gemini response:', error);
+      
+      // Handle specific error types
+      if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+        throw new Error('API rate limit exceeded. Vui lòng thử lại sau 1 phút.');
+      }
+      
+      if (error.message?.includes('400') || error.message?.includes('Bad Request')) {
+        throw new Error('Yêu cầu không hợp lệ. Vui lòng kiểm tra lại input.');
+      }
+      
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        throw new Error('API key không hợp lệ hoặc đã hết hạn.');
+      }
+      
       throw new Error('Không thể tạo phản hồi AI. Vui lòng thử lại sau.');
     }
   }

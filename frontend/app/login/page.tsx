@@ -1,195 +1,49 @@
-"use client"
+'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { RegisterForm } from '@/components/auth/RegisterForm';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [isLogin, setIsLogin] = useState(true);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (error) setError(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API không khả dụng');
-
-      const response = await fetch(`${base}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Store tokens if needed
-        if (data.accessToken) {
-          localStorage.setItem('accessToken', data.accessToken);
-        }
-        if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
-        
-        // Redirect to home page or intended page
-        router.push('/');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Đăng nhập thất bại');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Lỗi kết nối. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-    }
+  const handleSuccess = () => {
+    // Redirect to home page after successful login/register
+    window.location.href = '/';
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🎵</div>
-          <h2 className="text-3xl font-bold text-gray-900">Đăng nhập</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Đăng nhập vào tài khoản của bạn
-          </p>
+    <AuthGuard requireGuest redirectTo="/">
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Audio Tài Lộc</h1>
+            <p className="text-gray-600">Hệ thống âm thanh chuyên nghiệp</p>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin đăng nhập</CardTitle>
-            <CardDescription>
-              Nhập email và mật khẩu để đăng nhập
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          {isLogin ? (
+            <LoginForm
+              onSuccess={handleSuccess}
+              onSwitchToRegister={() => setIsLogin(false)}
+            />
+          ) : (
+            <RegisterForm
+              onSuccess={handleSuccess}
+              onSwitchToLogin={() => setIsLogin(true)}
+            />
+          )}
+        </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Nhập email của bạn"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="Nhập mật khẩu"
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                    Ghi nhớ đăng nhập
-                  </label>
-                </div>
-
-                <div className="text-sm">
-                  <Link href="/forgot-password" className="text-blue-600 hover:text-blue-500">
-                    Quên mật khẩu?
-                  </Link>
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-              </Button>
-            </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Hoặc</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  <span className="text-lg mr-2">📱</span>
-                  Google
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <span className="text-lg mr-2">📘</span>
-                  Facebook
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Chưa có tài khoản?{' '}
-                <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
-                  Đăng ký ngay
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600">
+            © 2025 Audio Tài Lộc. Tất cả quyền được bảo lưu.
+          </p>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
 

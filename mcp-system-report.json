@@ -1,0 +1,52 @@
+{
+  "project": "Audio Tài Lộc",
+  "timestamp": "2025-08-23T10:36:48.468Z",
+  "version": "1.0.0",
+  "mcpVersion": "1.0",
+  "status": "ACTIVE",
+  "health": {
+    "error": "timeout of 10000ms exceeded"
+  },
+  "quality": {
+    "criticalFiles": "4/4",
+    "timestamp": "2025-08-23T10:36:48.205Z"
+  },
+  "performance": {
+    "Health": {
+      "status": 200,
+      "responseTime": 25,
+      "success": true
+    },
+    "Products": {
+      "status": 200,
+      "responseTime": 115,
+      "success": true
+    },
+    "Categories": {
+      "status": 200,
+      "responseTime": 25,
+      "success": true
+    },
+    "Auth": {
+      "status": 200,
+      "responseTime": 17,
+      "success": true
+    },
+    "Cart": {
+      "status": 200,
+      "responseTime": 12,
+      "success": true
+    }
+  },
+  "security": {
+    "securityScore": "100%",
+    "corsConfigured": true,
+    "timestamp": "2025-08-23T10:36:48.416Z"
+  },
+  "dataConsistency": {
+    "productsCount": 8,
+    "categoriesCount": 9,
+    "timestamp": "2025-08-23T10:36:48.467Z"
+  },
+  "overallScore": "50%"
+}

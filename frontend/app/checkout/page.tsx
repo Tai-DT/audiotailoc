@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,8 +133,8 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  try {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!base) throw new Error('API không khả dụng');
 
       // Create order
@@ -239,7 +240,7 @@ export default function CheckoutPage() {
           <h2 className="text-2xl font-bold mb-2">Giỏ hàng trống</h2>
           <p className="text-gray-600 mb-4">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
           <Button asChild>
-            <a href="/products">Mua sắm ngay</a>
+            <Link href="/products">Mua sắm ngay</Link>
           </Button>
         </div>
       </div>
@@ -250,20 +251,20 @@ export default function CheckoutPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Thanh toán</h1>
+        <h1 className="text-3xl font-bold mb-2">Thanh toán</h1>
           <p className="text-gray-600">Hoàn tất đơn hàng của bạn</p>
-        </div>
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
+          <Card>
+            <CardHeader>
                 <CardTitle>Thông tin giao hàng</CardTitle>
                 <CardDescription>
                   Điền thông tin để hoàn tất đơn hàng
                 </CardDescription>
-              </CardHeader>
+            </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Customer Information */}
@@ -355,7 +356,7 @@ export default function CheckoutPage() {
                       placeholder="Ghi chú cho đơn hàng (không bắt buộc)"
                       rows={3}
                     />
-                  </div>
+                </div>
 
                   {/* Payment Method */}
                   <div className="space-y-4">
@@ -379,11 +380,11 @@ export default function CheckoutPage() {
                               <h3 className="font-semibold">{method.name}</h3>
                               <p className="text-sm text-gray-600">{method.description}</p>
                             </div>
-                          </div>
-                        </div>
+                </div>
+                </div>
                       ))}
-                    </div>
-                  </div>
+                </div>
+              </div>
 
                   <Button 
                     type="submit" 
@@ -394,16 +395,16 @@ export default function CheckoutPage() {
                     {processing ? 'Đang xử lý...' : `Thanh toán ${formatPrice(cart.totalCents)}`}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
+          <Card>
+            <CardHeader>
                 <CardTitle>Đơn hàng của bạn</CardTitle>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="space-y-4">
                 {/* Order Items */}
                 <div className="space-y-3">
@@ -433,7 +434,7 @@ export default function CheckoutPage() {
                   <div className="flex justify-between">
                     <span>Thuế:</span>
                     <span>{formatPrice(cart.taxCents)}</span>
-                  </div>
+                    </div>
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Tổng cộng:</span>
                     <span>{formatPrice(cart.totalCents)}</span>
@@ -451,8 +452,8 @@ export default function CheckoutPage() {
                     <span>Giao hàng trong 24-48h</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           </div>
         </div>
       </div>

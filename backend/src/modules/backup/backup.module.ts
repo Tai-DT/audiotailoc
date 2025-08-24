@@ -1,12 +1,21 @@
-import { Module } from '@nestjs/common';
-import { BackupService } from './backup.service';
+import { Module, Global } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { BackupController } from './backup.controller';
-import { LoggingModule } from '../monitoring/logging.module';
+import { BackupService } from './backup.service';
+import { BackupSchedulerService } from './backup-scheduler.service';
+import { LoggingModule } from '../logging/logging.module';
 
+@Global()
 @Module({
-  imports: [LoggingModule],
-  providers: [BackupService],
+  imports: [ConfigModule, LoggingModule],
   controllers: [BackupController],
-  exports: [BackupService],
+  providers: [
+    BackupService,
+    BackupSchedulerService,
+  ],
+  exports: [
+    BackupService,
+    BackupSchedulerService,
+  ],
 })
 export class BackupModule {}

@@ -1,162 +1,50 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { formatPrice } from '@/lib/utils';
-
-type CartItem = {
-  id: string;
-  productId: string;
-  productSlug: string;
-  productName: string;
-  productImageUrl?: string | null;
-  priceCents: number;
-  quantity: number;
-  inStock: boolean;
-};
-
-type Cart = {
-  items: CartItem[];
-  totalItems: number;
-  subtotalCents: number;
-  shippingCents: number;
-  taxCents: number;
-  totalCents: number;
-};
+import { useCartStore } from '@/store/cart-store';
+import { useAuthStore } from '@/store/auth-store';
+import { CartItem } from '@/components/cart/CartItem';
 
 export default function CartPage() {
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null);
+  const { items, getTotal, getItemCount, clearCart, guestId, createGuestCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    fetchCart();
-  }, []);
-
-  async function fetchCart() {
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API base URL not configured');
-
-      const res = await fetch(`${base}/cart`, {
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        const cartData = await res.json();
-        setCart(cartData);
-      } else {
-        setCart(null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch cart:', error);
-      setCart(null);
-    } finally {
-      setLoading(false);
+    // Create guest cart if not authenticated and no guestId
+    if (!isAuthenticated && !guestId) {
+      createGuestCart();
     }
-  }
+  }, [isAuthenticated, guestId, createGuestCart]);
 
-  async function updateQuantity(itemId: string, quantity: number) {
-    if (quantity < 1) return;
-    
-    setUpdating(itemId);
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API base URL not configured');
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(price);
+  };
 
-      const res = await fetch(`${base}/cart/items/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ quantity }),
-      });
-
-      if (res.ok) {
-        await fetchCart();
-      }
-    } catch (error) {
-      console.error('Failed to update quantity:', error);
-    } finally {
-      setUpdating(null);
+  const handleClearCart = () => {
+    if (confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
+      clearCart();
     }
-  }
+  };
 
-  async function removeItem(itemId: string) {
-    setUpdating(itemId);
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API base URL not configured');
-
-      const res = await fetch(`${base}/cart/items/${itemId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        await fetchCart();
-      }
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    } finally {
-      setUpdating(null);
-    }
-  }
-
-  async function clearCart() {
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API base URL not configured');
-
-      const res = await fetch(`${base}/cart`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        await fetchCart();
-      }
-    } catch (error) {
-      console.error('Failed to clear cart:', error);
-    }
-  }
-
-  if (loading) {
+  if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải giỏ hàng...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!cart || cart.items.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🛒</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Giỏ hàng trống</h1>
-          <p className="text-gray-600 mb-8">
-            Bạn chưa có sản phẩm nào trong giỏ hàng
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/products">
-              <Button size="lg">
-                🛍️ Tiếp tục mua sắm
-              </Button>
-            </Link>
-            <Link href="/categories">
-              <Button variant="outline" size="lg">
-                📂 Xem danh mục
-              </Button>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🛒</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Giỏ hàng trống</h1>
+            <p className="text-gray-600 mb-8">
+              Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm của chúng tôi!
+            </p>
+            <Link
+              href="/products"
+              className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors inline-block"
+            >
+              Tiếp tục mua sắm
             </Link>
           </div>
         </div>
@@ -165,195 +53,120 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Giỏ hàng</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Sản phẩm ({cart.totalItems})</CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearCart}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Xóa tất cả
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {cart.items.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                    {/* Product Image */}
-                    <div className="w-20 h-20 relative flex-shrink-0">
-                      {item.productImageUrl ? (
-                        <Image
-                          src={item.productImageUrl}
-                          alt={item.productName}
-                          fill
-                          className="object-cover rounded"
-                          sizes="80px"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">No img</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <Link 
-                        href={`/products/${item.productSlug}`}
-                        className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                      >
-                        {item.productName}
-                      </Link>
-                      <div className="text-lg font-bold text-blue-600 mt-1">
-                        {formatPrice(item.priceCents)}
-                      </div>
-                      {!item.inStock && (
-                        <Badge variant="destructive" className="mt-1">
-                          Hết hàng
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Quantity Controls */}
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={updating === item.id || item.quantity <= 1}
-                      >
-                        -
-                      </Button>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value, 10);
-                          if (!isNaN(value) && value > 0) {
-                            updateQuantity(item.id, value);
-                          }
-                        }}
-                        className="w-16 text-center"
-                        min="1"
-                        disabled={updating === item.id}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={updating === item.id || !item.inStock}
-                      >
-                        +
-                      </Button>
-                    </div>
-
-                    {/* Total Price */}
-                    <div className="text-right min-w-0">
-                      <div className="font-bold text-gray-900">
-                        {formatPrice(item.priceCents * item.quantity)}
-                      </div>
-                    </div>
-
-                    {/* Remove Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      disabled={updating === item.id}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Giỏ hàng</h1>
+          <p className="text-gray-600">
+            Bạn có {getItemCount()} sản phẩm trong giỏ hàng
+          </p>
         </div>
 
-        {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tổng đơn hàng</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Sản phẩm ({items.length})
+                </h2>
+                <button
+                  onClick={handleClearCart}
+                  className="text-sm text-red-600 hover:text-red-700 transition-colors"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+
               <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Tạm tính:</span>
-                  <span>{formatPrice(cart.subtotalCents)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Phí vận chuyển:</span>
-                  <span>{formatPrice(cart.shippingCents)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Thuế:</span>
-                  <span>{formatPrice(cart.taxCents)}</span>
-                </div>
-                <div className="border-t pt-4">
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Tổng cộng:</span>
-                    <span>{formatPrice(cart.totalCents)}</span>
-                  </div>
-                </div>
+                {items.map((item) => (
+                  <CartItem key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          </div>
 
-                <div className="space-y-3 pt-4">
-                  <Link href="/checkout" className="w-full">
-                    <Button className="w-full" size="lg">
-                      🛒 Tiến hành thanh toán
-                    </Button>
-                  </Link>
-                  <Link href="/products" className="w-full">
-                    <Button variant="outline" className="w-full">
-                      🛍️ Tiếp tục mua sắm
-                    </Button>
-                  </Link>
-                </div>
+          {/* Cart Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Tóm tắt đơn hàng
+              </h2>
 
-                {/* Promo Code */}
-                <div className="pt-4 border-t">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Mã giảm giá"
-                      className="flex-1"
-                    />
-                    <Button variant="outline" size="sm">
-                      Áp dụng
-                    </Button>
+              {/* Order Summary */}
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tạm tính:</span>
+                  <span className="text-gray-900">{formatPrice(getTotal())}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Phí vận chuyển:</span>
+                  <span className="text-gray-900">Tính sau</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Thuế:</span>
+                  <span className="text-gray-900">Tính sau</span>
+                </div>
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span className="text-gray-900">Tổng cộng:</span>
+                    <span className="text-blue-600">{formatPrice(getTotal())}</span>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Security Info */}
-          <Card className="mt-4">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>🔒</span>
-                <span>Thanh toán an toàn</span>
+              {/* Checkout Button */}
+              <Link
+                href="/checkout"
+                className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-center block"
+              >
+                Tiến hành thanh toán
+              </Link>
+
+              {/* Continue Shopping */}
+              <Link
+                href="/products"
+                className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors text-center block mt-4"
+              >
+                Tiếp tục mua sắm
+              </Link>
+
+              {/* Guest Checkout Notice */}
+              {!isAuthenticated && (
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-medium">Đăng nhập để lưu giỏ hàng</p>
+                      <p className="mt-1">
+                        <Link href="/login" className="underline hover:no-underline">
+                          Đăng nhập
+                        </Link>{' '}
+                        hoặc{' '}
+                        <Link href="/register" className="underline hover:no-underline">
+                          đăng ký
+                        </Link>{' '}
+                        để lưu giỏ hàng và theo dõi đơn hàng.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Security Notice */}
+              <div className="mt-6 text-center">
+                <div className="flex items-center justify-center text-sm text-gray-500">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  Thanh toán an toàn
+                </div>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
-                <span>🚚</span>
-                <span>Giao hàng toàn quốc</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
-                <span>🔄</span>
-                <span>Đổi trả 30 ngày</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -222,7 +222,7 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {dashboardData?.recentOrders?.length > 0 ? (
+                {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
                   <div className="space-y-4">
                     {dashboardData.recentOrders.slice(0, 5).map((order: any) => (
                       <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {dashboardData?.topProducts?.length > 0 ? (
+                {dashboardData?.topProducts && dashboardData.topProducts.length > 0 ? (
                   <div className="space-y-4">
                     {dashboardData.topProducts.slice(0, 5).map((product: any, index: number) => (
                       <div key={product.id} className="flex items-center justify-between">

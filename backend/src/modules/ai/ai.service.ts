@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmbeddingService } from './embedding.service';
 import { GeminiService } from './gemini.service';
@@ -27,8 +28,7 @@ export class AiService {
       // Tìm kiếm semantic trong knowledge base
       const qvec = await this.embedder.embed(query);
       const items = await this.prisma.knowledgeBaseEntry.findMany({ 
-        take: 200, 
-        include: { product: true } 
+        take: 200
       });
       
       if (!qvec) return items.slice(0, limit) as any[];
@@ -43,12 +43,12 @@ export class AiService {
       const _productResults = await this.prisma.product.findMany({
         where: {
           OR: [
-            { name: { contains: query, mode: 'insensitive' as any } },
-            { description: { contains: query, mode: 'insensitive' as any } },
+            { name: { contains: query } },
+            { description: { contains: query } },
             ...expandedKeywords.map(keyword => ({
               OR: [
-                { name: { contains: keyword, mode: 'insensitive' as any } },
-                { description: { contains: keyword, mode: 'insensitive' as any } },
+                { name: { contains: keyword } },
+                { description: { contains: keyword } },
               ]
             }))
           ]
@@ -64,7 +64,7 @@ export class AiService {
       this.logger.error('Semantic search failed:', error);
       // Fallback to original search
       const qvec = await this.embedder.embed(query);
-      const items = await this.prisma.knowledgeBaseEntry.findMany({ take: 200, include: { product: true } });
+      const items = await this.prisma.knowledgeBaseEntry.findMany({ take: 200 });
       if (!qvec) return items.slice(0, limit) as any[];
       const scored = items
         .map((it) => ({ it, score: it.embedding ? this.embedder.cosine(qvec, (it.embedding as any) as number[]) : 0 }))
@@ -94,8 +94,8 @@ export class AiService {
       const relevantProducts = await this.prisma.product.findMany({
         where: {
           OR: [
-            { name: { contains: input.message, mode: 'insensitive' as any } },
-            { description: { contains: input.message, mode: 'insensitive' as any } },
+            { name: { contains: input.message } },
+            { description: { contains: input.message } },
           ]
         },
         take: 3,
@@ -104,101 +104,118 @@ export class AiService {
         }
       });
 
-      // Tạo context text cho Gemini
-      const contextText = [
-        ...context.map((c: any) => `${c.title}: ${c.content}`),
-        ...relevantProducts.map(p => `${p.name}: ${p.description || 'Không có mô tả'} - Giá: ${(p.priceCents / 100).toLocaleString('vi-VN')} VNĐ`)
-      ].join('\n');
+      // Tạo context string
+      const contextString = context.map(item => 
+        `${item.title}: ${item.content}`
+      ).join('\n\n');
 
-      // Sử dụng Gemini để tạo response thông minh
-      const answer = await this.gemini.generateResponse(input.message, contextText);
-      
+      const productContext = relevantProducts.map(p => 
+        `${p.name}: ${p.description || ''} (Giá: ${(p.price / 100).toLocaleString('vi-VN')} VNĐ)`
+      ).join('\n');
+
+      const fullContext = `${contextString}\n\nSản phẩm liên quan:\n${productContext}`;
+
+      // Generate response với Gemini
+      const answer = await this.gemini.generateResponse(input.message, fullContext);
+
       await this.prisma.chatMessage.create({ 
         data: { sessionId: sid, role: 'ASSISTANT', text: answer } 
       });
 
-      return { 
-        sessionId: sid, 
-        answer, 
-        references: [
-          ...context.map((c: any) => ({ id: c.id, title: c.title, productId: c.productId, type: 'knowledge' })),
-          ...relevantProducts.map(p => ({ id: p.id, title: p.name, productId: p.id, type: 'product' }))
-        ]
+      return {
+        answer,
+        sessionId: sid,
+        references: context.map(item => ({
+          title: item.title,
+          content: item.content.substring(0, 200) + '...',
+          score: item.score
+        }))
       };
     } catch (error) {
       this.logger.error('Chat failed:', error);
-      
-      // Fallback to simple response
-      const session = input.sessionId
-        ? await this.prisma.chatSession.findUnique({ where: { id: input.sessionId } })
-        : await this.prisma.chatSession.create({ data: { userId: input.userId ?? null, source: 'WEB', status: 'OPEN' } });
-      
-      const sid = session?.id || (await this.prisma.chatSession.create({ data: { userId: input.userId ?? null } })).id;
-      
-      const fallbackAnswer = 'Xin lỗi, tôi đang gặp sự cố kỹ thuật. Bạn có thể thử lại sau hoặc liên hệ trực tiếp với chúng tôi qua điện thoại hoặc email.';
-      
-      await this.prisma.chatMessage.create({ 
-        data: { sessionId: sid, role: 'ASSISTANT', text: fallbackAnswer } 
-      });
-
-      return { sessionId: sid, answer: fallbackAnswer, references: [] };
+      throw new Error('Không thể xử lý tin nhắn. Vui lòng thử lại sau.');
     }
   }
 
-  // Tạo gợi ý sản phẩm thông minh
+  async reindex(all = false) {
+    try {
+      const entries = all 
+        ? await this.prisma.knowledgeBaseEntry.findMany()
+        : await this.prisma.knowledgeBaseEntry.findMany({
+            where: {
+              OR: [
+                { embedding: null },
+                { embedding: undefined }
+              ]
+            }
+          });
+
+      let updated = 0;
+      for (const entry of entries) {
+        const embedding = await this.embedder.embed(`${entry.title}\n\n${entry.content}`);
+        if (embedding) {
+          await this.prisma.knowledgeBaseEntry.update({
+            where: { id: entry.id },
+            data: { embedding: embedding as any }
+          });
+          updated++;
+        }
+      }
+
+      return { message: `Reindexed ${updated} entries` };
+    } catch (error) {
+      this.logger.error('Reindex failed:', error);
+      throw new Error('Reindex failed');
+    }
+  }
+
+  async escalate(sessionId: string) {
+    try {
+      await this.prisma.chatSession.update({
+        where: { id: sessionId },
+        data: { status: 'ESCALATED' }
+      });
+      return { message: 'Session escalated successfully' };
+    } catch (error) {
+      this.logger.error('Escalate failed:', error);
+      throw new Error('Failed to escalate session');
+    }
+  }
+
   async getProductRecommendations(query: string) {
     try {
       const products = await this.prisma.product.findMany({
         where: {
           OR: [
-            { name: { contains: query, mode: 'insensitive' as any } },
-            { description: { contains: query, mode: 'insensitive' as any } },
+            { name: { contains: query } },
+            { description: { contains: query } },
           ]
         },
-        take: 8,
+        take: 10,
         include: {
           category: true,
         }
       });
-      
-      if (products.length === 0) {
-        return {
-          recommendation: 'Không tìm thấy sản phẩm phù hợp. Bạn có thể tìm kiếm với từ khóa khác hoặc xem toàn bộ danh mục sản phẩm.',
-          products: []
-        };
-      }
 
       const recommendation = await this.gemini.generateProductRecommendation(query, products);
       
       return {
+        query,
         recommendation,
-        products: products.slice(0, 6)
+        products: products.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price / 100,
+          category: p.category?.name
+        }))
       };
     } catch (error) {
       this.logger.error('Product recommendation failed:', error);
-      
-      // Fallback to simple product list
-      const products = await this.prisma.product.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' as any } },
-            { description: { contains: query, mode: 'insensitive' as any } },
-          ]
-        },
-        take: 6,
-        include: {
-          category: true,
-        }
-      });
-
-      return {
-        recommendation: 'Đang gặp sự cố khi tạo gợi ý. Vui lòng xem danh sách sản phẩm dưới đây.',
-        products
-      };
+      throw new Error('Không thể tạo gợi ý sản phẩm. Vui lòng thử lại sau.');
     }
   }
 
-  // Cải thiện mô tả sản phẩm với AI
   async enhanceProductDescription(productId: string) {
     try {
       const product = await this.prisma.product.findUnique({
@@ -211,50 +228,25 @@ export class AiService {
       }
 
       const enhancedDescription = await this.gemini.generateProductDescription(product);
-      
-      // Cập nhật description nếu tốt hơn description hiện tại
-      if (enhancedDescription.length > (product.description?.length || 0)) {
-        await this.prisma.product.update({
-          where: { id: productId },
-          data: { description: enhancedDescription }
-        });
-      }
+
+      await this.prisma.product.update({
+        where: { id: productId },
+        data: { description: enhancedDescription }
+      });
 
       return {
-        original: product.description,
-        enhanced: enhancedDescription,
-        updated: enhancedDescription.length > (product.description?.length || 0)
+        productId,
+        originalDescription: product.description,
+        enhancedDescription
       };
     } catch (error) {
-      this.logger.error('Product description enhancement failed:', error);
-      throw error;
+      this.logger.error('Product enhancement failed:', error);
+      throw new Error('Không thể cải thiện mô tả sản phẩm. Vui lòng thử lại sau.');
     }
   }
 
-  async reindex(all = false) {
-    const where = all ? {} : { OR: [{ embedding: null }, { embedding: { equals: undefined as any } }] } as any;
-    const entries = await this.prisma.knowledgeBaseEntry.findMany({ where, take: 1000 });
-    let updated = 0;
-    for (const entry of entries) {
-      const text = `${entry.title}\n\n${entry.content}`;
-      const vec = await this.embedder.embed(text);
-      if (vec && Array.isArray(vec)) {
-        await this.prisma.knowledgeBaseEntry.update({ where: { id: entry.id }, data: { embedding: vec as any } });
-        updated++;
-      }
-    }
-    const total = await this.prisma.knowledgeBaseEntry.count();
-    return { updated, total };
-  }
+  // ======= CHAT ANALYSIS METHODS =======
 
-  async escalate(sessionId: string) {
-    await this.prisma.chatSession.update({ where: { id: sessionId }, data: { status: 'ESCALATED' } });
-    return { sessionId, status: 'ESCALATED' };
-  }
-
-  // ======= CHAT ANALYSIS & SEARCH FEATURES =======
-
-  // Phân tích nội dung chat với AI
   async analyzeChatSession(sessionId: string) {
     try {
       const session = await this.prisma.chatSession.findUnique({
@@ -273,138 +265,38 @@ export class AiService {
         throw new Error('Chat session not found');
       }
 
-      const conversation = session.messages
-        .map(msg => `${msg.role}: ${msg.text}`)
-        .join('\n');
-
-      if (!conversation.trim()) {
-        return {
-          sessionId,
-          summary: 'Không có nội dung để phân tích',
-          sentiment: 'NEUTRAL',
-          topics: [],
-          actionItems: [],
-          customerSatisfaction: 'UNKNOWN'
-        };
-      }
-
-      // Sử dụng Gemini để phân tích
-      const analysisPrompt = `
-Phân tích cuộc hội thoại dịch vụ khách hàng sau đây của Audio Tài Lộc:
-
-${conversation}
-
-Vui lòng phân tích và trả về JSON với các thông tin sau:
-{
-  "summary": "Tóm tắt ngắn gọn cuộc hội thoại (1-2 câu)",
-  "sentiment": "POSITIVE|NEGATIVE|NEUTRAL",
-  "topics": ["danh sách chủ đề chính được thảo luận"],
-  "actionItems": ["danh sách hành động cần thực hiện"],
-  "customerSatisfaction": "VERY_SATISFIED|SATISFIED|NEUTRAL|DISSATISFIED|VERY_DISSATISFIED",
-  "productMentioned": ["danh sách sản phẩm được nhắc đến"],
-  "issuesRaised": ["danh sách vấn đề khách hàng nêu ra"],
-  "recommendations": ["đề xuất cải thiện dịch vụ"]
-}
-
-Chỉ trả về JSON, không có text khác.
-`;
-
-      const analysis = await this.gemini.generateResponse(analysisPrompt);
+      const conversation = session.messages.map(m => `${m.role}: ${m.text}`).join('\n');
       
-      try {
-        const parsedAnalysis = JSON.parse(analysis);
-        
-        // Lưu kết quả phân tích vào metadata
-        await this.prisma.chatSession.update({
-          where: { id: sessionId },
-          data: {
-            metadata: {
-              analysis: parsedAnalysis,
-              analyzedAt: new Date().toISOString()
-            } as any
-          }
-        });
+      const analysis = await this.gemini.generateResponse(
+        `Phân tích cuộc hội thoại sau và đưa ra insights:\n\n${conversation}`,
+        'Bạn là chuyên gia phân tích hội thoại khách hàng. Hãy phân tích và đưa ra insights về: 1) Ý định của khách hàng, 2) Mức độ hài lòng, 3) Các vấn đề cần giải quyết, 4) Gợi ý cải thiện.'
+      );
 
-        return {
-          sessionId,
-          ...parsedAnalysis,
-          analyzedAt: new Date()
-        };
-      } catch (parseError) {
-        this.logger.warn('Failed to parse AI analysis, using fallback', parseError);
-        
-        // Fallback analysis
-        const fallbackAnalysis = {
-          summary: conversation.length > 100 ? conversation.substring(0, 100) + '...' : conversation,
-          sentiment: 'NEUTRAL' as const,
-          topics: this.extractTopicsFromText(conversation),
-          actionItems: [],
-          customerSatisfaction: 'UNKNOWN' as const,
-          productMentioned: this.extractProductMentions(conversation),
-          issuesRaised: [],
-          recommendations: []
-        };
-
-        return {
-          sessionId,
-          ...fallbackAnalysis,
-          analyzedAt: new Date()
-        };
-      }
+      return {
+        sessionId,
+        analysis,
+        messageCount: session.messages.length,
+        duration: session.messages.length > 0 ? 
+          new Date(session.messages[session.messages.length - 1].createdAt).getTime() - 
+          new Date(session.messages[0].createdAt).getTime() : 0
+      };
     } catch (error) {
       this.logger.error('Chat analysis failed:', error);
-      throw new Error('Không thể phân tích cuộc hội thoại');
+      throw new Error('Không thể phân tích cuộc hội thoại. Vui lòng thử lại sau.');
     }
   }
 
-  // Tìm kiếm trong lịch sử chat
-  async searchChatHistory(query: string, options: {
-    userId?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-    sentiment?: string;
-    status?: string;
-    limit?: number;
-  } = {}) {
+  async searchChatHistory(query: string, options: any = {}) {
     try {
-      const { userId, dateFrom, dateTo, sentiment, status, limit = 20 } = options;
-
-      // Tìm kiếm cơ bản trong nội dung tin nhắn
-      const whereConditions: any = {
-        messages: {
-          some: {
-            text: {
-              contains: query,
-              mode: 'insensitive' as any
-            }
-          }
-        }
-      };
-
-      if (userId) {
-        whereConditions.userId = userId;
-      }
-
-      if (status) {
-        whereConditions.status = status;
-      }
-
-      if (dateFrom || dateTo) {
-        whereConditions.createdAt = {};
-        if (dateFrom) whereConditions.createdAt.gte = dateFrom;
-        if (dateTo) whereConditions.createdAt.lte = dateTo;
-      }
-
-      // Tìm kiếm với sentiment filter
-      if (sentiment) {
-        whereConditions.metadata = {
-          path: ['analysis', 'sentiment'],
-          equals: sentiment
-        };
-      }
+      const where: any = {};
+      
+      if (options.userId) where.userId = options.userId;
+      if (options.dateFrom) where.createdAt = { gte: options.dateFrom };
+      if (options.dateTo) where.createdAt = { ...where.createdAt, lte: options.dateTo };
+      if (options.status) where.status = options.status;
 
       const sessions = await this.prisma.chatSession.findMany({
-        where: whereConditions,
+        where,
         include: {
           messages: {
             orderBy: { createdAt: 'asc' }
@@ -413,157 +305,77 @@ Chỉ trả về JSON, không có text khác.
             select: { email: true, name: true }
           }
         },
-        orderBy: { updatedAt: 'desc' },
-        take: limit
+        take: options.limit || 10,
+        orderBy: { updatedAt: 'desc' }
       });
 
-      // Enhance results với AI nếu cần
-      const enhancedResults = await Promise.all(
-        sessions.map(async (session) => {
-          const relevantMessages = session.messages.filter(msg =>
-            msg.text.toLowerCase().includes(query.toLowerCase())
-          );
+      // Simple text search in messages
+      const results = sessions.filter(session => 
+        session.messages.some(message => 
+          message.text.toLowerCase().includes(query.toLowerCase())
+        )
+      );
 
+      return results.map(session => ({
+        id: session.id,
+        userId: session.userId,
+        user: session.user,
+        status: session.status,
+        messageCount: session.messages.length,
+        lastMessage: session.messages[session.messages.length - 1]?.text,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt
+      }));
+    } catch (error) {
+      this.logger.error('Chat search failed:', error);
+      throw new Error('Không thể tìm kiếm lịch sử chat. Vui lòng thử lại sau.');
+    }
+  }
+
+  async summarizeMultipleSessions(sessionIds: string[]) {
+    try {
+      const sessions = await this.prisma.chatSession.findMany({
+        where: { id: { in: sessionIds } },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' }
+          }
+        }
+      });
+
+      const summaries = await Promise.all(
+        sessions.map(async (session) => {
+          const conversation = session.messages.map(m => `${m.role}: ${m.text}`).join('\n');
+          const summary = await this.gemini.generateResponse(
+            `Tóm tắt cuộc hội thoại sau trong 2-3 câu:\n\n${conversation}`,
+            'Bạn là chuyên gia tóm tắt hội thoại. Hãy tóm tắt ngắn gọn ý chính của cuộc hội thoại.'
+          );
+          
           return {
             sessionId: session.id,
-            userId: session.userId,
-            user: session.user,
-            status: session.status,
-            createdAt: session.createdAt,
-            updatedAt: session.updatedAt,
-            relevantMessages: relevantMessages.slice(0, 3), // Top 3 relevant messages
-            messageCount: session.messages.length,
-            lastMessage: session.messages[session.messages.length - 1],
-            analysis: session.metadata ? (session.metadata as any).analysis : null
+            summary,
+            messageCount: session.messages.length
           };
         })
       );
 
-      return {
-        query,
-        results: enhancedResults,
-        total: enhancedResults.length
-      };
+      return summaries;
     } catch (error) {
-      this.logger.error('Chat search failed:', error);
-      throw new Error('Không thể tìm kiếm lịch sử chat');
+      this.logger.error('Session summarization failed:', error);
+      throw new Error('Không thể tóm tắt các cuộc hội thoại. Vui lòng thử lại sau.');
     }
   }
 
-  // Tóm tắt nhiều chat sessions
-  async summarizeMultipleSessions(sessionIds: string[]) {
+  async getChatInsights(options: any = {}) {
     try {
-      const sessions = await this.prisma.chatSession.findMany({
-        where: {
-          id: { in: sessionIds }
-        },
-        include: {
-          messages: {
-            orderBy: { createdAt: 'asc' }
-          },
-          user: {
-            select: { email: true, name: true }
-          }
-        }
-      });
-
-      if (sessions.length === 0) {
-        return {
-          summary: 'Không tìm thấy cuộc hội thoại nào',
-          totalSessions: 0,
-          totalMessages: 0,
-          commonTopics: [],
-          overallSentiment: 'NEUTRAL'
-        };
-      }
-
-      // Tạo tóm tắt tổng hợp
-      const allConversations = sessions.map(session => {
-        const conversation = session.messages
-          .map(msg => `${msg.role}: ${msg.text}`)
-          .join('\n');
-        return `--- Cuộc hội thoại ${session.id} ---\n${conversation}`;
-      }).join('\n\n');
-
-      const summaryPrompt = `
-Phân tích và tóm tắt ${sessions.length} cuộc hội thoại dịch vụ khách hàng của Audio Tài Lộc:
-
-${allConversations}
-
-Vui lòng tạo báo cáo tóm tắt JSON:
-{
-  "summary": "Tóm tắt tổng quan về tất cả cuộc hội thoại",
-  "totalSessions": ${sessions.length},
-  "totalMessages": ${sessions.reduce((sum, s) => sum + s.messages.length, 0)},
-  "commonTopics": ["chủ đề phổ biến nhất"],
-  "commonIssues": ["vấn đề khách hàng thường gặp"],
-  "overallSentiment": "POSITIVE|NEGATIVE|NEUTRAL",
-  "recommendations": ["khuyến nghị cải thiện dịch vụ"],
-  "productInsights": ["insights về sản phẩm từ phản hồi khách hàng"]
-}
-
-Chỉ trả về JSON, không có text khác.
-`;
-
-      const summary = await this.gemini.generateResponse(summaryPrompt);
+      const where: any = {};
       
-      try {
-        const parsedSummary = JSON.parse(summary);
-        return {
-          ...parsedSummary,
-          sessions: sessions.map(s => ({
-            id: s.id,
-            userId: s.userId,
-            messageCount: s.messages.length,
-            status: s.status,
-            createdAt: s.createdAt
-          })),
-          generatedAt: new Date()
-        };
-      } catch (parseError) {
-        this.logger.warn('Failed to parse summary, using fallback');
-        
-        return {
-          summary: `Tóm tắt ${sessions.length} cuộc hội thoại với tổng cộng ${sessions.reduce((sum, s) => sum + s.messages.length, 0)} tin nhắn`,
-          totalSessions: sessions.length,
-          totalMessages: sessions.reduce((sum, s) => sum + s.messages.length, 0),
-          commonTopics: this.extractTopicsFromText(allConversations),
-          overallSentiment: 'NEUTRAL',
-          sessions: sessions.map(s => ({
-            id: s.id,
-            userId: s.userId,
-            messageCount: s.messages.length,
-            status: s.status,
-            createdAt: s.createdAt
-          })),
-          generatedAt: new Date()
-        };
-      }
-    } catch (error) {
-      this.logger.error('Multiple sessions summary failed:', error);
-      throw new Error('Không thể tóm tắt các cuộc hội thoại');
-    }
-  }
-
-  // Chat insights - phân tích xu hướng
-  async getChatInsights(options: {
-    dateFrom?: Date;
-    dateTo?: Date;
-    userId?: string;
-  } = {}) {
-    try {
-      const { dateFrom, dateTo, userId } = options;
-      
-      const whereConditions: any = {};
-      if (userId) whereConditions.userId = userId;
-      if (dateFrom || dateTo) {
-        whereConditions.createdAt = {};
-        if (dateFrom) whereConditions.createdAt.gte = dateFrom;
-        if (dateTo) whereConditions.createdAt.lte = dateTo;
-      }
+      if (options.dateFrom) where.createdAt = { gte: options.dateFrom };
+      if (options.dateTo) where.createdAt = { ...where.createdAt, lte: options.dateTo };
+      if (options.userId) where.userId = options.userId;
 
       const sessions = await this.prisma.chatSession.findMany({
-        where: whereConditions,
+        where,
         include: {
           messages: true,
           user: {
@@ -572,125 +384,367 @@ Chỉ trả về JSON, không có text khác.
         }
       });
 
-      // Tính toán metrics
       const totalSessions = sessions.length;
-      const totalMessages = sessions.reduce((sum, s) => sum + s.messages.length, 0);
+      const totalMessages = sessions.reduce((sum, session) => sum + session.messages.length, 0);
       const avgMessagesPerSession = totalSessions > 0 ? totalMessages / totalSessions : 0;
-
-      // Phân tích status
-      const statusBreakdown = sessions.reduce((acc, session) => {
+      
+      const statusCounts = sessions.reduce((acc, session) => {
         acc[session.status] = (acc[session.status] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as any);
 
-      // Phân tích sentiment từ metadata
-      const sentimentBreakdown = sessions.reduce((acc, session) => {
-        const sentiment = session.metadata ? (session.metadata as any).analysis?.sentiment : 'UNKNOWN';
-        acc[sentiment] = (acc[sentiment] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Phân tích theo thời gian
-      const dailyStats = sessions.reduce((acc, session) => {
-        const date = session.createdAt.toISOString().split('T')[0];
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const insights = await this.gemini.generateResponse(
+        `Phân tích dữ liệu chat sau và đưa ra insights:\n\nTổng số cuộc hội thoại: ${totalSessions}\nTổng số tin nhắn: ${totalMessages}\nTrung bình tin nhắn/cuộc hội thoại: ${avgMessagesPerSession.toFixed(1)}\nPhân bố trạng thái: ${JSON.stringify(statusCounts)}`,
+        'Bạn là chuyên gia phân tích dữ liệu. Hãy đưa ra insights về hoạt động chat và gợi ý cải thiện.'
+      );
 
       return {
-        period: {
-          from: dateFrom,
-          to: dateTo
-        },
-        metrics: {
-          totalSessions,
-          totalMessages,
-          avgMessagesPerSession: Math.round(avgMessagesPerSession * 100) / 100,
-          avgSessionDuration: this.calculateAverageSessionDuration(sessions)
-        },
-        breakdown: {
-          status: statusBreakdown,
-          sentiment: sentimentBreakdown,
-          daily: dailyStats
-        },
-        topUsers: this.getTopUsers(sessions),
-        recentSessions: sessions.slice(0, 10).map(s => ({
-          id: s.id,
-          userId: s.userId,
-          status: s.status,
-          messageCount: s.messages.length,
-          createdAt: s.createdAt,
-          lastMessageAt: s.messages[s.messages.length - 1]?.createdAt
-        })),
-        generatedAt: new Date()
+        totalSessions,
+        totalMessages,
+        avgMessagesPerSession,
+        statusCounts,
+        insights
       };
     } catch (error) {
       this.logger.error('Chat insights failed:', error);
-      throw new Error('Không thể tạo báo cáo insights');
+      throw new Error('Không thể tạo insights. Vui lòng thử lại sau.');
     }
   }
 
-  // Helper methods
-  private extractTopicsFromText(text: string): string[] {
-    const commonTopics = [
-      'tai nghe', 'loa', 'âm thanh', 'chất lượng', 'giá cả', 
-      'bảo hành', 'giao hàng', 'thanh toán', 'hỗ trợ', 'khuyến mãi'
-    ];
-    
-    return commonTopics.filter(topic => 
-      text.toLowerCase().includes(topic.toLowerCase())
-    );
-  }
+  // ======= CORE AI-POWERED FEATURES =======
 
-  private extractProductMentions(text: string): string[] {
-    const productKeywords = [
-      'Tai nghe Tài Lộc Pro', 'Loa Tài Lộc Classic', 'Soundbar Tài Lộc 5.1',
-      'Test Audio Headphones'
-    ];
-    
-    return productKeywords.filter(product => 
-      text.toLowerCase().includes(product.toLowerCase())
-    );
-  }
-
-  private calculateAverageSessionDuration(sessions: any[]): number {
-    if (sessions.length === 0) return 0;
-    
-    const durations = sessions.map(session => {
-      if (session.messages.length < 2) return 0;
+  async generateContent(dto: any) {
+    try {
+      const prompt = this.getContentGenerationPrompt(dto.type, dto.prompt, dto.tone);
+      const content = await this.gemini.generateResponse(prompt);
       
-      const firstMessage = session.messages[0];
-      const lastMessage = session.messages[session.messages.length - 1];
-      
-      return new Date(lastMessage.createdAt).getTime() - new Date(firstMessage.createdAt).getTime();
-    });
-    
-    const avgDuration = durations.reduce((sum, duration) => sum + duration, 0) / durations.length;
-    return Math.round(avgDuration / 1000 / 60); // Convert to minutes
-  }
-
-  private getTopUsers(sessions: any[]): any[] {
-    const userStats = sessions.reduce((acc, session) => {
-      if (session.userId) {
-        const userId = session.userId;
-        if (!acc[userId]) {
-          acc[userId] = {
-            userId,
-            email: session.user?.email,
-            name: session.user?.name,
-            sessionCount: 0,
-            messageCount: 0
-          };
+      return {
+        success: true,
+        content: content.substring(0, dto.maxLength || 500),
+        metadata: {
+          type: dto.type || 'general',
+          tone: dto.tone || 'professional',
+          length: content.length,
+          generatedAt: new Date().toISOString()
         }
-        acc[userId].sessionCount++;
-        acc[userId].messageCount += session.messages.length;
+      };
+    } catch (error) {
+      this.logger.error('Content generation failed:', error);
+      throw new Error('Không thể tạo nội dung');
+    }
+  }
+
+  async analyzeSentiment(dto: any) {
+    try {
+      const prompt = `Phân tích cảm xúc của văn bản sau và trả về kết quả dạng JSON với format:
+{
+  "sentiment": "positive|negative|neutral",
+  "confidence": 0.0-1.0,
+  "emotions": ["emotion1", "emotion2"],
+  "score": 0.0-1.0
+}
+
+Văn bản: "${dto.text}"
+Context: ${dto.context || 'general'}`;
+
+      const response = await this.gemini.generateResponse(prompt);
+      const result = this.parseJSONResponse(response);
+      
+      return {
+        success: true,
+        sentiment: result.sentiment,
+        confidence: result.confidence,
+        emotions: result.emotions,
+        score: result.score,
+        text: dto.text
+      };
+    } catch (error) {
+      this.logger.error('Sentiment analysis failed:', error);
+      throw new Error('Không thể phân tích cảm xúc');
+    }
+  }
+
+  async classifyText(dto: any) {
+    try {
+      const prompt = `Phân loại văn bản sau vào một trong các danh mục: ${dto.categories.join(', ')}. Trả về kết quả dạng JSON:
+{
+  "category": "category_name",
+  "confidence": 0.0-1.0,
+  "alternatives": ["alt1", "alt2"]
+}
+
+Văn bản: "${dto.text}"`;
+
+      const response = await this.gemini.generateResponse(prompt);
+      const result = this.parseJSONResponse(response);
+      
+      return {
+        success: true,
+        category: result.category,
+        confidence: result.confidence,
+        alternatives: result.alternatives || [],
+        text: dto.text
+      };
+    } catch (error) {
+      this.logger.error('Text classification failed:', error);
+      throw new Error('Không thể phân loại văn bản');
+    }
+  }
+
+  async translate(dto: any) {
+    try {
+      const prompt = `Dịch văn bản sau sang ${dto.targetLanguage}${dto.sourceLanguage ? ` từ ${dto.sourceLanguage}` : ''}:
+
+"${dto.text}"
+
+Hãy dịch chính xác và tự nhiên.`;
+
+      const translation = await this.gemini.generateResponse(prompt);
+      
+      return {
+        success: true,
+        original: dto.text,
+        translation,
+        sourceLanguage: dto.sourceLanguage || 'auto',
+        targetLanguage: dto.targetLanguage,
+        length: translation.length
+      };
+    } catch (error) {
+      this.logger.error('Translation failed:', error);
+      throw new Error('Không thể dịch văn bản');
+    }
+  }
+
+  async detectCustomerIntent(dto: any) {
+    try {
+      const prompt = `Phân tích ý định của khách hàng từ tin nhắn sau và trả về kết quả dạng JSON:
+{
+  "intent": "purchase_inquiry|technical_support|complaint|general_question|product_recommendation",
+  "confidence": 0.0-1.0,
+  "entities": ["entity1", "entity2"],
+  "urgency": "low|medium|high"
+}
+
+Tin nhắn: "${dto.message}"`;
+
+      const response = await this.gemini.generateResponse(prompt);
+      const result = this.parseJSONResponse(response);
+      
+      return {
+        success: true,
+        intent: result.intent,
+        confidence: result.confidence,
+        entities: result.entities || [],
+        urgency: result.urgency,
+        message: dto.message,
+        userId: dto.userId,
+        sessionId: dto.sessionId
+      };
+    } catch (error) {
+      this.logger.error('Customer intent detection failed:', error);
+      throw new Error('Không thể xác định ý định khách hàng');
+    }
+  }
+
+  async getPersonalizedRecommendations(dto: any) {
+    try {
+      // Phân tích preferences của user
+      const userPreferences = await this.analyzeUserPreferences(dto.userId);
+      
+      // Tạo recommendations dựa trên preferences
+      const recommendations = await this.generatePersonalizedRecommendations(userPreferences, dto.context);
+      
+      return {
+        success: true,
+        userId: dto.userId,
+        recommendations,
+        preferences: userPreferences,
+        context: dto.context,
+        generatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      this.logger.error('Personalization failed:', error);
+      throw new Error('Không thể tạo gợi ý cá nhân hóa');
+    }
+  }
+
+  async getHealthStatus() {
+    try {
+      const geminiHealth = await this.checkGeminiHealth();
+      const embeddingHealth = await this.checkEmbeddingHealth();
+      const databaseHealth = await this.checkDatabaseHealth();
+
+      const isHealthy = geminiHealth && embeddingHealth && databaseHealth;
+      
+      return {
+        success: true,
+        status: isHealthy ? 'healthy' : 'degraded',
+        services: {
+          gemini: geminiHealth ? 'healthy' : 'unhealthy',
+          embedding: embeddingHealth ? 'healthy' : 'unhealthy',
+          database: databaseHealth ? 'healthy' : 'unhealthy'
+        },
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+      };
+    } catch (error) {
+      this.logger.error('Health check failed:', error);
+      return {
+        success: true,
+        status: 'unhealthy',
+        services: {
+          gemini: 'unhealthy',
+          embedding: 'unhealthy',
+          database: 'unhealthy'
+        },
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+      };
+    }
+  }
+
+  async getCapabilities() {
+    return {
+      success: true,
+      capabilities: [
+        {
+          name: 'content_generation',
+          description: 'Tạo nội dung tự động',
+          enabled: true,
+          models: ['gemini-pro']
+        },
+        {
+          name: 'sentiment_analysis',
+          description: 'Phân tích cảm xúc',
+          enabled: true,
+          models: ['gemini-pro']
+        },
+        {
+          name: 'text_classification',
+          description: 'Phân loại văn bản',
+          enabled: true,
+          models: ['gemini-pro']
+        },
+        {
+          name: 'translation',
+          description: 'Dịch thuật đa ngôn ngữ',
+          enabled: true,
+          models: ['gemini-pro']
+        },
+        {
+          name: 'customer_intent',
+          description: 'Phân tích ý định khách hàng',
+          enabled: true,
+          models: ['gemini-pro']
+        },
+        {
+          name: 'personalization',
+          description: 'Gợi ý sản phẩm cá nhân hóa',
+          enabled: true,
+          models: ['gemini-pro']
+        }
+      ],
+      models: {
+        'gemini-pro': {
+          status: 'active',
+          maxTokens: 32000,
+          supportedFeatures: ['text', 'code', 'reasoning']
+        }
       }
-      return acc;
-    }, {} as Record<string, any>);
-    
-    return Object.values(userStats)
-      .sort((a: any, b: any) => b.sessionCount - a.sessionCount)
-      .slice(0, 10);
+    };
+  }
+
+  // ======= HELPER METHODS =======
+
+  private getContentGenerationPrompt(type: string, prompt: string, tone: string): string {
+    const prompts: any = {
+      product_description: `Tạo mô tả sản phẩm âm thanh với tone ${tone} cho: ${prompt}`,
+      email_template: `Tạo template email ${tone} cho: ${prompt}`,
+      marketing_copy: `Tạo nội dung marketing ${tone} cho: ${prompt}`,
+      faq: `Tạo câu hỏi thường gặp ${tone} cho: ${prompt}`,
+      blog_post: `Tạo bài viết blog ${tone} về: ${prompt}`
+    };
+
+    return prompts[type as keyof typeof prompts] || `Tạo nội dung ${tone} về: ${prompt}`;
+  }
+
+  private parseJSONResponse(response: string): any {
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      throw new Error('No JSON found in response');
+    } catch (error) {
+      this.logger.error('JSON parsing failed:', error);
+      return {};
+    }
+  }
+
+  private async analyzeUserPreferences(userId: string): Promise<any> {
+    try {
+      // Mock user preferences analysis
+      return {
+        categories: {},
+        priceRange: { min: 0, max: 0 },
+        brands: {},
+        totalOrders: 0
+      };
+    } catch (error) {
+      this.logger.error('User preferences analysis failed:', error);
+      return {};
+    }
+  }
+
+  private async generatePersonalizedRecommendations(preferences: any, context: string): Promise<any[]> {
+    try {
+      // Mock personalized recommendations
+      return [
+        {
+          productId: 'rec_1',
+          score: 0.95,
+          reason: 'Based on your category preferences'
+        },
+        {
+          productId: 'rec_2',
+          score: 0.88,
+          reason: 'Similar to your previous purchases'
+        }
+      ];
+    } catch (error) {
+      this.logger.error('Personalized recommendations generation failed:', error);
+      return [];
+    }
+  }
+
+  private async checkGeminiHealth(): Promise<boolean> {
+    try {
+      await this.gemini.generateResponse('test');
+      return true;
+    } catch (error) {
+      this.logger.error('Gemini health check failed:', (error as Error).message);
+      return false;
+    }
+  }
+
+  private async checkEmbeddingHealth(): Promise<boolean> {
+    try {
+      await this.embedder.embed('test');
+      return true;
+    } catch (error) {
+      this.logger.error('Embedding health check failed:', (error as Error).message);
+      return false;
+    }
+  }
+
+  private async checkDatabaseHealth(): Promise<boolean> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return true;
+    } catch (error) {
+      this.logger.error('Database health check failed:', (error as Error).message);
+      return false;
+    }
   }
 }
 

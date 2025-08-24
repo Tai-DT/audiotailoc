@@ -16,6 +16,16 @@ class DirectionsQueryDto {
   to!: string;
 }
 
+class ReverseQueryDto {
+  @IsString()
+  latlng!: string; // format: "lat,lng"
+}
+
+class PlaceDetailQueryDto {
+  @IsString()
+  placeId!: string;
+}
+
 @UseGuards(RateLimitGuard)
 @Controller('maps')
 export class MapsController {
@@ -29,6 +39,16 @@ export class MapsController {
   @Get('directions')
   directions(@Query() q: DirectionsQueryDto) {
     return this.maps.directions(q.from, q.to);
+  }
+
+  @Get('reverse')
+  reverse(@Query() q: ReverseQueryDto) {
+    return this.maps.reverseGeocode(q.latlng);
+  }
+
+  @Get('place-detail')
+  placeDetail(@Query() q: PlaceDetailQueryDto) {
+    return this.maps.placeDetail(q.placeId);
   }
 }
 

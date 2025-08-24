@@ -1,0 +1,14 @@
+{
+    "host": "https://api.europe-west2.gcp.tinybird.co",
+    "id": "75bc413b-48f1-4f8a-81d5-04ffe99982ea",
+    "name": "Audio_tai_loc",
+    "scope": "user",
+    "token": "p.eyJ1IjogIjc1YmM0MTNiLTQ4ZjEtNGY4YS04MWQ1LTA0ZmZlOTk5ODJlYSIsICJpZCI6ICJlNjI4NjFhZC02YTY0LTQyZjQtYTc1ZC0zMDEzN2IwN2E2OTkiLCAiaG9zdCI6ICJnY3AtZXVyb3BlLXdlc3QyIn0.iYPIiun5kbiSLXsIjQbt2zRqnmtMl8a7PLZznEvpaas",
+    "tokens": {
+        "https://api.europe-west2.gcp.tinybird.co": "p.eyJ1IjogIjc1YmM0MTNiLTQ4ZjEtNGY4YS04MWQ1LTA0ZmZlOTk5ODJlYSIsICJpZCI6ICJlNjI4NjFhZC02YTY0LTQyZjQtYTc1ZC0zMDEzN2IwN2E2OTkiLCAiaG9zdCI6ICJnY3AtZXVyb3BlLXdlc3QyIn0.iYPIiun5kbiSLXsIjQbt2zRqnmtMl8a7PLZznEvpaas"
+    },
+    "user_email": "taidt3k4@gmail.com",
+    "user_id": "a4059a87-94bb-4845-a68b-c896b90ead44",
+    "user_token": "p.eyJ1IjogImE0MDU5YTg3LTk0YmItNDg0NS1hNjhiLWM4OTZiOTBlYWQ0NCIsICJpZCI6ICIxOTBmNTBhZC1jNjdmLTQ3MmEtYjExYi1mNjMyYjJiMjVjMjIiLCAiaG9zdCI6ICJnY3AtZXVyb3BlLXdlc3QyIn0.Mcwl3TbrunVHsbyTlQlEynTM8TCxExTjlIqZGZ4p1rQ",
+    "version": "0.0.1.dev285"
+}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards, Request, Headers } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, Request } from '@nestjs/common';
 import { CheckoutService } from './checkout.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { IsOptional, IsString } from 'class-validator';
@@ -16,8 +16,8 @@ export class CheckoutController {
   constructor(private readonly checkout: CheckoutService) {}
 
   @Post('create-order')
-  async create(@Request() req: any, @Body() dto: CheckoutDto, @Headers('x-idempotency-key') idempotencyKey?: string) {
-    const order = await this.checkout.createOrder(req.user?.sub, { promotionCode: dto.promotionCode, idempotencyKey });
+  async create(@Request() req: any, @Body() dto: CheckoutDto) {
+    const order = await this.checkout.createOrder(req.user?.sub, { promotionCode: dto.promotionCode });
     return { order };
   }
 

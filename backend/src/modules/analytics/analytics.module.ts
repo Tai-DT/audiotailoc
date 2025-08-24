@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
-import { AuthModule } from '../auth/auth.module';
+import { GuardsModule } from '../auth/guards.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [GuardsModule],
   providers: [AnalyticsService],
   controllers: [AnalyticsController],
   exports: [AnalyticsService],

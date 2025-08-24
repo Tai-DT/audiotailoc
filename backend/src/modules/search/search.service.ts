@@ -1,434 +1,353 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+
+type MeiliIndexSettings = { primaryKey?: string };
 
 export interface SearchFilters {
-  category?: string;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
+  brand?: string;
   inStock?: boolean;
   featured?: boolean;
   tags?: string[];
-  sortBy?: 'price' | 'name' | 'createdAt' | 'viewCount';
-  sortOrder?: 'asc' | 'desc';
-  limit?: number;
-  offset?: number;
 }
 
-export interface SearchSuggestion {
-  type: 'product' | 'category' | 'tag';
-  value: string;
-  count: number;
+interface SearchOptions {
+  sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | 'created_desc';
+  facets?: string[];
+  attributesToHighlight?: string[];
+  attributesToCrop?: string[];
+  cropLength?: number;
+}
+
+export interface SearchResult {
+  hits: any[];
+  estimatedTotalHits?: number;
+  page: number;
+  pageSize: number;
+  facetDistribution?: Record<string, any>;
+  processingTimeMs?: number;
+  query?: string;
+  suggestions?: string[];
 }
 
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
+  private url: string;
+  private key?: string;
+  private indexName = 'products';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly config: ConfigService) {
+    this.url = this.config.get<string>('MEILI_URL') ?? 'http://localhost:7700';
+    this.key = this.config.get<string>('MEILI_MASTER_KEY') ?? undefined;
+  }
 
-  // Advanced Product Search
-  async searchProducts(query: string, filters: SearchFilters = {}) {
-    const {
-      category,
-      minPrice,
-      maxPrice,
-      inStock,
-      featured,
-      tags,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      limit = 20,
-      offset = 0
-    } = filters;
+  private headers() {
+    return {
+      'content-type': 'application/json',
+      ...(this.key ? { Authorization: `Bearer ${this.key}` } : {}),
+    } as Record<string, string>;
+  }
 
-    // Build where conditions
-    const where: any = {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' as const } },
-        { description: { contains: query, mode: 'insensitive' as const } },
-        { slug: { contains: query, mode: 'insensitive' as const } }
-      ]
+  async ensureIndex(): Promise<void> {
+    try {
+      await fetch(`${this.url}/indexes/${this.indexName}`, {
+        method: 'PUT',
+        headers: this.headers(),
+        body: JSON.stringify({ primaryKey: 'id' } satisfies MeiliIndexSettings),
+      });
+
+      // Configure advanced search settings
+      await fetch(`${this.url}/indexes/${this.indexName}/settings`, {
+        method: 'PATCH',
+        headers: this.headers(),
+        body: JSON.stringify({
+          filterableAttributes: [
+            'categoryId',
+            'priceCents',
+            'brand',
+            'inStock',
+            'featured',
+            'tags',
+            'createdAt'
+          ],
+          sortableAttributes: [
+            'priceCents',
+            'name',
+            'createdAt',
+            'updatedAt'
+          ],
+          searchableAttributes: [
+            'name',
+            'description',
+            'brand',
+            'tags'
+          ],
+          displayedAttributes: [
+            'id',
+            'name',
+            'description',
+            'priceCents',
+            'imageUrl',
+            'slug',
+            'categoryId',
+            'brand',
+            'inStock',
+            'featured',
+            'tags'
+          ],
+          rankingRules: [
+            'words',
+            'typo',
+            'proximity',
+            'attribute',
+            'sort',
+            'exactness'
+          ],
+          stopWords: ['và', 'của', 'cho', 'với', 'từ', 'tại', 'trong'],
+          synonyms: {
+            'tai nghe': ['headphone', 'earphone'],
+            'loa': ['speaker'],
+            'ampli': ['amplifier', 'amp']
+          }
+        }),
+      });
+
+      this.logger.log('Search index configured successfully');
+    } catch (error) {
+      this.logger.error('Failed to configure search index:', error);
+    }
+  }
+
+  async indexDocuments(docs: unknown[]): Promise<void> {
+    await this.ensureIndex();
+    await fetch(`${this.url}/indexes/${this.indexName}/documents`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(docs),
+    });
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await this.ensureIndex();
+    await fetch(`${this.url}/indexes/${this.indexName}/documents/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: this.headers(),
+    });
+  }
+
+  async search(
+    q: string,
+    page: number,
+    pageSize: number,
+    filters?: SearchFilters,
+    options?: SearchOptions,
+  ): Promise<SearchResult> {
+    await this.ensureIndex();
+
+    const offset = (page - 1) * pageSize;
+    const filterClauses: string[] = [];
+
+    // Build filter clauses
+    if (filters?.categoryId) {
+      filterClauses.push(`categoryId = ${JSON.stringify(filters.categoryId)}`);
+    }
+    if (typeof filters?.minPrice === 'number') {
+      filterClauses.push(`priceCents >= ${filters.minPrice}`);
+    }
+    if (typeof filters?.maxPrice === 'number') {
+      filterClauses.push(`priceCents <= ${filters.maxPrice}`);
+    }
+    if (filters?.brand) {
+      filterClauses.push(`brand = ${JSON.stringify(filters.brand)}`);
+    }
+    if (typeof filters?.inStock === 'boolean') {
+      filterClauses.push(`inStock = ${filters.inStock}`);
+    }
+    if (typeof filters?.featured === 'boolean') {
+      filterClauses.push(`featured = ${filters.featured}`);
+    }
+    if (filters?.tags && filters.tags.length > 0) {
+      const tagFilters = filters.tags.map(tag => `tags = ${JSON.stringify(tag)}`);
+      filterClauses.push(`(${tagFilters.join(' OR ')})`);
+    }
+
+    const filter = filterClauses.length ? filterClauses.join(' AND ') : undefined;
+
+    // Build sort parameter
+    let sort: string[] | undefined;
+    if (options?.sortBy) {
+      switch (options.sortBy) {
+        case 'price_asc':
+          sort = ['priceCents:asc'];
+          break;
+        case 'price_desc':
+          sort = ['priceCents:desc'];
+          break;
+        case 'name_asc':
+          sort = ['name:asc'];
+          break;
+        case 'name_desc':
+          sort = ['name:desc'];
+          break;
+        case 'created_desc':
+          sort = ['createdAt:desc'];
+          break;
+        default:
+          sort = undefined; // relevance
+      }
+    }
+
+    // Default facets
+    const facets = options?.facets || ['categoryId', 'brand', 'tags'];
+
+    const searchParams = {
+      q: q || '',
+      offset,
+      limit: pageSize,
+      filter,
+      facets,
+      sort,
+      attributesToHighlight: options?.attributesToHighlight || ['name', 'description'],
+      attributesToCrop: options?.attributesToCrop || ['description'],
+      cropLength: options?.cropLength || 100,
+      showMatchesPosition: true,
     };
 
-    // Category filter
-    if (category) {
-      where.category = {
-        OR: [
-          { slug: { contains: category, mode: 'insensitive' as const } },
-          { name: { contains: category, mode: 'insensitive' as const } }
-        ]
+    try {
+      const res = await fetch(`${this.url}/indexes/${this.indexName}/search`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify(searchParams),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Search request failed: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        hits: data.hits || [],
+        estimatedTotalHits: data.estimatedTotalHits,
+        page,
+        pageSize,
+        facetDistribution: data.facetDistribution,
+        processingTimeMs: data.processingTimeMs,
+        query: q,
+      };
+    } catch (error) {
+      this.logger.error('Search request failed:', error);
+      return {
+        hits: [],
+        estimatedTotalHits: 0,
+        page,
+        pageSize,
+        facetDistribution: {},
+        query: q,
       };
     }
-
-    // Price range filter
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.priceCents = {};
-      if (minPrice !== undefined) where.priceCents.gte = minPrice;
-      if (maxPrice !== undefined) where.priceCents.lte = maxPrice;
-    }
-
-    // Stock filter
-    if (inStock !== undefined) {
-      where.inventory = { is: { stock: inStock ? { gt: 0 } : { lte: 0 } } } as any;
-    }
-
-    // Featured filter
-    if (featured !== undefined) {
-      where.featured = featured;
-    }
-
-    // Tags filter
-    if (tags && tags.length > 0) {
-      where.tags = { some: { name: { in: tags } } } as any;
-    }
-
-    // Build order by
-    const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
-
-    // Execute search
-    const [products, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        include: {
-          category: true,
-          inventory: true,
-          tags: true,
-          _count: {
-            select: {
-              reviews: true,
-              views: true
-            }
-          }
-        },
-        orderBy,
-        take: limit,
-        skip: offset
-      }),
-      this.prisma.product.count({ where })
-    ]);
-
-    // Log search analytics
-    this.logSearchAnalytics(query, filters, total);
-
-    return {
-      products,
-      total,
-      pagination: {
-        page: Math.floor(offset / limit) + 1,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      },
-      filters: {
-        applied: filters,
-        available: await this.getAvailableFilters(query)
-      }
-    };
   }
 
-  // Global Search across multiple entities
-  async globalSearch(query: string, limit: number = 10) {
-    const results = {
-      products: [],
-      categories: [],
-      services: [],
-      suggestions: []
-    };
+  async getSuggestions(q: string, limit: number = 5): Promise<string[]> {
+    if (!q || q.length < 2) return [];
 
-    // Search products
-    const products = await this.prisma.product.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' as const } },
-          { description: { contains: query, mode: 'insensitive' as const } }
-        ]
-      },
-      include: {
-        category: true,
-        inventory: true
-      },
-      take: Math.floor(limit / 2)
-    });
-
-    // Search categories
-    const categories = await this.prisma.category.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { slug: { contains: query, mode: 'insensitive' } }
-        ]
-      },
-      take: Math.floor(limit / 4)
-    });
-
-    // Search services
-    const services = await this.prisma.service.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } }
-        ]
-      },
-      take: Math.floor(limit / 4)
-    });
-
-    // Generate search suggestions
-    const suggestions = await this.generateSearchSuggestions(query);
-
-    return {
-      products,
-      categories,
-      services,
-      suggestions,
-      total: products.length + categories.length + services.length
-    };
-  }
-
-  // Search Suggestions
-  async getSearchSuggestions(query: string, limit: number = 5) {
-    const suggestions: SearchSuggestion[] = [];
-
-    // Product name suggestions
-    const productSuggestions = await this.prisma.product.findMany({
-      where: {
-        name: { contains: query, mode: 'insensitive' }
-      },
-      select: {
-        name: true,
-        _count: { select: { views: true } }
-      },
-      take: limit,
-      orderBy: { viewCount: 'desc' }
-    });
-
-    productSuggestions.forEach(product => {
-      suggestions.push({
-        type: 'product',
-        value: product.name,
-        count: product._count.views
-      });
-    });
-
-    // Category suggestions
-    const categorySuggestions = await this.prisma.category.findMany({
-      where: {
-        name: { contains: query, mode: 'insensitive' }
-      },
-      select: {
-        name: true,
-        _count: { select: { products: true } }
-      },
-      take: limit,
-      orderBy: { products: { _count: 'desc' } }
-    });
-
-    categorySuggestions.forEach(category => {
-      suggestions.push({
-        type: 'category',
-        value: category.name,
-        count: category._count.products
-      });
-    });
-
-    // Tag suggestions
-    const tagSuggestions = await this.prisma.productTag.findMany({
-      where: {
-        name: { contains: query, mode: 'insensitive' }
-      },
-      select: {
-        name: true,
-        _count: { select: { products: true } }
-      },
-      take: limit,
-      orderBy: { products: { _count: 'desc' } }
-    });
-
-    tagSuggestions.forEach(tag => {
-      suggestions.push({
-        type: 'tag',
-        value: tag.name,
-        count: tag._count.products
-      });
-    });
-
-    return suggestions
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-  }
-
-  // Popular Searches
-  async getPopularSearches(limit: number = 10) {
-    // This would typically come from search analytics
-    // For now, return popular product names
-    const popularProducts = await this.prisma.product.findMany({
-      where: {},
-      select: { name: true },
-      orderBy: { viewCount: 'desc' },
-      take: limit
-    });
-
-    return popularProducts.map(p => p.name);
-  }
-
-  // Search Analytics
-  async logSearchAnalytics(query: string, filters: SearchFilters, resultCount: number) {
     try {
-      await this.prisma.searchLog.create({
-        data: {
-          query,
-          filters: filters as any,
-          resultCount,
-          timestamp: new Date()
-        }
+      await this.ensureIndex();
+
+      const res = await fetch(`${this.url}/indexes/${this.indexName}/search`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          q,
+          limit,
+          attributesToRetrieve: ['name'],
+          attributesToHighlight: [],
+          attributesToCrop: [],
+        }),
       });
+
+      if (!res.ok) return [];
+
+      const data = await res.json();
+      const suggestions: string[] = (data.hits as Array<any> | undefined)
+        ?.map((hit: any) => hit.name)
+        .filter((name: unknown): name is string => typeof name === 'string' && name.toLowerCase().includes(q.toLowerCase()))
+        .slice(0, limit) || [];
+
+      return [...new Set(suggestions)]; // Remove duplicates
     } catch (error) {
-      this.logger.error('Failed to log search analytics:', error);
+      this.logger.error('Failed to get suggestions:', error);
+      return [];
     }
   }
 
-  // Get available filters for current search
-  async getAvailableFilters(query: string) {
-    const baseWhere: any = {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' as const } },
-        { description: { contains: query, mode: 'insensitive' as const } }
-      ]
-    };
-
-    const [categories, priceRange, tags] = await Promise.all([
-      // Available categories
-      this.prisma.category.findMany({
-        where: {
-          products: { some: baseWhere }
-        },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          _count: { select: { products: true } }
-        }
-      }),
-
-      // Price range
-      this.prisma.product.aggregate({
-        where: baseWhere,
-        _min: { priceCents: true },
-        _max: { priceCents: true }
-      }),
-
-      // Available tags
-      this.prisma.productTag.findMany({
-        where: {
-          products: { some: baseWhere }
-        },
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { products: true } }
-        }
-      })
-    ]);
-
-    return {
-      categories,
-      priceRange: {
-        min: (priceRange as any)._min?.priceCents ?? 0,
-        max: (priceRange as any)._max?.priceCents ?? 0
-      },
-      tags
-    };
+  async getPopularSearches(limit: number = 10): Promise<string[]> {
+    // This would typically come from analytics data
+    // For now, return some common search terms
+    return [
+      'tai nghe',
+      'loa bluetooth',
+      'ampli',
+      'sony',
+      'audio technica',
+      'sennheiser',
+      'bose',
+      'jbl',
+      'focal',
+      'beyerdynamic'
+    ].slice(0, limit);
   }
 
-  // Generate search suggestions based on query
-  private async generateSearchSuggestions(query: string): Promise<string[]> {
-    const suggestions: string[] = [];
+  async getFacets(): Promise<Record<string, any>> {
+    try {
+      await this.ensureIndex();
 
-    // Add query variations
-    if (query.length > 2) {
-      suggestions.push(query);
-      suggestions.push(query + ' giá rẻ');
-      suggestions.push(query + ' chất lượng');
-      suggestions.push(query + ' chính hãng');
+      const res = await fetch(`${this.url}/indexes/${this.indexName}/search`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          q: '',
+          limit: 0,
+          facets: ['categoryId', 'brand', 'tags'],
+        }),
+      });
+
+      if (!res.ok) return {};
+
+      const data = await res.json();
+      return data.facetDistribution || {};
+    } catch (error) {
+      this.logger.error('Failed to get facets:', error);
+      return {};
     }
-
-    // Add related terms based on query
-    const relatedTerms = await this.getRelatedTerms(query);
-    suggestions.push(...relatedTerms);
-
-    return suggestions.slice(0, 5);
   }
 
-  // Get related terms for a query
-  private async getRelatedTerms(query: string): Promise<string[]> {
-    // This would typically use a more sophisticated algorithm
-    // For now, return some basic related terms
-    const relatedTerms: { [key: string]: string[] } = {
-      'loa': ['speaker', 'amplifier', 'sound system'],
-      'microphone': ['mic', 'karaoke', 'recording'],
-      'headphone': ['earphone', 'headset', 'audio'],
-      'amplifier': ['amp', 'power', 'sound'],
-      'mixer': ['dj', 'audio', 'recording']
-    };
+  // Additional methods for compatibility
+  async searchProducts(query: string, options: any = {}): Promise<SearchResult> {
+    const page = options.page || 1;
+    const pageSize = options.limit || 20;
+    return this.search(query, page, pageSize, options, options);
+  }
 
-    const lowerQuery = query.toLowerCase();
-    for (const [key, terms] of Object.entries(relatedTerms)) {
-      if (lowerQuery.includes(key)) {
-        return terms;
-      }
-    }
+  async getSearchSuggestions(query: string, limit: number = 5): Promise<string[]> {
+    return this.getSuggestions(query, limit);
+  }
 
+  async getAvailableFilters(_query: string): Promise<any> {
+    return this.getFacets();
+  }
+
+  async globalSearch(query: string, options: any = {}): Promise<SearchResult> {
+    const page = options.page || 1;
+    const pageSize = options.limit || 20;
+    return this.search(query, page, pageSize, options, options);
+  }
+
+  async getUserSearchHistory(_userId: string): Promise<any[]> {
+    // This would typically fetch from a search history database
     return [];
   }
-
-  // Search History for logged-in users
-  async getUserSearchHistory(userId: string, limit: number = 10) {
-    const history = await this.prisma.searchLog.findMany({
-      where: { userId },
-      orderBy: { timestamp: 'desc' },
-      take: limit,
-      select: {
-        query: true,
-        timestamp: true
-      }
-    });
-
-    return history;
-  }
-
-  // Save search to user history
-  async saveUserSearch(userId: string, query: string, filters: SearchFilters) {
-    try {
-      await this.prisma.searchLog.create({
-        data: {
-          userId,
-          query,
-          filters: filters as any,
-          resultCount: 0,
-          timestamp: new Date()
-        }
-      });
-    } catch (error) {
-      this.logger.error('Failed to save user search:', error);
-    }
-  }
-
-  // Compatibility wrappers for other modules/controllers
-  async search(q: string, page = 1, pageSize = 20, filters: any = {}, _options?: any) {
-    const limit = pageSize;
-    const offset = (page - 1) * pageSize;
-    return this.searchProducts(q || '', { ...filters, limit, offset });
-  }
-
-  async getSuggestions(q: string, limit?: number) {
-    return this.getSearchSuggestions(q || '', limit ?? 5);
-  }
-
-  async getFacets() {
-    return this.getAvailableFilters('');
-  }
-
-  // Optional stubs for indexing hooks referenced elsewhere
-  async indexDocuments(_docs: any[]) { return; }
-  async deleteDocument(_id: string) { return; }
 }

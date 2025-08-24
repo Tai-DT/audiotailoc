@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UseGuards, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res, UseGuards, Param, Put, Delete } from '@nestjs/common';
 import type { Response } from 'express';
-import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Max, Min, IsArray, IsNumber } from 'class-validator';
 import { AiService } from './ai.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -110,6 +110,78 @@ class ReindexDto {
   @IsOptional()
   @IsBooleanString()
   all?: string;
+}
+
+// Core AI-powered features DTOs for Audio Tài Lộc
+class ContentGenerationDto {
+  @IsString()
+  prompt!: string;
+
+  @IsOptional()
+  @IsString()
+  type?: 'product_description' | 'email_template' | 'marketing_copy' | 'faq' | 'blog_post';
+
+  @IsOptional()
+  @IsString()
+  tone?: 'professional' | 'casual' | 'friendly' | 'formal';
+
+  @IsOptional()
+  @IsInt()
+  @Min(50)
+  @Max(2000)
+  maxLength?: number;
+}
+
+class SentimentAnalysisDto {
+  @IsString()
+  text!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
+class TextClassificationDto {
+  @IsString()
+  text!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  categories!: string[];
+}
+
+class TranslationDto {
+  @IsString()
+  text!: string;
+
+  @IsString()
+  targetLanguage!: string;
+
+  @IsOptional()
+  @IsString()
+  sourceLanguage?: string;
+}
+
+class CustomerIntentDto {
+  @IsString()
+  message!: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
+}
+
+class PersonalizationDto {
+  @IsString()
+  userId!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
 }
 
 @Controller('ai')
@@ -258,6 +330,56 @@ export class AiController {
         }
       }
     });
+  }
+
+  // ======= CORE AI-POWERED FEATURES ENDPOINTS =======
+
+  // Content Generation - Tạo mô tả sản phẩm, bài viết marketing
+  @Post('generate-content')
+  async generateContent(@Body() dto: ContentGenerationDto) {
+    return this.ai.generateContent(dto);
+  }
+
+  // Sentiment Analysis - Phân tích feedback khách hàng
+  @Post('analyze-sentiment')
+  async analyzeSentiment(@Body() dto: SentimentAnalysisDto) {
+    return this.ai.analyzeSentiment(dto);
+  }
+
+  // Text Classification - Phân loại tin nhắn khách hàng
+  @Post('classify-text')
+  async classifyText(@Body() dto: TextClassificationDto) {
+    return this.ai.classifyText(dto);
+  }
+
+  // Translation - Dịch thuật
+  @Post('translate')
+  async translate(@Body() dto: TranslationDto) {
+    return this.ai.translate(dto);
+  }
+
+  // Customer Intent Detection - Hiểu ý định khách hàng
+  @Post('detect-intent')
+  async detectIntent(@Body() dto: CustomerIntentDto) {
+    return this.ai.detectCustomerIntent(dto);
+  }
+
+  // Personalization - Gợi ý sản phẩm cá nhân hóa
+  @Post('personalize')
+  async personalize(@Body() dto: PersonalizationDto) {
+    return this.ai.getPersonalizedRecommendations(dto);
+  }
+
+  // AI Health Check
+  @Get('health')
+  async getAIHealth() {
+    return this.ai.getHealthStatus();
+  }
+
+  // AI Capabilities
+  @Get('capabilities')
+  async getCapabilities() {
+    return this.ai.getCapabilities();
   }
 }
 

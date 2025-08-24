@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
 import { AnalyticsService, AnalyticsFilters } from './analytics.service';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsOptional, IsDateString, IsArray, IsString } from 'class-validator';
 
 class AnalyticsQueryDto {
@@ -36,7 +36,7 @@ class AnalyticsQueryDto {
 }
 
 @Controller('analytics')
-@UseGuards(AdminGuard)
+@UseGuards(AdminOrKeyGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 

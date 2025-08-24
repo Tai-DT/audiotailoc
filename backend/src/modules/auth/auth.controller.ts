@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -20,10 +20,33 @@ class RefreshTokenDto {
   @IsString() refreshToken!: string;
 }
 
+class ForgotPasswordDto {
+  @IsEmail() email!: string;
+}
+
+class ResetPasswordDto {
+  @IsString() token!: string;
+  @MinLength(6) @IsString() newPassword!: string;
+}
+
+class ChangePasswordDto {
+  @IsString() currentPassword!: string;
+  @MinLength(6) @IsString() newPassword!: string;
+}
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService, private readonly users: UsersService) {}
+
+  @Get('status')
+  async status() {
+    return {
+      authenticated: false,
+      message: 'Authentication status endpoint',
+      timestamp: new Date().toISOString()
+    };
+  }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for registration
   @Post('register')
@@ -49,6 +72,37 @@ export class AuthController {
       throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     });
     return tokens;
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour for forgot password
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    const result = await this.auth.forgotPassword(dto.email).catch(() => {
+      throw new HttpException('Failed to process forgot password request', HttpStatus.INTERNAL_SERVER_ERROR);
+    });
+    return { message: 'If the email exists, a password reset link has been sent' };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for reset password
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const result = await this.auth.resetPassword(dto.token, dto.newPassword).catch(() => {
+      throw new HttpException('Invalid or expired reset token', HttpStatus.BAD_REQUEST);
+    });
+    return { message: 'Password has been reset successfully' };
+  }
+
+  @UseGuards(JwtGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for change password
+  @Put('change-password')
+  async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    const userId = req.user?.sub as string | undefined;
+    if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
+    
+    const result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
+      throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
+    });
+    return { message: 'Password has been changed successfully' };
   }
 
   @UseGuards(JwtGuard)

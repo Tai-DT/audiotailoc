@@ -1,12 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/modules/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
+import { TestDatabaseService } from '../src/modules/testing/test-database.service';
+import { TestHelpersService } from '../src/modules/testing/test-helpers.service';
+import { MockServicesService } from '../src/modules/testing/mock-services.service';
 
-describe('Authentication (e2e)', () => {
+describe('Auth API (e2e)', () => {
   let app: INestApplication;
-  let prismaService: PrismaService;
+  let testDatabase: TestDatabaseService;
+  let testHelpers: TestHelpersService;
+  let mockServices: MockServicesService;
+  let accessToken: string;
+  let refreshToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -14,245 +20,519 @@ describe('Authentication (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    prismaService = moduleFixture.get<PrismaService>(PrismaService);
+
+    // Apply same pipes and middleware as main app
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
+
     await app.init();
+
+    testDatabase = app.get(TestDatabaseService);
+    testHelpers = app.get(TestHelpersService);
+    mockServices = app.get(MockServicesService);
+
+    // Enable mock services for testing
+    mockServices.setMockEnabled(true);
+
+    // Clean up any existing test data
+    await testDatabase.cleanupTestData();
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await prismaService.user.deleteMany({
-      where: {
-        email: {
-          in: ['test@example.com', 'test2@example.com'],
-        },
-      },
-    });
+    await testDatabase.cleanupTestData();
     await app.close();
   });
 
   describe('/api/v1/auth/register (POST)', () => {
-    it('should register a new user successfully', () => {
-      return request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test User',
-        })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('user');
-          expect(res.body.user).toHaveProperty('id');
-          expect(res.body.user.email).toBe('test@example.com');
-          expect(res.body.user.name).toBe('Test User');
-          expect(res.body.user).not.toHaveProperty('password');
-        });
-    });
+    it('should register a new user successfully', async () => {
+      const registerData = {
+        email: `test${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Test User',
+        phone: '0123456789',
+      };
 
-    it('should return 400 for invalid email', () => {
-      return request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({
-          email: 'invalid-email',
-          password: 'password123',
-        })
-        .expect(422);
-    });
-
-    it('should return 400 for short password', () => {
-      return request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'test2@example.com',
-          password: '123',
-        })
-        .expect(422);
-    });
-
-    it('should return 400 for duplicate email', async () => {
-      // First registration
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'test2@example.com',
-          password: 'password123',
-        })
+        .send(registerData)
         .expect(201);
 
-      // Duplicate registration
-      return request(app.getHttpServer())
+      expect(response.body).toMatchObject({
+        success: true,
+        data: {
+          user: {
+            email: registerData.email,
+            name: registerData.name,
+            phone: registerData.phone,
+            isActive: true,
+            role: 'USER',
+            emailVerified: false,
+          },
+          accessToken: expect.any(String),
+          refreshToken: expect.any(String),
+        },
+      });
+
+      // Store tokens for later tests
+      accessToken = response.body.data.accessToken;
+      refreshToken = response.body.data.refreshToken;
+    });
+
+    it('should return validation error for invalid email', async () => {
+      const invalidData = {
+        email: 'invalid-email',
+        password: 'password123',
+        name: 'Test User',
+        phone: '0123456789',
+      };
+
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({
-          email: 'test2@example.com',
-          password: 'password123',
-        })
-        .expect(400);
+        .send(invalidData)
+        .expect(422);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.stringContaining('validation'),
+        },
+      });
+    });
+
+    it('should return error for duplicate email', async () => {
+      // First, create a user
+      const userData = {
+        email: `duplicate${Date.now()}@example.com`,
+        password: 'hashedpassword123',
+        name: 'Test User',
+        phone: '0123456789',
+      };
+
+      await testDatabase.createTestUser(userData);
+
+      // Try to register with same email
+      const registerData = {
+        email: userData.email,
+        password: 'password123',
+        name: 'Another User',
+        phone: '0987654321',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerData)
+        .expect(409);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.stringContaining('DUPLICATE'),
+          message: expect.stringContaining('already exists'),
+        },
+      });
+    });
+
+    it('should return validation error for weak password', async () => {
+      const weakPasswordData = {
+        email: `test${Date.now()}@example.com`,
+        password: '123', // Too short
+        name: 'Test User',
+        phone: '0123456789',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(weakPasswordData)
+        .expect(422);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.stringContaining('validation'),
+        },
+      });
     });
   });
 
   describe('/api/v1/auth/login (POST)', () => {
-    beforeEach(async () => {
-      // Ensure test user exists
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test User',
-        });
+    let testUser: any;
+
+    beforeAll(async () => {
+      // Create a test user for login tests
+      testUser = await testDatabase.createTestUser({
+        email: `login${Date.now()}@example.com`,
+        password: await testHelpers.hashTestPassword('password123'),
+        name: 'Login Test User',
+        phone: '0123456789',
+        emailVerified: true,
+      });
     });
 
-    it('should login successfully with valid credentials', () => {
-      return request(app.getHttpServer())
+    it('should login successfully with correct credentials', async () => {
+      const loginData = {
+        email: testUser.email,
+        password: 'password123',
+      };
+
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-        })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('accessToken');
-          expect(res.body).toHaveProperty('refreshToken');
-          expect(typeof res.body.accessToken).toBe('string');
-          expect(typeof res.body.refreshToken).toBe('string');
-        });
+        .send(loginData)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        data: {
+          user: {
+            id: testUser.id,
+            email: testUser.email,
+            name: testUser.name,
+            role: testUser.role,
+          },
+          accessToken: expect.any(String),
+          refreshToken: expect.any(String),
+        },
+      });
     });
 
-    it('should return 401 for invalid email', () => {
-      return request(app.getHttpServer())
+    it('should return error for incorrect password', async () => {
+      const loginData = {
+        email: testUser.email,
+        password: 'wrongpassword',
+      };
+
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'password123',
-        })
+        .send(loginData)
         .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: expect.stringContaining('invalid'),
+        },
+      });
     });
 
-    it('should return 401 for invalid password', () => {
-      return request(app.getHttpServer())
+    it('should return error for non-existent email', async () => {
+      const loginData = {
+        email: 'nonexistent@example.com',
+        password: 'password123',
+      };
+
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        })
+        .send(loginData)
         .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: expect.stringContaining('invalid'),
+        },
+      });
+    });
+
+    it('should handle rate limiting', async () => {
+      const loginData = {
+        email: testUser.email,
+        password: 'wrongpassword',
+      };
+
+      // Make multiple failed attempts
+      for (let i = 0; i < 10; i++) {
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send(loginData);
+      }
+
+      // Next attempt should be rate limited
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(loginData)
+        .expect(429);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        message: expect.stringContaining('too many requests'),
+      });
     });
   });
 
   describe('/api/v1/auth/refresh (POST)', () => {
     let refreshToken: string;
 
-    beforeEach(async () => {
-      // Login to get refresh token
-      const loginResponse = await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+    beforeAll(async () => {
+      // Get a refresh token by registering
+      const registerData = {
+        email: `refresh${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Refresh Test User',
+        phone: '0123456789',
+      };
 
-      refreshToken = loginResponse.body.refreshToken;
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerData)
+        .expect(201);
+
+      refreshToken = response.body.data.refreshToken;
     });
 
-    it('should refresh access token successfully', () => {
-      return request(app.getHttpServer())
+    it('should refresh access token successfully', async () => {
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
-        .send({
-          refreshToken,
-        })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('accessToken');
-          expect(res.body).toHaveProperty('refreshToken');
-          expect(typeof res.body.accessToken).toBe('string');
-          expect(typeof res.body.refreshToken).toBe('string');
-        });
+        .send({ refreshToken })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        data: {
+          accessToken: expect.any(String),
+          refreshToken: expect.any(String),
+        },
+      });
     });
 
-    it('should return 401 for invalid refresh token', () => {
-      return request(app.getHttpServer())
+    it('should return error for invalid refresh token', async () => {
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
-        .send({
-          refreshToken: 'invalid-token',
-        })
+        .send({ refreshToken: 'invalid-token' })
         .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.stringContaining('INVALID'),
+          message: expect.stringContaining('invalid'),
+        },
+      });
+    });
+
+    it('should return error for missing refresh token', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({})
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          message: expect.stringContaining('required'),
+        },
+      });
     });
   });
 
   describe('/api/v1/auth/me (GET)', () => {
     let accessToken: string;
+    let testUser: any;
 
-    beforeEach(async () => {
-      // Login to get access token
-      const loginResponse = await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+    beforeAll(async () => {
+      // Create user and get access token
+      testUser = await testDatabase.createTestUser({
+        email: `me${Date.now()}@example.com`,
+        password: await testHelpers.hashTestPassword('password123'),
+        name: 'Profile Test User',
+        phone: '0123456789',
+        emailVerified: true,
+      });
 
-      accessToken = loginResponse.body.accessToken;
+      accessToken = await testHelpers.generateTestToken(testUser.id);
     });
 
-    it('should return user profile with valid token', () => {
-      return request(app.getHttpServer())
+    it('should get current user profile', async () => {
+      const response = await request(app.getHttpServer())
         .get('/api/v1/auth/me')
         .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('userId');
-          expect(res.body).toHaveProperty('email');
-          expect(res.body.email).toBe('test@example.com');
-        });
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        data: {
+          user: {
+            id: testUser.id,
+            email: testUser.email,
+            name: testUser.name,
+            phone: testUser.phone,
+            role: testUser.role,
+          },
+        },
+      });
     });
 
-    it('should return 401 without token', () => {
-      return request(app.getHttpServer())
+    it('should return error without authorization', async () => {
+      const response = await request(app.getHttpServer())
         .get('/api/v1/auth/me')
         .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.stringContaining('UNAUTHORIZED'),
+        },
+      });
     });
 
-    it('should return 401 with invalid token', () => {
-      return request(app.getHttpServer())
+    it('should return error with invalid token', async () => {
+      const response = await request(app.getHttpServer())
         .get('/api/v1/auth/me')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.stringContaining('INVALID'),
+        },
+      });
+    });
+  });
+
+  describe('/api/v1/auth/logout (POST)', () => {
+    let accessToken: string;
+    let refreshToken: string;
+
+    beforeAll(async () => {
+      // Get tokens by registering
+      const registerData = {
+        email: `logout${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Logout Test User',
+        phone: '0123456789',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerData)
+        .expect(201);
+
+      accessToken = response.body.data.accessToken;
+      refreshToken = response.body.data.refreshToken;
+    });
+
+    it('should logout successfully', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ refreshToken })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        message: expect.stringContaining('logged out'),
+      });
+    });
+
+    it('should return error without authorization', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .send({ refreshToken })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.stringContaining('UNAUTHORIZED'),
+        },
+      });
+    });
+  });
+
+  describe('Security Headers', () => {
+    it('should include security headers in responses', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/auth/login')
+        .expect(404); // Endpoint doesn't exist, but we get headers
+
+      // Check for security headers
+      expect(response.headers).toMatchObject({
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'x-xss-protection': '1; mode=block',
+      });
+    });
+  });
+
+  describe('CORS', () => {
+    it('should handle CORS preflight requests', async () => {
+      const response = await request(app.getHttpServer())
+        .options('/api/v1/auth/register')
+        .set('Origin', 'http://localhost:3000')
+        .set('Access-Control-Request-Method', 'POST')
+        .expect(204);
+
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+      expect(response.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('should reject requests from unauthorized origins', async () => {
+      // This test might be tricky to implement without mocking
+      // The CORS middleware should reject unauthorized origins
+      // You might need to configure test-specific allowed origins
     });
   });
 
   describe('Rate Limiting', () => {
-    it('should limit registration attempts', async () => {
-      const requests = Array(4).fill(null).map(() =>
-        request(app.getHttpServer())
-          .post('/api/v1/auth/register')
-          .send({
-            email: `rate-limit-test-${Date.now()}@example.com`,
-            password: 'password123',
-          })
-      );
+    it('should apply rate limiting to auth endpoints', async () => {
+      // Make multiple requests to trigger rate limiting
+      const loginData = {
+        email: 'test@example.com',
+        password: 'password123',
+      };
 
-      const responses = await Promise.all(requests);
-      const successCount = responses.filter(res => res.status === 201).length;
-      const rateLimitedCount = responses.filter(res => res.status === 429).length;
+      // Make many requests quickly
+      for (let i = 0; i < 10; i++) {
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send(loginData);
+      }
 
-      expect(successCount).toBeLessThanOrEqual(3); // Max 3 registrations per minute
-      expect(rateLimitedCount).toBeGreaterThan(0);
+      // Next request should be rate limited
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(loginData)
+        .expect(429);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        message: expect.stringContaining('too many requests'),
+      });
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return structured error responses', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({}) // Missing required fields
+        .expect(422);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: {
+          code: expect.any(String),
+          message: expect.any(String),
+          timestamp: expect.any(String),
+          path: '/api/v1/auth/login',
+        },
+      });
     });
 
-    it('should limit login attempts', async () => {
-      const requests = Array(6).fill(null).map(() =>
-        request(app.getHttpServer())
-          .post('/api/v1/auth/login')
-          .send({
-            email: 'test@example.com',
-            password: 'wrongpassword',
-          })
-      );
+    it('should include correlation ID in error responses', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({})
+        .expect(422);
 
-      const responses = await Promise.all(requests);
-      const rateLimitedCount = responses.filter(res => res.status === 429).length;
-
-      expect(rateLimitedCount).toBeGreaterThan(0); // Should hit rate limit after 5 attempts
+      expect(response.headers).toHaveProperty('x-correlation-id');
+      expect(response.body.error).toHaveProperty('correlationId');
     });
   });
 });

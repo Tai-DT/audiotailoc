@@ -1,0 +1,941 @@
+{
+  "modules": {
+    "Overview & Analytics": [
+      "Dashboard Overview",
+      "Sales Analytics",
+      "Customer Analytics",
+      "Product Analytics",
+      "Performance Metrics",
+      "Real-time Statistics"
+    ],
+    "User Management": [
+      "User List",
+      "User Details",
+      "User Statistics",
+      "User Activity",
+      "Role Management",
+      "User Permissions"
+    ],
+    "Product Management": [
+      "Product Catalog",
+      "Product Creation",
+      "Product Editing",
+      "Category Management",
+      "Inventory Management",
+      "Product Analytics"
+    ],
+    "Order Management": [
+      "Order List",
+      "Order Details",
+      "Order Status Management",
+      "Order Analytics",
+      "Payment Management",
+      "Refund Processing"
+    ],
+    "Service Management": [
+      "Service Catalog",
+      "Service Creation",
+      "Service Categories",
+      "Technician Management",
+      "Booking Management",
+      "Schedule Management"
+    ],
+    "Content Management": [
+      "Page Management",
+      "Project Portfolio",
+      "SEO Management",
+      "Content Publishing",
+      "Media Management",
+      "Translation Management"
+    ],
+    "System Management": [
+      "System Configuration",
+      "Health Monitoring",
+      "Backup Management",
+      "Log Management",
+      "Security Settings",
+      "Maintenance Mode"
+    ],
+    "Communication": [
+      "Live Chat Management",
+      "Notification Management",
+      "Email Campaigns",
+      "Customer Support",
+      "Chat Analytics",
+      "Message History"
+    ],
+    "Marketing & SEO": [
+      "Campaign Management",
+      "SEO Optimization",
+      "Analytics Dashboard",
+      "Performance Tracking",
+      "Marketing ROI",
+      "Customer Segmentation"
+    ]
+  },
+  "apiEndpoints": {
+    "users": {
+      "name": "User Management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/users",
+          "type": "admin",
+          "description": "List all users"
+        },
+        {
+          "method": "GET",
+          "path": "/users/profile",
+          "type": "authenticated",
+          "description": "Get user profile"
+        },
+        {
+          "method": "GET",
+          "path": "/users/:id",
+          "type": "authenticated",
+          "description": "Get user by ID"
+        },
+        {
+          "method": "POST",
+          "path": "/users",
+          "type": "admin",
+          "description": "Create new user"
+        },
+        {
+          "method": "PUT",
+          "path": "/users/:id",
+          "type": "authenticated",
+          "description": "Update user"
+        },
+        {
+          "method": "DELETE",
+          "path": "/users/:id",
+          "type": "admin",
+          "description": "Delete user"
+        },
+        {
+          "method": "GET",
+          "path": "/users/stats/overview",
+          "type": "admin",
+          "description": "User statistics overview"
+        },
+        {
+          "method": "GET",
+          "path": "/users/stats/activity",
+          "type": "admin",
+          "description": "User activity statistics"
+        }
+      ],
+      "features": [
+        "User CRUD",
+        "Role Management",
+        "Profile Management",
+        "User Analytics"
+      ]
+    },
+    "catalog": {
+      "name": "Product Catalog",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/catalog/products",
+          "type": "public",
+          "description": "List products"
+        },
+        {
+          "method": "GET",
+          "path": "/catalog/products/:id",
+          "type": "public",
+          "description": "Get product details"
+        },
+        {
+          "method": "GET",
+          "path": "/catalog/categories",
+          "type": "public",
+          "description": "List categories"
+        },
+        {
+          "method": "GET",
+          "path": "/catalog/categories/:id",
+          "type": "public",
+          "description": "Get category details"
+        },
+        {
+          "method": "POST",
+          "path": "/catalog/products",
+          "type": "admin",
+          "description": "Create product"
+        },
+        {
+          "method": "PUT",
+          "path": "/catalog/products/:id",
+          "type": "admin",
+          "description": "Update product"
+        },
+        {
+          "method": "DELETE",
+          "path": "/catalog/products/:id",
+          "type": "admin",
+          "description": "Delete product"
+        }
+      ],
+      "features": [
+        "Product Management",
+        "Category Management",
+        "Inventory Tracking",
+        "Product Search"
+      ]
+    },
+    "orders": {
+      "name": "Order Management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/orders",
+          "type": "admin",
+          "description": "List all orders"
+        },
+        {
+          "method": "GET",
+          "path": "/orders/:id",
+          "type": "authenticated",
+          "description": "Get order details"
+        },
+        {
+          "method": "PATCH",
+          "path": "/orders/:id/status/:status",
+          "type": "admin",
+          "description": "Update order status"
+        },
+        {
+          "method": "POST",
+          "path": "/checkout/create-order",
+          "type": "authenticated",
+          "description": "Create new order"
+        }
+      ],
+      "features": [
+        "Order Management",
+        "Order Tracking",
+        "Status Updates",
+        "Order History"
+      ]
+    },
+    "payments": {
+      "name": "Payment Processing",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/payments/intents",
+          "type": "authenticated",
+          "description": "Create payment intent"
+        },
+        {
+          "method": "POST",
+          "path": "/payments/refunds",
+          "type": "admin",
+          "description": "Create refund"
+        },
+        {
+          "method": "GET",
+          "path": "/payments/vnpay/callback",
+          "type": "public",
+          "description": "VNPAY payment callback"
+        },
+        {
+          "method": "GET",
+          "path": "/payments/momo/callback",
+          "type": "public",
+          "description": "MOMO payment callback"
+        },
+        {
+          "method": "GET",
+          "path": "/payments/payos/callback",
+          "type": "public",
+          "description": "PayOS payment callback"
+        },
+        {
+          "method": "POST",
+          "path": "/payments/vnpay/webhook",
+          "type": "public",
+          "description": "VNPAY webhook"
+        },
+        {
+          "method": "POST",
+          "path": "/payments/momo/webhook",
+          "type": "public",
+          "description": "MOMO webhook"
+        },
+        {
+          "method": "POST",
+          "path": "/payments/payos/webhook",
+          "type": "public",
+          "description": "PayOS webhook"
+        }
+      ],
+      "features": [
+        "Multi-payment Gateway",
+        "Payment Intents",
+        "Webhooks",
+        "Refunds",
+        "Payment Security"
+      ]
+    },
+    "services": {
+      "name": "Service Management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/services",
+          "type": "public",
+          "description": "List services"
+        },
+        {
+          "method": "GET",
+          "path": "/services/categories",
+          "type": "public",
+          "description": "List service categories"
+        },
+        {
+          "method": "GET",
+          "path": "/services/types",
+          "type": "public",
+          "description": "List service types"
+        },
+        {
+          "method": "POST",
+          "path": "/services",
+          "type": "admin",
+          "description": "Create service"
+        },
+        {
+          "method": "PUT",
+          "path": "/services/:id",
+          "type": "admin",
+          "description": "Update service"
+        },
+        {
+          "method": "DELETE",
+          "path": "/services/:id",
+          "type": "admin",
+          "description": "Delete service"
+        }
+      ],
+      "features": [
+        "Service Management",
+        "Service Categories",
+        "Service Types",
+        "Service Booking"
+      ]
+    },
+    "bookings": {
+      "name": "Booking System",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/bookings",
+          "type": "authenticated",
+          "description": "List bookings"
+        },
+        {
+          "method": "POST",
+          "path": "/bookings",
+          "type": "authenticated",
+          "description": "Create booking"
+        },
+        {
+          "method": "PUT",
+          "path": "/bookings/:id",
+          "type": "authenticated",
+          "description": "Update booking"
+        },
+        {
+          "method": "DELETE",
+          "path": "/bookings/:id",
+          "type": "admin",
+          "description": "Cancel booking"
+        }
+      ],
+      "features": [
+        "Booking Management",
+        "Schedule Management",
+        "Booking Confirmation",
+        "Booking History"
+      ]
+    },
+    "technicians": {
+      "name": "Technician Management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/technicians",
+          "type": "public",
+          "description": "List technicians"
+        },
+        {
+          "method": "GET",
+          "path": "/technicians/:id",
+          "type": "public",
+          "description": "Get technician details"
+        },
+        {
+          "method": "GET",
+          "path": "/technicians/:id/workload",
+          "type": "admin",
+          "description": "Get technician workload"
+        },
+        {
+          "method": "POST",
+          "path": "/technicians",
+          "type": "admin",
+          "description": "Create technician"
+        },
+        {
+          "method": "PUT",
+          "path": "/technicians/:id",
+          "type": "admin",
+          "description": "Update technician"
+        },
+        {
+          "method": "DELETE",
+          "path": "/technicians/:id",
+          "type": "admin",
+          "description": "Delete technician"
+        },
+        {
+          "method": "PUT",
+          "path": "/technicians/:id/schedule",
+          "type": "admin",
+          "description": "Update technician schedule"
+        }
+      ],
+      "features": [
+        "Technician Management",
+        "Workload Tracking",
+        "Schedule Management",
+        "Technician Profiles"
+      ]
+    },
+    "chat": {
+      "name": "Live Chat",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/chat/sessions",
+          "type": "admin",
+          "description": "List chat sessions"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/sessions/:id",
+          "type": "admin",
+          "description": "Get chat session"
+        },
+        {
+          "method": "POST",
+          "path": "/chat/sessions/:id/messages",
+          "type": "admin",
+          "description": "Post message to session"
+        },
+        {
+          "method": "PATCH",
+          "path": "/chat/sessions/:id/escalate",
+          "type": "admin",
+          "description": "Escalate chat session"
+        },
+        {
+          "method": "PATCH",
+          "path": "/chat/sessions/:id/close",
+          "type": "admin",
+          "description": "Close chat session"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/sessions/:id/analytics",
+          "type": "admin",
+          "description": "Get session analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/stats",
+          "type": "admin",
+          "description": "Get chat statistics"
+        }
+      ],
+      "features": [
+        "Real-time Chat",
+        "Session Management",
+        "AI Integration",
+        "Chat Analytics",
+        "Escalation System"
+      ]
+    },
+    "search": {
+      "name": "Search Engine",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/search/products",
+          "type": "public",
+          "description": "Search products"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global",
+          "type": "public",
+          "description": "Global search"
+        },
+        {
+          "method": "GET",
+          "path": "/search/suggestions",
+          "type": "public",
+          "description": "Search suggestions"
+        },
+        {
+          "method": "GET",
+          "path": "/search/popular",
+          "type": "public",
+          "description": "Popular searches"
+        },
+        {
+          "method": "GET",
+          "path": "/search/history",
+          "type": "authenticated",
+          "description": "User search history"
+        },
+        {
+          "method": "GET",
+          "path": "/search/filters",
+          "type": "public",
+          "description": "Available search filters"
+        },
+        {
+          "method": "POST",
+          "path": "/search/admin/reindex",
+          "type": "admin",
+          "description": "Reindex search data"
+        }
+      ],
+      "features": [
+        "Full-text Search",
+        "Search Suggestions",
+        "Search History",
+        "Search Analytics",
+        "Meilisearch Integration"
+      ]
+    },
+    "files": {
+      "name": "File Management",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/files/upload",
+          "type": "authenticated",
+          "description": "Upload file"
+        },
+        {
+          "method": "GET",
+          "path": "/files",
+          "type": "admin",
+          "description": "List files"
+        },
+        {
+          "method": "DELETE",
+          "path": "/files/:id",
+          "type": "admin",
+          "description": "Delete file"
+        }
+      ],
+      "features": [
+        "File Upload",
+        "File Management",
+        "Cloudinary Integration",
+        "Image Processing"
+      ]
+    },
+    "notifications": {
+      "name": "Notifications",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/notifications",
+          "type": "admin",
+          "description": "Create notification"
+        },
+        {
+          "method": "GET",
+          "path": "/notifications/pending",
+          "type": "admin",
+          "description": "Get pending notifications"
+        },
+        {
+          "method": "PATCH",
+          "path": "/notifications/:id/read",
+          "type": "authenticated",
+          "description": "Mark notification as read"
+        },
+        {
+          "method": "PATCH",
+          "path": "/notifications/read-all",
+          "type": "authenticated",
+          "description": "Mark all notifications as read"
+        },
+        {
+          "method": "GET",
+          "path": "/notifications/stats",
+          "type": "admin",
+          "description": "Get notification statistics"
+        }
+      ],
+      "features": [
+        "Multi-channel Notifications",
+        "Email Notifications",
+        "Push Notifications",
+        "SMS Notifications",
+        "WebSocket Notifications"
+      ]
+    },
+    "analytics": {
+      "name": "Analytics",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/analytics/dashboard",
+          "type": "admin",
+          "description": "Analytics dashboard"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/sales",
+          "type": "admin",
+          "description": "Sales analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/customers",
+          "type": "admin",
+          "description": "Customer analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/products",
+          "type": "admin",
+          "description": "Product analytics"
+        }
+      ],
+      "features": [
+        "Real-time Analytics",
+        "Sales Analytics",
+        "Customer Analytics",
+        "Product Analytics",
+        "Performance Metrics"
+      ]
+    },
+    "admin": {
+      "name": "Admin Dashboard",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/admin/dashboard",
+          "type": "admin",
+          "description": "Admin dashboard overview"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/stats/users",
+          "type": "admin",
+          "description": "User statistics"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/stats/orders",
+          "type": "admin",
+          "description": "Order statistics"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/stats/products",
+          "type": "admin",
+          "description": "Product statistics"
+        },
+        {
+          "method": "POST",
+          "path": "/admin/bulk-action",
+          "type": "admin",
+          "description": "Perform bulk actions"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/system/status",
+          "type": "admin",
+          "description": "System status"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/logs/activity",
+          "type": "admin",
+          "description": "Activity logs"
+        }
+      ],
+      "features": [
+        "Dashboard Overview",
+        "Statistics",
+        "Bulk Actions",
+        "System Monitoring",
+        "Activity Logs"
+      ]
+    },
+    "system": {
+      "name": "System Management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/admin/system/config",
+          "type": "admin",
+          "description": "Get system configs"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/system/config/:key",
+          "type": "admin",
+          "description": "Get specific config"
+        },
+        {
+          "method": "POST",
+          "path": "/admin/system/config",
+          "type": "admin",
+          "description": "Create system config"
+        },
+        {
+          "method": "PUT",
+          "path": "/admin/system/config/:key",
+          "type": "admin",
+          "description": "Update system config"
+        },
+        {
+          "method": "DELETE",
+          "path": "/admin/system/config/:key",
+          "type": "admin",
+          "description": "Delete system config"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/system/info",
+          "type": "admin",
+          "description": "System information"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/system/logs",
+          "type": "admin",
+          "description": "System logs"
+        },
+        {
+          "method": "POST",
+          "path": "/admin/system/maintenance",
+          "type": "admin",
+          "description": "Toggle maintenance mode"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/system/maintenance/status",
+          "type": "admin",
+          "description": "Maintenance status"
+        }
+      ],
+      "features": [
+        "System Configuration",
+        "Dynamic Settings",
+        "Maintenance Mode",
+        "System Monitoring",
+        "Log Management"
+      ]
+    },
+    "health": {
+      "name": "Health Monitoring",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "type": "public",
+          "description": "Basic health check"
+        },
+        {
+          "method": "GET",
+          "path": "/health/detailed",
+          "type": "admin",
+          "description": "Detailed health check"
+        },
+        {
+          "method": "GET",
+          "path": "/health/database",
+          "type": "admin",
+          "description": "Database health"
+        },
+        {
+          "method": "GET",
+          "path": "/health/redis",
+          "type": "admin",
+          "description": "Redis health"
+        },
+        {
+          "method": "GET",
+          "path": "/health/external",
+          "type": "admin",
+          "description": "External services health"
+        },
+        {
+          "method": "GET",
+          "path": "/health/performance",
+          "type": "admin",
+          "description": "Performance metrics"
+        },
+        {
+          "method": "GET",
+          "path": "/health/security",
+          "type": "admin",
+          "description": "Security status"
+        },
+        {
+          "method": "GET",
+          "path": "/health/backup",
+          "type": "admin",
+          "description": "Backup status"
+        }
+      ],
+      "features": [
+        "Health Monitoring",
+        "Database Health",
+        "Redis Health",
+        "External Services Health",
+        "Performance Metrics",
+        "Security Status"
+      ]
+    },
+    "pages": {
+      "name": "Content Pages",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/pages",
+          "type": "public",
+          "description": "List pages"
+        },
+        {
+          "method": "GET",
+          "path": "/pages/:slug",
+          "type": "public",
+          "description": "Get page by slug"
+        },
+        {
+          "method": "POST",
+          "path": "/pages",
+          "type": "admin",
+          "description": "Create page"
+        },
+        {
+          "method": "PUT",
+          "path": "/pages/:slug",
+          "type": "admin",
+          "description": "Update page"
+        },
+        {
+          "method": "DELETE",
+          "path": "/pages/:slug",
+          "type": "admin",
+          "description": "Delete page"
+        }
+      ],
+      "features": [
+        "Content Management",
+        "Page Management",
+        "SEO Integration",
+        "Content Publishing"
+      ]
+    },
+    "projects": {
+      "name": "Portfolio Projects",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/projects",
+          "type": "public",
+          "description": "List projects"
+        },
+        {
+          "method": "GET",
+          "path": "/projects/:slug",
+          "type": "public",
+          "description": "Get project by slug"
+        },
+        {
+          "method": "POST",
+          "path": "/projects",
+          "type": "admin",
+          "description": "Create project"
+        },
+        {
+          "method": "PUT",
+          "path": "/projects/:slug",
+          "type": "admin",
+          "description": "Update project"
+        },
+        {
+          "method": "DELETE",
+          "path": "/projects/:slug",
+          "type": "admin",
+          "description": "Delete project"
+        }
+      ],
+      "features": [
+        "Portfolio Management",
+        "Project Showcase",
+        "Image Management",
+        "Project Categories"
+      ]
+    },
+    "backup": {
+      "name": "Backup & Recovery",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/backup/create",
+          "type": "admin",
+          "description": "Create backup"
+        },
+        {
+          "method": "GET",
+          "path": "/backup/list",
+          "type": "admin",
+          "description": "List backups"
+        },
+        {
+          "method": "POST",
+          "path": "/backup/restore/:id",
+          "type": "admin",
+          "description": "Restore backup"
+        },
+        {
+          "method": "DELETE",
+          "path": "/backup/:id",
+          "type": "admin",
+          "description": "Delete backup"
+        }
+      ],
+      "features": [
+        "Automated Backups",
+        "Backup Management",
+        "Data Recovery",
+        "Backup Scheduling"
+      ]
+    }
+  },
+  "statistics": {
+    "totalEndpoints": 140,
+    "publicEndpoints": 47,
+    "authenticatedEndpoints": 20,
+    "adminEndpoints": 70,
+    "guestEndpoints": 3,
+    "totalModules": 24
+  }
+}

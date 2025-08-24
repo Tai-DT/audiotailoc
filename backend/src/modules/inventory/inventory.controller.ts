@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsBooleanString, IsInt, IsOptional } from 'class-validator';
 
 class ListQueryDto {
@@ -22,7 +22,7 @@ class AdjustDto {
   lowStockThreshold?: number;
 }
 
-@UseGuards(JwtGuard, AdminGuard)
+@UseGuards(AdminOrKeyGuard)
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}

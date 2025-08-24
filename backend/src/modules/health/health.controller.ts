@@ -2,7 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthService } from './health.service';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 
 @ApiTags('Health')
 @Controller('health')
@@ -18,7 +18,7 @@ export class HealthController {
   }
 
   @Get('detailed')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Detailed health check (Admin only)' })
   @ApiResponse({ status: 200, description: 'Detailed health information' })
@@ -27,7 +27,7 @@ export class HealthController {
   }
 
   @Get('database')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Database health check' })
   @ApiResponse({ status: 200, description: 'Database health information' })
@@ -36,7 +36,7 @@ export class HealthController {
   }
 
   @Get('performance')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Performance metrics' })
   @ApiResponse({ status: 200, description: 'Performance information' })
@@ -45,7 +45,7 @@ export class HealthController {
   }
 
   @Get('system')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'System information' })
   @ApiResponse({ status: 200, description: 'System information' })
@@ -54,7 +54,7 @@ export class HealthController {
   }
 
   @Get('memory')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Memory usage information' })
   @ApiResponse({ status: 200, description: 'Memory usage details' })
@@ -77,7 +77,7 @@ export class HealthController {
   }
 
   @Get('dependencies')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Dependencies health check' })
   @ApiResponse({ status: 200, description: 'Dependencies status' })
@@ -86,7 +86,7 @@ export class HealthController {
   }
 
   @Get('logs')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Recent application logs' })
   @ApiResponse({ status: 200, description: 'Recent logs' })

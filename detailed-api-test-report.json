@@ -1,0 +1,175 @@
+{
+  "consistencyScore": 83,
+  "passedTests": 5,
+  "totalTests": 6,
+  "results": {
+    "products": {
+      "backend": {
+        "status": 200,
+        "success": true,
+        "totalItems": 8,
+        "sampleData": {
+          "id": "cmemnc7cq00011308l8wbc5ob",
+          "slug": "e2e-product-1755856019258",
+          "name": "Test Product",
+          "nameEn": null,
+          "description": null,
+          "descriptionEn": null,
+          "priceCents": 150000,
+          "imageUrl": null,
+          "images": [],
+          "createdAt": "2025-08-22T09:46:59.259Z",
+          "updatedAt": "2025-08-22T09:46:59.259Z",
+          "categoryId": null,
+          "featured": false,
+          "viewCount": 0,
+          "metaTitle": null,
+          "metaTitleEn": null,
+          "metaDescription": null,
+          "metaDescriptionEn": null,
+          "metaKeywords": null,
+          "metaKeywordsEn": null,
+          "canonicalUrl": null,
+          "ogImage": null,
+          "ogTitle": null,
+          "ogTitleEn": null,
+          "ogDescription": null,
+          "ogDescriptionEn": null
+        }
+      },
+      "frontend": {
+        "status": 200,
+        "hasContent": true,
+        "pageSize": 25591
+      },
+      "consistency": true
+    },
+    "categories": {
+      "backend": {
+        "status": 200,
+        "success": true,
+        "totalItems": 7,
+        "sampleData": {
+          "id": "cmemazskb0004pyj0mtmrxswr",
+          "slug": "dang-karaoke",
+          "name": "Dàng Karaoke",
+          "nameEn": null,
+          "description": "Dàn karaoke chuyên nghiệp với âm thanh sống động",
+          "descriptionEn": null,
+          "imageUrl": "/images/categories/karaoke-system.jpg",
+          "parentId": null,
+          "createdAt": "2025-08-22T04:01:24.778Z",
+          "updatedAt": "2025-08-22T04:01:24.778Z",
+          "metaTitle": "Dàn Karaoke chuyên nghiệp - Audio Tài Lộc",
+          "metaTitleEn": null,
+          "metaDescription": "Dàn karaoke chất lượng cao với âm thanh sống động, phù hợp cho gia đình và kinh doanh",
+          "metaDescriptionEn": null,
+          "metaKeywords": null,
+          "metaKeywordsEn": null,
+          "canonicalUrl": null
+        }
+      },
+      "frontend": {
+        "status": 200,
+        "hasContent": true
+      },
+      "consistency": true
+    },
+    "auth": {
+      "backend": {
+        "status": 200,
+        "success": true,
+        "data": {
+          "authenticated": false,
+          "message": "Authentication status endpoint",
+          "timestamp": "2025-08-23T10:26:03.834Z"
+        }
+      },
+      "frontend": {
+        "loginStatus": 200,
+        "registerStatus": 200,
+        "hasLoginForm": true,
+        "hasRegisterForm": true
+      },
+      "consistency": true
+    },
+    "cart": {
+      "backend": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "data": {
+            "items": [],
+            "total": 0,
+            "message": "No cart ID provided"
+          },
+          "message": "Data retrieved successfully",
+          "timestamp": "2025-08-23T10:26:04.027Z",
+          "path": "/api/v1/cart",
+          "method": "GET"
+        }
+      },
+      "frontend": {
+        "status": 200,
+        "hasContent": true,
+        "hasItems": true
+      },
+      "consistency": true
+    },
+    "payment": {
+      "backend": {
+        "methodsStatus": 200,
+        "methodsSuccess": true,
+        "intentsStatus": 200,
+        "methodsData": {
+          "methods": [
+            {
+              "id": "VNPAY",
+              "name": "VNPAY",
+              "description": "Thanh toán qua VNPAY",
+              "logo": "/images/payment/vnpay.png",
+              "enabled": true
+            },
+            {
+              "id": "MOMO",
+              "name": "MoMo",
+              "description": "Thanh toán qua MoMo",
+              "logo": "/images/payment/momo.png",
+              "enabled": true
+            },
+            {
+              "id": "PAYOS",
+              "name": "PayOS",
+              "description": "Thanh toán qua PayOS",
+              "logo": "/images/payment/payos.png",
+              "enabled": true
+            }
+          ]
+        },
+        "intentsData": {
+          "success": true,
+          "data": {
+            "intents": [],
+            "message": "Payment intents endpoint",
+            "timestamp": "2025-08-23T10:26:04.110Z"
+          },
+          "message": "Data retrieved successfully",
+          "timestamp": "2025-08-23T10:26:04.110Z",
+          "path": "/api/v1/payments/intents",
+          "method": "GET"
+        }
+      },
+      "frontend": {
+        "status": 200,
+        "hasContent": false
+      },
+      "consistency": true
+    },
+    "apiFlow": {
+      "health": 200,
+      "products": 200,
+      "categories": 200,
+      "overallHealth": true
+    }
+  }
+}

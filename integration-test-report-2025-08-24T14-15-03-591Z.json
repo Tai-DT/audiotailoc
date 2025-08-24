@@ -1,0 +1,84 @@
+{
+  "timestamp": "2025-08-24T14:15:03.591Z",
+  "summary": {
+    "overall": "success",
+    "components": 3,
+    "working": 4
+  },
+  "results": {
+    "backend": {
+      "status": "success",
+      "tests": {
+        "/api/v1": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:15:00.946Z"
+        },
+        "/api/v1/health": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:15:00.962Z"
+        },
+        "/api/v1/auth/status": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:15:00.967Z"
+        }
+      }
+    },
+    "dashboard": {
+      "status": "success",
+      "tests": {
+        "/": {
+          "success": true,
+          "status": 307,
+          "statusText": "Temporary Redirect",
+          "time": "2025-08-24T14:15:01.296Z"
+        },
+        "/login": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:15:02.178Z"
+        }
+      }
+    },
+    "frontend": {
+      "status": "success",
+      "tests": {
+        "/": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:15:02.968Z"
+        },
+        "/vi": {
+          "success": false,
+          "status": 404,
+          "statusText": "Not Found",
+          "time": "2025-08-24T14:15:03.086Z"
+        }
+      }
+    },
+    "integration": {
+      "status": "completed",
+      "tests": {
+        "Backend Health": {
+          "success": true,
+          "time": "2025-08-24T14:15:03.098Z"
+        },
+        "Dashboard-Backend Connection": {
+          "success": true,
+          "time": "2025-08-24T14:15:03.530Z"
+        },
+        "Frontend-Backend Connection": {
+          "success": true,
+          "time": "2025-08-24T14:15:03.588Z"
+        }
+      }
+    }
+  }
+}

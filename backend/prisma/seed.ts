@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seeding...');
+  console.log('🎤 About to create karaoke categories...');
 
   // Create admin user
   const adminPassword = await bcrypt.hash('Admin123!', 10);
@@ -38,61 +39,93 @@ async function main() {
     },
   });
 
+  // Delete existing categories first
+  console.log('🗑️ Deleting existing categories...');
+  await prisma.category.deleteMany();
+
   // Create categories
+  console.log('🎤 Creating karaoke categories...');
   const categories = await Promise.all([
-    prisma.category.upsert({
-      where: { slug: 'tai-nghe' },
-      update: {},
-      create: {
-        name: 'Tai nghe',
-        slug: 'tai-nghe',
-        description: 'Tai nghe chất lượng cao cho mọi nhu cầu',
-        image: '/images/categories/headphones.jpg',
+    prisma.category.create({
+      data: {
+        name: 'Dàng Karaoke',
+        slug: 'dang-karaoke',
+        description: 'Dàn karaoke chuyên nghiệp với âm thanh sống động',
+        image: '/images/categories/karaoke-system.jpg',
         featured: true,
-        seoTitle: 'Tai nghe chất lượng cao - Audio Tài Lộc',
-        seoDescription: 'Khám phá bộ sưu tập tai nghe chất lượng cao với âm thanh tuyệt vời',
+        seoTitle: 'Dàn Karaoke chuyên nghiệp - Audio Tài Lộc',
+        seoDescription: 'Dàn karaoke chất lượng cao với âm thanh sống động, phù hợp cho gia đình và kinh doanh',
       },
     }),
-    prisma.category.upsert({
-      where: { slug: 'loa' },
-      update: {},
-      create: {
-        name: 'Loa',
-        slug: 'loa',
-        description: 'Loa bluetooth và loa có dây chất lượng',
-        image: '/images/categories/speakers.jpg',
+    prisma.category.create({
+      data: {
+        name: 'Đầu Karaoke',
+        slug: 'dau-karaoke',
+        description: 'Đầu karaoke với nhiều bài hát phong phú',
+        image: '/images/categories/karaoke-player.jpg',
         featured: true,
-        seoTitle: 'Loa bluetooth và loa có dây - Audio Tài Lộc',
-        seoDescription: 'Tuyển chọn các dòng loa chất lượng với âm thanh sống động',
+        seoTitle: 'Đầu Karaoke chất lượng cao - Audio Tài Lộc',
+        seoDescription: 'Đầu karaoke với kho bài hát phong phú, giao diện thân thiện, dễ sử dụng',
       },
     }),
-    prisma.category.upsert({
-      where: { slug: 'micro' },
-      update: {},
-      create: {
-        name: 'Micro',
-        slug: 'micro',
-        description: 'Micro thu âm chuyên nghiệp',
-        image: '/images/categories/microphones.jpg',
+    prisma.category.create({
+      data: {
+        name: 'Loa & Loa Sub',
+        slug: 'loa-loa-sub',
+        description: 'Loa và loa sub karaoke chuyên dụng',
+        image: '/images/categories/speakers-subwoofers.jpg',
         featured: true,
-        seoTitle: 'Micro thu âm chuyên nghiệp - Audio Tài Lộc',
-        seoDescription: 'Micro chất lượng cao cho thu âm, livestream và karaoke',
+        seoTitle: 'Loa và Loa Sub karaoke - Audio Tài Lộc',
+        seoDescription: 'Loa karaoke và loa sub chuyên dụng với âm bass mạnh mẽ, âm thanh chất lượng',
       },
     }),
-    prisma.category.upsert({
-      where: { slug: 'phu-kien' },
-      update: {},
-      create: {
-        name: 'Phụ kiện',
-        slug: 'phu-kien',
-        description: 'Phụ kiện âm thanh đa dạng',
-        image: '/images/categories/accessories.jpg',
+    prisma.category.create({
+      data: {
+        name: 'Micro Phone',
+        slug: 'micro-phone',
+        description: 'Microphone karaoke chất lượng cao',
+        image: '/images/categories/microphones-karaoke.jpg',
+        featured: true,
+        seoTitle: 'Micro karaoke chuyên nghiệp - Audio Tài Lộc',
+        seoDescription: 'Micro karaoke với chất lượng thu âm tốt, thiết kế chuyên nghiệp',
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Mixer / Vang Số',
+        slug: 'mixer-vang-so',
+        description: 'Mixer và vang số karaoke chuyên nghiệp',
+        image: '/images/categories/mixer-effects.jpg',
+        featured: true,
+        seoTitle: 'Mixer và Vang số karaoke - Audio Tài Lộc',
+        seoDescription: 'Mixer và vang số chuyên nghiệp cho karaoke với nhiều hiệu ứng âm thanh',
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Màn Hình Chọn Bài',
+        slug: 'man-hinh-chon-bai',
+        description: 'Màn hình cảm ứng chọn bài karaoke',
+        image: '/images/categories/touch-screen.jpg',
+        featured: true,
+        seoTitle: 'Màn hình chọn bài karaoke - Audio Tài Lộc',
+        seoDescription: 'Màn hình cảm ứng chọn bài karaoke với giao diện thân thiện, dễ sử dụng',
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Thanh lý',
+        slug: 'thanh-ly',
+        description: 'Sản phẩm thanh lý với giá ưu đãi đặc biệt',
+        image: '/images/categories/clearance-sale.jpg',
         featured: false,
-        seoTitle: 'Phụ kiện âm thanh - Audio Tài Lộc',
-        seoDescription: 'Phụ kiện âm thanh chất lượng cho thiết bị của bạn',
+        seoTitle: 'Thanh lý sản phẩm karaoke - Audio Tài Lộc',
+        seoDescription: 'Sản phẩm thanh lý với giá ưu đãi đặc biệt, chất lượng đảm bảo',
       },
     }),
   ]);
+
+  console.log('✅ Created categories:', categories.map(c => c.name));
 
   // Create brands
   const brands = await Promise.all([
@@ -134,147 +167,157 @@ async function main() {
   // Create products
   const products = await Promise.all([
     prisma.product.upsert({
-      where: { slug: 'sony-wh-1000xm4' },
+      where: { slug: 'dan-karaoke-professional-5-1' },
       update: {},
       create: {
-        name: 'Sony WH-1000XM4',
-        slug: 'sony-wh-1000xm4',
-        description: 'Tai nghe chống ồn hàng đầu với chất lượng âm thanh tuyệt vời',
-        shortDescription: 'Tai nghe chống ồn Sony WH-1000XM4 với công nghệ AI',
-        sku: 'SONY-WH1000XM4-001',
-        priceCents: 799000000, // 7,990,000 VND
-        originalPriceCents: 899000000, // 8,990,000 VND
-        costCents: 600000000, // 6,000,000 VND
-        categoryId: categories[0].id,
+        name: 'Dàn Karaoke Professional 5.1',
+        slug: 'dan-karaoke-professional-5-1',
+        description: 'Dàn karaoke chuyên nghiệp 5.1 kênh với âm thanh sống động, phù hợp cho gia đình và kinh doanh',
+        shortDescription: 'Dàn karaoke 5.1 kênh chuyên nghiệp với âm bass mạnh mẽ',
+        sku: 'KARA-5-1-PRO-001',
+        priceCents: 1599000000, // 15,990,000 VND
+        originalPriceCents: 1799000000, // 17,990,000 VND
+        costCents: 1200000000, // 12,000,000 VND
+        categoryId: categories[0].id, // Dàn Karaoke
         brandId: brands[0].id,
         inStock: true,
-        stockQuantity: 50,
-        lowStockThreshold: 10,
-        weight: 254,
-        dimensions: '25.4 x 22.0 x 8.0 cm',
+        stockQuantity: 10,
+        lowStockThreshold: 3,
+        weight: 25000,
+        dimensions: '80 x 40 x 30 cm',
         images: [
-          '/images/products/sony-wh-1000xm4-1.jpg',
-          '/images/products/sony-wh-1000xm4-2.jpg',
-          '/images/products/sony-wh-1000xm4-3.jpg',
+          '/images/products/karaoke-5-1-1.jpg',
+          '/images/products/karaoke-5-1-2.jpg',
+          '/images/products/karaoke-5-1-3.jpg',
         ],
         featured: true,
         published: true,
-        seoTitle: 'Sony WH-1000XM4 - Tai nghe chống ồn tốt nhất',
-        seoDescription: 'Tai nghe Sony WH-1000XM4 với công nghệ chống ồn AI, âm thanh Hi-Res và pin 30 giờ',
+        seoTitle: 'Dàn Karaoke 5.1 Chuyên nghiệp - Audio Tài Lộc',
+        seoDescription: 'Dàn karaoke 5.1 kênh chuyên nghiệp với âm thanh sống động, phù hợp cho gia đình và kinh doanh',
         specifications: {
-          'Loại tai nghe': 'Over-ear, không dây',
-          'Công nghệ chống ồn': 'Active Noise Cancelling với AI',
-          'Driver': '40mm',
-          'Tần số': '4Hz - 40kHz',
-          'Thời lượng pin': '30 giờ (ANC bật), 38 giờ (ANC tắt)',
-          'Kết nối': 'Bluetooth 5.0, NFC, Jack 3.5mm',
-          'Codec hỗ trợ': 'SBC, AAC, LDAC',
-          'Trọng lượng': '254g',
-          'Màu sắc': 'Đen, Bạc',
+          'Số kênh': '5.1 kênh',
+          'Công suất tổng': '1000W RMS',
+          'Loa chính': '2 x 200W (Trái/Phải)',
+          'Loa center': '1 x 150W',
+          'Loa surround': '2 x 150W',
+          'Loa subwoofer': '1 x 350W (10 inch)',
+          'Đầu karaoke': 'Tích hợp với 30.000 bài hát',
+          'Microphone': '2 micro không dây',
+          'Kết nối': 'HDMI, USB, Bluetooth, AUX',
+          'Màn hình': '7 inch cảm ứng',
+          'Trọng lượng': '25kg',
         },
         features: [
-          'Công nghệ chống ồn AI thích ứng',
-          'Âm thanh Hi-Res Audio',
-          'Pin 30 giờ sử dụng',
-          'Sạc nhanh 10 phút cho 5 giờ nghe',
-          'Điều khiển cảm ứng thông minh',
-          'Hỗ trợ Google Assistant và Alexa',
+          'Âm thanh 5.1 kênh sống động',
+          '30.000 bài hát Việt Nam chất lượng cao',
+          '2 micro không dây chuyên nghiệp',
+          'Màn hình cảm ứng 7 inch',
+          'Kết nối đa dạng: HDMI, USB, Bluetooth',
+          'Điều khiển từ xa tiện lợi',
+          'Chế độ karaoke và nghe nhạc',
+          'Thiết kế sang trọng, bền bỉ',
         ],
       },
     }),
     prisma.product.upsert({
-      where: { slug: 'jbl-charge-5' },
+      where: { slug: 'dau-karaoke-premium-50000-bai' },
       update: {},
       create: {
-        name: 'JBL Charge 5',
-        slug: 'jbl-charge-5',
-        description: 'Loa bluetooth di động với âm bass mạnh mẽ và khả năng chống nước IP67',
-        shortDescription: 'Loa bluetooth JBL Charge 5 chống nước, pin 20 giờ',
-        sku: 'JBL-CHARGE5-001',
-        priceCents: 399000000, // 3,990,000 VND
-        originalPriceCents: 449000000, // 4,490,000 VND
-        costCents: 300000000, // 3,000,000 VND
-        categoryId: categories[1].id,
+        name: 'Đầu Karaoke Premium 50.000 Bài',
+        slug: 'dau-karaoke-premium-50000-bai',
+        description: 'Đầu karaoke với 50.000 bài hát Việt Nam chất lượng cao, giao diện thân thiện',
+        shortDescription: 'Đầu karaoke với 50.000 bài hát và giao diện cảm ứng',
+        sku: 'KARA-PLAYER-50000-001',
+        priceCents: 799000000, // 7,990,000 VND
+        originalPriceCents: 999000000, // 9,990,000 VND
+        costCents: 600000000, // 6,000,000 VND
+        categoryId: categories[1].id, // Đầu Karaoke
         brandId: brands[1].id,
         inStock: true,
-        stockQuantity: 30,
-        lowStockThreshold: 5,
-        weight: 960,
-        dimensions: '22.0 x 9.6 x 9.3 cm',
+        stockQuantity: 15,
+        lowStockThreshold: 3,
+        weight: 3500,
+        dimensions: '43 x 28 x 10 cm',
         images: [
-          '/images/products/jbl-charge-5-1.jpg',
-          '/images/products/jbl-charge-5-2.jpg',
-          '/images/products/jbl-charge-5-3.jpg',
+          '/images/products/karaoke-player-1.jpg',
+          '/images/products/karaoke-player-2.jpg',
+          '/images/products/karaoke-player-3.jpg',
         ],
         featured: true,
         published: true,
-        seoTitle: 'JBL Charge 5 - Loa bluetooth chống nước tốt nhất',
-        seoDescription: 'Loa JBL Charge 5 với âm bass mạnh mẽ, chống nước IP67 và pin 20 giờ',
+        seoTitle: 'Đầu Karaoke 50.000 Bài - Audio Tài Lộc',
+        seoDescription: 'Đầu karaoke với 50.000 bài hát Việt Nam chất lượng cao, giao diện cảm ứng thân thiện',
         specifications: {
-          'Loại loa': 'Bluetooth di động',
-          'Công suất': '30W RMS',
-          'Driver': '1 x Woofer, 2 x Tweeter',
-          'Tần số': '65Hz - 20kHz',
-          'Thời lượng pin': '20 giờ',
-          'Kết nối': 'Bluetooth 5.1, USB-C',
-          'Chống nước': 'IP67',
-          'Trọng lượng': '960g',
-          'Màu sắc': 'Đen, Xanh, Đỏ, Xám',
+          'Số lượng bài hát': '50.000 bài Việt Nam',
+          'Màn hình': '7 inch cảm ứng HD',
+          'Kết nối': 'HDMI, USB, Bluetooth 5.0, WiFi',
+          'Định dạng hỗ trợ': 'MP3, MP4, AVI, MKV',
+          'Điều khiển': 'Remote + cảm ứng',
+          'Ngôn ngữ': 'Tiếng Việt',
+          'Cập nhật': 'USB/WiFi',
+          'Trọng lượng': '3.5kg',
         },
         features: [
-          'Âm bass JBL Pro Sound mạnh mẽ',
-          'Chống nước và bụi IP67',
-          'Pin 20 giờ sử dụng liên tục',
-          'Sạc cho thiết bị khác qua USB',
-          'Kết nối nhiều loa JBL PartyBoost',
-          'Thiết kế bền bỉ, di động',
+          '50.000 bài hát Việt Nam chất lượng cao',
+          'Màn hình cảm ứng 7 inch HD',
+          'Kết nối đa dạng: HDMI, USB, Bluetooth, WiFi',
+          'Giao diện tiếng Việt thân thiện',
+          'Tìm kiếm bài hát nhanh chóng',
+          'Cập nhật bài hát qua USB/WiFi',
+          'Hỗ trợ nhiều định dạng video',
+          'Điều khiển từ xa tiện lợi',
         ],
       },
     }),
     prisma.product.upsert({
-      where: { slug: 'audio-technica-at2020' },
+      where: { slug: 'loa-karaoke-400w-subwoofer' },
       update: {},
       create: {
-        name: 'Audio-Technica AT2020',
-        slug: 'audio-technica-at2020',
-        description: 'Micro condenser chuyên nghiệp cho studio và livestream',
-        shortDescription: 'Micro condenser Audio-Technica AT2020 chuyên nghiệp',
-        sku: 'AT-AT2020-001',
-        priceCents: 299000000, // 2,990,000 VND
-        originalPriceCents: 329000000, // 3,290,000 VND
-        costCents: 220000000, // 2,200,000 VND
-        categoryId: categories[2].id,
+        name: 'Loa Karaoke 400W + Subwoofer',
+        slug: 'loa-karaoke-400w-subwoofer',
+        description: 'Bộ loa karaoke chuyên dụng với loa chính 400W và loa subwoofer 200W, âm bass mạnh mẽ',
+        shortDescription: 'Bộ loa karaoke 400W + subwoofer với âm bass mạnh mẽ',
+        sku: 'KARA-SPEAKER-400W-001',
+        priceCents: 599000000, // 5,990,000 VND
+        originalPriceCents: 699000000, // 6,990,000 VND
+        costCents: 450000000, // 4,500,000 VND
+        categoryId: categories[2].id, // Loa & Loa Sub
         brandId: brands[2].id,
         inStock: true,
-        stockQuantity: 20,
+        stockQuantity: 25,
         lowStockThreshold: 5,
-        weight: 345,
-        dimensions: '16.2 x 5.2 x 5.2 cm',
+        weight: 8500,
+        dimensions: 'Loa chính: 35x25x20cm, Subwoofer: 40x30x30cm',
         images: [
-          '/images/products/audio-technica-at2020-1.jpg',
-          '/images/products/audio-technica-at2020-2.jpg',
+          '/images/products/karaoke-speakers-1.jpg',
+          '/images/products/karaoke-speakers-2.jpg',
+          '/images/products/karaoke-speakers-3.jpg',
         ],
-        featured: false,
+        featured: true,
         published: true,
-        seoTitle: 'Audio-Technica AT2020 - Micro condenser chuyên nghiệp',
-        seoDescription: 'Micro AT2020 với chất lượng studio, phù hợp cho thu âm và livestream chuyên nghiệp',
+        seoTitle: 'Loa Karaoke 400W + Subwoofer - Audio Tài Lộc',
+        seoDescription: 'Bộ loa karaoke chuyên dụng với loa chính 400W và loa subwoofer 200W, âm bass mạnh mẽ',
         specifications: {
-          'Loại micro': 'Condenser',
-          'Polar pattern': 'Cardioid',
-          'Tần số': '20Hz - 20kHz',
-          'Độ nhạy': '-37 dBV/Pa',
-          'SPL tối đa': '144 dB',
-          'Kết nối': 'XLR 3-pin',
-          'Nguồn': 'Phantom power 48V',
-          'Trọng lượng': '345g',
+          'Loa chính': '400W RMS, 2 kênh (Trái/Phải)',
+          'Subwoofer': '200W RMS, 10 inch',
+          'Tần số loa chính': '60Hz - 20kHz',
+          'Tần số subwoofer': '30Hz - 200Hz',
+          'Driver loa chính': '8 inch + tweeter',
+          'Driver subwoofer': '10 inch',
+          'Kết nối': 'Jack 6.35mm, XLR',
+          'Chống nhiễu': 'Có',
+          'Chống phản hồi': 'Có',
+          'Trọng lượng': '8.5kg (tổng)',
         },
         features: [
-          'Chất lượng âm thanh studio',
-          'Polar pattern cardioid chống nhiễu',
-          'Tần số phản hồi rộng 20Hz-20kHz',
-          'Thiết kế bền bỉ, chuyên nghiệp',
-          'Phù hợp thu âm, livestream, podcast',
-          'Tương thích với mọi audio interface',
+          'Loa chính 400W RMS chất lượng cao',
+          'Subwoofer 200W với âm bass mạnh mẽ',
+          'Tách âm thanh karaoke chuyên nghiệp',
+          'Chống nhiễu và phản hồi âm thanh',
+          'Kết nối đa dạng: Jack, XLR',
+          'Thiết kế chuyên dụng cho karaoke',
+          'Chất liệu bền bỉ, chống va đập',
+          'Dễ dàng lắp đặt và sử dụng',
         ],
       },
     }),
@@ -283,19 +326,9 @@ async function main() {
   // Create product tags
   const tags = await Promise.all([
     prisma.tag.upsert({
-      where: { name: 'Chống ồn' },
+      where: { name: 'Karaoke' },
       update: {},
-      create: { name: 'Chống ồn', slug: 'chong-on' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Bluetooth' },
-      update: {},
-      create: { name: 'Bluetooth', slug: 'bluetooth' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Chống nước' },
-      update: {},
-      create: { name: 'Chống nước', slug: 'chong-nuoc' },
+      create: { name: 'Karaoke', slug: 'karaoke' },
     }),
     prisma.tag.upsert({
       where: { name: 'Chuyên nghiệp' },
@@ -303,43 +336,80 @@ async function main() {
       create: { name: 'Chuyên nghiệp', slug: 'chuyen-nghiep' },
     }),
     prisma.tag.upsert({
-      where: { name: 'Hi-Res' },
+      where: { name: 'Gia đình' },
       update: {},
-      create: { name: 'Hi-Res', slug: 'hi-res' },
+      create: { name: 'Gia đình', slug: 'gia-dinh' },
+    }),
+    prisma.tag.upsert({
+      where: { name: 'Kinh doanh' },
+      update: {},
+      create: { name: 'Kinh doanh', slug: 'kinh-doanh' },
+    }),
+    prisma.tag.upsert({
+      where: { name: 'Âm bass mạnh' },
+      update: {},
+      create: { name: 'Âm bass mạnh', slug: 'am-bass-manh' },
+    }),
+    prisma.tag.upsert({
+      where: { name: 'Nhiều bài hát' },
+      update: {},
+      create: { name: 'Nhiều bài hát', slug: 'nhieu-bai-hat' },
+    }),
+    prisma.tag.upsert({
+      where: { name: 'Cảm ứng' },
+      update: {},
+      create: { name: 'Cảm ứng', slug: 'cam-ung' },
+    }),
+    prisma.tag.upsert({
+      where: { name: 'Bluetooth' },
+      update: {},
+      create: { name: 'Bluetooth', slug: 'bluetooth' },
     }),
   ]);
 
   // Connect products with tags
   await Promise.all([
+    // Dàn Karaoke Professional 5.1
     prisma.product.update({
       where: { id: products[0].id },
       data: {
         tags: {
           connect: [
-            { id: tags[0].id }, // Chống ồn
-            { id: tags[1].id }, // Bluetooth
-            { id: tags[4].id }, // Hi-Res
+            { id: tags[0].id }, // Karaoke
+            { id: tags[1].id }, // Chuyên nghiệp
+            { id: tags[2].id }, // Gia đình
+            { id: tags[3].id }, // Kinh doanh
+            { id: tags[4].id }, // Âm bass mạnh
+            { id: tags[5].id }, // Nhiều bài hát
+            { id: tags[6].id }, // Cảm ứng
           ],
         },
       },
     }),
+    // Đầu Karaoke Premium 50.000 Bài
     prisma.product.update({
       where: { id: products[1].id },
       data: {
         tags: {
           connect: [
-            { id: tags[1].id }, // Bluetooth
-            { id: tags[2].id }, // Chống nước
+            { id: tags[0].id }, // Karaoke
+            { id: tags[5].id }, // Nhiều bài hát
+            { id: tags[6].id }, // Cảm ứng
+            { id: tags[7].id }, // Bluetooth
+            { id: tags[1].id }, // Chuyên nghiệp
           ],
         },
       },
     }),
+    // Loa Karaoke 400W + Subwoofer
     prisma.product.update({
       where: { id: products[2].id },
       data: {
         tags: {
           connect: [
-            { id: tags[3].id }, // Chuyên nghiệp
+            { id: tags[0].id }, // Karaoke
+            { id: tags[1].id }, // Chuyên nghiệp
+            { id: tags[4].id }, // Âm bass mạnh
           ],
         },
       },
@@ -475,11 +545,11 @@ async function main() {
         productId: products[0].id,
         userId: customer.id,
         rating: 5,
-        title: 'Tai nghe tuyệt vời!',
-        content: 'Chất lượng âm thanh rất tốt, chống ồn hiệu quả. Rất hài lòng với sản phẩm.',
+        title: 'Dàn karaoke tuyệt vời cho gia đình!',
+        content: 'Âm thanh rất sống động, nhiều bài hát hay. Con cái rất thích hát karaoke với dàn này. Giao hàng nhanh và hỗ trợ tận tình.',
         verified: true,
-        helpful: 15,
-        notHelpful: 1,
+        helpful: 25,
+        notHelpful: 2,
       },
     }),
     prisma.review.create({
@@ -487,11 +557,23 @@ async function main() {
         productId: products[1].id,
         userId: customer.id,
         rating: 4,
-        title: 'Loa bass mạnh',
-        content: 'Âm bass rất mạnh, chống nước tốt. Pin hơi yếu so với quảng cáo.',
+        title: 'Đầu karaoke nhiều bài hát',
+        content: '50.000 bài hát đủ để hát trong nhiều năm. Giao diện dễ sử dụng, cập nhật bài hát qua USB rất tiện.',
         verified: true,
-        helpful: 8,
-        notHelpful: 2,
+        helpful: 18,
+        notHelpful: 1,
+      },
+    }),
+    prisma.review.create({
+      data: {
+        productId: products[2].id,
+        userId: customer.id,
+        rating: 5,
+        title: 'Loa karaoke chuyên nghiệp',
+        content: 'Âm bass mạnh mẽ, âm thanh rõ ràng. Chống nhiễu tốt khi hát karaoke. Giá cả hợp lý so với chất lượng.',
+        verified: true,
+        helpful: 12,
+        notHelpful: 0,
       },
     }),
   ]);
@@ -501,7 +583,7 @@ async function main() {
     prisma.fAQ.create({
       data: {
         question: 'Làm thế nào để đổi trả sản phẩm?',
-        answer: 'Bạn có thể đổi trả sản phẩm trong vòng 7 ngày kể từ ngày nhận hàng. Sản phẩm phải còn nguyên vẹn, chưa sử dụng và có đầy đủ hóa đơn.',
+        answer: 'Bạn có thể đổi trả sản phẩm trong vòng 7 ngày kể từ ngày nhận hàng. Sản phẩm phải còn nguyên vẹn, chưa sử dụng và có đầy đủ hóa đơn. Riêng dàn karaoke cần kiểm tra kỹ trước khi đổi trả.',
         category: 'Đổi trả',
         isPublished: true,
         order: 1,
@@ -510,7 +592,7 @@ async function main() {
     prisma.fAQ.create({
       data: {
         question: 'Thời gian giao hàng là bao lâu?',
-        answer: 'Thời gian giao hàng tùy thuộc vào khu vực: TP.HCM và Hà Nội trong ngày, các tỉnh khác 2-3 ngày làm việc.',
+        answer: 'Thời gian giao hàng tùy thuộc vào khu vực: TP.HCM và Hà Nội trong 24h, các tỉnh khác 2-3 ngày làm việc. Dàn karaoke cồng kềnh có thể cần thêm thời gian vận chuyển.',
         category: 'Giao hàng',
         isPublished: true,
         order: 2,
@@ -519,10 +601,28 @@ async function main() {
     prisma.fAQ.create({
       data: {
         question: 'Có hỗ trợ bảo hành không?',
-        answer: 'Tất cả sản phẩm đều được bảo hành chính hãng. Thời gian bảo hành tùy theo từng sản phẩm, thường từ 12-24 tháng.',
+        answer: 'Tất cả sản phẩm đều được bảo hành chính hãng. Thời gian bảo hành tùy theo từng sản phẩm: dàn karaoke 12-24 tháng, đầu karaoke 12 tháng, loa 6-12 tháng.',
         category: 'Bảo hành',
         isPublished: true,
         order: 3,
+      },
+    }),
+    prisma.fAQ.create({
+      data: {
+        question: 'Làm thế nào để cập nhật bài hát mới?',
+        answer: 'Bạn có thể cập nhật bài hát qua USB hoặc WiFi (nếu có). Audio Tài Lộc cung cấp dịch vụ cập nhật bài hát định kỳ với chi phí hợp lý.',
+        category: 'Karaoke',
+        isPublished: true,
+        order: 4,
+      },
+    }),
+    prisma.fAQ.create({
+      data: {
+        question: 'Có hỗ trợ lắp đặt dàn karaoke không?',
+        answer: 'Có, Audio Tài Lộc cung cấp dịch vụ lắp đặt và hướng dẫn sử dụng dàn karaoke tận nơi với chi phí hợp lý.',
+        category: 'Dịch vụ',
+        isPublished: true,
+        order: 5,
       },
     }),
   ]);
@@ -530,13 +630,21 @@ async function main() {
   console.log('✅ Database seeding completed successfully!');
   console.log(`👤 Admin user: admin@audiotailoc.com / Admin123!`);
   console.log(`👤 Test customer: customer@test.com / Customer123!`);
-  console.log(`📦 Created ${products.length} products`);
-  console.log(`🏷️ Created ${categories.length} categories`);
+  console.log(`📦 Created ${products.length} karaoke products`);
+  console.log(`🎤 Created ${categories.length} karaoke categories:`);
+  console.log(`   - Dàn Karaoke`);
+  console.log(`   - Đầu Karaoke`);
+  console.log(`   - Loa & Loa Sub`);
+  console.log(`   - Micro Phone`);
+  console.log(`   - Mixer / Vang Số`);
+  console.log(`   - Màn Hình Chọn Bài`);
+  console.log(`   - Thanh lý`);
   console.log(`🏢 Created ${brands.length} brands`);
+  console.log(`🏷️ Created ${tags.length} product tags`);
   console.log(`🎫 Created 2 coupons`);
   console.log(`🚚 Created 3 shipping methods`);
-  console.log(`⭐ Created 2 sample reviews`);
-  console.log(`❓ Created 3 FAQ entries`);
+  console.log(`⭐ Created 3 sample reviews`);
+  console.log(`❓ Created 5 FAQ entries`);
 }
 
 main()

@@ -1,7 +1,7 @@
 'use client';
 
 import './globals.css';
-import { ErrorFallback } from './components/ui/error-boundary';
+import { ErrorFallback } from '../components/ui/error-boundary';
 
 export default function GlobalError({
   error,

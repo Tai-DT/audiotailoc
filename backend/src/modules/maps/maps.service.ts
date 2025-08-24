@@ -31,6 +31,28 @@ export class MapsService {
     const data = await res.json();
     return data;
   }
+
+  async reverseGeocode(latlng: string) {
+    const key = this.apiKey;
+    if (!key) return { results: [] };
+    const url = new URL('https://rsapi.goong.io/Geocode');
+    url.searchParams.set('api_key', key);
+    url.searchParams.set('latlng', latlng);
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    return data;
+  }
+
+  async placeDetail(placeId: string) {
+    const key = this.apiKey;
+    if (!key) return { result: null };
+    const url = new URL('https://rsapi.goong.io/Place/Detail');
+    url.searchParams.set('api_key', key);
+    url.searchParams.set('place_id', placeId);
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    return data;
+  }
 }
 
 

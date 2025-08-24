@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { Settings, Save, CreditCard, Bell } from 'lucide-react';
+import ChangePasswordForm from '../../components/forms/change-password-form';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
@@ -153,6 +154,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Change Password */}
+      <ChangePasswordForm />
     </div>
   );
 }

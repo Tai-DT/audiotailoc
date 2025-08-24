@@ -1,22 +1,31 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  // Protect admin product routes
-  if (pathname.startsWith('/products')) {
-    const token = req.cookies.get('accessToken')?.value;
-    if (!token) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('next', pathname + (req.nextUrl.search || ''));
-      return NextResponse.redirect(url);
-    }
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Auth pages that should not have the main layout
+  const authPages = ['/login', '/forgot-password', '/reset-password'];
+  
+  if (authPages.includes(pathname)) {
+    // For auth pages, we'll handle them specially
+    return NextResponse.next();
   }
+  
+  // For all other pages, continue with normal processing
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/products/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
 

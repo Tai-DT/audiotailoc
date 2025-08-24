@@ -75,12 +75,57 @@ export class OrdersService {
     return updated;
   }
 
-  async create(orderData: any) {
-    const order = await this.prisma.order.create({
-      data: orderData,
-      include: { items: true }
-    });
+  async create(orderData: any): Promise<any> {
+    // Generate unique order number
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const orderNo = `ORD${timestamp}${random}`;
+    
+    // Calculate totals
+    let subtotalCents = 0;
+    const items = orderData.items || [];
+    
+    for (const item of items) {
+      // Get product price if not provided
+      if (!item.unitPrice && item.productId) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId }
+        });
+        if (product) {
+          item.unitPrice = product.priceCents;
+        }
+      }
+      subtotalCents += (item.unitPrice || 0) * (item.quantity || 1);
+    }
 
-    return order;
+    try {
+      const order = await this.prisma.order.create({
+        data: {
+          orderNo,
+          userId: orderData.userId || null,
+          status: 'PENDING',
+          subtotalCents,
+          totalCents: subtotalCents,
+          shippingAddress: orderData.shippingAddress || {},
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.productId,
+              name: item.name || 'Sản phẩm',
+              quantity: item.quantity || 1,
+              unitPrice: item.unitPrice || 0
+            }))
+          }
+        },
+        include: { items: true }
+      });
+
+      return order;
+            } catch (error: any) {
+          if (error.code === 'P2002' && error.meta?.target?.includes('orderNo')) {
+        // Retry with different order number if duplicate
+        return this.create(orderData);
+      }
+      throw error;
+    }
   }
 }

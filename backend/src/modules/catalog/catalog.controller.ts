@@ -5,7 +5,7 @@ import { IsIn, IsInt, IsOptional, IsString, Min, MinLength, IsBoolean, IsArray }
 import { Transform, Type } from 'class-transformer';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';
-import { SearchService } from '../search/search.service';
+// import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
 
 class ListQueryDto {
   @IsOptional()
@@ -19,8 +19,8 @@ class ListQueryDto {
   pageSize?: number;
 
   @IsOptional()
-  @IsIn(['createdAt', 'name', 'priceCents'])
-  sortBy?: 'createdAt' | 'name' | 'priceCents';
+  @IsIn(['createdAt', 'name', 'price'])
+  sortBy?: 'createdAt' | 'name' | 'price';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])
@@ -41,6 +41,11 @@ class ListQueryDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  featured?: boolean;
 }
 
 class AdvancedSearchDto {
@@ -104,10 +109,6 @@ class AdvancedSearchDto {
 class CreateProductDto {
   @MinLength(1)
   @IsString()
-  slug!: string;
-
-  @MinLength(1)
-  @IsString()
   name!: string;
 
   @IsOptional()
@@ -116,7 +117,7 @@ class CreateProductDto {
 
   @IsInt()
   @Min(0)
-  priceCents!: number;
+  price!: number;
 
   @IsOptional()
   @IsString()
@@ -124,10 +125,6 @@ class CreateProductDto {
 }
 
 class UpdateProductDto {
-  @IsOptional()
-  @IsString()
-  slug?: string;
-
   @IsOptional()
   @IsString()
   name?: string;
@@ -139,7 +136,7 @@ class UpdateProductDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  priceCents?: number;
+  price?: number;
 
   @IsOptional()
   @IsString()
@@ -148,98 +145,60 @@ class UpdateProductDto {
 
 class DeleteManyDto {
   @IsOptional()
-  slugs?: string[];
+  ids?: string[];
 }
 
 @ApiTags('Products')
 @ApiBearerAuth()
 @Controller('catalog')
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService, private readonly searchService: SearchService) {}
+  constructor(private readonly catalog: CatalogService /* , private readonly searchService: SearchService */) {}
 
   @Get('products')
   list(@Query() query: ListQueryDto) {
-    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder } = query;
-    return this.catalog.listProducts({ page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder });
+    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured } = query;
+    return this.catalog.listProducts({ page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured });
   }
 
-  @Get('search/advanced')
-  async advancedSearch(@Query() query: AdvancedSearchDto) {
-    const {
-      q = '',
-      page = 1,
-      pageSize = 20,
-      categoryId,
-      minPrice,
-      maxPrice,
-      brand,
-      inStock,
-      featured,
-      tags,
-      sortBy = 'relevance',
-      facets
-    } = query;
+  // @Get('search/advanced')
+  // async advancedSearch(@Query() query: AdvancedSearchDto) {
+  //   // Disabled due to SearchService not available
+  //   throw new Error('Advanced search not available - SearchService disabled');
+  // }
 
-    const filters = {
-      categoryId,
-      minPrice,
-      maxPrice,
-      brand,
-      inStock,
-      featured,
-      tags
-    };
+  // @Get('search/suggestions')
+  // async getSearchSuggestions(@Query('q') q: string, @Query('limit') limit?: number) {
+  //   // Disabled due to SearchService not available
+  //   throw new Error('Search suggestions not available - SearchService disabled');
+  // }
 
-    const options = {
-      sortBy,
-      facets
-    };
+  // @Get('search/popular')
+  // async getPopularSearches(@Query('limit') limit?: number) {
+  //   // Disabled due to SearchService not available
+  //   throw new Error('Popular searches not available - SearchService disabled');
+  // }
 
-    return this.searchService.searchProducts(q, {
-      category: categoryId,
-      minPrice,
-      maxPrice,
-      inStock,
-      featured,
-      tags,
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
-    });
-  }
-
-  @Get('search/suggestions')
-  async getSearchSuggestions(@Query('q') q: string, @Query('limit') limit?: number) {
-    return this.searchService.getSearchSuggestions(q, limit);
-  }
-
-  @Get('search/popular')
-  async getPopularSearches(@Query('limit') limit?: number) {
-    return this.searchService.getPopularSearches(limit);
-  }
-
-  @Get('search/facets')
-  async getSearchFacets() {
-    return this.searchService.getAvailableFilters('');
-  }
+  // @Get('search/facets')
+  // async getSearchFacets() {
+  //   // Disabled due to SearchService not available
+  //   throw new Error('Search facets not available - SearchService disabled');
+  // }
 
   @Get('categories')
   listCategories() {
     return this.catalog.listCategories();
   }
 
-  @Get('products/:slug')
-  get(@Param('slug') slug: string) {
-    return this.catalog.getBySlug(slug);
+  @Get('products/:id')
+  get(@Param('id') id: string) {
+    return this.catalog.getById(id);
   }
 
-  @Get('search')
-  search(@Query('q') q = '', @Query('page') page = '1', @Query('pageSize') pageSize = '20', @Query('categoryId') categoryId?: string, @Query('minPrice') minPrice?: string, @Query('maxPrice') maxPrice?: string) {
-    const p = Math.max(1, parseInt(String(page), 10) || 1);
-    const ps = Math.min(100, Math.max(1, parseInt(String(pageSize), 10) || 20));
-    const min = typeof minPrice === 'string' ? Number(minPrice) : undefined;
-    const max = typeof maxPrice === 'string' ? Number(maxPrice) : undefined;
-    return this.searchService.searchProducts(q, { limit: ps, offset: (p - 1) * ps, category: categoryId || undefined, minPrice: isNaN(min as any) ? undefined : (min as any), maxPrice: isNaN(max as any) ? undefined : (max as any) });
-  }
+  // @Get('search')
+  // search(@Query('q') q = '', @Query('page') page = '1', @Query('pageSize') pageSize = '20', @Query('categoryId') categoryId?: string, @Query('minPrice') minPrice?: string, @Query('maxPrice') maxPrice?: string) {
+  //   // Disabled due to SearchService not available
+  //   throw new Error('Search not available - SearchService disabled');
+  // }
 
   @UseGuards(JwtGuard, AdminGuard)
   @Post('products')
@@ -249,20 +208,20 @@ export class CatalogController {
   }
 
   @UseGuards(JwtGuard, AdminGuard)
-  @Patch('products/:slug')
-  update(@Param('slug') slug: string, @Body() dto: UpdateProductDto) {
-    return this.catalog.update(slug, dto);
+  @Patch('products/:id')
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+    return this.catalog.update(id, dto);
   }
 
   @UseGuards(JwtGuard, AdminGuard)
-  @Delete('products/:slug')
-  remove(@Param('slug') slug: string) {
-    return this.catalog.remove(slug);
+  @Delete('products/:id')
+  remove(@Param('id') id: string) {
+    return this.catalog.remove(id);
   }
 
   @UseGuards(JwtGuard, AdminGuard)
   @Delete('products')
   removeMany(@Body() body: DeleteManyDto) {
-    return this.catalog.removeMany(body?.slugs ?? []);
+    return this.catalog.removeMany(body?.ids ?? []);
   }
 }

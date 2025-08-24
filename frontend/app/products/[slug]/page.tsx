@@ -1,188 +1,162 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { formatPrice } from '@/lib/utils';
-import ProductCard from '../../components/ProductCard';
+import { useProductStore } from '@/store/product-store';
+import { useCartStore } from '@/store/cart-store';
+import { useUIStore } from '@/store/ui-store';
+import { ProductCard } from '@/components/products/ProductCard';
 
-type Product = {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-  priceCents: number;
-  imageUrl?: string | null;
-  images?: string[];
-  categoryId?: string;
-  inStock?: boolean;
-  featured?: boolean;
-  viewCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-type Category = {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-};
-
-async function fetchProduct(slug: string): Promise<Product> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  
-  const res = await fetch(`${base}/catalog/products/${slug}`, {
-    next: { revalidate: 300 }
-  });
-  
-  if (!res.ok) {
-    throw new Error('Product not found');
-  }
-  
-  return res.json();
+interface ProductDetailPageProps {
+  params: {
+    slug: string;
+  };
 }
 
-async function fetchRelatedProducts(categoryId?: string, excludeSlug?: string): Promise<Product[]> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) return [];
-  
-  try {
-    const url = new URL(`${base}/catalog/products`);
-    url.searchParams.set('pageSize', '4');
-    if (categoryId) url.searchParams.set('categoryId', categoryId);
-    
-    const res = await fetch(url.toString(), {
-      next: { revalidate: 300 }
-    });
-    
-    if (!res.ok) return [];
-    
-    const data = await res.json();
-    return data.items?.filter((product: Product) => product.slug !== excludeSlug) || [];
-  } catch {
-    return [];
-  }
-}
+export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const { currentProduct, products, isLoading, error, fetchProduct, fetchProducts } = useProductStore();
+  const { addItem } = useCartStore();
+  const { addNotification } = useUIStore();
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
-async function fetchCategory(categoryId?: string): Promise<Category | null> {
-  if (!categoryId) return null;
-  
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) return null;
-  
-  try {
-    const res = await fetch(`${base}/catalog/categories/${categoryId}`, {
-      next: { revalidate: 600 }
-    });
-    
-    if (!res.ok) return null;
-    
-    return res.json();
-  } catch {
-    return null;
-  }
-}
+  useEffect(() => {
+    if (params.slug) {
+      fetchProduct(params.slug);
+    }
+  }, [params.slug, fetchProduct]);
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  let product: Product;
-  let category: Category | null = null;
-  let relatedProducts: Product[] = [];
+  useEffect(() => {
+    // Fetch related products
+    if (currentProduct?.categoryId) {
+      fetchProducts({ category: currentProduct.categoryId }, 1);
+    }
+  }, [currentProduct?.categoryId, fetchProducts]);
 
-  try {
-    product = await fetchProduct(params.slug);
-    category = await fetchCategory(product.categoryId);
-    relatedProducts = await fetchRelatedProducts(product.categoryId, params.slug);
-  } catch (error) {
-    notFound();
-  }
+  const handleAddToCart = async () => {
+    if (!currentProduct) return;
 
-  // Structured data for SEO
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": product.name,
-    "description": product.description,
-    "image": product.imageUrl,
-    "offers": {
-      "@type": "Offer",
-      "price": product.priceCents / 100,
-      "priceCurrency": "VND",
-      "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-    },
-    "category": category?.name,
-    "brand": {
-      "@type": "Brand",
-      "name": "Audio Tài Lộc"
+    try {
+      await addItem({
+        id: currentProduct.id,
+        name: currentProduct.name,
+        price: currentProduct.priceCents / 100,
+        imageUrl: currentProduct.imageUrl,
+        slug: currentProduct.slug,
+      }, quantity);
+
+      addNotification({
+        type: 'success',
+        title: 'Đã thêm vào giỏ hàng',
+        message: `${currentProduct.name} (${quantity} sản phẩm) đã được thêm vào giỏ hàng`,
+        duration: 3000,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Lỗi',
+        message: 'Không thể thêm sản phẩm vào giỏ hàng',
+        duration: 3000,
+      });
     }
   };
 
+  const formatPrice = (priceCents: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(priceCents / 100);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error || !currentProduct) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy sản phẩm</h1>
+          <p className="text-gray-600 mb-4">Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+          <a
+            href="/products"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Quay lại danh sách sản phẩm
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const images = currentProduct.images || [currentProduct.imageUrl].filter(Boolean);
+
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
-          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-blue-600">Sản phẩm</Link>
-          {category && (
-            <>
-              <span>/</span>
-              <Link href={`/categories/${category.slug}`} className="hover:text-blue-600">
-                {category.name}
-              </Link>
-            </>
-          )}
-          <span>/</span>
-          <span className="text-gray-900">{product.name}</span>
+        <nav className="mb-8">
+          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+            <li>
+              <a href="/" className="hover:text-blue-600">Trang chủ</a>
+            </li>
+            <li>/</li>
+            <li>
+              <a href="/products" className="hover:text-blue-600">Sản phẩm</a>
+            </li>
+            {currentProduct.category && (
+              <>
+                <li>/</li>
+                <li>
+                  <a href={`/products?category=${currentProduct.category.slug}`} className="hover:text-blue-600">
+                    {currentProduct.category.name}
+                  </a>
+                </li>
+              </>
+            )}
+            <li>/</li>
+            <li className="text-gray-900">{currentProduct.name}</li>
+          </ol>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Product Images */}
           <div className="space-y-4">
-            <div className="aspect-square relative overflow-hidden rounded-lg border">
-              {product.imageUrl ? (
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400">Không có hình ảnh</span>
-                </div>
-              )}
-              {product.featured && (
-                <Badge className="absolute top-4 left-4 bg-yellow-500">
-                  Nổi bật
-                </Badge>
-              )}
+            {/* Main Image */}
+            <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
+              <Image
+                src={images[selectedImage] || '/images/placeholder-product.jpg'}
+                alt={currentProduct.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             </div>
-            
-            {/* Additional Images */}
-            {product.images && product.images.length > 0 && (
+
+            {/* Thumbnail Images */}
+            {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(0, 4).map((image, index) => (
-                  <div key={index} className="aspect-square relative overflow-hidden rounded border">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative aspect-square bg-white rounded-lg overflow-hidden border-2 ${
+                      selectedImage === index ? 'border-blue-600' : 'border-gray-200'
+                    }`}
+                  >
                     <Image
-                      src={image}
-                      alt={`${product.name} - Hình ${index + 1}`}
+                      src={image || '/images/placeholder-product.jpg'}
+                      alt={`${currentProduct.name} - ${index + 1}`}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 25vw, 12vw"
+                      sizes="(max-width: 768px) 25vw, 12.5vw"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -190,104 +164,117 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
           {/* Product Info */}
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              {category && (
-                <Link href={`/categories/${category.slug}`} className="text-blue-600 hover:underline">
-                  {category.name}
-                </Link>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <span className="text-3xl font-bold text-blue-600">
-                {formatPrice(product.priceCents)}
-              </span>
-              {product.inStock !== undefined && (
-                <Badge variant={product.inStock ? "default" : "destructive"}>
-                  {product.inStock ? 'Còn hàng' : 'Hết hàng'}
-                </Badge>
-              )}
-            </div>
-
-            {product.description && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Mô tả sản phẩm</h3>
-                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            {/* Category */}
+            {currentProduct.category && (
+              <div className="text-sm text-gray-500">
+                {currentProduct.category.name}
               </div>
             )}
 
-            <div className="space-y-4">
-              <Button size="lg" className="w-full" disabled={!product.inStock}>
-                {product.inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
-              </Button>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="lg">
-                  ❤️ Yêu thích
-                </Button>
-                <Button variant="outline" size="lg">
-                  📞 Tư vấn
-                </Button>
-              </div>
+            {/* Product Name */}
+            <h1 className="text-3xl font-bold text-gray-900">{currentProduct.name}</h1>
+
+            {/* Price */}
+            <div className="text-3xl font-bold text-blue-600">
+              {formatPrice(currentProduct.priceCents)}
             </div>
 
-            {/* Product Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin sản phẩm</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mã sản phẩm:</span>
-                  <span className="font-medium">{product.id}</span>
+            {/* Stock Status */}
+            <div className={`text-sm ${
+              currentProduct.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {currentProduct.stockQuantity > 0 
+                ? `${currentProduct.stockQuantity} sản phẩm có sẵn`
+                : 'Hết hàng'
+              }
+            </div>
+
+            {/* Description */}
+            <div className="prose max-w-none">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Mô tả sản phẩm</h3>
+              <p className="text-gray-600 leading-relaxed">
+                {currentProduct.description || 'Không có mô tả chi tiết cho sản phẩm này.'}
+              </p>
+            </div>
+
+            {/* Add to Cart Section */}
+            {currentProduct.stockQuantity > 0 && (
+              <div className="space-y-4">
+                {/* Quantity Selector */}
+                <div className="flex items-center space-x-4">
+                  <label className="text-sm font-medium text-gray-700">Số lượng:</label>
+                  <div className="flex items-center border border-gray-300 rounded-md">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="px-3 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={currentProduct.stockQuantity}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, Math.min(currentProduct.stockQuantity, parseInt(e.target.value) || 1)))}
+                      className="w-16 text-center border-none focus:outline-none"
+                    />
+                    <button
+                      onClick={() => setQuantity(Math.min(currentProduct.stockQuantity, quantity + 1))}
+                      className="px-3 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Danh mục:</span>
-                  <span className="font-medium">{category?.name || 'Chưa phân loại'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Lượt xem:</span>
-                  <span className="font-medium">{product.viewCount || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ngày đăng:</span>
-                  <span className="font-medium">
-                    {product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+
+                {/* Add to Cart Button */}
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                >
+                  Thêm vào giỏ hàng
+                </button>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+              <button className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Thêm vào yêu thích
+              </button>
+              
+              <button className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+                Chia sẻ
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Sản phẩm liên quan</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
+        {products.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Sản phẩm liên quan</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {products
+                .filter(product => product.id !== currentProduct.id)
+                .slice(0, 4)
+                .map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    showAddToCart={true}
+                  />
+                ))}
             </div>
           </div>
         )}
-
-        {/* Reviews Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Đánh giá sản phẩm</h2>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center text-gray-500 py-8">
-                <p>Chưa có đánh giá nào cho sản phẩm này</p>
-                <Button variant="outline" className="mt-4">
-                  Viết đánh giá đầu tiên
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
-    </>
+    </div>
   );
 }

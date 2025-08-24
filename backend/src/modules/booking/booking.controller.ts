@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { ServiceBookingStatus, PaymentProvider, PaymentStatus } from '@prisma/client';
+// import { ServiceBookingStatus, PaymentProvider, PaymentStatus } from '@prisma/client'; // Not available in SQLite schema
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('bookings')

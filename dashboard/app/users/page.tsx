@@ -1,8 +1,8 @@
 import { apiFetch } from '../lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { formatDate } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { formatDate } from '../lib/utils';
 import Link from 'next/link';
 
 interface User {

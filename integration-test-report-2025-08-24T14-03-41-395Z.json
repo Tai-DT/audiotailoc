@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-08-24T14:03:41.395Z",
+  "summary": {
+    "overall": "partial",
+    "components": 3,
+    "working": 3
+  },
+  "results": {
+    "backend": {
+      "status": "success",
+      "tests": {
+        "/api/v1": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:03:32.378Z"
+        },
+        "/api/v1/health": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:03:32.384Z"
+        },
+        "/api/v1/auth/status": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:03:32.388Z"
+        }
+      }
+    },
+    "dashboard": {
+      "status": "partial",
+      "tests": {
+        "/": {
+          "success": true,
+          "status": 307,
+          "statusText": "Temporary Redirect",
+          "time": "2025-08-24T14:03:32.403Z"
+        },
+        "/login": {
+          "success": false,
+          "error": "network timeout at: http://localhost:3001/login",
+          "time": "2025-08-24T14:03:37.405Z"
+        }
+      }
+    },
+    "frontend": {
+      "status": "success",
+      "tests": {
+        "/": {
+          "success": true,
+          "status": 200,
+          "statusText": "OK",
+          "time": "2025-08-24T14:03:37.513Z"
+        },
+        "/vi": {
+          "success": false,
+          "status": 404,
+          "statusText": "Not Found",
+          "time": "2025-08-24T14:03:38.235Z"
+        }
+      }
+    },
+    "integration": {
+      "status": "completed",
+      "tests": {
+        "Backend Health": {
+          "success": true,
+          "time": "2025-08-24T14:03:38.240Z"
+        },
+        "Dashboard-Backend Connection": {
+          "success": true,
+          "time": "2025-08-24T14:03:41.339Z"
+        },
+        "Frontend-Backend Connection": {
+          "success": true,
+          "time": "2025-08-24T14:03:41.394Z"
+        }
+      }
+    }
+  }
+}

@@ -85,7 +85,7 @@ export default async function ProjectsPage() {
             Dự án nổi bật
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProjects.map((project) => (
+            {featuredProjects.map((project: Project) => (
               <Card key={project.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                 {project.images && project.images.length > 0 && (
                   <div className="relative h-48 overflow-hidden">
@@ -143,7 +143,7 @@ export default async function ProjectsPage() {
         <h2 className="text-2xl font-bold mb-6">Tất cả dự án</h2>
         {allProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {allProjects.map((project) => (
+            {allProjects.map((project: Project) => (
               <Card key={project.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                 {project.images && project.images.length > 0 && (
                   <div className="relative h-40 overflow-hidden">

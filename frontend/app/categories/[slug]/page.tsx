@@ -78,19 +78,21 @@ async function fetchCategoryProducts(
   return res.json();
 }
 
-export default async function CategoryPage({ 
+export default async function CategoryPage({
   params,
-  searchParams 
-}: { 
-  params: { slug: string };
-  searchParams: { page?: string; sort?: string; minPrice?: string; maxPrice?: string };
+  searchParams
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string; sort?: string; minPrice?: string; maxPrice?: string }>;
 }) {
+  const { slug } = await params;
+  const searchParamsResolved = await searchParams;
   let category: Category;
   let productsResponse: ProductsResponse;
 
   try {
-    category = await fetchCategory(params.slug);
-    const page = parseInt(searchParams.page || '1', 10);
+    category = await fetchCategory(slug);
+    const page = parseInt(searchParamsResolved.page || '1', 10);
     productsResponse = await fetchCategoryProducts(category.id, page, 12);
   } catch (error) {
     notFound();
@@ -188,9 +190,9 @@ export default async function CategoryPage({
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
                   <label className="text-sm font-medium">Sắp xếp:</label>
-                  <select 
+                  <select
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                    defaultValue={searchParams.sort || 'newest'}
+                    defaultValue={searchParamsResolved.sort || 'newest'}
                   >
                     <option value="newest">Mới nhất</option>
                     <option value="price_asc">Giá tăng dần</option>
@@ -206,14 +208,14 @@ export default async function CategoryPage({
                     type="number"
                     placeholder="Từ"
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm w-24"
-                    defaultValue={searchParams.minPrice}
+                    defaultValue={searchParamsResolved.minPrice}
                   />
                   <span>-</span>
                   <input
                     type="number"
                     placeholder="Đến"
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm w-24"
-                    defaultValue={searchParams.maxPrice}
+                    defaultValue={searchParamsResolved.maxPrice}
                   />
                   <Button size="sm">Lọc</Button>
                 </div>
