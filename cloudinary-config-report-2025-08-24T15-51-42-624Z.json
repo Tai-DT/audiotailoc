@@ -1,0 +1,98 @@
+{
+  "timestamp": "2025-08-24T15:51:42.625Z",
+  "files": {
+    "service": {
+      "exists": true,
+      "path": "backend/src/modules/files/cloudinary.service.ts",
+      "size": 1959
+    },
+    "filesService": {
+      "exists": true,
+      "path": "backend/src/modules/files/files.service.ts",
+      "size": 13525
+    },
+    "filesController": {
+      "exists": true,
+      "path": "backend/src/modules/files/files.controller.ts",
+      "size": 5420
+    },
+    "filesModule": {
+      "exists": true,
+      "path": "backend/src/modules/files/files.module.ts",
+      "size": 580
+    },
+    "envTemplate": {
+      "exists": true,
+      "path": "backend/env-template.txt",
+      "size": 3121
+    },
+    "envActual": {
+      "exists": true,
+      "path": "backend/.env",
+      "size": 2086
+    },
+    "packageJson": {
+      "exists": true,
+      "path": "backend/package.json",
+      "size": 3435
+    }
+  },
+  "environment": {
+    "actual": {},
+    "template": {
+      "CLOUDINARY_CLOUD_NAME": "your-cloudinary-cloud-name",
+      "CLOUDINARY_API_KEY": "your-cloudinary-api-key",
+      "CLOUDINARY_API_SECRET": "your-cloudinary-api-secret"
+    },
+    "missing": [
+      "CLOUDINARY_CLOUD_NAME",
+      "CLOUDINARY_API_KEY",
+      "CLOUDINARY_API_SECRET"
+    ],
+    "configured": false
+  },
+  "code": {
+    "service": {
+      "exists": true,
+      "features": [
+        "uploadImage",
+        "deleteAsset",
+        "isEnabled",
+        "public_id",
+        "folder",
+        "resource_type"
+      ]
+    },
+    "filesService": {
+      "exists": true,
+      "integration": true
+    },
+    "filesController": {
+      "exists": true,
+      "endpoints": [
+        "uploadFile",
+        "uploadMultipleFiles",
+        "uploadProductImage"
+      ]
+    },
+    "filesModule": {
+      "exists": true,
+      "imports": [
+        "CloudinaryService",
+        "FilesService",
+        "FilesController"
+      ]
+    }
+  },
+  "dependencies": {
+    "cloudinary": true,
+    "sharp": true,
+    "multer": true
+  },
+  "summary": {
+    "configured": false,
+    "issues": [
+      "Environment variables not configured"
+    ]
+  }
+}
