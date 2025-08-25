@@ -7,6 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 
 // Global modules
 import { CacheModule } from './cache/cache.module';
+import { TestingModule } from './testing/testing.module';
 
 // Authentication modules
 import { AuthModule } from './auth/auth.module';
@@ -46,6 +47,7 @@ import { FilesModule } from './files/files.module';
     CacheModule, // Global cache service
     PrismaModule, 
     HealthModule,
+    TestingModule, // Testing utilities
     
     // Authentication - CORE ONLY
     AuthModule,

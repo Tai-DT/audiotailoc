@@ -47,7 +47,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown payment operation: ${operation}`,
     };
@@ -96,7 +96,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown AI operation: ${operation}`,
     };
@@ -138,7 +138,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown email operation: ${operation}`,
     };
@@ -178,7 +178,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown SMS operation: ${operation}`,
     };
@@ -221,7 +221,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown file storage operation: ${operation}`,
     };
@@ -271,7 +271,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown geolocation operation: ${operation}`,
     };
@@ -320,7 +320,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown notification operation: ${operation}`,
     };
@@ -372,7 +372,7 @@ export class MockServicesService {
       },
     };
 
-    return responses[operation] || {
+    return (responses as any)[operation] || {
       success: false,
       error: `Unknown analytics operation: ${operation}`,
     };

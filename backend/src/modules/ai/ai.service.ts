@@ -147,7 +147,7 @@ export class AiService {
       const fullContext = `${contextString}\n\nSản phẩm liên quan:\n${productContext}\n\nLịch sử hội thoại:\n${conversationContext}`;
 
       // Generate response với Gemini với retry logic
-      let answer: string;
+      let answer: string = '';
       let retryCount = 0;
       const maxRetries = 2;
 
@@ -172,6 +172,11 @@ export class AiService {
           // Nếu không phải rate limit, throw error ngay
           throw error;
         }
+      }
+
+      // Kiểm tra nếu answer vẫn rỗng
+      if (!answer) {
+        throw new Error('Không thể tạo câu trả lời. Vui lòng thử lại sau.');
       }
 
       // Lưu message của assistant

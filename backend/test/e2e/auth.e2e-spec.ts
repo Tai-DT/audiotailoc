@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/modules/app.module';
-import { TestDatabaseService } from '../src/modules/testing/test-database.service';
-import { TestHelpersService } from '../src/modules/testing/test-helpers.service';
-import { MockServicesService } from '../src/modules/testing/mock-services.service';
+import { AppModule } from '../../src/modules/app.module';
+import { TestDatabaseService } from '../../src/modules/testing/test-database.service';
+import { TestHelpersService } from '../../src/modules/testing/test-helpers.service';
+import { MockServicesService } from '../../src/modules/testing/mock-services.service';
 
 describe('Auth API (e2e)', () => {
   let app: INestApplication;

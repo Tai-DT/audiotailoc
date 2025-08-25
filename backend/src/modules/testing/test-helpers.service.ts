@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { TestDatabaseService } from './test-database.service';
 
@@ -436,7 +436,7 @@ export class TestHelpersService {
       },
     };
 
-    return responses[service]?.[operation] || { success: false, error: 'Unknown service or operation' };
+    return (responses as any)[service]?.[operation] || { success: false, error: 'Unknown service or operation' };
   }
 
   // Create test HTTP headers

@@ -42,11 +42,13 @@ export class TestDatabaseService {
       originalPrice: 120000,
       stock: 10,
       categoryId: overrides.categoryId || 'test-category',
-      images: ['https://example.com/image1.jpg'],
+      images: 'https://example.com/image1.jpg',
       isActive: true,
       isFeatured: false,
       seoTitle: `Test Product ${Date.now()}`,
       seoDescription: 'Test product description',
+      slug: `test-product-${Date.now()}`,
+      priceCents: 10000000,
       ...overrides,
     };
 
@@ -97,17 +99,13 @@ export class TestDatabaseService {
       shippingAddress: '123 Test Street, Test City',
       shippingPhone: '0123456789',
       shippingName: 'Test User',
-      orderItems: {
-        create: orderItems,
-      },
+      orderNo: `ORDER-${Date.now()}`,
+      totalCents: total * 100,
       ...overrides,
     };
 
     const order = await this.prisma.order.create({
       data: orderData,
-      include: {
-        orderItems: true,
-      },
     });
 
     this.logger.log(`Created test order: ${order.id}`);
@@ -121,11 +119,13 @@ export class TestDatabaseService {
       price: 50000,
       duration: 60,
       categoryId: overrides.categoryId || 'test-category',
-      images: ['https://example.com/service.jpg'],
+      images: 'https://example.com/service.jpg',
       isActive: true,
       isFeatured: false,
       seoTitle: `Test Service ${Date.now()}`,
       seoDescription: 'Test service description',
+      category: 'KARAOKE',
+      type: 'SERVICE',
       ...overrides,
     };
 
@@ -146,7 +146,6 @@ export class TestDatabaseService {
           OR: [
             { order: { user: { email: { contains: '@example.com' } } } },
             { product: { name: { contains: 'Test Product' } } },
-            { service: { name: { contains: 'Test Service' } } },
           ]
         }
       });
