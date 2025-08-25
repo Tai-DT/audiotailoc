@@ -26,10 +26,23 @@ async function main() {
   const catHeadphones = await prisma.category.upsert({ where: { slug: 'tai-nghe' }, update: {}, create: { slug: 'tai-nghe', name: 'Tai nghe' } });
 
   // Promotions
+  const now = new Date();
+  const nextYear = new Date(now.getTime());
+  nextYear.setFullYear(now.getFullYear() + 1);
   await prisma.promotion.upsert({
     where: { code: 'WELCOME10' },
     update: {},
-    create: { code: 'WELCOME10', type: 'PERCENT', value: 10, minSubtotalCents: 500000 },
+    create: {
+      code: 'WELCOME10',
+      name: 'Welcome 10%',
+      description: 'Giảm 10% cho khách hàng mới',
+      type: 'PERCENT',
+      value: 10,
+      minAmount: 500000,
+      startDate: now,
+      endDate: nextYear,
+      isActive: true,
+    },
   });
 
   const items = [
@@ -67,8 +80,6 @@ async function main() {
       update: item,
       create: item,
     });
-    // Ensure inventory
-    await prisma.inventory.upsert({ where: { productId: p.id }, update: { stock: { increment: 50 } }, create: { productId: p.id, stock: 50, reserved: 0 } });
     // Seed KB entry for product if not exists
     const exists = await prisma.knowledgeBaseEntry.findFirst({ where: { productId: p.id, kind: 'PRODUCT' } });
     if (!exists) {
@@ -85,6 +96,25 @@ async function main() {
         { kind: 'FAQ', title: 'Bảo hành', content: 'Bảo hành 12 tháng cho tất cả sản phẩm chính hãng.' },
       ],
     });
+  }
+
+  // Create sample notifications for admin emails if users exist
+  if (adminEnv.length > 0) {
+    const admins = await prisma.user.findMany({ where: { email: { in: adminEnv } }, select: { id: true, email: true } });
+    for (const admin of admins) {
+      const hasAny = await (prisma as any).notification.count({ where: { userId: admin.id } }).catch(() => 0);
+      if (hasAny === 0) {
+        await (prisma as any).notification.create({
+          data: {
+            userId: admin.id,
+            type: 'SYSTEM',
+            title: 'Chào mừng quản trị viên',
+            message: 'Tài khoản của bạn đã được thiết lập. Đây là thông báo thử nghiệm.',
+            data: JSON.stringify({ seeded: true }),
+          }
+        }).catch(() => undefined);
+      }
+    }
   }
 }
 

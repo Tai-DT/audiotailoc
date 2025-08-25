@@ -92,9 +92,7 @@ describe('UsersService', () => {
           },
           _count: {
             select: {
-              orders: true,
-              reviews: true,
-              wishlistItems: true
+              orders: true
             }
           }
         }

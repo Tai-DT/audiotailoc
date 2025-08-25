@@ -17,7 +17,7 @@ import { CatalogModule } from './catalog/catalog.module';
 // import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
 // import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
 // import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
-// import { PaymentsModule } from './payments/payments.module'; // Disabled due to schema mismatch
+import { PaymentsModule } from './payments/payments.module';
 // import { OrdersModule } from './orders/orders.module'; // Disabled due to schema mismatch
 // import { InventoryModule } from './inventory/inventory.module'; // Disabled due to schema mismatch
 
@@ -61,6 +61,7 @@ import { FilesModule } from './files/files.module';
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
+    PaymentsModule,
     // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],

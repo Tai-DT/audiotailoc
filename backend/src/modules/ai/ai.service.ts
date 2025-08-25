@@ -77,11 +77,29 @@ export class AiService {
 
   async chat(input: { sessionId?: string; userId?: string | null; message: string }) {
     try {
-      const session = input.sessionId
-        ? await this.prisma.chatSession.findUnique({ where: { id: input.sessionId } })
-        : await this.prisma.chatSession.create({ data: { userId: input.userId ?? null, source: 'WEB', status: 'OPEN' } });
-      
-      const sid = session?.id || (await this.prisma.chatSession.create({ data: { userId: input.userId ?? null } })).id;
+      let session;
+      let sid: string;
+
+      if (input.sessionId) {
+        // Tìm session hiện tại
+        session = await this.prisma.chatSession.findUnique({ 
+          where: { id: input.sessionId } 
+        });
+        
+        if (!session) {
+          // Session không tồn tại, tạo mới
+          session = await this.prisma.chatSession.create({ 
+            data: { userId: input.userId ?? null, source: 'WEB', status: 'OPEN' } 
+          });
+        }
+        sid = session.id;
+      } else {
+        // Tạo session mới
+        session = await this.prisma.chatSession.create({ 
+          data: { userId: input.userId ?? null, source: 'WEB', status: 'OPEN' } 
+        });
+        sid = session.id;
+      }
       
       await this.prisma.chatMessage.create({ 
         data: { sessionId: sid, role: 'USER', text: input.message } 
@@ -89,6 +107,19 @@ export class AiService {
 
       // Retrieve context từ knowledge base
       const context = await this.semanticSearch(input.message, 5);
+      
+      // Lấy conversation history để cải thiện context
+      const conversationHistory = await this.prisma.chatMessage.findMany({
+        where: { sessionId: sid },
+        orderBy: { createdAt: 'asc' },
+        take: 10, // Lấy 10 messages gần nhất
+        select: { role: true, text: true }
+      });
+      
+      // Tạo conversation context
+      const conversationContext = conversationHistory
+        .map(msg => `${msg.role === 'USER' ? 'Khách hàng' : 'AI'}: ${msg.text}`)
+        .join('\n');
       
       // Tìm sản phẩm liên quan
       const relevantProducts = await this.prisma.product.findMany({
@@ -110,14 +141,40 @@ export class AiService {
       ).join('\n\n');
 
       const productContext = relevantProducts.map(p => 
-        `${p.name}: ${p.description || ''} (Giá: ${(p.price / 100).toLocaleString('vi-VN')} VNĐ)`
+        `${p.name}: ${p.description || ''} (Giá: ${(p.priceCents).toLocaleString('vi-VN')} VNĐ)`
       ).join('\n');
 
-      const fullContext = `${contextString}\n\nSản phẩm liên quan:\n${productContext}`;
+      const fullContext = `${contextString}\n\nSản phẩm liên quan:\n${productContext}\n\nLịch sử hội thoại:\n${conversationContext}`;
 
-      // Generate response với Gemini
-      const answer = await this.gemini.generateResponse(input.message, fullContext);
+      // Generate response với Gemini với retry logic
+      let answer: string;
+      let retryCount = 0;
+      const maxRetries = 2;
 
+      while (retryCount <= maxRetries) {
+        try {
+          answer = await this.gemini.generateResponse(input.message, fullContext);
+          break; // Thành công, thoát khỏi loop
+        } catch (error: any) {
+          retryCount++;
+          
+          // Kiểm tra nếu là rate limit error
+          if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+            if (retryCount <= maxRetries) {
+              this.logger.warn(`Rate limit hit, retrying in ${retryCount * 2} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, retryCount * 2000)); // Wait 2s, 4s
+              continue;
+            } else {
+              throw new Error('API rate limit exceeded. Vui lòng thử lại sau 1 phút.');
+            }
+          }
+          
+          // Nếu không phải rate limit, throw error ngay
+          throw error;
+        }
+      }
+
+      // Lưu message của assistant
       await this.prisma.chatMessage.create({ 
         data: { sessionId: sid, role: 'ASSISTANT', text: answer } 
       });
@@ -131,9 +188,17 @@ export class AiService {
           score: item.score
         }))
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Chat failed:', error);
-      throw new Error('Không thể xử lý tin nhắn. Vui lòng thử lại sau.');
+      
+      // Trả về error message cụ thể hơn
+      if (error.message?.includes('rate limit')) {
+        throw new Error('API rate limit exceeded. Vui lòng thử lại sau 1 phút.');
+      } else if (error.message?.includes('API key')) {
+        throw new Error('AI service configuration error. Vui lòng liên hệ admin.');
+      } else {
+        throw new Error('Không thể xử lý tin nhắn. Vui lòng thử lại sau.');
+      }
     }
   }
 
@@ -206,7 +271,7 @@ export class AiService {
           id: p.id,
           name: p.name,
           description: p.description,
-          price: p.price / 100,
+          price: p.priceCents,
           category: p.category?.name
         }))
       };

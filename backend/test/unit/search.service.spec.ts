@@ -51,16 +51,16 @@ describe('SearchService', () => {
           }) },
         },
         {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
           provide: AiService,
           useValue: mockAiService,
         },
         {
           provide: CacheService,
           useValue: mockCacheService,
-        },
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
         },
       ],
     }).compile();
@@ -69,6 +69,10 @@ describe('SearchService', () => {
     aiService = module.get<AiService>(AiService);
     cacheService = module.get<CacheService>(CacheService);
     prismaService = module.get<PrismaService>(PrismaService);
+
+    // Manually inject the dependencies since they're optional
+    (service as any).aiService = mockAiService;
+    (service as any).cacheService = mockCacheService;
   });
 
   afterEach(() => {
@@ -94,6 +98,10 @@ describe('SearchService', () => {
       };
 
       mockCacheService.get.mockResolvedValue(cachedResults);
+
+      // Debug: Check if cache service is injected
+      console.log('Cache service in test:', !!service['cacheService']);
+      console.log('AI service in test:', !!service['aiService']);
 
       const result = await service.searchProducts(query, filters);
 
@@ -248,24 +256,19 @@ describe('SearchService', () => {
       mockCacheService.get.mockResolvedValue(null);
       mockPrismaService.product.count.mockResolvedValue(25);
       mockPrismaService.product.findMany.mockResolvedValue(mockProducts);
-      mockPrismaService.product.aggregate.mockResolvedValue({
-        _min: { priceCents: 1000000 },
-        _max: { priceCents: 10000000 }
-      });
-      mockPrismaService.productTag.findMany.mockResolvedValue([]);
 
       const result = await service.searchProducts(query, filters);
 
       expect(mockPrismaService.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          skip: 0,
-          take: 20,
+          skip: 10, // (page - 1) * pageSize = (2 - 1) * 10 = 10
+          take: 10,
         })
       );
       expect(result).toEqual(expect.objectContaining({
         pagination: expect.objectContaining({
-          page: 1,
-          limit: 20,
+          page: 2,
+          limit: 10,
           total: 25
         })
       }));

@@ -273,4 +273,80 @@ export class NotificationService {
 
     this.logger.log(`Marketing email sent - Success: ${successful}, Failed: ${failed}`);
   }
+
+  // === Database-backed helpers expected by unit tests ===
+  async listNotifications(userId: string, options: { read?: boolean; page?: number; limit?: number } = {}) {
+    const page = Math.max(1, Math.floor(options.page ?? 1));
+    const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 20)));
+    const where: any = { userId };
+    if (typeof options.read === 'boolean') where.read = options.read;
+
+    const [items, total] = await Promise.all([
+      (this.prisma as any).notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      (this.prisma as any).notification.count({ where }),
+    ]);
+
+    return {
+      notifications: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+  async createNotification(notification: {
+    userId: string;
+    type: 'ORDER' | 'PAYMENT' | 'PROMOTION' | 'SYSTEM' | 'WELCOME';
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+  }) {
+    return (this.prisma as any).notification.create({
+      data: {
+        userId: notification.userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        data: notification.data,
+        read: false,
+      },
+    });
+  }
+
+  async getPendingNotifications(userId: string) {
+    return (this.prisma as any).notification.findMany({
+      where: { userId, read: false },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markAsRead(notificationId: string, userId: string) {
+    return (this.prisma as any).notification.updateMany({
+      where: { id: notificationId, userId },
+      data: { read: true, readAt: new Date() },
+    });
+  }
+
+  async markAllAsRead(userId: string) {
+    return (this.prisma as any).notification.updateMany({
+      where: { userId, read: false },
+      data: { read: true, readAt: new Date() },
+    });
+  }
+
+  async getNotificationStats(userId: string) {
+    const total = await (this.prisma as any).notification.count({ where: { userId } });
+    const unread = await (this.prisma as any).notification.count({ where: { userId, read: false } });
+    const read = await (this.prisma as any).notification.count({ where: { userId, read: true } });
+    const unreadPercentage = total > 0 ? Math.round((unread / total) * 100) : 0;
+    return { total, unread, read, unreadPercentage };
+  }
 }

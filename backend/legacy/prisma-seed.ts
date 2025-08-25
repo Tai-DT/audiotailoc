@@ -254,40 +254,34 @@ async function main() {
           'Định dạng hỗ trợ': 'MP3, MP4, AVI, MKV',
           'Điều khiển': 'Remote + cảm ứng',
           'Ngôn ngữ': 'Tiếng Việt',
-          'Cập nhật': 'USB/WiFi',
-          'Trọng lượng': '3.5kg',
         },
         features: [
-          '50.000 bài hát Việt Nam chất lượng cao',
-          'Màn hình cảm ứng 7 inch HD',
-          'Kết nối đa dạng: HDMI, USB, Bluetooth, WiFi',
-          'Giao diện tiếng Việt thân thiện',
-          'Tìm kiếm bài hát nhanh chóng',
-          'Cập nhật bài hát qua USB/WiFi',
-          'Hỗ trợ nhiều định dạng video',
-          'Điều khiển từ xa tiện lợi',
+          'Kho bài hát phong phú',
+          'Giao diện cảm ứng thân thiện',
+          'Kết nối WiFi/USB tiện lợi',
+          'Cập nhật bài hát dễ dàng',
         ],
       },
     }),
     prisma.product.upsert({
-      where: { slug: 'loa-karaoke-400w-subwoofer' },
+      where: { slug: 'loa-karaoke-sub-300w' },
       update: {},
       create: {
-        name: 'Loa Karaoke 400W + Subwoofer',
-        slug: 'loa-karaoke-400w-subwoofer',
-        description: 'Bộ loa karaoke chuyên dụng với loa chính 400W và loa subwoofer 200W, âm bass mạnh mẽ',
-        shortDescription: 'Bộ loa karaoke 400W + subwoofer với âm bass mạnh mẽ',
-        sku: 'KARA-SPEAKER-400W-001',
-        priceCents: 599000000, // 5,990,000 VND
-        originalPriceCents: 699000000, // 6,990,000 VND
-        costCents: 450000000, // 4,500,000 VND
+        name: 'Bộ Loa Karaoke 500W + Subwoofer 300W',
+        slug: 'loa-karaoke-sub-300w',
+        description: 'Bộ loa karaoke chuyên dụng với loa chính 500W RMS và loa subwoofer 300W, âm bass mạnh mẽ, tách âm chuyên nghiệp.',
+        shortDescription: 'Loa karaoke công suất lớn cho gia đình và kinh doanh',
+        sku: 'KARA-SPEAKER-500-300-001',
+        priceCents: 1299000000,
+        originalPriceCents: 1499000000,
+        costCents: 1000000000,
         categoryId: categories[2].id, // Loa & Loa Sub
         brandId: brands[2].id,
         inStock: true,
-        stockQuantity: 25,
-        lowStockThreshold: 5,
-        weight: 8500,
-        dimensions: 'Loa chính: 35x25x20cm, Subwoofer: 40x30x30cm',
+        stockQuantity: 8,
+        lowStockThreshold: 2,
+        weight: 22000,
+        dimensions: '60 x 35 x 30 cm',
         images: [
           '/images/products/karaoke-speakers-1.jpg',
           '/images/products/karaoke-speakers-2.jpg',
@@ -295,206 +289,20 @@ async function main() {
         ],
         featured: true,
         published: true,
-        seoTitle: 'Loa Karaoke 400W + Subwoofer - Audio Tài Lộc',
-        seoDescription: 'Bộ loa karaoke chuyên dụng với loa chính 400W và loa subwoofer 200W, âm bass mạnh mẽ',
+        seoTitle: 'Loa karaoke với sub 300W - Audio Tài Lộc',
+        seoDescription: 'Loa karaoke chuyên dụng với âm bass mạnh mẽ, phù hợp mọi không gian',
         specifications: {
-          'Loa chính': '400W RMS, 2 kênh (Trái/Phải)',
-          'Subwoofer': '200W RMS, 10 inch',
-          'Tần số loa chính': '60Hz - 20kHz',
-          'Tần số subwoofer': '30Hz - 200Hz',
-          'Driver loa chính': '8 inch + tweeter',
-          'Driver subwoofer': '10 inch',
-          'Kết nối': 'Jack 6.35mm, XLR',
-          'Chống nhiễu': 'Có',
-          'Chống phản hồi': 'Có',
-          'Trọng lượng': '8.5kg (tổng)',
+          'Công suất loa chính': '500W RMS',
+          'Công suất subwoofer': '300W RMS',
+          'Tần số đáp ứng': '45Hz - 20kHz',
+          'Kết nối': 'XLR, Jack 6.35mm',
         },
         features: [
-          'Loa chính 400W RMS chất lượng cao',
-          'Subwoofer 200W với âm bass mạnh mẽ',
-          'Tách âm thanh karaoke chuyên nghiệp',
-          'Chống nhiễu và phản hồi âm thanh',
-          'Kết nối đa dạng: Jack, XLR',
-          'Thiết kế chuyên dụng cho karaoke',
-          'Chất liệu bền bỉ, chống va đập',
-          'Dễ dàng lắp đặt và sử dụng',
+          'Âm bass mạnh mẽ',
+          'Tách âm chuyên nghiệp',
+          'Thiết kế bền bỉ',
+          'Dễ lắp đặt',
         ],
-      },
-    }),
-  ]);
-
-  // Create product tags
-  const tags = await Promise.all([
-    prisma.tag.upsert({
-      where: { name: 'Karaoke' },
-      update: {},
-      create: { name: 'Karaoke', slug: 'karaoke' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Chuyên nghiệp' },
-      update: {},
-      create: { name: 'Chuyên nghiệp', slug: 'chuyen-nghiep' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Gia đình' },
-      update: {},
-      create: { name: 'Gia đình', slug: 'gia-dinh' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Kinh doanh' },
-      update: {},
-      create: { name: 'Kinh doanh', slug: 'kinh-doanh' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Âm bass mạnh' },
-      update: {},
-      create: { name: 'Âm bass mạnh', slug: 'am-bass-manh' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Nhiều bài hát' },
-      update: {},
-      create: { name: 'Nhiều bài hát', slug: 'nhieu-bai-hat' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Cảm ứng' },
-      update: {},
-      create: { name: 'Cảm ứng', slug: 'cam-ung' },
-    }),
-    prisma.tag.upsert({
-      where: { name: 'Bluetooth' },
-      update: {},
-      create: { name: 'Bluetooth', slug: 'bluetooth' },
-    }),
-  ]);
-
-  // Connect products with tags
-  await Promise.all([
-    // Dàn Karaoke Professional 5.1
-    prisma.product.update({
-      where: { id: products[0].id },
-      data: {
-        tags: {
-          connect: [
-            { id: tags[0].id }, // Karaoke
-            { id: tags[1].id }, // Chuyên nghiệp
-            { id: tags[2].id }, // Gia đình
-            { id: tags[3].id }, // Kinh doanh
-            { id: tags[4].id }, // Âm bass mạnh
-            { id: tags[5].id }, // Nhiều bài hát
-            { id: tags[6].id }, // Cảm ứng
-          ],
-        },
-      },
-    }),
-    // Đầu Karaoke Premium 50.000 Bài
-    prisma.product.update({
-      where: { id: products[1].id },
-      data: {
-        tags: {
-          connect: [
-            { id: tags[0].id }, // Karaoke
-            { id: tags[5].id }, // Nhiều bài hát
-            { id: tags[6].id }, // Cảm ứng
-            { id: tags[7].id }, // Bluetooth
-            { id: tags[1].id }, // Chuyên nghiệp
-          ],
-        },
-      },
-    }),
-    // Loa Karaoke 400W + Subwoofer
-    prisma.product.update({
-      where: { id: products[2].id },
-      data: {
-        tags: {
-          connect: [
-            { id: tags[0].id }, // Karaoke
-            { id: tags[1].id }, // Chuyên nghiệp
-            { id: tags[4].id }, // Âm bass mạnh
-          ],
-        },
-      },
-    }),
-  ]);
-
-  // Create shipping zones
-  const shippingZones = await Promise.all([
-    prisma.shippingZone.upsert({
-      where: { name: 'Hồ Chí Minh' },
-      update: {},
-      create: {
-        name: 'Hồ Chí Minh',
-        description: 'Khu vực Thành phố Hồ Chí Minh',
-        countries: ['VN'],
-        states: ['Hồ Chí Minh'],
-        postalCodes: ['7*'],
-      },
-    }),
-    prisma.shippingZone.upsert({
-      where: { name: 'Hà Nội' },
-      update: {},
-      create: {
-        name: 'Hà Nội',
-        description: 'Khu vực Thủ đô Hà Nội',
-        countries: ['VN'],
-        states: ['Hà Nội'],
-        postalCodes: ['1*'],
-      },
-    }),
-    prisma.shippingZone.upsert({
-      where: { name: 'Toàn quốc' },
-      update: {},
-      create: {
-        name: 'Toàn quốc',
-        description: 'Các tỉnh thành khác',
-        countries: ['VN'],
-        states: [],
-        postalCodes: [],
-      },
-    }),
-  ]);
-
-  // Create shipping methods
-  await Promise.all([
-    prisma.shippingMethod.upsert({
-      where: { name: 'Giao hàng nhanh HCM' },
-      update: {},
-      create: {
-        name: 'Giao hàng nhanh HCM',
-        description: 'Giao hàng trong ngày tại TP.HCM',
-        carrier: 'Giao Hàng Nhanh',
-        estimatedDays: 1,
-        costCents: 3000000, // 30,000 VND
-        freeShippingThreshold: 50000000, // 500,000 VND
-        zoneId: shippingZones[0].id,
-        isActive: true,
-      },
-    }),
-    prisma.shippingMethod.upsert({
-      where: { name: 'Giao hàng nhanh HN' },
-      update: {},
-      create: {
-        name: 'Giao hàng nhanh HN',
-        description: 'Giao hàng trong ngày tại Hà Nội',
-        carrier: 'Giao Hàng Nhanh',
-        estimatedDays: 1,
-        costCents: 3000000, // 30,000 VND
-        freeShippingThreshold: 50000000, // 500,000 VND
-        zoneId: shippingZones[1].id,
-        isActive: true,
-      },
-    }),
-    prisma.shippingMethod.upsert({
-      where: { name: 'Giao hàng tiêu chuẩn' },
-      update: {},
-      create: {
-        name: 'Giao hàng tiêu chuẩn',
-        description: 'Giao hàng toàn quốc 2-3 ngày',
-        carrier: 'Giao Hàng Tiết Kiệm',
-        estimatedDays: 3,
-        costCents: 5000000, // 50,000 VND
-        freeShippingThreshold: 100000000, // 1,000,000 VND
-        zoneId: shippingZones[2].id,
-        isActive: true,
       },
     }),
   ]);
@@ -655,3 +463,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

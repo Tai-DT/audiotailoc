@@ -223,3 +223,4 @@ addKaraokeProducts()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

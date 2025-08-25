@@ -16,8 +16,8 @@ export class GeminiService {
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    this.logger.log('Gemini AI service initialized');
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.logger.log('Gemini AI service initialized with model: gemini-1.5-flash');
   }
 
   async generateResponse(prompt: string, context?: string): Promise<string> {

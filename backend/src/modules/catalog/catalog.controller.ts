@@ -109,6 +109,10 @@ class AdvancedSearchDto {
 class CreateProductDto {
   @MinLength(1)
   @IsString()
+  slug!: string;
+
+  @MinLength(1)
+  @IsString()
   name!: string;
 
   @IsOptional()
@@ -117,7 +121,7 @@ class CreateProductDto {
 
   @IsInt()
   @Min(0)
-  price!: number;
+  priceCents!: number;
 
   @IsOptional()
   @IsString()
@@ -136,7 +140,7 @@ class UpdateProductDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  price?: number;
+  priceCents?: number;
 
   @IsOptional()
   @IsString()
@@ -192,6 +196,11 @@ export class CatalogController {
   @Get('products/:id')
   get(@Param('id') id: string) {
     return this.catalog.getById(id);
+  }
+
+  @Get('products/slug/:slug')
+  getBySlug(@Param('slug') slug: string) {
+    return this.catalog.getBySlug(slug);
   }
 
   // @Get('search')

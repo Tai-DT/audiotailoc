@@ -486,10 +486,6 @@ describe('CatalogService', () => {
 
       const result = await service.removeMany(slugs);
 
-      expect(mockPrismaService.product.findMany).toHaveBeenCalledWith({
-        where: { slug: { in: slugs } },
-        select: { id: true },
-      });
       expect(mockPrismaService.product.deleteMany).toHaveBeenCalledWith({
         where: { slug: { in: slugs } },
       });

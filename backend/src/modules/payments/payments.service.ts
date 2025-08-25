@@ -12,20 +12,18 @@ export class PaymentsService {
     private readonly config: ConfigService
   ) {}
 
-  async createIntent(params: { orderId: string; provider: 'VNPAY' | 'MOMO' | 'PAYOS'; idempotencyKey: string; returnUrl?: string }) {
+  async createIntent(params: { orderId: string; provider: 'VNPAY' | 'MOMO' | 'PAYOS'; returnUrl?: string }) {
     const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
-    const existing = await this.prisma.paymentIntent.findUnique({ where: { idempotencyKey: params.idempotencyKey } });
-    if (existing) return { intentId: existing.id, redirectUrl: existing.returnUrl || '' };
     const intent = await this.prisma.paymentIntent.create({
-      data: { orderId: order.id, provider: params.provider, amountCents: order.totalCents, status: 'PENDING', idempotencyKey: params.idempotencyKey, returnUrl: params.returnUrl ?? null },
+      data: { orderId: order.id, provider: params.provider, amountCents: order.totalCents, status: 'PENDING', returnUrl: params.returnUrl ?? null },
     });
-    const redirectUrl = await this.buildRedirectUrl(intent, order);
+    const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider as 'VNPAY' | 'MOMO' | 'PAYOS' }, order);
     return { intentId: intent.id, redirectUrl };
   }
 
   private async buildRedirectUrl(
-    intent: { id: string; provider: 'VNPAY' | 'MOMO' | 'PAYOS'; amountCents: number; returnUrl: string | null },
+    intent: { id: string; provider: string; amountCents: number; returnUrl: string | null },
     order: { id: string; orderNo: string; totalCents: number },
   ): Promise<string> {
     const baseReturn = intent.returnUrl || this.config.get<string>('PAYMENT_RETURN_URL') || 'http://localhost:3000/return';

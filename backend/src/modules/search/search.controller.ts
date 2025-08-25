@@ -130,6 +130,13 @@ export class SearchController {
     );
   }
 
+  // Analytics: log user search interactions (fire-and-forget)
+  @Post('analytics')
+  async logSearchAnalytics(@Body() body: { query: string; filters?: Record<string, any>; resultCount?: number }) {
+    await this.searchService.logSearchAnalytics(body?.query || '', body?.filters || {}, body?.resultCount ?? 0);
+    return { ok: true };
+  }
+
   // Search History (for logged-in users)
   @Get('history')
   async getUserSearchHistory(
@@ -154,10 +161,10 @@ export class SearchController {
     const products = await this.prisma.product.findMany({
       select: {
         id: true,
-        // slug: true, // Field not available in current schema
+        slug: true,
         name: true,
         description: true,
-        price: true, // Using 'price' instead of 'priceCents'
+        priceCents: true,
         imageUrl: true,
         createdAt: true,
         updatedAt: true,
@@ -176,7 +183,7 @@ export class SearchController {
       imageUrl: p.imageUrl || '',
       category: p.category ? p.category.name : null,
       categorySlug: p.category ? p.category.slug : null,
-      tags: p.tags.map((t: any) => t.name),
+      // tags: p.tags.map((t: any) => t.name),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }));

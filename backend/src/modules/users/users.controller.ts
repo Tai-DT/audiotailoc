@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query, Req, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
@@ -53,7 +53,11 @@ export class UsersController {
 
   @UseGuards(JwtGuard)
   @Get('profile')
-  async getProfile(@Param('id') userId: string) {
+  async getProfile(@Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
     return this.usersService.findById(userId);
   }
 

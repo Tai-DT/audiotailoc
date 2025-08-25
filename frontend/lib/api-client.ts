@@ -28,7 +28,7 @@ export interface ApiError {
 
 // API Client Configuration
 const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

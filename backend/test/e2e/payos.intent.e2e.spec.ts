@@ -10,6 +10,7 @@ describe('Payments → PayOS intent (e2e)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
+    process.env.DATABASE_URL = 'file:./test.db';
     process.env.JWT_ACCESS_SECRET = 'test_access_secret';
     process.env.PAYOS_API_URL = process.env.PAYOS_API_URL || 'https://api.payos.vn';
     process.env.PAYOS_CLIENT_ID = process.env.PAYOS_CLIENT_ID || 'test_client_id';
@@ -56,15 +57,13 @@ describe('Payments → PayOS intent (e2e)', () => {
       data: {
         orderNo: `E2E-${Date.now()}`,
         userId: user.id,
-        subtotalCents: 150000,
-        shippingCents: 30000,
+        
         totalCents: 180000,
         items: {
           create: [{
             productId: product.id,
-            name: product.name,
             quantity: 1,
-            unitPrice: 150000,
+            price: 150000,
           }],
         },
       },

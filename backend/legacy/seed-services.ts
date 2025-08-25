@@ -255,74 +255,45 @@ async function seedTechnicians() {
       name: 'Lê Minh Cường',
       phone: '0903456789',
       email: 'cuong.le@audiotailoc.com',
-      specialties: [ServiceCategory.MAINTENANCE, ServiceCategory.REPAIR, ServiceCategory.LIQUIDATION],
+      specialties: [ServiceCategory.MAINTENANCE, ServiceCategory.INSTALLATION],
       schedule: [
-        { dayOfWeek: 1, startTime: '07:00', endTime: '16:00', isAvailable: true },
-        { dayOfWeek: 2, startTime: '07:00', endTime: '16:00', isAvailable: true },
-        { dayOfWeek: 3, startTime: '07:00', endTime: '16:00', isAvailable: true },
-        { dayOfWeek: 4, startTime: '07:00', endTime: '16:00', isAvailable: true },
-        { dayOfWeek: 5, startTime: '07:00', endTime: '16:00', isAvailable: true },
-        { dayOfWeek: 6, startTime: '08:00', endTime: '14:00', isAvailable: true },
+        { dayOfWeek: 1, startTime: '10:00', endTime: '19:00', isAvailable: true },
+        { dayOfWeek: 2, startTime: '10:00', endTime: '19:00', isAvailable: true },
+        { dayOfWeek: 3, startTime: '10:00', endTime: '19:00', isAvailable: true },
+        { dayOfWeek: 4, startTime: '10:00', endTime: '19:00', isAvailable: true },
+        { dayOfWeek: 5, startTime: '10:00', endTime: '19:00', isAvailable: true },
+        { dayOfWeek: 6, startTime: '09:00', endTime: '13:00', isAvailable: true },
         { dayOfWeek: 0, startTime: '00:00', endTime: '00:00', isAvailable: false },
-      ]
-    },
-    {
-      name: 'Phạm Thị Dung',
-      phone: '0904567890',
-      email: 'dung.pham@audiotailoc.com',
-      specialties: [ServiceCategory.CONSULTATION, ServiceCategory.INSTALLATION],
-      schedule: [
-        { dayOfWeek: 1, startTime: '08:30', endTime: '17:30', isAvailable: true },
-        { dayOfWeek: 2, startTime: '08:30', endTime: '17:30', isAvailable: true },
-        { dayOfWeek: 3, startTime: '08:30', endTime: '17:30', isAvailable: true },
-        { dayOfWeek: 4, startTime: '08:30', endTime: '17:30', isAvailable: true },
-        { dayOfWeek: 5, startTime: '08:30', endTime: '17:30', isAvailable: true },
-        { dayOfWeek: 6, startTime: '00:00', endTime: '00:00', isAvailable: false },
-        { dayOfWeek: 0, startTime: '10:00', endTime: '15:00', isAvailable: true }, // Sunday
       ]
     }
   ];
 
-  for (const technicianData of technicians) {
-    const { schedule, ...technician } = technicianData;
-    
-    const createdTechnician = await prisma.technician.create({
-      data: technician,
+  for (const tech of technicians) {
+    await prisma.technician.create({
+      data: {
+        name: tech.name,
+        phone: tech.phone,
+        email: tech.email,
+        specialties: tech.specialties,
+        schedule: tech.schedule,
+      },
     });
-
-    // Create schedule
-    for (const scheduleData of schedule) {
-      await prisma.technicianSchedule.create({
-        data: {
-          ...scheduleData,
-          technicianId: createdTechnician.id,
-        },
-      });
-    }
-
-    console.log(`✅ Created technician: ${technician.name}`);
   }
+
+  console.log('✅ Seeded technicians');
 }
 
 async function main() {
-  try {
-    console.log('🚀 Starting service management seeding...');
-    
-    await seedServices();
-    await seedTechnicians();
-    
-    console.log('✨ Service management seeding completed successfully!');
-  } catch (error) {
-    console.error('❌ Error during seeding:', error);
-    throw error;
-  } finally {
-    await prisma.$disconnect();
-  }
+  await seedServices();
+  await seedTechnicians();
 }
 
-if (require.main === module) {
-  main().catch((error) => {
-    console.error(error);
+main()
+  .catch((e) => {
+    console.error('❌ Error during services seeding:', e);
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });
-}
+

@@ -25,7 +25,7 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                price: true,
+                priceCents: true,
                 images: true,
                 imageUrl: true,
 
@@ -54,7 +54,7 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                price: true,
+                priceCents: true,
                 images: true,
                 imageUrl: true,
 
@@ -126,7 +126,7 @@ export class CartService {
           cartId: cart.id,
           productId,
           quantity,
-          unitPrice: product.priceCents
+          price: product.priceCents
         }
       });
     }
@@ -157,13 +157,8 @@ export class CartService {
 
     const delta = quantity - cartItem.quantity;
     if (delta !== 0) {
-      // Adjust reservation based on quantity change
-      await this.prisma.inventory.update({
-        where: { productId },
-        data: {
-          reserved: delta > 0 ? { increment: delta } : { decrement: -delta }
-        }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
     }
 
     if (quantity <= 0) {
@@ -193,10 +188,8 @@ export class CartService {
 
     const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
     if (item) {
-      await this.prisma.inventory.update({
-        where: { productId },
-        data: { reserved: { decrement: item.quantity } }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -214,10 +207,8 @@ export class CartService {
 
     const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
     for (const item of items) {
-      await this.prisma.inventory.update({
-        where: { productId: item.productId },
-        data: { reserved: { decrement: item.quantity } }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -266,7 +257,7 @@ export class CartService {
               cartId: existingUserCart.id,
               productId: item.productId,
               quantity: item.quantity,
-              unitPrice: item.unitPrice
+              price: item.price
             }
           });
         }
@@ -305,9 +296,9 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                price: true,
+                priceCents: true,
                 images: true,
-                inventory: { select: { stock: true } },
+                // inventory: { select: { stock: true } }, // Removed as not in schema
               }
             }
           }
@@ -336,9 +327,9 @@ export class CartService {
               select: {
                 id: true,
                 name: true,
-                price: true,
+                priceCents: true,
                 images: true,
-                inventory: { select: { stock: true } },
+                // inventory: { select: { stock: true } }, // Removed as not in schema
               }
             }
           }
@@ -364,17 +355,15 @@ export class CartService {
     }
 
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: { inventory: true }
+      where: { id: productId }
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    if ((product.inventory?.stock ?? 0) < quantity) {
-      throw new Error('Insufficient stock');
-    }
+    // Note: Stock check removed as inventory is not in current schema
+    // TODO: Implement stock check when inventory schema is added
 
     const existingItem = await this.prisma.cartItem.findFirst({
       where: {
@@ -394,7 +383,7 @@ export class CartService {
           cartId: cart.id,
           productId,
           quantity,
-          unitPrice: product.priceCents
+          price: product.priceCents
         }
       });
     }
@@ -424,12 +413,8 @@ export class CartService {
 
     const delta = quantity - cartItem.quantity;
     if (delta !== 0) {
-      await this.prisma.inventory.update({
-        where: { productId },
-        data: {
-          reserved: delta > 0 ? { increment: delta } : { decrement: -delta }
-        }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
     }
 
     if (quantity <= 0) {
@@ -457,10 +442,8 @@ export class CartService {
 
     const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
     if (item) {
-      await this.prisma.inventory.update({
-        where: { productId },
-        data: { reserved: { decrement: item.quantity } }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -478,10 +461,8 @@ export class CartService {
 
     const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
     for (const item of items) {
-      await this.prisma.inventory.update({
-        where: { productId: item.productId },
-        data: { reserved: { decrement: item.quantity } }
-      });
+      // Note: Inventory management removed as it's not in current schema
+      // TODO: Implement inventory management when schema is updated
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -491,7 +472,7 @@ export class CartService {
   // Helper method to calculate cart totals
   private calculateCartTotals(cart: any) {
     const subtotal = cart.items.reduce((sum: number, item: any) => {
-      return sum + ((item.unitPrice ?? item.product?.priceCents ?? 0) * item.quantity);
+      return sum + ((item.price ?? item.product?.priceCents ?? 0) * item.quantity);
     }, 0);
 
     const itemCount = cart.items.reduce((sum: number, item: any) => {
@@ -543,7 +524,7 @@ export class CartService {
       where: { cartId: cart.id },
       include: { product: true },
     });
-    const subtotalCents = items.reduce((sum, i) => sum + (i.unitPrice || i.product.priceCents) * i.quantity, 0);
+    const subtotalCents = items.reduce((sum, i) => sum + (i.price || i.product.priceCents) * i.quantity, 0);
     return { cart, items, subtotalCents };
   }
 }

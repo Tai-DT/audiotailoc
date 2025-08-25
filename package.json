@@ -21,7 +21,8 @@
     "mcp:scan": "node mcp-project-automation.js",
     "monitor": "node system-monitor.js",
     "dashboard": "node monitoring-dashboard.js",
-    "deploy": "node deploy-manager.js"
+    "deploy": "node deploy-manager.js",
+    "smoke:e2e": "node smoke-e2e.js"
   },
   "keywords": [
     "karaoke",

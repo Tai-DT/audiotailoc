@@ -10,9 +10,10 @@ export class PromotionService {
     const now = new Date();
     const promo = await this.prisma.promotion.findUnique({ where: { code } });
     if (!promo) return null;
-    if (promo.startsAt && promo.startsAt > now) return null;
-    if (promo.endsAt && promo.endsAt < now) return null;
-    if (promo.maxUses && promo.usedCount >= promo.maxUses) return null;
+    // Align with schema fields
+    if (promo.startDate && promo.startDate > now) return null;
+    if (promo.endDate && promo.endDate < now) return null;
+    if (promo.isActive === false) return null;
     return { code: promo.code, type: promo.type as any, value: promo.value };
   }
 
@@ -23,4 +24,3 @@ export class PromotionService {
     return Math.floor((subtotal * pct) / 100);
   }
 }
-

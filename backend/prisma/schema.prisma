@@ -17,64 +17,67 @@ model User {
   role      String   @default("USER") // USER, ADMIN
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   orders       Order[]
   carts        Cart[]
   chatSessions ChatSession[]
-  
+  Notification Notification[]
+
   @@map("users")
 }
 
 // Product Model (simplified)
 model Product {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
+  slug        String   @unique
   name        String
   description String?
-  price       Int       // Price in cents
+  priceCents  Int // Price in Vietnamese dong cents
   imageUrl    String?
-  images      String?   // JSON string of image URLs
+  images      String? // JSON string of image URLs
   categoryId  String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  category    Category? @relation(fields: [categoryId], references: [id])
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  
+  featured    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
   @@map("products")
 }
 
 // Category Model
 model Category {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  slug      String    @unique
+  slug      String   @unique
   parentId  String?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
-  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children  Category[] @relation("CategoryHierarchy")
-  products  Product[]
-  
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
   @@map("categories")
 }
 
 // Cart Model
 model Cart {
-  id        String     @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String?
   guestId   String?
-  status    String     @default("ACTIVE") // ACTIVE, CHECKED_OUT, ABANDONED
+  status    String    @default("ACTIVE") // ACTIVE, CHECKED_OUT, ABANDONED
   expiresAt DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  
-  user      User?      @relation(fields: [userId], references: [id])
-  items     CartItem[]
-  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user  User?      @relation(fields: [userId], references: [id])
+  items CartItem[]
+
   @@map("carts")
 }
 
@@ -84,33 +87,33 @@ model CartItem {
   cartId    String
   productId String
   quantity  Int
-  price     Int      // Price at time of adding
+  price     Int // Price at time of adding
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-  
+
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
   @@unique([cartId, productId])
   @@map("cart_items")
 }
 
 // Order Model (simplified)
 model Order {
-  id               String      @id @default(cuid())
-  orderNo          String      @unique
-  userId           String
-  totalCents       Int
-  status           String      @default("PENDING") // PENDING, PAID, FULFILLED, CANCELED
-  shippingAddress  String?     // JSON string
-  promotionCode    String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  
-  user             User        @relation(fields: [userId], references: [id])
-  items            OrderItem[]
-  payments         Payment[]
-  
+  id              String   @id @default(cuid())
+  orderNo         String   @unique
+  userId          String
+  totalCents      Int
+  status          String   @default("PENDING") // PENDING, PAID, FULFILLED, CANCELED
+  shippingAddress String? // JSON string
+  promotionCode   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+
   @@map("orders")
 }
 
@@ -120,67 +123,67 @@ model OrderItem {
   orderId   String
   productId String
   quantity  Int
-  price     Int      // Price at time of order
+  price     Int // Price at time of order
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-  
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
   @@map("order_items")
 }
 
 // Payment Intent Model (simplified)
 model PaymentIntent {
-  id            String    @id @default(cuid())
-  orderId       String
-  provider      String    // VNPAY, MOMO, PAYOS
-  amountCents   Int
-  status        String    @default("PENDING") // PENDING, REQUIRES_ACTION, SUCCEEDED, FAILED
-  clientSecret  String?
-  returnUrl     String?
-  metadata      String?   // JSON string
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  payments      Payment[]
-  
+  id           String   @id @default(cuid())
+  orderId      String
+  provider     String // VNPAY, MOMO, PAYOS
+  amountCents  Int
+  status       String   @default("PENDING") // PENDING, REQUIRES_ACTION, SUCCEEDED, FAILED
+  clientSecret String?
+  returnUrl    String?
+  metadata     String? // JSON string
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payments Payment[]
+
   @@map("payment_intents")
 }
 
 // Payment Model (simplified)
 model Payment {
-  id            String         @id @default(cuid())
+  id            String   @id @default(cuid())
   intentId      String
   orderId       String
   provider      String
   amountCents   Int
-  status        String         @default("PENDING")
+  status        String   @default("PENDING")
   transactionId String?
-  raw           String?        // JSON string
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  
-  intent        PaymentIntent  @relation(fields: [intentId], references: [id])
-  order         Order          @relation(fields: [orderId], references: [id])
-  
+  raw           String? // JSON string
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  intent PaymentIntent @relation(fields: [intentId], references: [id])
+  order  Order         @relation(fields: [orderId], references: [id])
+
   @@map("payments")
 }
 
 // Service Model (basic)
 model Service {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  price       Int       // Price in cents
-  category    String    // INSTALLATION, MAINTENANCE, etc.
-  type        String    // AUDIO_EQUIPMENT, HOME_THEATER, etc.
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  bookings    ServiceBooking[]
-  
+  price       Int // Price in cents
+  category    String // INSTALLATION, MAINTENANCE, etc.
+  type        String // AUDIO_EQUIPMENT, HOME_THEATER, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings ServiceBooking[]
+
   @@map("services")
 }
 
@@ -197,42 +200,42 @@ model ServiceBooking {
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
-  service       Service  @relation(fields: [serviceId], references: [id])
-  
+
+  service Service @relation(fields: [serviceId], references: [id])
+
   @@map("service_bookings")
 }
 
 // Promotion Model (basic)
 model Promotion {
-  id          String    @id @default(cuid())
-  code        String    @unique
+  id          String   @id @default(cuid())
+  code        String   @unique
   name        String
   description String?
-  type        String    @default("PERCENT") // PERCENT, FIXED
-  value       Int       // Percentage or fixed amount
-  minAmount   Int?      // Minimum order amount
-  maxAmount   Int?      // Maximum discount amount
+  type        String   @default("PERCENT") // PERCENT, FIXED
+  value       Int // Percentage or fixed amount
+  minAmount   Int? // Minimum order amount
+  maxAmount   Int? // Maximum discount amount
   startDate   DateTime
   endDate     DateTime
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("promotions")
 }
 
 // Knowledge Base Model (simplified for AI)
 model KnowledgeBaseEntry {
   id        String   @id @default(cuid())
-  kind      String   // PRODUCT, FAQ, DOC
+  kind      String // PRODUCT, FAQ, DOC
   title     String
   content   String
-  embedding String?  // JSON string representation of vector
+  embedding String? // JSON string representation of vector
   productId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("knowledge_base_entries")
 }
 
@@ -244,27 +247,45 @@ model ChatSession {
   status     String   @default("OPEN") // OPEN, ESCALATED, CLOSED
   source     String   @default("WEB") // WEB, ZALO
   assignedTo String?
-  metadata   String?  // JSON string
+  metadata   String? // JSON string
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
-  user       User?    @relation(fields: [userId], references: [id])
-  messages   ChatMessage[]
-  
+
+  user     User?         @relation(fields: [userId], references: [id])
+  messages ChatMessage[]
+
   @@map("chat_sessions")
 }
 
 // Chat Message Model (basic)
 model ChatMessage {
-  id        String      @id @default(cuid())
+  id        String   @id @default(cuid())
   sessionId String
-  role      String      // USER, ASSISTANT, STAFF, SYSTEM
+  role      String // USER, ASSISTANT, STAFF, SYSTEM
   text      String
-  metadata  String?     // JSON string
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
-  session   ChatSession @relation(fields: [sessionId], references: [id])
-  
+  metadata  String? // JSON string
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session ChatSession @relation(fields: [sessionId], references: [id])
+
   @@map("chat_messages")
+}
+
+// Notification Model (simple)
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // ORDER, PAYMENT, PROMOTION, SYSTEM, WELCOME
+  title     String
+  message   String
+  data      String? // JSON string
+  read      Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@map("notifications")
 }

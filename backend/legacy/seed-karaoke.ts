@@ -254,80 +254,52 @@ async function seedKaraokeProducts() {
     where: { slug: 'thanh-ly-karaoke' },
     update: {},
     create: {
-      name: 'Dịch Vụ Thanh Lý Thiết Bị Karaoke',
+      name: 'Thanh Lý Thiết Bị Karaoke',
       slug: 'thanh-ly-karaoke',
-      description: 'Dịch vụ thanh lý thiết bị karaoke cũ, thu mua với giá tốt nhất thị trường',
+      description: 'Dịch vụ thu mua và thanh lý thiết bị karaoke cũ với giá tốt',
       category: 'LIQUIDATION',
-      type: 'ON_SITE',
-      basePrice: 0, // Giá sẽ được tính dựa trên thiết bị
-      estimatedDuration: 120, // 2 giờ
-      isActive: true,
-      features: [
-        'Đánh giá thiết bị tại chỗ',
-        'Báo giá minh bạch',
-        'Thu mua ngay lập tức',
-        'Vận chuyển miễn phí',
-        'Xử lý giấy tờ pháp lý'
-      ],
-      requirements: [
-        'Thiết bị còn nguyên vẹn',
-        'Có đầy đủ phụ kiện',
-        'Giấy tờ mua bán (nếu có)'
-      ],
-      items: {
-        create: [
-          {
-            name: 'Đánh giá thiết bị',
-            description: 'Kiểm tra tình trạng và đánh giá giá trị thiết bị karaoke',
-            estimatedTime: 30,
-            isRequired: true,
-            order: 1
-          },
-          {
-            name: 'Báo giá thanh lý',
-            description: 'Đưa ra mức giá thu mua hợp lý dựa trên tình trạng thiết bị',
-            estimatedTime: 15,
-            isRequired: true,
-            order: 2
-          },
-          {
-            name: 'Thương lượng giá cả',
-            description: 'Thảo luận và thống nhất mức giá cuối cùng',
-            estimatedTime: 15,
-            isRequired: false,
-            order: 3
-          },
-          {
-            name: 'Hoàn tất thủ tục',
-            description: 'Ký hợp đồng, thanh toán và vận chuyển thiết bị',
-            estimatedTime: 60,
-            isRequired: true,
-            order: 4
-          }
-        ]
-      }
-    }
+      type: 'AUDIO_EQUIPMENT',
+      basePriceCents: 0,
+      estimatedDuration: 60,
+      requirements: JSON.stringify(['Thiết bị còn hoạt động', 'Có phụ kiện kèm theo']),
+      features: JSON.stringify(['Định giá miễn phí', 'Thu mua tận nơi']),
+      imageUrl: '/images/services/thanh-ly-karaoke.jpg',
+    },
   });
 
-  console.log('✅ Karaoke products and liquidation service created successfully!');
-  console.log(`📦 Created ${karaokeProducts.length} Karaoke products`);
-  console.log(`🔄 Created liquidation service: ${liquidationService.name}`);
+  // Create some sample requests for the service
+  await prisma.serviceBooking.createMany({
+    data: [
+      {
+        serviceId: liquidationService.id,
+        customerName: 'Nguyễn Văn A',
+        customerEmail: 'nguyenvana@example.com',
+        customerPhone: '0901234567',
+        scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        address: '123 Đường Karaoke, Quận 1, TP.HCM',
+        status: 'PENDING',
+        notes: 'Thanh lý dàn karaoke 5.1 cũ'
+      },
+      {
+        serviceId: liquidationService.id,
+        customerName: 'Trần Thị B',
+        customerEmail: 'tranthib@example.com',
+        customerPhone: '0902345678',
+        scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        address: '456 Đường Âm Nhạc, Quận 3, TP.HCM',
+        status: 'PENDING',
+        notes: 'Thu mua đầu karaoke cũ'
+      }
+    ]
+  });
 }
 
-async function main() {
-  try {
-    await seedKaraokeProducts();
-    console.log('🎉 Karaoke seeding completed!');
-  } catch (error) {
-    console.error('❌ Error seeding Karaoke products:', error);
-    throw error;
-  } finally {
+seedKaraokeProducts()
+  .catch((e) => {
+    console.error('❌ Error during karaoke seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
     await prisma.$disconnect();
-  }
-}
+  });
 
-if (require.main === module) {
-  main();
-}
-
-export default seedKaraokeProducts;
