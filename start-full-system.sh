@@ -107,8 +107,8 @@ start_backend() {
     print_status "Waiting for database connection..."
     sleep 5
 
-    # Start backend in background
-    npm run start:dev &
+    # Start backend in background on port 3010
+    PORT=3010 npm run start:dev &
     BACKEND_PID=$!
 
     cd ..
@@ -117,7 +117,7 @@ start_backend() {
     # Wait for backend to be ready
     print_status "Waiting for backend to be ready..."
     for i in {1..30}; do
-        if curl -s http://localhost:8000/api/v1/health > /dev/null; then
+        if curl -s http://localhost:3010/api/v1/health > /dev/null; then
             print_success "Backend is ready!"
             break
         fi
@@ -156,8 +156,8 @@ show_services_info() {
     echo ""
     echo "🌐 Service URLs:"
     echo "   📊 Dashboard:    http://localhost:3000"
-    echo "   🔗 Backend API:  http://localhost:8000"
-    echo "   📚 API Docs:     http://localhost:8000/docs"
+    echo "   🔗 Backend API:  http://localhost:3010"
+    echo "   📚 API Docs:     http://localhost:3010/docs"
     echo "   🗄️ Database:     localhost:5432"
     echo "   🔴 Redis:        localhost:6379"
     echo "   🔍 Meilisearch:  localhost:7700"

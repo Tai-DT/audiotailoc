@@ -13,7 +13,8 @@
     "test:coverage": "jest --coverage",
     "dev:with-backend": "next dev",
     "setup": "cp env-config-updated.md .env.local",
-    "dev:full": "echo '🚀 Starting Audio Tài Lộc Full System...' && echo '📋 Make sure to run: docker-compose up --build' && echo '🌐 Then visit: http://localhost:3000' && next dev"
+    "dev:full": "echo '🚀 Starting Audio Tài Lộc Full System...' && echo '📋 Make sure to run: docker-compose up --build' && echo '🌐 Then visit: http://localhost:3000' && next dev",
+    "dev:port3010": "echo '🎵 Dashboard configured for backend on port 3010' && next dev"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

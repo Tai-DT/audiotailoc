@@ -125,7 +125,7 @@ class WebSocketService {
     if (this.socket?.connected) return;
 
     // Use the correct WebSocket URL from environment
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010';
 
     this.socket = io(wsUrl, {
       auth: token ? { token } : undefined,

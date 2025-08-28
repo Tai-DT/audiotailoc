@@ -608,7 +608,7 @@ docker-compose up --build
 
 # Services sẽ chạy trên:
 # - Dashboard: http://localhost:3000
-# - Backend API: http://localhost:8000
+# - Backend API: http://localhost:3010
 # - Database: localhost:5432
 # - Redis: localhost:6379
 # - Meilisearch: localhost:7700
@@ -621,7 +621,7 @@ docker-compose up --build
 cd backend
 npm install
 npm run start:dev
-# Backend sẽ chạy trên http://localhost:8000
+# Backend sẽ chạy trên http://localhost:3010
 ```
 
 **Bước 2: Cấu hình Dashboard**
@@ -643,8 +643,8 @@ File `.env.local` đã được tạo với:
 
 ```bash
 # API Configuration - UPDATED FOR BACKEND INTEGRATION
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:3010/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:3010
 
 # Features
 NEXT_PUBLIC_ENABLE_REALTIME=true
@@ -700,7 +700,7 @@ socket.on('user.registered', (data) => {
 #### **Lỗi kết nối API**
 ```bash
 # Kiểm tra backend
-curl http://localhost:8000/api/v1/health
+curl http://localhost:3010/api/v1/health
 
 # Kiểm tra environment
 cat dashboard/.env.local
@@ -722,7 +722,7 @@ Nếu gặp vấn đề:
 1. Kiểm tra browser console
 2. Verify backend services đang chạy
 3. Check environment configuration
-4. Xem API docs tại http://localhost:8000/docs
+4. Xem API docs tại http://localhost:3010/docs
 
 ---
 

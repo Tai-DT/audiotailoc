@@ -2,6 +2,8 @@
 
 ## 🎵 Khởi động nhanh toàn bộ hệ thống với dữ liệu thật
 
+> **📝 Lưu ý:** Hệ thống đã được cấu hình để sử dụng cổng **3010** cho backend thay vì cổng 8000.
+
 ### **Cách 1: Script tự động (Khuyến nghị)**
 ```bash
 # Từ thư mục root của project
@@ -18,7 +20,7 @@ docker-compose up --build
 
 # Services sẽ chạy trên:
 # - Dashboard: http://localhost:3000
-# - Backend: http://localhost:8000
+# - Backend: http://localhost:3010
 # - Database: localhost:5432
 # - Redis: localhost:6379
 # - Meilisearch: localhost:7700
@@ -35,8 +37,9 @@ docker-compose up -d postgres redis meilisearch
 ```bash
 cd backend
 npm install
-npm run start:dev
-# Backend chạy trên http://localhost:8000
+# Chạy backend trên cổng 3010
+PORT=3010 npm run start:dev
+# Backend sẽ chạy trên http://localhost:3010
 ```
 
 #### **Bước 3: Khởi động Dashboard**
@@ -53,8 +56,8 @@ npm run dev
 Sau khi khởi động, truy cập:
 
 - **📊 Dashboard Admin**: http://localhost:3000
-- **🔗 Backend API**: http://localhost:8000
-- **📚 API Documentation**: http://localhost:8000/docs
+- **🔗 Backend API**: http://localhost:3010
+- **📚 API Documentation**: http://localhost:3010/docs
 - **🗄️ Database**: localhost:5432 (user: postgres, password: password)
 
 ## ✅ Tính năng đã hoàn thành
@@ -94,7 +97,7 @@ Sau khi khởi động, truy cập:
 ### **Lỗi kết nối API**
 ```bash
 # Kiểm tra backend
-curl http://localhost:8000/api/v1/health
+curl http://localhost:3010/api/v1/health
 
 # Kiểm tra environment
 cat dashboard/.env.local
@@ -123,7 +126,7 @@ Sales Analytics: GET /api/v1/analytics/sales
 Products: GET /api/v1/catalog/products
 Orders: GET /api/v1/orders
 Users: GET /api/v1/admin/users
-WebSocket: ws://localhost:8000
+WebSocket: ws://localhost:3010
 ```
 
 ## 🎉 Thành công!
