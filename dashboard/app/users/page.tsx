@@ -23,14 +23,31 @@ interface UsersResponse {
 
 async function fetchUsers(searchParams: { q?: string; page?: string }): Promise<UsersResponse> {
   try {
+    const base = process.env.NEXT_PUBLIC_API_URL;
+    if (!base) throw new Error('Missing NEXT_PUBLIC_API_URL');
+
     const params = new URLSearchParams();
     if (searchParams.q) params.set('q', searchParams.q);
     if (searchParams.page) params.set('page', searchParams.page);
     params.set('pageSize', '20');
 
-    const response = await apiFetch<UsersResponse>(`/admin/users?${params.toString()}`);
-    return response;
-  } catch {
+    const url = `${base}/admin/users?${params.toString()}`;
+    const response = await fetch(url, { cache: 'no-store' });
+
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      items: data.items || [],
+      totalCount: data.total || data.totalCount || 0,
+      page: data.page || parseInt(searchParams.page || '1'),
+      pageSize: data.pageSize || 20,
+      totalPages: data.totalPages || Math.ceil((data.total || data.totalCount || 0) / 20)
+    };
+  } catch (error) {
+    console.error('Error fetching users:', error);
     return {
       items: [],
       totalCount: 0,

@@ -31,14 +31,29 @@ export function useDashboard(): UseDashboardResult {
       setLoading(true);
       setError(null);
 
-      // Fetch data in parallel for better performance
+      // Fetch data from real backend APIs
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+      // Fetch dashboard stats from backend
+      const dashboardStatsRes = await fetch(`${apiBase}/admin/dashboard`, {
+        cache: 'no-store',
+        headers: {
+          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`,
+        }
+      });
+
+      let dashboardStats = null;
+      if (dashboardStatsRes.ok) {
+        dashboardStats = await dashboardStatsRes.json();
+      }
+
+      // Fetch basic counts as fallback
       const [productsRes, ordersRes, usersRes] = await Promise.allSettled([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/catalog/products?pageSize=1`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/orders?pageSize=1`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users?pageSize=1`),
+        fetch(`${apiBase}/catalog/products?pageSize=1`),
+        fetch(`${apiBase}/orders?pageSize=1`),
+        fetch(`${apiBase}/admin/users?pageSize=1`),
       ]);
 
-      // Process results
       const totalProducts = productsRes.status === 'fulfilled'
         ? (await productsRes.value.json()).totalCount || 0
         : 0;
@@ -51,30 +66,32 @@ export function useDashboard(): UseDashboardResult {
         ? (await usersRes.value.json()).totalCount || 0
         : 0;
 
-      // Fetch recent orders for revenue calculation
-      const recentOrdersRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/orders?pageSize=100`
-      );
+      // Use backend stats if available, otherwise calculate
+      const finalStats = dashboardStats || {
+        totalProducts,
+        totalOrders,
+        totalUsers,
+        totalRevenue: 0,
+      };
 
-      let totalRevenue = 0;
+      // Fetch recent orders
+      const recentOrdersRes = await fetch(`${apiBase}/orders?pageSize=5&sortBy=createdAt&sortOrder=desc`);
       let recentOrders: any[] = [];
 
       if (recentOrdersRes.ok) {
         const ordersData = await recentOrdersRes.json();
         recentOrders = ordersData.items || [];
-        totalRevenue = recentOrders.reduce((sum: number, order: any) =>
-          sum + (order.totalCents || 0), 0
-        );
       }
 
       setData({
-        totalProducts,
-        totalOrders,
-        totalUsers,
-        totalRevenue,
-        recentOrders: recentOrders.slice(0, 5),
+        totalProducts: finalStats.totalProducts || totalProducts,
+        totalOrders: finalStats.totalOrders || totalOrders,
+        totalUsers: finalStats.totalUsers || totalUsers,
+        totalRevenue: finalStats.totalRevenue || 0,
+        recentOrders,
       });
     } catch (err) {
+      console.error('Dashboard fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
     } finally {
       setLoading(false);
@@ -107,7 +124,8 @@ class WebSocketService {
   connect(token?: string) {
     if (this.socket?.connected) return;
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3010';
+    // Use the correct WebSocket URL from environment
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
 
     this.socket = io(wsUrl, {
       auth: token ? { token } : undefined,

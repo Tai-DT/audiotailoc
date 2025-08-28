@@ -18,15 +18,21 @@ type Order = {
 };
 
 async function fetchOrders(params: { page?: number; pageSize?: number; status?: string }) {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (!base) throw new Error('Missing NEXT_PUBLIC_API_URL');
   const u = new URL(`${base}/orders`);
   if (params.page) u.searchParams.set('page', String(params.page));
   if (params.pageSize) u.searchParams.set('pageSize', String(params.pageSize));
   if (params.status) u.searchParams.set('status', params.status);
-  const res = await fetch(u.toString(), { cache: 'no-store', headers: {} });
+  const res = await fetch(u.toString(), { cache: 'no-store' });
   if (!res.ok) throw new Error('Không thể tải đơn hàng');
-  return (await res.json()) as { total: number; page: number; pageSize: number; items: Order[] };
+  const data = await res.json();
+  return {
+    total: data.total || 0,
+    page: data.page || params.page || 1,
+    pageSize: data.pageSize || params.pageSize || 20,
+    items: data.items || []
+  };
 }
 
 function getStatusIcon(status: string) {

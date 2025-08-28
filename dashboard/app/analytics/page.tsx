@@ -32,37 +32,41 @@ async function fetchAnalytics(): Promise<AnalyticsData> {
     const orderItems = orders.items || [];
     const totalRevenue = orderItems.reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0);
 
-    // Mock data for charts (in real app, this would come from analytics API)
-    const revenueByMonth = [
-      { month: 'T1', revenue: 15000000, orders: 45 },
-      { month: 'T2', revenue: 18000000, orders: 52 },
-      { month: 'T3', revenue: 22000000, orders: 68 },
-      { month: 'T4', revenue: 25000000, orders: 75 },
-      { month: 'T5', revenue: 28000000, orders: 82 },
-      { month: 'T6', revenue: 32000000, orders: 95 }
-    ];
+    // Try to fetch real analytics data from backend
+    let revenueByMonth: Array<{ month: string; revenue: number; orders: number }> = [];
+    let topProducts: Array<{ name: string; sales: number; revenue: number }> = [];
+    let ordersByStatus: Array<{ status: string; count: number }> = [];
+    let recentActivity: Array<{ type: string; description: string; timestamp: string }> = [];
 
-    const topProducts = [
-      { name: 'Sony WH-1000XM4', sales: 45, revenue: 13500000 },
-      { name: 'Audio-Technica ATH-M50x', sales: 38, revenue: 7600000 },
-      { name: 'Sennheiser HD 660S', sales: 25, revenue: 12500000 },
-      { name: 'Beyerdynamic DT 770 Pro', sales: 32, revenue: 6400000 },
-      { name: 'Focal Clear', sales: 15, revenue: 22500000 }
-    ];
+    try {
+      // Fetch analytics data
+      const [salesRes, productsRes] = await Promise.allSettled([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/sales`).then(r => r.ok ? r.json() : null),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/products`).then(r => r.ok ? r.json() : null),
+      ]);
 
-    const ordersByStatus = [
-      { status: 'PENDING', count: 12 },
-      { status: 'CONFIRMED', count: 25 },
-      { status: 'SHIPPED', count: 18 },
-      { status: 'DELIVERED', count: 45 },
-      { status: 'CANCELLED', count: 3 }
-    ];
+      if (salesRes.status === 'fulfilled' && salesRes.value) {
+        revenueByMonth = salesRes.value.revenueByMonth || revenueByMonth;
+        ordersByStatus = salesRes.value.ordersByStatus || ordersByStatus;
+      }
 
-    const recentActivity = [
-      { type: 'order', description: 'Đơn hàng mới #12345', timestamp: new Date().toISOString() },
-      { type: 'product', description: 'Sản phẩm mới được thêm', timestamp: new Date(Date.now() - 3600000).toISOString() },
-      { type: 'user', description: 'Người dùng mới đăng ký', timestamp: new Date(Date.now() - 7200000).toISOString() }
-    ];
+      if (productsRes.status === 'fulfilled' && productsRes.value) {
+        topProducts = productsRes.value.topProducts || topProducts;
+      }
+
+      // Fetch recent orders for activity
+      const recentOrdersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders?pageSize=5&sortBy=createdAt&sortOrder=desc`);
+      if (recentOrdersRes.ok) {
+        const recentOrders = await recentOrdersRes.json();
+        recentActivity = recentOrders.items?.map((order: any) => ({
+          type: 'order',
+          description: `Đơn hàng mới ${order.orderNo}`,
+          timestamp: order.createdAt
+        })) || [];
+      }
+    } catch (error) {
+      console.warn('Could not fetch analytics data, using fallback:', error);
+    }
 
     return {
       totalRevenue,

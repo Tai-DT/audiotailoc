@@ -10,7 +10,10 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "dev:with-backend": "next dev",
+    "setup": "cp env-config-updated.md .env.local",
+    "dev:full": "echo '🚀 Starting Audio Tài Lộc Full System...' && echo '📋 Make sure to run: docker-compose up --build' && echo '🌐 Then visit: http://localhost:3000' && next dev"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

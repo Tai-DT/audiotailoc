@@ -565,4 +565,165 @@ For support and questions:
 
 ---
 
-**🎊 This comprehensive admin dashboard provides everything needed to effectively manage the Audio Tài Lộc platform with professional-grade features and enterprise-level capabilities!**
+---
+
+## 🔗 **Backend Integration Setup**
+
+### **Đã tích hợp dữ liệu thật từ Backend API**
+
+Dashboard này đã được cấu hình để kết nối và sử dụng dữ liệu trực tiếp từ backend Audio Tài Lộc.
+
+#### **API Endpoints được sử dụng:**
+
+```typescript
+// Dashboard Stats
+GET /api/v1/admin/dashboard          // Thống kê tổng quan
+GET /api/v1/analytics/sales          // Dữ liệu bán hàng
+GET /api/v1/analytics/products       // Phân tích sản phẩm
+GET /api/v1/analytics/customers      // Phân tích khách hàng
+
+// Products Management
+GET /api/v1/catalog/products         // Danh sách sản phẩm
+GET /api/v1/catalog/search           // Tìm kiếm sản phẩm
+POST /api/v1/catalog/products        // Tạo sản phẩm
+PATCH /api/v1/catalog/products/:id   // Cập nhật sản phẩm
+DELETE /api/v1/catalog/products/:id  // Xóa sản phẩm
+
+// Orders Management
+GET /api/v1/orders                   // Danh sách đơn hàng
+GET /api/v1/orders/:id               // Chi tiết đơn hàng
+PATCH /api/v1/orders/:id/status/:status // Cập nhật trạng thái
+
+// Users Management
+GET /api/v1/admin/users              // Danh sách người dùng
+GET /api/v1/auth/me                  // Thông tin user hiện tại
+```
+
+#### **Cách chạy với dữ liệu thật:**
+
+##### **1. Docker Compose (Khuyến nghị)**
+```bash
+# Từ thư mục root của project
+docker-compose up --build
+
+# Services sẽ chạy trên:
+# - Dashboard: http://localhost:3000
+# - Backend API: http://localhost:8000
+# - Database: localhost:5432
+# - Redis: localhost:6379
+# - Meilisearch: localhost:7700
+```
+
+##### **2. Chạy riêng lẻ**
+
+**Bước 1: Khởi động Backend**
+```bash
+cd backend
+npm install
+npm run start:dev
+# Backend sẽ chạy trên http://localhost:8000
+```
+
+**Bước 2: Cấu hình Dashboard**
+```bash
+cd dashboard
+npm install
+npm run setup  # Tạo file .env.local
+```
+
+**Bước 3: Khởi động Dashboard**
+```bash
+npm run dev
+# Dashboard sẽ chạy trên http://localhost:3000
+```
+
+#### **Cấu hình Environment**
+
+File `.env.local` đã được tạo với:
+
+```bash
+# API Configuration - UPDATED FOR BACKEND INTEGRATION
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+
+# Features
+NEXT_PUBLIC_ENABLE_REALTIME=true
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+NEXT_PUBLIC_CHART_UPDATE_INTERVAL=5000
+
+# Security
+NEXT_PUBLIC_NODE_ENV=development
+
+# Application
+NEXT_PUBLIC_APP_NAME=Audio Tài Lộc Dashboard
+NEXT_PUBLIC_APP_VERSION=1.0.0
+```
+
+#### **Real-time Features**
+
+Dashboard hỗ trợ real-time updates qua WebSocket:
+
+```typescript
+// WebSocket Events
+socket.on('dashboard.update', (data) => {
+  // Cập nhật dashboard stats
+});
+
+socket.on('order.created', (data) => {
+  // Thông báo đơn hàng mới
+});
+
+socket.on('user.registered', (data) => {
+  // Thông báo user mới
+});
+```
+
+#### **Authentication**
+
+- Sử dụng JWT token từ backend
+- Tự động refresh token
+- Role-based access control
+- Secure cookie storage
+
+### **🎯 Tính năng chính đã hoàn thành:**
+
+✅ **Real API Integration** - Sử dụng dữ liệu thật từ backend
+✅ **Real-time Updates** - WebSocket và live notifications
+✅ **Interactive Charts** - Biểu đồ từ dữ liệu backend
+✅ **Complete CRUD** - Đầy đủ chức năng quản lý
+✅ **Error Handling** - Xử lý lỗi và loading states
+✅ **Responsive Design** - Tối ưu cho mọi thiết bị
+✅ **Security** - JWT auth và role-based access
+
+### **🚨 Troubleshooting**
+
+#### **Lỗi kết nối API**
+```bash
+# Kiểm tra backend
+curl http://localhost:8000/api/v1/health
+
+# Kiểm tra environment
+cat dashboard/.env.local
+```
+
+#### **Lỗi WebSocket**
+- Kiểm tra console browser
+- Đảm bảo backend có WebSocket enabled
+- Verify WebSocket URL trong .env.local
+
+#### **Lỗi Authentication**
+- Clear cookies và đăng nhập lại
+- Kiểm tra JWT token validity
+- Verify backend auth endpoints
+
+### **📞 Support**
+
+Nếu gặp vấn đề:
+1. Kiểm tra browser console
+2. Verify backend services đang chạy
+3. Check environment configuration
+4. Xem API docs tại http://localhost:8000/docs
+
+---
+
+**🎊 Dashboard Audio Tài Lộc đã sẵn sàng với dữ liệu thật từ backend!**
