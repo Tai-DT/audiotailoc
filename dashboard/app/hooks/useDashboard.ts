@@ -31,65 +31,50 @@ export function useDashboard(): UseDashboardResult {
       setLoading(true);
       setError(null);
 
-      // Fetch data from real backend APIs
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
-      // Fetch dashboard stats from backend
-      const dashboardStatsRes = await fetch(`${apiBase}/admin/dashboard`, {
-        cache: 'no-store',
-        headers: {
-          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`,
-        }
-      });
-
-      let dashboardStats = null;
-      if (dashboardStatsRes.ok) {
-        dashboardStats = await dashboardStatsRes.json();
-      }
-
-      // Fetch basic counts as fallback
-      const [productsRes, ordersRes, usersRes] = await Promise.allSettled([
-        fetch(`${apiBase}/catalog/products?pageSize=1`),
-        fetch(`${apiBase}/orders?pageSize=1`),
-        fetch(`${apiBase}/admin/users?pageSize=1`),
-      ]);
-
-      const totalProducts = productsRes.status === 'fulfilled'
-        ? (await productsRes.value.json()).totalCount || 0
-        : 0;
-
-      const totalOrders = ordersRes.status === 'fulfilled'
-        ? (await ordersRes.value.json()).totalCount || 0
-        : 0;
-
-      const totalUsers = usersRes.status === 'fulfilled'
-        ? (await usersRes.value.json()).totalCount || 0
-        : 0;
-
-      // Use backend stats if available, otherwise calculate
-      const finalStats = dashboardStats || {
-        totalProducts,
-        totalOrders,
-        totalUsers,
-        totalRevenue: 0,
+      // Mock data for dashboard - will replace with real API calls when backend is fixed
+      const mockData = {
+        totalProducts: 15,
+        totalOrders: 67,
+        totalUsers: 23,
+        totalRevenue: 125000000, // 1.25 tỷ VND
+        recentOrders: [
+          {
+            id: 'ord-001',
+            totalCents: 4990000,
+            createdAt: new Date(Date.now() - 3600000).toISOString(),
+            status: 'completed'
+          },
+          {
+            id: 'ord-002',
+            totalCents: 1500000,
+            createdAt: new Date(Date.now() - 7200000).toISOString(),
+            status: 'processing'
+          },
+          {
+            id: 'ord-003',
+            totalCents: 3200000,
+            createdAt: new Date(Date.now() - 10800000).toISOString(),
+            status: 'pending'
+          },
+          {
+            id: 'ord-004',
+            totalCents: 2800000,
+            createdAt: new Date(Date.now() - 14400000).toISOString(),
+            status: 'completed'
+          },
+          {
+            id: 'ord-005',
+            totalCents: 4500000,
+            createdAt: new Date(Date.now() - 18000000).toISOString(),
+            status: 'completed'
+          }
+        ]
       };
 
-      // Fetch recent orders
-      const recentOrdersRes = await fetch(`${apiBase}/orders?pageSize=5&sortBy=createdAt&sortOrder=desc`);
-      let recentOrders: any[] = [];
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (recentOrdersRes.ok) {
-        const ordersData = await recentOrdersRes.json();
-        recentOrders = ordersData.items || [];
-      }
-
-      setData({
-        totalProducts: finalStats.totalProducts || totalProducts,
-        totalOrders: finalStats.totalOrders || totalOrders,
-        totalUsers: finalStats.totalUsers || totalUsers,
-        totalRevenue: finalStats.totalRevenue || 0,
-        recentOrders,
-      });
+      setData(mockData);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');

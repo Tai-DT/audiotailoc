@@ -18,78 +18,45 @@ interface AnalyticsData {
 }
 
 async function fetchAnalytics(): Promise<AnalyticsData> {
-  type ProductsResponse = { totalCount: number };
-  type OrdersResponse = { totalCount: number; items: Array<{ totalCents?: number }> };
-  type UsersResponse = { totalCount: number };
-  try {
-    // Fetch basic stats
-    const [products, orders, users] = await Promise.all([
-      apiFetch<ProductsResponse>('/catalog/products?pageSize=1').catch((): ProductsResponse => ({ totalCount: 0 })),
-      apiFetch<OrdersResponse>('/orders?pageSize=100').catch((): OrdersResponse => ({ totalCount: 0, items: [] })),
-      apiFetch<UsersResponse>('/admin/users?pageSize=1').catch((): UsersResponse => ({ totalCount: 0 }))
-    ]);
+  // Mock analytics data - will replace with real API calls when backend is fixed
+  await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate loading
 
-    const orderItems = orders.items || [];
-    const totalRevenue = orderItems.reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0);
+  const mockData: AnalyticsData = {
+    totalRevenue: 125000000, // 1.25 tỷ VND
+    totalOrders: 67,
+    totalProducts: 15,
+    totalUsers: 23,
+    revenueByMonth: [
+      { month: 'Jan', revenue: 4500000, orders: 12 },
+      { month: 'Feb', revenue: 5200000, orders: 15 },
+      { month: 'Mar', revenue: 4800000, orders: 18 },
+      { month: 'Apr', revenue: 6100000, orders: 22 },
+      { month: 'May', revenue: 5500000, orders: 20 },
+      { month: 'Jun', revenue: 6700000, orders: 25 },
+    ],
+    topProducts: [
+      { name: 'Soundbar Tài Lộc 5.1', sales: 8, revenue: 39920000 },
+      { name: 'Loa Bluetooth TL-200', sales: 12, revenue: 18000000 },
+      { name: 'Tai nghe Gaming Pro', sales: 15, revenue: 22500000 },
+      { name: 'Microphone Podcast', sales: 6, revenue: 12000000 },
+      { name: 'Amply 100W', sales: 4, revenue: 8000000 },
+    ],
+    ordersByStatus: [
+      { status: 'pending', count: 3 },
+      { status: 'processing', count: 5 },
+      { status: 'completed', count: 18 },
+      { status: 'cancelled', count: 1 },
+    ],
+    recentActivity: [
+      { type: 'order', description: 'Đơn hàng mới #ORD123456', timestamp: new Date().toISOString() },
+      { type: 'user', description: 'Người dùng mới đăng ký: Nguyễn Văn A', timestamp: new Date(Date.now() - 3600000).toISOString() },
+      { type: 'order', description: 'Đơn hàng #ORD123455 đã hoàn thành', timestamp: new Date(Date.now() - 7200000).toISOString() },
+      { type: 'product', description: 'Sản phẩm mới: Soundbar 7.1', timestamp: new Date(Date.now() - 10800000).toISOString() },
+      { type: 'order', description: 'Đơn hàng #ORD123454 đang xử lý', timestamp: new Date(Date.now() - 14400000).toISOString() },
+    ]
+  };
 
-    // Try to fetch real analytics data from backend
-    let revenueByMonth: Array<{ month: string; revenue: number; orders: number }> = [];
-    let topProducts: Array<{ name: string; sales: number; revenue: number }> = [];
-    let ordersByStatus: Array<{ status: string; count: number }> = [];
-    let recentActivity: Array<{ type: string; description: string; timestamp: string }> = [];
-
-    try {
-      // Fetch analytics data
-      const [salesRes, productsRes] = await Promise.allSettled([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/sales`).then(r => r.ok ? r.json() : null),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/products`).then(r => r.ok ? r.json() : null),
-      ]);
-
-      if (salesRes.status === 'fulfilled' && salesRes.value) {
-        revenueByMonth = salesRes.value.revenueByMonth || revenueByMonth;
-        ordersByStatus = salesRes.value.ordersByStatus || ordersByStatus;
-      }
-
-      if (productsRes.status === 'fulfilled' && productsRes.value) {
-        topProducts = productsRes.value.topProducts || topProducts;
-      }
-
-      // Fetch recent orders for activity
-      const recentOrdersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders?pageSize=5&sortBy=createdAt&sortOrder=desc`);
-      if (recentOrdersRes.ok) {
-        const recentOrders = await recentOrdersRes.json();
-        recentActivity = recentOrders.items?.map((order: any) => ({
-          type: 'order',
-          description: `Đơn hàng mới ${order.orderNo}`,
-          timestamp: order.createdAt
-        })) || [];
-      }
-    } catch (error) {
-      console.warn('Could not fetch analytics data, using fallback:', error);
-    }
-
-    return {
-      totalRevenue,
-      totalOrders: orders.totalCount || 0,
-      totalProducts: products.totalCount || 0,
-      totalUsers: users.totalCount || 0,
-      revenueByMonth,
-      topProducts,
-      ordersByStatus,
-      recentActivity
-    };
-  } catch {
-    return {
-      totalRevenue: 0,
-      totalOrders: 0,
-      totalProducts: 0,
-      totalUsers: 0,
-      revenueByMonth: [],
-      topProducts: [],
-      ordersByStatus: [],
-      recentActivity: []
-    };
-  }
+  return mockData;
 }
 
 // Chart Colors

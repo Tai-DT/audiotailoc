@@ -249,15 +249,13 @@ export class AnalyticsService {
       // Total products
       const totalProducts = await this.prisma.product.count();
 
-      // Low stock products (assuming stock level < 10)
-      const lowStockProducts = await this.prisma.inventory.count({
-        where: { stock: { lt: 10, gt: 0 } },
-      });
+      // Low stock products (placeholder - inventory not implemented)
+      const lowStockProducts = 0; // await this.prisma.inventory.count({ where: { stock: { lt: 10, gt: 0 } } });
 
       // Out of stock products
-      const outOfStockProducts = await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
-      const inventoryRows = await this.prisma.inventory.findMany({ include: { product: { select: { priceCents: true } } } });
-      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + (row.product?.priceCents || 0) * row.stock, 0);
+      const outOfStockProducts = 0; // await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
+      // const inventoryRows = await this.prisma.inventory.findMany({ include: { product: { select: { priceCents: true } } } });
+      const totalInventoryValue = 0; // inventoryRows.reduce((sum, row) => sum + (row.product?.priceCents || 0) * row.stock, 0);
 
       // Average inventory turnover (simplified calculation)
       const averageInventoryTurnover = await this.calculateInventoryTurnover(filters);

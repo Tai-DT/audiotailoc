@@ -13,17 +13,23 @@ import { TestingModule } from './testing/testing.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 
+// Admin module
+import { AdminModule } from './admin/admin.module';
+
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
 // import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
 // import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
 // import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
 import { PaymentsModule } from './payments/payments.module';
-// import { OrdersModule } from './orders/orders.module'; // Disabled due to schema mismatch
+import { OrdersModule } from './orders/orders.module'; // Enable for dashboard
 // import { InventoryModule } from './inventory/inventory.module'; // Disabled due to schema mismatch
 
 // AI and ML modules
 import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
+
+// Analytics module
+import { AnalyticsModule } from './analytics/analytics.module';
 
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
@@ -52,9 +58,15 @@ import { FilesModule } from './files/files.module';
     // Authentication - CORE ONLY
     AuthModule,
     UsersModule,
+
+    // Admin Dashboard - Temporarily disabled due to issues
+    // AdminModule,
     
     // AI and Intelligence - Minimal working version
     AiModule,
+
+    // Analytics for Dashboard
+    AnalyticsModule,
     
     // Support and File Management - ENABLED
     SupportModule,
@@ -64,7 +76,8 @@ import { FilesModule } from './files/files.module';
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
+    OrdersModule, // Enable for dashboard
+    // CartModule, CheckoutModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],
   controllers: [AppController],
