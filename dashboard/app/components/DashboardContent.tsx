@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { formatPrice } from '../lib/utils';
-import { useDashboard } from '../hooks/useDashboard';
-import { RefreshCw, TrendingUp, ShoppingCart, Users, DollarSign, AlertCircle, Loader2 } from 'lucide-react';
+import { useDashboard, useRealtimeDashboard, useRealtimeNotifications } from '../hooks/useDashboard';
+import { RefreshCw, TrendingUp, ShoppingCart, Users, DollarSign, AlertCircle, Loader2, Wifi, WifiOff, Bell } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Badge } from '../../components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import AdminNotice from '../AdminNotice';
 
 interface DashboardData {
@@ -149,8 +151,87 @@ interface DashboardContentProps {
   isAdmin?: boolean;
 }
 
+function ConnectionStatus() {
+  const { isConnected } = useRealtimeDashboard();
+
+  return (
+    <div className="flex items-center gap-2">
+      {isConnected ? (
+        <Wifi className="h-4 w-4 text-green-600" />
+      ) : (
+        <WifiOff className="h-4 w-4 text-red-600" />
+      )}
+      <span className={`text-xs ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+        {isConnected ? 'Live' : 'Offline'}
+      </span>
+    </div>
+  );
+}
+
+function NotificationBell() {
+  const { notifications, clearNotification, clearAllNotifications, unreadCount } = useRealtimeNotifications();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="relative">
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between p-2 border-b">
+          <h4 className="font-medium">Thông báo</h4>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllNotifications}
+              className="text-xs"
+            >
+              Đánh dấu đã đọc
+            </Button>
+          )}
+        </div>
+        <div className="max-h-96 overflow-y-auto">
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <DropdownMenuItem
+                key={notification.id}
+                className="flex-col items-start p-3 cursor-pointer"
+                onClick={() => clearNotification(notification.id)}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium text-sm">{notification.title}</span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(notification.timestamp).toLocaleTimeString('vi-VN')}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Chưa có thông báo nào</p>
+            </div>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function DashboardContent({ isAdmin = false }: DashboardContentProps) {
   const { data, loading, error, refetch } = useDashboard();
+  const { lastUpdate, isConnected } = useRealtimeDashboard();
 
   if (loading) {
     return (
@@ -233,10 +314,14 @@ export default function DashboardContent({ isAdmin = false }: DashboardContentPr
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-gray-600">Tổng quan hoạt động cửa hàng Audio Tài Lộc</p>
         </div>
-        <Button onClick={refetch} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Làm mới
-        </Button>
+        <div className="flex items-center gap-3">
+          <ConnectionStatus />
+          <NotificationBell />
+          <Button onClick={refetch} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* Admin Notice */}

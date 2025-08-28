@@ -1,6 +1,10 @@
 import { apiFetch } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { formatPrice, formatDate } from '../lib/utils';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users, Calendar, RefreshCw, Download } from 'lucide-react';
 
 interface AnalyticsData {
   totalRevenue: number;
@@ -84,172 +88,251 @@ async function fetchAnalytics(): Promise<AnalyticsData> {
   }
 }
 
+// Chart Colors
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+function KPICard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  trendValue,
+  color = "blue"
+}: {
+  title: string;
+  value: string;
+  icon: any;
+  trend?: 'up' | 'down';
+  trendValue?: string;
+  color?: string;
+}) {
+  const colorClasses = {
+    blue: 'text-blue-600 bg-blue-100',
+    green: 'text-green-600 bg-green-100',
+    orange: 'text-orange-600 bg-orange-100',
+    red: 'text-red-600 bg-red-100',
+    purple: 'text-purple-600 bg-purple-100',
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className={`p-2 rounded-full ${colorClasses[color as keyof typeof colorClasses]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {trend && trendValue && (
+          <p className={`text-xs flex items-center gap-1 ${
+            trend === 'up' ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {trend === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {trendValue} so với tháng trước
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RevenueChart({ data }: { data: Array<{ month: string; revenue: number; orders: number }> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Doanh thu theo tháng</CardTitle>
+        <CardDescription>6 tháng gần đây</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis tickFormatter={(value) => formatPrice(value)} />
+            <Tooltip
+              formatter={(value: number) => [formatPrice(value), 'Doanh thu']}
+              labelFormatter={(label) => `Tháng ${label}`}
+            />
+            <Area
+              type="monotone"
+              dataKey="revenue"
+              stroke="#3b82f6"
+              fill="#3b82f6"
+              fillOpacity={0.1}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TopProductsChart({ products }: { products: Array<{ name: string; sales: number; revenue: number }> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sản phẩm bán chạy</CardTitle>
+        <CardDescription>Top 5 sản phẩm có doanh thu cao nhất</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={products} layout="horizontal">
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" tickFormatter={(value) => formatPrice(value)} />
+            <YAxis dataKey="name" type="category" width={100} />
+            <Tooltip
+              formatter={(value: number) => [formatPrice(value), 'Doanh thu']}
+              labelFormatter={(label) => `Sản phẩm: ${label}`}
+            />
+            <Bar dataKey="revenue" fill="#10b981" />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OrderStatusChart({ data }: { data: Array<{ status: string; count: number }> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Trạng thái đơn hàng</CardTitle>
+        <CardDescription>Phân bố đơn hàng theo trạng thái</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="count"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentActivity({ activities }: { activities: Array<{ type: string; description: string; timestamp: string }> }) {
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'order':
+        return <ShoppingCart className="h-4 w-4 text-green-600" />;
+      case 'product':
+        return <Package className="h-4 w-4 text-blue-600" />;
+      case 'user':
+        return <Users className="h-4 w-4 text-purple-600" />;
+      default:
+        return <Package className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Hoạt động gần đây</CardTitle>
+        <CardDescription>Các sự kiện mới nhất</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {activities.map((activity, index) => (
+            <div key={index} className="flex items-start space-x-3">
+              <div className="p-1 bg-gray-100 rounded-full">
+                {getActivityIcon(activity.type)}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm">{activity.description}</p>
+                <p className="text-xs text-gray-500">{formatDate(activity.timestamp)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function AnalyticsPage() {
   const analytics = await fetchAnalytics();
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Thống kê & Phân tích</h1>
-        <p className="text-gray-600">Báo cáo chi tiết về hoạt động kinh doanh</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Thống kê & Phân tích</h1>
+          <p className="text-gray-600">Báo cáo chi tiết về hoạt động kinh doanh</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Calendar className="h-4 w-4 mr-2" />
+            Chọn khoảng thời gian
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Xuất báo cáo
+          </Button>
+          <Button variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* KPI Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
-            <span className="text-2xl">💰</span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(analytics.totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">+12% so với tháng trước</p>
-          </CardContent>
-        </Card>
+        <KPICard
+          title="Tổng doanh thu"
+          value={formatPrice(analytics.totalRevenue)}
+          icon={DollarSign}
+          trend="up"
+          trendValue="+12%"
+          color="blue"
+        />
+        <KPICard
+          title="Đơn hàng"
+          value={analytics.totalOrders.toLocaleString('vi-VN')}
+          icon={ShoppingCart}
+          trend="up"
+          trendValue="+8%"
+          color="green"
+        />
+        <KPICard
+          title="Sản phẩm"
+          value={analytics.totalProducts.toLocaleString('vi-VN')}
+          icon={Package}
+          color="orange"
+        />
+        <KPICard
+          title="Khách hàng"
+          value={analytics.totalUsers.toLocaleString('vi-VN')}
+          icon={Users}
+          trend="up"
+          trendValue="+15%"
+          color="purple"
+        />
+      </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đơn hàng</CardTitle>
-            <span className="text-2xl">🛒</span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">+8% so với tháng trước</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sản phẩm</CardTitle>
-            <span className="text-2xl">📦</span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalProducts}</div>
-            <p className="text-xs text-muted-foreground">Sản phẩm đang bán</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Khách hàng</CardTitle>
-            <span className="text-2xl">👥</span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">+15% so với tháng trước</p>
-          </CardContent>
-        </Card>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RevenueChart data={analytics.revenueByMonth} />
+        <TopProductsChart products={analytics.topProducts} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Doanh thu theo tháng</CardTitle>
-            <CardDescription>6 tháng gần đây</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {analytics.revenueByMonth.map((item) => (
-                <div key={item.month} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 text-sm font-medium">{item.month}</div>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(item.revenue / 35000000) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{formatPrice(item.revenue)}</div>
-                    <div className="text-xs text-gray-500">{item.orders} đơn</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Products */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sản phẩm bán chạy</CardTitle>
-            <CardDescription>Top 5 sản phẩm có doanh thu cao nhất</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {analytics.topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-gray-500">{product.sales} đã bán</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium">{formatPrice(product.revenue)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Order Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Trạng thái đơn hàng</CardTitle>
-            <CardDescription>Phân bố đơn hàng theo trạng thái</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analytics.ordersByStatus.map((status) => (
-                <div key={status.status} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      status.status === 'DELIVERED' ? 'bg-green-500' :
-                      status.status === 'SHIPPED' ? 'bg-blue-500' :
-                      status.status === 'CONFIRMED' ? 'bg-yellow-500' :
-                      status.status === 'CANCELLED' ? 'bg-red-500' : 'bg-gray-500'
-                    }`}></div>
-                    <span className="text-sm">{status.status}</span>
-                  </div>
-                  <span className="font-medium">{status.count}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-            <CardDescription>Các sự kiện mới nhất</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {analytics.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'order' ? 'bg-green-500' :
-                    activity.type === 'product' ? 'bg-blue-500' : 'bg-purple-500'
-                  }`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm">{activity.description}</p>
-                    <p className="text-xs text-gray-500">{formatDate(activity.timestamp)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <OrderStatusChart data={analytics.ordersByStatus} />
+        <RecentActivity activities={analytics.recentActivity} />
       </div>
     </div>
   );

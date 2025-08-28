@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 
 interface DashboardData {
   totalProducts: number;
@@ -96,18 +97,230 @@ export function useDashboard(): UseDashboardResult {
   };
 }
 
+// WebSocket service for real-time updates
+class WebSocketService {
+  private socket: Socket | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private listeners: Map<string, Function[]> = new Map();
+
+  connect(token?: string) {
+    if (this.socket?.connected) return;
+
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3010';
+
+    this.socket = io(wsUrl, {
+      auth: token ? { token } : undefined,
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+    });
+
+    this.setupEventHandlers();
+  }
+
+  private setupEventHandlers() {
+    if (!this.socket) return;
+
+    this.socket.on('connect', () => {
+      console.log('WebSocket connected');
+      this.reconnectAttempts = 0;
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+      this.handleReconnect();
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+      this.handleReconnect();
+    });
+
+    // Business events
+    this.socket.on('dashboard.update', (data) => {
+      this.emit('dashboard.update', data);
+    });
+
+    this.socket.on('order.created', (data) => {
+      this.emit('order.created', data);
+    });
+
+    this.socket.on('order.updated', (data) => {
+      this.emit('order.updated', data);
+    });
+
+    this.socket.on('product.created', (data) => {
+      this.emit('product.created', data);
+    });
+
+    this.socket.on('user.registered', (data) => {
+      this.emit('user.registered', data);
+    });
+  }
+
+  private handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = Math.pow(2, this.reconnectAttempts) * 1000; // Exponential backoff
+
+      setTimeout(() => {
+        this.connect();
+      }, delay);
+    }
+  }
+
+  on(event: string, callback: Function) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)!.push(callback);
+  }
+
+  off(event: string, callback: Function) {
+    const eventListeners = this.listeners.get(event);
+    if (eventListeners) {
+      const index = eventListeners.indexOf(callback);
+      if (index > -1) {
+        eventListeners.splice(index, 1);
+      }
+    }
+  }
+
+  private emit(event: string, data: any) {
+    const eventListeners = this.listeners.get(event);
+    if (eventListeners) {
+      eventListeners.forEach(callback => callback(data));
+    }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    this.listeners.clear();
+  }
+
+  get isConnected() {
+    return this.socket?.connected || false;
+  }
+}
+
+// Global WebSocket instance
+let websocketService: WebSocketService | null = null;
+
+function getWebSocketService(): WebSocketService {
+  if (!websocketService) {
+    websocketService = new WebSocketService();
+  }
+  return websocketService;
+}
+
 // Hook for real-time dashboard updates
 export function useRealtimeDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [, forceUpdate] = useState({});
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdate(new Date());
-    }, 30000); // Update every 30 seconds
-
-    return () => clearInterval(interval);
+  const triggerUpdate = useCallback(() => {
+    forceUpdate({});
   }, []);
 
-  return { lastUpdate };
+  useEffect(() => {
+    const wsService = getWebSocketService();
+
+    // Connect to WebSocket
+    wsService.connect();
+
+    // Listen for dashboard updates
+    const handleDashboardUpdate = (data: any) => {
+      setLastUpdate(new Date());
+      triggerUpdate();
+    };
+
+    wsService.on('dashboard.update', handleDashboardUpdate);
+
+    // Check connection status
+    const checkConnection = () => {
+      setIsConnected(wsService.isConnected);
+    };
+
+    const interval = setInterval(checkConnection, 1000);
+    checkConnection();
+
+    return () => {
+      wsService.off('dashboard.update', handleDashboardUpdate);
+      clearInterval(interval);
+    };
+  }, [triggerUpdate]);
+
+  return { lastUpdate, isConnected, triggerUpdate };
+}
+
+// Hook for real-time notifications
+export function useRealtimeNotifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    const wsService = getWebSocketService();
+
+    const handleOrderCreated = (data: any) => {
+      setNotifications(prev => [{
+        id: Date.now(),
+        type: 'order',
+        title: 'Đơn hàng mới',
+        message: `Đơn hàng ${data.orderNo} vừa được tạo`,
+        timestamp: new Date(),
+        data
+      }, ...prev]);
+    };
+
+    const handleOrderUpdated = (data: any) => {
+      setNotifications(prev => [{
+        id: Date.now(),
+        type: 'order_update',
+        title: 'Cập nhật đơn hàng',
+        message: `Đơn hàng ${data.orderNo} đã được cập nhật`,
+        timestamp: new Date(),
+        data
+      }, ...prev]);
+    };
+
+    const handleUserRegistered = (data: any) => {
+      setNotifications(prev => [{
+        id: Date.now(),
+        type: 'user',
+        title: 'Người dùng mới',
+        message: `Người dùng ${data.email} vừa đăng ký`,
+        timestamp: new Date(),
+        data
+      }, ...prev]);
+    };
+
+    wsService.on('order.created', handleOrderCreated);
+    wsService.on('order.updated', handleOrderUpdated);
+    wsService.on('user.registered', handleUserRegistered);
+
+    return () => {
+      wsService.off('order.created', handleOrderCreated);
+      wsService.off('order.updated', handleOrderUpdated);
+      wsService.off('user.registered', handleUserRegistered);
+    };
+  }, []);
+
+  const clearNotification = useCallback((id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  return {
+    notifications,
+    clearNotification,
+    clearAllNotifications,
+    unreadCount: notifications.length
+  };
 }
 
