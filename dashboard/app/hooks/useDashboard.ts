@@ -30,50 +30,33 @@ export function useDashboard(): UseDashboardResult {
       setLoading(true);
       setError(null);
 
-      // Fetch data in parallel for better performance
-      const [productsRes, ordersRes, usersRes] = await Promise.allSettled([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/catalog/products?pageSize=1`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/orders?pageSize=1`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users?pageSize=1`),
-      ]);
-
-      // Process results
-      const totalProducts = productsRes.status === 'fulfilled'
-        ? (await productsRes.value.json()).totalCount || 0
-        : 0;
-
-      const totalOrders = ordersRes.status === 'fulfilled'
-        ? (await ordersRes.value.json()).totalCount || 0
-        : 0;
-
-      const totalUsers = usersRes.status === 'fulfilled'
-        ? (await usersRes.value.json()).totalCount || 0
-        : 0;
-
-      // Fetch recent orders for revenue calculation
-      const recentOrdersRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/orders?pageSize=100`
-      );
-
-      let totalRevenue = 0;
+      // Fetch analytics overview first
+      const overviewRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analytics/overview`);
+      
+      if (!overviewRes.ok) {
+        throw new Error(`API error: ${overviewRes.status}`);
+      }
+      
+      const overview = await overviewRes.json();
+      
+      // Fetch recent orders for display
+      const ordersRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/orders`);
       let recentOrders: any[] = [];
-
-      if (recentOrdersRes.ok) {
-        const ordersData = await recentOrdersRes.json();
-        recentOrders = ordersData.items || [];
-        totalRevenue = recentOrders.reduce((sum: number, order: any) =>
-          sum + (order.totalCents || 0), 0
-        );
+      
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        recentOrders = ordersData.data || [];
       }
 
       setData({
-        totalProducts,
-        totalOrders,
-        totalUsers,
-        totalRevenue,
+        totalProducts: overview.totalProducts || 0,
+        totalOrders: overview.totalOrders || 0,
+        totalUsers: overview.totalUsers || 0,
+        totalRevenue: overview.totalRevenue || 0,
         recentOrders: recentOrders.slice(0, 5),
       });
     } catch (err) {
+      console.error('Dashboard fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
     } finally {
       setLoading(false);
