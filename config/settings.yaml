@@ -1,0 +1,128 @@
+# Auto Media Editor Configuration
+
+# General settings
+general:
+  output_quality: "high"  # low, medium, high, ultra
+  temp_directory: "./temp"
+  max_workers: 4
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_intermediate: false
+
+# AI Models configuration
+ai:
+  use_gpu: true
+  model_cache_dir: "./models"
+  device: "auto"  # auto, cpu, cuda, mps
+  
+  # Model settings
+  models:
+    clip:
+      model_name: "openai/clip-vit-base-patch32"
+      cache_dir: "./models/clip"
+    
+    stable_diffusion:
+      model_name: "runwayml/stable-diffusion-v1-5"
+      cache_dir: "./models/stable-diffusion"
+    
+    whisper:
+      model_name: "base"  # tiny, base, small, medium, large
+      cache_dir: "./models/whisper"
+    
+    face_detection:
+      model_name: "hog"  # hog, cnn
+      cache_dir: "./models/face_detection"
+
+# Image processing settings
+image:
+  enhancement:
+    level: "auto"  # auto, low, medium, high
+    face_detection: true
+    background_removal: true
+    style_transfer: false
+  
+  formats:
+    supported: ["jpg", "jpeg", "png", "bmp", "tiff", "webp"]
+    output_format: "jpg"
+    quality: 95
+  
+  processing:
+    max_size: 4096
+    batch_size: 10
+    resize_strategy: "maintain_aspect"  # maintain_aspect, crop, stretch
+
+# Video processing settings
+video:
+  stabilization:
+    enabled: true
+    method: "optical_flow"  # optical_flow, feature_matching
+  
+  auto_cut:
+    enabled: true
+    scene_threshold: 0.3
+    min_scene_duration: 1.0
+  
+  effects:
+    transitions: true
+    speed_adjustment: true
+    filters: true
+  
+  formats:
+    supported: ["mp4", "avi", "mov", "mkv", "webm"]
+    output_format: "mp4"
+    codec: "h264"
+    bitrate: "auto"
+  
+  processing:
+    max_resolution: "1080p"
+    fps: "auto"
+    batch_size: 1
+
+# Audio processing settings
+audio:
+  normalization:
+    enabled: true
+    target_level: -23  # dB LUFS
+  
+  background_music:
+    enabled: true
+    volume_ratio: 0.3  # 0.0 to 1.0
+    fade_in: 2.0  # seconds
+    fade_out: 3.0  # seconds
+  
+  effects:
+    noise_reduction: true
+    voice_enhancement: true
+    echo_cancellation: true
+  
+  formats:
+    supported: ["mp3", "wav", "aac", "flac", "ogg"]
+    output_format: "mp3"
+    bitrate: "192k"
+    sample_rate: 44100
+
+# Web interface settings
+web:
+  host: "0.0.0.0"
+  port: 8080
+  debug: false
+  max_file_size: 100  # MB
+  allowed_extensions:
+    image: ["jpg", "jpeg", "png", "bmp", "tiff", "webp"]
+    video: ["mp4", "avi", "mov", "mkv", "webm"]
+    audio: ["mp3", "wav", "aac", "flac", "ogg"]
+
+# Performance settings
+performance:
+  memory_limit: "4GB"
+  cpu_limit: 4
+  gpu_memory_limit: "2GB"
+  cache_enabled: true
+  cache_size: "1GB"
+  cache_ttl: 3600  # seconds
+
+# Security settings
+security:
+  allowed_origins: ["*"]
+  max_request_size: 100  # MB
+  rate_limit: 100  # requests per minute
+  api_key_required: false
