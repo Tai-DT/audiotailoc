@@ -15,12 +15,12 @@ import { UsersModule } from './users/users.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
-// import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
-// import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
-// import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
+import { CartModule } from './cart/cart.module'; // ✅ Schema mismatch fixed
+import { PromotionsModule } from './promotions/promotions.module'; // ✅ Schema mismatch fixed
+import { CheckoutModule } from './checkout/checkout.module'; // ✅ Dependencies resolved
 import { PaymentsModule } from './payments/payments.module';
-// import { OrdersModule } from './orders/orders.module'; // Disabled due to schema mismatch
-// import { InventoryModule } from './inventory/inventory.module'; // Disabled due to schema mismatch
+import { OrdersModule } from './orders/orders.module'; // ✅ Schema mismatch fixed
+import { InventoryModule } from './inventory/inventory.module'; // ✅ Schema mismatch fixed
 
 // AI and ML modules
 import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
@@ -63,8 +63,12 @@ import { FilesModule } from './files/files.module';
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
+    CartModule, // ✅ Enabled
+    PromotionsModule, // ✅ Enabled
+    CheckoutModule, // ✅ Enabled
+    OrdersModule, // ✅ Enabled
+    InventoryModule, // ✅ Enabled
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],
   controllers: [AppController],

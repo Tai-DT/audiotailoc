@@ -41,6 +41,7 @@ export class CheckoutService {
             name: i.product.name,
             quantity: i.quantity,
             unitPrice: i.unitPrice || i.product.priceCents,
+            totalPrice: (i.unitPrice || i.product.priceCents) * i.quantity,
             imageUrl: i.product.imageUrl ?? null,
           },
         });

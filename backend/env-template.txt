@@ -106,3 +106,33 @@ ANALYTICS_ENABLED="true"
 # Development
 DEBUG="true"
 SEED_DATA="true"
+
+# Production Environment Template
+# =========================================
+# For production, copy this file to .env.production
+# and update all values with your actual production credentials
+
+# Monitoring & Observability
+ENABLE_SWAGGER="true"
+ENABLE_METRICS="true"
+PROMETHEUS_PORT="9090"
+GRAFANA_PORT="3002"
+
+# Health Checks
+HEALTH_CHECK_ENABLED="true"
+DATABASE_HEALTH_CHECK="true"
+REDIS_HEALTH_CHECK="true"
+
+# Performance
+RATE_LIMIT_WINDOW_MS="900000"  # 15 minutes
+RATE_LIMIT_MAX_REQUESTS="1000"  # per window
+CACHE_TTL="3600"  # 1 hour
+
+# Backup Configuration
+BACKUP_ENABLED="false"
+BACKUP_SCHEDULE="0 2 * * *"  # Daily at 2 AM
+BACKUP_RETENTION_DAYS="30"
+
+# Admin Configuration
+ADMIN_EMAILS="admin@audiotailoc.com"
+ADMIN_SETUP_COMPLETE="false"

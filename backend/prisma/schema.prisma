@@ -26,7 +26,7 @@ model User {
   @@map("users")
 }
 
-// Product Model (simplified)
+// Product Model
 model Product {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -38,14 +38,57 @@ model Product {
   categoryId  String?
   featured    Boolean  @default(false)
   isActive    Boolean  @default(true)
+  stock       Int      @default(0) // Available stock quantity
+  minStock    Int      @default(0) // Minimum stock level for alerts
+  sku         String?  @unique // Stock Keeping Unit
+  weight      Float?   // Product weight in kg
+  dimensions  String?  // JSON string with dimensions
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   category   Category?   @relation(fields: [categoryId], references: [id])
   cartItems  CartItem[]
   orderItems OrderItem[]
+  inventory  Inventory?
+  transactions InventoryTransaction[]
 
   @@map("products")
+}
+
+// Inventory Model
+model Inventory {
+  id               String   @id @default(cuid())
+  productId        String   @unique
+  stock            Int      @default(0) // Current stock level
+  reserved         Int      @default(0) // Reserved for orders
+  available        Int      @default(0) // Actually available (stock - reserved)
+  lowStockThreshold Int     @default(5) // Alert when stock drops below this
+  reorderPoint     Int      @default(10) // Point to reorder stock
+  maxStock         Int?     // Maximum stock level
+  location         String?  // Warehouse location
+  lastCount        DateTime? // Last physical count date
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("inventory")
+}
+
+// Inventory Transaction Model
+model InventoryTransaction {
+  id        String   @id @default(cuid())
+  productId String
+  type      String   // IN, OUT, ADJUSTMENT, TRANSFER
+  quantity  Int      // Positive for IN, negative for OUT
+  reason    String   // PURCHASE, SALE, RETURN, ADJUSTMENT, etc.
+  reference String?  // Order ID, Purchase ID, etc.
+  notes     String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("inventory_transactions")
 }
 
 // Category Model
@@ -81,13 +124,14 @@ model Cart {
   @@map("carts")
 }
 
-// Cart Item Model  
+// Cart Item Model
 model CartItem {
   id        String   @id @default(cuid())
   cartId    String
   productId String
   quantity  Int
-  price     Int // Price at time of adding
+  unitPrice Int      // Price per unit at time of adding
+  totalPrice Int     // Total price (quantity * unitPrice)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -98,15 +142,23 @@ model CartItem {
   @@map("cart_items")
 }
 
-// Order Model (simplified)
+// Order Model
 model Order {
   id              String   @id @default(cuid())
   orderNo         String   @unique
   userId          String
-  totalCents      Int
-  status          String   @default("PENDING") // PENDING, PAID, FULFILLED, CANCELED
-  shippingAddress String? // JSON string
+  subtotalCents   Int      // Subtotal before discounts
+  discountCents   Int      @default(0) // Total discount amount
+  taxCents        Int      @default(0) // Tax amount
+  shippingCents   Int      @default(0) // Shipping cost
+  totalCents      Int      // Final total
+  status          String   @default("PENDING") // PENDING, CONFIRMED, PAID, SHIPPED, DELIVERED, CANCELED
+  shippingAddress String?  // JSON string with address details
+  billingAddress  String?  // JSON string with billing details
   promotionCode   String?
+  notes           String?
+  trackingNumber  String?
+  estimatedDelivery DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -122,8 +174,12 @@ model OrderItem {
   id        String   @id @default(cuid())
   orderId   String
   productId String
+  name      String   // Product name at time of order
+  imageUrl  String?  // Product image at time of order
   quantity  Int
-  price     Int // Price at time of order
+  unitPrice Int      // Price per unit at time of order
+  totalPrice Int     // Total price (quantity * unitPrice)
+  discount  Int      @default(0) // Discount applied to this item
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

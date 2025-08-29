@@ -93,14 +93,18 @@ export class TestDatabaseService {
 
     const orderData = {
       userId,
-      total,
-      status: 'PENDING',
-      paymentMethod: 'VNPAY',
-      shippingAddress: '123 Test Street, Test City',
-      shippingPhone: '0123456789',
-      shippingName: 'Test User',
-      orderNo: `ORDER-${Date.now()}`,
+      subtotalCents: total * 100,
+      discountCents: 0,
+      taxCents: 0,
+      shippingCents: 0,
       totalCents: total * 100,
+      status: 'PENDING',
+      orderNo: `ORDER-${Date.now()}`,
+      shippingAddress: JSON.stringify({
+        address: '123 Test Street, Test City',
+        phone: '0123456789',
+        name: 'Test User'
+      }),
       ...overrides,
     };
 
