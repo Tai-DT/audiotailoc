@@ -24,7 +24,8 @@
     "test:security": "jest --testPathPattern='security.*\\.spec\\.ts$'",
     "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
     "test:setup": "node scripts/setup-test-db.js",
-    "test:cleanup": "node scripts/cleanup-test-data.js"
+    "test:cleanup": "node scripts/cleanup-test-data.js",
+    "start:prod": "node dist/main"
   },
   "prisma": {
     "seed": "ts-node src/seed.ts"

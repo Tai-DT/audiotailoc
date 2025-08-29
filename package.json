@@ -1,0 +1,56 @@
+{
+  "name": "audio-tailoc-mcp",
+  "version": "1.0.0",
+  "description": "🎵 Audio Tài Lộc - MCP Project Automation System",
+  "main": "mcp-project-automation.js",
+  "scripts": {
+    "mcp:analyze": "node mcp-project-automation.js",
+    "mcp:monitor": "node system-monitor.js",
+    "mcp:deploy": "node deploy-manager.js",
+    "mcp:dev": "node dev-workflow.js",
+    "mcp:start": "npm run mcp:analyze && npm run mcp:monitor",
+    "mcp:full": "npm run mcp:analyze && npm run mcp:deploy && npm run mcp:monitor",
+    "dev": "npm run mcp:dev start --watch",
+    "build": "npm run mcp:deploy build",
+    "test": "npm run mcp:dev test",
+    "lint": "npm run mcp:dev lint",
+    "format": "npm run mcp:dev format",
+    "deploy:dev": "npm run mcp:deploy deploy development",
+    "deploy:staging": "npm run mcp:deploy deploy staging",
+    "deploy:prod": "npm run mcp:deploy deploy production",
+    "monitor": "npm run mcp:monitor",
+    "analyze": "npm run mcp:analyze",
+    "workflow": "npm run mcp:dev start --watch --test-watch"
+  },
+  "keywords": [
+    "audio",
+    "tailoc",
+    "mcp",
+    "automation",
+    "monitoring",
+    "deployment",
+    "development",
+    "workflow"
+  ],
+  "author": "Audio Tài Lộc Team",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^3.5.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tai-DT/audiotailoc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Tai-DT/audiotailoc/issues"
+  },
+  "homepage": "https://github.com/Tai-DT/audiotailoc#readme"
+}
