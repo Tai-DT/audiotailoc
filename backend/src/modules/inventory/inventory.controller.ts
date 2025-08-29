@@ -1,35 +1,31 @@
 import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
-import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
-import { IsBooleanString, IsInt, IsOptional } from 'class-validator';
 
-class ListQueryDto {
-  @IsOptional() @IsInt()
+interface ListQueryDto {
   page?: number;
-  @IsOptional() @IsInt()
   pageSize?: number;
-  @IsOptional() @IsBooleanString()
   lowStockOnly?: string;
 }
 
-class AdjustDto {
-  @IsOptional() @IsInt()
+interface AdjustDto {
   stockDelta?: number;
-  @IsOptional() @IsInt()
   reservedDelta?: number;
-  @IsOptional() @IsInt()
   lowStockThreshold?: number;
 }
 
 @UseGuards(AdminOrKeyGuard)
 @Controller('inventory')
 export class InventoryController {
-  constructor(private readonly inventory: InventoryService) {}
+  constructor(private readonly inventory: InventoryService) { }
 
   @Get()
   list(@Query() q: ListQueryDto) {
-    return this.inventory.list({ page: q.page, pageSize: q.pageSize, lowStockOnly: q.lowStockOnly === 'true' });
+    const page = q.page ? Number(q.page) : undefined;
+    const pageSize = q.pageSize ? Number(q.pageSize) : undefined;
+    const lowStockOnly = q.lowStockOnly === 'true';
+    
+    return this.inventory.list({ page, pageSize, lowStockOnly });
   }
 
   @Patch(':productId')
