@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useSystemHealth, useSystemMetrics, useDashboardStats } from '@/hooks/useApi'
+import { useSystemHealth, useSystemMetrics, useDashboardStats } from '@/src/hooks/useApi'
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -44,7 +44,7 @@ export default function ApiTestPage() {
         test: 'System Health Check',
         endpoint: '/api/v2/shutdown/health',
         status: 'error',
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       })
     }
@@ -69,7 +69,7 @@ export default function ApiTestPage() {
         test: 'System Metrics',
         endpoint: '/api/v2/monitoring/metrics',
         status: 'error',
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       })
     }
@@ -94,7 +94,7 @@ export default function ApiTestPage() {
         test: 'API Documentation',
         endpoint: '/api/v2/docs',
         status: 'error',
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       })
     }
@@ -278,7 +278,7 @@ export default function ApiTestPage() {
               Chưa có kết quả test
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Nhấn "Run Tests" để kiểm tra kết nối API
+              Nhấn &quot;Run Tests&quot; để kiểm tra kết nối API
             </p>
           </div>
         )}

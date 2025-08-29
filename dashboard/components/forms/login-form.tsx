@@ -17,7 +17,7 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const login = useAuthStore((state) => state.login)
+  const login = useAuthStore((state: any) => state.login)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}

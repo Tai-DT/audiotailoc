@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { DashboardProvider } from '@/contexts/DashboardContext'
-import { QueryProvider } from '@/providers/QueryProvider'
-import { ThemeProvider } from '@/providers/ThemeProvider'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import { DashboardProvider } from '@/src/contexts/DashboardContext'
+import { QueryProvider } from '@/src/providers/QueryProvider'
+import { ThemeProvider } from '@/src/providers/ThemeProvider'
+import DashboardLayout from '@/src/components/layout/DashboardLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 

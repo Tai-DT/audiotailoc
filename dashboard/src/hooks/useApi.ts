@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient, ApiResponse, PaginatedResponse } from '@/lib/api-client'
+import { apiClient, ApiResponse, PaginatedResponse } from '@/src/lib/api-client'
 import { toast } from 'react-hot-toast'
 
 // User hooks

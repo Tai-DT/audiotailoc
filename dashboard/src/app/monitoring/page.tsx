@@ -10,8 +10,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline'
-import PerformanceChart from '@/components/dashboard/PerformanceChart'
-import SystemHealth from '@/components/dashboard/SystemHealth'
+import PerformanceChart from '@/src/components/dashboard/PerformanceChart'
+import SystemHealth from '@/src/components/dashboard/SystemHealth'
 
 export default function MonitoringPage() {
   const [activeTab, setActiveTab] = useState<'performance' | 'health' | 'metrics' | 'realtime'>('performance')

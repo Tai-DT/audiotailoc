@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
+import { apiClient } from '@/src/lib/api-client'
 
 export interface Notification {
   id: string
@@ -197,14 +197,14 @@ export function DashboardProvider({ children }: DashboardProviderProps) {
 
   // Update state when API data arrives
   useEffect(() => {
-    if (apiMetrics) {
-      setMetrics(apiMetrics.data || apiMetrics)
+    if (apiMetrics && typeof apiMetrics === 'object' && 'data' in apiMetrics) {
+      setMetrics(apiMetrics.data as SystemMetrics || apiMetrics as unknown as SystemMetrics)
     }
   }, [apiMetrics])
 
   useEffect(() => {
-    if (apiHealth) {
-      setSystemHealth(apiHealth.data || apiHealth)
+    if (apiHealth && typeof apiHealth === 'object' && 'data' in apiHealth) {
+      setSystemHealth(apiHealth.data as SystemHealth || apiHealth as unknown as SystemHealth)
     }
   }, [apiHealth])
 

@@ -8,14 +8,13 @@ import {
   UsersIcon,
   CubeIcon,
   ShoppingBagIcon,
-  TrendingUpIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
-import { useDashboard } from '@/contexts/DashboardContext'
-import MetricCard from '@/components/dashboard/MetricCard'
-import PerformanceChart from '@/components/dashboard/PerformanceChart'
-import SystemHealth from '@/components/dashboard/SystemHealth'
-import RecentActivity from '@/components/dashboard/RecentActivity'
+import { useDashboard } from '@/src/contexts/DashboardContext'
+import MetricCard from '@/src/components/dashboard/MetricCard'
+import PerformanceChart from '@/src/components/dashboard/PerformanceChart'
+import SystemHealth from '@/src/components/dashboard/SystemHealth'
+import RecentActivity from '@/src/components/dashboard/RecentActivity'
 
 export default function Dashboard() {
   const { metrics, systemHealth, recentActivity } = useDashboard()
@@ -53,7 +52,7 @@ export default function Dashboard() {
       value: `$${metrics.todayRevenue?.toLocaleString() || 0}`,
       change: '+18%',
       changeType: 'increase' as const,
-      icon: TrendingUpIcon,
+      icon: ChartBarIcon,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
     },
@@ -61,7 +60,7 @@ export default function Dashboard() {
       name: 'System Health',
       value: systemHealth.status === 'healthy' ? 'Tốt' : 'Cảnh báo',
       change: systemHealth.status === 'healthy' ? 'Healthy' : 'Issues',
-      changeType: systemHealth.status === 'healthy' ? 'increase' : 'decrease',
+      changeType: systemHealth.status === 'healthy' ? 'increase' as const : 'decrease' as const,
       icon: systemHealth.status === 'healthy' ? ShieldCheckIcon : ExclamationTriangleIcon,
       color: systemHealth.status === 'healthy' ? 'text-green-600' : 'text-red-600',
       bgColor: systemHealth.status === 'healthy'
