@@ -1,24 +1,24 @@
 version: '3.8'
 
 services:
-  # Database - Using Aiven PostgreSQL (External)
-  # postgres:
-  #   image: postgres:15-alpine
-  #   environment:
-  #     POSTGRES_DB: atl
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - audiotaloc
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
+  # Database - Local PostgreSQL for Development
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: audiotailoc
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - audiotaloc
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # Search Engine
   meilisearch:
@@ -31,8 +31,8 @@ services:
       - meili_data:/meili_data
     networks:
       - audiotaloc
-    # depends_on:
-    #   - postgres
+    depends_on:
+      - postgres
 
   # Redis (Optional)
   redis:
@@ -57,17 +57,19 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://avnadmin:AVNS_J1t4lXQgYA1bGfQZgh5@pg-audio-tai-loc-kadev.c.aivencloud.com:26566/defaultdb?sslmode=require&sslcert=./ca.pem
-      - JWT_ACCESS_SECRET=your-jwt-access-secret-change-in-production
-      - JWT_REFRESH_SECRET=your-jwt-refresh-secret-change-in-production
-      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/audiotailoc?schema=public
+      - JWT_ACCESS_SECRET=dev-jwt-access-secret-key-change-in-production
+      - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-key-change-in-production
+      - NODE_ENV=development
       - PORT=8000
       - REDIS_URL=redis://redis:6379
-    volumes:
-      - ./backend/ca.pem:/app/ca.pem
+      - FRONTEND_URL=http://localhost:3000
+      - DASHBOARD_URL=http://localhost:3001
+      - ADMIN_URL=http://localhost:3002
     networks:
       - audiotaloc
     depends_on:
+      - postgres
       - redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
