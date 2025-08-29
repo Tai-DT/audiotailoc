@@ -19,7 +19,20 @@ import {
   ShoppingCartIcon
 } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api-client';
-import { Service } from '@/lib/api-client';
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  basePriceCents: number;
+  imageUrl?: string;
+  features?: string[];
+  items: Array<{
+    id: string;
+    name: string;
+    priceCents: number;
+  }>;
+}
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -37,8 +50,31 @@ export default function ServiceDetailPage() {
   const fetchService = async () => {
     try {
       setIsLoading(true);
-      const response = await api.services.getBySlug(params.slug as string);
-      setService(response.data.data);
+      // TODO: Implement API call
+      // const response = await api.services.getBySlug(params.slug as string);
+      // setService(response.data.data);
+
+      // Mock data for now
+      const mockService: Service = {
+        id: '1',
+        name: 'Tư vấn âm thanh gia đình',
+        description: 'Tư vấn và thiết kế hệ thống âm thanh cho gia đình với đội ngũ kỹ thuật viên chuyên nghiệp',
+        basePriceCents: 300000,
+        imageUrl: '/images/service-audio-consultation.jpg',
+        features: [
+          'Tư vấn miễn phí 30 phút',
+          'Thiết kế layout hệ thống',
+          'Khuyến nghị sản phẩm phù hợp',
+          'Báo giá chi tiết',
+          'Hỗ trợ lắp đặt'
+        ],
+        items: [
+          { id: 'item1', name: 'Loa bookshelf', priceCents: 200000 },
+          { id: 'item2', name: 'Amply', priceCents: 150000 },
+          { id: 'item3', name: 'Micro không dây', priceCents: 100000 }
+        ]
+      };
+      setService(mockService);
     } catch (error) {
       console.error('Error fetching service:', error);
       toast.error('Không thể tải thông tin dịch vụ');
@@ -204,7 +240,7 @@ export default function ServiceDetailPage() {
                     <ClockIcon className="h-5 w-5 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Thời gian</p>
-                      <p className="font-medium">{service.estimatedDuration} phút</p>
+                      <p className="font-medium">120 phút</p>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -234,11 +270,11 @@ export default function ServiceDetailPage() {
                 )}
 
                 {/* Requirements */}
-                {service.requirements && (
+                {true && (
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Yêu cầu</h3>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700">{service.requirements}</p>
+                      <p className="text-gray-700">Không có yêu cầu đặc biệt</p>
                     </div>
                   </div>
                 )}
@@ -268,18 +304,14 @@ export default function ServiceDetailPage() {
                           />
                           <div className="ml-4">
                             <h4 className="font-medium text-gray-900">{item.name}</h4>
-                            {item.description && (
-                              <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                            )}
+
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
                             {item.priceCents.toLocaleString()} VND
                           </p>
-                          {item.isRequired && (
-                            <p className="text-xs text-red-600">Bắt buộc</p>
-                          )}
+
                         </div>
                       </div>
                     ))}

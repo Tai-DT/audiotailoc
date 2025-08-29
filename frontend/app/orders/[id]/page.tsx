@@ -80,9 +80,9 @@ export default function OrderDetailPage() {
           <div className="text-red-500 text-6xl mb-4">❌</div>
           <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
           <p className="text-gray-600 mb-4">{error || 'Không tìm thấy đơn hàng'}</p>
-          <Button asChild>
-            <Link href="/orders">Quay lại danh sách đơn hàng</Link>
-          </Button>
+          <Link href="/orders">
+            <Button>Quay lại danh sách đơn hàng</Button>
+          </Link>
         </div>
       </div>
     );
@@ -92,9 +92,9 @@ export default function OrderDetailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <Button asChild variant="ghost" className="mb-4">
-            <Link href="/orders">← Quay lại danh sách đơn hàng</Link>
-          </Button>
+          <Link href="/orders">
+            <Button variant="ghost" className="mb-4">← Quay lại danh sách đơn hàng</Button>
+          </Link>
           <h1 className="text-3xl font-bold">Đơn hàng #{order.orderNo}</h1>
         </div>
 

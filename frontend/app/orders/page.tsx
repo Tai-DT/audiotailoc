@@ -155,9 +155,9 @@ export default function OrdersPage() {
           <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           {error.includes('đăng nhập') && (
-            <Button asChild>
-              <Link href="/login">Đăng nhập</Link>
-            </Button>
+            <Link href="/login">
+              <Button>Đăng nhập</Button>
+            </Link>
           )}
         </div>
       </div>
@@ -181,9 +181,9 @@ export default function OrdersPage() {
             <p className="text-gray-600 mb-6">
               Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm ngay!
             </p>
-            <Button asChild>
-              <Link href="/products">Mua sắm ngay</Link>
-            </Button>
+            <Link href="/products">
+              <Button>Mua sắm ngay</Button>
+            </Link>
           </div>
         ) : (
           <div className="space-y-6">
@@ -260,14 +260,14 @@ export default function OrdersPage() {
 
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/orders/${order.id}`}>
+                    <Link href={`/orders/${order.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
                         <Eye className="h-4 w-4 mr-2" />
                         Xem chi tiết
-                      </Link>
-                    </Button>
+                      </Button>
+                    </Link>
                     {order.status === 'PENDING' && (
-                      <Button variant="destructive" className="flex-1">
+                      <Button variant="danger" className="flex-1">
                         Hủy đơn hàng
                       </Button>
                     )}

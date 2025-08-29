@@ -314,3 +314,4 @@ const apiClient = new ApiClient();
 
 export default apiClient;
 export { ApiClient };
+export const api = apiClient;

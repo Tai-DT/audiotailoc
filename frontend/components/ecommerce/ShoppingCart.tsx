@@ -311,7 +311,7 @@ export default function ShoppingCart({
                 </div>
                 {appliedCoupon && (
                   <div className="text-sm text-green-600">
-                    ✓ Mã giảm giá "{appliedCoupon.code}" đã được áp dụng
+                    ✓ Mã giảm giá &ldquo;{appliedCoupon.code}&rdquo; đã được áp dụng
                   </div>
                 )}
               </div>

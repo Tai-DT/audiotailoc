@@ -123,11 +123,12 @@ export default function AIToolsPage() {
             {/* AI Tools Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {aiTools.map((tool) => (
-                <Card 
-                  key={tool.id} 
+                <div
+                  key={tool.id}
                   className="hover:shadow-lg transition-all duration-300 cursor-pointer"
                   onClick={() => setActiveTab(tool.id)}
                 >
+                <Card>
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <div className={`p-3 rounded-lg ${tool.bgColor}`}>
@@ -158,6 +159,7 @@ export default function AIToolsPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               ))}
             </div>
 

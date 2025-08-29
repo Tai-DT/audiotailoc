@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ProductCard from '../../components/ProductCard';
+import ProductCard from '@/components/ProductCard';
 
 type Category = {
   id: string;
@@ -248,7 +248,7 @@ export default async function CategoryPage({
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     <Link key={pageNum} href={`/categories/${category.slug}?page=${pageNum}`}>
                       <Button 
-                        variant={pageNum === page ? "default" : "outline"}
+                        variant={pageNum === page ? "primary" : "outline"}
                         size="sm"
                       >
                         {pageNum}

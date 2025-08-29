@@ -166,14 +166,14 @@ export default function SearchPage() {
               {/* View Mode Toggle */}
               <div className="flex items-center gap-2">
                 <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  variant={viewMode === 'grid' ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  variant={viewMode === 'list' ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('list')}
                 >
@@ -313,11 +313,11 @@ export default function SearchPage() {
                         </div>
                       )}
                       
-                      <Button asChild className="w-full">
-                        <Link href={getItemLink(item)}>
+                      <Link href={getItemLink(item)} className="w-full">
+                        <Button className="w-full">
                           Xem chi tiết
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}

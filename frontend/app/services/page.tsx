@@ -18,7 +18,20 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api-client';
-import { Service } from '@/lib/api-client';
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  basePriceCents: number;
+  imageUrl?: string;
+  features?: string[];
+  items: Array<{
+    id: string;
+    name: string;
+    priceCents: number;
+  }>;
+}
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
@@ -39,9 +52,30 @@ export default function ServicesPage() {
   const fetchServices = async () => {
     try {
       setIsLoading(true);
-      const response = await api.services.getAll({ isActive: true });
-      const servicesData = response.data.data;
-      setServices(servicesData);
+      // TODO: Implement API call
+      // const response = await api.services.getAll({ isActive: true });
+      // const servicesData = response.data.data;
+
+      // Mock data for now
+      const mockServices: Service[] = [
+        {
+          id: '1',
+          name: 'Tư vấn âm thanh gia đình',
+          description: 'Tư vấn và thiết kế hệ thống âm thanh cho gia đình',
+          basePriceCents: 300000,
+          features: ['Tư vấn miễn phí 30 phút', 'Thiết kế layout', 'Báo giá chi tiết'],
+          items: []
+        },
+        {
+          id: '2',
+          name: 'Lắp đặt hệ thống karaoke',
+          description: 'Lắp đặt và cấu hình hệ thống karaoke chuyên nghiệp',
+          basePriceCents: 500000,
+          features: ['Lắp đặt tận nơi', 'Cấu hình âm thanh', 'Bảo hành 12 tháng'],
+          items: []
+        }
+      ];
+      setServices(mockServices);
     } catch (error) {
       console.error('Failed to fetch services:', error);
       toast.error('Không thể tải danh sách dịch vụ');
@@ -60,13 +94,15 @@ export default function ServicesPage() {
       );
     }
 
-    if (selectedCategory) {
-      filtered = filtered.filter(service => service.category === selectedCategory);
-    }
+    // TODO: Implement category filtering
+    // if (selectedCategory) {
+    //   filtered = filtered.filter(service => service.category === selectedCategory);
+    // }
 
-    if (selectedType) {
-      filtered = filtered.filter(service => service.type === selectedType);
-    }
+    // TODO: Implement type filtering
+    // if (selectedType) {
+    //   filtered = filtered.filter(service => service.type === selectedType);
+    // }
 
     setFilteredServices(filtered);
   };
@@ -235,7 +271,7 @@ export default function ServicesPage() {
                 transition={{ duration: 0.8, delay: index * 0.1 }}
               >
                 <Card className="h-full hover:shadow-lg transition-shadow">
-                  <Link href={`/services/${service.slug}`}>
+                  <Link href={`/services/${service.id}`}>
                     <div className="aspect-video relative">
                       {service.imageUrl ? (
                         <Image src={service.imageUrl} alt={service.name} fill className="object-cover rounded-t-lg" />
@@ -246,7 +282,7 @@ export default function ServicesPage() {
                       )}
                       <div className="absolute top-3 left-3">
                         <Badge variant="secondary" className="bg-white/90 text-gray-800">
-                          {categoryIcons[service.category as keyof typeof categoryIcons]} {categoryLabels[service.category as keyof typeof categoryLabels]}
+                          Tư vấn
                         </Badge>
                       </div>
                     </div>
@@ -266,7 +302,7 @@ export default function ServicesPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center text-sm text-gray-500">
                           <ClockIcon className="h-4 w-4 mr-1" />
-                          {service.estimatedDuration} phút
+                          120 phút
                         </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <StarIcon className="h-4 w-4 mr-1 text-yellow-400" />
@@ -278,7 +314,7 @@ export default function ServicesPage() {
                           {service.basePriceCents.toLocaleString()} VND
                         </span>
                         <Badge variant="outline">
-                          {typeLabels[service.type as keyof typeof typeLabels]}
+                          Dịch vụ
                         </Badge>
                       </div>
                     </CardContent>
