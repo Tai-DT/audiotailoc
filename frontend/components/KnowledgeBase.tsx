@@ -245,11 +245,12 @@ export default function KnowledgeBase({
       ) : articles.length > 0 ? (
         <div className="grid gap-4">
           {articles.map((article) => (
-            <Card 
-              key={article.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow"
+            <button
+              key={article.id}
+              className="w-full text-left"
               onClick={() => handleArticleClick(article)}
             >
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg">{article.title}</CardTitle>
                 <CardDescription>
@@ -276,7 +277,8 @@ export default function KnowledgeBase({
                   </div>
                 )}
               </CardContent>
-            </Card>
+              </Card>
+            </button>
           ))}
         </div>
       ) : (

@@ -126,11 +126,11 @@ export default async function ProjectsPage() {
                       )}
                     </div>
                   )}
-                  <Button asChild className="w-full">
-                    <Link href={`/projects/${project.slug}`}>
+                  <Link href={`/projects/${project.slug}`} className="w-full">
+                    <Button className="w-full">
                       Xem chi tiết
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -181,11 +181,11 @@ export default async function ProjectsPage() {
                       )}
                     </div>
                   )}
-                  <Button asChild size="sm" className="w-full">
-                    <Link href={`/projects/${project.slug}`}>
+                  <Link href={`/projects/${project.slug}`} className="w-full">
+                    <Button size="sm" className="w-full">
                       Chi tiết
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -197,9 +197,9 @@ export default async function ProjectsPage() {
             <p className="text-gray-600 mb-6">
               Chúng tôi đang cập nhật portfolio. Vui lòng quay lại sau.
             </p>
-            <Button asChild>
-              <Link href="/contact">Liên hệ tư vấn</Link>
-            </Button>
+            <Link href="/contact">
+              <Button>Liên hệ tư vấn</Button>
+            </Link>
           </div>
         )}
       </div>
@@ -211,12 +211,12 @@ export default async function ProjectsPage() {
           Hãy để chúng tôi giúp bạn xây dựng hệ thống âm thanh hoàn hảo
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild variant="secondary" size="lg">
-            <Link href="/contact">Tư vấn miễn phí</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600">
-            <Link href="/services">Xem dịch vụ</Link>
-          </Button>
+          <Link href="/contact">
+            <Button variant="secondary" size="lg">Tư vấn miễn phí</Button>
+          </Link>
+          <Link href="/services">
+            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600">Xem dịch vụ</Button>
+          </Link>
         </div>
       </div>
     </div>

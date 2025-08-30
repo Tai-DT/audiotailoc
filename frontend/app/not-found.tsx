@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function NotFound() {
   return (
@@ -17,12 +17,12 @@ export default function NotFound() {
           <CardContent className="space-y-4">
             <div className="text-8xl font-bold text-gray-200">404</div>
             <div className="space-y-2">
-              <Button asChild className="w-full">
-                <Link href="/">Về trang chủ</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/products">Xem sản phẩm</Link>
-              </Button>
+              <Link href="/" className="w-full">
+                <Button className="w-full">Về trang chủ</Button>
+              </Link>
+              <Link href="/products" className="w-full">
+                <Button variant="outline" className="w-full">Xem sản phẩm</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

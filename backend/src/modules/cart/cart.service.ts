@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
@@ -88,22 +88,23 @@ export class CartService {
 
     // Check if product exists and is available
     const product = await this.prisma.product.findUnique({
-      where: { id: productId }
+      where: { id: productId },
+      include: { inventory: true }
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    // TODO: Implement inventory tracking in SQLite schema
-    // Stock check disabled for SQLite schema
-    // if ((product.inventory?.stock ?? 0) < quantity) {
-    //   throw new Error('Insufficient stock');
-    // }
-    // await this.prisma.inventory.update({
-    //   where: { productId: productId },
-    //   data: { reserved: { increment: quantity } },
-    // });
+    // ✅ Inventory management implemented
+    // Check available stock including reservations
+    const availableStock = product.stock - (product.inventory?.reserved ?? 0);
+    if (availableStock < quantity) {
+      throw new BadRequestException(`Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`);
+    }
+
+    // Reserve stock for this cart item
+    await this.reserveStock(productId, quantity);
 
     // Check if item already exists in cart
     const existingItem = await this.prisma.cartItem.findFirst({
@@ -126,7 +127,8 @@ export class CartService {
           cartId: cart.id,
           productId,
           quantity,
-          price: product.priceCents
+          unitPrice: product.priceCents,
+          totalPrice: product.priceCents * quantity
         }
       });
     }
@@ -156,21 +158,28 @@ export class CartService {
     }
 
     const delta = quantity - cartItem.quantity;
-    if (delta !== 0) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+    if (delta > 0) {
+      // Need to reserve additional stock
+      await this.reserveStock(productId, delta);
+    } else if (delta < 0) {
+      // Need to release some reserved stock
+      await this.releaseStock(productId, Math.abs(delta));
     }
 
     if (quantity <= 0) {
-      // Remove item
+      // Remove item - release all reserved stock
+      await this.releaseStock(productId, cartItem.quantity);
       await this.prisma.cartItem.delete({
         where: { id: cartItem.id }
       });
     } else {
-      // Update quantity
+      // Update quantity and total price
       await this.prisma.cartItem.update({
         where: { id: cartItem.id },
-        data: { quantity }
+        data: {
+          quantity,
+          totalPrice: cartItem.unitPrice * quantity
+        }
       });
     }
 
@@ -188,8 +197,8 @@ export class CartService {
 
     const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
     if (item) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+      // ✅ Release reserved stock when removing from cart
+      await this.releaseStock(productId, item.quantity);
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -207,8 +216,8 @@ export class CartService {
 
     const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
     for (const item of items) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+      // ✅ Release reserved stock when removing from cart
+      await this.releaseStock(item.productId, item.quantity);
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -257,7 +266,8 @@ export class CartService {
               cartId: existingUserCart.id,
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price
+              unitPrice: item.unitPrice,
+              totalPrice: item.unitPrice * item.quantity
             }
           });
         }
@@ -383,7 +393,8 @@ export class CartService {
           cartId: cart.id,
           productId,
           quantity,
-          price: product.priceCents
+          unitPrice: product.priceCents,
+          totalPrice: product.priceCents * quantity
         }
       });
     }
@@ -413,8 +424,7 @@ export class CartService {
 
     const delta = quantity - cartItem.quantity;
     if (delta !== 0) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+      // ✅ Release reserved stock when removing from cart
     }
 
     if (quantity <= 0) {
@@ -442,8 +452,7 @@ export class CartService {
 
     const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
     if (item) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+      // ✅ Release reserved stock when removing from cart
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
@@ -461,18 +470,54 @@ export class CartService {
 
     const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
     for (const item of items) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+      // ✅ Release reserved stock when removing from cart
       await this.prisma.cartItem.delete({ where: { id: item.id } });
     }
 
     return this.getUserCart(userId);
   }
 
+  // Helper method to reserve stock
+  private async reserveStock(productId: string, quantity: number) {
+    try {
+      await this.prisma.inventory.upsert({
+        where: { productId },
+        create: {
+          productId,
+          stock: 0,
+          reserved: quantity,
+          available: -quantity
+        },
+        update: {
+          reserved: { increment: quantity },
+          available: { decrement: quantity }
+        }
+      });
+    } catch (error) {
+      this.logger.error(`Failed to reserve stock for product ${productId}:`, error);
+      throw new BadRequestException('Failed to reserve stock');
+    }
+  }
+
+  // Helper method to release stock reservation
+  private async releaseStock(productId: string, quantity: number) {
+    try {
+      await this.prisma.inventory.update({
+        where: { productId },
+        data: {
+          reserved: { decrement: quantity },
+          available: { increment: quantity }
+        }
+      });
+    } catch (error) {
+      this.logger.error(`Failed to release stock for product ${productId}:`, error);
+    }
+  }
+
   // Helper method to calculate cart totals
   private calculateCartTotals(cart: any) {
     const subtotal = cart.items.reduce((sum: number, item: any) => {
-      return sum + ((item.price ?? item.product?.priceCents ?? 0) * item.quantity);
+      return sum + ((item.unitPrice ?? item.product?.priceCents ?? 0) * item.quantity);
     }, 0);
 
     const itemCount = cart.items.reduce((sum: number, item: any) => {
@@ -524,7 +569,7 @@ export class CartService {
       where: { cartId: cart.id },
       include: { product: true },
     });
-    const subtotalCents = items.reduce((sum, i) => sum + (i.price || i.product.priceCents) * i.quantity, 0);
+    const subtotalCents = items.reduce((sum, i) => sum + (i.unitPrice || i.product.priceCents) * i.quantity, 0);
     return { cart, items, subtotalCents };
   }
 }

@@ -85,11 +85,11 @@ function FeaturedProducts() {
                 <span className="text-xl font-bold text-blue-600">
                   {formatPrice(product.priceCents)}
                 </span>
-                <Button asChild size="sm">
-                  <Link href={`/products/${product.slug}`}>
+                <Link href={`/products/${product.slug}`}>
+                  <Button size="sm">
                     Xem chi tiết
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardContent>
@@ -193,16 +193,16 @@ export default function HomePageContent() {
             Khám phá bộ sưu tập tai nghe, loa, ampli chất lượng cao với giá tốt nhất thị trường
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-              <Link href="/products">
+            <Link href="/products">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
                 Mua sắm ngay <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-              <Link href="/about">
+              </Button>
+            </Link>
+            <Link href="/about">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
                 Tìm hiểu thêm
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -231,11 +231,11 @@ export default function HomePageContent() {
           </div>
           <FeaturedProducts />
           <div className="text-center">
-            <Button asChild size="lg">
-              <Link href="/products">
+            <Link href="/products">
+              <Button size="lg">
                 Xem tất cả sản phẩm <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -261,16 +261,16 @@ export default function HomePageContent() {
             Hãy khám phá ngay bộ sưu tập sản phẩm chất lượng cao của chúng tôi
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-              <Link href="/products">
+            <Link href="/products">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
                 Bắt đầu mua sắm
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-              <Link href="/contact">
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
                 Liên hệ tư vấn
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

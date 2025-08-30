@@ -162,9 +162,9 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           {error.includes('đăng nhập') && (
-            <Button asChild>
-              <Link href="/login">Đăng nhập</Link>
-            </Button>
+            <Link href="/login">
+              <Button>Đăng nhập</Button>
+            </Link>
           )}
         </div>
       </div>
@@ -178,9 +178,9 @@ export default function ProfilePage() {
           <div className="text-gray-400 text-6xl mb-4">👤</div>
           <h2 className="text-2xl font-bold mb-2">Không tìm thấy thông tin</h2>
           <p className="text-gray-600 mb-4">Vui lòng đăng nhập để xem thông tin cá nhân</p>
-          <Button asChild>
-            <Link href="/login">Đăng nhập</Link>
-          </Button>
+          <Link href="/login">
+            <Button>Đăng nhập</Button>
+          </Link>
         </div>
       </div>
     );
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                     </CardDescription>
                   </div>
                   <Button
-                    variant={editing ? "outline" : "default"}
+                    variant={editing ? "outline" : "primary"}
                     onClick={() => setEditing(!editing)}
                   >
                     {editing ? 'Hủy' : 'Chỉnh sửa'}
@@ -353,9 +353,9 @@ export default function ProfilePage() {
                       Xem lịch sử đơn hàng của bạn
                     </CardDescription>
                   </div>
-                  <Button asChild>
-                    <Link href="/orders">Xem tất cả</Link>
-                  </Button>
+                  <Link href="/orders">
+                    <Button variant="outline">Xem tất cả</Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
@@ -363,9 +363,9 @@ export default function ProfilePage() {
                   <div className="text-center py-8">
                     <div className="text-gray-400 text-4xl mb-4">📦</div>
                     <p className="text-gray-600 mb-4">Bạn chưa có đơn hàng nào</p>
-                    <Button asChild>
-                      <Link href="/products">Mua sắm ngay</Link>
-                    </Button>
+                    <Link href="/products">
+                      <Button>Mua sắm ngay</Button>
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -407,9 +407,9 @@ export default function ProfilePage() {
                 <div className="text-center py-8">
                   <div className="text-gray-400 text-4xl mb-4">💖</div>
                   <p className="text-gray-600 mb-4">Tính năng đang được phát triển</p>
-                  <Button asChild>
-                    <Link href="/products">Khám phá sản phẩm</Link>
-                  </Button>
+                  <Link href="/products">
+                    <Button>Khám phá sản phẩm</Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -428,9 +428,9 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                   <div>
                     <h4 className="font-medium mb-2">Bảo mật</h4>
-                    <Button variant="outline" asChild>
-                      <Link href="/change-password">Đổi mật khẩu</Link>
-                    </Button>
+                    <Link href="/change-password">
+                      <Button variant="outline">Đổi mật khẩu</Button>
+                    </Link>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Thông báo</h4>

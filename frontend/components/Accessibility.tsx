@@ -72,7 +72,7 @@ export function AccessibilityWidget() {
                 <span className="text-sm">Độ tương phản cao</span>
               </div>
               <Button
-                variant={highContrast ? "default" : "outline"}
+                variant={highContrast ? "primary" : "outline"}
                 size="sm"
                 onClick={toggleHighContrast}
                 aria-pressed={highContrast}
@@ -87,7 +87,7 @@ export function AccessibilityWidget() {
                 <span className="text-sm">Phông chữ lớn</span>
               </div>
               <Button
-                variant={largeText ? "default" : "outline"}
+                variant={largeText ? "primary" : "outline"}
                 size="sm"
                 onClick={toggleLargeText}
                 aria-pressed={largeText}
@@ -102,7 +102,7 @@ export function AccessibilityWidget() {
                 <span className="text-sm">Giảm chuyển động</span>
               </div>
               <Button
-                variant={reducedMotion ? "default" : "outline"}
+                variant={reducedMotion ? "primary" : "outline"}
                 size="sm"
                 onClick={toggleReducedMotion}
                 aria-pressed={reducedMotion}
@@ -117,7 +117,7 @@ export function AccessibilityWidget() {
                 <span className="text-sm">Âm thanh</span>
               </div>
               <Button
-                variant={soundEnabled ? "default" : "outline"}
+                variant={soundEnabled ? "primary" : "outline"}
                 size="sm"
                 onClick={toggleSound}
                 aria-pressed={soundEnabled}

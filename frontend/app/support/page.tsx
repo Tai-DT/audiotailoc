@@ -148,7 +148,7 @@ export default function SupportPage() {
                   {faqData.map((category) => (
                     <Button
                       key={category.category}
-                      variant={activeCategory === category.category ? "default" : "outline"}
+                      variant={activeCategory === category.category ? "primary" : "outline"}
                       size="sm"
                       onClick={() => setActiveCategory(category.category)}
                     >
@@ -323,9 +323,9 @@ export default function SupportPage() {
                   <p className="text-sm text-gray-600 mb-3">
                     Liên hệ trực tiếp với nhân viên hỗ trợ
                   </p>
-                  <Button asChild>
-                    <a href="tel:0901234567">Gọi ngay</a>
-                  </Button>
+                  <a href="tel:0901234567">
+                    <Button>Gọi ngay</Button>
+                  </a>
                 </div>
                 <div className="text-center">
                   <div className="text-4xl mb-4">💬</div>
@@ -343,9 +343,9 @@ export default function SupportPage() {
                   <p className="text-sm text-gray-600 mb-3">
                     Gửi email chi tiết cho chúng tôi
                   </p>
-                  <Button asChild variant="outline">
-                    <a href="mailto:support@audiotailoc.com">Gửi email</a>
-                  </Button>
+                  <a href="mailto:support@audiotailoc.com">
+                    <Button variant="outline">Gửi email</Button>
+                  </a>
                 </div>
               </div>
             </CardContent>

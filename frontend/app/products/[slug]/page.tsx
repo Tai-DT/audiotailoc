@@ -2,15 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useProductStore } from '@/store/product-store';
 import { useCartStore } from '@/store/cart-store';
 import { useUIStore } from '@/store/ui-store';
 import { ProductCard } from '@/components/products/ProductCard';
 
 interface ProductDetailPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
@@ -19,19 +20,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { addNotification } = useUIStore();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [resolvedParams, setResolvedParams] = useState<{ slug: string } | null>(null);
 
   useEffect(() => {
-    if (params.slug) {
-      fetchProduct(params.slug);
-    }
-  }, [params.slug, fetchProduct]);
+    params.then((resolved) => {
+      setResolvedParams(resolved);
+      fetchProduct(resolved.slug);
+    });
+  }, [params, fetchProduct]);
 
   useEffect(() => {
     // Fetch related products
-    if (currentProduct?.categoryId) {
+    if (currentProduct?.categoryId && resolvedParams?.slug) {
       fetchProducts({ category: currentProduct.categoryId }, 1);
     }
-  }, [currentProduct?.categoryId, fetchProducts]);
+  }, [currentProduct?.categoryId, resolvedParams?.slug, fetchProducts]);
 
   const handleAddToCart = async () => {
     if (!currentProduct) return;
@@ -83,12 +86,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <div className="text-6xl mb-4">😞</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy sản phẩm</h1>
           <p className="text-gray-600 mb-4">Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-          <a
+          <Link
             href="/products"
             className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             Quay lại danh sách sản phẩm
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -103,19 +106,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <nav className="mb-8">
           <ol className="flex items-center space-x-2 text-sm text-gray-600">
             <li>
-              <a href="/" className="hover:text-blue-600">Trang chủ</a>
+              <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
             </li>
             <li>/</li>
             <li>
-              <a href="/products" className="hover:text-blue-600">Sản phẩm</a>
+              <Link href="/products" className="hover:text-blue-600">Sản phẩm</Link>
             </li>
             {currentProduct.category && (
               <>
                 <li>/</li>
                 <li>
-                  <a href={`/products?category=${currentProduct.category.slug}`} className="hover:text-blue-600">
+                  <Link href={`/products?category=${currentProduct.category.slug}`} className="hover:text-blue-600">
                     {currentProduct.category.name}
-                  </a>
+                  </Link>
                 </li>
               </>
             )}

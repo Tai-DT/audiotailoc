@@ -1,0 +1,74 @@
+# Docker Compose Override for Development
+# This file extends docker-compose.yml with development-specific settings
+# Copy this to docker-compose.override.yml and modify as needed
+
+version: '3.8'
+
+services:
+  # Override backend for development
+  backend:
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    # Enable hot reload
+    command: npm run start:dev
+
+  # Override frontend for development
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000/api/v1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      # Exclude .next cache from volume
+      - /app/.next
+    command: npm run dev
+
+  # Add development database (SQLite for quick testing)
+  # Uncomment if you want to use SQLite instead of PostgreSQL
+  # dev-db:
+  #   image: alpine:latest
+  #   volumes:
+  #     - ./backend/dev.db:/app/dev.db
+  #   command: sh -c "touch /app/dev.db && tail -f /dev/null"
+
+  # Add Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    profiles:
+      - dev-tools
+
+  # Add pgAdmin for PostgreSQL management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@audiotailoc.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    profiles:
+      - dev-tools
+
+volumes:
+  pgadmin_data:
+
+# Development networks
+networks:
+  audiotaloc:
+    driver: bridge

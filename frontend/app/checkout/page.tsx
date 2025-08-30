@@ -224,9 +224,9 @@ export default function CheckoutPage() {
           <div className="text-red-500 text-6xl mb-4">❌</div>
           <h2 className="text-2xl font-bold mb-2">Có lỗi xảy ra</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Button asChild>
-            <a href="/cart">Quay lại giỏ hàng</a>
-          </Button>
+          <a href="/cart">
+            <Button>Quay lại giỏ hàng</Button>
+          </a>
         </div>
       </div>
     );
@@ -239,9 +239,9 @@ export default function CheckoutPage() {
           <div className="text-gray-400 text-6xl mb-4">🛒</div>
           <h2 className="text-2xl font-bold mb-2">Giỏ hàng trống</h2>
           <p className="text-gray-600 mb-4">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
-          <Button asChild>
-            <Link href="/products">Mua sắm ngay</Link>
-          </Button>
+          <Link href="/products">
+            <Button>Mua sắm ngay</Button>
+          </Link>
         </div>
       </div>
     );

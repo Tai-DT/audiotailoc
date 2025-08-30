@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -140,9 +141,11 @@ export default function ShoppingCart({
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
                     {/* Product Image */}
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 object-cover rounded"
                     />
                     
@@ -311,7 +314,7 @@ export default function ShoppingCart({
                 </div>
                 {appliedCoupon && (
                   <div className="text-sm text-green-600">
-                    ✓ Mã giảm giá "{appliedCoupon.code}" đã được áp dụng
+                    ✓ Mã giảm giá &ldquo;{appliedCoupon.code}&rdquo; đã được áp dụng
                   </div>
                 )}
               </div>
@@ -359,9 +362,11 @@ export default function ShoppingCart({
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex gap-3">
-                    <img
+                    <Image
                       src={`/api/placeholder/60/60?text=Product+${i}`}
                       alt={`Recommended ${i}`}
+                      width={60}
+                      height={60}
                       className="w-15 h-15 object-cover rounded"
                     />
                     <div className="flex-1">

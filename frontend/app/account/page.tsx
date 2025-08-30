@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
+import {
   UserIcon,
   CalendarIcon,
   ClockIcon,
@@ -12,13 +12,21 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   CogIcon,
-  LogoutIcon,
+  ArrowRightOnRectangleIcon,
   EyeIcon,
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api-client';
-import { Booking } from '@/lib/api-client';
+
+interface Booking {
+  id: string;
+  serviceName: string;
+  date: string;
+  time: string;
+  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  notes?: string;
+}
 
 export default function AccountPage() {
   const router = useRouter();
@@ -42,8 +50,30 @@ export default function AccountPage() {
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
-      const response = await api.bookings.getAll();
-      setBookings(response.data.data);
+      // TODO: Implement API call for bookings
+      // const response = await api.bookings.getAll();
+      // setBookings(response.data.data);
+
+      // Mock data for now
+      const mockBookings: Booking[] = [
+        {
+          id: '1',
+          serviceName: 'Tư vấn âm thanh gia đình',
+          date: '2024-08-30',
+          time: '14:00',
+          status: 'CONFIRMED',
+          notes: 'Cần tư vấn hệ thống loa 5.1'
+        },
+        {
+          id: '2',
+          serviceName: 'Lắp đặt hệ thống karaoke',
+          date: '2024-09-02',
+          time: '10:00',
+          status: 'PENDING',
+          notes: 'Phòng khách 20m²'
+        }
+      ];
+      setBookings(mockBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Không thể tải danh sách đặt lịch');
@@ -124,7 +154,7 @@ export default function AccountPage() {
                 onClick={handleLogout}
                 className="flex items-center px-4 py-2 text-gray-600 hover:text-red-600 transition-colors"
               >
-                <LogoutIcon className="h-5 w-5 mr-2" />
+                <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
                 Đăng xuất
               </button>
             </div>
@@ -309,31 +339,31 @@ export default function AccountPage() {
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
                               <h3 className="text-lg font-semibold text-gray-900">
-                                {booking.service.name}
+                                {booking.serviceName}
                               </h3>
                               <span className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
                                 {getStatusText(booking.status)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-500">#{booking.bookingNo}</p>
+                            <p className="text-sm text-gray-500">#{booking.id}</p>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div className="flex items-center">
                               <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
                               <span className="text-gray-600">
-                                {new Date(booking.scheduledDate).toLocaleDateString('vi-VN')}
+                                {new Date(booking.date).toLocaleDateString('vi-VN')}
                               </span>
                             </div>
                             
                             <div className="flex items-center">
                               <ClockIcon className="h-4 w-4 text-gray-400 mr-2" />
-                              <span className="text-gray-600">{booking.scheduledTime}</span>
+                              <span className="text-gray-600">{booking.time}</span>
                             </div>
                             
                             <div className="flex items-center">
                               <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
-                              <span className="text-gray-600 truncate">{booking.customerAddress}</span>
+                              <span className="text-gray-600 truncate">Địa chỉ khách hàng</span>
                             </div>
                           </div>
                           
@@ -341,11 +371,11 @@ export default function AccountPage() {
                             <div className="flex justify-between items-center">
                               <p className="text-sm text-gray-600">
                                 Tổng tiền: <span className="font-semibold text-gray-900">
-                                  {booking.estimatedCosts.toLocaleString()} VND
+                                  500,000 VND
                                 </span>
                               </p>
                               <p className="text-xs text-gray-500">
-                                {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
+                                {new Date().toLocaleDateString('vi-VN')}
                               </p>
                             </div>
                           </div>

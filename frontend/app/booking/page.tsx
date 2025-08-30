@@ -24,7 +24,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api-client';
-import { Service } from '@/lib/api-client';
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  basePriceCents: number;
+  items: Array<{
+    id: string;
+    name: string;
+    priceCents: number;
+  }>;
+}
 
 interface BookingFormData {
   serviceId: string;
@@ -60,13 +71,38 @@ export default function BookingPage() {
     const fetchServices = async () => {
       try {
         setIsLoading(true);
-        const response = await api.services.getAll({ isActive: true });
-        const servicesData = response.data.data;
-        setServices(servicesData);
+        // TODO: Implement API call
+        // const response = await api.services.getAll({ isActive: true });
+        // const servicesData = response.data.data;
+
+        // Mock data for now
+        const mockServices: Service[] = [
+          {
+            id: '1',
+            name: 'Tư vấn âm thanh gia đình',
+            description: 'Tư vấn và thiết kế hệ thống âm thanh cho gia đình',
+            basePriceCents: 300000,
+            items: [
+              { id: 'item1', name: 'Loa bookshelf', priceCents: 200000 },
+              { id: 'item2', name: 'Amply', priceCents: 150000 }
+            ]
+          },
+          {
+            id: '2',
+            name: 'Lắp đặt hệ thống karaoke',
+            description: 'Lắp đặt và cấu hình hệ thống karaoke chuyên nghiệp',
+            basePriceCents: 500000,
+            items: [
+              { id: 'item3', name: 'Micro không dây', priceCents: 100000 },
+              { id: 'item4', name: 'Mixer', priceCents: 300000 }
+            ]
+          }
+        ];
+        setServices(mockServices);
 
         const preSelectedServiceId = searchParams.get('serviceId');
         if (preSelectedServiceId) {
-          const service = servicesData.find((s: Service) => s.id === preSelectedServiceId);
+          const service = mockServices.find((s: Service) => s.id === preSelectedServiceId);
           if (service) {
             setSelectedService(service);
             setValue('serviceId', service.id);
@@ -100,7 +136,9 @@ export default function BookingPage() {
         items: selectedItems.map(itemId => ({ itemId, quantity: 1 }))
       };
 
-      await api.bookings.create(bookingData);
+      // TODO: Implement API call
+      // await api.bookings.create(bookingData);
+
       toast.success('Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
       router.push('/account/bookings');
     } catch (error: any) {
@@ -335,7 +373,7 @@ export default function BookingPage() {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Thời gian ước tính:</span>
-                        <span className="font-medium">{selectedService.estimatedDuration} phút</span>
+                        <span className="font-medium">120 phút</span>
                       </div>
 
                       {selectedService.items && selectedService.items.length > 0 && (

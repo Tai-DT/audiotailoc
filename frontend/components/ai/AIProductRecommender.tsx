@@ -124,7 +124,7 @@ export default function AIProductRecommender() {
                 Gợi ý từ AI
               </CardTitle>
               <CardDescription>
-                Dựa trên nhu cầu: "{recommendation.query}"
+                Dựa trên nhu cầu: &ldquo;{recommendation.query}&rdquo;
               </CardDescription>
             </CardHeader>
             <CardContent>
