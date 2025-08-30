@@ -15,7 +15,7 @@ import { UsersModule } from './users/users.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
-// import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
+import { CartModule } from './cart/cart.module';
 // import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
 // import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
 import { PaymentsModule } from './payments/payments.module';
@@ -66,7 +66,8 @@ import { FilesModule } from './files/files.module';
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
+    CartModule,
+    // CheckoutModule, OrdersModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],
   controllers: [AppController],
