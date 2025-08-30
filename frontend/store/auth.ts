@@ -48,8 +48,8 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ loading: true, error: null });
           
-          const response = await api.auth.login({ email, password });
-          const { token, user } = response.data.data;
+          const response = await api.login({ email, password });
+          const { token, user } = response.data;
           
           // Store token in localStorage
           if (typeof window !== 'undefined') {
@@ -77,8 +77,8 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ loading: true, error: null });
           
-          const response = await api.auth.register(userData);
-          const { token, user } = response.data.data;
+          const response = await api.register(userData);
+          const { token, user } = response.data;
           
           // Store token in localStorage
           if (typeof window !== 'undefined') {
@@ -137,7 +137,7 @@ export const useAuthStore = create<AuthStore>()(
             return;
           }
 
-          const response = await api.auth.me();
+          const response = await api.getCurrentUser();
           const user = response.data.data;
           
           set({

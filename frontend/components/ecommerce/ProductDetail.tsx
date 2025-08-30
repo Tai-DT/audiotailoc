@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -133,9 +134,11 @@ export default function ProductDetail({
         {/* Product Images */}
         <div className="space-y-4">
           <div className="relative">
-            <img
+            <Image
               src={product.images[selectedImage]}
               alt={product.name}
+              width={400}
+              height={384}
               className="w-full h-96 object-cover rounded-lg"
             />
             
@@ -183,10 +186,12 @@ export default function ProductDetail({
           {product.images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto">
               {product.images.map((image, index) => (
-                <img
+                <Image
                   key={index}
                   src={image}
                   alt={`${product.name} ${index + 1}`}
+                  width={80}
+                  height={80}
                   className={`w-20 h-20 object-cover rounded cursor-pointer border-2 ${
                     selectedImage === index ? 'border-blue-500' : 'border-gray-200'
                   }`}
@@ -420,10 +425,12 @@ export default function ProductDetail({
                       {review.images && review.images.length > 0 && (
                         <div className="flex gap-2 mt-3">
                           {review.images.map((image, index) => (
-                            <img
+                            <Image
                               key={index}
                               src={image}
                               alt={`Review ${index + 1}`}
+                              width={64}
+                              height={64}
                               className="w-16 h-16 object-cover rounded"
                             />
                           ))}
@@ -446,9 +453,11 @@ export default function ProductDetail({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {relatedProducts.map((relatedProduct) => (
                   <div key={relatedProduct.id} className="border rounded-lg p-4">
-                    <img
+                    <Image
                       src={relatedProduct.images[0]}
                       alt={relatedProduct.name}
+                      width={200}
+                      height={128}
                       className="w-full h-32 object-cover rounded mb-2"
                     />
                     <h4 className="font-medium text-sm mb-1">{relatedProduct.name}</h4>

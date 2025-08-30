@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -467,7 +468,7 @@ export default function Checkout({
                     <Checkbox
                       id="terms"
                       checked={formData.acceptTerms}
-                      onCheckedChange={(checked) => handleInputChange('acceptTerms', checked as boolean)}
+                      onCheckedChange={(checked) => handleInputChange('acceptTerms', checked === true)}
                     />
                     <label htmlFor="terms" className="text-sm">
                       Tôi đồng ý với <a href="/terms" className="text-blue-600 underline">điều khoản sử dụng</a> và{' '}
@@ -479,7 +480,7 @@ export default function Checkout({
                     <Checkbox
                       id="marketing"
                       checked={formData.acceptMarketing}
-                      onCheckedChange={(checked) => handleInputChange('acceptMarketing', checked as boolean)}
+                      onCheckedChange={(checked) => handleInputChange('acceptMarketing', checked === true)}
                     />
                     <label htmlFor="marketing" className="text-sm">
                       Nhận thông tin khuyến mãi qua email
@@ -527,9 +528,11 @@ export default function Checkout({
               <div className="space-y-3">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3">
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-cover rounded"
                     />
                     <div className="flex-1">

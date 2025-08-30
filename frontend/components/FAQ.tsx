@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -92,7 +93,7 @@ export default function FAQ({ category, showCategories = true, limit }: FAQProps
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2">
               <Button
-                variant={selectedCategory === '' ? 'default' : 'outline'}
+                variant={selectedCategory === '' ? 'primary' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedCategory('')}
               >
@@ -101,7 +102,7 @@ export default function FAQ({ category, showCategories = true, limit }: FAQProps
               {categories.map(cat => (
                 <Button
                   key={cat}
-                  variant={selectedCategory === cat ? 'default' : 'outline'}
+                  variant={selectedCategory === cat ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory(cat)}
                 >
@@ -134,22 +135,24 @@ export default function FAQ({ category, showCategories = true, limit }: FAQProps
                   .sort((a, b) => a.order - b.order)
                   .map((faq) => (
                     <Card key={faq.id} className="overflow-hidden">
-                      <CardHeader 
-                        className="cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => toggleExpanded(faq.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base font-medium pr-4">
-                            {faq.question}
-                          </CardTitle>
-                          <div className="flex-shrink-0">
-                            {expandedItems.has(faq.id) ? (
-                              <span className="text-blue-600">−</span>
-                            ) : (
-                              <span className="text-blue-600">+</span>
-                            )}
+                      <CardHeader>
+                        <button
+                          className="w-full text-left cursor-pointer hover:bg-gray-50 transition-colors p-4 -m-4"
+                          onClick={() => toggleExpanded(faq.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-medium pr-4">
+                              {faq.question}
+                            </CardTitle>
+                            <div className="flex-shrink-0">
+                              {expandedItems.has(faq.id) ? (
+                                <span className="text-blue-600">−</span>
+                              ) : (
+                                <span className="text-blue-600">+</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        </button>
                       </CardHeader>
                       
                       {expandedItems.has(faq.id) && (
@@ -191,12 +194,12 @@ export default function FAQ({ category, showCategories = true, limit }: FAQProps
               Chúng tôi luôn sẵn sàng hỗ trợ bạn
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild>
-                <a href="/support/contact">Liên hệ hỗ trợ</a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="/support/knowledge-base">Xem tài liệu hướng dẫn</a>
-              </Button>
+              <Link href="/support/contact">
+                <Button>Liên hệ hỗ trợ</Button>
+              </Link>
+              <Link href="/support/knowledge-base">
+                <Button variant="outline">Xem tài liệu hướng dẫn</Button>
+              </Link>
             </div>
           </div>
         </CardContent>

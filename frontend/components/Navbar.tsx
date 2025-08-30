@@ -161,12 +161,12 @@ export default function Navbar() {
               <NotificationCenter />
 
               {/* Cart */}
-              <Button asChild variant="outline" size="sm">
-                <Link href="/cart" className="flex items-center space-x-1">
+              <Link href="/cart" className="flex items-center space-x-1">
+                <Button variant="outline" size="sm">
                   <span>🛒</span>
                   <span>Giỏ hàng</span>
-                </Link>
-              </Button>
+                </Button>
+              </Link>
 
               {/* User Menu */}
               {user ? (
@@ -206,12 +206,12 @@ export default function Navbar() {
                 </DropdownMenu>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href="/login">Đăng nhập</Link>
-                  </Button>
-                  <Button asChild size="sm">
-                    <Link href="/register">Đăng ký</Link>
-                  </Button>
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm">Đăng nhập</Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="sm">Đăng ký</Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -261,21 +261,21 @@ export default function Navbar() {
 
                     {/* Mobile Actions */}
                     <div className="pt-4 border-t space-y-2">
-                      <Button asChild variant="outline" className="w-full justify-start">
-                        <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start">
                           <span className="mr-2">🛒</span>
                           Giỏ hàng
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                       
                       {user ? (
                         <>
-                          <Button asChild variant="ghost" className="w-full justify-start">
-                            <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button variant="ghost" className="w-full justify-start">
                               <User className="h-4 w-4 mr-2" />
                               Tài khoản
-                            </Link>
-                          </Button>
+                            </Button>
+                          </Link>
                           <Button 
                             variant="ghost" 
                             className="w-full justify-start"
@@ -290,16 +290,16 @@ export default function Navbar() {
                         </>
                       ) : (
                         <>
-                          <Button asChild variant="ghost" className="w-full justify-start">
-                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button variant="ghost" className="w-full justify-start">
                               Đăng nhập
-                            </Link>
-                          </Button>
-                          <Button asChild className="w-full justify-start">
-                            <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                            </Button>
+                          </Link>
+                          <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button className="w-full justify-start">
                               Đăng ký
-                            </Link>
-                          </Button>
+                            </Button>
+                          </Link>
                         </>
                       )}
                     </div>

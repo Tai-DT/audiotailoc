@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPrice } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -191,14 +193,14 @@ export default function ProductGrid({
           {/* View Mode */}
           <div className="flex border rounded-lg">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('grid')}
             >
               <Grid3X3 className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              variant={viewMode === 'list' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('list')}
             >
@@ -342,17 +344,20 @@ function ProductCard({
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <Card 
+    <div
       className="group cursor-pointer hover:shadow-lg transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <Card>
       <CardContent className="p-4">
         {/* Product Image */}
         <div className="relative mb-4">
-          <img
+          <Image
             src={product.image}
             alt={product.name}
+            width={300}
+            height={192}
             className="w-full h-48 object-cover rounded-lg"
           />
           
@@ -444,7 +449,8 @@ function ProductCard({
           {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
         </Button>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
@@ -462,9 +468,11 @@ function ProductListItem({
 }) {
   return (
     <Card className="flex gap-4 p-4">
-      <img
+      <Image
         src={product.image}
         alt={product.name}
+        width={128}
+        height={128}
         className="w-32 h-32 object-cover rounded-lg cursor-pointer"
         onClick={() => onProductClick(product)}
       />

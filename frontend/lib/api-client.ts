@@ -1,5 +1,14 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
+// Extend Axios types to include metadata
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    metadata?: {
+      startTime: Date;
+    };
+  }
+}
+
 // API Response Types
 export interface ApiResponse<T = any> {
   success: boolean;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -45,10 +45,6 @@ export default function ServicesPage() {
     fetchServices();
   }, []);
 
-  useEffect(() => {
-    filterServices();
-  }, [services, searchTerm, selectedCategory, selectedType]);
-
   const fetchServices = async () => {
     try {
       setIsLoading(true);
@@ -84,7 +80,7 @@ export default function ServicesPage() {
     }
   };
 
-  const filterServices = () => {
+  const filterServices = useCallback(() => {
     let filtered = services;
 
     if (searchTerm) {
@@ -105,7 +101,11 @@ export default function ServicesPage() {
     // }
 
     setFilteredServices(filtered);
-  };
+  }, [services, searchTerm]);
+
+  useEffect(() => {
+    filterServices();
+  }, [filterServices, selectedCategory, selectedType]);
 
   const categoryLabels = {
     AUDIO_EQUIPMENT: 'Thiết bị âm thanh',
