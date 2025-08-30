@@ -1,31 +1,104 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useProductStore, ProductFilters as FilterType } from '@/store/product-store';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Filter, 
+  X, 
+  Star, 
+  Truck, 
+  Zap,
+  RefreshCw
+} from 'lucide-react';
 
 interface ProductFiltersProps {
-  onFiltersChange: (filters: FilterType) => void;
-  currentFilters: FilterType;
+  onFiltersChange: (filters: any) => void;
+  currentFilters: any;
+  categories?: Array<{ id: string; name: string; count: number }>;
+  brands?: Array<{ id: string; name: string; count: number }>;
 }
 
-export const ProductFilters: React.FC<ProductFiltersProps> = ({
-  onFiltersChange,
+export default function ProductFilters({ 
+  onFiltersChange, 
   currentFilters,
-}) => {
-  const { categories } = useProductStore();
-  const [isOpen, setIsOpen] = useState(false);
+  categories = [],
+  brands = []
+}: ProductFiltersProps) {
+  const [filters, setFilters] = useState({
+    search: '',
+    categoryIds: [] as string[],
+    brandIds: [] as string[],
+    priceRange: [0, 10000000],
+    inStock: false,
+    featured: false,
+    rating: 0,
+    sortBy: 'featured'
+  });
 
-  const handleFilterChange = (key: keyof FilterType, value: any) => {
-    const newFilters = { ...currentFilters, [key]: value };
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    setFilters(currentFilters);
+  }, [currentFilters]);
+
+  const handleFilterChange = (key: string, value: any) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
     onFiltersChange(newFilters);
   };
 
-  const clearFilters = () => {
-    onFiltersChange({
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    });
+  const handleCategoryToggle = (categoryId: string) => {
+    const newCategoryIds = filters.categoryIds.includes(categoryId)
+      ? filters.categoryIds.filter(id => id !== categoryId)
+      : [...filters.categoryIds, categoryId];
+    handleFilterChange('categoryIds', newCategoryIds);
   };
+
+  const handleBrandToggle = (brandId: string) => {
+    const newBrandIds = filters.brandIds.includes(brandId)
+      ? filters.brandIds.filter(id => id !== brandId)
+      : [...filters.brandIds, brandId];
+    handleFilterChange('brandIds', newBrandIds);
+  };
+
+  const handlePriceRangeChange = (value: number[]) => {
+    handleFilterChange('priceRange', value);
+  };
+
+  const handleRatingChange = (rating: number) => {
+    handleFilterChange('rating', rating);
+  };
+
+  const handleSortChange = (sortBy: string) => {
+    handleFilterChange('sortBy', sortBy);
+  };
+
+  const clearAllFilters = () => {
+    const defaultFilters = {
+      search: '',
+      categoryIds: [],
+      brandIds: [],
+      priceRange: [0, 10000000],
+      inStock: false,
+      featured: false,
+      rating: 0,
+      sortBy: 'featured'
+    };
+    setFilters(defaultFilters);
+    onFiltersChange(defaultFilters);
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => {
+    if (Array.isArray(value)) {
+      return value.length > 0 && (Array.isArray(value) ? value.some(v => v !== 0) : value !== 0);
+    }
+    return value !== '' && value !== false && value !== 0;
+  });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -34,122 +107,266 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     }).format(price);
   };
 
+  const sortOptions = [
+    { value: 'featured', label: 'Nổi bật' },
+    { value: 'newest', label: 'Mới nhất' },
+    { value: 'price-low', label: 'Giá thấp → cao' },
+    { value: 'price-high', label: 'Giá cao → thấp' },
+    { value: 'rating', label: 'Đánh giá cao nhất' },
+    { value: 'name-asc', label: 'Tên A-Z' },
+    { value: 'name-desc', label: 'Tên Z-A' }
+  ];
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Bộ lọc sản phẩm</h3>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="lg:hidden text-gray-500 hover:text-gray-700"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-        </button>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Filter className="w-5 h-5" />
+          Bộ lọc
+        </h3>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAllFilters}
+            className="text-red-600 hover:text-red-700"
+          >
+            <RefreshCw className="w-4 h-4 mr-1" />
+            Xóa tất cả
+          </Button>
+        )}
       </div>
 
-      <div className={`lg:block ${isOpen ? 'block' : 'hidden'}`}>
-        {/* Search */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tìm kiếm
-          </label>
-          <input
-            type="text"
-            value={currentFilters.search || ''}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
+      {/* Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <Input
             placeholder="Tìm kiếm sản phẩm..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+            className="w-full"
           />
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Categories */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Danh mục
-          </label>
-          <select
-            value={currentFilters.category || ''}
-            onChange={(e) => handleFilterChange('category', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tất cả danh mục</option>
+      {/* Sort Options */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Sắp xếp</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {sortOptions.map((option) => (
+            <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="sortBy"
+                value={option.value}
+                checked={filters.sortBy === option.value}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="text-blue-600"
+              />
+              <span className="text-sm">{option.label}</span>
+            </label>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Categories */}
+      {categories.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Danh mục</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
             {categories.map((category) => (
-              <option key={category.id} value={category.slug}>
-                {category.name}
-              </option>
+              <label key={category.id} className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={filters.categoryIds.includes(category.id)}
+                    onCheckedChange={() => handleCategoryToggle(category.id)}
+                  />
+                  <span className="text-sm">{category.name}</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {category.count}
+                </Badge>
+              </label>
             ))}
-          </select>
-        </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Price Range */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Khoảng giá
-          </label>
-          <div className="space-y-2">
-            <input
-              type="number"
-              placeholder="Giá tối thiểu"
-              value={currentFilters.minPrice || ''}
-              onChange={(e) => handleFilterChange('minPrice', e.target.value ? Number(e.target.value) : undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="number"
-              placeholder="Giá tối đa"
-              value={currentFilters.maxPrice || ''}
-              onChange={(e) => handleFilterChange('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {/* Brands */}
+      {brands.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Thương hiệu</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {brands.map((brand) => (
+              <label key={brand.id} className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={filters.brandIds.includes(brand.id)}
+                    onCheckedChange={() => handleBrandToggle(brand.id)}
+                  />
+                  <span className="text-sm">{brand.name}</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {brand.count}
+                </Badge>
+              </label>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Price Range */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Khoảng giá</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Slider
+            value={filters.priceRange}
+            onValueChange={handlePriceRangeChange}
+            max={10000000}
+            min={0}
+            step={100000}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>{formatPrice(filters.priceRange[0])}</span>
+            <span>{formatPrice(filters.priceRange[1])}</span>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Featured Products */}
-        <div className="mb-6">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={currentFilters.featured || false}
-              onChange={(e) => handleFilterChange('featured', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      {/* Rating Filter */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Đánh giá</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {[5, 4, 3, 2, 1].map((rating) => (
+            <label key={rating} className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="rating"
+                value={rating}
+                checked={filters.rating === rating}
+                onChange={(e) => handleRatingChange(Number(e.target.value))}
+                className="text-blue-600"
+              />
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${
+                      i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-sm ml-1">& trở lên</span>
+              </div>
+            </label>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Other Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Tùy chọn khác</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <Checkbox
+              checked={filters.inStock}
+              onCheckedChange={(checked) => handleFilterChange('inStock', checked)}
             />
-            <span className="ml-2 text-sm text-gray-700">Chỉ sản phẩm nổi bật</span>
+            <div className="flex items-center gap-1">
+              <Truck className="w-4 h-4 text-green-600" />
+              <span className="text-sm">Còn hàng</span>
+            </div>
           </label>
-        </div>
 
-        {/* Sort By */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Sắp xếp theo
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <Checkbox
+              checked={filters.featured}
+              onCheckedChange={(checked) => handleFilterChange('featured', checked)}
+            />
+            <div className="flex items-center gap-1">
+              <Zap className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm">Sản phẩm nổi bật</span>
+            </div>
           </label>
-          <select
-            value={`${currentFilters.sortBy}-${currentFilters.sortOrder}`}
-            onChange={(e) => {
-              const [sortBy, sortOrder] = e.target.value.split('-');
-              handleFilterChange('sortBy', sortBy);
-              handleFilterChange('sortOrder', sortOrder);
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="createdAt-desc">Mới nhất</option>
-            <option value="createdAt-asc">Cũ nhất</option>
-            <option value="name-asc">Tên A-Z</option>
-            <option value="name-desc">Tên Z-A</option>
-            <option value="priceCents-asc">Giá tăng dần</option>
-            <option value="priceCents-desc">Giá giảm dần</option>
-          </select>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Clear Filters */}
-        <button
-          onClick={clearFilters}
-          className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-        >
-          Xóa bộ lọc
-        </button>
-      </div>
+      {/* Active Filters Display */}
+      {hasActiveFilters && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap gap-2">
+              {filters.search && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Tìm kiếm: {filters.search}
+                  <button
+                    onClick={() => handleFilterChange('search', '')}
+                    className="ml-1 text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              
+              {filters.categoryIds.map((id) => {
+                const category = categories.find(c => c.id === id);
+                return category ? (
+                  <Badge key={id} variant="secondary" className="bg-green-100 text-green-800">
+                    {category.name}
+                    <button
+                      onClick={() => handleCategoryToggle(id)}
+                      className="ml-1 text-green-600 hover:text-green-800"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ) : null;
+              })}
+              
+              {filters.brandIds.map((id) => {
+                const brand = brands.find(b => b.id === id);
+                return brand ? (
+                  <Badge key={id} variant="secondary" className="bg-purple-100 text-purple-800">
+                    {brand.name}
+                    <button
+                      onClick={() => handleBrandToggle(id)}
+                      className="ml-1 text-purple-600 hover:text-purple-800"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ) : null;
+              })}
+              
+              {filters.rating > 0 && (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                  {filters.rating}⭐ trở lên
+                  <button
+                    onClick={() => handleRatingChange(0)}
+                    className="ml-1 text-yellow-600 hover:text-yellow-800"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
-};
+}
