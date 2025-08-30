@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,8 @@ import {
   Eye,
   Settings,
   Calendar,
-  Activity
+  Activity,
+  ArrowRight
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
@@ -134,6 +136,54 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Quick Navigation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Link href="/admin/products">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Package className="h-8 w-8 text-blue-600 mb-2" />
+                  <h3 className="font-medium">Quản lý sản phẩm</h3>
+                  <p className="text-sm text-gray-600">Thêm, sửa, xóa sản phẩm</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/users">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Users className="h-8 w-8 text-green-600 mb-2" />
+                  <h3 className="font-medium">Quản lý người dùng</h3>
+                  <p className="text-sm text-gray-600">Quản lý tài khoản người dùng</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/orders">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <ShoppingCart className="h-8 w-8 text-purple-600 mb-2" />
+                  <h3 className="font-medium">Quản lý đơn hàng</h3>
+                  <p className="text-sm text-gray-600">Xem và xử lý đơn hàng</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
