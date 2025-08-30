@@ -36,11 +36,9 @@ async function main() {
       code: 'WELCOME10',
       name: 'Welcome 10%',
       description: 'Giảm 10% cho khách hàng mới',
-      type: 'PERCENT',
+      type: 'PERCENTAGE',
       value: 10,
-      minAmount: 500000,
-      startDate: now,
-      endDate: nextYear,
+      expiresAt: nextYear,
       isActive: true,
     },
   });

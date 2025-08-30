@@ -1,226 +1,148 @@
 import { create } from 'zustand';
-import apiClient from '@/lib/api-client';
 
 export interface Product {
   id: string;
-  name: string;
   slug: string;
-  description: string;
+  name: string;
+  description?: string;
   priceCents: number;
   imageUrl?: string;
-  images?: string[];
-  categoryId: string;
+  images?: string;
+  categoryId?: string;
+  featured: boolean;
+  isActive: boolean;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
   category?: {
     id: string;
     name: string;
     slug: string;
   };
-  isActive: boolean;
-  featured: boolean;
-  stockQuantity: number;
-  createdAt: string;
-  updatedAt: string;
+  stockQuantity?: number;
 }
 
 export interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  imageUrl?: string;
   parentId?: string;
+  isActive: boolean;
 }
 
 export interface ProductFilters {
   category?: string;
-  search?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  featured?: boolean;
-  sortBy?: 'name' | 'priceCents' | 'createdAt';
+  priceMin?: number;
+  priceMax?: number;
+  sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  search?: string;
 }
 
-export interface ProductState {
+export interface Pagination {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+interface ProductState {
   products: Product[];
-  categories: Category[];
   currentProduct: Product | null;
+  categories: Category[];
+  pagination: Pagination;
   filters: ProductFilters;
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-  };
   isLoading: boolean;
   error: string | null;
 }
 
-export interface ProductActions {
-  fetchProducts: (filters?: ProductFilters, page?: number) => Promise<void>;
+interface ProductActions {
+  fetchProducts: (filters: ProductFilters, page?: number) => Promise<void>;
   fetchProduct: (slug: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
-  searchProducts: (query: string) => Promise<Product[]>;
-  setFilters: (filters: Partial<ProductFilters>) => void;
-  clearFilters: () => void;
-  setLoading: (loading: boolean) => void;
+  setFilters: (filters: ProductFilters) => void;
   clearError: () => void;
 }
 
-export type ProductStore = ProductState & ProductActions;
-
 const initialState: ProductState = {
   products: [],
-  categories: [],
   currentProduct: null,
-  filters: {
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  },
-  pagination: {
-    page: 1,
-    pageSize: 12,
-    total: 0,
-  },
+  categories: [],
+  pagination: { page: 1, pageSize: 20, total: 0 },
+  filters: { sortBy: 'createdAt', sortOrder: 'desc' },
   isLoading: false,
   error: null,
 };
 
-export const useProductStore = create<ProductStore>((set, get) => ({
+export const useProductStore = create<ProductState & ProductActions>((set, get) => ({
   ...initialState,
 
-  fetchProducts: async (filters = {}, page = 1) => {
-    const currentFilters = { ...get().filters, ...filters };
-    
+  fetchProducts: async (filters: ProductFilters, page = 1) => {
     set({ isLoading: true, error: null });
-
+    
     try {
-      const params = {
-        page,
-        pageSize: get().pagination.pageSize,
-        ...currentFilters,
-      };
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: get().pagination.pageSize.toString(),
+        ...(filters.category && { category: filters.category }),
+        ...(filters.search && { search: filters.search }),
+        ...(filters.sortBy && { sortBy: filters.sortBy }),
+        ...(filters.sortOrder && { sortOrder: filters.sortOrder }),
+      });
 
-      const response = await apiClient.getProducts(params);
-      
-      if (response.success) {
+      const response = await fetch(`http://localhost:8000/api/v1/catalog/products?${params}`);
+      const data = await response.json();
+
+      if (data.success) {
         set({
-          products: response.data.items,
+          products: data.data.items || [],
           pagination: {
-            page: response.data.page,
-            pageSize: response.data.pageSize,
-            total: response.data.total,
+            page,
+            pageSize: data.data.pageSize || 20,
+            total: data.data.total || 0,
           },
-          filters: currentFilters,
+          filters,
           isLoading: false,
         });
       } else {
-        set({
-          isLoading: false,
-          error: response.message || 'Failed to fetch products',
-        });
+        set({ error: data.message || 'Failed to fetch products', isLoading: false });
       }
     } catch (error: any) {
-      set({
-        isLoading: false,
-        error: error.message || 'Failed to fetch products',
-      });
+      set({ error: error.message || 'Failed to fetch products', isLoading: false });
     }
   },
 
   fetchProduct: async (slug: string) => {
     set({ isLoading: true, error: null });
-
+    
     try {
-      const response = await apiClient.getProduct(slug);
-      
-      if (response.success) {
-        set({
-          currentProduct: response.data,
-          isLoading: false,
-        });
+      const response = await fetch(`http://localhost:8000/api/v1/catalog/products/${slug}`);
+      const data = await response.json();
+
+      if (data.success) {
+        set({ currentProduct: data.data, isLoading: false });
       } else {
-        set({
-          isLoading: false,
-          error: response.message || 'Failed to fetch product',
-        });
+        set({ error: data.message || 'Product not found', isLoading: false });
       }
     } catch (error: any) {
-      set({
-        isLoading: false,
-        error: error.message || 'Failed to fetch product',
-      });
+      set({ error: error.message || 'Failed to fetch product', isLoading: false });
     }
   },
 
   fetchCategories: async () => {
-    set({ isLoading: true, error: null });
-
     try {
-      const response = await apiClient.getCategories();
-      
-      if (response.success) {
-        set({
-          categories: response.data,
-          isLoading: false,
-        });
-      } else {
-        set({
-          isLoading: false,
-          error: response.message || 'Failed to fetch categories',
-        });
+      const response = await fetch('http://localhost:8000/api/v1/catalog/categories');
+      const data = await response.json();
+
+      if (data.success) {
+        set({ categories: data.data || [] });
       }
-    } catch (error: any) {
-      set({
-        isLoading: false,
-        error: error.message || 'Failed to fetch categories',
-      });
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
     }
   },
 
-  searchProducts: async (query: string) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const response = await apiClient.searchProducts(query);
-      
-      if (response.success) {
-        set({
-          products: response.data,
-          isLoading: false,
-        });
-        return response.data;
-      } else {
-        set({
-          isLoading: false,
-          error: response.message || 'Search failed',
-        });
-        return [];
-      }
-    } catch (error: any) {
-      set({
-        isLoading: false,
-        error: error.message || 'Search failed',
-      });
-      return [];
-    }
-  },
-
-  setFilters: (filters: Partial<ProductFilters>) => {
-    const currentFilters = { ...get().filters, ...filters };
-    set({ filters: currentFilters });
-  },
-
-  clearFilters: () => {
-    set({
-      filters: {
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      },
-    });
-  },
-
-  setLoading: (loading: boolean) => {
-    set({ isLoading: loading });
+  setFilters: (filters: ProductFilters) => {
+    set({ filters });
   },
 
   clearError: () => {

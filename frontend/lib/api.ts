@@ -1,24 +1,67 @@
-import { cookies } from 'next/headers';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-export function getApiBase(): string {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  return base;
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message: string;
+  timestamp: string;
+  path: string;
+  method: string;
 }
 
-export async function authHeaders(): Promise<HeadersInit> {
-  const c = await cookies();
-  const token = c.get('accessToken')?.value;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+class ApiClient {
+  private baseURL: string;
+
+  constructor(baseURL: string) {
+    this.baseURL = baseURL;
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    const response = await fetch(url, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return data;
+  }
+
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+
+  async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async put<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
+  }
 }
 
-export async function apiFetch<T = any>(path: string, init: RequestInit = {}): Promise<T> {
-  const base = getApiBase();
-  const headers = new Headers(init.headers || {});
-  const auth = await authHeaders();
-  Object.entries(auth).forEach(([k, v]) => headers.set(k, String(v)));
-  const res = await fetch(`${base}${path}`, { ...init, headers, cache: 'no-store' });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  return (await res.json()) as T;
-}
-
+export const apiClient = new ApiClient(API_BASE_URL);
+export default apiClient;
