@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Button } from '../../shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -11,11 +11,35 @@ import {
   CheckCircleIcon,
   PhoneIcon,
   EnvelopeIcon,
-  MapPinIcon
+  MapPinIcon,
+  ShoppingCartIcon,
+  CogIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch featured products from API
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/catalog/products?featured=true');
+        const data = await response.json();
+        setFeaturedProducts(data.data?.items || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -212,6 +236,81 @@ export default function HomePage() {
               </Link>
             </Button>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Sản phẩm nổi bật
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Khám phá những sản phẩm audio chất lượng cao được yêu thích nhất
+            </p>
+          </motion.div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-white rounded-lg h-64"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredProducts.map((product: any, index: number) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.1 }}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow group">
+                    <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                      <img
+                        src={product.imageUrl || 'https://placehold.co/400x300?text=Audio+Product'}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{product.name}</CardTitle>
+                      <CardDescription>{product.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between items-center">
+                        <span className="text-2xl font-bold text-primary-600">
+                          {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                          }).format(product.priceCents / 100)}
+                        </span>
+                        <Button asChild size="sm">
+                          <Link href={`/products/${product.slug}`}>Xem chi tiết</Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          <div className="text-center mt-12">
+            <Button asChild size="lg" variant="outline">
+              <Link href="/products">
+                Xem tất cả sản phẩm
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 

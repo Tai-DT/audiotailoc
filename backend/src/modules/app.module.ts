@@ -15,15 +15,16 @@ import { UsersModule } from './users/users.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
-// import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
-// import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
-// import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
+import { CartModule } from './cart/cart.module';
+// import { PromotionsModule } from './promotions/promotions.module'; // Fixing schema issues
+// import { CheckoutModule } from './checkout/checkout.module'; // Fixing schema issues
 import { PaymentsModule } from './payments/payments.module';
-// import { OrdersModule } from './orders/orders.module'; // Disabled due to schema mismatch
-// import { InventoryModule } from './inventory/inventory.module'; // Disabled due to schema mismatch
+import { OrdersModule } from './orders/orders.module';
+// import { InventoryModule } from './inventory/inventory.module'; // Fixing schema issues
 
 // AI and ML modules
 import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
+import { AnalyticsModule } from './analytics/analytics.module';
 
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
@@ -32,13 +33,13 @@ import { NotificationsModule } from './notifications/notifications.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
-// import { SearchModule } from './search/search.module'; // Disabled due to schema mismatch
-// Removed ApiVersioningModule - using single v1 API
+// import { SearchModule } from './search/search.module'; // Will enable after fixing
+// import { WebhooksModule } from './webhooks/webhooks.module'; // Fixing schema issues
 
-// Service Management modules - DISABLED FOR MINIMAL STARTUP
-// import { ServicesModule } from './services/services.module'; // Disabled due to schema mismatch
-// import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
-// import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
+// Service Management modules - FIXING SCHEMA ISSUES
+// import { ServicesModule } from './services/services.module'; // Fixing schema issues
+// import { BookingModule } from './booking/booking.module'; // Fixing schema issues
+// import { TechniciansModule } from './technicians/technicians.module'; // Fixing schema issues
 
 @Module({
   imports: [
@@ -57,17 +58,25 @@ import { FilesModule } from './files/files.module';
     
     // AI and Intelligence - Minimal working version
     AiModule,
+    AnalyticsModule,
     
     // Support and File Management - ENABLED
     SupportModule,
     NotificationsModule,
     FilesModule,
     
-    // E-commerce modules - ENABLING STEP BY STEP
+    // E-commerce modules - CORE ENABLED
     CatalogModule,
+    CartModule,
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
-    // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
+    OrdersModule,
+    // PromotionsModule, CheckoutModule, InventoryModule (fixing schema)
+    
+    // Additional modules - CORE ENABLED  
+    // SearchModule, WebhooksModule (will enable after fixing)
+    
+    // Service Management modules - WILL ENABLE AFTER FIXING
+    // ServicesModule, BookingModule, TechniciansModule,
   ],
   controllers: [AppController],
 })

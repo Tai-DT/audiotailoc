@@ -1,18 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import apiClient from '@/lib/api-client';
 
 export interface User {
   id: string;
-  name: string;
   email: string;
-  role: 'USER' | 'ADMIN';
-  avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  name?: string;
+  phone?: string;
+  role: string;
 }
 
-export interface AuthState {
+interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -20,16 +17,13 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface AuthActions {
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+interface AuthActions {
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
   logout: () => void;
-  getCurrentUser: () => Promise<void>;
   clearError: () => void;
-  setLoading: (loading: boolean) => void;
+  checkAuth: () => Promise<void>;
 }
-
-export type AuthStore = AuthState & AuthActions;
 
 const initialState: AuthState = {
   user: null,
@@ -39,7 +33,7 @@ const initialState: AuthState = {
   error: null,
 };
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set, get) => ({
       ...initialState,
@@ -48,119 +42,84 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const response = await apiClient.login({ email, password });
+          const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
           
-          if (response.success) {
+          const data = await response.json();
+          
+          if (data.success) {
             set({
-              user: response.data.user,
-              token: response.data.token,
+              user: data.data.user,
+              token: data.data.accessToken,
               isAuthenticated: true,
               isLoading: false,
-              error: null,
             });
-            return true;
           } else {
-            set({
-              isLoading: false,
-              error: response.message || 'Login failed',
-            });
-            return false;
+            set({ error: data.message || 'Login failed', isLoading: false });
           }
         } catch (error: any) {
-          set({
-            isLoading: false,
-            error: error.message || 'Login failed',
-          });
-          return false;
+          set({ error: error.message || 'Login failed', isLoading: false });
         }
       },
 
-      register: async (name: string, email: string, password: string) => {
+      register: async (data) => {
         set({ isLoading: true, error: null });
         
         try {
-          const response = await apiClient.register({ name, email, password });
+          const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
           
-          if (response.success) {
-            set({
-              user: response.data.user,
-              token: response.data.token,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-            return true;
+          const result = await response.json();
+          
+          if (result.success) {
+            // Auto login after successful registration
+            await get().login(data.email, data.password);
           } else {
-            set({
-              isLoading: false,
-              error: response.message || 'Registration failed',
-            });
-            return false;
+            set({ error: result.message || 'Registration failed', isLoading: false });
           }
         } catch (error: any) {
-          set({
-            isLoading: false,
-            error: error.message || 'Registration failed',
-          });
-          return false;
+          set({ error: error.message || 'Registration failed', isLoading: false });
         }
       },
 
-      logout: async () => {
-        try {
-          await apiClient.logout();
-        } catch (error) {
-          // Ignore logout errors
-        } finally {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
-        }
-      },
-
-      getCurrentUser: async () => {
-        const { token } = get();
-        if (!token) return;
-
-        set({ isLoading: true });
-        
-        try {
-          const response = await apiClient.getCurrentUser();
-          
-          if (response.success) {
-            set({
-              user: response.data,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-          } else {
-            set({
-              user: null,
-              token: null,
-              isAuthenticated: false,
-              isLoading: false,
-            });
-          }
-        } catch (error) {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
-        }
+      logout: () => {
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          error: null,
+        });
       },
 
       clearError: () => {
         set({ error: null });
       },
 
-      setLoading: (loading: boolean) => {
-        set({ isLoading: loading });
+      checkAuth: async () => {
+        const { token } = get();
+        if (!token) return;
+
+        try {
+          const response = await fetch('http://localhost:8000/api/v1/auth/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            set({ user: data.data, isAuthenticated: true });
+          } else {
+            get().logout();
+          }
+        } catch (error) {
+          get().logout();
+        }
       },
     }),
     {

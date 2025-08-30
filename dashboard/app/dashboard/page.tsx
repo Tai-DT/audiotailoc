@@ -1,8 +1,53 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { MainLayout } from "../../components/layout/main-layout"
-import { Users, Music, TrendingUp, DollarSign, Calendar, MessageSquare } from "lucide-react"
+import { Users, Music, TrendingUp, DollarSign, Calendar, MessageSquare, Package, ShoppingCart } from "lucide-react"
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Mock data for now - will connect to real API later
+    const mockData = {
+      sales: {
+        totalRevenue: 125000000, // 125M VND
+        totalOrders: 156,
+        averageOrderValue: 800000, // 800K VND
+        conversionRate: 0.032
+      },
+      customers: {
+        totalCustomers: 1234,
+        newCustomers: 45,
+        returningCustomers: 89,
+        customerRetention: 0.78
+      },
+      inventory: {
+        totalProducts: 89,
+        lowStockProducts: 5,
+        outOfStockProducts: 2,
+        inventoryValue: 450000000 // 450M VND
+      },
+      recentOrders: [
+        { id: '1', orderNo: 'ATL-001', customerName: 'Nguyễn Văn A', totalCents: 299000000, status: 'COMPLETED', createdAt: new Date() },
+        { id: '2', orderNo: 'ATL-002', customerName: 'Trần Thị B', totalCents: 199000000, status: 'PENDING', createdAt: new Date() }
+      ]
+    };
+    
+    setTimeout(() => {
+      setDashboardData(mockData);
+      setLoading(false);
+    }, 1000);
+  }, []);
+
+  const formatPrice = (priceCents: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(priceCents / 100);
+  };
   return (
     <MainLayout>
       <div className="flex-1 space-y-6 p-6">
@@ -17,59 +62,76 @@ export default function DashboardPage() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
-              <p className="text-xs text-muted-foreground">
-                +20.1% so với tháng trước
-              </p>
-            </CardContent>
-          </Card>
+        {loading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tổng khách hàng</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.customers?.totalCustomers || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  +{dashboardData?.customers?.newCustomers || 0} khách mới
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Karaoke Rooms</CardTitle>
-              <Music className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">56</div>
-              <p className="text-xs text-muted-foreground">
-                +12% so với tháng trước
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tổng sản phẩm</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.inventory?.totalProducts || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {dashboardData?.inventory?.lowStockProducts || 0} sắp hết hàng
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Doanh thu</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$45,231</div>
-              <p className="text-xs text-muted-foreground">
-                +180.1% so với tháng trước
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Doanh thu</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatPrice(dashboardData?.sales?.totalRevenue * 100 || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Trung bình {formatPrice(dashboardData?.sales?.averageOrderValue * 100 || 0)}/đơn
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bookings</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+573</div>
-              <p className="text-xs text-muted-foreground">
-                +201 so với tháng trước
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Đơn hàng</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.sales?.totalOrders || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Tỷ lệ chuyển đổi {((dashboardData?.sales?.conversionRate || 0) * 100).toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Charts Section */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

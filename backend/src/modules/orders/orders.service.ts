@@ -104,7 +104,6 @@ export class OrdersService {
           orderNo,
           userId: orderData.userId || null,
           status: 'PENDING',
-          subtotalCents,
           totalCents: subtotalCents,
           shippingAddress: orderData.shippingAddress || {},
           items: {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { apiFetch } from '../../lib/api';
+import { apiClient } from '@/lib/api';
 
 export default async function CheckoutReturnPage({ searchParams }: { searchParams: Promise<{ orderNo?: string }> }) {
   const sp = await searchParams;
