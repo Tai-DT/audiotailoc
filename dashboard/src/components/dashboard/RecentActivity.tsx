@@ -10,7 +10,7 @@ import {
   ServerIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline'
-import { RecentActivity as RecentActivityType } from '@/contexts/DashboardContext'
+import { RecentActivity as RecentActivityType } from '@/src/contexts/DashboardContext'
 
 interface RecentActivityProps {
   activities: RecentActivityType[]

@@ -11,8 +11,8 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
-import { useTheme } from '@/providers/ThemeProvider'
-import { useDashboard } from '@/contexts/DashboardContext'
+import { useTheme } from '@/src/providers/ThemeProvider'
+import { useDashboard } from '@/src/contexts/DashboardContext'
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void

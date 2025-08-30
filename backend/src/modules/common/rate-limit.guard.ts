@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, BadRequestException } from '@nestjs/common';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {

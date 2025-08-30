@@ -1,4 +1,4 @@
-// Simplified Prisma Schema for Audio Tài Lộc (SQLite compatible)
+// Complete Prisma Schema for Audio Tài Lộc with all required models
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +6,51 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+enum ServiceCategory {
+  INSTALLATION
+  MAINTENANCE
+  REPAIR
+  LIQUIDATION
+  RENTAL
+  CONSULTATION
+  DELIVERY
+  OTHER
+}
+
+enum ServiceType {
+  AUDIO_EQUIPMENT
+  HOME_THEATER
+  PROFESSIONAL_SOUND
+  LIGHTING
+  CONSULTATION
+  MAINTENANCE
+  OTHER
+}
+
+enum ServiceBookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
 }
 
 // User Model
@@ -19,19 +64,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders         Order[]
-  carts          Cart[]
-  chatSessions   ChatSession[]
-  notifications  Notification[]
-  wishlistItems  WishlistItem[]
-  reviews        ProductReview[]
-  searchQueries  SearchQuery[]
-  productViews   ProductView[]
-  serviceViews   ServiceView[]
-  questions      CustomerQuestion[]
-  loyaltyAccount LoyaltyAccount?
-  projects       Project[]
-  ServiceBooking ServiceBooking[]
+  orders       Order[]
+  carts        Cart[]
+  chatSessions ChatSession[]
+  notifications Notification[]
+  wishlistItems WishlistItem[]
+  reviews      ProductReview[]
 
   @@map("users")
 }
@@ -52,14 +90,12 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category         Category?            @relation(fields: [categoryId], references: [id])
-  cartItems        CartItem[]
-  orderItems       OrderItem[]
-  reviews          ProductReview[]
-  inventory        Inventory?
-  wishlistItems    WishlistItem[]
-  views            ProductView[]
-  knowledgeEntries KnowledgeBaseEntry[]
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  reviews    ProductReview[]
+  inventory  Inventory?
+  wishlistItems WishlistItem[]
 
   @@map("products")
 }
@@ -97,7 +133,7 @@ model Cart {
   @@map("carts")
 }
 
-// Cart Item Model  
+// Cart Item Model
 model CartItem {
   id        String   @id @default(cuid())
   cartId    String
@@ -120,16 +156,15 @@ model Order {
   orderNo         String   @unique
   userId          String
   totalCents      Int
-  status          String   @default("PENDING")
+  status          OrderStatus @default(PENDING)
   shippingAddress String?
   promotionCode   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user     User             @relation(fields: [userId], references: [id])
+  user     User        @relation(fields: [userId], references: [id])
   items    OrderItem[]
   payments Payment[]
-  paymentIntents PaymentIntent[]
 
   @@map("orders")
 }
@@ -154,17 +189,15 @@ model OrderItem {
 model Payment {
   id            String   @id @default(cuid())
   orderId       String
-  intentId      String?
   provider      String
   amountCents   Int
-  status        String   @default("PENDING")
+  status        PaymentStatus @default(PENDING)
   transactionId String?
   metadata      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  order  Order         @relation(fields: [orderId], references: [id])
-  intent PaymentIntent? @relation(fields: [intentId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
 
   @@map("payments")
 }
@@ -189,21 +222,17 @@ model Service {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  views    ServiceView[]
-  bookings ServiceBooking[]
-  items    ServiceItem[]
-
   @@map("services")
 }
 
 // Notification Model
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  type      String   @default("INFO")
-  isRead    Boolean  @default(false)
+  id      String   @id @default(cuid())
+  userId  String
+  title   String
+  message String
+  type    String   @default("INFO")
+  isRead  Boolean  @default(false)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -263,7 +292,6 @@ model ChatSession {
   userId    String?
   guestId   String?
   status    String   @default("ACTIVE")
-  source    String   @default("WEB") // WEB, ZALO, MOBILE
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -277,10 +305,9 @@ model ChatSession {
 model ChatMessage {
   id         String   @id @default(cuid())
   sessionId  String
-  role       String   @default("user") // USER, ASSISTANT, STAFF, SYSTEM
   content    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isFromUser Boolean  @default(true)
+  timestamp  DateTime @default(now())
 
   session ChatSession @relation(fields: [sessionId], references: [id])
 
@@ -299,6 +326,8 @@ model Page {
 
   @@map("pages")
 }
+
+// Additional Models for Complete Functionality
 
 // Search Query Model
 model SearchQuery {
@@ -342,12 +371,12 @@ model ServiceView {
 
 // Customer Question Model
 model CustomerQuestion {
-  id           String   @id @default(cuid())
-  userId       String?
-  question     String
-  category     String?
+  id          String   @id @default(cuid())
+  userId      String?
+  question    String
+  category    String?
   satisfaction Int?
-  timestamp    DateTime @default(now())
+  timestamp   DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
 
@@ -364,9 +393,6 @@ model Technician {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  bookings  ServiceBooking[]
-  schedules TechnicianSchedule[]
-
   @@map("technicians")
 }
 
@@ -379,41 +405,39 @@ model ServiceItem {
   quantity  Int
   createdAt DateTime @default(now())
 
-  service      Service              @relation(fields: [serviceId], references: [id])
-  bookingItems ServiceBookingItem[]
+  service Service @relation(fields: [serviceId], references: [id])
 
   @@map("service_items")
 }
 
 // Service Booking Model
 model ServiceBooking {
-  id           String    @id @default(cuid())
-  userId       String
-  serviceId    String
+  id          String   @id @default(cuid())
+  userId      String
+  serviceId   String
   technicianId String?
-  status       String    @default("PENDING")
-  scheduledAt  DateTime?
-  completedAt  DateTime?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  status      ServiceBookingStatus @default(PENDING)
+  scheduledAt DateTime?
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user       User?                @relation(fields: [userId], references: [id])
-  service    Service?             @relation(fields: [serviceId], references: [id])
-  technician Technician?          @relation(fields: [technicianId], references: [id])
-  items      ServiceBookingItem[]
+  user       User?       @relation(fields: [userId], references: [id])
+  service    Service?    @relation(fields: [serviceId], references: [id])
+  technician Technician? @relation(fields: [technicianId], references: [id])
 
   @@map("service_bookings")
 }
 
 // Service Booking Item Model
 model ServiceBookingItem {
-  id            String   @id @default(cuid())
-  bookingId     String
+  id         String @id @default(cuid())
+  bookingId  String
   serviceItemId String
-  quantity      Int
-  price         Int
-  createdAt     DateTime @default(now())
+  quantity   Int
+  price      Int
+  createdAt  DateTime @default(now())
 
   booking     ServiceBooking @relation(fields: [bookingId], references: [id])
   serviceItem ServiceItem    @relation(fields: [serviceItemId], references: [id])
@@ -438,15 +462,15 @@ model TechnicianSchedule {
 
 // Promotion Model
 model Promotion {
-  id          String    @id @default(cuid())
-  code        String    @unique
+  id          String   @id @default(cuid())
+  code        String   @unique
   name        String
   description String?
-  type        String    @default("PERCENTAGE")
+  type        String   @default("PERCENTAGE")
   value       Int
-  isActive    Boolean   @default(true)
+  isActive    Boolean  @default(true)
   expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
   @@map("promotions")
 }
@@ -463,15 +487,15 @@ model SystemConfig {
 
 // Loyalty Account Model
 model LoyaltyAccount {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  points    Int      @default(0)
-  tier      String   @default("BRONZE")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  points       Int      @default(0)
+  tier         String   @default("BRONZE")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user         User                @relation(fields: [userId], references: [id])
+  user User                @relation(fields: [userId], references: [id])
   transactions PointTransaction[]
   redemptions  RedemptionHistory[]
 
@@ -480,13 +504,13 @@ model LoyaltyAccount {
 
 // Point Transaction Model
 model PointTransaction {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   accountId   String
   amount      Int
   type        String // EARNED, REDEEMED, EXPIRED
   description String?
   expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
   account LoyaltyAccount @relation(fields: [accountId], references: [id])
 
@@ -526,12 +550,12 @@ model LoyaltyReward {
 
 // Webhook Model
 model Webhook {
-  id        String   @id @default(cuid())
-  url       String
-  secret    String
-  events    String // JSON array of events
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  url         String
+  secret      String
+  events      String // JSON array of events
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
   @@map("webhooks")
 }
@@ -544,7 +568,6 @@ model KnowledgeBaseEntry {
   content   String
   productId String?
   tags      String? // JSON array
-  embedding String? // JSON string representation of vector
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -552,25 +575,6 @@ model KnowledgeBaseEntry {
   product Product? @relation(fields: [productId], references: [id])
 
   @@map("knowledge_base_entries")
-}
-
-// Payment Intent Model
-model PaymentIntent {
-  id           String   @id @default(cuid())
-  orderId      String
-  provider     String // VNPAY, MOMO, PAYOS
-  amountCents  Int
-  status       String   @default("PENDING") // PENDING, REQUIRES_ACTION, SUCCEEDED, FAILED
-  clientSecret String?
-  returnUrl    String?
-  metadata     String? // JSON string
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id])
-  payments Payment[]
-
-  @@map("payment_intents")
 }
 
 // Project Model

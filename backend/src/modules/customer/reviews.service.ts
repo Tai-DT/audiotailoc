@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 import { ProductReview as ProductReviewModel, ProductReviewVote, ProductReviewReport } from '@prisma/client';
 
 export interface ProductReview {

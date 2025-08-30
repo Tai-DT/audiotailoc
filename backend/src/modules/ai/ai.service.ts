@@ -102,7 +102,7 @@ export class AiService {
       }
       
       await this.prisma.chatMessage.create({ 
-        data: { sessionId: sid, role: 'USER', text: input.message } 
+        data: { sessionId: sid, role: 'USER', content: input.message } 
       });
 
       // Retrieve context từ knowledge base
@@ -113,12 +113,12 @@ export class AiService {
         where: { sessionId: sid },
         orderBy: { createdAt: 'asc' },
         take: 10, // Lấy 10 messages gần nhất
-        select: { role: true, text: true }
+        select: { role: true, content: true }
       });
       
       // Tạo conversation context
       const conversationContext = conversationHistory
-        .map(msg => `${msg.role === 'USER' ? 'Khách hàng' : 'AI'}: ${msg.text}`)
+        .map(msg => `${msg.role === 'USER' ? 'Khách hàng' : 'AI'}: ${msg.content}`)
         .join('\n');
       
       // Tìm sản phẩm liên quan
@@ -181,7 +181,7 @@ export class AiService {
 
       // Lưu message của assistant
       await this.prisma.chatMessage.create({ 
-        data: { sessionId: sid, role: 'ASSISTANT', text: answer } 
+        data: { sessionId: sid, role: 'ASSISTANT', content: answer } 
       });
 
       return {
@@ -335,7 +335,7 @@ export class AiService {
         throw new Error('Chat session not found');
       }
 
-      const conversation = session.messages.map(m => `${m.role}: ${m.text}`).join('\n');
+      const conversation = session.messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
       const analysis = await this.gemini.generateResponse(
         `Phân tích cuộc hội thoại sau và đưa ra insights:\n\n${conversation}`,
@@ -382,7 +382,7 @@ export class AiService {
       // Simple text search in messages
       const results = sessions.filter(session => 
         session.messages.some(message => 
-          message.text.toLowerCase().includes(query.toLowerCase())
+          message.content.toLowerCase().includes(query.toLowerCase())
         )
       );
 
@@ -392,7 +392,7 @@ export class AiService {
         user: session.user,
         status: session.status,
         messageCount: session.messages.length,
-        lastMessage: session.messages[session.messages.length - 1]?.text,
+        lastMessage: session.messages[session.messages.length - 1]?.content,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt
       }));
@@ -415,7 +415,7 @@ export class AiService {
 
       const summaries = await Promise.all(
         sessions.map(async (session) => {
-          const conversation = session.messages.map(m => `${m.role}: ${m.text}`).join('\n');
+          const conversation = session.messages.map(m => `${m.role}: ${m.content}`).join('\n');
           const summary = await this.gemini.generateResponse(
             `Tóm tắt cuộc hội thoại sau trong 2-3 câu:\n\n${conversation}`,
             'Bạn là chuyên gia tóm tắt hội thoại. Hãy tóm tắt ngắn gọn ý chính của cuộc hội thoại.'

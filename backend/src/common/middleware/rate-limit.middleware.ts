@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { CacheService } from '../../modules/cache/cache.service';
+import { CacheService } from '../../modules/caching/cache.service';
 
 export interface RateLimitOptions {
   windowMs: number; // Time window in milliseconds

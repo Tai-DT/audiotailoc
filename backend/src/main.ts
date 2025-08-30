@@ -18,7 +18,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   // Get port early to avoid hoisting issues
-  const port = Number(config.get('PORT') || 3010);
+  const port = Number(process.env.PORT || config.get('PORT') || 3010);
 
   // Validate required environment variables
   const requiredEnvVars = [

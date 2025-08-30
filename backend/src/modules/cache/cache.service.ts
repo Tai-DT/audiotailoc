@@ -1,9 +1,18 @@
+// This file is deprecated. Use UpstashCacheService from ../caching/cache.service.ts instead
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   prefix?: string;
+}
+
+export interface CacheStats {
+  connected: boolean;
+  keyCount: number;
+  memoryUsage: string;
+  type?: string;
+  error?: string;
 }
 
 @Injectable()
@@ -132,15 +141,30 @@ export class CacheService {
   // Increment counter
   async increment(key: string, valueOrAmount: any = 1, optionsOrPrefix: any = 'app'): Promise<number> {
     const amount = typeof valueOrAmount === 'number' ? valueOrAmount : 1;
-    const prefix = typeof optionsOrPrefix === 'string' ? optionsOrPrefix : optionsOrPrefix?.prefix ?? 'app';
+    const options = typeof optionsOrPrefix === 'object' ? optionsOrPrefix : {};
+    const prefix = typeof optionsOrPrefix === 'string' ? optionsOrPrefix : options?.prefix ?? 'app';
+    const ttl = options?.ttl;
     const fullKey = this.buildKey(key, prefix);
 
     try {
+      let result: number;
       if (this.redis) {
-        return await this.redis.incrby(fullKey, amount);
+        result = await this.redis.incrby(fullKey, amount);
+        // Set TTL if provided
+        if (ttl) {
+          await this.redis.expire(fullKey, ttl);
+        }
       } else {
-        return this.incrementInMemory(fullKey, amount);
+        result = this.incrementInMemory(fullKey, amount);
+        if (ttl) {
+          // For in-memory, we need to update the TTL
+          const item = this.memoryCache.get(fullKey);
+          if (item) {
+            item.expires = Date.now() + ttl * 1000;
+          }
+        }
       }
+      return result;
     } catch (error) {
       this.logger.error(`Failed to increment cache for key ${fullKey}:`, error as any);
       return 0;
@@ -205,18 +229,34 @@ export class CacheService {
   }
 
   // Cache statistics
-  async getStats(): Promise<any> {
+  async getStats(): Promise<CacheStats> {
     try {
       if (this.redis) {
-        const info = await this.redis.info();
         const keys = await this.redis.dbsize();
-        return { info, keys };
+        const memory = await this.redis.info('memory');
+        const memoryUsage = memory ? this.parseMemoryUsage(memory) : 'Unknown';
+        
+        return {
+          connected: true,
+          keyCount: keys || 0,
+          memoryUsage,
+        };
       } else {
-        return { type: 'memory', keys: this.getMemoryStats() };
+        return {
+          connected: true,
+          keyCount: this.getMemoryStats(),
+          memoryUsage: `${this.getMemoryStats()} keys`,
+          type: 'memory',
+        };
       }
     } catch (error) {
       this.logger.error('Failed to get cache stats:', error as any);
-      return { error: (error as any).message };
+      return {
+        connected: false,
+        keyCount: 0,
+        memoryUsage: 'Unknown',
+        error: (error as any).message,
+      };
     }
   }
 
@@ -290,6 +330,18 @@ export class CacheService {
   private clearMemory(): void {
     this.memoryCache.clear();
   }
+
+private parseMemoryUsage(info: string): string {
+  const lines = info.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('used_memory:')) {
+      const bytes = parseInt(line.split(':')[1]);
+      const mb = (bytes / 1024 / 1024).toFixed(2);
+      return `${mb} MB`;
+    }
+  }
+  return 'Unknown';
+}
 
   // Health check
   async healthCheck(): Promise<boolean> {

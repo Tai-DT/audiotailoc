@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useApi'
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/src/hooks/useApi'
 import {
   CubeIcon,
   PlusIcon,
@@ -15,29 +15,6 @@ import {
   CurrencyDollarIcon,
   ArchiveBoxIcon,
 } from '@heroicons/react/24/outline'
-
-// Real API hooks
-const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
-  page: 1,
-  limit: 100,
-  search: searchTerm,
-  category: categoryFilter === 'all' ? undefined : categoryFilter,
-  status: statusFilter === 'all' ? undefined : statusFilter,
-})
-
-const createProductMutation = useCreateProduct()
-const updateProductMutation = useUpdateProduct()
-const deleteProductMutation = useDeleteProduct()
-
-// Extract products from API response
-const products = productsData?.data || []
-const productStats = {
-  totalProducts: productsData?.meta?.total || 0,
-  activeProducts: products.filter(p => p.status === 'active').length,
-  outOfStockProducts: products.filter(p => p.stock === 0).length,
-  lowStockProducts: products.filter(p => p.stock > 0 && p.stock < 10).length,
-  totalCategories: categories.length,
-}
 
 const categories = [
   'Electronics',
@@ -60,10 +37,33 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
 
+  // Real API hooks
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
+    page: 1,
+    limit: 100,
+    search: searchTerm,
+    category: categoryFilter === 'all' ? undefined : categoryFilter,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  })
+
+  const createProductMutation = useCreateProduct()
+  const updateProductMutation = useUpdateProduct()
+  const deleteProductMutation = useDeleteProduct()
+
+  // Extract products from API response
+  const products = productsData?.data || []
+  const productStats = {
+    totalProducts: productsData?.meta?.total || 0,
+    activeProducts: products.filter((p: any) => p.status === 'active').length,
+    outOfStockProducts: products.filter((p: any) => p.stock === 0).length,
+    lowStockProducts: products.filter((p: any) => p.stock > 0 && p.stock < 10).length,
+    totalCategories: categories.length,
+  }
+
   // API hooks are defined above
 
   // Client-side filtering for additional filtering beyond API
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product: any) => {
     const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.category?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
@@ -310,7 +310,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product: any) => (
                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

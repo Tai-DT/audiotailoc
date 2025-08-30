@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 // import { Prisma } from '@prisma/client';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 
 export type ProductDto = {
   id: string;

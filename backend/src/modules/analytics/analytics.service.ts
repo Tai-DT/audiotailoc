@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 
 export interface SalesMetrics {
   totalRevenue: number;

@@ -6,7 +6,7 @@ import { LoggerModule } from './logger/logger.module';
 import { PrismaModule } from '../prisma/prisma.module';
 
 // Global modules
-import { CacheModule } from './cache/cache.module';
+import { CacheModule } from './caching/cache.module';
 import { TestingModule } from './testing/testing.module';
 
 // Authentication modules
@@ -44,7 +44,9 @@ import { FilesModule } from './files/files.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), 
     LoggerModule,
-    CacheModule, // Global cache service
+    CacheModule.forRoot({
+      isGlobal: true,
+    }), // Global cache service
     PrismaModule, 
     HealthModule,
     TestingModule, // Testing utilities

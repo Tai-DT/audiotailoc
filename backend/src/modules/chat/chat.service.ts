@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 
 @Injectable()
 export class ChatService {

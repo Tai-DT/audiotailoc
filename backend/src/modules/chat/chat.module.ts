@@ -3,7 +3,7 @@ import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { AiModule } from '../ai/ai.module';
-import { CacheModule } from '../cache/cache.module';
+import { CacheModule } from '../caching/cache.module';
 
 @Module({
   imports: [AiModule, CacheModule],

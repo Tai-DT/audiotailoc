@@ -7,10 +7,10 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
   ServerIcon,
-  DatabaseIcon,
+  ServerStackIcon,
   CpuChipIcon,
 } from '@heroicons/react/24/outline'
-import { useDashboard } from '@/contexts/DashboardContext'
+import { useDashboard } from '@/src/contexts/DashboardContext'
 
 export default function SystemHealth() {
   const { systemHealth } = useDashboard()
@@ -85,7 +85,7 @@ export default function SystemHealth() {
     {
       name: 'Database',
       status: systemHealth.services.database,
-      icon: DatabaseIcon,
+      icon: ServerStackIcon,
       description: 'PostgreSQL database connection',
     },
     {

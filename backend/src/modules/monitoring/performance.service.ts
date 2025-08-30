@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../caching/cache.service';
 
 interface PerformanceMetric {
   name: string;
@@ -171,7 +171,7 @@ export class PerformanceService {
       },
       cache: {
         hitRate: 0, // Would need to track this separately
-        keyCount: cacheStats.keyCount || 0,
+        keyCount: cacheStats.keysCount || 0,
         memoryUsage: cacheStats.memoryUsage || 'Unknown',
       },
     };

@@ -113,16 +113,19 @@ export class TestDatabaseService {
   }
 
   async createTestService(overrides: Partial<any> = {}) {
+    const serviceName = `Test Service ${Date.now()}`;
     const serviceData = {
-      name: `Test Service ${Date.now()}`,
+      name: serviceName,
+      slug: serviceName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
       description: 'This is a test service',
       price: 50000,
+      basePriceCents: 50000 * 100, // Convert to cents as required by Prisma schema
       duration: 60,
       categoryId: overrides.categoryId || 'test-category',
       images: 'https://example.com/service.jpg',
       isActive: true,
       isFeatured: false,
-      seoTitle: `Test Service ${Date.now()}`,
+      seoTitle: serviceName,
       seoDescription: 'Test service description',
       category: 'KARAOKE',
       type: 'SERVICE',

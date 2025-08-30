@@ -12,7 +12,7 @@ import {
   useSendEmail,
   useEmailSettings,
   useUpdateEmailSettings
-} from '@/hooks/useApi'
+} from '@/src/hooks/useApi'
 import {
   EnvelopeIcon,
   PaperAirplaneIcon,
@@ -23,8 +23,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  MailIcon,
   InboxIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 
 const mockEmails = [
@@ -168,8 +168,8 @@ export default function EmailPage() {
   const updateSettingsMutation = useUpdateEmailSettings()
 
   // Extract data from API responses
-  const emails = emailHistoryData?.data || []
-  const emailStats = emailStatsData?.data || {
+  const emails = (emailHistoryData as any)?.data || []
+  const emailStats = (emailStatsData as any)?.data || {
     totalEmails: 0,
     sentToday: 0,
     delivered: 0,
@@ -178,11 +178,11 @@ export default function EmailPage() {
     clickRate: 0,
     templates: 0,
   }
-  const emailTemplates = emailTemplatesData?.data || []
-  const emailSettings = emailSettingsData?.data || {}
+  const emailTemplates = (emailTemplatesData as any)?.data || []
+  const emailSettings = (emailSettingsData as any)?.data || {}
 
   // Client-side filtering for additional search
-  const filteredEmails = emails.filter(email => {
+  const filteredEmails = emails.filter((email: any) => {
     const matchesSearch = email.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          email.to?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
@@ -203,7 +203,7 @@ export default function EmailPage() {
       case 'pending':
         return <ClockIcon className="h-5 w-5 text-yellow-500" />
       default:
-        return <MailIcon className="h-5 w-5 text-gray-500" />
+        return <EnvelopeIcon className="h-5 w-5 text-gray-500" />
     }
   }
 
@@ -238,8 +238,8 @@ export default function EmailPage() {
   }
 
   const tabs = [
-    { id: 'emails', name: 'Email History', icon: MailIcon },
-    { id: 'templates', name: 'Templates', icon: DocumentIcon },
+    { id: 'emails', name: 'Email History', icon: EnvelopeIcon },
+    { id: 'templates', name: 'Templates', icon: PencilSquareIcon },
     { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
   ]
 
@@ -442,7 +442,7 @@ export default function EmailPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredEmails.map((email) => (
+                  {filteredEmails.map((email: any) => (
                     <tr key={email.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
@@ -537,7 +537,7 @@ export default function EmailPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {emailTemplates.map((template) => (
+            {emailTemplates.map((template: any) => (
               <div key={template.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -574,7 +574,7 @@ export default function EmailPage() {
                   </button>
                   <button
                     onClick={() => deleteTemplateMutation.mutate(template.id)}
-                    disabled={deleteTemplateMutation.isLoading}
+                    disabled={deleteTemplateMutation.isPending}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm disabled:opacity-50"
                   >
                     Xóa

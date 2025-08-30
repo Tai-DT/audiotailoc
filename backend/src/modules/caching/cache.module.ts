@@ -1,6 +1,7 @@
 import { Module, Global, DynamicModule } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheService } from './cache.service';
+import { UpstashCacheService } from './upstash-cache.service';
 import { CacheInterceptor } from './cache.interceptor';
 
 export interface CacheModuleOptions {
@@ -20,19 +21,7 @@ export class CacheModule {
       providers: [
         {
           provide: CacheService,
-          useFactory: () => {
-            // You can inject ConfigService here if needed
-            return new CacheService({
-              get: (key: string, defaultValue?: any) => {
-                // This would be replaced with actual config service
-                if (key === 'CACHE_TTL') return ttl;
-                if (key === 'REDIS_URL') return process.env.REDIS_URL || 'redis://localhost:6379';
-                if (key === 'REDIS_PASSWORD') return process.env.REDIS_PASSWORD;
-                if (key === 'REDIS_DB') return parseInt(process.env.REDIS_DB || '0', 10);
-                return defaultValue;
-              },
-            } as any);
-          },
+          useClass: UpstashCacheService,
         },
         {
           provide: APP_INTERCEPTOR,
@@ -59,7 +48,7 @@ export class CacheModule {
         {
           provide: CacheService,
           useFactory: async (configService: any, options: CacheModuleOptions) => {
-            const cacheService = new CacheService(configService);
+            const cacheService = new UpstashCacheService(configService);
             const { ttl = 3600 } = options;
             // Set default TTL
             return cacheService;

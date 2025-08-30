@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar'
 import Header from './Header'
-import { useDashboard } from '@/contexts/DashboardContext'
+import { useDashboard } from '@/src/contexts/DashboardContext'
 
 interface DashboardLayoutProps {
   children: React.ReactNode

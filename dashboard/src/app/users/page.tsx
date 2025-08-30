@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/hooks/useApi'
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/src/hooks/useApi'
 import {
   UsersIcon,
   UserPlusIcon,
@@ -18,47 +18,47 @@ import {
   XCircleIcon,
 } from '@heroicons/react/24/outline'
 
-// Real API hooks
-const { data: usersData, isLoading: usersLoading, error: usersError } = useUsers({
-  page: 1,
-  limit: 100,
-  search: searchTerm,
-  role: roleFilter === 'all' ? undefined : roleFilter,
-  status: statusFilter === 'all' ? undefined : statusFilter,
-})
-
-const createUserMutation = useCreateUser()
-const updateUserMutation = useUpdateUser()
-const deleteUserMutation = useDeleteUser()
-
-// Extract users from API response
-const users = usersData?.data || []
-const userStats = {
-  totalUsers: usersData?.meta?.total || 0,
-  activeUsers: users.filter(u => u.status === 'active').length,
-  newUsersToday: users.filter(u => {
-    const createdAt = new Date(u.createdAt)
-    const today = new Date()
-    return createdAt.toDateString() === today.toDateString()
-  }).length,
-  newUsersThisWeek: users.filter(u => {
-    const createdAt = new Date(u.createdAt)
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return createdAt >= weekAgo
-  }).length,
-}
-
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [roleFilter, setRoleFilter] = useState('all')
   const [selectedUser, setSelectedUser] = useState<any>(null)
 
+  // Real API hooks
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useUsers({
+    page: 1,
+    limit: 100,
+    search: searchTerm,
+    role: roleFilter === 'all' ? undefined : roleFilter,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  })
+
+  const createUserMutation = useCreateUser()
+  const updateUserMutation = useUpdateUser()
+  const deleteUserMutation = useDeleteUser()
+
+  // Extract users from API response
+  const users = usersData?.data || []
+  const userStats = {
+    totalUsers: usersData?.meta?.total || 0,
+    activeUsers: users.filter((u: any) => u.status === 'active').length,
+    newUsersToday: users.filter((u: any) => {
+      const createdAt = new Date(u.createdAt)
+      const today = new Date()
+      return createdAt.toDateString() === today.toDateString()
+    }).length,
+    newUsersThisWeek: users.filter((u: any) => {
+      const createdAt = new Date(u.createdAt)
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return createdAt >= weekAgo
+    }).length,
+  }
+
   // API hooks are defined above component
 
   // Client-side filtering for additional filtering beyond API
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user: any) => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
@@ -289,7 +289,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredUsers.map((user) => (
+              {filteredUsers.map((user: any) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

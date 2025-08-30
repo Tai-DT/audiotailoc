@@ -6,6 +6,7 @@ import { createHash } from 'crypto';
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   keyPrefix?: string;
+  prefix?: string; // Alias for keyPrefix for compatibility
   tags?: string[]; // Cache tags for bulk invalidation
 }
 
@@ -23,6 +24,7 @@ export interface CacheStats {
   totalRequests: number;
   keysCount: number;
   memoryUsage: string;
+  connected: boolean;
 }
 
 @Injectable()
@@ -151,7 +153,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const cacheKey = this.generateKey(key, options?.keyPrefix);
+      const cacheKey = this.generateKey(key, options?.prefix || options?.keyPrefix);
       const ttl = options?.ttl || this.defaultTtl;
       const entry: CacheEntry<T> = {
         data: value,
@@ -245,6 +247,51 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // Increment counter
+  async increment(key: string, value: number = 1, options?: { prefix?: string; ttl?: number }): Promise<number> {
+    if (!this.isConnected || !this.redis) {
+      this.logger.warn('Redis not connected, increment operation skipped');
+      return 0;
+    }
+
+    const prefix = options?.prefix || '';
+    const fullKey = prefix ? `${prefix}:${key}` : key;
+
+    try {
+      const result = await this.redis.incrby(fullKey, value);
+      
+      // Set TTL if provided
+      if (options?.ttl) {
+        await this.redis.expire(fullKey, options.ttl);
+      }
+      
+      return result;
+    } catch (error) {
+      this.logger.error(`Cache increment error for key ${fullKey}`, error);
+      return 0;
+    }
+  }
+
+  // Delete multiple keys by pattern
+  async deletePattern(pattern: string, prefix?: string): Promise<void> {
+    if (!this.isConnected || !this.redis) {
+      this.logger.warn('Redis not connected, deletePattern operation skipped');
+      return;
+    }
+
+    const fullPattern = prefix ? `${prefix}:${pattern}` : pattern;
+
+    try {
+      const keys = await this.redis.keys(fullPattern);
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
+        this.logger.log(`Deleted ${keys.length} cache entries matching pattern ${fullPattern}`);
+      }
+    } catch (error) {
+      this.logger.error(`Cache deletePattern error for pattern ${fullPattern}`, error);
+    }
+  }
+
   // Get or set (cache-aside pattern)
   async getOrSet<T = any>(
     key: string,
@@ -252,7 +299,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     options?: CacheOptions
   ): Promise<T> {
     // Try to get from cache first
-    const cached = await this.get<T>(key, { prefix: options?.keyPrefix });
+    const cached = await this.get<T>(key, { prefix: options?.prefix || options?.keyPrefix });
     if (cached !== null) {
       return cached;
     }
@@ -283,7 +330,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
       this.stats.totalRequests += keys.length;
 
-      return cachedValues.map((cached, index) => {
+      return cachedValues.map((cached, _index) => {
         if (cached) {
           this.stats.hits++;
           const entry: CacheEntry<T> = JSON.parse(cached);
@@ -316,7 +363,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       const pipeline = this.redis.pipeline();
 
       for (const { key, value } of keyValuePairs) {
-        const cacheKey = this.generateKey(key, options?.keyPrefix);
+        const cacheKey = this.generateKey(key, options?.prefix || options?.keyPrefix);
         const entry: CacheEntry = {
           data: value,
           timestamp: Date.now(),
@@ -355,6 +402,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       totalRequests: this.stats.totalRequests,
       keysCount: 0, // Would need Redis INFO command to get this
       memoryUsage: 'N/A', // Would need Redis INFO command to get this
+      connected: this.isConnected,
     };
   }
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useOrders, useUpdateOrderStatus } from '@/hooks/useApi'
+import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useApi'
 import {
   ShoppingBagIcon,
   EyeIcon,
@@ -15,47 +15,47 @@ import {
   UserIcon,
 } from '@heroicons/react/24/outline'
 
-// Real API hooks
-const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useOrders({
-  page: 1,
-  limit: 50,
-  search: searchTerm,
-  status: statusFilter === 'all' ? undefined : statusFilter,
-  paymentStatus: undefined,
-  dateFrom: undefined,
-  dateTo: undefined,
-})
-
-const updateOrderStatusMutation = useUpdateOrderStatus()
-
-// Extract orders from API response
-const orders = ordersData?.data || []
-const orderStats = {
-  totalOrders: ordersData?.meta?.total || 0,
-  pendingOrders: orders.filter(o => o.status === 'pending').length,
-  processingOrders: orders.filter(o => o.status === 'processing').length,
-  shippedOrders: orders.filter(o => o.status === 'shipped').length,
-  deliveredOrders: orders.filter(o => o.status === 'delivered').length,
-  cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
-  totalRevenue: orders.reduce((sum, order) => sum + (order.total || 0), 0),
-  todayRevenue: orders
-    .filter(o => {
-      const orderDate = new Date(o.createdAt)
-      const today = new Date()
-      return orderDate.toDateString() === today.toDateString()
-    })
-    .reduce((sum, order) => sum + (order.total || 0), 0),
-}
-
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
 
-  const filteredOrders = mockOrders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Real API hooks
+  const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useOrders({
+    page: 1,
+    limit: 50,
+    search: searchTerm,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    paymentStatus: undefined,
+    dateFrom: undefined,
+    dateTo: undefined,
+  })
+
+  const updateOrderStatusMutation = useUpdateOrderStatus()
+
+  // Extract orders from API response
+  const orders = ordersData?.data || []
+  const orderStats = {
+    totalOrders: ordersData?.meta?.total || 0,
+    pendingOrders: orders.filter((o: any) => o.status === 'pending').length,
+    processingOrders: orders.filter((o: any) => o.status === 'processing').length,
+    shippedOrders: orders.filter((o: any) => o.status === 'shipped').length,
+    deliveredOrders: orders.filter((o: any) => o.status === 'delivered').length,
+    cancelledOrders: orders.filter((o: any) => o.status === 'cancelled').length,
+    totalRevenue: orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0),
+    todayRevenue: orders
+      .filter((o: any) => {
+        const orderDate = new Date(o.createdAt)
+        const today = new Date()
+        return orderDate.toDateString() === today.toDateString()
+      })
+      .reduce((sum: number, order: any) => sum + (order.total || 0), 0),
+  }
+
+  const filteredOrders = orders.filter((order: any) => {
+    const matchesSearch = order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.email?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter
 
     return matchesSearch && matchesStatus
@@ -324,7 +324,7 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order: any) => (
                 <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>

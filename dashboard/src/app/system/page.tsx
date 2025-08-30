@@ -5,11 +5,8 @@ import { motion } from 'framer-motion'
 import {
   CogIcon,
   ServerIcon,
-  DatabaseIcon,
+  ServerStackIcon,
   CpuChipIcon,
-  MemoryIcon,
-  HardDriveIcon,
-  NetworkIcon,
   GlobeAltIcon,
   PlayIcon,
   StopIcon,
@@ -124,7 +121,7 @@ export default function SystemPage() {
     { id: 'overview', name: 'Tổng quan', icon: ServerIcon },
     { id: 'services', name: 'Dịch vụ', icon: CogIcon },
     { id: 'metrics', name: 'Metrics', icon: CpuChipIcon },
-    { id: 'logs', name: 'Logs', icon: DatabaseIcon },
+    { id: 'logs', name: 'Logs', icon: ServerStackIcon },
   ]
 
   return (
@@ -243,7 +240,7 @@ export default function SystemPage() {
                     {systemMetrics.memoryUsage}%
                   </p>
                 </div>
-                <MemoryIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <CpuChipIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
@@ -266,7 +263,7 @@ export default function SystemPage() {
                     {systemMetrics.diskUsage}%
                   </p>
                 </div>
-                <HardDriveIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <ServerIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
@@ -284,14 +281,14 @@ export default function SystemPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <NetworkIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                <GlobeAltIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatBytes(systemMetrics.networkIn * 1024)}/s
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Network In</div>
               </div>
               <div className="text-center">
-                <NetworkIcon className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                <GlobeAltIcon className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatBytes(systemMetrics.networkOut * 1024)}/s
                 </div>
