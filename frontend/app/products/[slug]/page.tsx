@@ -6,6 +6,7 @@ import { useProductStore } from '@/store/product-store';
 import { useCartStore } from '@/store/cart-store';
 import { useUIStore } from '@/store/ui-store';
 import { ProductCard } from '@/components/products/ProductCard';
+import ProductSpecs from '@/components/products/ProductSpecs';
 
 interface ProductDetailPageProps {
   params: {
@@ -195,6 +196,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <p className="text-gray-600 leading-relaxed">
                 {currentProduct.description || 'Không có mô tả chi tiết cho sản phẩm này.'}
               </p>
+            </div>
+
+            {/* Specifications */}
+            <div className="pt-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Thông số kỹ thuật</h3>
+              <ProductSpecs
+                type={(currentProduct.category?.slug as any) || 'generic'}
+                specs={(currentProduct as any).specs || { brand: (currentProduct as any).brand, model: (currentProduct as any).model, warranty: (currentProduct as any).warranty }}
+              />
             </div>
 
             {/* Add to Cart Section */}

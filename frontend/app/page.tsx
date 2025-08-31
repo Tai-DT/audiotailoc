@@ -50,6 +50,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Product Categories Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Danh mục sản phẩm</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { name: 'Dàn Karaoke', slug: 'dan-karaoke', emoji: '🎶' },
+              { name: 'Đầu Karaoke', slug: 'dau-karaoke', emoji: '📀' },
+              { name: 'Loa & Loa Sub', slug: 'loa', emoji: '🔊' },
+              { name: 'Micro Phone', slug: 'micro', emoji: '🎤' },
+              { name: 'Mixer / Vang Số', slug: 'mixer-vang-so', emoji: '🎚️' },
+              { name: 'Màn Hình Chọn Bài', slug: 'man-hinh', emoji: '🖥️' },
+              { name: 'Thanh lý', slug: 'thanh-ly', emoji: '🏷️' },
+            ].map((c) => (
+              <Link key={c.slug} href={`/products?category=${c.slug}`} className="group border rounded-lg p-6 bg-white hover:shadow-md transition">
+                <div className="text-3xl mb-3">{c.emoji}</div>
+                <div className="font-semibold group-hover:text-primary-600">{c.name}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -150,24 +173,9 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              {
-                title: 'Lắp đặt hệ thống âm thanh',
-                description: 'Thiết kế và lắp đặt hệ thống âm thanh chuyên nghiệp cho gia đình, văn phòng',
-                price: '2,000,000 VND',
-                badge: 'Phổ biến'
-              },
-              {
-                title: 'Bảo trì và sửa chữa',
-                description: 'Dịch vụ bảo trì định kỳ và sửa chữa các thiết bị âm thanh',
-                price: '500,000 VND',
-                badge: 'Tiết kiệm'
-              },
-              {
-                title: 'Tư vấn âm thanh',
-                description: 'Tư vấn chuyên môn về thiết kế và lựa chọn thiết bị âm thanh',
-                price: '300,000 VND',
-                badge: 'Miễn phí'
-              }
+              { title: 'Thanh lý', description: 'Sản phẩm thanh lý, giá tốt, kiểm định kỹ.', price: 'Liên hệ', badge: 'Hot' },
+              { title: 'Lắp đặt', description: 'Thiết kế, thi công, tối ưu âm thanh tại chỗ.', price: 'Từ 2,000,000 VND', badge: 'Phổ biến' },
+              { title: 'Cho thuê', description: 'Cho thuê dàn âm thanh, sự kiện, hội nghị.', price: 'Theo ngày', badge: 'Linh hoạt' },
             ].map((service, index) => (
               <motion.div
                 key={index}
