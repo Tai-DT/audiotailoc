@@ -50,16 +50,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) {
-        setError('API không khả dụng');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${base}/users/profile`, {
-        credentials: 'include'
-      });
+      const response = await fetch('/api/auth/me', { cache: 'no-store' });
 
       if (response.ok) {
         const userData = await response.json();
@@ -84,12 +75,7 @@ export default function ProfilePage() {
 
   const fetchOrders = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) return;
-
-      const response = await fetch(`${base}/orders?limit=5`, {
-        credentials: 'include'
-      });
+      const response = await fetch('/api/orders?limit=5', { cache: 'no-store' });
 
       if (response.ok) {
         const data = await response.json();
@@ -105,15 +91,11 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) throw new Error('API không khả dụng');
-
-      const response = await fetch(`${base}/users/profile`, {
+      const response = await fetch('/api/users/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(formData),
       });
 

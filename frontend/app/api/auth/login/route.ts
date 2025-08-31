@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
   const data = (await res.json()) as { accessToken: string; refreshToken: string };
   const resp = NextResponse.json({ ok: true });
   const isProd = process.env.NODE_ENV === 'production';
-  resp.cookies.set('accessToken', data.accessToken, { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/', maxAge: 60 * 15 });
-  resp.cookies.set('refreshToken', data.refreshToken, { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 });
+  resp.cookies.set('atl_access', data.accessToken, { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/', maxAge: 60 * 15 });
+  resp.cookies.set('atl_refresh', data.refreshToken, { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 });
   return resp;
 }
 

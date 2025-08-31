@@ -21,9 +21,14 @@ async function main() {
     }
   }
 
-  // Categories
-  const catSpeakers = await prisma.category.upsert({ where: { slug: 'loa' }, update: {}, create: { slug: 'loa', name: 'Loa' } });
-  const catHeadphones = await prisma.category.upsert({ where: { slug: 'tai-nghe' }, update: {}, create: { slug: 'tai-nghe', name: 'Tai nghe' } });
+  // Categories (expanded)
+  const catLoa = await prisma.category.upsert({ where: { slug: 'loa' }, update: {}, create: { slug: 'loa', name: 'Loa & Loa Sub' } });
+  const catDanKaraoke = await prisma.category.upsert({ where: { slug: 'dan-karaoke' }, update: {}, create: { slug: 'dan-karaoke', name: 'Dàn Karaoke' } });
+  const catDauKaraoke = await prisma.category.upsert({ where: { slug: 'dau-karaoke' }, update: {}, create: { slug: 'dau-karaoke', name: 'Đầu Karaoke' } });
+  const catMicro = await prisma.category.upsert({ where: { slug: 'micro' }, update: {}, create: { slug: 'micro', name: 'Micro Phone' } });
+  const catMixer = await prisma.category.upsert({ where: { slug: 'mixer-vang-so' }, update: {}, create: { slug: 'mixer-vang-so', name: 'Mixer / Vang Số' } });
+  const catManHinh = await prisma.category.upsert({ where: { slug: 'man-hinh' }, update: {}, create: { slug: 'man-hinh', name: 'Màn Hình Chọn Bài' } });
+  const catThanhLy = await prisma.category.upsert({ where: { slug: 'thanh-ly' }, update: {}, create: { slug: 'thanh-ly', name: 'Thanh lý' } });
 
   // Promotions
   const now = new Date();
@@ -52,7 +57,7 @@ async function main() {
       description: 'Âm thanh ấm áp, thiết kế cổ điển.',
       priceCents: 1990000,
       imageUrl: 'https://placehold.co/600x400?text=Classic',
-      categoryId: catSpeakers.id,
+      categoryId: catLoa.id,
     },
     {
       slug: 'tai-nghe-tai-loc-pro',
@@ -60,7 +65,7 @@ async function main() {
       description: 'Chống ồn chủ động, pin lâu.',
       priceCents: 2990000,
       imageUrl: 'https://placehold.co/600x400?text=Pro',
-      categoryId: catHeadphones.id,
+      categoryId: catMicro.id,
     },
     {
       slug: 'soundbar-tai-loc-5-1',
@@ -68,7 +73,7 @@ async function main() {
       description: 'Rạp tại gia, âm trường rộng.',
       priceCents: 4990000,
       imageUrl: 'https://placehold.co/600x400?text=Soundbar',
-      categoryId: catSpeakers.id,
+      categoryId: catLoa.id,
     },
   ];
 
