@@ -12,7 +12,7 @@ export async function GET() {
     cache: 'no-store',
   });
   if (!res.ok) return NextResponse.json({ user: null }, { status: 200 });
-  const data = (await res.json()) as unknown;
+  const data = (await res.json()) as any;
   return NextResponse.json(data);
 }
 

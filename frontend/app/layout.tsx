@@ -2,6 +2,9 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/sonner';
 import AIChatWidgetProvider from '@/components/ai/AIChatWidgetProvider';
+import Navbar from '@/components/Navbar';
+import SubNavbar from '@/components/SubNavbar';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: {
@@ -66,7 +69,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className="scroll-smooth">
       <body className="min-h-screen bg-gray-50 font-sans antialiased">
         <div className="min-h-screen flex flex-col">
-          {children}
+          <Navbar />
+          <SubNavbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </div>
         <AIChatWidgetProvider />
         <Toaster />

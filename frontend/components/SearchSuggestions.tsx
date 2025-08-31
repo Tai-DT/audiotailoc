@@ -28,16 +28,12 @@ export default function SearchSuggestions({
 
   const fetchPopularSearches = useCallback(async () => {
     try {
-      if (!base) {
-        setPopularSearches(["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]);
-        return;
-      }
-      // Use categories as popular search seeds
-      const response = await fetch(`${base}/catalog/categories`);
+      // Use categories as popular search seeds (proxy or direct)
+      const response = await fetch(`/api/search/products?q=`);
       if (response.ok) {
         const data = await response.json();
-        const names = (Array.isArray(data) ? data : []).map((c: any) => c?.name).filter(Boolean);
-        setPopularSearches(names.slice(0, 8));
+        const names = (Array.isArray(data.items) ? data.items : []).map((p: any) => p?.name).filter(Boolean);
+        setPopularSearches((names.slice(0, 8).length ? names.slice(0, 8) : ["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]))
       } else {
         setPopularSearches(["tai nghe", "loa bluetooth", "soundbar", "ampli", "micro"]);
       }
@@ -50,12 +46,7 @@ export default function SearchSuggestions({
   const fetchSuggestions = useCallback(async (q: string) => {
     setIsLoading(true);
     try {
-      if (!base) return;
-      // Try backend catalog search by name
-      const url = new URL(`${base}/catalog/products`);
-      url.searchParams.set('q', q);
-      url.searchParams.set('pageSize', '5');
-      const response = await fetch(url.toString());
+      const response = await fetch(`/api/search/products?q=${encodeURIComponent(q)}`);
       if (response.ok) {
         const data = await response.json();
         const items = Array.isArray(data?.items) ? data.items : [];

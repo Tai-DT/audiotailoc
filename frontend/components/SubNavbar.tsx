@@ -19,48 +19,10 @@ export default function SubNavbar() {
 
   // Categories data
   const categories: Category[] = [
-    {
-      id: 'headphones',
-      name: 'Tai nghe',
-      slug: 'headphones',
-      icon: '🎧',
-      description: 'Tai nghe chất lượng cao'
-    },
-    {
-      id: 'speakers',
-      name: 'Loa',
-      slug: 'speakers',
-      icon: '🔊',
-      description: 'Loa công suất cao'
-    },
-    {
-      id: 'amplifiers',
-      name: 'Ampli',
-      slug: 'amplifiers',
-      icon: '⚡',
-      description: 'Ampli công suất'
-    },
-    {
-      id: 'microphones',
-      name: 'Microphone',
-      slug: 'microphones',
-      icon: '🎤',
-      description: 'Microphone chuyên nghiệp'
-    },
-    {
-      id: 'accessories',
-      name: 'Phụ kiện',
-      slug: 'accessories',
-      icon: '🔌',
-      description: 'Phụ kiện âm thanh'
-    },
-    {
-      id: 'karaoke',
-      name: 'Karaoke',
-      slug: 'karaoke',
-      icon: '🎤🎵',
-      description: 'Hệ thống karaoke'
-    }
+    { id: 'mic', name: 'Mic', slug: 'micro', icon: '🎤', description: 'Micro Phone' },
+    { id: 'loa', name: 'Loa', slug: 'loa', icon: '🔊', description: 'Loa & Loa Sub' },
+    { id: 'mixer', name: 'Mixer / Vang số', slug: 'mixer-vang-so', icon: '🎚️', description: 'Mixer / Vang Số' },
+    { id: 'thanh-ly', name: 'Thanh lý', slug: 'thanh-ly', icon: '🏷️', description: 'Sản phẩm thanh lý' },
   ];
 
   // Show subnavbar when on products page or category pages

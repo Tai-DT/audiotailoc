@@ -44,20 +44,14 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check user authentication
+  // Check user authentication via Next API
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-        if (!base) return;
-
-        const response = await fetch(`${base}/users/profile`, {
-          credentials: 'include'
-        });
-
+        const response = await fetch('/api/auth/me', { cache: 'no-store' });
         if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+          const data = await response.json();
+          setUser(data);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -69,14 +63,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) return;
-
-      await fetch(`${base}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
+      await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
       window.location.href = '/';
     } catch (error) {

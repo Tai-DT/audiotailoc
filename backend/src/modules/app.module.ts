@@ -15,7 +15,7 @@ import { UsersModule } from './users/users.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
-// import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
+import { CartModule } from './cart/cart.module';
 // import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
 // import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
 import { PaymentsModule } from './payments/payments.module';
@@ -35,8 +35,8 @@ import { FilesModule } from './files/files.module';
 // import { SearchModule } from './search/search.module'; // Disabled due to schema mismatch
 // Removed ApiVersioningModule - using single v1 API
 
-// Service Management modules - DISABLED FOR MINIMAL STARTUP
-// import { ServicesModule } from './services/services.module'; // Disabled due to schema mismatch
+// Service Management modules
+import { ServicesModule } from './services/services.module';
 // import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
 // import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
 
@@ -66,7 +66,9 @@ import { FilesModule } from './files/files.module';
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
+    CartModule,
+    ServicesModule,
+    // CheckoutModule, OrdersModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],
   controllers: [AppController],
