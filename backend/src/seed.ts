@@ -92,6 +92,53 @@ async function main() {
     }
   }
 
+  // Services seed (Thanh lý, Lắp đặt, Cho thuê)
+  await prisma.service.upsert({
+    where: { slug: 'thanh-ly' },
+    update: {},
+    create: {
+      slug: 'thanh-ly',
+      name: 'Thanh lý thiết bị âm thanh',
+      description: 'Thu mua và thanh lý thiết bị âm thanh đã qua sử dụng, kiểm định chất lượng.',
+      category: 'LIQUIDATION' as any,
+      type: 'OTHER' as any,
+      basePriceCents: 0,
+      price: 0,
+      duration: 0,
+      isActive: true,
+    } as any,
+  }).catch(() => undefined);
+  await prisma.service.upsert({
+    where: { slug: 'lap-dat' },
+    update: {},
+    create: {
+      slug: 'lap-dat',
+      name: 'Lắp đặt hệ thống âm thanh',
+      description: 'Thiết kế và thi công hệ thống âm thanh chuyên nghiệp.',
+      category: 'INSTALLATION' as any,
+      type: 'PROFESSIONAL_SOUND' as any,
+      basePriceCents: 2000000,
+      price: 2000000,
+      duration: 120,
+      isActive: true,
+    } as any,
+  }).catch(() => undefined);
+  await prisma.service.upsert({
+    where: { slug: 'cho-thue' },
+    update: {},
+    create: {
+      slug: 'cho-thue',
+      name: 'Cho thuê thiết bị âm thanh',
+      description: 'Cho thuê dàn âm thanh cho sự kiện, hội nghị, tiệc cưới.',
+      category: 'RENTAL' as any,
+      type: 'PROFESSIONAL_SOUND' as any,
+      basePriceCents: 500000,
+      price: 500000,
+      duration: 24 * 60,
+      isActive: true,
+    } as any,
+  }).catch(() => undefined);
+
   // Seed FAQ entries if none
   const faqCount = await prisma.knowledgeBaseEntry.count({ where: { kind: 'FAQ' } });
   if (faqCount === 0) {

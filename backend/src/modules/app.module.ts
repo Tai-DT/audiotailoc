@@ -35,8 +35,8 @@ import { FilesModule } from './files/files.module';
 // import { SearchModule } from './search/search.module'; // Disabled due to schema mismatch
 // Removed ApiVersioningModule - using single v1 API
 
-// Service Management modules - DISABLED FOR MINIMAL STARTUP
-// import { ServicesModule } from './services/services.module'; // Disabled due to schema mismatch
+// Service Management modules
+import { ServicesModule } from './services/services.module';
 // import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
 // import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
 
@@ -67,6 +67,7 @@ import { FilesModule } from './files/files.module';
     CatalogModule,
     PaymentsModule,
     CartModule,
+    ServicesModule,
     // CheckoutModule, OrdersModule, InventoryModule (schema issues)
     // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
   ],
