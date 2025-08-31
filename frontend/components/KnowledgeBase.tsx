@@ -204,7 +204,6 @@ export default function KnowledgeBase({
         <h2 className="text-2xl font-bold mb-2">Trung tâm trợ giúp</h2>
         <p className="text-gray-600">Tìm câu trả lời cho các câu hỏi thường gặp</p>
       </div>
-
       {/* Search and Filters */}
       {showSearch && (
         <Card>
@@ -235,7 +234,6 @@ export default function KnowledgeBase({
           </CardContent>
         </Card>
       )}
-
       {/* Articles List */}
       {loading ? (
         <div className="text-center py-8">

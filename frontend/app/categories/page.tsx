@@ -61,7 +61,6 @@ export default async function CategoriesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -77,7 +76,7 @@ export default async function CategoriesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category) => (
             <Card key={category.id} className="group hover:shadow-lg transition-shadow">
-              <Link href={`/categories/${category.slug}`}>
+              <Link href={`/categories/${category.slug}`} legacyBehavior>
                 <CardHeader className="pb-4">
                   <div className="aspect-video relative overflow-hidden rounded-lg mb-4">
                     {category.imageUrl ? (
@@ -128,7 +127,7 @@ export default async function CategoriesPage() {
             <p className="text-gray-600 mb-6">
               Các danh mục sản phẩm sẽ được hiển thị ở đây
             </p>
-            <Link href="/products">
+            <Link href="/products" legacyBehavior>
               <span className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                 Xem tất cả sản phẩm
               </span>
@@ -146,12 +145,12 @@ export default async function CategoriesPage() {
               Liên hệ với chúng tôi để được tư vấn về sản phẩm phù hợp với nhu cầu của bạn
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/support">
+              <Link href="/support" legacyBehavior>
                 <span className="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-md hover:bg-gray-100 transition-colors">
                   💬 Tư vấn miễn phí
                 </span>
               </Link>
-              <Link href="/products">
+              <Link href="/products" legacyBehavior>
                 <span className="inline-flex items-center px-6 py-3 border border-white text-white rounded-md hover:bg-white hover:text-blue-600 transition-colors">
                   🛍️ Xem tất cả sản phẩm
                 </span>

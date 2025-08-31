@@ -148,7 +148,6 @@ export default function ServicesPage() {
           </motion.div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Search and Filters */}
         <motion.div
@@ -235,7 +234,7 @@ export default function ServicesPage() {
                 transition={{ duration: 0.8, delay: index * 0.1 }}
               >
                 <Card className="h-full hover:shadow-lg transition-shadow">
-                  <Link href={`/services/${service.slug}`}>
+                  <Link href={`/services/${service.slug}`} legacyBehavior>
                     <div className="aspect-video relative">
                       {service.imageUrl ? (
                         <Image src={service.imageUrl} alt={service.name} fill className="object-cover rounded-t-lg" />

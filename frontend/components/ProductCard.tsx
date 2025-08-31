@@ -31,7 +31,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <div className="group bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      <Link href={`/products/${slug}`} aria-label={name}>
+      <Link href={`/products/${slug}`} aria-label={name} legacyBehavior>
         <div className="aspect-square relative overflow-hidden">
           {imageUrl ? (
             <Image
@@ -44,11 +44,11 @@ export default function ProductCard({ product }: { product: Product }) {
           ) : (
             // Keep an <img> with alt text so tests can find it even when image is missing
             // eslint-disable-next-line @next/next/no-img-element
-            <img
+            (<img
               alt={name}
               src="https://placehold.co/600x600?text=No+Image"
               className="w-full h-full object-cover"
-            />
+            />)
           )}
           {featured ? (
             <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">
@@ -59,7 +59,10 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
       <div className="p-4">
         <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-          <Link href={`/products/${slug}`} className="hover:text-blue-600 transition-colors">
+          <Link
+            href={`/products/${slug}`}
+            className="hover:text-blue-600 transition-colors"
+            legacyBehavior>
             {name}
           </Link>
         </h3>

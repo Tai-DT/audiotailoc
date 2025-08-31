@@ -56,7 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden">
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug}`} legacyBehavior>
           <Image
             src={product.imageUrl || '/images/placeholder-product.jpg'}
             alt={product.name}
@@ -80,7 +80,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
       </div>
-
       {/* Product Info */}
       <div className="p-4">
         {/* Category */}
@@ -91,7 +90,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Product Name */}
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug}`} legacyBehavior>
           <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2">
             {product.name}
           </h3>

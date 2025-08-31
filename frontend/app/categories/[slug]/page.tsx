@@ -135,7 +135,6 @@ export default async function CategoryPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
@@ -238,7 +237,7 @@ export default async function CategoryPage({
               <div className="flex justify-center">
                 <div className="flex items-center space-x-2">
                   {page > 1 && (
-                    <Link href={`/categories/${category.slug}?page=${page - 1}`}>
+                    <Link href={`/categories/${category.slug}?page=${page - 1}`} legacyBehavior>
                       <Button variant="outline" size="sm">
                         ← Trước
                       </Button>
@@ -246,7 +245,10 @@ export default async function CategoryPage({
                   )}
                   
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <Link key={pageNum} href={`/categories/${category.slug}?page=${pageNum}`}>
+                    <Link
+                      key={pageNum}
+                      href={`/categories/${category.slug}?page=${pageNum}`}
+                      legacyBehavior>
                       <Button 
                         variant={pageNum === page ? "default" : "outline"}
                         size="sm"
@@ -257,7 +259,7 @@ export default async function CategoryPage({
                   ))}
                   
                   {page < totalPages && (
-                    <Link href={`/categories/${category.slug}?page=${page + 1}`}>
+                    <Link href={`/categories/${category.slug}?page=${page + 1}`} legacyBehavior>
                       <Button variant="outline" size="sm">
                         Sau →
                       </Button>
@@ -277,12 +279,12 @@ export default async function CategoryPage({
               Chúng tôi sẽ cập nhật sản phẩm mới sớm nhất
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/products">
+              <Link href="/products" legacyBehavior>
                 <Button>
                   Xem tất cả sản phẩm
                 </Button>
               </Link>
-              <Link href="/support">
+              <Link href="/support" legacyBehavior>
                 <Button variant="outline">
                   Liên hệ tư vấn
                 </Button>
@@ -302,12 +304,12 @@ export default async function CategoryPage({
                 Đội ngũ chuyên gia của chúng tôi sẵn sàng hỗ trợ bạn chọn sản phẩm phù hợp nhất
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/support">
+                <Link href="/support" legacyBehavior>
                   <Button variant="secondary" size="lg">
                     💬 Tư vấn miễn phí
                   </Button>
                 </Link>
-                <Link href="/products">
+                <Link href="/products" legacyBehavior>
                   <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600">
                     🛍️ Xem tất cả sản phẩm
                   </Button>

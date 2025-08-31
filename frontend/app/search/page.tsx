@@ -281,7 +281,7 @@ export default function SearchPage() {
                           <span className="text-2xl">{getItemIcon(item.type)}</span>
                           <div>
                             <CardTitle className="text-lg">
-                              <Link href={getItemLink(item)} className="hover:text-blue-600">
+                              <Link href={getItemLink(item)} className="hover:text-blue-600" legacyBehavior>
                                 {item.title}
                               </Link>
                             </CardTitle>

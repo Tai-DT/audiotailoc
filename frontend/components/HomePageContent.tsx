@@ -129,7 +129,7 @@ function Categories() {
           key={category.id}
           href={`/categories/${category.slug}`}
           className="group text-center p-4 rounded-lg border hover:border-blue-300 hover:shadow-md transition-all duration-300"
-        >
+          legacyBehavior>
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
             <span className="text-white font-bold text-lg">
               {category.name.charAt(0).toUpperCase()}
@@ -194,7 +194,7 @@ export default function HomePageContent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-              <Link href="/products">
+              <Link href="/products" legacyBehavior>
                 Mua sắm ngay <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
@@ -206,7 +206,6 @@ export default function HomePageContent() {
           </div>
         </div>
       </section>
-
       {/* Categories Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -219,7 +218,6 @@ export default function HomePageContent() {
           <Categories />
         </div>
       </section>
-
       {/* Featured Products Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -232,14 +230,13 @@ export default function HomePageContent() {
           <FeaturedProducts />
           <div className="text-center">
             <Button asChild size="lg">
-              <Link href="/products">
+              <Link href="/products" legacyBehavior>
                 Xem tất cả sản phẩm <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -252,7 +249,6 @@ export default function HomePageContent() {
           <Features />
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-700 text-white">
         <div className="container mx-auto px-4 text-center">

@@ -90,7 +90,7 @@ export default function SubNavbar() {
                 }`}
                 onMouseEnter={() => setActiveCategory(category.id)}
                 onMouseLeave={() => setActiveCategory(null)}
-              >
+                legacyBehavior>
                 <span className="text-base">{category.icon}</span>
                 <span>{category.name}</span>
               </Link>
@@ -103,7 +103,7 @@ export default function SubNavbar() {
             <Link
               href="/products?featured=true"
               className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
-            >
+              legacyBehavior>
               <span>⭐</span>
               <span className="hidden sm:inline">Sản phẩm nổi bật</span>
             </Link>
@@ -112,7 +112,7 @@ export default function SubNavbar() {
             <Link
               href="/products?new=true"
               className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-            >
+              legacyBehavior>
               <span>🆕</span>
               <span className="hidden sm:inline">Hàng mới</span>
             </Link>
@@ -121,7 +121,7 @@ export default function SubNavbar() {
             <Link
               href="/products?sale=true"
               className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-            >
+              legacyBehavior>
               <span>🏷️</span>
               <span className="hidden sm:inline">Khuyến mãi</span>
             </Link>

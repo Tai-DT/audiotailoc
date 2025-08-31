@@ -113,7 +113,7 @@ export default function Navbar() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2" legacyBehavior>
               <div className="text-2xl">🎵</div>
               <span className="text-xl font-bold text-gray-900">Audio Tài Lộc</span>
             </Link>
@@ -162,7 +162,7 @@ export default function Navbar() {
 
               {/* Cart */}
               <Button asChild variant="outline" size="sm">
-                <Link href="/cart" className="flex items-center space-x-1">
+                <Link href="/cart" className="flex items-center space-x-1" legacyBehavior>
                   <span>🛒</span>
                   <span>Giỏ hàng</span>
                 </Link>
@@ -179,20 +179,20 @@ export default function Navbar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center">
+                      <Link href="/profile" className="flex items-center" legacyBehavior>
                         <User className="h-4 w-4 mr-2" />
                         Tài khoản
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center">
+                      <Link href="/orders" className="flex items-center" legacyBehavior>
                         <ShoppingBag className="h-4 w-4 mr-2" />
                         Đơn hàng
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/profile?tab=settings" className="flex items-center">
+                      <Link href="/profile?tab=settings" className="flex items-center" legacyBehavior>
                         <Settings className="h-4 w-4 mr-2" />
                         Cài đặt
                       </Link>
@@ -252,7 +252,7 @@ export default function Navbar() {
                               : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                           onClick={() => setIsMobileMenuOpen(false)}
-                        >
+                          legacyBehavior>
                           <span className="text-lg">{item.icon}</span>
                           <span>{item.label}</span>
                         </Link>
@@ -262,7 +262,7 @@ export default function Navbar() {
                     {/* Mobile Actions */}
                     <div className="pt-4 border-t space-y-2">
                       <Button asChild variant="outline" className="w-full justify-start">
-                        <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)} legacyBehavior>
                           <span className="mr-2">🛒</span>
                           Giỏ hàng
                         </Link>
@@ -271,7 +271,7 @@ export default function Navbar() {
                       {user ? (
                         <>
                           <Button asChild variant="ghost" className="w-full justify-start">
-                            <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} legacyBehavior>
                               <User className="h-4 w-4 mr-2" />
                               Tài khoản
                             </Link>
@@ -315,7 +315,6 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-
       {/* Spacer to prevent content from being hidden behind fixed navbar */}
       <div className="h-16"></div>
     </>

@@ -154,7 +154,6 @@ export default function SearchSuggestions({
         placeholder={placeholder}
         className="w-full"
       />
-
       {showSuggestions && (
         <div
           ref={suggestionsRef}
@@ -162,7 +161,7 @@ export default function SearchSuggestions({
         >
           {query.length >= 2 ? (
             // Search suggestions
-            <>
+            (<>
               {isLoading ? (
                 <div className="p-3 text-center text-gray-500">
                   <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -193,30 +192,28 @@ export default function SearchSuggestions({
                   Không tìm thấy gợi ý nào
                 </div>
               )}
-            </>
+            </>)
           ) : (
             // Popular searches
-            popularSearches.length > 0 && (
-              <>
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b">
-                  Tìm kiếm phổ biến
-                </div>
-                {popularSearches.map((search, index) => (
-                  <button
-                    key={search}
-                    onClick={() => handleSuggestionClick(search)}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
-                      selectedIndex === index ? 'bg-blue-50 text-blue-700' : ''
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-gray-400 mr-2">🔥</span>
-                      <span>{search}</span>
-                    </div>
-                  </button>
-                ))}
-              </>
-            )
+            (popularSearches.length > 0 && (<>
+              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b">
+                Tìm kiếm phổ biến
+              </div>
+              {popularSearches.map((search, index) => (
+                <button
+                  key={search}
+                  onClick={() => handleSuggestionClick(search)}
+                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
+                    selectedIndex === index ? 'bg-blue-50 text-blue-700' : ''
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <span className="text-gray-400 mr-2">🔥</span>
+                    <span>{search}</span>
+                  </div>
+                </button>
+              ))}
+            </>))
           )}
 
           {/* Quick search button */}

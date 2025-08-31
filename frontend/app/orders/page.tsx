@@ -261,7 +261,7 @@ export default function OrdersPage() {
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/orders/${order.id}`}>
+                      <Link href={`/orders/${order.id}`} legacyBehavior>
                         <Eye className="h-4 w-4 mr-2" />
                         Xem chi tiết
                       </Link>

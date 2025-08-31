@@ -40,20 +40,18 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           sizes="80px"
         />
       </div>
-
       {/* Product Info */}
       <div className="flex-1 min-w-0">
-        <Link 
+        <Link
           href={`/products/${item.slug}`}
           className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
-        >
+          legacyBehavior>
           {item.name}
         </Link>
         <p className="text-sm text-gray-500 mt-1">
           Đơn giá: {formatPrice(item.price)}
         </p>
       </div>
-
       {/* Quantity Controls */}
       <div className="flex items-center space-x-2">
         <button
@@ -78,7 +76,6 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           </svg>
         </button>
       </div>
-
       {/* Total Price */}
       <div className="text-right min-w-0">
         <div className="text-lg font-bold text-blue-600">
@@ -88,7 +85,6 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           {item.quantity} × {formatPrice(item.price)}
         </div>
       </div>
-
       {/* Remove Button */}
       <button
         onClick={() => removeItem(item.productId)}

@@ -16,7 +16,6 @@ export default function AboutPage() {
           cam kết mang đến những sản phẩm chất lượng cao nhất cho khách hàng.
         </p>
       </div>
-
       {/* Mission & Vision */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         <Card>
@@ -49,7 +48,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
       </div>
-
       {/* Company Story */}
       <div className="mb-16">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Câu chuyện của chúng tôi</h2>
@@ -79,7 +77,6 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-
       {/* Values */}
       <div className="mb-16">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Giá trị cốt lõi</h2>
@@ -115,7 +112,6 @@ export default function AboutPage() {
           </Card>
         </div>
       </div>
-
       {/* Team */}
       <div className="mb-16">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Đội ngũ của chúng tôi</h2>
@@ -160,7 +156,6 @@ export default function AboutPage() {
           </Card>
         </div>
       </div>
-
       {/* Stats */}
       <div className="mb-16">
         <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
@@ -186,7 +181,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
       </div>
-
       {/* CTA */}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -196,12 +190,12 @@ export default function AboutPage() {
           Liên hệ ngay để được tư vấn và chọn sản phẩm phù hợp nhất với nhu cầu của bạn
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/products">
+          <Link href="/products" legacyBehavior>
             <span className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
               🛍️ Xem sản phẩm
             </span>
           </Link>
-          <Link href="/support/contact">
+          <Link href="/support/contact" legacyBehavior>
             <span className="inline-flex items-center px-6 py-3 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
               💬 Liên hệ tư vấn
             </span>
