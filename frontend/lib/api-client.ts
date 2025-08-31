@@ -242,22 +242,22 @@ class ApiClient {
 
   // Cart methods
   public async getCart(guestId?: string): Promise<ApiResponse<any>> {
-    const params = guestId ? `?guestId=${guestId}` : '';
+    const params = guestId ? `?cartId=${guestId}` : '';
     return this.get(`/cart${params}`);
   }
 
   public async addToCart(data: { productId: string; quantity: number }, guestId?: string): Promise<ApiResponse<any>> {
-    const params = guestId ? `?guestId=${guestId}` : '';
+    const params = guestId ? `?cartId=${guestId}` : '';
     return this.post(`/cart/items${params}`, data);
   }
 
   public async updateCartItem(productId: string, quantity: number, guestId?: string): Promise<ApiResponse<any>> {
-    const params = guestId ? `?guestId=${guestId}` : '';
+    const params = guestId ? `?cartId=${guestId}` : '';
     return this.put(`/cart/items/${productId}${params}`, { quantity });
   }
 
   public async removeFromCart(productId: string, guestId?: string): Promise<ApiResponse<any>> {
-    const params = guestId ? `?guestId=${guestId}` : '';
+    const params = guestId ? `?cartId=${guestId}` : '';
     return this.delete(`/cart/items/${productId}${params}`);
   }
 

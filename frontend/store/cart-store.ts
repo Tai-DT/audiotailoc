@@ -132,8 +132,18 @@ export const useCartStore = create<CartStore>()(
           const response = await apiClient.getCart(currentGuestId);
           
           if (response.success) {
+            const backendItems = (response.data.items || []) as any[];
+            const items = backendItems.map((i: any) => ({
+              id: i.id,
+              productId: i.productId,
+              name: i.product?.name || i.name || 'Sản phẩm',
+              price: (i.price ?? i.product?.priceCents ?? 0) / 100,
+              quantity: i.quantity,
+              imageUrl: i.product?.imageUrl,
+              slug: i.product?.slug,
+            }));
             set({
-              items: response.data.items || [],
+              items,
               guestId: currentGuestId,
               isLoading: false,
             });
@@ -158,7 +168,7 @@ export const useCartStore = create<CartStore>()(
           const response = await apiClient.post('/cart/guest');
           
           if (response.success) {
-            const guestId = response.data.guestId;
+            const guestId = response.data?.id || response.data?.guestId || response.data?.cartId;
             set({
               guestId,
               isLoading: false,
