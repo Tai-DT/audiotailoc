@@ -9,13 +9,35 @@ type Product = {
   priceCents: number;
 };
 
-async function fetchProducts(): Promise<Product[]> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-  const res = await fetch(`${base}/catalog/products`, { cache: 'no-store' });
+async function fetchProducts(searchParams: {
+  q?: string;
+  page?: string;
+  pageSize?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}): Promise<{ items: Product[]; total: number; page: number; pageSize: number }> {
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (!base) throw new Error('Missing NEXT_PUBLIC_API_URL');
+
+  const params = new URLSearchParams();
+  if (searchParams.q) params.set('q', searchParams.q);
+  if (searchParams.page) params.set('page', searchParams.page);
+  if (searchParams.pageSize) params.set('pageSize', searchParams.pageSize);
+  if (searchParams.sortBy) params.set('sortBy', searchParams.sortBy);
+  if (searchParams.sortOrder) params.set('sortOrder', searchParams.sortOrder);
+
+  const url = `${base}/catalog/products${params.toString() ? `?${params.toString()}` : ''}`;
+  const res = await fetch(url, { cache: 'no-store' });
+
   if (!res.ok) throw new Error('Không thể tải danh sách sản phẩm');
-  const data = (await res.json()) as Product[];
-  return data;
+
+  const data = await res.json();
+  return {
+    items: data.items || [],
+    total: data.total || 0,
+    page: data.page || 1,
+    pageSize: data.pageSize || 20
+  };
 }
 
 export default async function DashboardProductsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string; pageSize?: string; sortBy?: string; sortOrder?: string }> }) {
@@ -25,24 +47,32 @@ export default async function DashboardProductsPage({ searchParams }: { searchPa
   const pageSize = Math.min(100, Math.max(1, parseInt(String(sp?.pageSize ?? '20'), 10) || 20));
   const sortBy = (sp?.sortBy ?? 'createdAt') as 'createdAt' | 'name' | 'priceCents';
   const sortOrder = (sp?.sortOrder ?? 'desc') as 'asc' | 'desc';
-  let products: Product[] = [];
-  let total = 0;
+
+  let productsData;
   if (q) {
-    const res = await (await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/catalog/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`, { cache: 'no-store' })).json();
-    const out = res as { hits: Product[]; estimatedTotalHits?: number };
-    products = out.hits;
-    total = out.estimatedTotalHits ?? out.hits.length;
+    // Use search API for queries
+    const base = process.env.NEXT_PUBLIC_API_URL;
+    const searchUrl = `${base}/catalog/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`;
+    const res = await fetch(searchUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Không thể tìm kiếm sản phẩm');
+    const searchData = await res.json();
+    productsData = {
+      items: searchData.hits || [],
+      total: searchData.estimatedTotalHits || searchData.hits?.length || 0,
+      page,
+      pageSize
+    };
   } else {
-    const url = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}/catalog/products`);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('pageSize', String(pageSize));
-    url.searchParams.set('sortBy', sortBy);
-    url.searchParams.set('sortOrder', sortOrder);
-    const res = await (await fetch(url.toString(), { cache: 'no-store' })).json();
-    const out = res as { items: Product[]; total: number };
-    products = out.items;
-    total = out.total;
+    // Use regular products API
+    productsData = await fetchProducts({
+      page: String(page),
+      pageSize: String(pageSize),
+      sortBy,
+      sortOrder
+    });
   }
+
+  const { items: products, total } = productsData;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const me = await apiFetch<{ userId: string | null; role?: string | null }>('/auth/me').catch(() => null);
   const isAdmin = me?.role === 'ADMIN';

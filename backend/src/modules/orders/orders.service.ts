@@ -104,7 +104,7 @@ export class OrdersService {
           orderNo,
           userId: orderData.userId || null,
           status: 'PENDING',
-          subtotalCents,
+          // subtotalCents, // Not in schema
           totalCents: subtotalCents,
           shippingAddress: orderData.shippingAddress || {},
           items: {

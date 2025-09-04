@@ -4,12 +4,12 @@ Copy these environment variables to your `.env.local` file in the dashboard dire
 
 ```bash
 # Dashboard Environment Configuration - Audio Tài Lộc
-# Updated to connect to Backend running on port 8000
+# Updated to connect to Backend running on port 3010
 
 # API Configuration - UPDATED FOR BACKEND INTEGRATION
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-NEXT_PUBLIC_API_DOCS_URL=http://localhost:8000/docs
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:3010/api/v1
+NEXT_PUBLIC_API_DOCS_URL=http://localhost:3010/docs
+NEXT_PUBLIC_WS_URL=ws://localhost:3010
 
 # Features
 NEXT_PUBLIC_ENABLE_REALTIME=true

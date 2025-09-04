@@ -1,8 +1,12 @@
 import { cookies } from 'next/headers';
 
 export function getApiBase(): string {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!base) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (!base) {
+    // Fallback to localhost:3010 for development
+    console.warn('NEXT_PUBLIC_API_URL not set, using default: http://localhost:3010/api/v1');
+    return 'http://localhost:3010/api/v1';
+  }
   return base;
 }
 
