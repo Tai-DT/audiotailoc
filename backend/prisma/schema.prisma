@@ -1,10 +1,10 @@
-// Simplified Prisma Schema for Audio Tài Lộc (SQLite compatible)
+// Simplified Prisma Schema for Audio Tài Lộc (PostgreSQL compatible)
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
