@@ -61,16 +61,17 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      // Test connection
-      const response = await this.makeRequest('GET', '/');
-      if (response.ok) {
+      // Test connection with PING command
+      const response = await this.makeRequest('POST', '/ping');
+      if (response && response.result === 'PONG') {
         this.isConnected = true;
         this.logger.log('Upstash Redis connected successfully');
       } else {
-        throw new Error('Connection test failed');
+        throw new Error('PING test failed');
       }
     } catch (error) {
-      this.logger.error('Failed to initialize Upstash Redis', error);
+      this.logger.error('Failed to initialize Upstash Redis');
+      this.logger.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       this.isConnected = false;
     }
   }
