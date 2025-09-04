@@ -1,5 +1,25 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+
+// Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
+// This prevents Nest's ConsoleLogger from crashing the process when writes fail.
+if (process && process.stdout && typeof process.stdout.on === 'function') {
+  process.stdout.on('error', (err: any) => {
+    if (err && (err.code === 'EPIPE' || err.code === 'EIO')) {
+      // Ignore broken pipe / I/O errors on stdout
+      return;
+    }
+    // Surface unexpected stdout errors
+    console.error('Unhandled stdout error:', err);
+  });
+
+  process.stderr.on('error', (err: any) => {
+    if (err && (err.code === 'EPIPE' || err.code === 'EIO')) {
+      return;
+    }
+    console.error('Unhandled stderr error:', err);
+  });
+}
 import { AppModule } from './modules/app.module';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -258,4 +278,3 @@ bootstrap().catch((error) => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });
-
