@@ -318,7 +318,7 @@ export class MarketingService {
     };
   }
 
-  async getConversionFunnel(startDate?: string, endDate?: string) {
+  async getConversionFunnel(_startDate?: string, _endDate?: string) {
     // Mock conversion funnel data
     return {
       visitors: 10000,
@@ -418,7 +418,7 @@ export class MarketingService {
     this.logger.log(`Push campaign sent to ${recipients.length} recipients`);
   }
 
-  private async sendSocialCampaign(campaign: any) {
+  private async sendSocialCampaign(_campaign: any) {
     // Social media posting implementation would go here
     this.logger.log(`Social campaign posted`);
   }

@@ -19,8 +19,11 @@ import { CatalogModule } from './catalog/catalog.module';
 // import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
 // import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
 import { PaymentsModule } from './payments/payments.module';
-// import { OrdersModule } from './orders/orders.module'; // Disabled due to schema mismatch
-// import { InventoryModule } from './inventory/inventory.module'; // Disabled due to schema mismatch
+import { CartModule } from './cart/cart.module';
+import { PromotionsModule } from './promotions/promotions.module';
+import { CheckoutModule } from './checkout/checkout.module';
+import { OrdersModule } from './orders/orders.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 // AI and ML modules
 import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
@@ -29,6 +32,7 @@ import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
 import { SupportModule } from './support/support.module';
 // import { WebhooksModule } from './webhooks/webhooks.module'; // Disabled due to schema mismatch
 import { NotificationsModule } from './notifications/notifications.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
@@ -40,8 +44,8 @@ import { FilesModule } from './files/files.module';
 // import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
 // import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
 
-@Module({
-  imports: [
+const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
+const runtimeImports = [
     ConfigModule.forRoot({ isGlobal: true }), 
     LoggerModule,
     CacheModule.forRoot({
@@ -61,15 +65,22 @@ import { FilesModule } from './files/files.module';
     // Support and File Management - ENABLED
     SupportModule,
     NotificationsModule,
+  WebSocketModule,
     FilesModule,
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
     PaymentsModule,
-    // CartModule, CheckoutModule, PaymentsModule, OrdersModule, InventoryModule (schema issues)
-    // WebhooksModule, SearchModule, ServicesModule, TechniciansModule
-  ],
+    OrdersModule,
+    InventoryModule,
+];
+
+if (FEATURE_CHECKOUT) {
+  runtimeImports.push(CartModule, PromotionsModule, CheckoutModule);
+}
+
+@Module({
+  imports: runtimeImports,
   controllers: [AppController],
 })
 export class AppModule {}
-

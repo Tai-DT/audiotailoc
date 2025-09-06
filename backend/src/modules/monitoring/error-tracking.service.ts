@@ -258,7 +258,7 @@ export class ErrorTrackingService {
   }
 
   // Get error trends
-  getErrorTrends(timeRange: 'hour' | 'day' | 'week' = 'day'): Array<{
+  getErrorTrends(_timeRange: 'hour' | 'day' | 'week' = 'day'): Array<{
     timestamp: Date;
     errorCount: number;
     newErrorCount: number;
@@ -378,7 +378,7 @@ export class ErrorTrackingService {
     });
   }
 
-  private sendToExternalService(error: ErrorReport): void {
+  private sendToExternalService(_error: ErrorReport): void {
     // Integration with external services like Sentry, Bugsnag, etc.
     const sentryDsn = this.config.get<string>('SENTRY_DSN');
     

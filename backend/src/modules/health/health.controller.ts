@@ -1,7 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthService } from './health.service';
-import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 
 @ApiTags('Health')
@@ -119,6 +118,42 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Active alerts' })
   async activeAlerts() {
     return this.healthService.getActiveAlerts();
+  }
+
+  @Get('redis')
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Redis health check' })
+  @ApiResponse({ status: 200, description: 'Redis health information' })
+  async redisHealth() {
+    return this.healthService.checkRedisHealth();
+  }
+
+  @Get('upstash')
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upstash Redis health check' })
+  @ApiResponse({ status: 200, description: 'Upstash Redis health information' })
+  async upstashHealth() {
+    return this.healthService.checkUpstashHealth();
+  }
+
+  @Get('external-apis')
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'External APIs health check' })
+  @ApiResponse({ status: 200, description: 'External APIs health information' })
+  async externalApisHealth() {
+    return this.healthService.checkExternalApisHealth();
+  }
+
+  @Get('storage')
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Storage health check' })
+  @ApiResponse({ status: 200, description: 'Storage health information' })
+  async storageHealth() {
+    return this.healthService.checkStorageHealth();
   }
 }
 

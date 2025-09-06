@@ -77,7 +77,7 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour for forgot password
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    const result = await this.auth.forgotPassword(dto.email).catch(() => {
+    const _result = await this.auth.forgotPassword(dto.email).catch(() => {
       throw new HttpException('Failed to process forgot password request', HttpStatus.INTERNAL_SERVER_ERROR);
     });
     return { message: 'If the email exists, a password reset link has been sent' };
@@ -86,7 +86,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for reset password
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    const result = await this.auth.resetPassword(dto.token, dto.newPassword).catch(() => {
+    const _result = await this.auth.resetPassword(dto.token, dto.newPassword).catch(() => {
       throw new HttpException('Invalid or expired reset token', HttpStatus.BAD_REQUEST);
     });
     return { message: 'Password has been reset successfully' };
@@ -99,7 +99,7 @@ export class AuthController {
     const userId = req.user?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
     
-    const result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
+    const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
       throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
     });
     return { message: 'Password has been changed successfully' };

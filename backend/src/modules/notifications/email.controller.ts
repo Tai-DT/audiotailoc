@@ -240,7 +240,7 @@ export class EmailController {
   }
 
   @Delete('templates/:id')
-  async deleteEmailTemplate(@Param('id') id: string) {
+  async deleteEmailTemplate(@Param('id') _id: string) {
     try {
       // Mock deletion - in real app, delete from database
       return {
@@ -391,7 +391,7 @@ export class EmailController {
   }
 
   @Get('stats')
-  async getEmailStats(@Query() query: {
+  async getEmailStats(@Query() _query: {
     startDate?: string;
     endDate?: string;
   }) {

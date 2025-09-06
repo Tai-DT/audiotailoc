@@ -95,6 +95,11 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
     const response = await fetch(url, requestOptions);
 
     if (!response.ok) {
+      // Gracefully degrade to disabled state to avoid noisy logs
+      this.logger.error(`Upstash API error: ${response.status} ${response.statusText}`);
+      if (response.status >= 400) {
+        this.isConnected = false;
+      }
       throw new Error(`Upstash API error: ${response.status} ${response.statusText}`);
     }
 
@@ -243,7 +248,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
     try {
       // Get all keys with pattern (this is a simplified approach)
       // Upstash doesn't support KEYS command directly, so we'll use a different approach
-      const pattern = `${prefix}:*`;
+  const _pattern = `${prefix}:*`;
       this.logger.log(`Clearing cache entries with prefix ${prefix}`);
       // For now, return 0 as we need to implement key scanning
       return 0;
@@ -437,12 +442,13 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
       const response = await this.makeRequest('GET', '/');
       return response.ok || response.result === 'PONG';
     } catch {
+      this.isConnected = false;
       return false;
     }
   }
 
   // Delete pattern (simplified implementation)
-  async deletePattern(pattern: string, prefix: string = 'app'): Promise<void> {
+  async deletePattern(pattern: string, _prefix: string = 'app'): Promise<void> {
     if (!this.isConnected) {
       return;
     }

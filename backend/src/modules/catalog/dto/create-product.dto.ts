@@ -5,7 +5,6 @@ import {
   IsUrl,
   IsBoolean,
   Min,
-  Max,
   IsArray,
   ArrayMinSize,
   ValidateNested,

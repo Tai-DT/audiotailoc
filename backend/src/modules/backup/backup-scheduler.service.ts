@@ -432,7 +432,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Get schedule execution history
-  getScheduleHistory(scheduleId: string): any[] {
+  getScheduleHistory(_scheduleId: string): any[] {
     // This would integrate with logging to get historical execution data
     // For now, return empty array
     return [];

@@ -1,5 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+// import { IoAdapter } from '@nestjs/platform-socket.io';
+// import type { INestApplication } from '@nestjs/common';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -75,6 +77,8 @@ async function bootstrap() {
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
         imgSrc: ["'self'", "data:", "https:"],
+  // Allow websocket connections for realtime features
+  connectSrc: ["'self'", 'ws:', 'wss:'],
       },
     },
   }));
@@ -97,7 +101,8 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key'],
+  // Include custom admin header to support dashboard admin requests from browser
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
   });
 
@@ -170,6 +175,8 @@ async function bootstrap() {
 
   // Global prefix - sử dụng API v1 (phiên bản duy nhất và tốt nhất)
   app.setGlobalPrefix('api/v1');
+
+  // WebSocket adapter: not required for default Socket.IO usage; Gateway will initialize it
 
   // Simple documentation for single API version
   const enableDocs = (config.get('ENABLE_SWAGGER') ?? 'true') !== 'false';

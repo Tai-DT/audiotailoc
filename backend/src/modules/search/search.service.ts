@@ -533,7 +533,7 @@ export class SearchService {
     const pageSize = filters.pageSize || 20;
     
     let enhancedQuery = query;
-    let searchFilters = { ...filters };
+    let _searchFilters = { ...filters };
 
     // AI enhancement for long queries
     if (query.length > 20 && this.aiService) {

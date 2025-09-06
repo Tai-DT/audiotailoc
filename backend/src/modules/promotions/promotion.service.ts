@@ -11,8 +11,7 @@ export class PromotionService {
     const promo = await this.prisma.promotion.findUnique({ where: { code } });
     if (!promo) return null;
     // Align with schema fields
-    if (promo.startDate && promo.startDate > now) return null;
-    if (promo.endDate && promo.endDate < now) return null;
+    if (promo.expiresAt && promo.expiresAt < now) return null;
     if (promo.isActive === false) return null;
     return { code: promo.code, type: promo.type as any, value: promo.value };
   }

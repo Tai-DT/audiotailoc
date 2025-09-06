@@ -20,7 +20,7 @@ export class ZaloService {
     const userId = null; // external user not mapped yet
     const session = await this.prisma.chatSession.create({ data: { userId, source: 'ZALO', status: 'OPEN' } });
     const text = event?.message?.text || event?.event_name || 'Zalo message';
-    await this.prisma.chatMessage.create({ data: { sessionId: session.id, role: 'USER', text, metadata: event } });
+    await this.prisma.chatMessage.create({ data: { sessionId: session.id, role: 'USER', content: text } });
     return session.id;
   }
 

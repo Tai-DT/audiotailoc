@@ -122,7 +122,7 @@ export class WebhooksController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Zalo webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handleZaloWebhook(@Body() data: any, @Headers('x-zalo-signature') signature?: string) {
+  async handleZaloWebhook(@Body() _data: any, @Headers('x-zalo-signature') _signature?: string) {
     // Zalo webhook handling is already implemented in zalo.service.ts
     return { success: true, message: 'Zalo webhook received' };
   }

@@ -7,10 +7,9 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { TechniciansService } from './technicians.service';
-import { ServiceCategory } from '@prisma/client';
+import { ServiceCategory } from '../../common/enums';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('technicians')
@@ -106,13 +105,21 @@ export class TechniciansController {
     @Param('id') id: string,
     @Body() scheduleDto: {
       schedules: Array<{
-        dayOfWeek: number;
+        date: string;
         startTime: string;
         endTime: string;
         isAvailable: boolean;
       }>;
     }
   ) {
-    return this.techniciansService.setTechnicianSchedule(id, scheduleDto.schedules);
+    return this.techniciansService.setTechnicianSchedule(
+      id,
+      scheduleDto.schedules.map(s => ({
+        date: new Date(s.date),
+        startTime: s.startTime,
+        endTime: s.endTime,
+        isAvailable: s.isAvailable,
+      }))
+    );
   }
 }

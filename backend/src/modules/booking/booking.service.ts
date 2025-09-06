@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ServiceBookingStatus, PaymentStatus, PaymentProvider } from '@prisma/client';
+import { ServiceBookingStatus, PaymentStatus, PaymentProvider } from '../../common/enums';
 
 @Injectable()
 export class BookingService {
@@ -10,15 +10,19 @@ export class BookingService {
   async createBooking(data: {
     serviceId: string;
     userId?: string;
+    // Customer fields are currently unused as they don't exist in schema
     customerName: string;
     customerPhone: string;
     customerEmail?: string;
     customerAddress: string;
-    scheduledDate: Date;
+    scheduledAt: Date;
     scheduledTime: string;
     notes?: string;
     items?: Array<{ itemId: string; quantity: number }>;
   }) {
+    if (!data.userId) {
+      throw new BadRequestException('userId is required');
+    }
     const service = await this.prisma.service.findUnique({
       where: { id: data.serviceId },
       include: { items: true },
@@ -28,29 +32,21 @@ export class BookingService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    const bookingNo = `SV${Date.now()}`;
-    let estimatedCosts = service.basePriceCents;
-
     const booking = await this.prisma.$transaction(async (tx) => {
       // Create booking
       const newBooking = await tx.serviceBooking.create({
         data: {
-          bookingNo,
           serviceId: data.serviceId,
-          userId: data.userId,
-          customerName: data.customerName,
-          customerPhone: data.customerPhone,
-          customerEmail: data.customerEmail,
-          customerAddress: data.customerAddress,
-          scheduledDate: data.scheduledDate,
+          userId: data.userId as string,
+          scheduledAt: data.scheduledAt,
           scheduledTime: data.scheduledTime,
           notes: data.notes,
-          estimatedCosts,
           status: ServiceBookingStatus.PENDING,
         },
       });
 
       // Add booking items if provided
+      let estimatedCosts = service.basePriceCents || 0;
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
           const serviceItem = service.items.find(si => si.id === item.itemId);
@@ -58,32 +54,32 @@ export class BookingService {
             throw new BadRequestException(`Không tìm thấy mục dịch vụ: ${item.itemId}`);
           }
 
-          const totalPrice = serviceItem.priceCents * item.quantity;
-          estimatedCosts += totalPrice;
-
+          const lineTotal = serviceItem.price * item.quantity;
+          estimatedCosts += lineTotal;
           await tx.serviceBookingItem.create({
             data: {
               bookingId: newBooking.id,
-              itemId: item.itemId,
+              serviceItemId: item.itemId,
               quantity: item.quantity,
-              unitPrice: serviceItem.priceCents,
-              totalPrice,
+              // Schema has only a single price field; store total price
+              price: lineTotal,
             },
           });
         }
-
-        // Update estimated costs
-        await tx.serviceBooking.update({
-          where: { id: newBooking.id },
-          data: { estimatedCosts },
-        });
       }
+
+      // Persist estimated costs
+      await tx.serviceBooking.update({
+        where: { id: newBooking.id },
+        data: { estimatedCosts },
+      });
 
       // Create status history
       await tx.serviceStatusHistory.create({
         data: {
           bookingId: newBooking.id,
           status: ServiceBookingStatus.PENDING,
+          newStatus: ServiceBookingStatus.PENDING,
           note: 'Booking được tạo',
         },
       });
@@ -104,12 +100,10 @@ export class BookingService {
         technician: true,
         items: {
           include: {
-            item: true,
+            serviceItem: true,
           },
         },
-        statusHistory: {
-          orderBy: { createdAt: 'desc' },
-        },
+        history: { orderBy: { createdAt: 'desc' } },
         payments: true,
       },
     });
@@ -142,9 +136,9 @@ export class BookingService {
     if (params.serviceId) where.serviceId = params.serviceId;
     
     if (params.fromDate || params.toDate) {
-      where.scheduledDate = {};
-      if (params.fromDate) where.scheduledDate.gte = params.fromDate;
-      if (params.toDate) where.scheduledDate.lte = params.toDate;
+      where.scheduledAt = {};
+      if (params.fromDate) where.scheduledAt.gte = params.fromDate;
+      if (params.toDate) where.scheduledAt.lte = params.toDate;
     }
 
     const [total, bookings] = await this.prisma.$transaction([
@@ -157,11 +151,11 @@ export class BookingService {
           technician: true,
           items: {
             include: {
-              item: true,
+              serviceItem: true,
             },
           },
         },
-        orderBy: { scheduledDate: 'asc' },
+        orderBy: { scheduledAt: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -175,19 +169,21 @@ export class BookingService {
     id: string, 
     status: ServiceBookingStatus, 
     note?: string,
-    changedBy?: string,
-    actualCosts?: number
+    changedBy?: string
   ) {
-    const booking = await this.getBooking(id);
+    const _booking = await this.getBooking(id);
 
-    const updatedBooking = await this.prisma.$transaction(async (tx) => {
+    const _updatedBooking = await this.prisma.$transaction(async (tx) => {
       const updateData: any = { status };
       
       if (status === ServiceBookingStatus.COMPLETED) {
         updateData.completedAt = new Date();
-        if (actualCosts !== undefined) {
-          updateData.actualCosts = actualCosts;
-        }
+        // Compute actualCosts from items
+        const sum = await tx.serviceBookingItem.aggregate({
+          where: { bookingId: id },
+          _sum: { price: true },
+        });
+        updateData.actualCosts = sum._sum.price || 0;
       }
 
       const updated = await tx.serviceBooking.update({
@@ -200,6 +196,7 @@ export class BookingService {
         data: {
           bookingId: id,
           status,
+          newStatus: status,
           note,
           changedBy,
         },
@@ -213,7 +210,7 @@ export class BookingService {
 
   // Assign technician to booking
   async assignTechnician(bookingId: string, technicianId: string, note?: string) {
-    const booking = await this.getBooking(bookingId);
+    const _booking = await this.getBooking(bookingId);
     
     const technician = await this.prisma.technician.findUnique({
       where: { id: technicianId },
@@ -227,7 +224,7 @@ export class BookingService {
       throw new BadRequestException('Kỹ thuật viên không hoạt động');
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const _updated = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.serviceBooking.update({
         where: { id: bookingId },
         data: {
@@ -240,6 +237,7 @@ export class BookingService {
         data: {
           bookingId,
           status: ServiceBookingStatus.ASSIGNED,
+          newStatus: ServiceBookingStatus.ASSIGNED,
           note: note || `Phân công cho ${technician.name}`,
         },
       });
@@ -264,11 +262,11 @@ export class BookingService {
       throw new BadRequestException('Không thể dời lịch booking đã hoàn thành hoặc đã hủy');
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const _updated = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.serviceBooking.update({
         where: { id },
         data: {
-          scheduledDate: newDate,
+          scheduledAt: newDate,
           scheduledTime: newTime,
           status: ServiceBookingStatus.RESCHEDULED,
         },
@@ -278,7 +276,8 @@ export class BookingService {
         data: {
           bookingId: id,
           status: ServiceBookingStatus.RESCHEDULED,
-          note: note || `Dời lịch từ ${booking.scheduledDate.toLocaleDateString()} ${booking.scheduledTime} sang ${newDate.toLocaleDateString()} ${newTime}`,
+          newStatus: ServiceBookingStatus.RESCHEDULED,
+          note: note || `Dời lịch sang ${newDate.toLocaleDateString()} ${newTime}`,
         },
       });
 
@@ -296,7 +295,7 @@ export class BookingService {
       throw new BadRequestException('Không thể hủy booking đã hoàn thành');
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const _updated = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.serviceBooking.update({
         where: { id },
         data: {
@@ -308,6 +307,7 @@ export class BookingService {
         data: {
           bookingId: id,
           status: ServiceBookingStatus.CANCELLED,
+          newStatus: ServiceBookingStatus.CANCELLED,
           note: reason || 'Booking bị hủy',
         },
       });
@@ -318,42 +318,7 @@ export class BookingService {
     return this.getBooking(id);
   }
 
-  // Create payment for booking
-  async createPayment(bookingId: string, data: {
-    amountCents: number;
-    paymentMethod: PaymentProvider;
-    transactionId?: string;
-  }) {
-    const booking = await this.getBooking(bookingId);
-
-    return this.prisma.servicePayment.create({
-      data: {
-        bookingId,
-        amountCents: data.amountCents,
-        paymentMethod: data.paymentMethod,
-        status: PaymentStatus.PENDING,
-        transactionId: data.transactionId,
-      },
-    });
-  }
-
-  // Update payment status
-  async updatePaymentStatus(paymentId: string, status: PaymentStatus, transactionId?: string) {
-    const updateData: any = { status };
-    
-    if (status === PaymentStatus.SUCCEEDED) {
-      updateData.paidAt = new Date();
-    }
-    
-    if (transactionId) {
-      updateData.transactionId = transactionId;
-    }
-
-    return this.prisma.servicePayment.update({
-      where: { id: paymentId },
-      data: updateData,
-    });
-  }
+  // Payment operations
 
   // Get booking statistics
   async getBookingStats(params?: {
@@ -364,9 +329,9 @@ export class BookingService {
     const where: any = {};
     
     if (params?.fromDate || params?.toDate) {
-      where.scheduledDate = {};
-      if (params.fromDate) where.scheduledDate.gte = params.fromDate;
-      if (params.toDate) where.scheduledDate.lte = params.toDate;
+      where.scheduledAt = {};
+      if (params.fromDate) where.scheduledAt.gte = params.fromDate;
+      if (params.toDate) where.scheduledAt.lte = params.toDate;
     }
     
     if (params?.technicianId) {
@@ -388,9 +353,15 @@ export class BookingService {
       this.prisma.serviceBooking.count({ where: { ...where, status: ServiceBookingStatus.IN_PROGRESS } }),
       this.prisma.serviceBooking.count({ where: { ...where, status: ServiceBookingStatus.COMPLETED } }),
       this.prisma.serviceBooking.count({ where: { ...where, status: ServiceBookingStatus.CANCELLED } }),
-      this.prisma.serviceBooking.aggregate({
-        where: { ...where, status: ServiceBookingStatus.COMPLETED },
-        _sum: { actualCosts: true },
+      // Sum revenue from booking items of completed bookings
+      this.prisma.serviceBookingItem.aggregate({
+        where: {
+          booking: {
+            ...where,
+            status: ServiceBookingStatus.COMPLETED,
+          },
+        },
+        _sum: { price: true },
       }),
     ]);
 
@@ -401,7 +372,40 @@ export class BookingService {
       inProgressBookings,
       completedBookings,
       cancelledBookings,
-      totalRevenue: totalRevenue._sum.actualCosts || 0,
+      totalRevenue: totalRevenue._sum.price || 0,
     };
+  }
+
+  // Create payment for booking
+  async createPayment(bookingId: string, data: {
+    amountCents: number;
+    paymentMethod: PaymentProvider;
+    transactionId?: string;
+  }) {
+    await this.getBooking(bookingId);
+
+    return this.prisma.servicePayment.create({
+      data: {
+        bookingId,
+        provider: data.paymentMethod,
+        amountCents: data.amountCents,
+        status: PaymentStatus.PENDING,
+        transactionId: data.transactionId,
+      },
+    });
+  }
+
+  // Update payment status
+  async updatePaymentStatus(paymentId: string, status: PaymentStatus, transactionId?: string) {
+    const updateData: any = { status };
+    if (transactionId) updateData.transactionId = transactionId;
+    if (status === PaymentStatus.SUCCEEDED || status === PaymentStatus.COMPLETED) {
+      updateData.paidAt = new Date();
+    }
+
+    return this.prisma.servicePayment.update({
+      where: { id: paymentId },
+      data: updateData,
+    });
   }
 }

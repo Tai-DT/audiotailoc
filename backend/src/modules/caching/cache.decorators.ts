@@ -14,7 +14,7 @@ export function Cache(ttl?: number, keyPrefix?: string, tags?: string[]) {
     const cacheOptions: CacheOptions = { ttl, keyPrefix, tags };
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
       if (!cacheService) {
         return originalMethod.apply(this, args);
       }
@@ -61,7 +61,7 @@ export function CacheWithKey(
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
       if (!cacheService) {
         return originalMethod.apply(this, args);
       }
@@ -101,7 +101,7 @@ export function CacheWithDynamicTTL(
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
       if (!cacheService) {
         return originalMethod.apply(this, args);
       }
@@ -154,7 +154,7 @@ export function InvalidateCache(
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
 
       // Execute method first
       const result = await originalMethod.apply(this, args);
@@ -186,7 +186,7 @@ export function InvalidateCacheByTags(tagGenerator: (...args: any[]) => string[]
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
 
       // Execute method first
       const result = await originalMethod.apply(this, args);
@@ -222,7 +222,7 @@ export function ConditionalCache(
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
       if (!cacheService) {
         return originalMethod.apply(this, args);
       }
@@ -271,7 +271,7 @@ export function CacheWithFallback(
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheService = this.cacheService;
+      const cacheService = (this as any).cacheService;
       if (!cacheService) {
         try {
           return await originalMethod.apply(this, args);

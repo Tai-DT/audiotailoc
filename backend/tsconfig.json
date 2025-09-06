@@ -16,7 +16,7 @@
     "moduleResolution": "Node",
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "prisma/**/*", "test/**/*"],
+  "include": ["src/**/*", "prisma/**/*"],
   "exclude": [
     "node_modules",
     "dist",
@@ -24,7 +24,8 @@
     "prisma/seed.ts",
     "src/add-karaoke-products.ts",
     "src/seed-karaoke.ts",
-    "src/seed-services.ts"
+    "src/seed-services.ts",
+    // Temporarily exclude backup module due to missing dependencies
+    "src/modules/backup/**/*"
   ]
 }
-

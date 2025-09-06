@@ -46,6 +46,13 @@ REDIS_URL="redis://localhost:6379"
 REDIS_PASSWORD=""
 REDIS_DB=0
 
+# Cache backend selection: 'redis' (default) or 'upstash'
+CACHE_BACKEND="redis"
+# When using Upstash, configure the following and set CACHE_BACKEND=upstash or ENABLE_UPSTASH=true
+UPSTASH_REDIS_REST_URL=""
+UPSTASH_REDIS_REST_TOKEN=""
+ENABLE_UPSTASH="false"
+
 # Email Configuration
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"

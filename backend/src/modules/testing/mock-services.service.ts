@@ -437,7 +437,7 @@ export class MockServicesService {
   }
 
   // Generate random test data
-  generateRandomData(type: string, options: any = {}) {
+  generateRandomData(type: string, _options: any = {}) {
     switch (type) {
       case 'email':
         return `test${Date.now()}${Math.random().toString(36).substring(7)}@example.com`;

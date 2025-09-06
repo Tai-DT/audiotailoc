@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../caching/cache.service';
-import { WishlistItem as WishlistItemModel } from '@prisma/client';
 
 export interface WishlistItem {
   id: string;

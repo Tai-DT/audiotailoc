@@ -145,7 +145,7 @@ export class SecurityMiddleware implements NestMiddleware {
     );
   }
 
-  private handleSuspiciousRequest(ip: string, req: Request) {
+  private handleSuspiciousRequest(ip: string, _req: Request) {
     const currentCount = this.suspiciousRequests.get(ip) || 0;
     this.suspiciousRequests.set(ip, currentCount + 1);
 

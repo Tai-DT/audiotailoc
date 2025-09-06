@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGua
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsIn, IsInt, IsOptional, IsString, Min, MinLength, IsBoolean, IsArray } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
@@ -48,7 +48,7 @@ class ListQueryDto {
   featured?: boolean;
 }
 
-class AdvancedSearchDto {
+class _AdvancedSearchDto {
   @IsOptional()
   @IsString()
   q?: string;

@@ -3,16 +3,19 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-// import { ServiceBookingStatus, PaymentProvider, PaymentStatus } from '@prisma/client'; // Not available in SQLite schema
+import { ServiceBookingStatus } from '../../common/enums';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+@ApiTags('bookings')
 @Controller('bookings')
 // @UseGuards(JwtAuthGuard)
 export class BookingController {
@@ -26,14 +29,14 @@ export class BookingController {
     customerPhone: string;
     customerEmail?: string;
     customerAddress: string;
-    scheduledDate: string; // ISO date string
+    scheduledAt: string; // ISO date string
     scheduledTime: string;
     notes?: string;
     items?: Array<{ itemId: string; quantity: number }>;
   }) {
     return this.bookingService.createBooking({
       ...createBookingDto,
-      scheduledDate: new Date(createBookingDto.scheduledDate),
+      scheduledAt: new Date(createBookingDto.scheduledAt),
     });
   }
 
@@ -79,21 +82,17 @@ export class BookingController {
   }
 
   @Put(':id/status')
+  @ApiOperation({ summary: 'Update booking status' })
+  @ApiResponse({ status: 200, description: 'Booking updated' })
   async updateBookingStatus(
     @Param('id') id: string,
-    @Body() updateStatusDto: {
-      status: ServiceBookingStatus;
-      note?: string;
-      changedBy?: string;
-      actualCosts?: number;
-    }
+    @Body() updateStatusDto: UpdateBookingStatusDto
   ) {
     return this.bookingService.updateBookingStatus(
       id,
       updateStatusDto.status,
       updateStatusDto.note,
-      updateStatusDto.changedBy,
-      updateStatusDto.actualCosts
+      updateStatusDto.changedBy
     );
   }
 
@@ -136,25 +135,22 @@ export class BookingController {
   }
 
   // Payment endpoints
+  @ApiOperation({ summary: 'Create a booking payment' })
+  @ApiResponse({ status: 201, description: 'Payment created' })
   @Post(':id/payments')
   async createPayment(
     @Param('id') bookingId: string,
-    @Body() createPaymentDto: {
-      amountCents: number;
-      paymentMethod: PaymentProvider;
-      transactionId?: string;
-    }
+    @Body() createPaymentDto: CreatePaymentDto
   ) {
     return this.bookingService.createPayment(bookingId, createPaymentDto);
   }
 
+  @ApiOperation({ summary: 'Update payment status' })
+  @ApiResponse({ status: 200, description: 'Payment updated' })
   @Put('payments/:paymentId/status')
   async updatePaymentStatus(
     @Param('paymentId') paymentId: string,
-    @Body() updatePaymentDto: {
-      status: PaymentStatus;
-      transactionId?: string;
-    }
+    @Body() updatePaymentDto: UpdatePaymentStatusDto
   ) {
     return this.bookingService.updatePaymentStatus(
       paymentId,

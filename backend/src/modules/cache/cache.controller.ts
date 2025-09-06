@@ -24,38 +24,11 @@ export class CacheController {
         module: 'cache',
         status: 'operational',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
-      }
-    };
-  }
-
-  @Get('status')
-  async getStatus() {
-    return {
-      success: true,
-      data: {
-        cache: {
-          status: 'active',
-          hits: 0,
-          misses: 0
-        }
+        timestamp: new Date().toISOString(),
+        hits: 0,
+        misses: 0,
       },
-      message: 'Cache status retrieved successfully'
-    };
-  }
-
-  @Get('status')
-  async getStatus() {
-    return {
-      success: true,
-      data: {
-        cache: {
-          status: 'active',
-          hits: 0,
-          misses: 0
-        }
-      },
-      message: 'Cache status retrieved successfully'
+      message: 'Cache status retrieved successfully',
     };
   }
 }

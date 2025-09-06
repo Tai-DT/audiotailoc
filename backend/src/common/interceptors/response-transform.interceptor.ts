@@ -22,7 +22,7 @@ export class ResponseTransformInterceptor<T>
 {
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+    const _response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
       map((data) => ({
@@ -36,7 +36,7 @@ export class ResponseTransformInterceptor<T>
     );
   }
 
-  private getSuccessMessage(method: string, url: string): string {
+  private getSuccessMessage(method: string, _url: string): string {
     switch (method) {
       case 'GET':
         return 'Data retrieved successfully';

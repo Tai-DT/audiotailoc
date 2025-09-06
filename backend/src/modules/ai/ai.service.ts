@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmbeddingService } from './embedding.service';
 import { GeminiService } from './gemini.service';
@@ -751,7 +750,7 @@ Tin nhắn: "${dto.message}"`;
     }
   }
 
-  private async analyzeUserPreferences(userId: string): Promise<any> {
+  private async analyzeUserPreferences(_userId: string): Promise<any> {
     try {
       // Mock user preferences analysis
       return {
@@ -766,7 +765,7 @@ Tin nhắn: "${dto.message}"`;
     }
   }
 
-  private async generatePersonalizedRecommendations(preferences: any, context: string): Promise<any[]> {
+  private async generatePersonalizedRecommendations(_preferences: any, _context: string): Promise<any[]> {
     try {
       // Mock personalized recommendations
       return [

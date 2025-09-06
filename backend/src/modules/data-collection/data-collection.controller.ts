@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Post, Query, UseGuards, Req } from '@nestjs/common';
 import { DataCollectionService, SearchQueryData, QuestionData, ProductViewData, ServiceViewData } from './data-collection.service';
-import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsOptional, IsDateString, IsString, IsNumber, IsArray, IsIn, Min, Max } from 'class-validator';
 
@@ -162,7 +161,7 @@ export class DataCollectionController {
   }
 
   @Post('track/question')
-  async trackQuestion(@Body() data: TrackQuestionDto, @Req() req: any) {
+  async trackQuestion(@Body() data: TrackQuestionDto, @Req() _req: any) {
     const questionData: QuestionData = {
       ...data,
     };

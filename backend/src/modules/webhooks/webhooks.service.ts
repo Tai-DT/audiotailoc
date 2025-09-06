@@ -44,8 +44,8 @@ export class WebhooksService {
         vnp_ResponseCode,
         vnp_Amount,
         vnp_TransactionNo,
-        vnp_OrderInfo,
-        vnp_PayDate,
+        vnp_OrderInfo: _vnp_OrderInfo,
+        vnp_PayDate: _vnp_PayDate,
       } = data;
 
       // Find payment intent
@@ -142,7 +142,7 @@ export class WebhooksService {
         resultCode,
         amount,
         transId,
-        message,
+        message: _message,
       } = data;
 
       // Find payment intent
@@ -237,7 +237,7 @@ export class WebhooksService {
         status,
         amount,
         transactionId,
-        description,
+        description: _description,
       } = data;
 
       // Find payment intent

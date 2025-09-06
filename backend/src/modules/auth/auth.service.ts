@@ -72,7 +72,7 @@ export class AuthService {
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const _resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Store reset token in database (you might want to add a resetToken field to User model)
     // For now, we'll just return success
@@ -103,7 +103,7 @@ export class AuthService {
     const mockUserId = 'demo-user-id';
     
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const _hashedPassword = await bcrypt.hash(newPassword, 12);
     
     // Update user password (in production, use UsersService)
     console.log(`Password reset for user ${mockUserId} with token ${token}`);

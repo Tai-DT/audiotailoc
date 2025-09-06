@@ -18,7 +18,7 @@ export class NotificationsController {
   }
 
   @Get('settings')
-  async getNotificationSettings(@Query('userId') userId?: string) {
+  async getNotificationSettings(@Query('userId') _userId?: string) {
     return {
       email: {
         enabled: true,
@@ -36,7 +36,7 @@ export class NotificationsController {
   }
 
   @Post('subscribe')
-  async subscribeToNotifications(@Body() data: {
+  async subscribeToNotifications(@Body() _data: {
     userId: string;
     type: string;
     channel: 'email' | 'sms' | 'push';
@@ -48,7 +48,7 @@ export class NotificationsController {
   }
 
   @Post('unsubscribe')
-  async unsubscribeFromNotifications(@Body() data: {
+  async unsubscribeFromNotifications(@Body() _data: {
     userId: string;
     type: string;
     channel: 'email' | 'sms' | 'push';

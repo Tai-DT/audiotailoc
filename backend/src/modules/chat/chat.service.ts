@@ -35,7 +35,7 @@ export class ChatService {
     
     // Create the message
     const message = await this.prisma.chatMessage.create({ 
-      data: { sessionId, role, text } 
+      data: { sessionId, role, content: text } 
     });
 
     // If it's a user message, generate AI response
@@ -52,7 +52,7 @@ export class ChatService {
           data: {
             sessionId,
             role: 'ASSISTANT',
-            text: aiResponse.answer
+            content: aiResponse.answer
           }
         });
 
@@ -70,7 +70,7 @@ export class ChatService {
           data: {
             sessionId,
             role: 'ASSISTANT',
-            text: 'Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau hoặc liên hệ nhân viên hỗ trợ.'
+            content: 'Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau hoặc liên hệ nhân viên hỗ trợ.'
           }
         });
       }
@@ -145,5 +145,4 @@ export class ChatService {
     return stats;
   }
 }
-
 

@@ -392,20 +392,20 @@ export class AnalyticsService {
     filters: AnalyticsFilters = {}
   ): Promise<string> {
     try {
-      let data: any;
+      let _data: any;
 
       switch (type) {
         case 'sales':
-          data = await this.getSalesMetrics(filters);
+          _data = await this.getSalesMetrics(filters);
           break;
         case 'customers':
-          data = await this.getCustomerMetrics(filters);
+          _data = await this.getCustomerMetrics(filters);
           break;
         case 'inventory':
-          data = await this.getInventoryMetrics(filters);
+          _data = await this.getInventoryMetrics(filters);
           break;
         case 'all':
-          data = await this.getDashboardData(filters);
+          _data = await this.getDashboardData(filters);
           break;
       }
 
@@ -445,7 +445,7 @@ export class AnalyticsService {
   private async calculateSalesMetrics(
     startDate: Date, 
     endDate: Date, 
-    filters: AnalyticsFilters
+    _filters: AnalyticsFilters
   ): Promise<Omit<SalesMetrics, 'revenueGrowth' | 'orderGrowth' | 'topProducts' | 'salesByPeriod'>> {
     // Get orders in the period
     const orders = await this.prisma.order.findMany({
@@ -474,9 +474,9 @@ export class AnalyticsService {
   }
 
   private async getTopProducts(
-    startDate: Date, 
-    endDate: Date, 
-    filters: AnalyticsFilters
+    _startDate: Date, 
+    _endDate: Date, 
+    _filters: AnalyticsFilters
   ): Promise<SalesMetrics['topProducts']> {
     // This would aggregate order items by product
     // For now, return mock data
@@ -492,9 +492,9 @@ export class AnalyticsService {
   }
 
   private async getSalesByPeriod(
-    startDate: Date, 
-    endDate: Date, 
-    filters: AnalyticsFilters
+    _startDate: Date, 
+    _endDate: Date, 
+    _filters: AnalyticsFilters
   ): Promise<SalesMetrics['salesByPeriod']> {
     // This would group sales by day/week/month
     // For now, return mock data
@@ -508,15 +508,15 @@ export class AnalyticsService {
     ];
   }
 
-  private async calculateCustomerLifetimeValue(filters: AnalyticsFilters): Promise<number> {
+  private async calculateCustomerLifetimeValue(_filters: AnalyticsFilters): Promise<number> {
     // Simplified CLV calculation
     // CLV = Average Order Value × Purchase Frequency × Customer Lifespan
     return 5000000; // Placeholder
   }
 
   private async getCustomerSegments(
-    startDate: Date, 
-    endDate: Date
+    _startDate: Date, 
+    _endDate: Date
   ): Promise<CustomerMetrics['customerSegments']> {
     // This would segment customers by spending, frequency, etc.
     return [
@@ -527,56 +527,56 @@ export class AnalyticsService {
   }
 
   private async getTopCustomers(
-    startDate: Date, 
-    endDate: Date, 
-    filters: AnalyticsFilters
+    _startDate: Date, 
+    _endDate: Date, 
+    _filters: AnalyticsFilters
   ): Promise<CustomerMetrics['topCustomers']> {
     // This would find customers with highest spending
     return [];
   }
 
-  private async calculateInventoryTurnover(filters: AnalyticsFilters): Promise<number> {
+  private async calculateInventoryTurnover(_filters: AnalyticsFilters): Promise<number> {
     // Inventory Turnover = Cost of Goods Sold / Average Inventory Value
     return 4.5; // Placeholder
   }
 
-  private async getTopSellingProducts(filters: AnalyticsFilters): Promise<InventoryMetrics['topSellingProducts']> {
+  private async getTopSellingProducts(_filters: AnalyticsFilters): Promise<InventoryMetrics['topSellingProducts']> {
     return [];
   }
 
-  private async getSlowMovingProducts(filters: AnalyticsFilters): Promise<InventoryMetrics['slowMovingProducts']> {
+  private async getSlowMovingProducts(_filters: AnalyticsFilters): Promise<InventoryMetrics['slowMovingProducts']> {
     return [];
   }
 
-  private async calculateMRR(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateMRR(_startDate: Date, _endDate: Date): Promise<number> {
     return 0; // Placeholder
   }
 
-  private async calculateCAC(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateCAC(_startDate: Date, _endDate: Date): Promise<number> {
     return 0; // Placeholder
   }
 
-  private async calculateChurnRate(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateChurnRate(_startDate: Date, _endDate: Date): Promise<number> {
     return 0; // Placeholder
   }
 
-  private async calculateAverageResponseTime(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateAverageResponseTime(_startDate: Date, _endDate: Date): Promise<number> {
     return 0; // Placeholder
   }
 
-  private async calculateOrderFulfillmentRate(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateOrderFulfillmentRate(_startDate: Date, _endDate: Date): Promise<number> {
     return 95; // Placeholder
   }
 
-  private async calculateReturnRate(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateReturnRate(_startDate: Date, _endDate: Date): Promise<number> {
     return 2.5; // Placeholder
   }
 
-  private async calculateProfitMargin(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateProfitMargin(_startDate: Date, _endDate: Date): Promise<number> {
     return 25; // Placeholder
   }
 
-  private async calculateMarketingROI(startDate: Date, endDate: Date): Promise<number> {
+  private async calculateMarketingROI(_startDate: Date, _endDate: Date): Promise<number> {
     return 300; // Placeholder
   }
 

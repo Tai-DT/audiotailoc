@@ -9,7 +9,6 @@ import {
   Res,
   HttpStatus,
   HttpException,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { BackupService, BackupResult, RestoreResult, BackupStatus, BackupMetadata } from './backup.service';

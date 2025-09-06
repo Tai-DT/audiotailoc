@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -147,7 +147,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Get order statistics' })
   @ApiResponse({ status: 200, description: 'Order statistics' })
   async getOrderStats(@Query('days') days = '30') {
-    const daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    const _daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
     
     const [
       totalOrders,

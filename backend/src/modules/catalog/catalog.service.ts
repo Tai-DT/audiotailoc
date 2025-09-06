@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 // import { Prisma } from '@prisma/client';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
@@ -93,8 +93,8 @@ export class CatalogService {
     return product;
   }
 
-  async update(slug: string, data: Partial<{ name: string; description?: string | null; priceCents: number; imageUrl?: string | null }>): Promise<ProductDto> {
-    const product = await (this.prisma as any).product.update({ where: { slug }, data });
+  async update(id: string, data: Partial<{ name: string; description?: string | null; priceCents: number; imageUrl?: string | null }>): Promise<ProductDto> {
+    const product = await (this.prisma as any).product.update({ where: { id }, data });
     /* void this.search.indexDocuments([
       { id: product.id, slug: product.slug, name: product.name, description: product.description, priceCents: product.priceCents, imageUrl: product.imageUrl, categoryId: product.categoryId },
     ]); */
@@ -102,8 +102,8 @@ export class CatalogService {
     return product;
   }
 
-  async remove(slug: string): Promise<{ deleted: boolean }> {
-    const product = await (this.prisma as any).product.delete({ where: { slug } });
+  async remove(id: string): Promise<{ deleted: boolean }> {
+    await (this.prisma as any).product.delete({ where: { id } });
     /* void this.search.deleteDocument(product.id); */
     await this.cache.deletePattern('products:list:*');
     return { deleted: true };

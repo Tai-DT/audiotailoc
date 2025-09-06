@@ -7,7 +7,7 @@ const config: Config = {
     '^.+\\.(t|j)s$': [
       'ts-jest',
       {
-        tsconfig: '<rootDir>/tsconfig.json',
+        tsconfig: '<rootDir>/tsconfig.test.json',
       },
     ],
   },
@@ -17,4 +17,3 @@ const config: Config = {
 };
 
 export default config;
-

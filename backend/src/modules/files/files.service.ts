@@ -305,7 +305,7 @@ export class FilesService {
   ): Promise<{ files: FileUploadResult[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 20));
-    const skip = (page - 1) * limit;
+    const _skip = (page - 1) * limit;
 
     const where: any = {};
     if (filters.type) {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { } from '@nestjs/common';
 import { MonitoringService } from './monitoring.service';
 
 // Custom metrics decorators
@@ -21,7 +21,7 @@ export function TrackExecutionTime(operation: string) {
 
         return result;
       } catch (error) {
-        const duration = Date.now() - start;
+        const _duration = Date.now() - start;
 
         if (monitoringService) {
           monitoringService.recordError('OperationError', operation);

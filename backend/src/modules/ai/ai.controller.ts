@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UseGuards, Param, Put, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res, UseGuards, Param } from '@nestjs/common';
 import type { Response } from 'express';
-import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Max, Min, IsArray, IsNumber } from 'class-validator';
+import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Max, Min, IsArray } from 'class-validator';
 import { AiService } from './ai.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';

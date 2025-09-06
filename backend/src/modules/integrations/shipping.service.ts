@@ -489,9 +489,9 @@ export class ShippingService {
 
   // Viettel Post Integration
   private async getViettelPostRates(
-    fromAddress: ShippingAddress,
-    toAddress: ShippingAddress,
-    packages: ShippingPackage[]
+    _fromAddress: ShippingAddress,
+    _toAddress: ShippingAddress,
+    _packages: ShippingPackage[]
   ): Promise<ShippingRate[]> {
     // Viettel Post API integration would go here
     // For now, return empty array
@@ -499,17 +499,17 @@ export class ShippingService {
   }
 
   private async createViettelPostLabel(
-    serviceCode: string,
-    fromAddress: ShippingAddress,
-    toAddress: ShippingAddress,
-    packages: ShippingPackage[],
-    orderId: string
+    _serviceCode: string,
+    _fromAddress: ShippingAddress,
+    _toAddress: ShippingAddress,
+    _packages: ShippingPackage[],
+    _orderId: string
   ): Promise<ShippingLabel> {
     // Viettel Post label creation would go here
     throw new Error('Viettel Post integration not implemented');
   }
 
-  private async trackViettelPost(trackingNumber: string): Promise<TrackingInfo> {
+  private async trackViettelPost(_trackingNumber: string): Promise<TrackingInfo> {
     // Viettel Post tracking would go here
     throw new Error('Viettel Post tracking not implemented');
   }

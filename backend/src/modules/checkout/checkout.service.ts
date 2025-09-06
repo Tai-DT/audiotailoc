@@ -40,7 +40,8 @@ export class CheckoutService {
             productId: i.productId,
             name: i.product.name,
             quantity: i.quantity,
-            unitPrice: i.unitPrice || i.product.priceCents,
+            price: i.price || i.product.priceCents,
+            unitPrice: i.price || i.product.priceCents,
             imageUrl: i.product.imageUrl ?? null,
           },
         });

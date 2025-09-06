@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ServiceCategory, ServiceType, ServiceBookingStatus } from '@prisma/client';
+import { ServiceCategory, ServiceType, ServiceBookingStatus } from '../../common/enums';
 
 @Injectable()
 export class ServicesService {
@@ -15,15 +15,21 @@ export class ServicesService {
     type: ServiceType;
     basePriceCents: number;
     estimatedDuration: number;
-    requirements?: string;
-    features?: string;
     imageUrl?: string;
   }) {
     return this.prisma.service.create({
-      data,
-      include: {
-        items: true,
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        category: data.category,
+        type: data.type,
+        basePriceCents: data.basePriceCents,
+        price: data.basePriceCents,
+        duration: data.estimatedDuration,
+        images: data.imageUrl,
       },
+      include: { items: true },
     });
   }
 
@@ -102,24 +108,31 @@ export class ServicesService {
     description: string;
     basePriceCents: number;
     estimatedDuration: number;
-    requirements: string;
-    features: string;
     imageUrl: string;
     isActive: boolean;
   }>) {
-    const service = await this.getService(id);
-    
+    const _service = await this.getService(id);
+
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.basePriceCents !== undefined) {
+      updateData.basePriceCents = data.basePriceCents;
+      updateData.price = data.basePriceCents;
+    }
+    if (data.estimatedDuration !== undefined) updateData.duration = data.estimatedDuration;
+    if (data.imageUrl !== undefined) updateData.images = data.imageUrl;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
     return this.prisma.service.update({
       where: { id },
-      data,
-      include: {
-        items: true,
-      },
+      data: updateData,
+      include: { items: true },
     });
   }
 
   async deleteService(id: string) {
-    const service = await this.getService(id);
+    const _service = await this.getService(id);
     
     // Check if service has any bookings
     const bookingCount = await this.prisma.serviceBooking.count({
@@ -138,25 +151,23 @@ export class ServicesService {
   // Service Items Management
   async addServiceItem(serviceId: string, data: {
     name: string;
-    description?: string;
     priceCents: number;
-    isRequired: boolean;
   }) {
     await this.getService(serviceId); // Ensure service exists
 
     return this.prisma.serviceItem.create({
       data: {
-        ...data,
         serviceId,
+        name: data.name,
+        price: data.priceCents,
+        quantity: 1,
       },
     });
   }
 
   async updateServiceItem(itemId: string, data: Partial<{
     name: string;
-    description: string;
     priceCents: number;
-    isRequired: boolean;
   }>) {
     const item = await this.prisma.serviceItem.findUnique({
       where: { id: itemId },
@@ -166,9 +177,13 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy mục dịch vụ');
     }
 
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.priceCents !== undefined) updateData.price = data.priceCents;
+
     return this.prisma.serviceItem.update({
       where: { id: itemId },
-      data,
+      data: updateData,
     });
   }
 
@@ -183,7 +198,7 @@ export class ServicesService {
 
     // Check if item is used in any bookings
     const bookingItemCount = await this.prisma.serviceBookingItem.count({
-      where: { itemId },
+      where: { serviceItemId: itemId },
     });
 
     if (bookingItemCount > 0) {
@@ -252,9 +267,11 @@ export class ServicesService {
       this.prisma.serviceBooking.count(),
       this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.PENDING } }),
       this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.COMPLETED } }),
-      this.prisma.serviceBooking.aggregate({
-        where: { status: ServiceBookingStatus.COMPLETED },
-        _sum: { actualCosts: true },
+      this.prisma.serviceBookingItem.aggregate({
+        where: {
+          booking: { status: ServiceBookingStatus.COMPLETED },
+        },
+        _sum: { price: true },
       }),
     ]);
 
@@ -264,7 +281,7 @@ export class ServicesService {
       totalBookings,
       pendingBookings,
       completedBookings,
-      totalRevenue: revenue._sum.actualCosts || 0,
+      totalRevenue: revenue._sum.price || 0,
     };
   }
 }

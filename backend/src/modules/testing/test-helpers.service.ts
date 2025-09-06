@@ -82,7 +82,7 @@ export class TestHelpersService {
   }
 
   // Generate test image data
-  generateTestImageData(width: number = 100, height: number = 100): Express.Multer.File {
+  generateTestImageData(_width: number = 100, _height: number = 100): Express.Multer.File {
     // Create a simple test image (1x1 pixel PNG)
     const pngSignature = Buffer.from([
       0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,

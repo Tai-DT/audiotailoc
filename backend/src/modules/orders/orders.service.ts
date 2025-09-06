@@ -38,7 +38,7 @@ export class OrdersService {
     const order = await this.get(id);
     const nexts = allowedTransitions[order.status] || [];
     if (!nexts.includes(status)) throw new BadRequestException('Trạng thái không hợp lệ');
-    const updated = await this.prisma.order.update({ where: { id }, data: { status: status as any } });
+    const updated = await this.prisma.order.update({ where: { id }, data: { status } });
 
     // Send notification email if we have the user's email
     if (order.userId) {
@@ -99,6 +99,10 @@ export class OrdersService {
     }
 
     try {
+      const shippingAddress = typeof orderData.shippingAddress === 'string'
+        ? orderData.shippingAddress
+        : (orderData.shippingAddress ? JSON.stringify(orderData.shippingAddress) : null);
+
       const order = await this.prisma.order.create({
         data: {
           orderNo,
@@ -106,7 +110,7 @@ export class OrdersService {
           status: 'PENDING',
           subtotalCents,
           totalCents: subtotalCents,
-          shippingAddress: orderData.shippingAddress || {},
+          shippingAddress,
           items: {
             create: items.map((item: any) => ({
               productId: item.productId,

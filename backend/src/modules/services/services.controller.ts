@@ -7,10 +7,9 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { ServiceCategory, ServiceType } from '@prisma/client';
+import { ServiceCategory, ServiceType } from '../../common/enums';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('services')
@@ -45,7 +44,7 @@ export class ServicesController {
     return this.servicesService.getServices({
       category: query.category,
       type: query.type,
-      isActive: query.isActive === 'true',
+      isActive: query.isActive !== undefined ? query.isActive === 'true' : undefined,
       page: query.page ? parseInt(query.page) : undefined,
       pageSize: query.pageSize ? parseInt(query.pageSize) : undefined,
     });
@@ -104,12 +103,13 @@ export class ServicesController {
     @Param('id') serviceId: string,
     @Body() createItemDto: {
       name: string;
-      description?: string;
       priceCents: number;
-      isRequired: boolean;
     }
   ) {
-    return this.servicesService.addServiceItem(serviceId, createItemDto);
+    return this.servicesService.addServiceItem(serviceId, {
+      name: createItemDto.name,
+      priceCents: createItemDto.priceCents,
+    });
   }
 
   @Put('items/:itemId')
@@ -117,12 +117,13 @@ export class ServicesController {
     @Param('itemId') itemId: string,
     @Body() updateItemDto: {
       name?: string;
-      description?: string;
       priceCents?: number;
-      isRequired?: boolean;
     }
   ) {
-    return this.servicesService.updateServiceItem(itemId, updateItemDto);
+    return this.servicesService.updateServiceItem(itemId, {
+      name: updateItemDto.name,
+      priceCents: updateItemDto.priceCents,
+    });
   }
 
   @Delete('items/:itemId')

@@ -1,4 +1,4 @@
-import { Injectable, Logger, LogLevel } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
@@ -145,7 +145,7 @@ export class LoggingService {
 
   // Specialized logging methods
   logRequest(context: LogContext): void {
-    const { method, url, statusCode, duration, userId, ip } = context;
+    const { method, url, statusCode, duration, userId: _userId, ip: _ip } = context;
     const message = `${method} ${url} ${statusCode} ${duration}ms`;
     
     if (statusCode && statusCode >= 400) {
@@ -270,7 +270,7 @@ export class LoggingService {
   }
 
   // Log aggregation and analysis
-  async getLogStats(timeRange: 'hour' | 'day' | 'week' = 'hour'): Promise<{
+  async getLogStats(_timeRange: 'hour' | 'day' | 'week' = 'hour'): Promise<{
     totalLogs: number;
     errorCount: number;
     warnCount: number;
@@ -326,7 +326,7 @@ export class LoggingService {
       .substring(0, 500); // Limit query length
   }
 
-  private sendToErrorTracking(message: string, context: any): void {
+  private sendToErrorTracking(_message: string, _context: any): void {
     // Integration with external error tracking services like Sentry
     const sentryDsn = this.config.get<string>('SENTRY_DSN');
     
