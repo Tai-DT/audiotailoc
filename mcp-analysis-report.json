@@ -1,0 +1,147 @@
+{
+  "timestamp": "2025-08-29T21:32:21.329Z",
+  "project": "Audio Tài Lộc",
+  "duration": 96,
+  "results": {
+    "system": {
+      "nodeVersion": "v22.16.0",
+      "memoryUsage": {
+        "rss": 51245056,
+        "heapTotal": 6094848,
+        "heapUsed": 5214016,
+        "external": 1960739,
+        "arrayBuffers": 16659
+      },
+      "diskSpace": 0,
+      "networkStatus": true
+    },
+    "backend": {},
+    "frontend": {},
+    "database": {
+      "schemas": [
+        "schema-sqlite.prisma",
+        "schema.prisma"
+      ],
+      "totalModels": 29,
+      "hasPrisma": true
+    },
+    "security": {
+      "checks": [
+        {
+          "type": "gitignore",
+          "status": "good"
+        },
+        {
+          "type": "audit_script",
+          "status": "warning"
+        }
+      ],
+      "score": 50
+    },
+    "performance": {
+      "checks": [
+        {
+          "type": "caching",
+          "file": "cache.interceptor.ts",
+          "status": "good"
+        },
+        {
+          "type": "monitoring",
+          "status": "good"
+        }
+      ],
+      "score": 100
+    },
+    "deployment": {
+      "checks": [
+        {
+          "type": "docker",
+          "file": "docker-compose.yml",
+          "status": "good"
+        },
+        {
+          "type": "env_template",
+          "template": "env-template.txt",
+          "status": "good"
+        },
+        {
+          "type": "env_template",
+          "template": ".env.example",
+          "status": "good"
+        }
+      ],
+      "score": 100
+    }
+  },
+  "summary": {
+    "system": {
+      "nodeVersion": "v22.16.0",
+      "memoryUsage": {
+        "rss": 51245056,
+        "heapTotal": 6094848,
+        "heapUsed": 5214016,
+        "external": 1960739,
+        "arrayBuffers": 16659
+      },
+      "diskSpace": 0,
+      "networkStatus": true
+    },
+    "backend": {},
+    "frontend": {},
+    "database": {
+      "schemas": [
+        "schema-sqlite.prisma",
+        "schema.prisma"
+      ],
+      "totalModels": 29,
+      "hasPrisma": true
+    },
+    "security": {
+      "checks": [
+        {
+          "type": "gitignore",
+          "status": "good"
+        },
+        {
+          "type": "audit_script",
+          "status": "warning"
+        }
+      ],
+      "score": 50
+    },
+    "performance": {
+      "checks": [
+        {
+          "type": "caching",
+          "file": "cache.interceptor.ts",
+          "status": "good"
+        },
+        {
+          "type": "monitoring",
+          "status": "good"
+        }
+      ],
+      "score": 100
+    },
+    "deployment": {
+      "checks": [
+        {
+          "type": "docker",
+          "file": "docker-compose.yml",
+          "status": "good"
+        },
+        {
+          "type": "env_template",
+          "template": "env-template.txt",
+          "status": "good"
+        },
+        {
+          "type": "env_template",
+          "template": ".env.example",
+          "status": "good"
+        }
+      ],
+      "score": 100
+    }
+  }
+}
