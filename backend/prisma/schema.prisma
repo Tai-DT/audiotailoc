@@ -32,26 +32,48 @@ model User {
   loyaltyAccount LoyaltyAccount?
   projects       Project[]
   ServiceBooking ServiceBooking[]
+  activityLogs   ActivityLog[]
 
   @@map("users")
 }
 
 // Product Model
 model Product {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  description String?
-  priceCents  Int
-  imageUrl    String?
-  images      String?
-  categoryId  String?
-  featured    Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  isDeleted   Boolean  @default(false)
-  viewCount   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  description       String?
+  shortDescription  String?
+  priceCents        Int
+  originalPriceCents Int?
+  imageUrl          String?
+  images            Json?    // Array of image URLs
+  categoryId        String?
+  brand             String?
+  model             String?
+  sku               String?  @unique
+  specifications    Json?    // Product specifications as JSON
+  features          String?  // Key features (comma separated)
+  warranty          String?  // Warranty information
+  weight            Float?   // Weight in kg
+  dimensions        String?  // Dimensions (LxWxH)
+  stockQuantity     Int      @default(0)
+  minOrderQuantity  Int      @default(1)
+  maxOrderQuantity  Int?     // Maximum order quantity
+  tags              String?  // Tags (comma separated)
+
+  // SEO Fields
+  metaTitle         String?
+  metaDescription   String?
+  metaKeywords      String?  // Keywords (comma separated)
+  canonicalUrl      String?
+
+  featured          Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  isDeleted         Boolean  @default(false)
+  viewCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   category         Category?            @relation(fields: [categoryId], references: [id])
   cartItems        CartItem[]
@@ -63,6 +85,9 @@ model Product {
   knowledgeEntries KnowledgeBaseEntry[]
 
   @@index([isDeleted])
+  @@index([isActive])
+  @@index([featured])
+  @@index([categoryId])
   @@map("products")
 }
 
@@ -118,18 +143,19 @@ model CartItem {
 
 // Order Model
 model Order {
-  id              String   @id @default(cuid())
-  orderNo         String   @unique
-  userId          String
-  subtotalCents   Int      @default(0)
-  discountCents   Int      @default(0)
-  shippingCents   Int      @default(0)
-  totalCents      Int
-  status          String   @default("PENDING")
-  shippingAddress String?
-  promotionCode   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  orderNo            String   @unique
+  userId             String
+  subtotalCents      Int      @default(0)
+  discountCents      Int      @default(0)
+  shippingCents      Int      @default(0)
+  totalCents         Int
+  status             String   @default("PENDING")
+  shippingAddress    String?
+  shippingCoordinates String?
+  promotionCode      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user           User            @relation(fields: [userId], references: [id])
   items          OrderItem[]
@@ -177,16 +203,62 @@ model Payment {
   @@map("payments")
 }
 
+// Service Category Model
+model ServiceCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  services Service[]
+  types    ServiceType[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("service_categories")
+}
+
+// Service Type Model
+model ServiceType {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  categoryId  String
+  icon        String?
+  color       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  services Service[]
+
+  @@index([isActive])
+  @@index([categoryId])
+  @@index([sortOrder])
+  @@map("service_types")
+}
+
 // Service Model
 model Service {
   id             String   @id @default(cuid())
   slug           String   @unique
   name           String
   description    String?
+  shortDescription String?
   basePriceCents Int
   price          Int
   duration       Int
   categoryId     String?
+  typeId         String?
   images         String?
   isActive       Boolean  @default(true)
   isFeatured     Boolean  @default(false)
@@ -194,13 +266,25 @@ model Service {
   seoDescription String?
   category       String?
   type           String?
+  tags           String?  // JSON array of tags
+  features       String?  // JSON array of features
+  requirements   String?  // JSON array of requirements
+  metadata       String?  // JSON object for additional data
+  viewCount      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Relations
+  serviceCategory ServiceCategory? @relation(fields: [categoryId], references: [id])
+  serviceType      ServiceType?     @relation(fields: [typeId], references: [id])
   views    ServiceView[]
   bookings ServiceBooking[]
   items    ServiceItem[]
 
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([categoryId])
+  @@index([typeId])
   @@map("services")
 }
 
@@ -257,13 +341,55 @@ model ProductReview {
   title      String?
   comment    String?
   isVerified Boolean  @default(false)
+  status     ReviewStatus @default(APPROVED)
+  upvotes    Int      @default(0)
+  downvotes  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   user    User    @relation(fields: [userId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
+  votes   ProductReviewVote[]
+  reports ProductReviewReport[]
+
   @@map("product_reviews")
+}
+
+// Review status enum for moderation
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Users can vote helpful/report on reviews
+model ProductReviewVote {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  isUpvote  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  review ProductReview @relation(fields: [reviewId], references: [id])
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@map("product_review_votes")
+}
+
+// Reports for admin moderation
+model ProductReviewReport {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  reason    String
+  createdAt DateTime @default(now())
+
+  review ProductReview @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId])
+  @@map("product_review_reports")
 }
 
 // Chat Session Model
@@ -631,4 +757,126 @@ model Project {
   user User @relation(fields: [userId], references: [id])
 
   @@map("projects")
+}
+
+// Activity Log Model
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  resource    String?  // users, products, orders, etc.
+  resourceId  String?  // ID of the affected resource
+  details     String?  // JSON string with additional details
+  ipAddress   String?
+  userAgent   String?
+  method      String?  // HTTP method
+  url         String?  // Request URL
+  statusCode  Int?     // HTTP status code
+  duration    Int?     // Request duration in ms
+  category    String   @default("user_activity") // user_activity, security, audit, system
+  severity    String   @default("info") // info, warn, error
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([category])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+// ==========================
+// Marketing Models & Enums
+// ==========================
+
+enum CampaignType {
+  EMAIL
+  SMS
+  PUSH
+  SOCIAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+model Campaign {
+  id              String          @id @default(cuid())
+  name            String
+  description     String
+  type            CampaignType
+  status          CampaignStatus  @default(DRAFT)
+  targetAudience  String?
+  discountPercent Int?
+  discountAmount  Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  sentAt          DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  recipients      CampaignRecipient[]
+  opens           CampaignOpen[]
+  clicks          CampaignClick[]
+  emailLogs       EmailLog[]
+
+  @@map("campaigns")
+}
+
+model CampaignRecipient {
+  id         String   @id @default(cuid())
+  campaignId String
+  email      String
+  name       String?
+  createdAt  DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("campaign_recipients")
+}
+
+model CampaignOpen {
+  id             String   @id @default(cuid())
+  campaignId     String
+  recipientEmail String?
+  createdAt      DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("campaign_opens")
+}
+
+model CampaignClick {
+  id             String   @id @default(cuid())
+  campaignId     String
+  recipientEmail String?
+  url            String?
+  createdAt      DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("campaign_clicks")
+}
+
+model EmailLog {
+  id             String   @id @default(cuid())
+  campaignId     String?
+  recipientEmail String
+  subject        String
+  status         String   // SENT, FAILED
+  error          String?
+  sentAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("email_logs")
 }

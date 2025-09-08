@@ -15,6 +15,7 @@ export interface ErrorResponse {
   timestamp: string;
   path: string;
   requestId?: string;
+  errors?: string[];
 }
 
 @Catch()
@@ -29,6 +30,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'Internal Server Error';
+    let validationErrors: string[] | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -38,6 +40,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const responseObj = exceptionResponse as any;
         message = responseObj.message || exception.message;
         error = responseObj.error || exception.message;
+        // Include validation errors if they exist
+        if (responseObj.errors) {
+          validationErrors = responseObj.errors;
+        }
       } else {
         message = exception.message;
         error = exception.message;
@@ -55,6 +61,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
       requestId: request.headers['x-request-id'] as string,
     };
+
+    // Add validation errors if they exist
+    if (validationErrors) {
+      errorResponse.errors = validationErrors;
+    }
 
     // Log error details
     this.logger.error(

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { Service, Product, Category, User, Order, Cart } from './types';
 
 // API Response Types
 export interface ApiResponse<T = any> {
@@ -279,6 +280,11 @@ class ApiClient {
     return this.get(`/search/products?q=${encodeURIComponent(query)}`);
   }
 
+  // Maps methods
+  public async geocodeAddress(query: string): Promise<ApiResponse<any>> {
+    return this.get(`/maps/geocode?query=${encodeURIComponent(query)}`);
+  }
+
   // SEO methods
   public async getSeoData(type: 'home' | 'product' | 'category' | 'page', id?: string): Promise<ApiResponse<any>> {
     const url = id ? `/seo/${type}/${id}` : `/seo/${type}`;
@@ -293,6 +299,34 @@ class ApiClient {
   public async getRobotsTxt(): Promise<string> {
     const response = await this.client.get('/seo/robots.txt', { responseType: 'text' });
     return response.data;
+  }
+
+  // Services methods
+  public async getServices(params?: {
+    isActive?: boolean;
+    category?: string;
+    type?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<Service[]>> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    return this.get(`/services?${queryParams.toString()}`);
+  }
+
+  public async getService(slug: string): Promise<ApiResponse<Service>> {
+    return this.get(`/services/${slug}`);
+  }
+
+  public async getServiceById(id: string): Promise<ApiResponse<Service>> {
+    return this.get(`/services/id/${id}`);
   }
 
   // i18n methods
@@ -311,6 +345,58 @@ class ApiClient {
 
 // Create singleton instance
 const apiClient = new ApiClient();
+
+// Create structured API object
+export const api = {
+  services: {
+    getAll: (params?: {
+      isActive?: boolean;
+      category?: string;
+      type?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) => apiClient.getServices(params),
+    getById: (id: string) => apiClient.getServiceById(id),
+    getBySlug: (slug: string) => apiClient.getService(slug)
+  },
+  products: {
+    getAll: (params?: {
+      page?: number;
+      pageSize?: number;
+      category?: string;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }) => apiClient.getProducts(params),
+    getById: (slug: string) => apiClient.getProduct(slug)
+  },
+  categories: {
+    getAll: () => apiClient.getCategories()
+  },
+  cart: {
+    get: (guestId?: string) => apiClient.getCart(guestId),
+    addItem: (data: { productId: string; quantity: number }, guestId?: string) => 
+      apiClient.addToCart(data, guestId),
+    updateItem: (productId: string, quantity: number, guestId?: string) => 
+      apiClient.updateCartItem(productId, quantity, guestId),
+    removeItem: (productId: string, guestId?: string) => 
+      apiClient.removeFromCart(productId, guestId)
+  },
+  auth: {
+    login: (credentials: { email: string; password: string }) => 
+      apiClient.login(credentials),
+    register: (userData: { name: string; email: string; password: string }) => 
+      apiClient.register(userData),
+    logout: () => apiClient.logout(),
+    getCurrentUser: () => apiClient.getCurrentUser()
+  },
+  orders: {
+    create: (orderData: any) => apiClient.createOrder(orderData),
+    getAll: () => apiClient.getOrders(),
+    getById: (orderId: string) => apiClient.getOrder(orderId)
+  }
+};
 
 export default apiClient;
 export { ApiClient };

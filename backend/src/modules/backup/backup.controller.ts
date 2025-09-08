@@ -37,9 +37,7 @@ export class BackupController {
         status,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'get_backup_status',
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'get_backup_status' } });
 
       throw new HttpException(
         {
@@ -85,11 +83,7 @@ export class BackupController {
         total,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'list_backups',
-        type,
-        status,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'list_backups', type, status } });
 
       throw new HttpException(
         {
@@ -98,6 +92,24 @@ export class BackupController {
             code: 'BACKUP_LIST_ERROR',
             message: 'Failed to list backups',
           },
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Preflight status
+  @Get('preflight')
+  async getPreflight(): Promise<{ success: boolean; status: any }> {
+    try {
+      const status = await this.backupService.getPreflightStatus();
+      return { success: true, status };
+    } catch (error) {
+      this.loggingService.logError(error as any, { metadata: { operation: 'backup_preflight' } });
+      throw new HttpException(
+        {
+          success: false,
+          error: { code: 'BACKUP_PREFLIGHT_ERROR', message: 'Failed to run backup preflight', details: (error as Error).message },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
@@ -140,10 +152,7 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error, {
-        operation: 'get_backup_details',
-        backupId,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'get_backup_details', backupId } });
 
       throw new HttpException(
         {
@@ -188,10 +197,7 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'create_full_backup',
-        options,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'create_full_backup', options } });
 
       throw new HttpException(
         {
@@ -199,7 +205,7 @@ export class BackupController {
           error: {
             code: 'FULL_BACKUP_ERROR',
             message: 'Failed to create full backup',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -242,10 +248,7 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'create_incremental_backup',
-        options,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'create_incremental_backup', options } });
 
       throw new HttpException(
         {
@@ -253,7 +256,7 @@ export class BackupController {
           error: {
             code: 'INCREMENTAL_BACKUP_ERROR',
             message: 'Failed to create incremental backup',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -292,10 +295,7 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'create_file_backup',
-        options,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'create_file_backup', options } });
 
       throw new HttpException(
         {
@@ -303,7 +303,7 @@ export class BackupController {
           error: {
             code: 'FILE_BACKUP_ERROR',
             message: 'Failed to create file backup',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -343,11 +343,7 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'restore_from_backup',
-        backupId,
-        options,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'restore_from_backup', backupId, options } });
 
       throw new HttpException(
         {
@@ -355,7 +351,7 @@ export class BackupController {
           error: {
             code: 'BACKUP_RESTORE_ERROR',
             message: 'Failed to restore from backup',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -412,10 +408,7 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error, {
-        operation: 'point_in_time_recovery',
-        options,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'point_in_time_recovery', options } });
 
       throw new HttpException(
         {
@@ -423,7 +416,7 @@ export class BackupController {
           error: {
             code: 'POINT_IN_TIME_RECOVERY_ERROR',
             message: 'Failed to perform point-in-time recovery',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -491,11 +484,8 @@ export class BackupController {
         });
       });
 
-      readStream.on('error', (error) => {
-        this.loggingService.logError(error, {
-          operation: 'download_backup',
-          backupId,
-        });
+      readStream.on('error', (error: Error) => {
+        this.loggingService.logError(error as any, { metadata: { operation: 'download_backup', backupId } });
         response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           success: false,
           error: {
@@ -510,10 +500,7 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error, {
-        operation: 'download_backup',
-        backupId,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'download_backup', backupId } });
 
       throw new HttpException(
         {
@@ -557,11 +544,7 @@ export class BackupController {
         await fs.unlink(backup.path);
       } catch (error) {
         // Log but don't fail if file deletion fails
-        this.loggingService.logError(error, {
-          operation: 'delete_backup_file',
-          backupId,
-          path: backup.path,
-        });
+        this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup_file', backupId, path: backup.path } });
       }
 
       // Delete metadata (this would be handled by the service in a real implementation)
@@ -570,11 +553,7 @@ export class BackupController {
         await fs.unlink(metadataPath);
       } catch (error) {
         // Log but don't fail if metadata deletion fails
-        this.loggingService.logError(error, {
-          operation: 'delete_backup_metadata',
-          backupId,
-          path: metadataPath,
-        });
+        this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath } });
       }
 
       this.loggingService.logBusinessEvent('backup_deleted', {
@@ -592,10 +571,7 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error, {
-        operation: 'delete_backup',
-        backupId,
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup', backupId } });
 
       throw new HttpException(
         {
@@ -603,7 +579,7 @@ export class BackupController {
           error: {
             code: 'DELETE_BACKUP_ERROR',
             message: 'Failed to delete backup',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -628,9 +604,7 @@ export class BackupController {
         deletedCount,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'cleanup_old_backups',
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'cleanup_old_backups' } });
 
       throw new HttpException(
         {
@@ -638,7 +612,7 @@ export class BackupController {
           error: {
             code: 'BACKUP_CLEANUP_ERROR',
             message: 'Failed to cleanup old backups',
-            details: error.message,
+            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -675,7 +649,7 @@ export class BackupController {
           current.timestamp > newest.timestamp ? current : newest
         ).timestamp : null,
         successRate: backups.length > 0 ? (backups.filter(b => b.status === 'completed').length / backups.length) * 100 : 0,
-        ...status,
+        status,
       };
 
       this.loggingService.logBusinessEvent('backup_analytics_requested', {
@@ -688,9 +662,7 @@ export class BackupController {
         analytics,
       };
     } catch (error) {
-      this.loggingService.logError(error, {
-        operation: 'get_backup_analytics',
-      });
+      this.loggingService.logError(error as any, { metadata: { operation: 'get_backup_analytics' } });
 
       throw new HttpException(
         {

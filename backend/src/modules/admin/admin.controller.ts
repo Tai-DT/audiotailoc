@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { LoggingService } from '../monitoring/logging.service';
+import { ActivityLogService } from '../../services/activity-log.service';
 
 class AdminDashboardDto {
   startDate?: string;
@@ -22,7 +24,9 @@ class BulkActionDto {
 export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly loggingService: LoggingService,
+    private readonly activityLogService: ActivityLogService
   ) {}
 
   @Get('dashboard')
@@ -348,19 +352,134 @@ export class AdminController {
 
   @Get('logs/activity')
   @ApiOperation({ summary: 'Get activity logs' })
-  @ApiResponse({ status: 200, description: 'Activity logs' })
-  async getActivityLogs(@Query('type') type?: string, @Query('limit') limit = '100') {
-    // This would typically integrate with a logging service
-    // For now, return a placeholder
-    return {
-      success: true,
-      data: {
-        logs: [],
-        total: 0,
-        type: type || 'all',
-        limit: parseInt(limit)
-      },
-      message: 'Activity log retrieval not implemented yet'
-    };
+  @ApiResponse({ status: 200, description: 'Activity logs retrieved successfully' })
+  async getActivityLogs(
+    @Query('type') type?: string,
+    @Query('limit') limit = '100',
+    @Query('offset') offset = '0',
+    @Query('userId') userId?: string,
+    @Query('action') action?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    try {
+      const limitNum = Math.min(parseInt(limit), 1000); // Max 1000 records
+      const offsetNum = parseInt(offset);
+
+      // Use ActivityLogService to get logs
+      const { logs, total } = await this.activityLogService.getActivityLogs({
+        category: type && type !== 'all' ? type : undefined,
+        userId,
+        action,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        limit: limitNum,
+        offset: offsetNum
+      });
+
+      // Log admin activity
+      this.loggingService.logUserActivity(
+        'admin_view_activity_logs',
+        'Viewed activity logs',
+        {
+          resource: 'activity_logs',
+          type: type || 'all',
+          limit: limitNum,
+          offset: offsetNum,
+          filters: { userId, action, startDate, endDate }
+        }
+      );
+
+      return {
+        success: true,
+        data: {
+          logs,
+          total,
+          limit: limitNum,
+          offset: offsetNum,
+          type: type || 'all'
+        }
+      };
+    } catch (error) {
+      this.loggingService.error('Failed to retrieve activity logs', {
+        error: error as Error,
+        type,
+        limit,
+        offset,
+        userId,
+        action,
+        startDate,
+        endDate
+      });
+
+      return {
+        success: false,
+        error: {
+          code: 'ACTIVITY_LOGS_RETRIEVAL_FAILED',
+          message: 'Failed to retrieve activity logs',
+          details: (error as Error).message
+        }
+      };
+    }
+  }
+
+  @Delete('logs/activity/cleanup')
+  @ApiOperation({ summary: 'Clean up old activity logs' })
+  @ApiResponse({ status: 200, description: 'Old activity logs cleaned up successfully' })
+  async cleanupActivityLogs(@Query('days') days = '90') {
+    try {
+      const daysNum = parseInt(days);
+      if (daysNum < 7) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_CLEANUP_DAYS',
+            message: 'Cleanup days must be at least 7'
+          }
+        };
+      }
+
+      // Use ActivityLogService to cleanup old logs
+      const deletedCount = await this.activityLogService.cleanupOldLogs(daysNum);
+
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysNum);
+
+      // Log admin activity
+      this.loggingService.logUserActivity(
+        'admin_cleanup_activity_logs',
+        'Cleaned up old activity logs',
+        {
+          resource: 'activity_logs',
+          deletedCount,
+          cutoffDate: cutoffDate.toISOString(),
+          days: daysNum
+        }
+      );
+
+      return {
+        success: true,
+        data: {
+          deletedCount,
+          cutoffDate: cutoffDate.toISOString(),
+          days: daysNum
+        },
+        message: `Successfully deleted ${deletedCount} old activity logs`
+      };
+    } catch (error) {
+      this.loggingService.error('Failed to cleanup activity logs', {
+        error: error as Error,
+        days
+      });
+
+      return {
+        success: false,
+        error: {
+          code: 'ACTIVITY_LOGS_CLEANUP_FAILED',
+          message: 'Failed to cleanup activity logs',
+          details: (error as Error).message
+        }
+      };
+    }
   }
 }

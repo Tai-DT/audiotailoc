@@ -533,6 +533,79 @@ Context: ${dto.context || 'general'}`;
     }
   }
 
+  // ======= CUSTOMER INSIGHTS WRAPPERS =======
+  // These methods provide structured AI outputs used by customer-insights module.
+  async analyzeCustomerSegment(behavior: {
+    userId?: string;
+    sessionId?: string;
+    searchQueries: string[];
+    viewedProducts: string[];
+    viewedServices: string[];
+    questions: string[];
+    timeSpent: number;
+    interactions: number;
+    lastActivity: Date | undefined;
+  }): Promise<{ segmentName: string; description: string; criteria: any; averageValue?: number; preferences?: string[]; }>
+  {
+    const prompt = `Phân tích hành vi khách hàng và phân đoạn (segment). Trả JSON:
+{
+  "segmentName": string,
+  "description": string,
+  "criteria": any,
+  "averageValue": number,
+  "preferences": string[]
+}
+
+Dữ liệu: ${JSON.stringify(behavior)}`;
+    const response = await this.gemini.generateResponse(prompt);
+    const result = this.parseJSONResponse(response);
+    return {
+      segmentName: result.segmentName || 'General',
+      description: result.description || 'General customer segment',
+      criteria: result.criteria || {},
+      averageValue: typeof result.averageValue === 'number' ? result.averageValue : 0,
+      preferences: Array.isArray(result.preferences) ? result.preferences : []
+    };
+  }
+
+  async analyzeCustomerNeeds(input: {
+    questions: Array<{ text: string; category?: string | null; satisfaction?: number | null }>;
+    searchQueries: string[];
+    popularProducts: Record<string, number>;
+    totalInteractions: number;
+  }): Promise<any>
+  {
+    const prompt = `Phân tích nhu cầu khách hàng từ dữ liệu sau và trả về JSON có các trường:
+{
+  "needs": Array<{ category: string, description: string, frequency: number, urgency: "low|medium|high", satisfaction: number, suggestions: string[] }>,
+  "summary": string
+}
+
+Dữ liệu: ${JSON.stringify(input)}`;
+    const response = await this.gemini.generateResponse(prompt);
+    const result = this.parseJSONResponse(response);
+    return {
+      needs: Array.isArray(result.needs) ? result.needs : [],
+      summary: result.summary || ''
+    };
+  }
+
+  async generateImprovementSuggestions(input: any): Promise<any> {
+    const prompt = `Dựa trên dữ liệu sau, đề xuất cải tiến (JSON):
+{
+  "suggestions": Array<{ area: string, action: string, impact: "low|medium|high" }>,
+  "priorities": string[]
+}
+
+Dữ liệu: ${JSON.stringify(input)}`;
+    const response = await this.gemini.generateResponse(prompt);
+    const result = this.parseJSONResponse(response);
+    return {
+      suggestions: Array.isArray(result.suggestions) ? result.suggestions : [],
+      priorities: Array.isArray(result.priorities) ? result.priorities : []
+    };
+  }
+
   async classifyText(dto: any) {
     try {
       const prompt = `Phân loại văn bản sau vào một trong các danh mục: ${dto.categories.join(', ')}. Trả về kết quả dạng JSON:
@@ -816,4 +889,3 @@ Tin nhắn: "${dto.message}"`;
     }
   }
 }
-

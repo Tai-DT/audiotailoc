@@ -11,9 +11,9 @@ export class ProjectsService {
     });
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(id: string) {
     const project = await this.prisma.project.findUnique({
-      where: { slug }
+      where: { id }
     });
 
     if (!project) {
@@ -60,4 +60,3 @@ export class ProjectsService {
     return { message: 'Project deleted successfully' };
   }
 }
-

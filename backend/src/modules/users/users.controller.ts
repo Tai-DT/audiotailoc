@@ -8,9 +8,10 @@ class CreateUserDto {
   @IsEmail()
   email!: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(6)
-  password!: string;
+  password?: string;
 
   @IsString()
   name!: string;
@@ -22,6 +23,9 @@ class CreateUserDto {
   @IsOptional()
   @IsEnum(['USER', 'ADMIN'])
   role?: 'USER' | 'ADMIN';
+
+  @IsOptional()
+  generatePassword?: boolean;
 }
 
 class UpdateUserDto {
@@ -44,10 +48,27 @@ export class UsersController {
 
   @UseGuards(AdminOrKeyGuard)
   @Get()
-  async findAll(@Query('page') page = '1', @Query('limit') limit = '10') {
+  async findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('search') search?: string,
+    @Query('role') role?: string,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('sortBy') sortBy = 'createdAt',
+    @Query('sortOrder') sortOrder = 'desc'
+  ) {
     return this.usersService.findAll({
       page: parseInt(page),
-      limit: parseInt(limit)
+      limit: parseInt(limit),
+      search,
+      role,
+      status,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder: sortOrder as 'asc' | 'desc'
     });
   }
 
@@ -79,10 +100,10 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(AdminOrKeyGuard)
+  @UseGuards(JwtGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: any) {
+    return this.usersService.remove(id, req.user);
   }
 
   @UseGuards(AdminOrKeyGuard)

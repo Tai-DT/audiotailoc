@@ -44,12 +44,12 @@ export class SeoController {
     return this.seoService.getPageSeo(slug, lang as 'vi' | 'en');
   }
 
-  @Get('project/:slug')
+  @Get('project/:id')
   async getProjectSeo(
-    @Param('slug') slug: string,
+    @Param('id') id: string,
     @Query('lang') lang: string = 'vi'
   ) {
-    return this.seoService.getProjectSeo(slug, lang as 'vi' | 'en');
+    return this.seoService.getProjectSeo(id, lang as 'vi' | 'en');
   }
 
   @Get('home')
@@ -57,4 +57,3 @@ export class SeoController {
     return this.seoService.getHomeSeo(lang as 'vi' | 'en');
   }
 }
-

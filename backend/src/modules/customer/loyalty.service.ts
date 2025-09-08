@@ -7,46 +7,38 @@ export interface LoyaltyAccount {
   userId: string;
   points: number;
   tier: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
-  totalEarned: number;
-  totalRedeemed: number;
-  nextTierPoints: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface PointTransaction {
   id: string;
-  userId: string;
+  accountId: string;
   type: 'EARNED' | 'REDEEMED' | 'EXPIRED' | 'ADJUSTED';
-  points: number;
-  description: string;
-  orderId?: string;
-  expiresAt?: Date;
+  amount: number;
+  description?: string | null;
+  expiresAt?: Date | null;
   createdAt: Date;
 }
 
 export interface LoyaltyReward {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   pointsCost: number;
   type: 'DISCOUNT' | 'FREE_SHIPPING' | 'PRODUCT' | 'CASHBACK';
-  value: number; // Discount percentage or cashback amount
-  minTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
-  maxRedemptions?: number;
-  validUntil?: Date;
+  value: number;
   isActive: boolean;
   createdAt: Date;
 }
 
 export interface RedemptionHistory {
   id: string;
-  userId: string;
+  accountId: string;
   rewardId: string;
   pointsUsed: number;
-  orderId?: string;
-  status: 'PENDING' | 'USED' | 'EXPIRED';
-  expiresAt: Date;
+  status: 'COMPLETED' | 'PENDING' | 'USED' | 'EXPIRED';
   createdAt: Date;
   reward: LoyaltyReward;
 }
@@ -89,8 +81,7 @@ export class LoyaltyService {
           userId,
           points: 0,
           tier: 'BRONZE',
-          totalEarned: 0,
-          totalRedeemed: 0,
+          isActive: true,
         },
       });
     }
@@ -115,25 +106,22 @@ export class LoyaltyService {
     // Create point transaction
     const transaction = await this.prisma.pointTransaction.create({
       data: {
-        userId,
+        accountId: account.id,
         type: 'EARNED',
-        points,
+        amount: points,
         description,
-        orderId,
-        expiresAt: expiresAt || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year default
+        expiresAt: expiresAt || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       },
     });
 
     // Update loyalty account
     const newPoints = account.points + points;
-    const newTotalEarned = account.totalEarned + points;
-    const newTier = this.calculateTier(newTotalEarned);
+    const newTier = this.calculateTier(newPoints);
 
     await this.prisma.loyaltyAccount.update({
       where: { userId },
       data: {
         points: newPoints,
-        totalEarned: newTotalEarned,
         tier: newTier,
       },
     });
@@ -163,41 +151,21 @@ export class LoyaltyService {
       throw new BadRequestException('Reward is not active');
     }
 
-    if (reward.validUntil && reward.validUntil < new Date()) {
-      throw new BadRequestException('Reward has expired');
-    }
-
-    if (reward.minTier && !this.canAccessTier(account.tier, reward.minTier)) {
-      throw new BadRequestException('Insufficient tier level for this reward');
-    }
+    // Simplified schema: no validUntil/minTier; only check active and points
 
     if (account.points < reward.pointsCost) {
       throw new BadRequestException('Insufficient points');
     }
 
-    // Check redemption limits
-    if (reward.maxRedemptions) {
-      const redemptionCount = await this.prisma.redemptionHistory.count({
-        where: {
-          userId,
-          rewardId,
-          status: { in: ['PENDING', 'USED'] },
-        },
-      });
-
-      if (redemptionCount >= reward.maxRedemptions) {
-        throw new BadRequestException('Maximum redemptions reached for this reward');
-      }
-    }
+    // Simplified: no per-user max redemptions in schema
 
     // Create redemption record
     const redemption = await this.prisma.redemptionHistory.create({
       data: {
-        userId,
+        accountId: account.id,
         rewardId,
         pointsUsed: reward.pointsCost,
-        status: 'PENDING',
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days to use
+        status: 'COMPLETED',
       },
       include: {
         reward: true,
@@ -209,16 +177,15 @@ export class LoyaltyService {
       where: { userId },
       data: {
         points: { decrement: reward.pointsCost },
-        totalRedeemed: { increment: reward.pointsCost },
       },
     });
 
     // Create point transaction
     await this.prisma.pointTransaction.create({
       data: {
-        userId,
+        accountId: account.id,
         type: 'REDEEMED',
-        points: -reward.pointsCost,
+        amount: -reward.pointsCost,
         description: `Redeemed: ${reward.name}`,
       },
     });
@@ -247,7 +214,8 @@ export class LoyaltyService {
   }> {
     const { page = 1, pageSize = 20, type } = options;
 
-    const where: any = { userId };
+    const account = await this.getLoyaltyAccount(userId);
+    const where: any = { accountId: account.id };
     if (type) {
       where.type = type;
     }
@@ -274,19 +242,11 @@ export class LoyaltyService {
   }
 
   async getAvailableRewards(userId: string): Promise<LoyaltyReward[]> {
-    const account = await this.getLoyaltyAccount(userId);
+    const _account = await this.getLoyaltyAccount(userId);
     
     const rewards = await this.prisma.loyaltyReward.findMany({
       where: {
         isActive: true,
-        OR: [
-          { validUntil: null },
-          { validUntil: { gte: new Date() } },
-        ],
-        OR: [
-          { minTier: null },
-          { minTier: { in: this.getAccessibleTiers(account.tier) } },
-        ],
       },
       orderBy: { pointsCost: 'asc' },
     });
@@ -295,8 +255,9 @@ export class LoyaltyService {
   }
 
   async getRedemptionHistory(userId: string): Promise<RedemptionHistory[]> {
+    const account = await this.getLoyaltyAccount(userId);
     const redemptions = await this.prisma.redemptionHistory.findMany({
-      where: { userId },
+      where: { accountId: account.id },
       include: { reward: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -320,9 +281,10 @@ export class LoyaltyService {
 
   async processProductReview(userId: string, productId: string): Promise<void> {
     // Check if user already earned points for reviewing this product
+    const account = await this.getLoyaltyAccount(userId);
     const existingTransaction = await this.prisma.pointTransaction.findFirst({
       where: {
-        userId,
+        accountId: account.id,
         description: { contains: `Product review: ${productId}` },
         type: 'EARNED',
       },
@@ -350,9 +312,10 @@ export class LoyaltyService {
     const currentYear = today.getFullYear();
     
     // Check if already received birthday bonus this year
+    const account = await this.getLoyaltyAccount(userId);
     const existingBonus = await this.prisma.pointTransaction.findFirst({
       where: {
-        userId,
+        accountId: account.id,
         description: { contains: `Birthday bonus ${currentYear}` },
         type: 'EARNED',
       },
@@ -373,15 +336,6 @@ export class LoyaltyService {
       where: {
         type: 'EARNED',
         expiresAt: { lte: new Date() },
-        // Not already expired
-        NOT: {
-          pointTransaction: {
-            some: {
-              type: 'EXPIRED',
-              description: { contains: 'Expired points from transaction' },
-            },
-          },
-        },
       },
     });
 
@@ -389,46 +343,37 @@ export class LoyaltyService {
       // Create expiration transaction
       await this.prisma.pointTransaction.create({
         data: {
-          userId: transaction.userId,
+          accountId: transaction.accountId,
           type: 'EXPIRED',
-          points: -transaction.points,
+          amount: -transaction.amount,
           description: `Expired points from transaction ${transaction.id}`,
         },
       });
 
-      // Update loyalty account
-      await this.prisma.loyaltyAccount.update({
-        where: { userId: transaction.userId },
-        data: {
-          points: { decrement: transaction.points },
-        },
-      });
-
-      // Clear cache
-      await this.clearLoyaltyCache(transaction.userId);
+      const account = await this.prisma.loyaltyAccount.findUnique({ where: { id: transaction.accountId } });
+      if (account) {
+        // Update loyalty account
+        await this.prisma.loyaltyAccount.update({
+          where: { id: account.id },
+          data: {
+            points: { decrement: transaction.amount },
+          },
+        });
+        // Clear cache
+        await this.clearLoyaltyCache(account.userId);
+      }
     }
   }
 
-  private calculateTier(totalEarned: number): 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' {
-    if (totalEarned >= this.TIER_THRESHOLDS.PLATINUM) return 'PLATINUM';
-    if (totalEarned >= this.TIER_THRESHOLDS.GOLD) return 'GOLD';
-    if (totalEarned >= this.TIER_THRESHOLDS.SILVER) return 'SILVER';
+  private calculateTier(points: number): 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' {
+    if (points >= this.TIER_THRESHOLDS.PLATINUM) return 'PLATINUM';
+    if (points >= this.TIER_THRESHOLDS.GOLD) return 'GOLD';
+    if (points >= this.TIER_THRESHOLDS.SILVER) return 'SILVER';
     return 'BRONZE';
   }
 
-  private getNextTierPoints(tier: string, totalEarned: number): number {
-    switch (tier) {
-      case 'BRONZE':
-        return this.TIER_THRESHOLDS.SILVER - totalEarned;
-      case 'SILVER':
-        return this.TIER_THRESHOLDS.GOLD - totalEarned;
-      case 'GOLD':
-        return this.TIER_THRESHOLDS.PLATINUM - totalEarned;
-      case 'PLATINUM':
-        return 0;
-      default:
-        return 0;
-    }
+  private getNextTierPoints(): number {
+    return 0;
   }
 
   private canAccessTier(userTier: string, requiredTier: string): boolean {
@@ -436,11 +381,7 @@ export class LoyaltyService {
     return tierOrder.indexOf(userTier) >= tierOrder.indexOf(requiredTier);
   }
 
-  private getAccessibleTiers(userTier: string): string[] {
-    const tierOrder = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
-    const userTierIndex = tierOrder.indexOf(userTier);
-    return tierOrder.slice(0, userTierIndex + 1);
-  }
+  private getAccessibleTiers(): string[] { return ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM']; }
 
   private async handleTierUpgrade(userId: string, newTier: string): Promise<void> {
     // Award tier upgrade bonus
@@ -475,9 +416,7 @@ export class LoyaltyService {
       userId: account.userId,
       points: account.points,
       tier: account.tier,
-      totalEarned: account.totalEarned,
-      totalRedeemed: account.totalRedeemed,
-      nextTierPoints: this.getNextTierPoints(account.tier, account.totalEarned),
+      isActive: account.isActive,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
     };
@@ -486,11 +425,10 @@ export class LoyaltyService {
   private mapPointTransaction(transaction: any): PointTransaction {
     return {
       id: transaction.id,
-      userId: transaction.userId,
+      accountId: transaction.accountId,
       type: transaction.type,
-      points: transaction.points,
+      amount: transaction.amount,
       description: transaction.description,
-      orderId: transaction.orderId,
       expiresAt: transaction.expiresAt,
       createdAt: transaction.createdAt,
     };
@@ -504,9 +442,6 @@ export class LoyaltyService {
       pointsCost: reward.pointsCost,
       type: reward.type,
       value: reward.value,
-      minTier: reward.minTier,
-      maxRedemptions: reward.maxRedemptions,
-      validUntil: reward.validUntil,
       isActive: reward.isActive,
       createdAt: reward.createdAt,
     };
@@ -515,12 +450,10 @@ export class LoyaltyService {
   private mapRedemptionHistory(redemption: any): RedemptionHistory {
     return {
       id: redemption.id,
-      userId: redemption.userId,
+      accountId: redemption.accountId,
       rewardId: redemption.rewardId,
       pointsUsed: redemption.pointsUsed,
-      orderId: redemption.orderId,
       status: redemption.status,
-      expiresAt: redemption.expiresAt,
       createdAt: redemption.createdAt,
       reward: this.mapLoyaltyReward(redemption.reward),
     };

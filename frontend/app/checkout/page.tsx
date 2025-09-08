@@ -39,6 +39,10 @@ interface CheckoutForm {
   shippingCity: string;
   shippingDistrict: string;
   shippingWard: string;
+  shippingCoordinates?: {
+    lat: number;
+    lng: number;
+  };
   notes: string;
   paymentMethod: 'VNPAY' | 'MOMO' | 'PAYOS' | 'COD';
 }
@@ -89,6 +93,7 @@ export default function CheckoutPage() {
     shippingCity: '',
     shippingDistrict: '',
     shippingWard: '',
+    shippingCoordinates: undefined,
     notes: '',
     paymentMethod: 'VNPAY'
   });
@@ -149,6 +154,7 @@ export default function CheckoutPage() {
           customerEmail: formData.customerEmail,
           customerPhone: formData.customerPhone,
           shippingAddress: `${formData.shippingAddress}, ${formData.shippingWard}, ${formData.shippingDistrict}, ${formData.shippingCity}`,
+          shippingCoordinates: formData.shippingCoordinates,
           notes: formData.notes,
           items: cart?.items.map(item => ({
             productId: item.productId,
@@ -304,13 +310,14 @@ export default function CheckoutPage() {
 
                   {/* Shipping Address */}
                   <div className="space-y-2">
-                    <Label htmlFor="shippingAddress">Địa chỉ *</Label>
-                    <Input
+                    <Label htmlFor="shippingAddress">Địa chỉ giao hàng *</Label>
+                    <Textarea
                       id="shippingAddress"
                       value={formData.shippingAddress}
                       onChange={(e) => handleInputChange('shippingAddress', e.target.value)}
-                      placeholder="Số nhà, tên đường"
+                      placeholder="Nhập địa chỉ giao hàng (số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố)"
                       required
+                      rows={3}
                     />
                   </div>
 

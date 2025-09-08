@@ -10,7 +10,7 @@ export class PagesController {
   @Get()
   async list(@Query('published') published?: string) {
     return this.prisma.page.findMany({
-      where: published ? { published: published === 'true' } : {},
+      where: published ? { isPublished: published === 'true' } : {},
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -24,13 +24,15 @@ export class PagesController {
   @UseGuards(AdminGuard)
   @Post()
   async create(@Body() data: { slug: string; title: string; content: string; published?: boolean }) {
-    return this.prisma.page.create({ data });
+    const { published, ...rest } = data as any;
+    return this.prisma.page.create({ data: { ...rest, isPublished: published ?? false } });
   }
 
   @UseGuards(AdminGuard)
   @Put(':slug')
   async update(@Param('slug') slug: string, @Body() data: Partial<{ title: string; content: string; published: boolean }>) {
-    return this.prisma.page.update({ where: { slug }, data });
+    const { published, ...rest } = (data || {}) as any;
+    return this.prisma.page.update({ where: { slug }, data: { ...rest, ...(published !== undefined ? { isPublished: published } : {}) } });
   }
 
   @UseGuards(AdminGuard)

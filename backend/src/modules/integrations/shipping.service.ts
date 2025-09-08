@@ -155,11 +155,11 @@ export class ShippingService {
       ];
 
       const results = await Promise.allSettled(trackingPromises);
-      const successfulResult = results.find(result => 
-        result.status === 'fulfilled' && result.value !== null
-      );
+      const successfulResult = results.find((result): result is PromiseFulfilledResult<TrackingInfo> => {
+        return result.status === 'fulfilled' && result.value !== null;
+      });
 
-      if (successfulResult && successfulResult.status === 'fulfilled') {
+      if (successfulResult) {
         return successfulResult.value;
       }
 

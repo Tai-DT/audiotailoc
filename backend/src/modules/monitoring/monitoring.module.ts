@@ -4,17 +4,19 @@ import { MonitoringController } from './monitoring.controller';
 import { MonitoringService } from './monitoring.service';
 import { MonitoringMiddleware } from './monitoring.middleware';
 import { MonitoringInterceptor } from './monitoring.interceptor';
+import { LoggingService } from './logging.service';
 
 @Module({
   controllers: [MonitoringController],
   providers: [
     MonitoringService,
+    LoggingService,
     {
       provide: APP_INTERCEPTOR,
       useClass: MonitoringInterceptor,
     },
   ],
-  exports: [MonitoringService],
+  exports: [MonitoringService, LoggingService],
 })
 export class MonitoringModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

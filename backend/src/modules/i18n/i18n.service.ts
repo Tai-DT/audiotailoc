@@ -66,65 +66,26 @@ export class I18nService {
   }
 
   // Get translations for a specific locale
-  async getTranslations(locale: string, context?: string): Promise<LocalizedContent> {
-    try {
-      const translations = await this.prisma.translation.findMany({
-        where: {
-          locale,
-          ...(context && { context }),
-        },
-        select: {
-          key: true,
-          value: true,
-        },
-      });
-
-      const result: LocalizedContent = {};
-      translations.forEach((trans: any) => {
-        result[trans.key] = trans.value;
-      });
-
-      return result;
-    } catch (error) {
-      this.logger.error(`Failed to get translations for locale ${locale}:`, error);
-      return {};
-    }
+  async getTranslations(_locale: string, _context?: string): Promise<LocalizedContent> {
+    // No translation table in schema; return empty map for now
+    return {};
   }
 
   // Translate a specific key
   async translate(key: string, locale: string, params?: Record<string, any>): Promise<string> {
-    try {
-      const translation = await this.prisma.translation.findFirst({
-        where: { key, locale },
+    // No translation table; simply return the key with params interpolated if provided
+    let value = key;
+    if (params) {
+      Object.keys(params).forEach(param => {
+        const regex = new RegExp(`{{${param}}}`, 'g');
+        value = value.replace(regex, String(params[param]));
       });
-
-      if (!translation) {
-        // Fallback to default locale
-        if (locale !== this.defaultLocale) {
-          return this.translate(key, this.defaultLocale, params);
-        }
-        return key; // Return key if no translation found
-      }
-
-      let value = translation.value;
-
-      // Replace parameters
-      if (params) {
-        Object.keys(params).forEach(param => {
-          const regex = new RegExp(`{{${param}}}`, 'g');
-          value = value.replace(regex, String(params[param]));
-        });
-      }
-
-      return value;
-    } catch (error) {
-      this.logger.error(`Translation failed for key ${key}:`, error);
-      return key;
     }
+    return value;
   }
 
   // Get localized product data
-  async getLocalizedProduct(productId: string, locale: string) {
+  async getLocalizedProduct(productId: string, _locale: string) {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id: productId },
@@ -132,48 +93,17 @@ export class I18nService {
           id: true,
           slug: true,
           name: true,
-          nameEn: true,
           description: true,
-          descriptionEn: true,
-          metaTitle: true,
-          metaTitleEn: true,
-          metaDescription: true,
-          metaDescriptionEn: true,
-          metaKeywords: true,
-          metaKeywordsEn: true,
-          ogTitle: true,
-          ogTitleEn: true,
-          ogDescription: true,
-          ogDescriptionEn: true,
         },
       });
 
       if (!product) return null;
-
-      if (locale === 'en') {
-        return {
-          id: product.id,
-          slug: product.slug,
-          name: product.nameEn || product.name,
-          description: product.descriptionEn || product.description,
-          metaTitle: product.metaTitleEn || product.metaTitle,
-          metaDescription: product.metaDescriptionEn || product.metaDescription,
-          metaKeywords: product.metaKeywordsEn || product.metaKeywords,
-          ogTitle: product.ogTitleEn || product.ogTitle,
-          ogDescription: product.ogDescriptionEn || product.ogDescription,
-        };
-      }
 
       return {
         id: product.id,
         slug: product.slug,
         name: product.name,
         description: product.description,
-        metaTitle: product.metaTitle,
-        metaDescription: product.metaDescription,
-        metaKeywords: product.metaKeywords,
-        ogTitle: product.ogTitle,
-        ogDescription: product.ogDescription,
       };
     } catch (error) {
       this.logger.error(`Failed to get localized product ${productId}:`, error);
@@ -182,7 +112,7 @@ export class I18nService {
   }
 
   // Get localized page data
-  async getLocalizedPage(slug: string, locale: string) {
+  async getLocalizedPage(slug: string, _locale: string) {
     try {
       const page = await this.prisma.page.findUnique({
         where: { slug },
@@ -190,40 +120,17 @@ export class I18nService {
           id: true,
           slug: true,
           title: true,
-          titleEn: true,
           content: true,
-          contentEn: true,
-          metaTitle: true,
-          metaTitleEn: true,
-          metaDescription: true,
-          metaDescriptionEn: true,
-          metaKeywords: true,
-          metaKeywordsEn: true,
         },
       });
 
       if (!page) return null;
-
-      if (locale === 'en') {
-        return {
-          id: page.id,
-          slug: page.slug,
-          title: page.titleEn || page.title,
-          content: page.contentEn || page.content,
-          metaTitle: page.metaTitleEn || page.metaTitle,
-          metaDescription: page.metaDescriptionEn || page.metaDescription,
-          metaKeywords: page.metaKeywordsEn || page.metaKeywords,
-        };
-      }
 
       return {
         id: page.id,
         slug: page.slug,
         title: page.title,
         content: page.content,
-        metaTitle: page.metaTitle,
-        metaDescription: page.metaDescription,
-        metaKeywords: page.metaKeywords,
       };
     } catch (error) {
       this.logger.error(`Failed to get localized page ${slug}:`, error);
@@ -282,78 +189,21 @@ export class I18nService {
   }
 
   // Add or update translation
-  async setTranslation(data: TranslationData): Promise<void> {
-    try {
-      await this.prisma.translation.upsert({
-        where: {
-          key_locale: {
-            key: data.key,
-            locale: data.locale,
-          },
-        },
-        update: {
-          value: data.value,
-          context: data.context,
-        },
-        create: {
-          key: data.key,
-          value: data.value,
-          locale: data.locale,
-          context: data.context,
-        },
-      });
-    } catch (error) {
-      this.logger.error('Failed to set translation:', error);
-      throw error;
-    }
+  async setTranslation(_data: TranslationData): Promise<void> {
+    // No-op: translation storage is not defined in schema
+    this.logger.warn('setTranslation called but translation model is not defined in schema');
   }
 
   // Bulk update translations
-  async setTranslations(translations: TranslationData[]): Promise<void> {
-    try {
-      await this.prisma.$transaction(
-        translations.map(trans =>
-          this.prisma.translation.upsert({
-            where: {
-              key_locale: {
-                key: trans.key,
-                locale: trans.locale,
-              },
-            },
-            update: {
-              value: trans.value,
-              context: trans.context,
-            },
-            create: {
-              key: trans.key,
-              value: trans.value,
-              locale: trans.locale,
-              context: trans.context,
-            },
-          })
-        )
-      );
-    } catch (error) {
-      this.logger.error('Failed to set translations:', error);
-      throw error;
-    }
+  async setTranslations(_translations: TranslationData[]): Promise<void> {
+    // No-op: translation storage is not defined in schema
+    this.logger.warn('setTranslations called but translation model is not defined in schema');
   }
 
   // Delete translation
-  async deleteTranslation(key: string, locale: string): Promise<void> {
-    try {
-      await this.prisma.translation.delete({
-        where: {
-          key_locale: {
-            key,
-            locale,
-          },
-        },
-      });
-    } catch (error) {
-      this.logger.error('Failed to delete translation:', error);
-      throw error;
-    }
+  async deleteTranslation(_key: string, _locale: string): Promise<void> {
+    // No-op: translation storage is not defined in schema
+    this.logger.warn('deleteTranslation called but translation model is not defined in schema');
   }
 
   // Get translation statistics
@@ -362,39 +212,11 @@ export class I18nService {
     totalTranslations: number;
     coverage: Record<string, number>;
   }> {
-    try {
-      const [totalKeys, translationsByLocale] = await Promise.all([
-        this.prisma.translation.groupBy({
-          by: ['key'],
-          _count: true,
-        }),
-        this.prisma.translation.groupBy({
-          by: ['locale'],
-          _count: true,
-        }),
-      ]);
-
-      const uniqueKeys = totalKeys.length;
-      const totalTranslations = translationsByLocale.reduce((sum: number, item: any) => sum + item._count, 0);
-
-      const coverage: Record<string, number> = {};
-      translationsByLocale.forEach((item: any) => {
-        coverage[item.locale] = uniqueKeys > 0 ? (item._count / uniqueKeys) * 100 : 0;
-      });
-
-      return {
-        totalKeys: uniqueKeys,
-        totalTranslations,
-        coverage,
-      };
-    } catch (error) {
-      this.logger.error('Failed to get translation stats:', error);
-      return {
-        totalKeys: 0,
-        totalTranslations: 0,
-        coverage: {},
-      };
-    }
+    // No storage; return empty stats
+    return {
+      totalKeys: 0,
+      totalTranslations: 0,
+      coverage: {},
+    };
   }
 }
-

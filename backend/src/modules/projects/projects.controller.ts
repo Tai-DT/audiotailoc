@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminGuard } from '../auth/admin.guard';
 
@@ -8,34 +8,34 @@ export class ProjectsController {
 
   // Public
   @Get()
-  async list(@Query('featured') featured?: string) {
+  async list() {
     return this.prisma.project.findMany({
-      where: featured ? { featured: featured === 'true' } : {},
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  @Get(':slug')
-  async getBySlug(@Param('slug') slug: string) {
-    return this.prisma.project.findUnique({ where: { slug } });
+  @Get(':id')
+  async getById(@Param('id') id: string) {
+    return this.prisma.project.findUnique({ where: { id } });
   }
 
   // Admin
   @UseGuards(AdminGuard)
   @Post()
-  async create(@Body() data: { slug: string; name: string; description?: string; images?: string[]; tags?: string[]; featured?: boolean }) {
-    return this.prisma.project.create({ data });
+  async create(@Body() data: { name: string; description?: string; userId: string; status?: string }) {
+    const { name, description, userId, status } = data;
+    return this.prisma.project.create({ data: { name, description, userId, status: status || 'DRAFT' } });
   }
 
   @UseGuards(AdminGuard)
-  @Put(':slug')
-  async update(@Param('slug') slug: string, @Body() data: Partial<{ name: string; description?: string; images?: string[]; tags?: string[]; featured?: boolean }>) {
-    return this.prisma.project.update({ where: { slug }, data });
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() data: Partial<{ name: string; description?: string; status?: string }>) {
+    return this.prisma.project.update({ where: { id }, data });
   }
 
   @UseGuards(AdminGuard)
-  @Delete(':slug')
-  async remove(@Param('slug') slug: string) {
-    return this.prisma.project.delete({ where: { slug } });
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.prisma.project.delete({ where: { id } });
   }
 }

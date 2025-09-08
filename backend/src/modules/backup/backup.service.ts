@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import * as archiver from 'archiver';
+import archiver from 'archiver';
 import { createWriteStream, createReadStream } from 'fs';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class BackupService {
@@ -13,15 +13,17 @@ export class BackupService {
   private readonly backupDir: string;
   private readonly retentionDays: number;
   private readonly maxBackupSize: number;
+  private readonly minFreeSpaceBytes: number;
   private isBackupInProgress = false;
 
   constructor(
     private configService: ConfigService,
-    private prisma: PrismaClient,
+    private prisma: PrismaService,
   ) {
     this.backupDir = this.configService.get('BACKUP_DIR', './backups');
-    this.retentionDays = this.configService.get('BACKUP_RETENTION_DAYS', 30);
-    this.maxBackupSize = this.configService.get('MAX_BACKUP_SIZE_MB', 1024) * 1024 * 1024; // Convert to bytes
+    this.retentionDays = Number(this.configService.get('BACKUP_RETENTION_DAYS', 30));
+    this.maxBackupSize = Number(this.configService.get('MAX_BACKUP_SIZE_MB', 1024)) * 1024 * 1024; // Convert to bytes
+    this.minFreeSpaceBytes = Number(this.configService.get('MIN_FREE_SPACE_MB', 256)) * 1024 * 1024;
   }
 
   // Create full database backup
@@ -49,6 +51,9 @@ export class BackupService {
       const fullPath = path.join(backupPath, backupFile);
 
       this.logger.log(`Starting full database backup: ${backupId}`);
+
+      // Preflight checks
+      await this.preflightChecks(['pg_dump']);
 
       // Create database dump
       await this.createDatabaseDump(fullPath);
@@ -107,7 +112,7 @@ export class BackupService {
         backupId,
         path: finalPath,
         size: finalSize,
-        duration: backupMetadata.duration,
+        duration: backupMetadata.duration || (Date.now() - startTime),
         metadata: backupMetadata,
       };
 
@@ -173,8 +178,8 @@ export class BackupService {
         success: true,
         backupId,
         path: finalPath,
-        size: backupMetadata.size,
-        duration: backupMetadata.duration,
+        size: backupMetadata.size!,
+        duration: backupMetadata.duration || (Date.now() - startTime),
         metadata: backupMetadata,
       };
 
@@ -234,7 +239,7 @@ export class BackupService {
         backupId,
         path: backupPath,
         size: backupSize,
-        duration: backupMetadata.duration,
+        duration: backupMetadata.duration || (Date.now() - startTime),
         metadata: backupMetadata,
       };
 
@@ -276,9 +281,12 @@ export class BackupService {
         };
       }
 
+      // Preflight checks
+      await this.preflightChecks(['pg_restore', 'tar']);
+
       // Perform restore based on backup type
       if (backupMetadata.type === 'full' || backupMetadata.type === 'incremental') {
-        await this.restoreDatabaseBackup(backupMetadata, options.dropExisting);
+        await this.restoreDatabaseBackup(backupMetadata, !!options.dropExisting);
       }
 
       // Restore files if it's a file backup
@@ -547,7 +555,7 @@ export class BackupService {
         resolve();
       });
 
-      archive.on('error', (error) => {
+      archive.on('error', (error: any) => {
         reject(error);
       });
 
@@ -622,6 +630,100 @@ export class BackupService {
     }
   }
 
+  private async preflightChecks(commands: string[] = []): Promise<void> {
+    // Ensure backup directory exists and is writable
+    try {
+      await fs.mkdir(this.backupDir, { recursive: true });
+      const testFile = path.join(this.backupDir, `.write-test-${Date.now()}`);
+      await fs.writeFile(testFile, 'ok');
+      await fs.unlink(testFile);
+    } catch (e) {
+      throw new Error(`Backup directory not writable: ${this.backupDir}`);
+    }
+
+    // Ensure required commands exist
+    for (const cmd of commands) {
+      const exists = await this.commandExists(cmd);
+      if (!exists) {
+        throw new Error(`Required command not found in PATH: ${cmd}`);
+      }
+    }
+
+    // Check disk space
+    const disk = await this.getDiskInfo(this.backupDir);
+    if (disk.availableBytes < this.minFreeSpaceBytes) {
+      throw new Error(`Not enough free space. Available: ${disk.availableBytes} bytes, required: ${this.minFreeSpaceBytes} bytes`);
+    }
+  }
+
+  private async commandExists(cmd: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const which = process.platform === 'win32' ? 'where' : 'which';
+      const p = spawn(which, [cmd]);
+      p.on('close', (code) => resolve(code === 0));
+      p.on('error', () => resolve(false));
+    });
+  }
+
+  private async getDiskInfo(targetDir: string): Promise<{ totalBytes: number; availableBytes: number }> {
+    return new Promise((resolve) => {
+      const platform = process.platform;
+      if (platform === 'win32') {
+        // Fallback: use os module
+        const os = require('os');
+        resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
+        return;
+      }
+      const df = spawn('df', ['-k', targetDir]);
+      let out = '';
+      df.stdout.on('data', (d) => (out += d.toString()));
+      df.on('close', () => {
+        const lines = out.trim().split('\n');
+        if (lines.length >= 2) {
+          const parts = lines[1].trim().split(/\s+/);
+          // Filesystem Size Used Avail Use% Mounted
+          const totalKB = parseInt(parts[1]) || 0;
+          const availKB = parseInt(parts[3]) || 0;
+          resolve({ totalBytes: totalKB * 1024, availableBytes: availKB * 1024 });
+        } else {
+          const os = require('os');
+          resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
+        }
+      });
+      df.on('error', () => {
+        const os = require('os');
+        resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
+      });
+    });
+  }
+
+  // Expose preflight status for controllers
+  async getPreflightStatus() {
+    const tools = {
+      pg_dump: await this.commandExists('pg_dump'),
+      pg_restore: await this.commandExists('pg_restore'),
+      tar: await this.commandExists('tar'),
+    };
+    const writable = await (async () => {
+      try {
+        await fs.mkdir(this.backupDir, { recursive: true });
+        const tmp = path.join(this.backupDir, `.write-test-${Date.now()}`);
+        await fs.writeFile(tmp, 'ok');
+        await fs.unlink(tmp);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    const disk = await this.getDiskInfo(this.backupDir);
+    return { tools, writable, disk, minFreeSpaceBytes: this.minFreeSpaceBytes };
+  }
+
+  // Public wrapper to verify a backup file path
+  async verifyBackupFile(filePath: string): Promise<boolean> {
+    return this.verifyBackupIntegrity(filePath);
+  }
+
   private async calculateChecksum(filePath: string): Promise<string> {
     const crypto = require('crypto');
     const fileBuffer = await fs.readFile(filePath);
@@ -634,12 +736,12 @@ export class BackupService {
   }
 
   private async getDatabaseVersion(): Promise<string> {
-    const result = await this.prisma.$queryRaw`SELECT version() as version`;
+    const result: any = await this.prisma.$queryRaw`SELECT version() as version`;
     return result[0].version;
   }
 
   private async getTablesCount(): Promise<number> {
-    const result = await this.prisma.$queryRaw`
+    const result: any = await this.prisma.$queryRaw`
       SELECT count(*) as count
       FROM information_schema.tables
       WHERE table_schema = 'public'
@@ -655,7 +757,7 @@ export class BackupService {
 
     for (const table of tables) {
       try {
-        const result = await this.prisma.$queryRawUnsafe(`SELECT count(*) as count FROM ${table}`);
+        const result: any = await this.prisma.$queryRawUnsafe(`SELECT count(*) as count FROM ${table}`);
         total += parseInt(result[0].count);
       } catch (error) {
         // Skip tables that can't be counted
@@ -666,12 +768,12 @@ export class BackupService {
   }
 
   private async getAllTables(): Promise<string[]> {
-    const result = await this.prisma.$queryRaw`
+    const result: any = await this.prisma.$queryRaw`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
     `;
-    return result.map(row => row.table_name);
+    return (result as any[]).map((row: any) => row.table_name);
   }
 
   private async saveBackupMetadata(metadata: BackupMetadata): Promise<void> {
@@ -679,7 +781,9 @@ export class BackupService {
     await fs.mkdir(metadataDir, { recursive: true });
 
     const metadataPath = path.join(metadataDir, `${metadata.id}.json`);
-    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+    const tmpPath = `${metadataPath}.tmp`;
+    await fs.writeFile(tmpPath, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.rename(tmpPath, metadataPath);
   }
 
   private async getBackupMetadata(backupId: string): Promise<BackupMetadata | null> {
@@ -783,9 +887,24 @@ export class BackupService {
   }
 
   private async restoreFileBackup(backup: BackupMetadata): Promise<void> {
-    // This would extract the file backup archive
-    // Implementation depends on the archive format used
-    this.logger.log(`File backup restore not implemented yet: ${backup.id}`);
+    // Extract tar.gz archive into project root while preventing path traversal
+    const archivePath = backup.path;
+    if (!archivePath.endsWith('.tar.gz')) {
+      this.logger.warn(`Unsupported file backup format for restore: ${archivePath}`);
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const tarProc = spawn('tar', ['-xzf', archivePath, '-C', '.']);
+      let stderr = '';
+      tarProc.stderr.on('data', (d) => (stderr += d.toString()));
+      tarProc.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`tar extract failed: ${stderr}`));
+      });
+      tarProc.on('error', (err) => reject(err));
+    });
+    this.logger.log(`File backup restored from ${archivePath}`);
   }
 }
 

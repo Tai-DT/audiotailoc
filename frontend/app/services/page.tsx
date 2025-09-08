@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api-client';
-import { Service } from '@/lib/api-client';
+import { Service } from '@/lib/types';
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);

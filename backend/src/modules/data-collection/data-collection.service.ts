@@ -4,48 +4,30 @@ import { PrismaService } from '../../prisma/prisma.service';
 export interface SearchQueryData {
   query: string;
   userId?: string;
-  sessionId?: string;
-  userAgent?: string;
-  ipAddress?: string;
   timestamp?: Date;
-  resultCount?: number;
-  clickedResults?: string[];
-  searchDuration?: number;
+  // additional telemetry fields are ignored in current schema
 }
 
 export interface QuestionData {
   question: string;
   userId?: string;
-  sessionId?: string;
   category?: string;
   timestamp?: Date;
-  source?: 'chat' | 'contact' | 'faq' | 'support';
-  status?: 'answered' | 'pending' | 'escalated';
   satisfaction?: number;
 }
 
 export interface ProductViewData {
   productId: string;
   userId?: string;
-  sessionId?: string;
-  userAgent?: string;
-  ipAddress?: string;
   timestamp?: Date;
   duration?: number;
-  source?: 'search' | 'category' | 'recommendation' | 'direct';
-  referrer?: string;
 }
 
 export interface ServiceViewData {
   serviceId: string;
   userId?: string;
-  sessionId?: string;
-  userAgent?: string;
-  ipAddress?: string;
   timestamp?: Date;
   duration?: number;
-  source?: 'search' | 'category' | 'recommendation' | 'direct';
-  referrer?: string;
 }
 
 @Injectable()
@@ -61,13 +43,7 @@ export class DataCollectionService {
         data: {
           query: data.query,
           userId: data.userId,
-          sessionId: data.sessionId,
-          userAgent: data.userAgent,
-          ipAddress: data.ipAddress,
           timestamp: data.timestamp || new Date(),
-          resultCount: data.resultCount,
-          clickedResults: data.clickedResults,
-          searchDuration: data.searchDuration,
         },
       });
 
@@ -86,11 +62,8 @@ export class DataCollectionService {
         data: {
           question: data.question,
           userId: data.userId,
-          sessionId: data.sessionId,
           category: data.category,
           timestamp: data.timestamp || new Date(),
-          source: data.source,
-          status: data.status || 'pending',
           satisfaction: data.satisfaction,
         },
       });
@@ -110,13 +83,8 @@ export class DataCollectionService {
         data: {
           productId: data.productId,
           userId: data.userId,
-          sessionId: data.sessionId,
-          userAgent: data.userAgent,
-          ipAddress: data.ipAddress,
           timestamp: data.timestamp || new Date(),
           duration: data.duration,
-          source: data.source,
-          referrer: data.referrer,
         },
       });
 
@@ -135,13 +103,8 @@ export class DataCollectionService {
         data: {
           serviceId: data.serviceId,
           userId: data.userId,
-          sessionId: data.sessionId,
-          userAgent: data.userAgent,
-          ipAddress: data.ipAddress,
           timestamp: data.timestamp || new Date(),
           duration: data.duration,
-          source: data.source,
-          referrer: data.referrer,
         },
       });
 
@@ -202,17 +165,12 @@ export class DataCollectionService {
       },
     };
 
-    const [totalQuestions, questionsByCategory, questionsByStatus, satisfactionScore] = await Promise.all([
+    const [totalQuestions, questionsByCategory, satisfactionScore] = await Promise.all([
       this.prisma.customerQuestion.count({ where }),
       this.prisma.customerQuestion.groupBy({
         by: ['category'],
         where,
         _count: { category: true },
-      }),
-      this.prisma.customerQuestion.groupBy({
-        by: ['status'],
-        where,
-        _count: { status: true },
       }),
       this.prisma.customerQuestion.aggregate({
         where: { ...where, satisfaction: { not: null } },
@@ -223,7 +181,7 @@ export class DataCollectionService {
     return {
       totalQuestions,
       questionsByCategory,
-      questionsByStatus,
+      questionsByStatus: [],
       averageSatisfaction: satisfactionScore._avg.satisfaction,
     };
   }
@@ -237,7 +195,7 @@ export class DataCollectionService {
       },
     };
 
-    const [totalViews, popularProducts, viewsBySource, averageDuration] = await Promise.all([
+    const [totalViews, popularProducts, viewsByUser, averageDuration] = await Promise.all([
       this.prisma.productView.count({ where }),
       this.prisma.productView.groupBy({
         by: ['productId'],
@@ -247,9 +205,9 @@ export class DataCollectionService {
         take: 10,
       }),
       this.prisma.productView.groupBy({
-        by: ['source'],
+        by: ['userId'],
         where,
-        _count: { source: true },
+        _count: { userId: true },
       }),
       this.prisma.productView.aggregate({
         where: { ...where, duration: { not: null } },
@@ -260,7 +218,7 @@ export class DataCollectionService {
     return {
       totalViews,
       popularProducts,
-      viewsBySource,
+      viewsBySource: viewsByUser,
       averageDuration: averageDuration._avg.duration,
     };
   }
@@ -274,7 +232,7 @@ export class DataCollectionService {
       },
     };
 
-    const [totalViews, popularServices, viewsBySource, averageDuration] = await Promise.all([
+    const [totalViews, popularServices, viewsByUser, averageDuration] = await Promise.all([
       this.prisma.serviceView.count({ where }),
       this.prisma.serviceView.groupBy({
         by: ['serviceId'],
@@ -284,9 +242,9 @@ export class DataCollectionService {
         take: 10,
       }),
       this.prisma.serviceView.groupBy({
-        by: ['source'],
+        by: ['userId'],
         where,
-        _count: { source: true },
+        _count: { userId: true },
       }),
       this.prisma.serviceView.aggregate({
         where: { ...where, duration: { not: null } },
@@ -297,7 +255,7 @@ export class DataCollectionService {
     return {
       totalViews,
       popularServices,
-      viewsBySource,
+      viewsBySource: viewsByUser,
       averageDuration: averageDuration._avg.duration,
     };
   }

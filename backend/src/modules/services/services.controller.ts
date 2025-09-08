@@ -7,10 +7,16 @@ import {
   Body,
   Param,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { ServicesService } from './services.service';
-import { ServiceCategory, ServiceType } from '../../common/enums';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CreateServiceDto } from './dto/create-service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateServiceItemDto } from './dto/create-service-item.dto';
 
 @Controller('services')
 // @UseGuards(JwtAuthGuard)
@@ -18,32 +24,22 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
-  async createService(@Body() createServiceDto: {
-    name: string;
-    slug: string;
-    description?: string;
-    category: ServiceCategory;
-    type: ServiceType;
-    basePriceCents: number;
-    estimatedDuration: number;
-    requirements?: string;
-    features?: string;
-    imageUrl?: string;
-  }) {
+  async createService(@Body() createServiceDto: CreateServiceDto) {
     return this.servicesService.createService(createServiceDto);
   }
 
   @Get()
   async getServices(@Query() query: {
-    category?: ServiceCategory;
-    type?: ServiceType;
+    categoryId?: string;
+    typeId?: string;
     isActive?: string;
     page?: string;
     pageSize?: string;
   }) {
+    console.log('[DEBUG] ServicesController.getServices called with query:', query);
     return this.servicesService.getServices({
-      category: query.category,
-      type: query.type,
+      categoryId: query.categoryId,
+      typeId: query.typeId,
       isActive: query.isActive !== undefined ? query.isActive === 'true' : undefined,
       page: query.page ? parseInt(query.page) : undefined,
       pageSize: query.pageSize ? parseInt(query.pageSize) : undefined,
@@ -78,16 +74,7 @@ export class ServicesController {
   @Put(':id')
   async updateService(
     @Param('id') id: string,
-    @Body() updateServiceDto: {
-      name?: string;
-      description?: string;
-      basePriceCents?: number;
-      estimatedDuration?: number;
-      requirements?: string;
-      features?: string;
-      imageUrl?: string;
-      isActive?: boolean;
-    }
+    @Body() updateServiceDto: UpdateServiceDto
   ) {
     return this.servicesService.updateService(id, updateServiceDto);
   }
@@ -95,6 +82,28 @@ export class ServicesController {
   @Delete(':id')
   async deleteService(@Param('id') id: string) {
     return this.servicesService.deleteService(id);
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/services',
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}$_$_${file.originalname}`);
+        },
+      }),
+    }),
+  )
+  async uploadServiceImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.servicesService.updateServiceImage(id, file.path);
   }
 
   // Service Items

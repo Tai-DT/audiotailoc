@@ -1,10 +1,10 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { GuardsModule } from '../auth/guards.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [forwardRef(() => GuardsModule)],
+  imports: [NotificationsModule],
   providers: [UsersService],
   controllers: [UsersController],
   exports: [UsersService],

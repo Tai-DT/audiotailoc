@@ -2,40 +2,11 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsUrl,
   IsBoolean,
   Min,
   IsArray,
-  ArrayMinSize,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export class ProductImageDto {
-  @ApiProperty({
-    description: 'Image URL',
-    example: 'https://example.com/image.jpg',
-  })
-  @IsUrl()
-  url!: string;
-
-  @ApiPropertyOptional({
-    description: 'Image alt text',
-    example: 'Product image description',
-  })
-  @IsOptional()
-  @IsString()
-  alt?: string;
-
-  @ApiPropertyOptional({
-    description: 'Is this the main image?',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isMain?: boolean;
-}
 
 export class CreateProductDto {
   @ApiProperty({
@@ -52,31 +23,40 @@ export class CreateProductDto {
   @IsString()
   slug!: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Product description',
     example: 'High-quality audio cable for professional use',
   })
+  @IsOptional()
   @IsString()
-  description!: string;
+  description?: string | null;
 
   @ApiProperty({
-    description: 'Product price in VND',
-    example: 150000,
+    description: 'Product price in cents (VND)',
+    example: 15000000,
     minimum: 0,
   })
   @IsNumber()
   @Min(0)
-  price!: number;
+  priceCents!: number;
 
   @ApiPropertyOptional({
-    description: 'Product sale price in VND',
-    example: 120000,
+    description: 'Product original price in cents (VND)',
+    example: 18000000,
     minimum: 0,
   })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salePrice?: number;
+  originalPriceCents?: number;
+
+  @ApiPropertyOptional({
+    description: 'Product short description',
+    example: 'Premium quality audio cable',
+  })
+  @IsOptional()
+  @IsString()
+  shortDescription?: string;
 
   @ApiPropertyOptional({
     description: 'Product stock quantity',
@@ -87,7 +67,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  stock?: number = 0;
+  stockQuantity?: number = 0;
 
   @ApiPropertyOptional({
     description: 'Product SKU (Stock Keeping Unit)',
@@ -98,12 +78,57 @@ export class CreateProductDto {
   sku?: string;
 
   @ApiPropertyOptional({
-    description: 'Product category',
-    example: 'Cables',
+    description: 'Product warranty',
+    example: '24 months',
   })
   @IsOptional()
   @IsString()
-  category?: string;
+  warranty?: string;
+
+  @ApiPropertyOptional({
+    description: 'Product features',
+    example: 'Waterproof, Wireless, Long battery life',
+  })
+  @IsOptional()
+  @IsString()
+  features?: string;
+
+  @ApiPropertyOptional({
+    description: 'Minimum order quantity',
+    example: 1,
+    minimum: 1,
+    default: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  minOrderQuantity?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Maximum order quantity',
+    example: 10,
+    minimum: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  maxOrderQuantity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Product tags (comma-separated)',
+    example: 'audio,cable,professional',
+  })
+  @IsOptional()
+  @IsString()
+  tags?: string;
+
+  @ApiPropertyOptional({
+    description: 'Product category ID',
+    example: 'category-uuid',
+  })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 
   @ApiPropertyOptional({
     description: 'Product brand',
@@ -132,32 +157,20 @@ export class CreateProductDto {
   dimensions?: string;
 
   @ApiPropertyOptional({
-    description: 'Product specifications (JSON string)',
-    example: '{"length": "3m", "connector": "3.5mm"}',
+    description: 'Product specifications (JSON object)',
+    example: '{"length": "3m", "connector": "3.5mm", "material": "copper"}',
   })
   @IsOptional()
-  @IsString()
-  specifications?: string;
+  specifications?: Record<string, any>;
 
   @ApiPropertyOptional({
-    description: 'Product tags',
-    example: ['audio', 'cable', 'professional'],
+    description: 'Product images (array of URLs)',
+    example: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags?: string[];
-
-  @ApiPropertyOptional({
-    description: 'Product images',
-    type: [ProductImageDto],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductImageDto)
-  @ArrayMinSize(1)
-  images?: ProductImageDto[];
+  images?: string[];
 
   @ApiPropertyOptional({
     description: 'Is product active/visible?',
@@ -173,7 +186,7 @@ export class CreateProductDto {
   })
   @IsOptional()
   @IsBoolean()
-  isFeatured?: boolean = false;
+  featured?: boolean = false;
 
   @ApiPropertyOptional({
     description: 'SEO meta title',
@@ -190,4 +203,28 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   metaDescription?: string;
+
+  @ApiPropertyOptional({
+    description: 'Product model',
+    example: 'AC-1000',
+  })
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({
+    description: 'SEO meta keywords (comma-separated)',
+    example: 'audio,cable,professional,premium',
+  })
+  @IsOptional()
+  @IsString()
+  metaKeywords?: string;
+
+  @ApiPropertyOptional({
+    description: 'SEO canonical URL',
+    example: 'https://audiotailoc.com/products/premium-audio-cable',
+  })
+  @IsOptional()
+  @IsString()
+  canonicalUrl?: string;
 }

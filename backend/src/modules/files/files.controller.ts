@@ -10,9 +10,6 @@ import {
   UploadedFile,
   UploadedFiles,
   BadRequestException,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
@@ -43,21 +40,21 @@ export class FilesController {
   })
   @ApiOperation({ summary: 'Upload a single file' })
   async uploadFile(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB
-          new FileTypeValidator({ fileType: '.(jpg|jpeg|png|gif|pdf|doc|docx)' }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
 
-    return this.filesService.uploadFile(file);
+    // Custom validation options
+    const validationOptions = {
+      maxSize: 5 * 1024 * 1024, // 5MB
+      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'],
+      allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif'],
+      requireImage: true,
+    };
+
+    return this.filesService.uploadFile(file, validationOptions);
   }
 
   @Post('upload-multiple')
@@ -81,21 +78,20 @@ export class FilesController {
   })
   @ApiOperation({ summary: 'Upload multiple files' })
   async uploadMultipleFiles(
-    @UploadedFiles(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB per file
-          new FileTypeValidator({ fileType: '.(jpg|jpeg|png|gif|pdf|doc|docx)' }),
-        ],
-      }),
-    )
-    files: Express.Multer.File[],
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files uploaded');
     }
 
-    return this.filesService.uploadMultipleFiles(files);
+    // Custom validation options for each file
+    const validationOptions = {
+      maxSize: 5 * 1024 * 1024, // 5MB per file
+      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx'],
+    };
+
+    return this.filesService.uploadMultipleFiles(files, validationOptions);
   }
 
   @Post('upload/product-image/:productId')
@@ -117,15 +113,7 @@ export class FilesController {
   @ApiOperation({ summary: 'Upload product image' })
   async uploadProductImage(
     @Param('productId') productId: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: '.(jpg|jpeg|png|webp)' }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('No image uploaded');
@@ -152,15 +140,7 @@ export class FilesController {
   })
   @ApiOperation({ summary: 'Upload user avatar' })
   async uploadUserAvatar(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
-          new FileTypeValidator({ fileType: '.(jpg|jpeg|png)' }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('No avatar uploaded');

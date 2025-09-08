@@ -11,7 +11,9 @@ import { TestingModule } from './testing/testing.module';
 
 // Authentication modules
 import { AuthModule } from './auth/auth.module';
+import { SharedModule } from './shared/shared.module';
 import { UsersModule } from './users/users.module';
+import { AdminModule } from './admin/admin.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
@@ -25,6 +27,9 @@ import { CheckoutModule } from './checkout/checkout.module';
 import { OrdersModule } from './orders/orders.module';
 import { InventoryModule } from './inventory/inventory.module';
 
+// Complete Product API Module
+import { CompleteProductModule } from './catalog/complete-product.module';
+
 // AI and ML modules
 import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
 
@@ -32,15 +37,21 @@ import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
 import { SupportModule } from './support/support.module';
 // import { WebhooksModule } from './webhooks/webhooks.module'; // Disabled due to schema mismatch
 import { NotificationsModule } from './notifications/notifications.module';
+import { BackupModule } from './backup/backup.module';
+import { MarketingModule } from './marketing/marketing.module';
+import { ReviewsModule } from './customer/reviews.module';
 import { WebSocketModule } from './websocket/websocket.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
 // import { SearchModule } from './search/search.module'; // Disabled due to schema mismatch
 // Removed ApiVersioningModule - using single v1 API
+import { MapsModule } from './maps/maps.module';
 
 // Service Management modules - DISABLED FOR MINIMAL STARTUP
-// import { ServicesModule } from './services/services.module'; // Disabled due to schema mismatch
+import { ServicesModule } from './services/services.module';
+import { ServiceCategoriesModule } from './service-categories/service-categories.module';
+import { ServiceTypesModule } from './service-types/service-types.module';
 // import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
 // import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
 
@@ -57,7 +68,9 @@ const runtimeImports = [
     
     // Authentication - CORE ONLY
     AuthModule,
+    SharedModule,
     UsersModule,
+    AdminModule,
     
     // AI and Intelligence - Minimal working version
     AiModule,
@@ -67,12 +80,24 @@ const runtimeImports = [
     NotificationsModule,
   WebSocketModule,
     FilesModule,
+    BackupModule,
+    MarketingModule,
+    ReviewsModule,
+    MapsModule,
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
     PaymentsModule,
     OrdersModule,
     InventoryModule,
+
+    // Complete Product API Module - NEW COMPLETE SYSTEM
+    CompleteProductModule,
+
+    // Services Management
+    ServicesModule,
+    ServiceCategoriesModule,
+    ServiceTypesModule,
 ];
 
 if (FEATURE_CHECKOUT) {
