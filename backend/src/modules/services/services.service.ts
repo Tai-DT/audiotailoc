@@ -1,51 +1,69 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ServiceCategory, ServiceType, ServiceBookingStatus } from '../../common/enums';
+import { ServiceBookingStatus } from '../../common/enums';
+import { CreateServiceDto } from './dto/create-service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class ServicesService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Service Management
-  async createService(data: {
-    name: string;
-    slug: string;
-    description?: string;
-    category: ServiceCategory;
-    type: ServiceType;
-    basePriceCents: number;
-    estimatedDuration: number;
-    imageUrl?: string;
-  }) {
+  async createService(data: CreateServiceDto) {
+    // Generate slug if not provided
+    const slug = data.slug || this.generateSlug(data.name);
+    
+    // Validate categoryId and typeId exist
+    const [category, type] = await Promise.all([
+      data.categoryId ? this.prisma.serviceCategory.findUnique({ where: { id: data.categoryId } }) : null,
+      data.typeId ? this.prisma.serviceType.findUnique({ where: { id: data.typeId } }) : null,
+    ]);
+
+    if (data.categoryId && !category) {
+      throw new BadRequestException('Invalid category ID');
+    }
+    if (data.typeId && !type) {
+      throw new BadRequestException('Invalid type ID');
+    }
+
+    // Calculate basePriceCents from price if needed
+    const basePriceCents = data.basePriceCents ?? (data.price ? Math.round(data.price * 100) : 0);
+
     return this.prisma.service.create({
       data: {
         name: data.name,
-        slug: data.slug,
+        slug,
         description: data.description,
-        category: data.category,
-        type: data.type,
-        basePriceCents: data.basePriceCents,
-        price: data.basePriceCents,
-        duration: data.estimatedDuration,
+        categoryId: data.categoryId,
+        typeId: data.typeId,
+        basePriceCents,
+        price: basePriceCents,
+        duration: data.estimatedDuration || 60,
         images: data.imageUrl,
+        isActive: data.isActive ?? true,
       },
-      include: { items: true },
+      include: {
+        items: true,
+        serviceCategory: true,
+        serviceType: true,
+      },
     });
   }
 
   async getServices(params: {
-    category?: ServiceCategory;
-    type?: ServiceType;
+    categoryId?: string;
+    typeId?: string;
     isActive?: boolean;
     page?: number;
     pageSize?: number;
   }) {
+    console.log('[DEBUG] ServicesService.getServices called with params:', params);
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
-    
+
     const where: any = {};
-    if (params.category) where.category = params.category;
-    if (params.type) where.type = params.type;
+    if (params.categoryId) where.categoryId = params.categoryId;
+    if (params.typeId) where.typeId = params.typeId;
     if (params.isActive !== undefined) where.isActive = params.isActive;
 
     const [total, services] = await this.prisma.$transaction([
@@ -54,6 +72,8 @@ export class ServicesService {
         where,
         include: {
           items: true,
+          serviceCategory: true,
+          serviceType: true,
           _count: {
             select: {
               bookings: true,
@@ -66,7 +86,16 @@ export class ServicesService {
       }),
     ]);
 
-    return { total, page, pageSize, services };
+    // Map services to include computed price field
+    const mappedServices = services.map(service => ({
+      ...service,
+      price: service.basePriceCents / 100,
+      category: service.serviceCategory,
+      type: service.serviceType,
+    }));
+
+    console.log('[DEBUG] ServicesService.getServices returning:', { total, page, pageSize, servicesCount: services.length });
+    return { total, page, pageSize, services: mappedServices };
   }
 
   async getService(id: string) {
@@ -74,6 +103,8 @@ export class ServicesService {
       where: { id },
       include: {
         items: true,
+        serviceCategory: true,
+        serviceType: true,
         bookings: {
           orderBy: { createdAt: 'desc' },
           take: 10,
@@ -85,7 +116,12 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    return service;
+    return {
+      ...service,
+      price: service.basePriceCents / 100,
+      category: service.serviceCategory,
+      type: service.serviceType,
+    };
   }
 
   async getServiceBySlug(slug: string) {
@@ -93,6 +129,8 @@ export class ServicesService {
       where: { slug },
       include: {
         items: true,
+        serviceCategory: true,
+        serviceType: true,
       },
     });
 
@@ -100,35 +138,81 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    return service;
+    return {
+      ...service,
+      price: service.basePriceCents / 100,
+      category: service.serviceCategory,
+      type: service.serviceType,
+    };
   }
 
-  async updateService(id: string, data: Partial<{
-    name: string;
-    description: string;
-    basePriceCents: number;
-    estimatedDuration: number;
-    imageUrl: string;
-    isActive: boolean;
-  }>) {
-    const _service = await this.getService(id);
+  async updateService(id: string, data: UpdateServiceDto) {
+    // Check if service exists
+    const existingService = await this.prisma.service.findUnique({
+      where: { id },
+    });
+    if (!existingService) {
+      throw new NotFoundException('Service not found');
+    }
+
+    // Validate categoryId and typeId if provided
+    if (data.categoryId || data.typeId) {
+      const [category, type] = await Promise.all([
+        data.categoryId ? this.prisma.serviceCategory.findUnique({ where: { id: data.categoryId } }) : null,
+        data.typeId ? this.prisma.serviceType.findUnique({ where: { id: data.typeId } }) : null,
+      ]);
+
+      if (data.categoryId && !category) {
+        throw new BadRequestException('Invalid category ID');
+      }
+      if (data.typeId && !type) {
+        throw new BadRequestException('Invalid type ID');
+      }
+    }
 
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.typeId !== undefined) updateData.typeId = data.typeId;
+    
+    // Handle price conversion
     if (data.basePriceCents !== undefined) {
       updateData.basePriceCents = data.basePriceCents;
       updateData.price = data.basePriceCents;
+    } else if (data.price !== undefined) {
+      const basePriceCents = Math.round(data.price * 100);
+      updateData.basePriceCents = basePriceCents;
+      updateData.price = basePriceCents;
     }
+    
     if (data.estimatedDuration !== undefined) updateData.duration = data.estimatedDuration;
     if (data.imageUrl !== undefined) updateData.images = data.imageUrl;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    return this.prisma.service.update({
+    const updated = await this.prisma.service.update({
       where: { id },
       data: updateData,
-      include: { items: true },
+      include: {
+        items: true,
+        serviceCategory: true,
+        serviceType: true,
+      },
     });
+
+    return {
+      ...updated,
+      price: updated.basePriceCents / 100,
+      category: updated.serviceCategory,
+      type: updated.serviceType,
+    };
+  }
+
+  async updateServiceImage(id: string, imagePath: string) {
+    // In a production environment, you would upload the file to a cloud storage
+    // service (like S3, Cloudinary, etc.) and store the URL.
+    // For this example, we'll just store the local file path.
+    return this.updateService(id, { imageUrl: imagePath });
   }
 
   async deleteService(id: string) {
@@ -211,45 +295,47 @@ export class ServicesService {
   }
 
   // Service Categories and Types
-  getServiceCategories() {
-    return Object.values(ServiceCategory).map(category => ({
-      value: category,
-      label: this.getCategoryLabel(category),
+  async getServiceCategories() {
+    const categories = await this.prisma.serviceCategory.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    return categories.map(cat => ({
+      value: cat.id,
+      label: cat.name,
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
     }));
   }
 
-  getServiceTypes() {
-    return Object.values(ServiceType).map(type => ({
-      value: type,
-      label: this.getTypeLabel(type),
+  async getServiceTypes() {
+    const types = await this.prisma.serviceType.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      include: { category: true },
+    });
+
+    return types.map(type => ({
+      value: type.id,
+      label: type.name,
+      id: type.id,
+      name: type.name,
+      slug: type.slug,
+      categoryId: type.categoryId,
+      category: type.category,
     }));
   }
 
-  private getCategoryLabel(category: ServiceCategory): string {
-    const labels = {
-      INSTALLATION: 'Lắp đặt',
-      MAINTENANCE: 'Bảo trì',
-      REPAIR: 'Sửa chữa',
-      LIQUIDATION: 'Thanh lý',
-      RENTAL: 'Cho thuê',
-      CONSULTATION: 'Tư vấn',
-      DELIVERY: 'Giao hàng',
-      OTHER: 'Khác',
-    };
-    return labels[category] || category;
-  }
-
-  private getTypeLabel(type: ServiceType): string {
-    const labels = {
-      AUDIO_EQUIPMENT: 'Thiết bị âm thanh',
-      HOME_THEATER: 'Rạp hát tại nhà',
-      PROFESSIONAL_SOUND: 'Âm thanh chuyên nghiệp',
-      LIGHTING: 'Ánh sáng',
-      CONSULTATION: 'Tư vấn',
-      MAINTENANCE: 'Bảo trì',
-      OTHER: 'Khác',
-    };
-    return labels[type] || type;
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-')      // Replace spaces with hyphens
+      .replace(/--+/g, '-')      // Replace multiple hyphens with single hyphen
+      .trim();
   }
 
   // Statistics

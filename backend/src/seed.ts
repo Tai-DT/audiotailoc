@@ -36,12 +36,10 @@ async function main() {
       code: 'WELCOME10',
       name: 'Welcome 10%',
       description: 'Giảm 10% cho khách hàng mới',
-      type: 'PERCENT',
+      type: 'PERCENTAGE',
       value: 10,
-      minAmount: 500000,
-      startDate: now,
-      endDate: nextYear,
       isActive: true,
+      expiresAt: nextYear,
     },
   });
 
@@ -110,7 +108,6 @@ async function main() {
             type: 'SYSTEM',
             title: 'Chào mừng quản trị viên',
             message: 'Tài khoản của bạn đã được thiết lập. Đây là thông báo thử nghiệm.',
-            data: JSON.stringify({ seeded: true }),
           }
         }).catch(() => undefined);
       }

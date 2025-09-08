@@ -232,7 +232,12 @@ export class DocumentationController {
   }> {
     try {
       // This would integrate with the API versioning service to get real changelog data
-      const changelog = {
+      const changelog: Record<string, {
+        releaseDate: string;
+        changes: string[];
+        breakingChanges: string[];
+        isDeprecated: boolean;
+      }> = {
         'v2': {
           releaseDate: '2024-03-01T00:00:00Z',
           changes: [

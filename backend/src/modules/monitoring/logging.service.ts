@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
@@ -17,7 +18,7 @@ export interface LogContext {
 }
 
 export interface ErrorContext extends LogContext {
-  error: Error;
+  error?: Error;
   stack?: string;
   errorCode?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
@@ -28,7 +29,10 @@ export class LoggingService {
   private readonly logger: winston.Logger;
   private readonly nestLogger = new Logger(LoggingService.name);
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService
+  ) {
     this.logger = this.createWinstonLogger();
   }
 
@@ -242,6 +246,65 @@ export class LoggingService {
       category: 'user_activity',
       timestamp: new Date().toISOString(),
     });
+
+    // Save to database asynchronously
+    this.saveActivityLog({
+      userId,
+      action,
+      resource: context?.resource,
+      resourceId: context?.resourceId,
+      details: context ? JSON.stringify(context) : null,
+      ipAddress: context?.ip,
+      userAgent: context?.userAgent,
+      method: context?.method,
+      url: context?.url,
+      statusCode: context?.statusCode,
+      duration: context?.duration,
+      category: 'user_activity',
+      severity: 'info'
+    }).catch(error => {
+      this.error('Failed to save activity log to database', { error: error as Error, userId, action });
+    });
+  }
+
+  // Save activity log to database
+  private async saveActivityLog(data: {
+    userId?: string;
+    action: string;
+    resource?: string;
+    resourceId?: string;
+    details?: string | null;
+    ipAddress?: string;
+    userAgent?: string;
+    method?: string;
+    url?: string;
+    statusCode?: number;
+    duration?: number;
+    category: string;
+    severity: string;
+  }): Promise<void> {
+    try {
+      await this.prisma.activityLog.create({
+        data: {
+          userId: data.userId,
+          action: data.action,
+          resource: data.resource,
+          resourceId: data.resourceId,
+          details: data.details,
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+          method: data.method,
+          url: data.url,
+          statusCode: data.statusCode,
+          duration: data.duration,
+          category: data.category,
+          severity: data.severity,
+        }
+      });
+    } catch (error) {
+      this.error('Failed to save activity log', { error: error as Error, data });
+      throw error;
+    }
   }
 
   // Payment logging

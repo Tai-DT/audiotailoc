@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CampaignStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
+import { CampaignStatus, CampaignType } from '@prisma/client';
 
 @Injectable()
 export class MarketingService {
@@ -13,9 +13,9 @@ export class MarketingService {
   ) {}
 
   // Campaign Management
+
   async getCampaigns(status?: CampaignStatus) {
     const where: any = status ? { status } : {};
-    
     const campaigns = await this.prisma.campaign.findMany({
       where,
       include: {
@@ -60,7 +60,7 @@ export class MarketingService {
   async createCampaign(data: {
     name: string;
     description: string;
-    type: 'EMAIL' | 'SMS' | 'PUSH' | 'SOCIAL';
+    type: CampaignType;
     targetAudience?: string;
     discountPercent?: number;
     discountAmount?: number;
@@ -77,7 +77,7 @@ export class MarketingService {
         discountAmount: data.discountAmount,
         startDate: data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate ? new Date(data.endDate) : null,
-        status: 'DRAFT'
+        status: CampaignStatus.DRAFT
       }
     });
 
@@ -88,12 +88,13 @@ export class MarketingService {
   async updateCampaign(id: string, data: Partial<{
     name: string;
     description: string;
-    type: 'EMAIL' | 'SMS' | 'PUSH' | 'SOCIAL';
+    type: CampaignType;
     targetAudience: string;
     discountPercent: number;
     discountAmount: number;
     startDate: string;
     endDate: string;
+    status: CampaignStatus;
   }>) {
     const campaign = await this.prisma.campaign.update({
       where: { id },
@@ -139,7 +140,7 @@ export class MarketingService {
     // Update campaign status
     await this.prisma.campaign.update({
       where: { id },
-      data: { status: 'SENT', sentAt: new Date() }
+      data: { status: CampaignStatus.SENT, sentAt: new Date() }
     });
 
     this.logger.log(`Campaign sent: ${id} to ${recipients.length} recipients`);

@@ -78,7 +78,6 @@ export class RecommendationsService {
       where: { id: productId },
       include: {
         category: true,
-        tags: true,
       },
     });
 
@@ -89,18 +88,11 @@ export class RecommendationsService {
       where: {
         AND: [
           { id: { not: productId } },
-          { published: true },
-          { inStock: true },
+          { isActive: true },
+          { isDeleted: false },
           {
             OR: [
               { categoryId: product.categoryId },
-              { 
-                tags: {
-                  some: {
-                    name: { in: product.tags.map(tag => tag.name) }
-                  }
-                }
-              },
               {
                 priceCents: {
                   gte: product.priceCents * 0.7,
@@ -113,7 +105,7 @@ export class RecommendationsService {
       },
       include: {
         category: true,
-        tags: true,
+        inventory: true,
         reviews: {
           select: {
             rating: true,
@@ -177,10 +169,11 @@ export class RecommendationsService {
     const products = await this.prisma.product.findMany({
       where: {
         id: { in: productIds },
-        published: true,
-        inStock: true,
+        isActive: true,
+        isDeleted: false,
       },
       include: {
+        inventory: true,
         reviews: {
           select: {
             rating: true,
@@ -218,11 +211,12 @@ export class RecommendationsService {
     // Get recently viewed products
     const recentlyViewed = await this.prisma.productView.findMany({
       where: { userId },
-      orderBy: { viewedAt: 'desc' },
+      orderBy: { timestamp: 'desc' },
       take: 10,
       include: {
         product: {
           include: {
+            inventory: true,
             category: true,
             reviews: {
               select: {
@@ -265,8 +259,8 @@ export class RecommendationsService {
 
     const where: any = {
       categoryId,
-      published: true,
-      inStock: true,
+      isActive: true,
+      isDeleted: false,
     };
 
     if (context.priceRange) {
@@ -283,6 +277,7 @@ export class RecommendationsService {
     const products = await this.prisma.product.findMany({
       where,
       include: {
+        inventory: true,
         reviews: {
           select: {
             rating: true,
@@ -318,10 +313,11 @@ export class RecommendationsService {
     // Get trending products based on recent views and orders
     const trendingProducts = await this.prisma.product.findMany({
       where: {
-        published: true,
-        inStock: true,
+        isActive: true,
+        isDeleted: false,
       },
       include: {
+        inventory: true,
         reviews: {
           select: {
             rating: true,
@@ -351,23 +347,8 @@ export class RecommendationsService {
 
   // Track user interactions for better recommendations
   async trackProductView(userId: string, productId: string): Promise<void> {
-    await this.prisma.productView.upsert({
-      where: {
-        userId_productId: {
-          userId,
-          productId,
-        },
-      },
-      update: {
-        viewedAt: new Date(),
-        viewCount: { increment: 1 },
-      },
-      create: {
-        userId,
-        productId,
-        viewedAt: new Date(),
-        viewCount: 1,
-      },
+    await this.prisma.productView.create({
+      data: { userId, productId, timestamp: new Date(), duration: 0 }
     });
 
     // Update product view count
@@ -515,14 +496,15 @@ export class RecommendationsService {
     const products = await this.prisma.product.findMany({
       where: {
         categoryId: { in: categoryIds },
-        published: true,
-        inStock: true,
+        isActive: true,
+        isDeleted: false,
         priceCents: userProfile.priceRange ? {
           gte: userProfile.priceRange.min * 0.8,
           lte: userProfile.priceRange.max * 1.2,
         } : undefined,
       },
       include: {
+        inventory: true,
         reviews: {
           select: {
             rating: true,
@@ -556,11 +538,7 @@ export class RecommendationsService {
       score += 20;
     }
 
-    // Common tags
-    const commonTags = product1.tags.filter((tag1: any) =>
-      product2.tags.some((tag2: any) => tag1.name === tag2.name)
-    );
-    score += Math.min(commonTags.length * 10, 30);
+    // Tags not available in current schema
 
     return Math.min(score, 100);
   }
@@ -608,10 +586,10 @@ export class RecommendationsService {
       name: product.name,
       slug: product.slug,
       priceCents: product.priceCents,
-      images: product.images || [],
+      images: Array.isArray(product.images) ? product.images : (product.images ? (()=>{ try { return JSON.parse(product.images); } catch { return product.imageUrl ? [product.imageUrl] : []; } })() : (product.imageUrl ? [product.imageUrl] : [])),
       rating: avgRating,
       reviewCount: product.reviews.length,
-      inStock: product.inStock,
+      inStock: product.inventory ? product.inventory.stock > 0 : true,
     };
   }
 

@@ -6,7 +6,7 @@ export function TrackExecutionTime(operation: string) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: any[]) {
       const start = Date.now();
       const monitoringService = this.monitoringService || getMonitoringService();
 
@@ -39,7 +39,7 @@ export function TrackDatabaseOperation(operation: string) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: any[]) {
       const monitoringService = this.monitoringService || getMonitoringService();
 
       try {
@@ -61,7 +61,7 @@ export function TrackExternalService(serviceName: string) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: any[]) {
       const monitoringService = this.monitoringService || getMonitoringService();
 
       try {

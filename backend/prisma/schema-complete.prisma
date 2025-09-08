@@ -152,15 +152,16 @@ model CartItem {
 
 // Order Model
 model Order {
-  id              String   @id @default(cuid())
-  orderNo         String   @unique
-  userId          String
-  totalCents      Int
-  status          OrderStatus @default(PENDING)
-  shippingAddress String?
-  promotionCode   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  orderNo            String   @unique
+  userId             String
+  totalCents         Int
+  status             OrderStatus @default(PENDING)
+  shippingAddress    String?
+  shippingCoordinates String?
+  promotionCode      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user     User        @relation(fields: [userId], references: [id])
   items    OrderItem[]

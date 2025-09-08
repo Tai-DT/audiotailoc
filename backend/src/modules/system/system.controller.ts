@@ -7,13 +7,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 class SystemConfigDto {
   key!: string;
   value!: string;
-  description?: string;
   type?: 'string' | 'number' | 'boolean' | 'json';
 }
 
 class UpdateConfigDto {
   value!: string;
-  description?: string;
 }
 
 @ApiTags('System Configuration')
@@ -29,9 +27,8 @@ export class SystemController {
   @Get('config')
   @ApiOperation({ summary: 'Get all system configurations' })
   @ApiResponse({ status: 200, description: 'System configurations retrieved' })
-  async getConfigs(@Query('group') group?: string) {
+  async getConfigs(@Query('group') _group?: string) {
     const configs = await this.prisma.systemConfig.findMany({
-      where: group ? { group } : {},
       orderBy: { key: 'asc' }
     });
     
@@ -75,8 +72,7 @@ export class SystemController {
       data: {
         key: dto.key,
         value: dto.value,
-        description: dto.description,
-        type: dto.type || 'string'
+        type: dto.type || 'STRING'
       }
     });
     
@@ -93,8 +89,7 @@ export class SystemController {
     const config = await this.prisma.systemConfig.update({
       where: { key },
       data: {
-        value: dto.value,
-        description: dto.description
+        value: dto.value
       }
     });
     
@@ -176,8 +171,7 @@ export class SystemController {
       create: {
         key: 'maintenance_mode',
         value: body.enabled.toString(),
-        description: 'System maintenance mode',
-        type: 'boolean'
+        type: 'BOOLEAN'
       }
     });
     
@@ -188,8 +182,7 @@ export class SystemController {
         create: {
           key: 'maintenance_message',
           value: body.message,
-          description: 'Maintenance mode message',
-          type: 'string'
+          type: 'STRING'
         }
       });
     }

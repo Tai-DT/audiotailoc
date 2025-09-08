@@ -150,13 +150,12 @@ export class DataCollectionController {
 
   // Public endpoints for tracking (no authentication required)
   @Post('track/search')
-  async trackSearchQuery(@Body() data: TrackSearchQueryDto, @Req() req: any) {
+  async trackSearchQuery(@Body() data: TrackSearchQueryDto, @Req() _req: any) {
     const searchData: SearchQueryData = {
-      ...data,
-      ipAddress: data.ipAddress || req.ip,
-      userAgent: data.userAgent || req.headers['user-agent'],
+      query: data.query,
+      userId: data.userId,
+      timestamp: new Date(),
     };
-
     return this.dataCollectionService.trackSearchQuery(searchData);
   }
 
@@ -170,24 +169,24 @@ export class DataCollectionController {
   }
 
   @Post('track/product-view')
-  async trackProductView(@Body() data: TrackProductViewDto, @Req() req: any) {
+  async trackProductView(@Body() data: TrackProductViewDto, @Req() _req: any) {
     const viewData: ProductViewData = {
-      ...data,
-      ipAddress: data.ipAddress || req.ip,
-      userAgent: data.userAgent || req.headers['user-agent'],
+      productId: data.productId,
+      userId: data.userId,
+      timestamp: new Date(),
+      duration: data.duration,
     };
-
     return this.dataCollectionService.trackProductView(viewData);
   }
 
   @Post('track/service-view')
-  async trackServiceView(@Body() data: TrackServiceViewDto, @Req() req: any) {
+  async trackServiceView(@Body() data: TrackServiceViewDto, @Req() _req: any) {
     const viewData: ServiceViewData = {
-      ...data,
-      ipAddress: data.ipAddress || req.ip,
-      userAgent: data.userAgent || req.headers['user-agent'],
+      serviceId: data.serviceId,
+      userId: data.userId,
+      timestamp: new Date(),
+      duration: data.duration,
     };
-
     return this.dataCollectionService.trackServiceView(viewData);
   }
 

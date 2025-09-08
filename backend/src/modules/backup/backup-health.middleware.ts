@@ -23,12 +23,12 @@ export class BackupHealthMiddleware implements NestMiddleware {
 
   private async checkBackupHealth(): Promise<void> {
     try {
-      const stats = this.backupService.getBackupStats();
+      const status = await this.backupService.getBackupStatus();
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       // Check if we have recent backups
-      const backups = this.backupService.getBackups();
+      const backups = await this.backupService.listBackups();
       const recentBackups = backups.filter(backup => backup.timestamp > twentyFourHoursAgo);
 
       if (recentBackups.length === 0) {
@@ -36,12 +36,14 @@ export class BackupHealthMiddleware implements NestMiddleware {
       }
 
       // Check success rate
-      if (stats.successRate < 90) {
-        this.logger.warn(`Low backup success rate: ${stats.successRate}%`);
-      }
+      // If there are failed backups recently, warn (approximation)
+      const failedCount = backups.filter(b => b.status === 'failed').length;
+      const total = backups.length || 1;
+      const successRate = Math.round(((total - failedCount) / total) * 100);
+      if (successRate < 90) this.logger.warn(`Low backup success rate: ${successRate}%`);
 
       // Check total backup count
-      if (stats.totalBackups === 0) {
+      if (status.totalBackups === 0) {
         this.logger.error('No backups found in the system');
       }
 

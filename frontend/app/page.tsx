@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Button } from '../../shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -35,16 +35,16 @@ export default function HomePage() {
               Nâng tầm trải nghiệm âm thanh với các sản phẩm chất lượng cao và dịch vụ chuyên nghiệp
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
-                <Link href="/services">
+              <Link href="/services">
+                <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
                   Khám phá dịch vụ
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary-600">
-                <Link href="/booking">
+                </Button>
+              </Link>
+              <Link href="/booking">
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary-600">
                   Đặt lịch ngay
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -190,7 +190,7 @@ export default function HomePage() {
                       <span className="text-2xl font-bold text-primary-600">
                         {service.price}
                       </span>
-                      <Button asChild size="sm">
+                      <Button size="sm">
                         <Link href="/booking">Đặt lịch</Link>
                       </Button>
                     </div>
@@ -206,7 +206,7 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-center mt-12"
           >
-            <Button asChild size="lg">
+            <Button size="lg">
               <Link href="/services">
                 Xem tất cả dịch vụ
               </Link>
@@ -263,7 +263,7 @@ export default function HomePage() {
                         <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                       ))}
                     </div>
-                    <p className="text-gray-600 mb-4">"{testimonial.content}"</p>
+                    <p className="text-gray-600 mb-4">&ldquo;{testimonial.content}&rdquo;</p>
                     <div>
                       <p className="font-semibold text-gray-900">{testimonial.name}</p>
                       <p className="text-sm text-gray-500">{testimonial.role}</p>
@@ -334,7 +334,7 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-center mt-12"
           >
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary-600">
+            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary-600">
               <Link href="/booking">
                 Đặt lịch tư vấn miễn phí
               </Link>

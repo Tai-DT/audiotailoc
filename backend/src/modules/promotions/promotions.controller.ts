@@ -2,17 +2,16 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller('promotions')
 export class PromotionsController {
-  
   @Get()
-  async findAll() {
+  async getPromotions() {
     return {
       success: true,
       data: {
-        message: 'promotions module is working',
-        status: 'active',
-        timestamp: new Date().toISOString()
+        promotions: [],
+        total: 0,
+        timestamp: new Date().toISOString(),
       },
-      message: 'promotions data retrieved successfully'
+      message: 'Promotions retrieved successfully',
     };
   }
 
@@ -24,32 +23,8 @@ export class PromotionsController {
         module: 'promotions',
         status: 'operational',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
-      }
-    };
-  }
-
-  @Get()
-  async getPromotions() {
-    return {
-      success: true,
-      data: {
-        promotions: [],
-        total: 0
+        timestamp: new Date().toISOString(),
       },
-      message: 'Promotions retrieved successfully'
-    };
-  }
-
-  @Get()
-  async getPromotions() {
-    return {
-      success: true,
-      data: {
-        promotions: [],
-        total: 0
-      },
-      message: 'Promotions retrieved successfully'
     };
   }
 }

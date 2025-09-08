@@ -35,34 +35,19 @@ export class SeoService {
   async getProductSeo(productId: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
-      include: { category: true, tags: true }
+      include: { category: true }
     });
 
     if (!product) {
       return this.getDefaultSeo('product', lang);
     }
 
-    const title = lang === 'en' 
-      ? (product.metaTitleEn || product.nameEn || product.name)
-      : (product.metaTitle || product.name);
-
-    const description = lang === 'en'
-      ? (product.metaDescriptionEn || product.descriptionEn || product.description)
-      : (product.metaDescription || product.description);
-
-    const keywords = lang === 'en'
-      ? (product.metaKeywordsEn || product.metaKeywords)
-      : product.metaKeywords;
-
-    const ogTitle = lang === 'en'
-      ? (product.ogTitleEn || product.ogTitle || title)
-      : (product.ogTitle || title);
-
-    const ogDescription = lang === 'en'
-      ? (product.ogDescriptionEn || product.ogDescription || description)
-      : (product.ogDescription || description);
-
-    const canonicalUrl = product.canonicalUrl || `${this.defaultSiteUrl}/products/${product.slug}`;
+    const title = product.name;
+    const description = product.description || '';
+    const keywords = `${product.name}, audio, âm thanh, ${product.category?.name || ''}`;
+    const ogTitle = title;
+    const ogDescription = description;
+    const canonicalUrl = `${this.defaultSiteUrl}/products/${product.slug}`;
 
     const structuredData = this.generateProductStructuredData(product, lang);
 
@@ -76,12 +61,12 @@ export class SeoService {
       canonicalUrl,
       ogTitle: ogTitle || title,
       ogDescription: ogDescription || description || '',
-      ogImage: product.ogImage || product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
+      ogImage: product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
       ogType: 'product',
       twitterCard: 'summary_large_image',
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
-      twitterImage: product.ogImage || product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
+      twitterImage: product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
       structuredData
     };
   }
@@ -97,19 +82,10 @@ export class SeoService {
       return this.getDefaultSeo('category', lang);
     }
 
-    const title = lang === 'en'
-      ? (category.metaTitleEn || category.nameEn || category.name)
-      : (category.metaTitle || category.name);
-
-    const description = lang === 'en'
-      ? (category.metaDescriptionEn || category.descriptionEn || category.description)
-      : (category.metaDescription || category.description);
-
-    const keywords = lang === 'en'
-      ? (category.metaKeywordsEn || category.metaKeywords)
-      : category.metaKeywords;
-
-    const canonicalUrl = category.canonicalUrl || `${this.defaultSiteUrl}/categories/${category.slug}`;
+    const title = category.name;
+    const description = `Khám phá các sản phẩm ${category.name} chất lượng cao`;
+    const keywords = `${category.name}, audio, âm thanh, thiết bị âm thanh`;
+    const canonicalUrl = `${this.defaultSiteUrl}/categories/${category.slug}`;
 
     return {
       type: 'category',
@@ -121,12 +97,12 @@ export class SeoService {
       canonicalUrl,
       ogTitle: title,
       ogDescription: description || '',
-      ogImage: category.imageUrl || `${this.defaultSiteUrl}/images/default-category.jpg`,
+      ogImage: `${this.defaultSiteUrl}/images/default-category.jpg`,
       ogType: 'website',
       twitterCard: 'summary_large_image',
       twitterTitle: title,
       twitterDescription: description || '',
-      twitterImage: category.imageUrl || `${this.defaultSiteUrl}/images/default-category.jpg`
+      twitterImage: `${this.defaultSiteUrl}/images/default-category.jpg`
     };
   }
 
@@ -140,27 +116,12 @@ export class SeoService {
       return this.getDefaultSeo('page', lang);
     }
 
-    const title = lang === 'en'
-      ? (page.metaTitleEn || page.titleEn || page.title)
-      : (page.metaTitle || page.title);
-
-    const description = lang === 'en'
-      ? (page.metaDescriptionEn || page.contentEn || page.content)
-      : (page.metaDescription || page.content);
-
-    const keywords = lang === 'en'
-      ? (page.metaKeywordsEn || page.metaKeywords)
-      : page.metaKeywords;
-
-    const ogTitle = lang === 'en'
-      ? (page.ogTitleEn || page.ogTitle || title)
-      : (page.ogTitle || title);
-
-    const ogDescription = lang === 'en'
-      ? (page.ogDescriptionEn || page.ogDescription || description)
-      : (page.ogDescription || description);
-
-    const canonicalUrl = page.canonicalUrl || `${this.defaultSiteUrl}/pages/${slug}`;
+    const title = page.title;
+    const description = page.content;
+    const keywords = `${page.title}, audio, âm thanh`;
+    const ogTitle = title;
+    const ogDescription = description;
+    const canonicalUrl = `${this.defaultSiteUrl}/pages/${slug}`;
 
     return {
       type: 'page',
@@ -171,62 +132,47 @@ export class SeoService {
       canonicalUrl,
       ogTitle: ogTitle || title,
       ogDescription: ogDescription || description || '',
-      ogImage: page.ogImage || `${this.defaultSiteUrl}/images/default-page.jpg`,
+      ogImage: `${this.defaultSiteUrl}/images/default-page.jpg`,
       ogType: 'article',
       twitterCard: 'summary_large_image',
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
-      twitterImage: page.ogImage || `${this.defaultSiteUrl}/images/default-page.jpg`
+      twitterImage: `${this.defaultSiteUrl}/images/default-page.jpg`
     };
   }
 
   // Generate SEO data for project
-  async getProjectSeo(slug: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
+  async getProjectSeo(id: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const project = await this.prisma.project.findUnique({
-      where: { slug }
+      where: { id }
     });
 
     if (!project) {
       return this.getDefaultSeo('project', lang);
     }
 
-    const title = lang === 'en'
-      ? (project.metaTitleEn || project.nameEn || project.name)
-      : (project.metaTitle || project.name);
-
-    const description = lang === 'en'
-      ? (project.metaDescriptionEn || project.descriptionEn || project.description)
-      : (project.metaDescription || project.description);
-
-    const keywords = lang === 'en'
-      ? (project.metaKeywordsEn || project.metaKeywords)
-      : project.metaKeywords;
-
-    const ogTitle = lang === 'en'
-      ? (project.ogTitleEn || project.ogTitle || title)
-      : (project.ogTitle || title);
-
-    const ogDescription = lang === 'en'
-      ? (project.ogDescriptionEn || project.ogDescription || description)
-      : (project.ogDescription || description);
-
-    const canonicalUrl = project.canonicalUrl || `${this.defaultSiteUrl}/projects/${slug}`;
+    const title = project.name;
+    const description = project.description || '';
+    const keywords = `${project.name}, dự án, audio, âm thanh`;
+    const ogTitle = title;
+    const ogDescription = description;
+    const canonicalUrl = `${this.defaultSiteUrl}/projects/${project.id}`;
 
     return {
       type: 'project',
-      entitySlug: slug,
+      entitySlug: project.id,
       title: title || `${project.name} - ${this.defaultSiteName}`,
       description: description || `Dự án ${project.name} của Audio Tài Lộc`,
       keywords: keywords || `${project.name}, dự án, audio, âm thanh`,
       canonicalUrl,
       ogTitle: ogTitle || title,
       ogDescription: ogDescription || description || '',
-      ogImage: project.ogImage || project.imageUrl || `${this.defaultSiteUrl}/images/default-project.jpg`,
+      ogImage: `${this.defaultSiteUrl}/images/default-project.jpg`,
       ogType: 'article',
       twitterCard: 'summary_large_image',
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
-      twitterImage: project.ogImage || project.imageUrl || `${this.defaultSiteUrl}/images/default-project.jpg`
+      twitterImage: `${this.defaultSiteUrl}/images/default-project.jpg`
     };
   }
 
@@ -264,8 +210,8 @@ export class SeoService {
     const [products, categories, pages, projects] = await Promise.all([
       this.prisma.product.findMany({ select: { slug: true, updatedAt: true } }),
       this.prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
-      this.prisma.page.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
-      this.prisma.project.findMany({ select: { slug: true, updatedAt: true } })
+      this.prisma.page.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
+      this.prisma.project.findMany({ select: { id: true, updatedAt: true } })
     ]);
 
     let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -291,7 +237,7 @@ export class SeoService {
 
     // Projects
     projects.forEach(project => {
-      sitemap += `  <url>\n    <loc>${this.defaultSiteUrl}/projects/${project.slug}</loc>\n    <lastmod>${project.updatedAt.toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+      sitemap += `  <url>\n    <loc>${this.defaultSiteUrl}/projects/${project.id}</loc>\n    <lastmod>${project.updatedAt.toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
     });
 
     sitemap += '</urlset>';
@@ -313,9 +259,9 @@ Disallow: /static/`;
   }
 
   // Generate structured data for products
-  private generateProductStructuredData(product: any, lang: 'vi' | 'en'): any {
-    const name = lang === 'en' ? (product.nameEn || product.name) : product.name;
-    const description = lang === 'en' ? (product.descriptionEn || product.description) : product.description;
+  private generateProductStructuredData(product: any, _lang: 'vi' | 'en'): any {
+    const name = product.name;
+    const description = product.description;
 
     return {
       '@context': 'https://schema.org',

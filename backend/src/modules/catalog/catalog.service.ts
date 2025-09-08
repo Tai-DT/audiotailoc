@@ -1,17 +1,40 @@
  import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-// import { Prisma } from '@prisma/client';
-// import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
 import { CacheService } from '../caching/cache.service';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 export type ProductDto = {
   id: string;
   slug?: string;
   name: string;
   description?: string | null;
-  // Tests expect priceCents field
+  shortDescription?: string | null;
   priceCents: number;
+  originalPriceCents?: number | null;
   imageUrl?: string | null;
+  images?: any;
+  categoryId?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  sku?: string | null;
+  specifications?: any;
+  features?: string | null;
+  warranty?: string | null;
+  weight?: number | null;
+  dimensions?: string | null;
+  stockQuantity?: number;
+  minOrderQuantity?: number;
+  maxOrderQuantity?: number | null;
+  tags?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  metaKeywords?: string | null;
+  canonicalUrl?: string | null;
+  featured?: boolean;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  viewCount?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -46,7 +69,7 @@ export class CatalogService {
     const cached = await this.cache.get<{ items: ProductDto[]; total: number; page: number; pageSize: number }>(cacheKey);
     if (cached) return cached;
 
-    const [total, items] = await this.prisma.$transaction([
+    const [total, rawItems] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
         where,
@@ -55,6 +78,14 @@ export class CatalogService {
         take: pageSize,
       }),
     ]);
+
+    // Parse images field for each product
+    const items = rawItems.map(item => ({
+      ...item,
+      images: (typeof item.images === 'string') ? JSON.parse(item.images) : item.images,
+      specifications: (typeof item.specifications === 'string') ? JSON.parse(item.specifications) : item.specifications,
+    }));
+
     const result = { items, total, page, pageSize };
     await this.cache.set(cacheKey, result, { ttl: 60 });
     return result;
@@ -63,48 +94,163 @@ export class CatalogService {
   async getById(id: string): Promise<ProductDto> {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+
+    // Parse images and specifications fields
+    let parsedImages = product.images;
+    let parsedSpecifications = product.specifications;
+
+    if (typeof product.images === 'string') {
+      try {
+        parsedImages = JSON.parse(product.images);
+      } catch (error) {
+        console.error('Error parsing images:', error);
+      }
+    }
+
+    if (typeof product.specifications === 'string') {
+      try {
+        parsedSpecifications = JSON.parse(product.specifications);
+      } catch (error) {
+        console.error('Error parsing specifications:', error);
+      }
+    }
+
+    return {
+      ...product,
+      images: parsedImages,
+      specifications: parsedSpecifications,
+    };
   }
 
   async getBySlug(slug: string): Promise<ProductDto> {
     const product = await (this.prisma as any).product.findUnique({ where: { slug } });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+
+    // Parse images and specifications fields
+    return {
+      ...product,
+      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+    };
   }
 
-  async create(data: { slug: string; name: string; description?: string | null; priceCents: number; imageUrl?: string | null }): Promise<ProductDto> {
+  async create(data: CreateProductDto): Promise<ProductDto> {
     // Validate price is positive
     if (data.priceCents <= 0) {
       throw new Error('Price must be greater than 0');
     }
+
     // Ensure slug uniqueness
-    const existed = await (this.prisma as any).product.findUnique({ where: { slug: data.slug } });
+    const existed = await this.prisma.product.findUnique({ where: { slug: data.slug } });
     if (existed) {
       throw new Error('Product with this slug already exists');
     }
-    
-    const product = await (this.prisma as any).product.create({ data });
-    // Fire-and-forget index (no await to avoid blocking request)
-    // Optional search indexing (no-op)
-    /* void this.search.indexDocuments([
-      { id: product.id, slug: product.slug, name: product.name, description: product.description, priceCents: product.priceCents, imageUrl: product.imageUrl, categoryId: product.categoryId },
-    ]); */
+
+    // Prepare product data
+    const productData: any = {
+      slug: data.slug,
+      name: data.name,
+      description: data.description,
+      shortDescription: data.shortDescription || data.description?.substring(0, 200),
+      priceCents: data.priceCents,
+      originalPriceCents: data.originalPriceCents || data.priceCents,
+      imageUrl: data.images?.[0] || null,
+      images: data.images ? JSON.stringify(data.images) : null,
+      categoryId: data.categoryId,
+      brand: data.brand,
+      model: data.model,
+      sku: data.sku,
+      specifications: data.specifications ? JSON.stringify(data.specifications) : null,
+      features: data.features,
+      warranty: data.warranty,
+      weight: data.weight,
+      dimensions: data.dimensions,
+      stockQuantity: data.stockQuantity || 0,
+      minOrderQuantity: data.minOrderQuantity || 1,
+      maxOrderQuantity: data.maxOrderQuantity,
+      tags: data.tags,
+      metaTitle: data.metaTitle || data.name,
+      metaDescription: data.metaDescription || data.description?.substring(0, 160),
+      metaKeywords: data.metaKeywords,
+      canonicalUrl: data.canonicalUrl,
+      featured: data.featured || false,
+      isActive: data.isActive ?? true,
+    };
+
+    const product = await this.prisma.product.create({ data: productData });
+
+    // Clear cache
     await this.cache.deletePattern('products:list:*');
-    return product;
+
+    // Parse images and specifications fields for response
+    return {
+      ...product,
+      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+    };
   }
 
-  async update(id: string, data: Partial<{ name: string; description?: string | null; priceCents: number; imageUrl?: string | null }>): Promise<ProductDto> {
-    const product = await (this.prisma as any).product.update({ where: { id }, data });
-    /* void this.search.indexDocuments([
-      { id: product.id, slug: product.slug, name: product.name, description: product.description, priceCents: product.priceCents, imageUrl: product.imageUrl, categoryId: product.categoryId },
-    ]); */
+  async update(id: string, data: UpdateProductDto): Promise<ProductDto> {
+    // Check if product exists
+    const existingProduct = await this.prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) {
+      updateData.description = data.description;
+      updateData.shortDescription = data.description?.substring(0, 200);
+    }
+    if (data.priceCents !== undefined) updateData.priceCents = data.priceCents;
+    if (data.originalPriceCents !== undefined) updateData.originalPriceCents = data.originalPriceCents;
+    if (data.images !== undefined) {
+      updateData.imageUrl = data.images?.[0] || null;
+      updateData.images = data.images ? JSON.stringify(data.images) : null;
+    }
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.brand !== undefined) updateData.brand = data.brand;
+    if (data.model !== undefined) updateData.model = data.model;
+    if (data.sku !== undefined) updateData.sku = data.sku;
+    if (data.specifications !== undefined) {
+      updateData.specifications = data.specifications ? JSON.stringify(data.specifications) : null;
+    }
+    if (data.features !== undefined) updateData.features = data.features;
+    if (data.warranty !== undefined) updateData.warranty = data.warranty;
+    if (data.weight !== undefined) updateData.weight = data.weight;
+    if (data.dimensions !== undefined) updateData.dimensions = data.dimensions;
+    if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
+    if (data.minOrderQuantity !== undefined) updateData.minOrderQuantity = data.minOrderQuantity;
+    if (data.maxOrderQuantity !== undefined) updateData.maxOrderQuantity = data.maxOrderQuantity;
+    if (data.tags !== undefined) updateData.tags = data.tags;
+    if (data.metaTitle !== undefined) updateData.metaTitle = data.metaTitle;
+    if (data.metaDescription !== undefined) updateData.metaDescription = data.metaDescription;
+    if (data.metaKeywords !== undefined) updateData.metaKeywords = data.metaKeywords;
+    if (data.canonicalUrl !== undefined) updateData.canonicalUrl = data.canonicalUrl;
+    if (data.featured !== undefined) updateData.featured = data.featured;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    const product = await this.prisma.product.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Clear cache
     await this.cache.deletePattern('products:list:*');
-    return product;
+
+    // Parse images and specifications fields for response
+    return {
+      ...product,
+      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+    };
   }
 
   async remove(id: string): Promise<{ deleted: boolean }> {
-    await (this.prisma as any).product.delete({ where: { id } });
-    /* void this.search.deleteDocument(product.id); */
+    await this.prisma.product.delete({ where: { id } });
     await this.cache.deletePattern('products:list:*');
     return { deleted: true };
   }

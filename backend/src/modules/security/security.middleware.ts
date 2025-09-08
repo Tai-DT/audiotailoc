@@ -167,8 +167,9 @@ export class SecurityMiddleware implements NestMiddleware {
   }
 
   private isRateLimited(ip: string, now: number): boolean {
-    const windowMs = 15 * 60 * 1000; // 15 minutes
-    const maxRequests = 100; // requests per window
+    const isDevelopment = this.configService.get('NODE_ENV') === 'development';
+    const windowMs = isDevelopment ? 60 * 1000 : 15 * 60 * 1000; // 1 minute in dev, 15 minutes in prod
+    const maxRequests = isDevelopment ? 1000 : 100; // 1000 requests per minute in dev, 100 in prod
 
     const current = this.rateLimit.get(ip);
 

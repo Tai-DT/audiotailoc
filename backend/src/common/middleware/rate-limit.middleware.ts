@@ -27,25 +27,30 @@ export class RateLimitMiddleware implements NestMiddleware {
     // Apply different limits based on endpoint
     const endpoint = req.path;
     const method = req.method;
+    const isDevelopment = process.env.NODE_ENV === 'development';
 
     if (endpoint.includes('/auth/login')) {
-      options.windowMs = 15 * 60 * 1000; // 15 minutes
-      options.maxRequests = 5; // 5 login attempts
+      options.windowMs = isDevelopment ? 60 * 1000 : 15 * 60 * 1000; // 1 minute in dev, 15 minutes in prod
+      options.maxRequests = isDevelopment ? 100 : 5; // 100 login attempts in dev, 5 in prod
       options.message = 'Too many login attempts, please try again later';
     } else if (endpoint.includes('/auth/register')) {
-      options.windowMs = 60 * 60 * 1000; // 1 hour
-      options.maxRequests = 3; // 3 registration attempts
+      options.windowMs = isDevelopment ? 60 * 1000 : 60 * 60 * 1000; // 1 minute in dev, 1 hour in prod
+      options.maxRequests = isDevelopment ? 50 : 3; // 50 registration attempts in dev, 3 in prod
       options.message = 'Too many registration attempts, please try again later';
     } else if (endpoint.includes('/auth/forgot-password')) {
-      options.windowMs = 60 * 60 * 1000; // 1 hour
-      options.maxRequests = 3; // 3 password reset attempts
+      options.windowMs = isDevelopment ? 60 * 1000 : 60 * 60 * 1000; // 1 minute in dev, 1 hour in prod
+      options.maxRequests = isDevelopment ? 50 : 3; // 50 password reset attempts in dev, 3 in prod
       options.message = 'Too many password reset attempts, please try again later';
     } else if (method === 'POST' && endpoint.includes('/api/')) {
-      options.windowMs = 60 * 1000; // 1 minute
-      options.maxRequests = 30; // 30 POST requests per minute
+      options.windowMs = isDevelopment ? 60 * 1000 : 60 * 1000; // 1 minute
+      options.maxRequests = isDevelopment ? 500 : 30; // 500 POST requests per minute in dev, 30 in prod
     } else if (endpoint.includes('/search')) {
-      options.windowMs = 60 * 1000; // 1 minute
-      options.maxRequests = 60; // 60 search requests per minute
+      options.windowMs = isDevelopment ? 60 * 1000 : 60 * 1000; // 1 minute
+      options.maxRequests = isDevelopment ? 200 : 60; // 200 search requests per minute in dev, 60 in prod
+    } else {
+      // Default rate limiting for other endpoints
+      options.windowMs = isDevelopment ? 60 * 1000 : 15 * 60 * 1000; // 1 minute in dev, 15 minutes in prod
+      options.maxRequests = isDevelopment ? 1000 : 100; // 1000 requests per window in dev, 100 in prod
     }
 
     this.applyRateLimit(req, res, next, options);

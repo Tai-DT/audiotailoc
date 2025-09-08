@@ -195,6 +195,12 @@ export class WishlistService {
         throw new NotFoundException('Cart not found');
     }
 
+    // Load product price for cart item
+    const product = await this.prisma.product.findUnique({ where: { id: productId }, select: { priceCents: true } });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
     // Add to cart
     await this.prisma.cartItem.upsert({
       where: {
@@ -210,6 +216,7 @@ export class WishlistService {
         cartId: cart.id,
         productId,
         quantity,
+        price: product.priceCents,
       },
     });
 
