@@ -80,7 +80,7 @@ export class PaymentsController {
     return this.payments.createIntent(dto);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post('refunds')
   createRefund(@Body() dto: CreateRefundDto) {
     return this.payments.createRefund(dto.paymentId, dto.amountCents, dto.reason);

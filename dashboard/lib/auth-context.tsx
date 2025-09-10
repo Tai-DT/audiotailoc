@@ -172,7 +172,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to store tokens:', e)
       }
 
+      // Ensure token is set before any API calls
       apiClient.setToken(accessToken)
+      console.log('🔐 JWT Token set in ApiClient:', accessToken.substring(0, 30) + '...')
+
       await refreshUser()
     } catch (error) {
       console.error('Login error:', error)

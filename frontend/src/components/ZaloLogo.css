@@ -1,0 +1,10 @@
+.zalo-logo {
+  display: inline-block;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* small helper for circular avatars */
+.zalo-logo.avatar {
+  border-radius: 50%;
+}

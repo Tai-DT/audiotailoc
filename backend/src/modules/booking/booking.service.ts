@@ -216,6 +216,82 @@ export class BookingService {
     return this.getBooking(id);
   }
 
+  // General update booking method
+  async updateBooking(
+    id: string,
+    updateData: {
+      userId?: string;
+      serviceId?: string;
+      technicianId?: string | null;
+      scheduledAt?: Date;
+      scheduledTime?: string;
+      status?: ServiceBookingStatus;
+      notes?: string;
+      estimatedCosts?: number;
+      actualCosts?: number;
+    }
+  ) {
+    const booking = await this.getBooking(id);
+
+    // Validate technician if provided
+    if (updateData.technicianId) {
+      const technician = await this.prisma.technician.findUnique({
+        where: { id: updateData.technicianId },
+      });
+
+      if (!technician) {
+        throw new NotFoundException('Không tìm thấy kỹ thuật viên');
+      }
+
+      if (!technician.isActive) {
+        throw new BadRequestException('Kỹ thuật viên không hoạt động');
+      }
+    }
+
+    // Validate service if provided
+    if (updateData.serviceId) {
+      const service = await this.prisma.service.findUnique({
+        where: { id: updateData.serviceId },
+      });
+
+      if (!service) {
+        throw new NotFoundException('Không tìm thấy dịch vụ');
+      }
+    }
+
+    // Prepare update data
+    const data: any = {};
+    if (updateData.userId !== undefined) data.userId = updateData.userId;
+    if (updateData.serviceId !== undefined) data.serviceId = updateData.serviceId;
+    if (updateData.technicianId !== undefined) data.technicianId = updateData.technicianId;
+    if (updateData.scheduledAt !== undefined) data.scheduledAt = updateData.scheduledAt;
+    if (updateData.scheduledTime !== undefined) data.scheduledTime = updateData.scheduledTime;
+    if (updateData.status !== undefined) data.status = updateData.status;
+    if (updateData.notes !== undefined) data.notes = updateData.notes;
+    if (updateData.estimatedCosts !== undefined) data.estimatedCosts = updateData.estimatedCosts;
+    if (updateData.actualCosts !== undefined) data.actualCosts = updateData.actualCosts;
+
+    // Handle status changes that require special logic
+    if (updateData.status === ServiceBookingStatus.COMPLETED && booking.status !== ServiceBookingStatus.COMPLETED) {
+      data.completedAt = new Date();
+      // Compute actualCosts from items if not provided
+      if (updateData.actualCosts === undefined) {
+        const sum = await this.prisma.serviceBookingItem.aggregate({
+          where: { bookingId: id },
+          _sum: { price: true },
+        });
+        data.actualCosts = sum._sum.price || 0;
+      }
+    }
+
+    const updated = await this.prisma.serviceBooking.update({
+      where: { id },
+      data,
+    });
+
+    return this.getBooking(id);
+  }
+
   // Assign technician to booking
   async assignTechnician(bookingId: string, technicianId: string, note?: string) {
     const _booking = await this.getBooking(bookingId);
