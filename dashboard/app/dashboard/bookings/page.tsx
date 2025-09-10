@@ -6,22 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, User, Phone, MapPin, Wrench } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar, Clock, User, Phone, MapPin, Wrench, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface Booking {
   id: string;
   user: {
+    id: string;
     name: string;
     phone?: string;
     address?: string;
   };
   service: {
+    id: string;
     name: string;
-    serviceType: {
+    serviceType?: {
       name: string;
     };
   };
   technician?: {
+    id: string;
     name: string;
   };
   scheduledAt: string;
@@ -29,6 +37,27 @@ interface Booking {
   status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   notes?: string;
   createdAt: string;
+  estimatedCosts?: number;
+  actualCosts?: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Technician {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
 }
 
 const statusColors = {
@@ -48,6 +77,7 @@ const statusLabels = {
 };
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookingsData, setBookingsData] = useState<{
     bookings: Booking[];
     total: number;
@@ -61,9 +91,18 @@ export default function BookingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     fetchBookings();
+    fetchServices();
+    fetchTechnicians();
+    fetchUsers();
   }, []);
 
   const fetchBookings = async () => {
@@ -119,6 +158,125 @@ export default function BookingsPage() {
     }
   };
 
+  const fetchServices = async () => {
+    try {
+      const response = await fetch('/api/services');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && data.data.services) {
+          setServices(data.data.services);
+        } else if (data.success && Array.isArray(data.data)) {
+          // Fallback for direct array response
+          setServices(data.data);
+        } else {
+          // Use mock services if API response is unexpected
+          setServices([
+            { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
+            { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
+            { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
+            { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
+          ]);
+        }
+      } else {
+        console.error('Failed to fetch services:', response.statusText);
+        // Use mock services as fallback
+        setServices([
+          { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
+          { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
+          { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
+          { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      // Use mock services as fallback
+      setServices([
+        { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
+        { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
+        { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
+        { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
+      ]);
+    }
+  };
+
+  const fetchTechnicians = async () => {
+    try {
+      const response = await fetch('/api/technicians');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && data.data.technicians) {
+          setTechnicians(data.data.technicians);
+        } else if (data.success && Array.isArray(data.data)) {
+          // Fallback for direct array response
+          setTechnicians(data.data);
+        } else {
+          // Use mock technicians if API response is unexpected
+          setTechnicians([
+            { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
+            { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
+            { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
+            { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
+          ]);
+        }
+      } else {
+        console.error('Failed to fetch technicians:', response.statusText);
+        // Use mock technicians as fallback
+        setTechnicians([
+          { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
+          { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
+          { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
+          { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+      // Use mock technicians as fallback
+      setTechnicians([
+        { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
+        { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
+        { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
+        { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
+      ]);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && data.data.length > 0) {
+          setUsers(data.data);
+        } else {
+          // Use mock users if API returns empty
+          setUsers([
+            { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
+            { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
+            { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
+            { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
+          ]);
+        }
+      } else {
+        // Use mock users if API fails
+        setUsers([
+          { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
+          { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
+          { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
+          { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      // Use mock users as fallback
+      setUsers([
+        { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
+        { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
+        { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
+        { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
+      ]);
+    }
+  };
+
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {
       const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010').replace(/\/$/, '');
@@ -141,6 +299,79 @@ export default function BookingsPage() {
     }
   };
 
+  const updateBooking = async (id: string, bookingData: any) => {
+    try {
+      const response = await fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (response.ok) {
+        fetchBookings();
+        setIsEditDialogOpen(false);
+        setEditingBooking(null);
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to update booking:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error updating booking:', error);
+    }
+  };
+
+  const deleteBooking = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa đặt lịch này?')) return;
+
+    try {
+      const response = await fetch(`/api/bookings/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchBookings();
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to delete booking:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+    }
+  };
+
+  const createBooking = async (bookingData: any) => {
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (response.ok) {
+        fetchBookings();
+        setIsCreateDialogOpen(false);
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to create booking:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error creating booking:', error);
+    }
+  };
+
+  const viewBookingDetail = (booking: Booking) => {
+    router.push(`/dashboard/bookings/${booking.id}`);
+  };
+
+  const openEditDialog = (booking: Booking) => {
+    setEditingBooking(booking);
+    setIsEditDialogOpen(true);
+  };
+
   const filteredBookings = (bookingsData.bookings || []).filter((booking: Booking) =>
     filterStatus === 'all' || booking.status === filterStatus
   );
@@ -158,6 +389,48 @@ export default function BookingsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Quản lý đặt lịch</h1>
         <div className="flex gap-4">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm đặt lịch
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Thêm đặt lịch mới</DialogTitle>
+              </DialogHeader>
+              <BookingForm
+                services={services}
+                technicians={technicians}
+                users={users}
+                onSubmit={createBooking}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Chỉnh sửa đặt lịch</DialogTitle>
+              </DialogHeader>
+              {editingBooking && (
+                <BookingForm
+                  services={services}
+                  technicians={technicians}
+                  users={users}
+                  booking={editingBooking}
+                  onSubmit={(data) => updateBooking(editingBooking.id, data)}
+                  onCancel={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingBooking(null);
+                  }}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Lọc theo trạng thái" />
@@ -213,10 +486,10 @@ export default function BookingsPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Wrench className="h-4 w-4" />
-                        {booking.service?.serviceType?.name || 'N/A'}
+                        {booking.service?.name || 'N/A'}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {booking.service?.name}
+                        {booking.service?.serviceType?.name || 'Dịch vụ'}
                       </div>
                     </div>
                   </TableCell>
@@ -240,6 +513,27 @@ export default function BookingsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => viewBookingDetail(booking)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEditDialog(booking)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteBooking(booking.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                       {booking.status === 'PENDING' && (
                         <Button
                           size="sm"
@@ -283,5 +577,178 @@ export default function BookingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function BookingForm({
+  services,
+  technicians,
+  users,
+  booking,
+  onSubmit,
+  onCancel
+}: {
+  services: Service[];
+  technicians: Technician[];
+  users: User[];
+  booking?: Booking;
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    userId: booking?.user?.id || '',
+    serviceId: booking?.service?.id || '',
+    technicianId: booking?.technician?.id || 'unassigned',
+    scheduledAt: booking ? new Date(booking.scheduledAt).toISOString().split('T')[0] : '',
+    scheduledTime: booking?.scheduledTime || '',
+    status: (booking?.status || 'PENDING') as 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED',
+    notes: booking?.notes || '',
+    estimatedCosts: booking?.estimatedCosts?.toString() || '',
+    actualCosts: booking?.actualCosts?.toString() || '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      technicianId: formData.technicianId === 'unassigned' ? null : formData.technicianId,
+      estimatedCosts: formData.estimatedCosts ? parseInt(formData.estimatedCosts as string) : null,
+      actualCosts: formData.actualCosts ? parseInt(formData.actualCosts as string) : null,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="userId">Khách hàng</Label>
+          <Select value={formData.userId} onValueChange={(value) => setFormData({...formData, userId: value})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn khách hàng" />
+            </SelectTrigger>
+            <SelectContent>
+              {(users || []).map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.name} ({user.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="serviceId">Dịch vụ</Label>
+          <Select value={formData.serviceId} onValueChange={(value) => setFormData({...formData, serviceId: value})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn dịch vụ" />
+            </SelectTrigger>
+            <SelectContent>
+              {(services || []).map((service) => (
+                <SelectItem key={service.id} value={service.id}>
+                  {service.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="technicianId">Kỹ thuật viên</Label>
+          <Select value={formData.technicianId} onValueChange={(value) => setFormData({...formData, technicianId: value})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn kỹ thuật viên" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Chưa phân công</SelectItem>
+              {(technicians || []).map((technician) => (
+                <SelectItem key={technician.id} value={technician.id}>
+                  {technician.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="status">Trạng thái</Label>
+          <Select value={formData.status} onValueChange={(value: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => setFormData({...formData, status: value})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
+              <SelectItem value="CONFIRMED">Đã xác nhận</SelectItem>
+              <SelectItem value="IN_PROGRESS">Đang thực hiện</SelectItem>
+              <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
+              <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="scheduledAt">Ngày thực hiện</Label>
+          <Input
+            id="scheduledAt"
+            type="date"
+            value={formData.scheduledAt}
+            onChange={(e) => setFormData({...formData, scheduledAt: e.target.value})}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="scheduledTime">Giờ thực hiện</Label>
+          <Input
+            id="scheduledTime"
+            type="time"
+            value={formData.scheduledTime}
+            onChange={(e) => setFormData({...formData, scheduledTime: e.target.value})}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="estimatedCosts">Chi phí dự kiến (VNĐ)</Label>
+          <Input
+            id="estimatedCosts"
+            type="number"
+            value={formData.estimatedCosts}
+            onChange={(e) => setFormData({...formData, estimatedCosts: e.target.value})}
+            placeholder="0"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="actualCosts">Chi phí thực tế (VNĐ)</Label>
+          <Input
+            id="actualCosts"
+            type="number"
+            value={formData.actualCosts}
+            onChange={(e) => setFormData({...formData, actualCosts: e.target.value})}
+            placeholder="0"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Ghi chú</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({...formData, notes: e.target.value})}
+          placeholder="Nhập ghi chú..."
+          rows={3}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button type="submit">
+          {booking ? 'Cập nhật' : 'Tạo mới'}
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="100%" height="100%" rx="64" fill="#000000"/>
+  <path d="M128 176c0-61.9 50.1-112 112-112s112 50.1 112 112-50.1 112-112 112c-8.6 0-16.9-1-24.8-3l-50.4 29.2c-4.9 2.8-11.1-1.1-9.6-6.6l12.9-47.8C165 287.3 128 240.9 128 176z" fill="#ffffff"/>
+  <text x="256" y="204" font-family="Segoe UI, Roboto, Arial, sans-serif" font-weight="700" font-size="84" fill="#000000" text-anchor="middle" dominant-baseline="middle">Zalo</text>
+  <text x="256" y="300" font-family="Segoe UI, Roboto, Arial, sans-serif" font-weight="600" font-size="36" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">BOT</text>
+</svg>

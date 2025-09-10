@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/ui/image-upload"
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,8 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
     description: "",
     imageUrl: "",
     mobileImageUrl: "",
+    images: [] as string[], // Array for desktop images
+    mobileImages: [] as string[], // Array for mobile images
     linkUrl: "",
     buttonLabel: "",
     page: "home",
@@ -60,6 +63,8 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
         description: banner.description || "",
         imageUrl: banner.imageUrl || "",
         mobileImageUrl: banner.mobileImageUrl || "",
+        images: banner.imageUrl ? [banner.imageUrl] : [],
+        mobileImages: banner.mobileImageUrl ? [banner.mobileImageUrl] : [],
         linkUrl: banner.linkUrl || "",
         buttonLabel: banner.buttonLabel || "",
         page: banner.page || "home",
@@ -73,6 +78,8 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
         description: "",
         imageUrl: "",
         mobileImageUrl: "",
+        images: [],
+        mobileImages: [],
         linkUrl: "",
         buttonLabel: "",
         page: "home",
@@ -84,7 +91,13 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Convert arrays back to single URLs for backend compatibility
+    const submitData = {
+      ...formData,
+      imageUrl: formData.images.length > 0 ? formData.images[0] : formData.imageUrl,
+      mobileImageUrl: formData.mobileImages.length > 0 ? formData.mobileImages[0] : formData.mobileImageUrl,
+    }
+    onSubmit(submitData)
   }
 
   return (
@@ -132,30 +145,45 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="imageUrl" className="text-right">
-                URL hình ảnh *
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Hình ảnh desktop *
               </Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3">
+                <ImageUpload
+                  value={formData.images}
+                  onChange={(urls) => {
+                    setFormData(prev => ({ ...prev, images: urls }))
+                    if (urls.length > 0) {
+                      setFormData(prev => ({ ...prev, imageUrl: urls[0] }))
+                    }
+                  }}
+                  folder="banners/desktop"
+                  maxFiles={1}
+                  label=""
+                  placeholder="Chọn hình ảnh desktop cho banner"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="mobileImageUrl" className="text-right">
-                URL hình mobile
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Hình ảnh mobile
               </Label>
-              <Input
-                id="mobileImageUrl"
-                type="url"
-                value={formData.mobileImageUrl}
-                onChange={(e) => setFormData({ ...formData, mobileImageUrl: e.target.value })}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ImageUpload
+                  value={formData.mobileImages}
+                  onChange={(urls) => {
+                    setFormData(prev => ({ ...prev, mobileImages: urls }))
+                    if (urls.length > 0) {
+                      setFormData(prev => ({ ...prev, mobileImageUrl: urls[0] }))
+                    }
+                  }}
+                  folder="banners/mobile"
+                  maxFiles={1}
+                  label=""
+                  placeholder="Chọn hình ảnh mobile cho banner"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="linkUrl" className="text-right">

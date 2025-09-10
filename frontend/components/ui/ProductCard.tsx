@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { CldImage } from 'next-cloudinary';
 import Image from 'next/image';
 import { Heart, ShoppingCart, Star, Eye, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,9 +22,9 @@ interface ProductCardProps {
   showQuickAdd?: boolean;
 }
 
-export default function ProductCard({ 
-  product, 
-  variant = 'default', 
+export default function ProductCard({
+  product,
+  variant = 'default',
   className,
   showWishlist = true,
   showQuickAdd = true
@@ -42,7 +43,7 @@ export default function ProductCard({
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsLoading(true);
     try {
       await addToCart(product.id, 1);
@@ -57,16 +58,16 @@ export default function ProductCard({
   const handleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsWishlisted(!isWishlisted);
     toast.success(
-      isWishlisted 
-        ? 'Đã xóa khỏi danh sách yêu thích' 
+      isWishlisted
+        ? 'Đã xóa khỏi danh sách yêu thích'
         : 'Đã thêm vào danh sách yêu thích'
     );
   };
 
-  const discountPercentage = product.originalPriceCents 
+  const discountPercentage = product.originalPriceCents
     ? Math.round(((product.originalPriceCents - product.priceCents) / product.originalPriceCents) * 100)
     : null;
 
@@ -86,31 +87,48 @@ export default function ProductCard({
         <CardContent className="p-0 h-full flex flex-col">
           {/* Product Image */}
           <div className="relative flex-1 overflow-hidden">
-            <Image
-              src={(() => {
-                // Handle both images array and imageUrl for backward compatibility
-                const imgSrc = product.images && product.images.length > 0 
-                  ? product.images[0] 
-                  : product.imageUrl || '/images/product-placeholder.jpg';
-                
-                // If it's a full URL, use it directly
-                if (imgSrc && imgSrc.startsWith('http')) {
-                  return imgSrc;
-                }
-                
-                // Otherwise, return the placeholder
-                return '/images/product-placeholder.jpg';
-              })()}
-              alt={product.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              onError={(e) => {
-                // Fallback to placeholder on error
-                const target = e.target as HTMLImageElement;
-                target.src = '/images/product-placeholder.jpg';
-              }}
-            />
-            
+            {(() => {
+              // Use ProductService to get optimized image URL
+              const mainImage = ProductService.getMainImage(product);
+
+              // If it's a Cloudinary URL, use CldImage
+              if (mainImage && ProductService.isCloudinaryUrl(mainImage)) {
+                const publicId = ProductService.extractCloudinaryPublicId(mainImage);
+                return (
+                  <CldImage
+                    src={publicId || 'cld-sample-5'}
+                    width={400}
+                    height={300}
+                    crop="fill"
+                    gravity="auto"
+                    quality="auto"
+                    format="auto"
+                    alt={product.name}
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      console.error('Cloudinary image load error for product:', product.name, product.id);
+                    }}
+                  />
+                );
+              }
+
+              // For external URLs or missing images, use regular Image with Cloudinary placeholder
+              return (
+                <Image
+                  src={mainImage && mainImage.startsWith('http') ? mainImage : 'https://res.cloudinary.com/dib7tbv7w/image/upload/cld-sample-5'}
+                  alt={product.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    console.error('Image load error for product:', product.name, product.id);
+                    // Fallback to Cloudinary sample on error
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://res.cloudinary.com/dib7tbv7w/image/upload/cld-sample-5';
+                  }}
+                />
+              );
+            })()}
+
             {/* Badges */}
             <div className="absolute top-3 left-3 flex flex-col space-y-2">
               {product.featured && (

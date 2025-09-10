@@ -82,6 +82,29 @@ export class BookingController {
     return this.bookingService.getBooking(id);
   }
 
+  @Put(':id')
+  @ApiOperation({ summary: 'Update booking details' })
+  @ApiResponse({ status: 200, description: 'Booking updated' })
+  async updateBooking(
+    @Param('id') id: string,
+    @Body() updateData: {
+      userId?: string;
+      serviceId?: string;
+      technicianId?: string | null;
+      scheduledAt?: string;
+      scheduledTime?: string;
+      status?: ServiceBookingStatus;
+      notes?: string;
+      estimatedCosts?: number;
+      actualCosts?: number;
+    }
+  ) {
+    return this.bookingService.updateBooking(id, {
+      ...updateData,
+      scheduledAt: updateData.scheduledAt ? new Date(updateData.scheduledAt) : undefined,
+    });
+  }
+
   @Put(':id/status')
   @ApiOperation({ summary: 'Update booking status' })
   @ApiResponse({ status: 200, description: 'Booking updated' })

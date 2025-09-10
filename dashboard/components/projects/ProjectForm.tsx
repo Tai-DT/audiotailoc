@@ -146,7 +146,8 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       setUploadingImage(true);
       // Use dedicated upload method which sets proper headers and includes auth token
       const response = await apiClient.uploadFile(file);
-      const imageUrl = (response.data as any).url;
+      const responseData = response.data as any;
+      const imageUrl = responseData.url || responseData.secure_url;
 
       switch (type) {
         case 'thumbnail':
