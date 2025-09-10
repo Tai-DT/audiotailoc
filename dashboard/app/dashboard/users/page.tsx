@@ -1,14 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ProtectedRoute } from "@/components/auth/protected-route"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import {
@@ -177,9 +175,8 @@ export default function UsersPage() {
   const totalPages = Math.ceil(totalUsers / pageSize)
 
   return (
-    <ProtectedRoute>
-      <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h2>
@@ -469,7 +466,6 @@ export default function UsersPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </DashboardLayout>
-    </ProtectedRoute>
+      </>
   )
 }

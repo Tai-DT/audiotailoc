@@ -496,63 +496,6 @@ export const ApiSearch = (resource: string, searchSchema?: any) => {
   );
 };
 
-// AI-powered endpoint decorator
-export const ApiAIEndpoint = (operation: string, description?: string) => {
-  return applyDecorators(
-    ApiOperation({
-      summary: operation,
-      description: description || `AI-powered ${operation.toLowerCase()}`,
-    }),
-    ApiStandardResponses.success(
-      'AI operation completed successfully',
-      {
-        type: 'object',
-        properties: {
-          result: { type: 'string', description: 'AI-generated result' },
-          tokens: { type: 'integer', description: 'Tokens used', example: 150 },
-          model: { type: 'string', description: 'AI model used', example: 'gemini-1.5-flash' },
-          confidence: { type: 'number', description: 'Confidence score', example: 0.95 },
-        },
-      }
-    ),
-    ApiStandardResponses.badRequest('Invalid AI request parameters'),
-    ApiStandardResponses.unauthorized(),
-    ApiStandardResponses.tooManyRequests('AI service quota exceeded'),
-    ApiBody({
-      schema: {
-        type: 'object',
-        properties: {
-          prompt: {
-            type: 'string',
-            description: 'Input prompt for AI',
-            example: 'Generate a product description for a smartphone',
-          },
-          model: {
-            type: 'string',
-            description: 'AI model to use',
-            example: 'gemini-1.5-flash',
-          },
-          temperature: {
-            type: 'number',
-            description: 'Creativity level (0.0 - 1.0)',
-            example: 0.7,
-            minimum: 0,
-            maximum: 1,
-          },
-          maxTokens: {
-            type: 'integer',
-            description: 'Maximum tokens to generate',
-            example: 500,
-            minimum: 1,
-            maximum: 4096,
-          },
-        },
-        required: ['prompt'],
-      },
-    }),
-  );
-};
-
 // Payment endpoint decorator
 export const ApiPaymentEndpoint = (operation: string) => {
   return applyDecorators(

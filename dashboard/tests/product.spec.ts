@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@audiotailoc.com'
-const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'admin123'
-const BASE = process.env.BASE_URL || 'http://127.0.0.1:3001'
+const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'Admin123!'
+const BASE = process.env.BASE_URL || 'http://localhost:3001'
 
 test.setTimeout(120000)
 

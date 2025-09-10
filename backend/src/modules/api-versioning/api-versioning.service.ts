@@ -48,7 +48,7 @@ export class ApiVersioningService {
       isDeprecated: false,
       changes: [
         'AI-powered search',
-        'Real-time chat',
+        'Zalo customer support integration',
         'Payment gateway integration',
         'Inventory management',
         'Performance monitoring'

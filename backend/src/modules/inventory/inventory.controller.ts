@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards, Delete, Post } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsBooleanString, IsInt, IsOptional } from 'class-validator';
@@ -19,6 +19,12 @@ class AdjustDto {
   reservedDelta?: number;
   @IsOptional() @IsInt()
   lowStockThreshold?: number;
+  
+  // Absolute values (alternative to deltas)
+  @IsOptional() @IsInt()
+  stock?: number;
+  @IsOptional() @IsInt()
+  reserved?: number;
 }
 
 @UseGuards(AdminOrKeyGuard)
@@ -34,6 +40,16 @@ export class InventoryController {
   @Patch(':productId')
   adjust(@Param('productId') productId: string, @Body() dto: AdjustDto) {
     return this.inventory.adjust(productId, dto);
+  }
+
+  @Delete(':productId')
+  delete(@Param('productId') productId: string) {
+    return this.inventory.delete(productId);
+  }
+
+  @Post('sync')
+  syncWithProducts() {
+    return this.inventory.syncWithProducts();
   }
 }
 

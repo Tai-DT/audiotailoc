@@ -3,15 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import CloudinaryService from "@/lib/cloudinary"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ProtectedRoute } from "@/components/auth/protected-route"
 import { apiClient } from "@/lib/api-client"
+import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import {
   Package,
@@ -25,7 +24,6 @@ import {
   Image as ImageIcon,
   Filter,
   Download,
-  Upload,
   CheckSquare,
   Square,
   Power,
@@ -58,6 +56,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { UpdateProductData, ApiResponse } from "@/lib/api-client"
 
 interface Product {
   id: string
@@ -95,6 +96,7 @@ interface ProductsResponse {
 }
 
 export default function ProductsPage() {
+  const { toast } = useToast()
   const { token } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -103,15 +105,30 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
-  const [pageSize] = useState(10)
+  // Increase pageSize to fetch all products for full listing in UI
+  const [pageSize] = useState(10000)
   const [categories, setCategories] = useState<Category[]>([])
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
+  const [deleteCheckResult, setDeleteCheckResult] = useState<{ canDelete: boolean; message: string; associatedOrdersCount: number } | null>(null)
+  const [checkingDelete, setCheckingDelete] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
-  const [showBulkActions, setShowBulkActions] = useState(false)
+  
+  const [showBulkEditDialog, setShowBulkEditDialog] = useState(false)
+  const [bulkUpdating, setBulkUpdating] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [bulkIsActive, setBulkIsActive] = useState<string | null>(null) // 'true' | 'false' | 'keep' | null
+  const [bulkFeatured, setBulkFeatured] = useState<string | null>(null) // 'true' | 'false' | 'keep' | null
+  const [bulkCategoryId, setBulkCategoryId] = useState<string | null>(null)
+  const resetBulkEditForm = () => {
+    setBulkIsActive(null)
+    setBulkFeatured(null)
+    setBulkCategoryId(null)
+  }
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -152,11 +169,49 @@ export default function ProductsPage() {
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-      await apiClient.deleteProduct(productId)
-      setDeleteProductId(null)
-      fetchProducts() // Refresh the list
+      const result = await apiClient.deleteProduct(productId)
+
+      if (result.deleted) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        })
+        setDeleteProductId(null)
+        setDeleteCheckResult(null)
+        fetchProducts() // Refresh the list
+      } else {
+        // Enhanced error message for better user understanding
+        let errorDescription = result.message || "Failed to delete product";
+        if (result.message?.includes("associated order")) {
+          errorDescription = "Không thể xóa sản phẩm này vì đã có đơn hàng liên kết. Vui lòng hủy hoặc hoàn thành các đơn hàng trước khi xóa sản phẩm.";
+        }
+
+        toast({
+          title: "Không thể xóa sản phẩm",
+          description: errorDescription,
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error('Failed to delete product:', error)
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the product",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const checkProductDeletable = async (productId: string) => {
+    try {
+      setCheckingDelete(true)
+      const result = await apiClient.checkProductDeletable(productId)
+      setDeleteCheckResult(result.data as { canDelete: boolean; message: string; associatedOrdersCount: number })
+    } catch (error) {
+      console.error('Failed to check product deletable status:', error)
+      setDeleteCheckResult({ canDelete: false, message: 'Unable to check deletion status', associatedOrdersCount: 0 })
+    } finally {
+      setCheckingDelete(false)
     }
   }
 
@@ -188,12 +243,13 @@ export default function ProductsPage() {
     }).format(amount / 100) // Convert cents to VND
   }
 
+  const formatNumber = (n: number) => new Intl.NumberFormat('vi-VN').format(n)
+
   const totalPages = Math.ceil(totalProducts / pageSize)
 
   return (
-    <ProtectedRoute>
-      <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">Quản lý sản phẩm</h2>
@@ -327,18 +383,11 @@ export default function ProductsPage() {
                   <span className="text-sm font-medium">
                     Đã chọn {selectedProducts.size} sản phẩm
                   </span>
-                  <Button variant="outline" size="sm">
-                    <Power className="mr-2 h-4 w-4" />
-                    Bật
+                  <Button variant="outline" size="sm" onClick={() => setShowBulkEditDialog(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Chỉnh sửa hàng loạt
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <PowerOff className="mr-2 h-4 w-4" />
-                    Tắt
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Xóa
-                  </Button>
+                  {/* bulk delete removed because not implemented */}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -433,14 +482,28 @@ export default function ProductsPage() {
                             </Button>
                           </TableCell>
                           <TableCell>
-                            {product.images && product.images.length > 0 ? (
+                            {(product.images && product.images.length > 0) || product.imageUrl ? (
                               <Image
                                 src={(() => {
-                                  const imgValue = product.images && product.images.length > 0 ? product.images[0] : product.imageUrl;
-                                  const resolved = imgValue ? (imgValue.startsWith('http') ? imgValue : CloudinaryService.getOptimizedUrl(imgValue, { width: 48, height: 48, crop: 'fill', quality: 'auto' })) : '';
-                                  // eslint-disable-next-line no-console
-                                  console.log('PRODUCT_IMAGE_VALUE', product.id, imgValue);
-                                  return resolved;
+                                  // Priority: images array > imageUrl field
+                                  const imgValue = product.images && product.images.length > 0 
+                                    ? product.images[0] 
+                                    : product.imageUrl;
+                                  
+                                  if (!imgValue) return '';
+                                  
+                                  // If it's already a full URL, use it directly
+                                  if (imgValue.startsWith('http')) {
+                                    return imgValue;
+                                  }
+                                  
+                                  // Otherwise, treat it as a Cloudinary public ID and optimize it
+                                  return CloudinaryService.getOptimizedUrl(imgValue, { 
+                                    width: 48, 
+                                    height: 48, 
+                                    crop: 'fill', 
+                                    quality: 'auto' 
+                                  });
                                 })()}
                                 alt={product.name}
                                 width={48}
@@ -483,12 +546,12 @@ export default function ProductsPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center space-x-1">
-                              <span className={`text-sm font-medium ${
-                                (product.stockQuantity || 0) > 10 ? 'text-green-600' :
-                                (product.stockQuantity || 0) > 0 ? 'text-yellow-600' : 'text-red-600'
+                            <div className="flex items-center space-x-2">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${
+                                (product.stockQuantity || 0) > 10 ? 'bg-green-50 text-green-700' :
+                                (product.stockQuantity || 0) > 0 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
                               }`}>
-                                {product.stockQuantity || 0}
+                                {formatNumber(product.stockQuantity || 0)}
                               </span>
                               {(product.stockQuantity || 0) <= 5 && (product.stockQuantity || 0) > 0 && (
                                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -560,7 +623,10 @@ export default function ProductsPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-red-600"
-                                  onClick={() => setDeleteProductId(product.id)}
+                                  onClick={() => {
+                                    setDeleteProductId(product.id)
+                                    checkProductDeletable(product.id)
+                                  }}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Xóa
@@ -614,7 +680,28 @@ export default function ProductsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.
+                {checkingDelete ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    <span>Đang kiểm tra...</span>
+                  </div>
+                ) : deleteCheckResult ? (
+                  <div>
+                    <p className="mb-2">Bạn có chắc chắn muốn xóa sản phẩm này?</p>
+                    {deleteCheckResult.canDelete ? (
+                      <p className="text-green-600 text-sm">✓ Sản phẩm có thể xóa an toàn.</p>
+                    ) : (
+                      <div className="text-red-600 text-sm">
+                        <p>⚠️ {deleteCheckResult.message}</p>
+                        {deleteCheckResult.associatedOrdersCount > 0 && (
+                          <p className="mt-1">Số đơn hàng liên kết: {deleteCheckResult.associatedOrdersCount}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p>Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.</p>
+                )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -622,8 +709,9 @@ export default function ProductsPage() {
               <AlertDialogAction
                 onClick={() => deleteProductId && handleDeleteProduct(deleteProductId)}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={checkingDelete || (deleteCheckResult !== null && !deleteCheckResult.canDelete)}
               >
-                Xóa
+                {checkingDelete ? 'Đang kiểm tra...' : 'Xóa'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -645,7 +733,172 @@ export default function ProductsPage() {
           categories={categories}
           onSuccess={handleFormSuccess}
         />
-      </DashboardLayout>
-    </ProtectedRoute>
+
+        {/* Bulk Delete Confirmation */}
+        <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa hàng loạt</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn sắp xóa {selectedProducts.size} sản phẩm. Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  setShowBulkDeleteConfirm(false)
+                  setBulkDeleting(true)
+                  const ids = Array.from(selectedProducts)
+                  const failed: string[] = []
+                  try {
+                    for (const id of ids) {
+                      try {
+                        const res = await apiClient.deleteProduct(id) as ApiResponse<{ deleted: boolean }>
+                        // backend returns { deleted: boolean } or throws; handle both
+                        if (res?.data?.deleted === false) {
+                          failed.push(id)
+                        }
+                      } catch (err) {
+                        console.error('Failed to delete product', id, err)
+                        failed.push(id)
+                      }
+                    }
+
+                    // refresh
+                    fetchProducts()
+                    // clear selection of successfully deleted
+                    if (failed.length === 0) {
+                      setSelectedProducts(new Set())
+                      setShowBulkEditDialog(false)
+                      toast({ title: 'Xóa hàng loạt', description: `Đã xóa ${ids.length} sản phẩm.` })
+                    } else {
+                      // keep only failed ids selected
+                      setSelectedProducts(new Set(failed))
+                      toast({ title: 'Xóa 1 phần', description: `Không thể xóa ${failed.length} sản phẩm.` })
+                    }
+                  } finally {
+                    setBulkDeleting(false)
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {bulkDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Edit Dialog */}
+        <Dialog open={showBulkEditDialog} onOpenChange={(open) => {
+          setShowBulkEditDialog(open)
+          if (!open) resetBulkEditForm()
+        }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa nhiều sản phẩm</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              <div>
+                <Label>Trạng thái</Label>
+                <Select value={bulkIsActive ?? "keep"} onValueChange={(v) => setBulkIsActive(v === "keep" ? null : v)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Giữ nguyên" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="keep">Giữ nguyên</SelectItem>
+                    <SelectItem value="true">Bật</SelectItem>
+                    <SelectItem value="false">Tắt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Nổi bật</Label>
+                <Select value={bulkFeatured ?? "keep"} onValueChange={(v) => setBulkFeatured(v === "keep" ? null : v)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Giữ nguyên" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="keep">Giữ nguyên</SelectItem>
+                    <SelectItem value="true">Có</SelectItem>
+                    <SelectItem value="false">Không</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Danh mục</Label>
+                <Select value={bulkCategoryId ?? "keep"} onValueChange={(v) => setBulkCategoryId(v === "keep" ? null : v)}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Không thay đổi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="keep">Không thay đổi</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => {
+                setShowBulkEditDialog(false)
+                resetBulkEditForm()
+              }} disabled={bulkUpdating || bulkDeleting}>
+                Hủy
+              </Button>
+
+              {/* Bulk delete trigger inside dialog */}
+              <Button
+                variant="outline"
+                className="text-red-600 hover:text-red-700 mr-2"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={bulkDeleting}
+              >
+                Xóa
+              </Button>
+
+              <Button
+                disabled={bulkUpdating || bulkDeleting}
+                onClick={async () => {
+                  // Build update payload
+                  const update: UpdateProductData = {}
+                  if (bulkIsActive === 'true') update.isActive = true
+                  if (bulkIsActive === 'false') update.isActive = false
+                  if (bulkFeatured === 'true') update.featured = true
+                  if (bulkFeatured === 'false') update.featured = false
+                  if (bulkCategoryId && bulkCategoryId !== 'keep') update.categoryId = bulkCategoryId
+
+                  if (Object.keys(update).length === 0) {
+                    // nothing to do
+                    setShowBulkEditDialog(false)
+                    return
+                  }
+
+                  setBulkUpdating(true)
+                  try {
+                    const ids = Array.from(selectedProducts)
+                    for (const id of ids) {
+                      // perform updates sequentially to avoid overloading backend
+                      await apiClient.updateProduct(id, update)
+                    }
+                    // refresh
+                    fetchProducts()
+                    setSelectedProducts(new Set())
+                    setShowBulkEditDialog(false)
+                    resetBulkEditForm()
+                  } catch (error) {
+                    console.error('Bulk update failed', error)
+                  } finally {
+                    setBulkUpdating(false)
+                  }
+                }}
+              >
+                {bulkUpdating ? 'Đang cập nhật...' : 'Áp dụng thay đổi'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
   )
 }

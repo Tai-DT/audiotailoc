@@ -102,16 +102,57 @@ export function ImageUpload({
     
     try {
       const uploadedUrls: string[] = []
+      const failedFiles: string[] = []
       
       // Upload files in sequence to maintain order
       for (const file of files) {
         try {
-          // Check file size
+          // Production monitoring - track upload attempts
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'file_upload_attempt', {
+              event_category: 'upload',
+              event_label: file.type,
+              value: Math.round(file.size / 1024) // size in KB
+            })
+          }
+
+          // Validate file size
           if (file.size > maxSize * 1024 * 1024) {
-            throw new Error(`File ${file.name} vượt quá kích thước tối đa ${maxSize}MB`)
+            const errorMsg = `File ${file.name} vượt quá kích thước tối đa ${maxSize}MB`
+            console.error(errorMsg, { fileSize: file.size, maxSize: maxSize * 1024 * 1024 })
+            failedFiles.push(file.name)
+
+            // Production monitoring - track validation errors
+            if (typeof window !== 'undefined' && window.gtag) {
+              window.gtag('event', 'file_upload_error', {
+                event_category: 'upload',
+                event_label: 'file_too_large',
+                value: Math.round(file.size / 1024 / 1024) // size in MB
+              })
+            }
+            continue
+          }
+
+          // Validate file type
+          if (!file.type.startsWith('image/')) {
+            const errorMsg = `File ${file.name} không phải là hình ảnh`
+            console.error(errorMsg, { fileType: file.type })
+            failedFiles.push(file.name)
+
+            // Production monitoring - track validation errors
+            if (typeof window !== 'undefined' && window.gtag) {
+              window.gtag('event', 'file_upload_error', {
+                event_category: 'upload',
+                event_label: 'invalid_file_type',
+                value: file.type
+              })
+            }
+            continue
           }
           
-          // Upload to MCP
+          console.log('Uploading file:', file.name)
+          
+          // Upload to server API route
           const fileUrl = await uploadToMCP(file)
           uploadedUrls.push(fileUrl)
           
@@ -120,16 +161,40 @@ export function ImageUpload({
             ...prev,
             [file.name]: 100 // Mark as complete
           }))
+
+          // Production monitoring - track successful uploads
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'file_upload_success', {
+              event_category: 'upload',
+              event_label: file.type,
+              value: Math.round(file.size / 1024) // size in KB
+            })
+          }
           
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error)
-          setError(`Lỗi khi tải lên ${file.name}: ${error instanceof Error ? error.message : 'Có lỗi xảy ra'}`)
+          failedFiles.push(file.name)
+
+          // Production monitoring - track upload errors
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'file_upload_error', {
+              event_category: 'upload',
+              event_label: 'upload_failed',
+              value: error instanceof Error ? error.message : 'Upload failed'
+            })
+          }
         }
       }
       
       // Update parent component with new URLs
       if (uploadedUrls.length > 0) {
         onChange([...value, ...uploadedUrls])
+      }
+
+      // Show error message if some files failed
+      if (failedFiles.length > 0) {
+        const errorMsg = `Upload thất bại cho ${failedFiles.length} file: ${failedFiles.join(', ')}`
+        setError(errorMsg)
       }
       
     } catch (error) {
@@ -142,106 +207,6 @@ export function ImageUpload({
         fileInputRef.current.value = ''
       }
     }
-    setError(null)
-
-    const uploadedUrls: string[] = [...value] // Start with existing URLs
-    const failedFiles: string[] = []
-
-    for (const file of files) {
-      try {
-        // Production monitoring - track upload attempts
-        if (typeof window !== 'undefined' && window.gtag) {
-          window.gtag('event', 'file_upload_attempt', {
-            event_category: 'upload',
-            event_label: file.type,
-            value: Math.round(file.size / 1024) // size in KB
-          })
-        }
-
-        // Validate file size
-        if (file.size > maxSize * 1024 * 1024) {
-          const errorMsg = `File ${file.name} vượt quá ${maxSize}MB`
-          console.error(errorMsg, { fileSize: file.size, maxSize: maxSize * 1024 * 1024 })
-          failedFiles.push(file.name)
-
-          // Production monitoring - track validation errors
-          if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'file_upload_error', {
-              event_category: 'upload',
-              event_label: 'file_too_large',
-              value: Math.round(file.size / 1024 / 1024) // size in MB
-            })
-          }
-          continue
-        }
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          const errorMsg = `File ${file.name} không phải là hình ảnh`
-          console.error(errorMsg, { fileType: file.type })
-          failedFiles.push(file.name)
-
-          // Production monitoring - track validation errors
-          if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'file_upload_error', {
-              event_category: 'upload',
-              event_label: 'invalid_file_type',
-              value: file.type
-            })
-          }
-          continue
-        }
-
-        console.log('Uploading file:', file.name)
-        const result = await CloudinaryService.uploadFile(file, folder, {
-          width,
-          height,
-          crop: 'fill',
-          quality: 'auto'
-        })
-
-        console.log('Upload successful for:', file.name, result)
-        uploadedUrls.push(result.secure_url)
-
-        // Production monitoring - track successful uploads
-        if (typeof window !== 'undefined' && window.gtag) {
-          window.gtag('event', 'file_upload_success', {
-            event_category: 'upload',
-            event_label: file.type,
-            value: Math.round(file.size / 1024) // size in KB
-          })
-        }
-
-      } catch (err) {
-        console.error('Upload error for file:', file.name, err)
-        failedFiles.push(file.name)
-
-        // Production monitoring - track upload errors
-        if (typeof window !== 'undefined' && window.gtag) {
-          window.gtag('event', 'file_upload_error', {
-            event_category: 'upload',
-            event_label: 'upload_failed',
-            value: err instanceof Error ? err.message : 'Upload failed'
-          })
-        }
-      }
-    }
-
-    // Update parent component with all uploaded URLs
-    onChange(uploadedUrls)
-
-    // Show error message if some files failed
-    if (failedFiles.length > 0) {
-      const errorMsg = `Upload thất bại cho ${failedFiles.length} file: ${failedFiles.join(', ')}`
-      setError(errorMsg)
-    }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-
-    setUploading(false)
   }
 
   const handleRemove = (index: number) => {

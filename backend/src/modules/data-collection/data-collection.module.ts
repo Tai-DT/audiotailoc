@@ -7,7 +7,7 @@ import { GuardsModule } from '../auth/guards.module';
 @Module({
   imports: [GuardsModule],
   controllers: [DataCollectionController],
-  providers: [DataCollectionService, PrismaService],
+  providers: [DataCollectionService],
   exports: [DataCollectionService],
 })
 export class DataCollectionModule {}

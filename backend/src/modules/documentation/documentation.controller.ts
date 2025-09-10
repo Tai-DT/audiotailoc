@@ -266,7 +266,7 @@ export class DocumentationController {
           changes: [
             'JWT authentication with refresh tokens',
             'AI-powered search and recommendations',
-            'Real-time chat system',
+            'Zalo customer support integration',
             'Payment gateway integration (VNPAY, MOMO)',
             'Advanced inventory management',
             'Enhanced product management',

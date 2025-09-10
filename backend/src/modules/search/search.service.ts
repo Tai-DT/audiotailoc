@@ -61,7 +61,6 @@ export class SearchService {
   constructor(
     private readonly config: ConfigService,
     @Optional() private readonly prisma?: PrismaService,
-    @Optional() private readonly aiService?: any,
     @Optional() private readonly cacheService?: any,
   ) {
     this.url = this.config.get<string>('MEILI_URL') ?? 'http://localhost:7700';
@@ -535,18 +534,8 @@ export class SearchService {
     let enhancedQuery = query;
     let _searchFilters = { ...filters };
 
-    // AI enhancement for long queries
-    if (query.length > 20 && this.aiService) {
-      try {
-        const aiResults = await this.aiService.semanticSearch(query, 3);
-        if (aiResults && aiResults.length > 0) {
-          enhancedQuery = aiResults.map((r: any) => r.title).join(' ');
-        }
-      } catch (error) {
-        this.logger.error('AI enhancement failed:', error);
-        // Continue with original query
-      }
-    }
+    // AI enhancement removed - using original query
+    // Removed AI semantic search functionality
 
     // Build database search conditions
     const where: any = {};

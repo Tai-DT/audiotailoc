@@ -21,9 +21,8 @@ Advanced logging system with Winston, correlation IDs, and structured logging fo
 3. **Security Events** - Authentication, authorization, attacks
 4. **Business Events** - Order processing, payments, user actions
 5. **Performance Metrics** - Operation duration, database queries
-6. **AI Operations** - Gemini AI interactions, prompts, responses
-7. **Database Operations** - Query tracking, connection issues
-8. **Health Checks** - System health monitoring
+6. **Database Operations** - Query tracking, connection issues
+7. **Health Checks** - System health monitoring
 
 ## Log Structure
 
@@ -130,16 +129,6 @@ this.loggingService.logSecurityEvent('suspicious_request', {
   endpoint: '/api/admin',
   userAgent: 'curl/7.68.0',
   pattern: 'directory_traversal'
-});
-```
-
-### AI Operation Logging:
-```typescript
-this.loggingService.logAI('text_generation', 'gemini-1.5-flash', {
-  prompt: 'Generate product description',
-  tokens: 150,
-  model: 'gemini-1.5-flash',
-  duration: 2.5
 });
 ```
 

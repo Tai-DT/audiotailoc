@@ -9,52 +9,34 @@ export class ServiceTypesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createServiceTypeDto: CreateServiceTypeDto) {
-    // Check if category exists
-    const category = await this.prisma.serviceCategory.findUnique({
-      where: { id: createServiceTypeDto.categoryId },
-    });
-
-    if (!category) {
-      throw new NotFoundException(
-        `Category with ID "${createServiceTypeDto.categoryId}" not found`,
-      );
-    }
-
     const slug = await this.generateSlug(createServiceTypeDto.name);
-    
+
     return this.prisma.serviceType.create({
       data: {
-        ...createServiceTypeDto,
+        name: createServiceTypeDto.name,
+        description: createServiceTypeDto.description,
+        icon: createServiceTypeDto.icon,
+        color: createServiceTypeDto.color,
+        sortOrder: createServiceTypeDto.sortOrder || 0,
         slug,
-      },
-      include: {
-        category: true,
+        isActive: createServiceTypeDto.isActive ?? true,
       },
     });
   }
 
-  async findAll(categoryId?: string) {
-    const where: Prisma.ServiceTypeWhereInput = { isActive: true };
-    
-    if (categoryId) {
-      where.categoryId = categoryId;
-    }
-
-    return this.prisma.serviceType.findMany({
-      where,
-      include: {
-        category: true,
-      },
+  async findAll() {
+    console.log('[ServiceTypesService] findAll called');
+    const result = await this.prisma.serviceType.findMany({
       orderBy: { sortOrder: 'asc' },
     });
+    console.log('[ServiceTypesService] findAll result length:', result.length);
+    console.log('[ServiceTypesService] findAll first item:', result[0]);
+    return result;
   }
 
   async findOne(id: string) {
     const serviceType = await this.prisma.serviceType.findUnique({
       where: { id },
-      include: {
-        category: true,
-      },
     });
 
     if (!serviceType) {
@@ -65,33 +47,21 @@ export class ServiceTypesService {
   }
 
   async update(id: string, updateServiceTypeDto: UpdateServiceTypeDto) {
+    console.log(`[ServiceTypesService] Updating service type ${id} with data:`, updateServiceTypeDto);
     await this.findOne(id); // Check if service type exists
-    
-    if (updateServiceTypeDto.categoryId) {
-      // Check if new category exists
-      const category = await this.prisma.serviceCategory.findUnique({
-        where: { id: updateServiceTypeDto.categoryId },
-      });
 
-      if (!category) {
-        throw new NotFoundException(
-          `Category with ID "${updateServiceTypeDto.categoryId}" not found`,
-        );
-      }
-    }
-
-    return this.prisma.serviceType.update({
+    const result = await this.prisma.serviceType.update({
       where: { id },
       data: updateServiceTypeDto,
-      include: {
-        category: true,
-      },
     });
+    console.log(`[ServiceTypesService] Updated service type ${id}:`, result);
+    return result;
   }
 
   async remove(id: string) {
+    console.log(`[ServiceTypesService] Deleting service type ${id}`);
     await this.findOne(id); // Check if service type exists
-    
+
     // Check if type is being used by any services
     const serviceCount = await this.prisma.service.count({
       where: { typeId: id },
@@ -101,12 +71,11 @@ export class ServiceTypesService {
       throw new Error('Cannot delete service type that is being used by services');
     }
 
-    return this.prisma.serviceType.delete({
+    const result = await this.prisma.serviceType.delete({
       where: { id },
-      include: {
-        category: true,
-      },
     });
+    console.log(`[ServiceTypesService] Deleted service type ${id}:`, result);
+    return result;
   }
 
   private async generateSlug(name: string): Promise<string> {

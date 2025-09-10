@@ -223,21 +223,6 @@ export class TestHelpersService {
     };
   }
 
-  // Generate test AI prompt data
-  generateTestAIPromptData(overrides: Partial<any> = {}) {
-    return {
-      prompt: 'Generate a product description for a smartphone',
-      model: 'gemini-1.5-flash',
-      temperature: 0.7,
-      maxTokens: 500,
-      context: {
-        productId: `product_${Date.now()}`,
-        category: 'electronics',
-      },
-      ...overrides,
-    };
-  }
-
   // Generate test chat message
   generateTestChatMessage(overrides: Partial<any> = {}) {
     return {

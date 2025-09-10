@@ -50,8 +50,13 @@ export interface Service {
   description: string;
   imageUrl?: string; // Add imageUrl property
   shortDescription?: string;
+  priceType?: string; // FIXED, RANGE, NEGOTIABLE, CONTACT
   basePriceCents: number;
   price: number;
+  minPrice?: number;
+  maxPrice?: number;
+  minPriceDisplay?: number;
+  maxPriceDisplay?: number;
   duration: number; // In minutes
   categoryId: string;
   typeId: string;
@@ -100,8 +105,11 @@ export interface ServiceFormData {
   shortDescription?: string;
   
   // Pricing & Duration
+  priceType?: string; // FIXED, RANGE, NEGOTIABLE, CONTACT
   basePriceCents: number;
   price: number;
+  minPrice?: number;
+  maxPrice?: number;
   duration: number; // In minutes
   
   // Categorization

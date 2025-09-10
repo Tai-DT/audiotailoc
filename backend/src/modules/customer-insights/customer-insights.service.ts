@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AiService } from '../ai/ai.service';
 
 export interface CustomerBehaviorData {
   userId?: string;
@@ -39,7 +38,6 @@ export class CustomerInsightsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly aiService: AiService,
   ) {}
 
   // Analyze customer behavior patterns
@@ -107,15 +105,18 @@ export class CustomerInsightsService {
         const behavior = await this.analyzeCustomerBehavior(customer.id);
         
         if (behavior.interactions > 0) {
-          const segmentAnalysis = await this.aiService.analyzeCustomerSegment(behavior);
+          // AI analysis removed - using basic segmentation
+          const segmentName = behavior.interactions > 50 ? 'High Engagement' : 
+                             behavior.interactions > 20 ? 'Medium Engagement' : 'Low Engagement';
+          
           segments.push({
             id: customer.id,
-            name: segmentAnalysis.segmentName,
-            description: segmentAnalysis.description,
-            criteria: segmentAnalysis.criteria,
+            name: segmentName,
+            description: `Customer with ${behavior.interactions} interactions`,
+            criteria: [`Interactions: ${behavior.interactions}`],
             customerCount: 1,
-            averageValue: segmentAnalysis.averageValue || 0,
-            preferences: segmentAnalysis.preferences || [],
+            averageValue: 0,
+            preferences: [],
           });
         }
       }
@@ -159,38 +160,33 @@ export class CustomerInsightsService {
         totalInteractions: questions.length + searchQueries.length + productViews.length,
       };
 
-      // Use AI to analyze customer needs
-      const needsAnalysis = await this.aiService.analyzeCustomerNeeds(analysisData);
-      
-      return needsAnalysis;
+      // AI analysis removed - returning basic analysis
+      return {
+        needs: analysisData.popularProducts,
+        preferences: [],
+        recommendations: ['Check product catalog', 'Review search history'],
+        insights: [`Total interactions: ${analysisData.totalInteractions}`]
+      };
     } catch (error) {
       this.logger.error(`Failed to analyze customer needs: ${(error as Error).message}`);
       throw error;
     }
   }
 
-  // Generate improvement suggestions using AI
+  // Generate improvement suggestions
   async generateImprovementSuggestions() {
     try {
-      const [customerNeeds, popularSearches, popularProducts, questions] = await Promise.all([
-        this.analyzeCustomerNeeds(),
-        this.getPopularSearchQueries(),
-        this.getPopularProducts(),
-        this.getFrequentQuestions(),
-      ]);
-
-      const improvementData = {
-        customerNeeds,
-        popularSearches,
-        popularProducts,
-        questions,
-        timestamp: new Date(),
+      // Removed Promise.all call since results are not needed without AI
+      return {
+        suggestions: [
+          'Improve product search functionality',
+          'Add more product categories',
+          'Enhance customer support',
+          'Optimize site performance'
+        ],
+        priority: 'medium',
+        estimatedImpact: 'moderate'
       };
-
-      // Use AI to generate improvement suggestions
-      const suggestions = await this.aiService.generateImprovementSuggestions(improvementData);
-      
-      return suggestions;
     } catch (error) {
       this.logger.error(`Failed to generate improvement suggestions: ${(error as Error).message}`);
       throw error;

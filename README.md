@@ -9,7 +9,7 @@ A modern, full-stack e-commerce platform for audio services built with cutting-e
 - ✅ **Shopping Cart**: Advanced cart functionality with persistence
 - ✅ **User Authentication**: Secure login/register system
 - ✅ **Payment Integration**: VNPAY, MOMO, PayOS support
-- ✅ **Real-time Chat**: Customer support integration
+- ✅ **Customer Support**: Zalo integration for customer service
 - ✅ **SEO Optimized**: Built-in SEO features and sitemaps
 - ✅ **Mobile Responsive**: Perfect mobile experience
 - ✅ **PWA Ready**: Progressive Web App capabilities
@@ -151,10 +151,6 @@ NODE_ENV="development"
 
 # Redis (Cache)
 REDIS_URL="redis://localhost:6379"
-
-# Google AI (Gemini)
-GOOGLE_AI_API_KEY="your-google-ai-api-key"
-GEMINI_MODEL="gemini-1.5-pro"
 
 # PayOS Payment
 PAYOS_CLIENT_ID="your-payos-client-id"

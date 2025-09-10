@@ -16,16 +16,14 @@
     "moduleResolution": "Node",
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "prisma/**/*"],
+  "include": ["src/**/*", "prisma/**/*", "backend/**/*"],
   "exclude": [
     "node_modules",
     "dist",
-    // Exclude legacy/demo/seed scripts that target older schemas
     "prisma/seed.ts",
     "src/add-karaoke-products.ts",
     "src/seed-karaoke.ts",
     "src/seed-services.ts",
-    // Temporarily exclude backup module due to missing dependencies
     "src/modules/backup/**/*"
   ]
 }
