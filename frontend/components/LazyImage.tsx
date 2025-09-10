@@ -64,6 +64,9 @@ export function LazyImage({
   };
 
   const handleError = () => {
+    console.error('LazyImage error loading:', src);
+    console.error('Image dimensions:', { width, height });
+    console.error('Image alt:', alt);
     setHasError(true);
     onError?.();
   };

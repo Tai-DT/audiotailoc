@@ -89,7 +89,7 @@ export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   // Knowledge Base endpoints
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post('kb/articles')
   createArticle(@Body() dto: CreateArticleDto) {
     return this.supportService.createArticle(dto);
@@ -128,7 +128,7 @@ export class SupportController {
   }
 
   // FAQ endpoints
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post('faq')
   createFAQ(@Body() dto: CreateFAQDto) {
     return this.supportService.createFAQ(dto);
@@ -165,7 +165,7 @@ export class SupportController {
     });
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Put('tickets/:id/status')
   updateTicketStatus(
     @Param('id') id: string,

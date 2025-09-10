@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { MarketingService } from './marketing.service';
 import { AdminGuard } from '../auth/admin.guard';
+import { JwtGuard } from '../auth/jwt.guard';
 import { IsString, IsEmail, IsOptional, IsArray, IsNumber, Min, Max } from 'class-validator';
 
 class CreateCampaignDto {
@@ -54,7 +55,7 @@ class SendEmailDto {
 }
 
 @Controller('marketing')
-@UseGuards(AdminGuard)
+@UseGuards(JwtGuard, AdminGuard)
 export class MarketingController {
   constructor(private readonly marketingService: MarketingService) {}
 

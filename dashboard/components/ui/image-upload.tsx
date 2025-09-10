@@ -188,7 +188,9 @@ export function ImageUpload({
       
       // Update parent component with new URLs
       if (uploadedUrls.length > 0) {
-        onChange([...value, ...uploadedUrls])
+        // If maxFiles is 1, replace instead of append
+        const newUrls = maxFiles === 1 ? uploadedUrls : [...value, ...uploadedUrls]
+        onChange(newUrls)
       }
 
       // Show error message if some files failed

@@ -5,6 +5,8 @@ export interface Banner {
   description?: string | null;
   imageUrl: string;
   mobileImageUrl?: string | null;
+  images?: string[]; // Array support for multiple images
+  mobileImages?: string[]; // Array support for multiple mobile images
   linkUrl?: string | null;
   buttonLabel?: string | null;
   page: string;
@@ -32,6 +34,8 @@ export interface CreateBannerDto {
   description?: string;
   imageUrl: string;
   mobileImageUrl?: string;
+  images?: string[]; // Array support for multiple images
+  mobileImages?: string[]; // Array support for multiple mobile images
   linkUrl?: string;
   buttonLabel?: string;
   page: string;
