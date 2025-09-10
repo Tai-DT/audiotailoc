@@ -172,6 +172,30 @@ export class ProductService {
   }
 
   /**
+  /**
+   * Trích xuất public ID từ Cloudinary URL để sử dụng với CldImage
+   */
+  static extractCloudinaryPublicId(url: string): string | null {
+    if (!this.isCloudinaryUrl(url)) {
+      return null;
+    }
+
+    try {
+      // Extract public_id từ Cloudinary URL
+      const urlParts = url.split('/');
+      const uploadIndex = urlParts.indexOf('upload');
+      if (uploadIndex === -1) return null;
+
+      const publicIdWithFormat = urlParts.slice(uploadIndex + 1).join('/');
+      const publicId = publicIdWithFormat.replace(/\.[^.]+$/, ''); // Remove extension
+      return publicId;
+    } catch (error) {
+      console.error('Error extracting Cloudinary public ID:', error);
+      return null;
+    }
+  }
+
+  /**
    * Tạo URL tối ưu cho hình ảnh Cloudinary
    */
   static getOptimizedImageUrl(

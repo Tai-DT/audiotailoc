@@ -30,8 +30,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth-context';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { format } from 'date-fns';
 import {
@@ -113,6 +113,9 @@ export default function ProjectsPage() {
     // Ensure authenticated requests (create/update/delete) have token
     if (token) {
       apiClient.setToken(token);
+      console.log('🔑 ProjectsPage: Token set to apiClient:', token.substring(0, 30) + '...');
+    } else {
+      console.log('⚠️ ProjectsPage: No token available');
     }
   }, [token]);
 

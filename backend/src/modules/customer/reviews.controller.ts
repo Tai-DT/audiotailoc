@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { AdminGuard } from '../auth/admin.guard';
+import { JwtGuard } from '../auth/jwt.guard';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -69,14 +70,14 @@ export class ReviewsController {
   }
 
   // Admin moderation
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post(':id/approve')
   async approve(@Param('id') id: string) {
     await this.reviews.approveReview(id);
     return { success: true };
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Post(':id/reject')
   async reject(@Param('id') id: string) {
     await this.reviews.rejectReview(id);
