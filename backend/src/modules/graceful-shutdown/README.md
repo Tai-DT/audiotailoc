@@ -185,7 +185,7 @@ server.on('connection', (socket) => {
 await this.closeWebSocketConnections();
 
 // Implementation in your WebSocket gateway
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     // Clean up client resources
     await this.cleanupClientResources(client);
@@ -307,31 +307,6 @@ private async closePaymentConnections(): Promise<void> {
     this.logger.log('✅ Payment gateway connections closed');
   } catch (error) {
     this.logger.error('Error closing payment connections', error);
-  }
-}
-```
-
-### AI Service Cleanup
-
-```typescript
-// Close AI service connections
-private async closeAIServices(): Promise<void> {
-  try {
-    this.logger.log('🤖 Closing AI service connections');
-
-    // Close Google Gemini connections
-    if (this.geminiService) {
-      await this.geminiService.close();
-    }
-
-    // Close other AI services
-    if (this.openaiService) {
-      await this.openaiService.close();
-    }
-
-    this.logger.log('✅ AI service connections closed');
-  } catch (error) {
-    this.logger.error('Error closing AI services', error);
   }
 }
 ```

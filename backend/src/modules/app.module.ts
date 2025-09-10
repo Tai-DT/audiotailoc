@@ -30,9 +30,6 @@ import { InventoryModule } from './inventory/inventory.module';
 // Complete Product API Module
 import { CompleteProductModule } from './catalog/complete-product.module';
 
-// AI and ML modules
-import { AiModule } from './ai/ai.module'; // Đã fix với Gemini integration
-
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
 // import { WebhooksModule } from './webhooks/webhooks.module'; // Disabled due to schema mismatch
@@ -40,7 +37,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { BackupModule } from './backup/backup.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { ReviewsModule } from './customer/reviews.module';
-import { WebSocketModule } from './websocket/websocket.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
@@ -52,8 +49,12 @@ import { MapsModule } from './maps/maps.module';
 import { ServicesModule } from './services/services.module';
 import { ServiceCategoriesModule } from './service-categories/service-categories.module';
 import { ServiceTypesModule } from './service-types/service-types.module';
-// import { BookingModule } from './booking/booking.module'; // Disabled due to enum dependencies
-// import { TechniciansModule } from './technicians/technicians.module'; // Disabled due to schema mismatch
+import { BookingModule } from './booking/booking.module';
+import { TechniciansModule } from './technicians/technicians.module';
+
+// Site Content Management
+import { SiteModule } from './site/site.module';
+import { ProjectsModule } from './projects/projects.module';
 
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
@@ -72,18 +73,15 @@ const runtimeImports = [
     UsersModule,
     AdminModule,
     
-    // AI and Intelligence - Minimal working version
-    AiModule,
-    
     // Support and File Management - ENABLED
     SupportModule,
     NotificationsModule,
-  WebSocketModule,
     FilesModule,
     BackupModule,
     MarketingModule,
     ReviewsModule,
     MapsModule,
+    AnalyticsModule,
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
@@ -98,6 +96,14 @@ const runtimeImports = [
     ServicesModule,
     ServiceCategoriesModule,
     ServiceTypesModule,
+    BookingModule,
+    TechniciansModule,
+
+    // Site Content Management
+    SiteModule,
+    
+    // Portfolio/Projects
+    ProjectsModule,
 ];
 
 if (FEATURE_CHECKOUT) {

@@ -1,293 +1,188 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  StarIcon
-} from '@heroicons/react/24/outline';
+import { Headphones, Settings, Home, Wrench, Calendar, Users, Shield, Zap, Target, Star, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { api } from '@/lib/api-client';
-import { Service } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useServiceStore } from '@/lib/store';
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
+  const { services, getServices, isLoading } = useServiceStore();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    fetchServices();
-  }, []);
+    getServices();
+  }, [getServices]);
 
-  useEffect(() => {
-    filterServices();
-  }, [services, searchTerm, selectedCategory, selectedType]);
-
-  const fetchServices = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.services.getAll({ isActive: true });
-      const servicesData = response.data.data;
-      setServices(servicesData);
-    } catch (error) {
-      console.error('Failed to fetch services:', error);
-      toast.error('Không thể tải danh sách dịch vụ');
-    } finally {
-      setIsLoading(false);
+  // Build dynamic categories from backend data
+  const dynamicCategories = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    for (const s of services) {
+      const cat = (s as any).category;
+      if (cat?.slug && cat?.name && !map.has(cat.slug)) {
+        map.set(cat.slug, { id: cat.slug, name: cat.name });
+      }
     }
+    return Array.from(map.values());
+  }, [services]);
+
+  const filtered = useMemo(() => {
+    if (selectedCategory === 'all') return services;
+    return services.filter((s: any) => s?.category?.slug === selectedCategory);
+  }, [services, selectedCategory]);
+
+  const formatPrice = (cents?: number, fallback?: number) => {
+    const value = typeof cents === 'number' ? cents : (typeof fallback === 'number' ? fallback * 100 : 0);
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value / 100);
   };
 
-  const filterServices = () => {
-    let filtered = services;
+  return (
+    <div className="min-h-screen">
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-4 bg-white/20 text-white border-white/30">Dịch vụ chuyên nghiệp</Badge>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Dịch Vụ Âm Thanh Toàn Diện</h1>
+            <p className="text-xl mb-8 text-white/90">Từ tư vấn, lắp đặt đến bảo trì - Chúng tôi đồng hành cùng bạn trong mọi nhu cầu âm thanh</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/booking">Đặt lịch tư vấn</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white hover:text-orange-600">
+                Gọi ngay: 0901 234 567
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    if (searchTerm) {
-      filtered = filtered.filter(service =>
-        service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        service.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+      {/* Categories */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Danh Mục Dịch Vụ</h2>
+            <p className="text-xl text-gray-600">Khám phá các dịch vụ chuyên nghiệp của chúng tôi</p>
+          </div>
 
-    if (selectedCategory) {
-      filtered = filtered.filter(service => service.category === selectedCategory);
-    }
-
-    if (selectedType) {
-      filtered = filtered.filter(service => service.type === selectedType);
-    }
-
-    setFilteredServices(filtered);
-  };
-
-  const categoryLabels = {
-    AUDIO_EQUIPMENT: 'Thiết bị âm thanh',
-    HOME_THEATER: 'Rạp hát tại nhà',
-    PROFESSIONAL_SOUND: 'Âm thanh chuyên nghiệp',
-    LIGHTING: 'Ánh sáng',
-    CONSULTATION: 'Tư vấn',
-    MAINTENANCE: 'Bảo trì',
-    OTHER: 'Khác'
-  };
-
-  const typeLabels = {
-    AUDIO_EQUIPMENT: 'Thiết bị âm thanh',
-    HOME_THEATER: 'Rạp hát tại nhà',
-    PROFESSIONAL_SOUND: 'Âm thanh chuyên nghiệp',
-    LIGHTING: 'Ánh sáng',
-    CONSULTATION: 'Tư vấn',
-    MAINTENANCE: 'Bảo trì',
-    OTHER: 'Khác'
-  };
-
-  const categoryIcons = {
-    AUDIO_EQUIPMENT: '🎵',
-    HOME_THEATER: '🏠',
-    PROFESSIONAL_SOUND: '🎤',
-    LIGHTING: '💡',
-    CONSULTATION: '💬',
-    MAINTENANCE: '🔧',
-    OTHER: '📦'
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-video bg-gray-200 rounded-t-lg"></div>
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+            <Card
+              className={`cursor-pointer transition-all hover:shadow-lg ${selectedCategory === 'all' ? 'ring-2 ring-orange-500' : ''}`}
+              onClick={() => setSelectedCategory('all')}
+            >
+              <CardContent className="p-6 text-center">
+                <Users className="h-10 w-10 mx-auto mb-3 text-orange-600" />
+                <h3 className="font-semibold text-sm">Tất cả</h3>
+              </CardContent>
+            </Card>
+            {dynamicCategories.map((cat) => (
+              <Card
+                key={cat.id}
+                className={`cursor-pointer transition-all hover:shadow-lg ${selectedCategory === cat.id ? 'ring-2 ring-orange-500' : ''}`}
+                onClick={() => setSelectedCategory(cat.id)}
+              >
+                <CardContent className="p-6 text-center">
+                  <Headphones className="h-10 w-10 mx-auto mb-3 text-orange-600" />
+                  <h3 className="font-semibold text-sm">{cat.name}</h3>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Dịch vụ chuyên nghiệp</h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Đội ngũ kỹ thuật viên giàu kinh nghiệm với các dịch vụ âm thanh chất lượng cao
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Badge variant="secondary">🔧 Lắp đặt chuyên nghiệp</Badge>
-              <Badge variant="secondary">🛠️ Bảo trì định kỳ</Badge>
-              <Badge variant="secondary">💡 Tư vấn miễn phí</Badge>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Search and Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-8"
-        >
-          <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Search Input */}
-                <div className="md:col-span-2">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Tìm kiếm dịch vụ..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                {/* Category Filter */}
-                <div>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tất cả danh mục" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Tất cả danh mục</SelectItem>
-                      {Object.entries(categoryLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Type Filter */}
-                <div>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tất cả loại" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Tất cả loại</SelectItem>
-                      {Object.entries(typeLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+            <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl mx-auto mb-8">
+              <TabsTrigger value="all">Tất cả</TabsTrigger>
+              {dynamicCategories.slice(0, 5).map((cat) => (
+                <TabsTrigger key={cat.id} value={cat.id}>{cat.name}</TabsTrigger>
+              ))}
+            </TabsList>
 
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-600">
-            Tìm thấy <span className="font-semibold text-gray-900">{filteredServices.length}</span> dịch vụ
-          </p>
-        </div>
-
-        {/* Services Grid */}
-        {filteredServices.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center py-12"
-          >
-            <FunnelIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy dịch vụ</h3>
-            <p className="text-gray-600">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredServices.map((service, index) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow">
-                  <Link href={`/services/${service.slug}`} legacyBehavior>
-                    <div className="aspect-video relative">
-                      {service.imageUrl ? (
-                        <Image src={service.imageUrl} alt={service.name} fill className="object-cover rounded-t-lg" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center rounded-t-lg">
-                          <span className="text-white text-2xl font-bold">AT</span>
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3">
-                        <Badge variant="secondary" className="bg-white/90 text-gray-800">
-                          {categoryIcons[service.category as keyof typeof categoryIcons]} {categoryLabels[service.category as keyof typeof categoryLabels]}
-                        </Badge>
+            <TabsContent value={selectedCategory}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filtered.map((service: any) => {
+                  const img = service.images || service.imageUrl || '/images/services/placeholder.jpg';
+                  const priceText = formatPrice(service.basePriceCents, service.price);
+                  const durationMins = service.duration || service.durationMinutes || service.estimatedDuration;
+                  return (
+                    <Card key={service.id} className="overflow-hidden hover:shadow-xl transition-shadow">
+                      <div className="relative h-48 bg-gray-200">
+                        <Image src={img} alt={service.name} fill className="object-cover" />
+                        {service.isFeatured && (
+                          <Badge className="absolute top-4 right-4 bg-orange-500">Nổi bật</Badge>
+                        )}
                       </div>
-                    </div>
-
-                    <CardHeader>
-                      <CardTitle className="hover:text-primary-600 transition-colors">
-                        {service.name}
-                      </CardTitle>
-                      {service.description && (
-                        <CardDescription className="line-clamp-2">
-                          {service.description}
+                      <CardHeader>
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline">{service.category?.name || 'Dịch vụ'}</Badge>
+                          <div className="flex items-center text-sm">
+                            <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
+                            <span className="font-medium">4.9</span>
+                          </div>
+                        </div>
+                        <CardTitle className="line-clamp-2">{service.name}</CardTitle>
+                        <CardDescription>
+                          <div className="flex items-center justify_between mt-2">
+                            <div className="flex items-center text-sm">
+                              <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                              {durationMins ? `${durationMins} phút` : 'Thời lượng linh hoạt'}
+                            </div>
+                            <div className="text-lg font-bold text-orange-600">{priceText}</div>
+                          </div>
                         </CardDescription>
-                      )}
-                    </CardHeader>
+                      </CardHeader>
+                      <CardContent>
+                        {service.shortDescription && (
+                          <p className="text-sm text-gray-600 line-clamp-2">{service.shortDescription}</p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="gap-2">
+                        <Button className="flex-1" asChild>
+                          <Link href={`/services/${service.slug || service.id}`}>Xem chi tiết</Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <Link href={`/booking?service=${service.id}`}>Đặt lịch</Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
 
-                    <CardContent>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <ClockIcon className="h-4 w-4 mr-1" />
-                          {service.estimatedDuration} phút
-                        </div>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <StarIcon className="h-4 w-4 mr-1 text-yellow-400" />
-                          4.8
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-primary-600">
-                          {service.basePriceCents.toLocaleString()} VND
-                        </span>
-                        <Badge variant="outline">
-                          {typeLabels[service.type as keyof typeof typeLabels]}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
-              </motion.div>
-            ))}
+      {/* Lý do chọn */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Tại Sao Chọn Chúng Tôi?</h2>
+            <p className="text-xl text-gray-600">Cam kết mang đến dịch vụ tốt nhất cho khách hàng</p>
           </div>
-        )}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="text-center"><CardContent className="pt-6"><div className="bg-orange-100 w-16 h-16 rounded_full flex items-center justify-center mx-auto mb-4"><Users className="h-8 w-8 text-orange-600" /></div><h3 className="font-semibold mb-2">Đội Ngũ Chuyên Nghiệp</h3><p className="text-sm text-gray-600">Kỹ thuật viên được đào tạo bài bản với nhiều năm kinh nghiệm</p></CardContent></Card>
+            <Card className="text-center"><CardContent className="pt-6"><div className="bg-blue-100 w-16 h-16 rounded_full flex items-center justify-center mx-auto mb-4"><Shield className="h-8 w-8 text-blue-600" /></div><h3 className="font-semibold mb-2">Bảo Hành Dài Hạn</h3><p className="text-sm text-gray-600">Chế độ bảo hành lên đến 24 tháng cho mọi dịch vụ</p></CardContent></Card>
+            <Card className="text_center"><CardContent className="pt-6"><div className="bg-green-100 w-16 h-16 rounded_full flex items-center justify_center mx-auto mb-4"><Zap className="h-8 w-8 text-green-600" /></div><h3 className="font-semibold mb-2">Phản Hồi Nhanh</h3><p className="text-sm text-gray-600">Có mặt trong vòng 2 giờ cho các trường hợp khẩn cấp</p></CardContent></Card>
+            <Card className="text-center"><CardContent className="pt-6"><div className="bg-purple-100 w-16 h-16 rounded_full flex items-center justify-center mx-auto mb-4"><Target className="h-8 w-8 text-purple-600" /></div><h3 className="font-semibold mb-2">Giá Cả Minh Bạch</h3><p className="text-sm text-gray-600">Báo giá rõ ràng, không phát sinh chi phí ngoài dự kiến</p></CardContent></Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-gradient-to-r from-orange-600 to-red-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Sẵn Sàng Nâng Cấp Hệ Thống Âm Thanh?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">Đặt lịch tư vấn miễn phí ngay hôm nay để được tư vấn giải pháp phù hợp nhất</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" asChild><Link href="/booking">Đặt lịch ngay</Link></Button>
+            <Button size="lg" variant="outline" className="bg-transparent text_white border_white hover:bg-white hover:text-orange-600">Xem portfolio</Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

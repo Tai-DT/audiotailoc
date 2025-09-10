@@ -446,19 +446,40 @@ export class CompleteProductService {
     return this.mapToProductResponse(updatedProduct);
   }
 
-  async deleteProduct(id: string): Promise<void> {
-    const product = await this.prisma.product.findUnique({
-      where: { id, isDeleted: false },
-    });
+  async deleteProduct(id: string): Promise<{ deleted: boolean; message?: string }> {
+    try {
+      const product = await this.prisma.product.findUnique({
+        where: { id, isDeleted: false },
+        include: {
+          _count: {
+            select: { orderItems: true }
+          }
+        }
+      });
 
-    if (!product) {
-      throw new NotFoundException(`Product with ID '${id}' not found`);
+      if (!product) {
+        return { deleted: false, message: 'Product not found' };
+      }
+
+      // Check if product has associated order items
+      if (product._count.orderItems > 0) {
+        return {
+          deleted: false,
+          message: `Cannot delete product "${product.name}" because it has ${product._count.orderItems} associated order(s). Please remove or update the orders first.`
+        };
+      }
+
+      // Safe to delete (soft delete)
+      await this.prisma.product.update({
+        where: { id },
+        data: { isDeleted: true },
+      });
+
+      return { deleted: true };
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      return { deleted: false, message: 'An error occurred while deleting the product' };
     }
-
-    await this.prisma.product.update({
-      where: { id },
-      data: { isDeleted: true },
-    });
   }
 
   async bulkDeleteProducts(ids: string[]): Promise<void> {
@@ -956,5 +977,41 @@ export class CompleteProductService {
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
     };
+  }
+
+  async checkProductDeletable(id: string): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
+    try {
+      const product = await this.prisma.product.findUnique({
+        where: { id, isDeleted: false },
+        include: {
+          _count: {
+            select: { orderItems: true }
+          }
+        }
+      });
+
+      if (!product) {
+        return { canDelete: false, message: 'Product not found', associatedOrdersCount: 0 };
+      }
+
+      const associatedOrdersCount = product._count.orderItems;
+
+      if (associatedOrdersCount > 0) {
+        return {
+          canDelete: false,
+          message: `Cannot delete product "${product.name}" because it has ${associatedOrdersCount} associated order(s). Please remove or update the orders first.`,
+          associatedOrdersCount
+        };
+      }
+
+      return {
+        canDelete: true,
+        message: 'Product can be safely deleted',
+        associatedOrdersCount: 0
+      };
+    } catch (error) {
+      console.error('Error checking product deletable status:', error);
+      return { canDelete: false, message: 'An error occurred while checking deletion status', associatedOrdersCount: 0 };
+    }
   }
 }

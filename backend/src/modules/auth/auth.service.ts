@@ -19,27 +19,50 @@ export class AuthService {
   }
 
   async login(dto: { email: string; password: string }) {
+    console.log('🔍 Login attempt for:', dto.email);
+
     // Check if account is locked
     if (this.securityService.isAccountLocked(dto.email)) {
       const remainingTime = this.securityService.getRemainingLockoutTime(dto.email);
+      console.log('🔒 Account is locked, remaining time:', Math.ceil(remainingTime / 60000), 'minutes');
       throw new Error(`Account is locked. Try again in ${Math.ceil(remainingTime / 60000)} minutes.`);
     }
 
     const user = await this.users.findByEmail(dto.email);
-    if (!user) throw new Error('not found');
+    console.log('👤 User lookup result:', !!user);
+    if (user) {
+      console.log('   User ID:', user.id);
+      console.log('   User Email:', user.email);
+      console.log('   User Role:', (user as any).role);
+      console.log('   Password hash exists:', !!user.password);
+    }
+
+    if (!user) {
+      console.log('❌ User not found in database');
+      throw new Error('not found');
+    }
+
+    console.log('🔐 Comparing passwords...');
     const ok = await bcrypt.compare(dto.password, user.password);
-    
+    console.log('🔐 Password comparison result:', ok);
+
     // Record login attempt
     const success = ok;
     this.securityService.recordLoginAttempt(dto.email, success);
-    
-    if (!ok) throw new Error('bad pass');
 
+    if (!ok) {
+      console.log('❌ Password mismatch');
+      throw new Error('bad pass');
+    }
+
+    console.log('✅ Login successful, generating tokens...');
     const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET') || 'dev_access';
     const refreshSecret = this.config.get<string>('JWT_REFRESH_SECRET') || 'dev_refresh';
     const accessToken = jwt.sign({ sub: user.id, email: user.email, role: (user as any).role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
     const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+
+    console.log('✅ Tokens generated successfully');
+    return { accessToken, refreshToken, userId: user.id };
   }
 
   async refresh(refreshToken: string) {

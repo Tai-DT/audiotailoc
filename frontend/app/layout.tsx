@@ -1,7 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/sonner';
-import AIChatWidgetProvider from '@/components/ai/AIChatWidgetProvider';
+import MainLayout from '@/components/layout/MainLayout';
+import ZaloChatButton from '@/components/ZaloChatButton';
 
 export const metadata: Metadata = {
   title: {
@@ -63,13 +65,19 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className="scroll-smooth">
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
-        <div className="min-h-screen flex flex-col">
-          {children}
-        </div>
-        <AIChatWidgetProvider />
-        <Toaster />
+    <html lang="vi" className="scroll-smooth" suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <MainLayout>
+            {children}
+          </MainLayout>
+          <ZaloChatButton />
+        </ThemeProvider>
       </body>
     </html>
   );

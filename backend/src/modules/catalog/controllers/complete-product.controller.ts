@@ -333,8 +333,36 @@ export class CompleteProductController {
     status: HttpStatus.NOT_FOUND,
     description: 'Product not found',
   })
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id') id: string): Promise<{ deleted: boolean; message?: string }> {
     return this.catalogService.deleteProduct(id);
+  }
+
+  @Get(':id/deletable')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check if product can be deleted',
+    description: 'Check if a product can be safely deleted (no associated orders)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Product ID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Product deletion status',
+    schema: {
+      type: 'object',
+      properties: {
+        canDelete: { type: 'boolean' },
+        message: { type: 'string' },
+        associatedOrdersCount: { type: 'number' },
+      },
+    },
+  })
+  async checkDeletable(@Param('id') id: string): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
+    return this.catalogService.checkProductDeletable(id);
   }
 
   @Delete()

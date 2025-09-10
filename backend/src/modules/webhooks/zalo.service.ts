@@ -16,12 +16,20 @@ export class ZaloService {
   async handleIncoming(headers: Record<string, string>, body: any) {
     // TODO: verify signature with secret if Zalo sends one
     const event = body;
-    // Normalize and push into chat pipeline
+    // Handle Zalo customer support messages
     const userId = null; // external user not mapped yet
-    const session = await this.prisma.chatSession.create({ data: { userId, source: 'ZALO', status: 'OPEN' } });
     const text = event?.message?.text || event?.event_name || 'Zalo message';
-    await this.prisma.chatMessage.create({ data: { sessionId: session.id, role: 'USER', content: text } });
-    return session.id;
+
+    // Create a customer question instead of chat session/message
+    const customerQuestion = await this.prisma.customerQuestion.create({
+      data: {
+        userId,
+        question: text,
+        category: 'ZALO_SUPPORT'
+      }
+    });
+
+    return customerQuestion.id;
   }
 
   async replyToUser(zaloUserId: string, text: string) {

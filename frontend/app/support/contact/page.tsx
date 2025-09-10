@@ -274,7 +274,7 @@ export default function ContactPage() {
                   📺
                 </a>
                 <a
-                  href="https://zalo.me/audiotailoc"
+                  href={`https://zalo.me/${process.env.NEXT_PUBLIC_ZALO_PHONE || '0582454014'}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"

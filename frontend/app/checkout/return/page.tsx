@@ -1,14 +1,16 @@
 import Link from 'next/link';
-import { apiFetch } from '../../lib/api';
+import apiClient from '@/lib/api-client';
 
 export default async function CheckoutReturnPage({ searchParams }: { searchParams: Promise<{ orderNo?: string }> }) {
   const sp = await searchParams;
   const orderNo = sp?.orderNo || '';
   let status = 'unknown';
-  try {
-    const order = await apiFetch<{ status: string }>(`/checkout/order-by-no/${encodeURIComponent(orderNo)}`);
-    status = order.status;
-  } catch {}
+  if (orderNo) {
+    try {
+      const res = await apiClient.get<{ status: string }>(`/checkout/order-by-no/${encodeURIComponent(orderNo)}`);
+      status = (res as any)?.data?.status || 'unknown';
+    } catch {}
+  }
   return (
     <main style={{ padding: 24 }}>
       <h1>Kết quả thanh toán</h1>

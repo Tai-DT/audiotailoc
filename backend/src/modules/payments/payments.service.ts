@@ -12,13 +12,32 @@ export class PaymentsService {
     private readonly config: ConfigService
   ) {}
 
-  async createIntent(params: { orderId: string; provider: 'VNPAY' | 'MOMO' | 'PAYOS'; returnUrl?: string }) {
+  async createIntent(params: { orderId: string; provider: 'PAYOS' | 'COD'; returnUrl?: string }) {
     const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
     const intent = await this.prisma.paymentIntent.create({
       data: { orderId: order.id, provider: params.provider, amountCents: order.totalCents, status: 'PENDING', returnUrl: params.returnUrl ?? null },
     });
-    const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider as 'VNPAY' | 'MOMO' | 'PAYOS' }, order);
+    // For COD, no redirect needed
+    if (params.provider === 'COD') {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { 
+          status: 'CONFIRMED'
+        }
+      });
+      // Update payment intent to mark COD
+      await this.prisma.paymentIntent.update({
+        where: { id: intent.id },
+        data: { 
+          status: 'PENDING',
+          metadata: JSON.stringify({ paymentMethod: 'COD' })
+        }
+      });
+      return { intentId: intent.id, redirectUrl: null, paymentMethod: 'COD' };
+    }
+    
+    const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider as 'PAYOS' }, order);
     return { intentId: intent.id, redirectUrl };
   }
 

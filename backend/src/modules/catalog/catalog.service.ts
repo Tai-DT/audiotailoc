@@ -134,6 +134,34 @@ export class CatalogService {
     };
   }
 
+  async checkSkuExists(sku: string, excludeId?: string): Promise<boolean> {
+    const where: any = { sku };
+    if (excludeId) {
+      where.id = { not: excludeId };
+    }
+    const count = await this.prisma.product.count({ where });
+    return count > 0;
+  }
+
+  async generateUniqueSku(baseName?: string): Promise<string> {
+    const base = baseName ? baseName.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8) : 'PROD';
+    let sku = base;
+    let counter = 1;
+
+    while (await this.checkSkuExists(sku)) {
+      sku = `${base}-${counter.toString().padStart(3, '0')}`;
+      counter++;
+      
+      // Prevent infinite loop
+      if (counter > 999) {
+        sku = `${base}-${Date.now().toString().slice(-6)}`;
+        break;
+      }
+    }
+
+    return sku;
+  }
+
   async create(data: CreateProductDto): Promise<ProductDto> {
     // Validate price is positive
     if (data.priceCents <= 0) {
@@ -249,10 +277,43 @@ export class CatalogService {
     };
   }
 
-  async remove(id: string): Promise<{ deleted: boolean }> {
-    await this.prisma.product.delete({ where: { id } });
-    await this.cache.deletePattern('products:list:*');
-    return { deleted: true };
+  async remove(id: string): Promise<{ deleted: boolean; message?: string }> {
+    try {
+      // Check if product exists
+      const product = await this.prisma.product.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: { orderItems: true }
+          }
+        }
+      });
+
+      if (!product) {
+        return { deleted: false, message: 'Product not found' };
+      }
+
+      // Check if product has associated order items
+      if (product._count.orderItems > 0) {
+        return {
+          deleted: false,
+          message: `Cannot delete product "${product.name}" because it has ${product._count.orderItems} associated order(s). Please remove or update the orders first.`
+        };
+      }
+
+      // Delete associated inventory first to avoid foreign key constraint
+      await this.prisma.inventory.deleteMany({
+        where: { productId: id }
+      });
+
+      // Safe to delete
+      const res = await this.prisma.product.deleteMany({ where: { id } });
+      await this.cache.deletePattern('products:list:*');
+      return { deleted: (res.count ?? 0) > 0 };
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      return { deleted: false, message: 'An error occurred while deleting the product' };
+    }
   }
 
   async listCategories(): Promise<{ id: string; slug: string; name: string; parentId: string | null }[]> {

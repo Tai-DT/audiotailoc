@@ -75,6 +75,21 @@ export class CatalogController {
     return this.catalog.getBySlug(slug);
   }
 
+    @Get('products/check-sku/:sku')
+  @UseGuards(JwtGuard, AdminGuard)
+  async checkSkuExists(
+    @Param('sku') sku: string,
+    @Query('excludeId') excludeId?: string,
+  ) {
+    return this.catalog.checkSkuExists(sku, excludeId);
+  }
+
+  @Get('generate-sku')
+  @UseGuards(JwtGuard, AdminGuard)
+  async generateUniqueSku(@Query('baseName') baseName?: string) {
+    return this.catalog.generateUniqueSku(baseName);
+  }
+
   // @Get('search')
   // search(@Query('q') q = '', @Query('page') page = '1', @Query('pageSize') pageSize = '20', @Query('categoryId') categoryId?: string, @Query('minPrice') minPrice?: string, @Query('maxPrice') maxPrice?: string) {
   //   // Disabled due to SearchService not available
