@@ -1,18 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { serviceService } from '@/lib/services/service-service';
-import { Service, ServiceFormData, ServiceCategory, ServiceType } from '@/types/service';
+import { Service, ServiceFormData, ServiceType } from '@/types/service';
 
 interface ServicesResponse {
   services: Service[];
   total: number;
   page: number;
   limit: number;
-}
-
-interface CategoriesResponse {
-  categories: ServiceCategory[];
-  total: number;
 }
 
 interface TypesResponse {
@@ -24,23 +19,32 @@ export function useServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [types, setTypes] = useState<ServiceType[]>([]);
 
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const [servicesResponse, categoriesResponse, typesResponse] = await Promise.all([
-        serviceService.getServices({ limit: 100 }) as Promise<ServicesResponse>,
-        serviceService.getServiceCategories() as Promise<CategoriesResponse>,
-        serviceService.getServiceTypes() as Promise<TypesResponse>
+
+      const [servicesResponse, typesResponse] = await Promise.all([
+        serviceService.getServices({ limit: 100 }),
+        serviceService.getServiceTypes()
       ]);
 
-      setServices(servicesResponse.services || []);
-      setCategories(categoriesResponse.categories || []);
-      setTypes(typesResponse.types || []);
+      // Handle the wrapped API response structure
+      const servicesData = servicesResponse?.data || servicesResponse;
+      const typesData = typesResponse?.data || typesResponse;
+
+      setServices(Array.isArray(servicesData) ? servicesData : (servicesData?.services || []));
+
+      // Transform types to add value and label fields
+      const typesArray = Array.isArray(typesData) ? typesData : (typesData?.types || []);
+      const transformedTypes = typesArray.map((type: any) => ({
+        ...type,
+        value: type.id,
+        label: type.name
+      }));
+      setTypes(transformedTypes);
     } catch (err) {
       console.error('Error fetching services data:', err);
       setError('Failed to load services. Please try again later.');
@@ -66,8 +70,8 @@ export function useServices() {
   const updateService = async (id: string, data: Partial<ServiceFormData>) => {
     try {
       const updatedService = await serviceService.updateService(id, data);
-      setServices(prev => 
-        prev.map(service => 
+      setServices(prev =>
+        prev.map(service =>
           service.id === id ? { ...service, ...(updatedService as Service) } : service
         )
       );
@@ -108,7 +112,6 @@ export function useServices() {
 
   return {
     services,
-    categories,
     types,
     loading,
     error,

@@ -1,7 +1,5 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-// import { IoAdapter } from '@nestjs/platform-socket.io';
-// import type { INestApplication } from '@nestjs/common';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -83,15 +81,15 @@ async function bootstrap() {
     },
   }));
 
-  // Enhanced CORS configuration
+  // Enhanced CORS configuration - exclude WebSocket upgrades
   const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002');
   const allowedOrigins = corsOrigins.split(',').map((origin: string) => origin.trim());
-  
+
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -101,8 +99,8 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  // Include custom admin header to support dashboard admin requests from browser
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
+    // Include custom admin header to support dashboard admin requests from browser
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
   });
 
@@ -176,8 +174,6 @@ async function bootstrap() {
   // Global prefix - sử dụng API v1 (phiên bản duy nhất và tốt nhất)
   app.setGlobalPrefix('api/v1');
 
-  // WebSocket adapter: not required for default Socket.IO usage; Gateway will initialize it
-
   // Simple documentation for single API version
   const enableDocs = (config.get('ENABLE_SWAGGER') ?? 'true') !== 'false';
 
@@ -197,7 +193,6 @@ async function bootstrap() {
       .addTag('Services', 'Service management endpoints')
       .addTag('Bookings', 'Booking management endpoints')
       .addTag('Search', 'Search and discovery endpoints')
-      .addTag('AI', 'AI-powered features endpoints')
       .addTag('Files', 'File management endpoints')
       .addTag('Support', 'Customer support endpoints')
       .addTag('Health', 'Health check endpoints')

@@ -12,18 +12,17 @@ import { useAuth } from "@/lib/auth-context"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
-import { Service, ServiceCategory, ServiceType, ServiceFormData, AudioEquipmentSpecs } from "@/types/service"
+import { Service, ServiceType, ServiceFormData, AudioEquipmentSpecs } from "@/types/service"
 
 interface ServiceFormDialogProps {
   service?: Partial<Service> | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  categories: ServiceCategory[]
   types: ServiceType[]
   onSubmit: (data: ServiceFormData) => Promise<void>
 }
 
-export function ServiceFormDialog({ service, open, onOpenChange, categories, types, onSubmit }: ServiceFormDialogProps) {
+export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit }: ServiceFormDialogProps) {
   const { token } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<ServiceFormData>(() => {
@@ -35,7 +34,6 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
       duration: 60,
       isActive: true,
       images: [],
-      categoryId: '',
       typeId: '',
       requirements: [],
       includedServices: [],
@@ -57,14 +55,12 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
         ...defaultValues,
         ...service,
         basePriceCents: service.basePriceCents || 0,
-        categoryId: service.categoryId || '',
         typeId: service.typeId || ''
       }
     }
 
     return {
       ...defaultValues,
-      categoryId: categories.length > 0 ? categories[0].value : '',
       typeId: types.length > 0 ? types[0].value : ''
     }
   })
@@ -74,30 +70,32 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
       const defaultValues: ServiceFormData = {
         name: service?.name || "",
         description: service?.description || "",
-        price: service?.price || 0,
-        basePriceCents: service?.basePriceCents || 0,
-        duration: service?.duration || 60,
-        categoryId: service?.categoryId || "",
+        priceType: service?.priceType || 'FIXED',
+        price: service?.price || (service?.basePriceCents ? service.basePriceCents / 100 : 0),
+        basePriceCents: service?.basePriceCents || (service?.price ? service.price * 100 : 0),
+        minPrice: service?.minPriceDisplay || (service?.minPrice ? service.minPrice / 100 : undefined),
+        maxPrice: service?.maxPriceDisplay || (service?.maxPrice ? service.maxPrice / 100 : undefined),
+        duration: service?.duration || service?.estimatedDuration || 60,
         typeId: service?.typeId || "",
-        requirements: service?.requirements 
-          ? Array.isArray(service.requirements) 
-            ? service.requirements 
-            : String(service.requirements).split('\n').filter(Boolean) 
+        requirements: service?.requirements
+          ? Array.isArray(service.requirements)
+            ? service.requirements
+            : String(service.requirements).split('\n').filter(Boolean)
           : [],
-        features: service?.features 
-          ? Array.isArray(service.features) 
-            ? service.features 
-            : String(service.features).split('\n').filter(Boolean) 
+        features: service?.features
+          ? Array.isArray(service.features)
+            ? service.features
+            : String(service.features).split('\n').filter(Boolean)
           : [],
-        includedServices: service?.includedServices 
-          ? Array.isArray(service.includedServices) 
-            ? service.includedServices 
-            : String(service.includedServices).split('\n').filter(Boolean) 
+        includedServices: service?.includedServices
+          ? Array.isArray(service.includedServices)
+            ? service.includedServices
+            : String(service.includedServices).split('\n').filter(Boolean)
           : [],
-        images: service?.images 
-          ? Array.isArray(service.images) 
-            ? service.images 
-            : [String(service.images)] 
+        images: service?.images
+          ? Array.isArray(service.images)
+            ? service.images
+            : [String(service.images)]
           : [],
         isActive: service?.isActive ?? true,
         isFeatured: service?.isFeatured ?? false,
@@ -120,7 +118,6 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
         price: 0,
         basePriceCents: 0,
         duration: 60,
-        categoryId: categories.length > 0 ? categories[0].value : '',
         typeId: types.length > 0 ? types[0].value : '',
         images: [],
         requirements: [],
@@ -196,32 +193,58 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.name || !formData.description || !formData.price || !formData.duration || !formData.categoryId || !formData.typeId) {
+    e.preventDefault();
+
+    // Validate based on price type
+    if (!formData.name || !formData.duration || !formData.typeId) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc")
       return
     }
-    
+
+    if (formData.priceType === 'FIXED' && !formData.price) {
+      toast.error("Vui lòng nhập giá dịch vụ")
+      return
+    }
+
+    if (formData.priceType === 'RANGE' && (!formData.minPrice || !formData.maxPrice)) {
+      toast.error("Vui lòng nhập khoảng giá")
+      return
+    }
+
+    if (formData.priceType === 'RANGE' && formData.minPrice > formData.maxPrice) {
+      toast.error("Giá từ phải nhỏ hơn giá đến")
+      return
+    }
+
     try {
       setLoading(true)
-      
+
       // Transform data to match backend expectations
-      const serviceData = {
-        ...formData,
-        basePriceCents: formData.price,
-        estimatedDuration: formData.duration,
-        // Use the first image URL if available
-        imageUrl: formData.images?.[0] || '',
-        // Map to the correct field names expected by the backend
-        categoryId: formData.categoryId,
+      const serviceData: any = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description || '',
+        shortDescription: formData.shortDescription,
         typeId: formData.typeId,
-        // Remove fields that shouldn't be sent to the backend
-        price: undefined,
-        images: undefined
+        priceType: formData.priceType || 'FIXED',
+        estimatedDuration: formData.duration,
+        imageUrl: formData.images?.[0] || formData.imageUrl || '',
+        isActive: formData.isActive ?? true,
+        isFeatured: formData.isFeatured ?? false,
+        requirements: formData.requirements,
+        features: formData.features,
+        includedServices: formData.includedServices,
       }
-      
-      await onSubmit(serviceData as any)
+
+      // Add price fields based on type
+      if (formData.priceType === 'RANGE') {
+        serviceData.minPrice = Number(formData.minPrice);
+        serviceData.maxPrice = Number(formData.maxPrice);
+      } else if (formData.priceType === 'FIXED' || !formData.priceType) {
+        serviceData.price = Number(formData.price) || Number(formData.basePriceCents / 100);
+      }
+
+      await onSubmit(serviceData)
       onOpenChange(false)
     } catch (error) {
       console.error("Error saving service:", error)
@@ -271,45 +294,24 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Danh mục</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                required
-              >
-                <SelectTrigger className={!formData.categoryId ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Chọn danh mục *" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Loại dịch vụ</Label>
-              <Select
-                value={formData.typeId}
-                onValueChange={(value) => setFormData({ ...formData, typeId: value })}
-                required
-              >
-                <SelectTrigger className={!formData.typeId ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Chọn loại dịch vụ *" />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Loại dịch vụ</Label>
+            <Select
+              value={formData.typeId}
+              onValueChange={(value) => setFormData({ ...formData, typeId: value })}
+              required
+            >
+              <SelectTrigger className={!formData.typeId ? "border-destructive" : ""}>
+                <SelectValue placeholder="Chọn loại dịch vụ *" />
+              </SelectTrigger>
+              <SelectContent>
+                {types.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -323,25 +325,117 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Giá dịch vụ (VNĐ) *</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.basePriceCents / 100}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  basePriceCents: parseInt(e.target.value) * 100 || 0
-                }))}
-                placeholder="0"
-                min="0"
-                required
-              />
+          <div className="space-y-2">
+            <Label>Loại giá</Label>
+            <Select
+              value={formData.priceType || 'FIXED'}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, priceType: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn loại giá" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FIXED">Giá cố định</SelectItem>
+                <SelectItem value="RANGE">Khoảng giá</SelectItem>
+                <SelectItem value="NEGOTIABLE">Giá thương lượng</SelectItem>
+                <SelectItem value="CONTACT">Liên hệ báo giá</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.priceType === 'FIXED' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Giá dịch vụ (VNĐ) *</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.price || formData.basePriceCents / 100 || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setFormData(prev => ({
+                      ...prev,
+                      price: value,
+                      basePriceCents: Math.round(value * 100)
+                    }))
+                  }}
+                  placeholder="0"
+                  min="0"
+                  required={formData.priceType === 'FIXED'}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Hiển thị: {new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                  }).format(formData.price || formData.basePriceCents / 100 || 0)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {formData.priceType === 'RANGE' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minPrice">Giá từ (VNĐ) *</Label>
+                <Input
+                  id="minPrice"
+                  type="number"
+                  value={formData.minPrice || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setFormData(prev => ({ ...prev, minPrice: value }))
+                  }}
+                  placeholder="0"
+                  min="0"
+                  required={formData.priceType === 'RANGE'}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxPrice">Giá đến (VNĐ) *</Label>
+                <Input
+                  id="maxPrice"
+                  type="number"
+                  value={formData.maxPrice || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setFormData(prev => ({ ...prev, maxPrice: value }))
+                  }}
+                  placeholder="0"
+                  min="0"
+                  required={formData.priceType === 'RANGE'}
+                />
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-muted-foreground">
+                  Hiển thị: {new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                  }).format(formData.minPrice || 0)} - {new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                  }).format(formData.maxPrice || 0)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {formData.priceType === 'NEGOTIABLE' && (
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm text-muted-foreground">
-                Hiển thị: {formatCurrency(formData.basePriceCents)}
+                Giá sẽ được thương lượng trực tiếp với khách hàng
               </p>
             </div>
+          )}
+
+          {formData.priceType === 'CONTACT' && (
+            <div className="p-4 bg-muted rounded-md">
+              <p className="text-sm text-muted-foreground">
+                Khách hàng cần liên hệ để được báo giá chi tiết
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="duration">Thời gian (phút) *</Label>
               <Input
@@ -367,9 +461,9 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {(Array.isArray(formData.images) ? formData.images : []).map((image, index) => (
                 <div key={index} className="relative group">
-                  <img 
-                    src={image} 
-                    alt={`Hình ảnh ${index + 1}`} 
+                  <img
+                    src={image}
+                    alt={`Hình ảnh ${index + 1}`}
                     className="rounded-md w-full h-32 object-cover"
                   />
                   <Button
@@ -519,7 +613,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
           {/* SEO Section */}
           <div className="space-y-4 border-t pt-4 mt-6">
             <h3 className="text-lg font-medium">Tối ưu hóa công cụ tìm kiếm (SEO)</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="metaTitle">Tiêu đề SEO (Meta Title)</Label>
               <Input
@@ -582,16 +676,11 @@ export function ServiceFormDialog({ service, open, onOpenChange, categories, typ
               </p>
             </div>
           </div>
-          
-          {/* SEO Section */}
-          <div className="space-y-4 border-t pt-4 mt-6">
-            <h3 className="text-lg font-medium">Tối ưu hóa công cụ tìm kiếm (SEO)</h3>
-          </div>
-          
+
           <DialogFooter className="pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >

@@ -37,8 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const accessToken = localStorage.getItem('accessToken')
       const refreshToken = localStorage.getItem('refreshToken')
-      if (accessToken && refreshToken) {
-        return { accessToken, refreshToken }
+      // Accept cases where only accessToken is present (backend may not return refresh token)
+      if (accessToken) {
+        return { accessToken, refreshToken: refreshToken ?? '' }
       }
     } catch (error) {
       console.error('Failed to get stored tokens:', error)
@@ -49,7 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setStoredTokens = (tokens: AuthTokens) => {
     try {
       localStorage.setItem('accessToken', tokens.accessToken)
-      localStorage.setItem('refreshToken', tokens.refreshToken)
+      // store refreshToken if provided (may be empty string)
+      if (tokens.refreshToken !== undefined && tokens.refreshToken !== null) {
+        localStorage.setItem('refreshToken', tokens.refreshToken)
+      } else {
+        localStorage.removeItem('refreshToken')
+      }
     } catch (error) {
       console.error('Failed to store tokens:', error)
     }
@@ -117,18 +123,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiClient.login({ email, password })
-      const tokens = response.data as AuthTokens
 
-      if (tokens.accessToken && tokens.refreshToken) {
-        setToken(tokens.accessToken)
-        setStoredTokens(tokens)
-        apiClient.setToken(tokens.accessToken)
-        await refreshUser()
-      } else {
-        throw new Error('Invalid login response')
+      if (!response.success) {
+        throw new Error(response.message || 'Login failed')
       }
+
+      // Normalize various response shapes from backend
+      // Possible shapes:
+      // - { data: { accessToken, refreshToken } }
+      // - { data: { data: { token, user } } }
+      // - { data: { token, user } }
+      // - { token }
+      const respData: any = response?.data ?? response
+      let accessToken: string | null = null
+      let refreshToken: string | null = null
+
+      // Try nested data.data first
+      if (respData?.data && typeof respData.data === 'object') {
+        const inner = respData.data.data ?? respData.data
+        if (inner?.token || inner?.accessToken) {
+          accessToken = inner.token ?? inner.accessToken
+          refreshToken = inner.refreshToken ?? null
+        }
+      }
+
+      // Fallback to top-level fields
+      if (!accessToken) {
+        accessToken = respData?.token ?? respData?.accessToken ?? null
+        refreshToken = respData?.refreshToken ?? null
+      }
+
+      if (!accessToken) {
+        console.error('Invalid tokens in response:', response)
+        throw new Error('Invalid login response: Missing access token')
+      }
+
+      setToken(accessToken)
+
+      // Store tokens: if refresh token available, store both; otherwise store accessToken only
+      try {
+        if (refreshToken) {
+          setStoredTokens({ accessToken, refreshToken })
+        } else {
+          localStorage.setItem('accessToken', accessToken)
+          localStorage.removeItem('refreshToken')
+        }
+      } catch (e) {
+        console.error('Failed to store tokens:', e)
+      }
+
+      apiClient.setToken(accessToken)
+      await refreshUser()
     } catch (error) {
-      throw error
+      console.error('Login error:', error)
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('An unknown error occurred during login')
     }
   }
 

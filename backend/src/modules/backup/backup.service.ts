@@ -328,7 +328,12 @@ export class BackupService {
         throw new Error(`No backups found before ${targetTime.toISOString()}`);
       }
 
-      // Sort by timestamp, most recent first
+      // Ensure timestamps are Date objects and sort by timestamp, most recent first
+      relevantBackups.forEach(backup => {
+        if (typeof backup.timestamp === 'string') {
+          backup.timestamp = new Date(backup.timestamp);
+        }
+      });
       relevantBackups.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
       const latestFullBackup = relevantBackups.find(b => b.type === 'full');
@@ -377,6 +382,13 @@ export class BackupService {
   // Get backup status and information
   async getBackupStatus(): Promise<BackupStatus> {
     const backups = await this.listBackups();
+    // Ensure timestamps are Date objects
+    backups.forEach(backup => {
+      if (typeof backup.timestamp === 'string') {
+        backup.timestamp = new Date(backup.timestamp);
+      }
+    });
+    
     const latestBackup = backups
       .filter(b => b.status === 'completed')
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
@@ -414,6 +426,15 @@ export class BackupService {
         try {
           const content = await fs.readFile(path.join(metadataDir, file), 'utf-8');
           const metadata: BackupMetadata = JSON.parse(content);
+          
+          // Ensure timestamp is a Date object
+          if (typeof metadata.timestamp === 'string') {
+            metadata.timestamp = new Date(metadata.timestamp);
+          }
+          if (metadata.sinceTimestamp && typeof metadata.sinceTimestamp === 'string') {
+            metadata.sinceTimestamp = new Date(metadata.sinceTimestamp);
+          }
+          
           backups.push(metadata);
         } catch (error) {
           this.logger.error(`Failed to read backup metadata: ${file}`, error);
@@ -790,7 +811,17 @@ export class BackupService {
     try {
       const metadataPath = path.join(this.backupDir, 'metadata', `${backupId}.json`);
       const content = await fs.readFile(metadataPath, 'utf-8');
-      return JSON.parse(content);
+      const metadata: BackupMetadata = JSON.parse(content);
+      
+      // Ensure timestamp is a Date object
+      if (typeof metadata.timestamp === 'string') {
+        metadata.timestamp = new Date(metadata.timestamp);
+      }
+      if (metadata.sinceTimestamp && typeof metadata.sinceTimestamp === 'string') {
+        metadata.sinceTimestamp = new Date(metadata.sinceTimestamp);
+      }
+      
+      return metadata;
     } catch {
       return null;
     }

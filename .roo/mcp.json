@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tavily-mcp@0.2.3"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      }
+    },
+    "jetbrains": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jetbrains/mcp-proxy"
+      ]
+    }
+  }
+}

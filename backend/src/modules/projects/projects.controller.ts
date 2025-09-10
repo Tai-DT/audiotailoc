@@ -1,41 +1,93 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { ProjectsService } from './projects.service';
 import { AdminGuard } from '../auth/admin.guard';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('projects')
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly projectsService: ProjectsService) {}
 
-  // Public
+  // Public endpoints
   @Get()
-  async list() {
-    return this.prisma.project.findMany({
-      orderBy: { createdAt: 'desc' },
+  @ApiOperation({ summary: 'Get all projects' })
+  async list(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+    @Query('featured') featured?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.projectsService.findAll({
+      page,
+      limit,
+      status,
+      featured: featured === 'true',
+      category,
     });
   }
 
-  @Get(':id')
-  async getById(@Param('id') id: string) {
-    return this.prisma.project.findUnique({ where: { id } });
+  @Get('featured')
+  @ApiOperation({ summary: 'Get featured projects' })
+  async getFeatured() {
+    return this.projectsService.findFeatured();
   }
 
-  // Admin
+  @Get('by-slug/:slug')
+  @ApiOperation({ summary: 'Get project by slug' })
+  async getBySlug(@Param('slug') slug: string) {
+    return this.projectsService.findBySlug(slug);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get project by ID' })
+  async getById(@Param('id') id: string) {
+    return this.projectsService.findById(id);
+  }
+
+  // Admin endpoints
   @UseGuards(AdminGuard)
   @Post()
-  async create(@Body() data: { name: string; description?: string; userId: string; status?: string }) {
-    const { name, description, userId, status } = data;
-    return this.prisma.project.create({ data: { name, description, userId, status: status || 'DRAFT' } });
+  @ApiOperation({ summary: 'Create new project' })
+  async create(@Body() data: any) {
+    return this.projectsService.create(data);
   }
 
   @UseGuards(AdminGuard)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() data: Partial<{ name: string; description?: string; status?: string }>) {
-    return this.prisma.project.update({ where: { id }, data });
+  @ApiOperation({ summary: 'Update project' })
+  async update(@Param('id') id: string, @Body() data: any) {
+    return this.projectsService.update(id, data);
   }
 
   @UseGuards(AdminGuard)
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete project' })
   async remove(@Param('id') id: string) {
-    return this.prisma.project.delete({ where: { id } });
+    return this.projectsService.remove(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post(':id/toggle-featured')
+  @ApiOperation({ summary: 'Toggle project featured status' })
+  async toggleFeatured(@Param('id') id: string) {
+    return this.projectsService.toggleFeatured(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post(':id/toggle-active')
+  @ApiOperation({ summary: 'Toggle project active status' })
+  async toggleActive(@Param('id') id: string) {
+    return this.projectsService.toggleActive(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Put(':id/reorder')
+  @ApiOperation({ summary: 'Update project display order' })
+  async updateOrder(
+    @Param('id') id: string,
+    @Body('displayOrder') displayOrder: number,
+  ) {
+    return this.projectsService.updateDisplayOrder(id, displayOrder);
   }
 }

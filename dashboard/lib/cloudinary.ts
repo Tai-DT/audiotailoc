@@ -147,8 +147,8 @@ export class CloudinaryService {
       }
 
       const timestamp = Math.floor(Date.now() / 1000);
-      const apiKey = process.env.CLOUDINARY_API_KEY || '515973253722995';
-      const apiSecret = process.env.CLOUDINARY_API_SECRET || 'JHQbBTbJicxxdF7qoJrLUBLYI7w';
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
       if (!apiKey || !apiSecret) {
         throw new Error('Cloudinary API credentials not configured');

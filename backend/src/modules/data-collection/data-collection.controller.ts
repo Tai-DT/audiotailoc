@@ -54,8 +54,8 @@ class TrackQuestionDto {
   category?: string;
 
   @IsOptional()
-  @IsIn(['chat', 'contact', 'faq', 'support'])
-  source?: 'chat' | 'contact' | 'faq' | 'support';
+  @IsIn(['contact', 'faq', 'support', 'zalo'])
+  source?: 'contact' | 'faq' | 'support' | 'zalo';
 
   @IsOptional()
   @IsIn(['answered', 'pending', 'escalated'])

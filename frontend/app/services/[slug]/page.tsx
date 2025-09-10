@@ -19,12 +19,20 @@ import {
   ShoppingCartIcon
 } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api-client';
-import { Service } from '@/lib/api-client';
+import type { Service as BaseService } from '@/lib/types';
+
+type ServiceExt = BaseService & {
+  estimatedDuration?: number;
+  features?: string;
+  requirements?: string;
+  items?: { id: string; name?: string; priceCents: number; description?: string; isRequired?: boolean }[];
+  basePriceCents?: number
+};
 
 export default function ServiceDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [service, setService] = useState<Service | null>(null);
+  const [service, setService] = useState<ServiceExt | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -38,7 +46,7 @@ export default function ServiceDetailPage() {
     try {
       setIsLoading(true);
       const response = await api.services.getBySlug(params.slug as string);
-      setService(response.data.data);
+      setService(response.data as any);
     } catch (error) {
       console.error('Error fetching service:', error);
       toast.error('Không thể tải thông tin dịch vụ');
@@ -113,10 +121,11 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const totalPrice = service.basePriceCents + 
-    service.items
+const base = (service.basePriceCents ?? (service as any).priceCents ?? 0);
+  const itemsTotal = (service.items || [])
       .filter(item => selectedItems.has(item.id))
-      .reduce((sum, item) => sum + item.priceCents, 0);
+      .reduce((sum, item) => sum + (item.priceCents || 0), 0);
+  const totalPrice = base + itemsTotal;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -310,9 +319,7 @@ export default function ServiceDetailPage() {
                   {selectedItems.size > 0 && (
                     <div className="border-t pt-4">
                       <p className="text-sm text-gray-600 mb-2">Hạng mục đã chọn:</p>
-                      {service.items
-                        .filter(item => selectedItems.has(item.id))
-                        .map(item => (
+{((service.items?.filter(item => selectedItems.has(item.id))) || []).map(item => (
                           <div key={item.id} className="flex justify-between text-sm">
                             <span className="text-gray-600">{item.name}</span>
                             <span>{item.priceCents.toLocaleString()} VND</span>

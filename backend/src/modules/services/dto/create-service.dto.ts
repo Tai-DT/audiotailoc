@@ -17,11 +17,23 @@ export class CreateServiceDto {
   @IsString()
   shortDescription?: string;
 
+  @IsOptional()
   @IsString()
-  categoryId!: string;
+  typeId?: string;
 
+  @IsOptional()
   @IsString()
-  typeId!: string;
+  priceType?: string; // FIXED, RANGE, NEGOTIABLE, CONTACT
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minPrice?: number; // Min price in VND
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number; // Max price in VND
 
   @IsOptional()
   @IsNumber()

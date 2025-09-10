@@ -53,55 +53,6 @@ export class MockServicesService {
     };
   }
 
-  // Mock AI service
-  async mockAIService(operation: string, data: any = {}) {
-    if (!this.mocksEnabled) {
-      throw new Error('Mock services are disabled in production');
-    }
-
-    const mockResponse = this.getMockAIResponse(operation, data);
-    this.logger.log(`Mock AI Service - ${operation}:`, mockResponse);
-
-    return mockResponse;
-  }
-
-  private getMockAIResponse(operation: string, data: any) {
-    const responses = {
-      generate_text: {
-        success: true,
-        text: `Mock AI response for prompt: "${data.prompt || 'test prompt'}"`,
-        tokens: Math.floor(Math.random() * 100) + 50,
-        model: data.model || 'mock-gemini',
-        finishReason: 'stop',
-      },
-      analyze_image: {
-        success: true,
-        description: 'Mock image analysis result',
-        tags: ['test', 'mock', 'image'],
-        confidence: 0.95,
-      },
-      chat_completion: {
-        success: true,
-        message: {
-          role: 'assistant',
-          content: `Mock chat response to: "${data.message || 'test message'}"`,
-        },
-        tokens: Math.floor(Math.random() * 200) + 100,
-        finishReason: 'stop',
-      },
-      embed_text: {
-        success: true,
-        embedding: Array.from({ length: 768 }, () => Math.random() * 2 - 1),
-        tokens: data.text ? data.text.split(' ').length : 10,
-      },
-    };
-
-    return (responses as any)[operation] || {
-      success: false,
-      error: `Unknown AI operation: ${operation}`,
-    };
-  }
-
   // Mock email service
   async mockEmailService(operation: string, data: any = {}) {
     if (!this.mocksEnabled) {

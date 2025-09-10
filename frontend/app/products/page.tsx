@@ -1,211 +1,386 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ProductCard } from '@/components/products/ProductCard';
-import { ProductFilters } from '@/components/products/ProductFilters';
-import { useProductStore, ProductFilters as FilterType } from '@/store/product-store';
-import { useUIStore } from '@/store/ui-store';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import ProductCard from '@/components/ui/ProductCard';
+import { useProductStore } from '@/lib/store';
+import { ProductFilters } from '@/lib/types-prisma';
 
 export default function ProductsPage() {
-  const { 
-    products, 
-    categories, 
-    pagination, 
-    filters, 
-    isLoading, 
-    error,
-    fetchProducts, 
-    fetchCategories, 
-    setFilters 
-  } = useProductStore();
-  
-  const { addNotification } = useUIStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, 50000000]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  const { products, categories, isLoading, getProducts, getCategories, setFilters } = useProductStore();
+
+  // Mock brands - in real app, this would come from API
+  const brands = ['Sony', 'Audio-Technica', 'Sennheiser', 'Bose', 'Yamaha', 'Pioneer', 'JBL', 'Focal'];
+
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Fetch categories on mount
-    fetchCategories();
-  }, [fetchCategories]);
+    getCategories();
+    // Initialize category filter from URL if present
+    const cid = searchParams.get('categoryId') || searchParams.get('category');
+    if (cid) {
+      setSelectedCategories([cid]);
+    }
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getCategories]);
 
   useEffect(() => {
-    // Fetch products when filters change
-    fetchProducts(filters, 1);
-  }, [filters, fetchProducts]);
+    const delayedLoad = setTimeout(() => {
+      loadProducts();
+    }, 500);
 
-  const handleFiltersChange = (newFilters: FilterType) => {
-    setFilters(newFilters);
+    return () => clearTimeout(delayedLoad);
+  }, [searchQuery, selectedBrands, selectedCategories, priceRange, sortBy, sortOrder]);
+
+  const loadProducts = () => {
+    const filters: ProductFilters = {
+      search: searchQuery || undefined,
+      brand: selectedBrands.length > 0 ? selectedBrands.join(',') : undefined,
+      categoryId: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+      minPrice: priceRange[0],
+      maxPrice: priceRange[1],
+      sortBy: sortBy as 'price' | 'name' | 'createdAt' | 'viewCount',
+      sortOrder,
+      page: 1,
+      limit: 20
+    };
+    
+    setFilters(filters);
+    getProducts(filters);
   };
 
-  const handlePageChange = (page: number) => {
-    fetchProducts(filters, page);
+  const handleBrandChange = (brand: string, checked: boolean) => {
+    setSelectedBrands(prev => 
+      checked ? [...prev, brand] : prev.filter(b => b !== brand)
+    );
   };
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
-    setViewMode(mode);
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    setSelectedCategories(prev => 
+      checked ? [...prev, categoryId] : prev.filter(c => c !== categoryId)
+    );
   };
 
-  if (error) {
-    addNotification({
-      type: 'error',
-      title: 'Lỗi',
-      message: error,
-    });
-  }
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedBrands([]);
+    setSelectedCategories([]);
+    setPriceRange([0, 50000000]);
+    setSortBy('name');
+    setSortOrder('asc');
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+
+  const FiltersSidebar = () => (
+    <div className="space-y-6">
+      {/* Search */}
+      <div>
+        <Label htmlFor="search">Tìm kiếm</Label>
+        <Input
+          id="search"
+          placeholder="Tên sản phẩm..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="mt-2"
+        />
+      </div>
+
+      <Separator />
+
+      {/* Categories */}
+      <div>
+        <Label className="text-sm font-semibold">Danh mục</Label>
+        <div className="mt-3 space-y-3">
+          {categories.map((category) => (
+            <div key={category.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`category-${category.id}`}
+                checked={selectedCategories.includes(category.id)}
+                onCheckedChange={(checked) => 
+                  handleCategoryChange(category.id, checked as boolean)
+                }
+              />
+              <Label 
+                htmlFor={`category-${category.id}`} 
+                className="text-sm cursor-pointer"
+              >
+                {category.name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Brands */}
+      <div>
+        <Label className="text-sm font-semibold">Thương hiệu</Label>
+        <div className="mt-3 space-y-3">
+          {brands.map((brand) => (
+            <div key={brand} className="flex items-center space-x-2">
+              <Checkbox
+                id={`brand-${brand}`}
+                checked={selectedBrands.includes(brand)}
+                onCheckedChange={(checked) => 
+                  handleBrandChange(brand, checked as boolean)
+                }
+              />
+              <Label 
+                htmlFor={`brand-${brand}`} 
+                className="text-sm cursor-pointer"
+              >
+                {brand}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Price Range */}
+      <div>
+        <Label className="text-sm font-semibold">Khoảng giá</Label>
+        <div className="mt-3 space-y-4">
+          <Slider
+            value={priceRange}
+            onValueChange={setPriceRange}
+            max={50000000}
+            step={100000}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>{formatPrice(priceRange[0])}</span>
+            <span>{formatPrice(priceRange[1])}</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Clear Filters */}
+      <Button 
+        variant="outline" 
+        onClick={clearFilters}
+        className="w-full"
+      >
+        <X className="h-4 w-4 mr-2" />
+        Xóa bộ lọc
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sản phẩm</h1>
-          <p className="text-gray-600">
-            Khám phá các sản phẩm âm thanh chất lượng cao
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Sản phẩm</h1>
+        <p className="text-gray-600">
+          Khám phá bộ sưu tập thiết bị âm thanh chất lượng cao
+        </p>
+      </div>
+
+      <div className="flex gap-8">
+        {/* Desktop Filters Sidebar */}
+        <div className="hidden lg:block w-80 flex-shrink-0">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Bộ lọc</h3>
+              <Filter className="h-5 w-5 text-gray-400" />
+            </div>
+            <FiltersSidebar />
+          </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:w-1/4">
-            <ProductFilters
-              onFiltersChange={handleFiltersChange}
-              currentFilters={filters}
-            />
-          </div>
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Top Bar */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Results Count and Mobile Filter */}
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {products.length} sản phẩm
+                </span>
+                
+                {/* Mobile Filters */}
+                <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="lg:hidden">
+                      <SlidersHorizontal className="h-4 w-4 mr-2" />
+                      Bộ lọc
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-80">
+                    <SheetHeader>
+                      <SheetTitle>Bộ lọc sản phẩm</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FiltersSidebar />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
 
-          {/* Products Content */}
-          <div className="lg:w-3/4">
-            {/* Toolbar */}
-            <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* Results Count */}
-                <div className="text-sm text-gray-600">
-                  Hiển thị {products.length} trong tổng số {pagination.total} sản phẩm
+              {/* Sort and View Controls */}
+              <div className="flex items-center gap-4">
+                {/* Sort */}
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="sort" className="text-sm">Sắp xếp:</Label>
+                  <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+                    const [newSortBy, newSortOrder] = value.split('-');
+                    setSortBy(newSortBy);
+                    setSortOrder(newSortOrder as 'asc' | 'desc');
+                  }}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                      <SelectItem value="name-desc">Tên Z-A</SelectItem>
+                      <SelectItem value="price-asc">Giá thấp đến cao</SelectItem>
+                      <SelectItem value="price-desc">Giá cao đến thấp</SelectItem>
+                      <SelectItem value="createdAt-desc">Mới nhất</SelectItem>
+                      <SelectItem value="viewCount-desc">Phổ biến nhất</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* View Mode Toggle */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Xem:</span>
-                  <button
-                    onClick={() => handleViewModeChange('grid')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'grid'
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                {/* View Mode */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleViewModeChange('list')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'list'
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-                    </svg>
-                  </button>
+                    <List className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              </div>
-            )}
-
-            {/* Products Grid/List */}
-            {!isLoading && products.length > 0 && (
-              <div className={`grid gap-6 ${
-                viewMode === 'grid'
-                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  : 'grid-cols-1'
-              }`}>
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    showAddToCart={true}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!isLoading && products.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Không tìm thấy sản phẩm
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác
-                </p>
-                <button
-                  onClick={() => handleFiltersChange({
-                    sortBy: 'createdAt',
-                    sortOrder: 'desc',
-                  })}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Xem tất cả sản phẩm
-                </button>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {!isLoading && pagination.total > pagination.pageSize && (
-              <div className="mt-8 flex items-center justify-center">
-                <nav className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Trước
-                  </button>
-                  
-                  {Array.from({ length: Math.ceil(pagination.total / pagination.pageSize) }, (_, i) => i + 1)
-                    .filter(page => 
-                      page === 1 || 
-                      page === Math.ceil(pagination.total / pagination.pageSize) ||
-                      Math.abs(page - pagination.page) <= 1
-                    )
-                    .map((page, index, array) => (
-                      <React.Fragment key={page}>
-                        {index > 0 && array[index - 1] !== page - 1 && (
-                          <span className="px-3 py-2 text-sm text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => handlePageChange(page)}
-                          className={`px-3 py-2 text-sm font-medium rounded-md ${
-                            page === pagination.page
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                          }`}
+            {/* Active Filters */}
+            {(selectedBrands.length > 0 || selectedCategories.length > 0 || searchQuery) && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex flex-wrap gap-2">
+                  {searchQuery && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      Tìm kiếm: {searchQuery}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  )}
+                  {selectedBrands.map(brand => (
+                    <Badge key={brand} variant="secondary" className="flex items-center gap-1">
+                      {brand}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent"
+                        onClick={() => handleBrandChange(brand, false)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                  {selectedCategories.map(categoryId => {
+                    const category = categories.find(c => c.id === categoryId);
+                    return category ? (
+                      <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
+                        {category.name}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
+                          onClick={() => handleCategoryChange(categoryId, false)}
                         >
-                          {page}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= Math.ceil(pagination.total / pagination.pageSize)}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Sau
-                  </button>
-                </nav>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
           </div>
+
+          {/* Products Grid/List */}
+          {isLoading ? (
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                : 'grid-cols-1'
+            }`}>
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="bg-gray-200 animate-pulse rounded-lg h-[400px]"></div>
+              ))}
+            </div>
+          ) : products.length > 0 ? (
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                : 'grid-cols-1'
+            }`}>
+              {products.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  variant={viewMode === 'list' ? 'compact' : 'default'}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 mb-4">
+                <Filter className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg mb-2">Không tìm thấy sản phẩm nào</p>
+                <p className="text-sm">Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm</p>
+              </div>
+              <Button variant="outline" onClick={clearFilters}>
+                Xóa tất cả bộ lọc
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -8,8 +8,8 @@ class CreateIntentDto {
   @IsString()
   orderId!: string;
 
-  @IsIn(['VNPAY', 'MOMO', 'PAYOS'])
-  provider!: 'VNPAY' | 'MOMO' | 'PAYOS';
+  @IsIn(['PAYOS', 'COD'])
+  provider!: 'PAYOS' | 'COD';
 
   @IsString() @MinLength(8)
   idempotencyKey!: string;
@@ -38,23 +38,16 @@ export class PaymentsController {
     return {
       methods: [
         {
-          id: 'VNPAY',
-          name: 'VNPAY',
-          description: 'Thanh toán qua VNPAY',
-          logo: '/images/payment/vnpay.png',
-          enabled: true
-        },
-        {
-          id: 'MOMO',
-          name: 'MoMo',
-          description: 'Thanh toán qua MoMo',
-          logo: '/images/payment/momo.png',
+          id: 'COD',
+          name: 'Thanh toán khi nhận hàng',
+          description: 'Thanh toán bằng tiền mặt khi nhận hàng',
+          logo: '/images/payment/cod.png',
           enabled: true
         },
         {
           id: 'PAYOS',
           name: 'PayOS',
-          description: 'Thanh toán qua PayOS',
+          description: 'Thanh toán qua PayOS (Chuyển khoản, QR, Thẻ)',
           logo: '/images/payment/payos.png',
           enabled: true
         }
@@ -68,7 +61,7 @@ export class PaymentsController {
       status: 'active',
       message: 'Payment system is operational',
       timestamp: new Date().toISOString(),
-      supportedProviders: ['VNPAY', 'MOMO', 'PAYOS']
+      supportedProviders: ['COD', 'PAYOS']
     };
   }
 

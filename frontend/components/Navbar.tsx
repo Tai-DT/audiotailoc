@@ -48,16 +48,28 @@ export default function Navbar() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
         if (!base) return;
 
-        const response = await fetch(`${base}/users/profile`, {
-          credentials: 'include'
+        // Get token from localStorage
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const response = await fetch(`${base}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
 
         if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+          const result = await response.json();
+          if (result.success && result.data) {
+            setUser(result.data);
+          }
+        } else if (response.status === 401) {
+          // Token invalid, remove it
+          localStorage.removeItem('auth_token');
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -69,18 +81,25 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) return;
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
+      const token = localStorage.getItem('auth_token');
 
-      await fetch(`${base}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      setUser(null);
-      window.location.href = '/';
+      if (base && token) {
+        await fetch(`${base}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
     } catch (error) {
       console.error('Logout failed:', error);
+    } finally {
+      // Always clear local state
+      localStorage.removeItem('auth_token');
+      setUser(null);
+      window.location.href = '/';
     }
   };
 

@@ -68,27 +68,6 @@ export function ServiceTypeList({ categoryId, onSelect, mode = 'manage' }: Servi
     }
   };
 
-  const toggleStatus = async (id: string, currentStatus: boolean) => {
-    try {
-      await serviceTypeApi.toggleStatus(id, !currentStatus);
-      setServiceTypes(prev =>
-        prev.map(type =>
-          type.id === id ? { ...type, isActive: !currentStatus } : type
-        )
-      );
-      showToast({
-        title: 'Thành công',
-        description: `Đã ${currentStatus ? 'tắt' : 'bật'} loại dịch vụ`,
-      });
-    } catch (error) {
-      console.error('Failed to toggle service type status:', error);
-      showToast({
-        title: 'Lỗi',
-        description: 'Không thể cập nhật trạng thái',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const columns: ColumnDef<ServiceType>[] = [
     {

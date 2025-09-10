@@ -9,9 +9,6 @@ export class CreateServiceTypeDto {
   @IsOptional()
   description?: string;
 
-  @IsString({ message: 'Vui lòng chọn danh mục' })
-  @IsNotEmpty({ message: 'Vui lòng chọn danh mục' })
-  categoryId!: string;
 
   @IsString()
   @IsOptional()
