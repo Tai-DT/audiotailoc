@@ -46,14 +46,34 @@ export class ServicesController {
     });
   }
 
-  @Get('categories')
-  getServiceCategories() {
-    return this.servicesService.getServiceCategories();
-  }
+  // Service categories have been removed from the system
 
   @Get('types')
   getServiceTypes() {
     return this.servicesService.getServiceTypes();
+  }
+
+  @Get('types/:id')
+  async getServiceType(@Param('id') id: string) {
+    return this.servicesService.getServiceType(id);
+  }
+
+  @Post('types')
+  async createServiceType(@Body() data: { name: string; slug?: string; description?: string; isActive?: boolean }) {
+    return this.servicesService.createServiceType(data);
+  }
+
+  @Put('types/:id')
+  async updateServiceType(
+    @Param('id') id: string,
+    @Body() data: { name?: string; slug?: string; description?: string; isActive?: boolean; sortOrder?: number }
+  ) {
+    return this.servicesService.updateServiceType(id, data);
+  }
+
+  @Delete('types/:id')
+  async deleteServiceType(@Param('id') id: string) {
+    return this.servicesService.deleteServiceType(id);
   }
 
   @Get('stats')

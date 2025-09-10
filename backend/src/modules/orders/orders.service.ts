@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
+import { CacheService } from '../caching/cache.service';
 
 const allowedTransitions: Record<string, string[]> = {
-  PENDING: ['PROCESSING', 'CANCELLED'],
+  PENDING: ['PROCESSING', 'CANCELLED', 'COMPLETED'],
   PROCESSING: ['COMPLETED', 'CANCELLED'],
   COMPLETED: [],
   CANCELLED: [],
@@ -14,6 +15,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    private readonly cache: CacheService,
   ) {}
 
   list(params: { page?: number; pageSize?: number; status?: string }) {
@@ -62,6 +64,8 @@ export class OrdersService {
         updatedAt: order.updatedAt,
         items: order.items.map(item => ({
           id: item.id,
+          productId: item.productId,
+          productSlug: (item as any).product?.slug || null,
           productName: item.product?.name || item.name || 'Sản phẩm',
           quantity: item.quantity,
           price: item.unitPrice || 0,
@@ -79,9 +83,58 @@ export class OrdersService {
 
   async updateStatus(id: string, status: string) {
     const order = await this.get(id);
-    const nexts = allowedTransitions[order.status] || [];
-    if (!nexts.includes(status)) throw new BadRequestException('Trạng thái không hợp lệ');
-    const updated = await this.prisma.order.update({ where: { id }, data: { status } });
+    const current = (order.status || '').toUpperCase();
+    const next = (status || '').toUpperCase();
+    const nexts = allowedTransitions[current] || [];
+    // Debug logs to help diagnose invalid transitions
+    console.log('[OrdersService.updateStatus] current=', current, 'requested=', next, 'allowed=', nexts);
+    if (!nexts.includes(next)) throw new BadRequestException('Trạng thái không hợp lệ');
+    const updated = await this.prisma.order.update({ where: { id }, data: { status: next } });
+
+    // If order is cancelled from PENDING/PROCESSING, restore stock back to inventory
+    if (next === 'CANCELLED' && (current === 'PENDING' || current === 'PROCESSING')) {
+      try {
+        const items = await this.prisma.orderItem.findMany({
+          where: { orderId: id },
+          include: { product: { select: { id: true, slug: true, name: true } } },
+        });
+
+        for (const item of items) {
+          let targetProductId: string | null = item.productId ?? null;
+
+          // Try to resolve via relation if productId is null
+          if (!targetProductId && item.product?.id) {
+            targetProductId = item.product.id;
+          }
+
+          // Try resolve by slug if available
+          if (!targetProductId && item.product?.slug) {
+            const bySlug = await this.prisma.product.findUnique({ where: { slug: item.product.slug } });
+            if (bySlug) targetProductId = bySlug.id;
+          }
+
+          // As a last resort, try by name
+          if (!targetProductId && item.product?.name) {
+            const byName = await (this.prisma as any).product.findFirst({ where: { name: item.product.name } });
+            if (byName) targetProductId = byName.id;
+          }
+
+          if (targetProductId) {
+            await this.prisma.product.update({
+              where: { id: targetProductId },
+              data: { stockQuantity: { increment: item.quantity } },
+            });
+          } else {
+            console.warn('[OrdersService.updateStatus] Could not resolve product for order item during cancel restore. Skipped increment.');
+          }
+        }
+
+        // Invalidate cached product lists so stock changes reflect immediately
+        await this.cache.clearByPrefix('audiotailoc');
+      } catch (error) {
+        console.error('Failed to restore stock on cancellation:', error);
+      }
+    }
 
     // Send notification email if we have the user's email
     if (order.userId) {
@@ -129,7 +182,7 @@ export class OrdersService {
 
     for (const item of orderData.items || []) {
       const itemData: any = {
-        productId: item.productId,
+        // productId will be assigned only if resolved to a real product below
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || 0,
         name: item.name || 'Sản phẩm',
@@ -152,6 +205,8 @@ export class OrdersService {
         if (product) {
           itemData.unitPrice = product.priceCents;
           itemData.productId = product.id; // Use actual product ID
+          // Prefer product name if not explicitly provided
+          if (!item.name && product.name) itemData.name = product.name;
         }
       } catch (error) {
         console.error('Failed to fetch product:', error);
@@ -187,32 +242,54 @@ export class OrdersService {
         userId = guestUser.id;
       }
 
-      const order = await this.prisma.order.create({
-        data: {
-          orderNo,
-          userId,
-          status: 'PENDING',
-          subtotalCents,
-          totalCents: subtotalCents,
-          shippingAddress,
-          shippingCoordinates,
-          items: {
-            create: items
-          }
-        },
-        include: {
-          items: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
+      // Create order and adjust stock atomically
+      const order = await this.prisma.$transaction(async (tx) => {
+        // Decrease stock for each product in the order
+        for (const item of items) {
+          if (item.productId) {
+            // Ensure stock is sufficient before decrement
+            const product = await tx.product.findUnique({
+              where: { id: item.productId },
+              select: { stockQuantity: true }
+            });
+            if (product && product.stockQuantity !== null && product.stockQuantity < item.quantity) {
+              throw new BadRequestException('Số lượng tồn kho không đủ cho sản phẩm');
             }
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stockQuantity: { decrement: item.quantity } }
+            });
           }
         }
-      });
 
+        return await tx.order.create({
+          data: {
+            orderNo,
+            userId,
+            status: 'PENDING',
+            subtotalCents,
+            totalCents: subtotalCents,
+            shippingAddress,
+            shippingCoordinates,
+            items: {
+              create: items
+            }
+          },
+          include: {
+            items: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true
+              }
+            }
+          }
+        });
+      });
+      // Invalidate cached product lists so stock changes reflect immediately
+      await this.cache.clearByPrefix('audiotailoc');
       return order;
     } catch (error) {
       console.error('Error creating order:', error);
@@ -275,7 +352,7 @@ export class OrdersService {
 
       for (const item of updateData.items) {
         const itemData: any = {
-          productId: item.productId,
+          // productId will be assigned only if resolved to a real product below
           quantity: item.quantity || 1,
           unitPrice: item.unitPrice || 0,
           name: item.name || 'Sản phẩm',
@@ -297,6 +374,7 @@ export class OrdersService {
           if (product) {
             itemData.unitPrice = product.priceCents;
             itemData.productId = product.id;
+            if (!item.name && product.name) itemData.name = product.name;
           }
         } catch (error) {
           console.error('Failed to fetch product:', error);
@@ -304,6 +382,12 @@ export class OrdersService {
 
         items.push(itemData);
         subtotalCents += (itemData.unitPrice || 0) * (itemData.quantity || 1);
+      }
+
+      // Ensure every item resolved to a valid productId
+      const unresolved = items.filter(i => !i.productId);
+      if (unresolved.length > 0) {
+        throw new BadRequestException('Sản phẩm không hợp lệ. Vui lòng chọn lại sản phẩm.');
       }
 
       updatePayload.items = { create: items };
@@ -382,7 +466,30 @@ export class OrdersService {
   }
 
   async delete(id: string) {
-    await this.get(id); // Check if order exists
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true }
+    });
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+
+    // If deleting a PENDING/PROCESSING order, restore stock first
+    if (order.status === 'PENDING' || order.status === 'PROCESSING') {
+      try {
+        for (const item of order.items) {
+          if (item.productId) {
+            await this.prisma.product.update({
+              where: { id: item.productId },
+              data: { stockQuantity: { increment: item.quantity } }
+            });
+          }
+        }
+        // Invalidate cached product lists
+        await this.cache.clearByPrefix('audiotailoc');
+      } catch (error) {
+        console.error('Failed to restore stock on delete:', error);
+      }
+    }
+
     await this.prisma.orderItem.deleteMany({ where: { orderId: id } });
     await this.prisma.payment.deleteMany({ where: { orderId: id } });
     await this.prisma.order.delete({ where: { id } });

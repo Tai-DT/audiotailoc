@@ -132,7 +132,7 @@ export default function ApiTestPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">API Base URL</span>
                   <code className="text-xs bg-muted px-2 py-1 rounded">
-                    http://localhost:3010/api/v1
+                    {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}
                   </code>
                 </div>
                 <div className="flex items-center justify-between">

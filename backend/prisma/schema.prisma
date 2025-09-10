@@ -19,70 +19,73 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders         Order[]
-  carts          Cart[]
-  chatSessions   ChatSession[]
-  notifications  Notification[]
-  wishlistItems  WishlistItem[]
-  reviews        ProductReview[]
-  searchQueries  SearchQuery[]
-  productViews   ProductView[]
-  serviceViews   ServiceView[]
-  questions      CustomerQuestion[]
-  loyaltyAccount LoyaltyAccount?
-  projects       Project[]
-  ServiceBooking ServiceBooking[]
-  activityLogs   ActivityLog[]
+  orders             Order[]
+  carts              Cart[]
+  notifications      Notification[]
+  wishlistItems      WishlistItem[]
+  reviews            ProductReview[]
+  searchQueries      SearchQuery[]
+  productViews       ProductView[]
+  serviceViews       ServiceView[]
+  questions          CustomerQuestion[]
+  loyaltyAccount     LoyaltyAccount?
+  projects           Project[]
+  ServiceBooking     ServiceBooking[]
+  activityLogs       ActivityLog[]
+  inventoryMovements InventoryMovement[]
 
   @@map("users")
 }
 
 // Product Model
 model Product {
-  id                String   @id @default(cuid())
-  slug              String   @unique
-  name              String
-  description       String?
-  shortDescription  String?
-  priceCents        Int
+  id                 String  @id @default(cuid())
+  slug               String  @unique
+  name               String
+  description        String?
+  shortDescription   String?
+  priceCents         Int
   originalPriceCents Int?
-  imageUrl          String?
-  images            Json?    // Array of image URLs
-  categoryId        String?
-  brand             String?
-  model             String?
-  sku               String?  @unique
-  specifications    Json?    // Product specifications as JSON
-  features          String?  // Key features (comma separated)
-  warranty          String?  // Warranty information
-  weight            Float?   // Weight in kg
-  dimensions        String?  // Dimensions (LxWxH)
-  stockQuantity     Int      @default(0)
-  minOrderQuantity  Int      @default(1)
-  maxOrderQuantity  Int?     // Maximum order quantity
-  tags              String?  // Tags (comma separated)
+  imageUrl           String?
+  images             Json? // Array of image URLs
+  categoryId         String?
+  brand              String?
+  model              String?
+  sku                String? @unique
+  specifications     Json? // Product specifications as JSON
+  features           String? // Key features (comma separated)
+  warranty           String? // Warranty information
+  weight             Float? // Weight in kg
+  dimensions         String? // Dimensions (LxWxH)
+  stockQuantity      Int     @default(0)
+  minOrderQuantity   Int     @default(1)
+  maxOrderQuantity   Int? // Maximum order quantity
+  maxStock           Int? // Maximum stock threshold for overstock alerts
+  tags               String? // Tags (comma separated)
 
   // SEO Fields
-  metaTitle         String?
-  metaDescription   String?
-  metaKeywords      String?  // Keywords (comma separated)
-  canonicalUrl      String?
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String? // Keywords (comma separated)
+  canonicalUrl    String?
 
-  featured          Boolean  @default(false)
-  isActive          Boolean  @default(true)
-  isDeleted         Boolean  @default(false)
-  viewCount         Int      @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  featured  Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  isDeleted Boolean  @default(false)
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  category         Category?            @relation(fields: [categoryId], references: [id])
-  cartItems        CartItem[]
-  orderItems       OrderItem[]
-  reviews          ProductReview[]
-  inventory        Inventory?
-  wishlistItems    WishlistItem[]
-  views            ProductView[]
-  knowledgeEntries KnowledgeBaseEntry[]
+  category          Category?            @relation(fields: [categoryId], references: [id])
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  reviews           ProductReview[]
+  inventory         Inventory?
+  wishlistItems     WishlistItem[]
+  views             ProductView[]
+  knowledgeEntries  KnowledgeBaseEntry[]
+  InventoryMovement InventoryMovement[]
+  InventoryAlert    InventoryAlert[]
 
   @@index([isDeleted])
   @@index([isActive])
@@ -143,19 +146,19 @@ model CartItem {
 
 // Order Model
 model Order {
-  id                 String   @id @default(cuid())
-  orderNo            String   @unique
-  userId             String
-  subtotalCents      Int      @default(0)
-  discountCents      Int      @default(0)
-  shippingCents      Int      @default(0)
-  totalCents         Int
-  status             String   @default("PENDING")
-  shippingAddress    String?
+  id                  String   @id @default(cuid())
+  orderNo             String   @unique
+  userId              String
+  subtotalCents       Int      @default(0)
+  discountCents       Int      @default(0)
+  shippingCents       Int      @default(0)
+  totalCents          Int
+  status              String   @default("PENDING")
+  shippingAddress     String?
   shippingCoordinates String?
-  promotionCode      String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  promotionCode       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   user           User            @relation(fields: [userId], references: [id])
   items          OrderItem[]
@@ -203,26 +206,8 @@ model Payment {
   @@map("payments")
 }
 
-// Service Category Model
-model ServiceCategory {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  icon        String?
-  color       String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  services Service[]
-  types    ServiceType[]
-
-  @@index([isActive])
-  @@index([sortOrder])
-  @@map("service_categories")
-}
+// Service Category Model - REMOVED
+// Previously used for categorizing service types, now removed as requested
 
 // Service Type Model
 model ServiceType {
@@ -230,7 +215,6 @@ model ServiceType {
   name        String
   slug        String   @unique
   description String?
-  categoryId  String
   icon        String?
   color       String?
   isActive    Boolean  @default(true)
@@ -238,52 +222,49 @@ model ServiceType {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category ServiceCategory @relation(fields: [categoryId], references: [id])
   services Service[]
 
   @@index([isActive])
-  @@index([categoryId])
   @@index([sortOrder])
   @@map("service_types")
 }
 
 // Service Model
 model Service {
-  id             String   @id @default(cuid())
-  slug           String   @unique
-  name           String
-  description    String?
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  description      String?
   shortDescription String?
-  basePriceCents Int
-  price          Int
-  duration       Int
-  categoryId     String?
-  typeId         String?
-  images         String?
-  isActive       Boolean  @default(true)
-  isFeatured     Boolean  @default(false)
-  seoTitle       String?
-  seoDescription String?
-  category       String?
-  type           String?
-  tags           String?  // JSON array of tags
-  features       String?  // JSON array of features
-  requirements   String?  // JSON array of requirements
-  metadata       String?  // JSON object for additional data
-  viewCount      Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  basePriceCents   Int      @default(0) // Legacy field for backward compatibility
+  price            Int      @default(0) // Legacy field for backward compatibility
+  minPrice         Int? // Minimum price in cents
+  maxPrice         Int? // Maximum price in cents
+  priceType        String   @default("FIXED") // FIXED, RANGE, NEGOTIABLE, CONTACT
+  duration         Int
+  typeId           String?
+  images           String?
+  isActive         Boolean  @default(true)
+  isFeatured       Boolean  @default(false)
+  seoTitle         String?
+  seoDescription   String?
+  type             String?
+  tags             String? // JSON array of tags
+  features         String? // JSON array of features
+  requirements     String? // JSON array of requirements
+  metadata         String? // JSON object for additional data
+  viewCount        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
-  serviceCategory ServiceCategory? @relation(fields: [categoryId], references: [id])
-  serviceType      ServiceType?     @relation(fields: [typeId], references: [id])
-  views    ServiceView[]
-  bookings ServiceBooking[]
-  items    ServiceItem[]
+  serviceType     ServiceType?     @relation(fields: [typeId], references: [id])
+  views           ServiceView[]
+  bookings        ServiceBooking[]
+  items           ServiceItem[]
 
   @@index([isActive])
   @@index([isFeatured])
-  @@index([categoryId])
   @@index([typeId])
   @@map("services")
 }
@@ -318,6 +299,70 @@ model Inventory {
   @@map("inventory")
 }
 
+// Inventory Movement Model
+model InventoryMovement {
+  id            String   @id @default(cuid())
+  productId     String
+  type          String // STOCK_IN, STOCK_OUT, ADJUSTMENT, RESERVED, RELEASED
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  reason        String? // MANUAL_ADJUSTMENT, ORDER_FULFILLED, ORDER_CANCELLED, etc.
+  referenceId   String? // Order ID, Adjustment ID, etc.
+  referenceType String? // ORDER, ADJUSTMENT, etc.
+  userId        String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+// Inventory Alert Model
+model InventoryAlert {
+  id           String    @id @default(cuid())
+  productId    String
+  type         String // LOW_STOCK, OUT_OF_STOCK, OVERSTOCK
+  message      String
+  threshold    Int? // The threshold that triggered the alert
+  currentStock Int // Stock level when alert was created
+  isResolved   Boolean   @default(false)
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@index([type])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@map("inventory_alerts")
+}
+
+// Inventory Report Model
+model InventoryReport {
+  id          String   @id @default(cuid())
+  type        String // STOCK_LEVELS, MOVEMENTS, ALERTS, SUMMARY
+  title       String
+  description String?
+  parameters  String? // JSON string of report parameters
+  data        String? // JSON string of report data
+  generatedBy String?
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([generatedAt])
+  @@map("inventory_reports")
+}
+
 // Wishlist Item Model
 model WishlistItem {
   id        String   @id @default(cuid())
@@ -334,18 +379,18 @@ model WishlistItem {
 
 // Product Review Model
 model ProductReview {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   userId     String
   productId  String
   rating     Int
   title      String?
   comment    String?
-  isVerified Boolean  @default(false)
+  isVerified Boolean      @default(false)
   status     ReviewStatus @default(APPROVED)
-  upvotes    Int      @default(0)
-  downvotes  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  upvotes    Int          @default(0)
+  downvotes  Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   user    User    @relation(fields: [userId], references: [id])
   product Product @relation(fields: [productId], references: [id])
@@ -390,36 +435,6 @@ model ProductReviewReport {
 
   @@index([reviewId])
   @@map("product_review_reports")
-}
-
-// Chat Session Model
-model ChatSession {
-  id        String   @id @default(cuid())
-  userId    String?
-  guestId   String?
-  status    String   @default("ACTIVE")
-  source    String   @default("WEB") // WEB, ZALO, MOBILE
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User?         @relation(fields: [userId], references: [id])
-  messages ChatMessage[]
-
-  @@map("chat_sessions")
-}
-
-// Chat Message Model
-model ChatMessage {
-  id        String   @id @default(cuid())
-  sessionId String
-  role      String   @default("user") // USER, ASSISTANT, STAFF, SYSTEM
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  session ChatSession @relation(fields: [sessionId], references: [id])
-
-  @@map("chat_messages")
 }
 
 // Page Model
@@ -622,12 +637,41 @@ model Promotion {
   @@map("promotions")
 }
 
+// Banner Model
+model Banner {
+  id             String    @id @default(cuid())
+  title          String
+  subtitle       String?
+  description    String?
+  imageUrl       String
+  mobileImageUrl String?
+  linkUrl        String?
+  buttonLabel    String?
+  page           String    @default("home") // home, about, services, etc.
+  locale         String?
+  position       Int       @default(0)
+  isActive       Boolean   @default(true)
+  startAt        DateTime?
+  endAt          DateTime?
+  isDeleted      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([page])
+  @@index([isActive])
+  @@index([isDeleted])
+  @@index([position])
+  @@map("banners")
+}
+
 // System Config Model
 model SystemConfig {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
-  type  String @default("STRING")
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  type      String   @default("STRING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("system_configs")
 }
@@ -746,36 +790,89 @@ model PaymentIntent {
 
 // Project Model
 model Project {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  status      String   @default("DRAFT")
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  description      String?
+  shortDescription String?
+  client           String?
+  clientLogo       String?
+  category         String?
+  technologies     String? // JSON array of tech stack
+  features         String? // JSON array of features
+  images           String? // JSON array of image URLs
+  thumbnailImage   String?
+  coverImage       String?
+  youtubeVideoId   String? // YouTube video ID
+  youtubeVideoUrl  String? // Full YouTube URL
+  demoUrl          String?
+  githubUrl        String?
+  liveUrl          String?
+  startDate        DateTime?
+  endDate          DateTime?
+  duration         String? // e.g., "3 months"
+  teamSize         Int?
+  budget           String?
+  status           String    @default("DRAFT") // DRAFT, IN_PROGRESS, COMPLETED, ON_HOLD
+  isActive         Boolean   @default(true)
+  isFeatured       Boolean   @default(false)
+  displayOrder     Int       @default(0)
+  viewCount        Int       @default(0)
+  userId           String
+  tags             String? // JSON array of tags
+  testimonial      String? // Client testimonial
+  results          String? // Project results/impact
+  challenges       String? // Challenges faced
+  solutions        String? // Solutions implemented
+
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImage         String?
+  structuredData  String? // JSON-LD structured data
+  canonicalUrl    String?
+
+  // Additional fields
+  content        String?   @db.Text // Rich HTML content
+  galleryImages  String? // JSON array of gallery images
+  clientLogoUrl  String?
+  projectDate    DateTime?
+  completionDate DateTime?
+  featured       Boolean   @default(false)
+  isDeleted      Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 
+  @@index([slug])
+  @@index([status])
+  @@index([isActive])
+  @@index([isFeatured])
   @@map("projects")
 }
 
 // Activity Log Model
 model ActivityLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String
-  resource    String?  // users, products, orders, etc.
-  resourceId  String?  // ID of the affected resource
-  details     String?  // JSON string with additional details
-  ipAddress   String?
-  userAgent   String?
-  method      String?  // HTTP method
-  url         String?  // Request URL
-  statusCode  Int?     // HTTP status code
-  duration    Int?     // Request duration in ms
-  category    String   @default("user_activity") // user_activity, security, audit, system
-  severity    String   @default("info") // info, warn, error
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String? // users, products, orders, etc.
+  resourceId String? // ID of the affected resource
+  details    String? // JSON string with additional details
+  ipAddress  String?
+  userAgent  String?
+  method     String? // HTTP method
+  url        String? // Request URL
+  statusCode Int? // HTTP status code
+  duration   Int? // Request duration in ms
+  category   String   @default("user_activity") // user_activity, security, audit, system
+  severity   String   @default("info") // info, warn, error
+  createdAt  DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
 
@@ -805,24 +902,24 @@ enum CampaignStatus {
 }
 
 model Campaign {
-  id              String          @id @default(cuid())
+  id              String         @id @default(cuid())
   name            String
   description     String
   type            CampaignType
-  status          CampaignStatus  @default(DRAFT)
+  status          CampaignStatus @default(DRAFT)
   targetAudience  String?
   discountPercent Int?
   discountAmount  Int?
   startDate       DateTime?
   endDate         DateTime?
   sentAt          DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  recipients      CampaignRecipient[]
-  opens           CampaignOpen[]
-  clicks          CampaignClick[]
-  emailLogs       EmailLog[]
+  recipients CampaignRecipient[]
+  opens      CampaignOpen[]
+  clicks     CampaignClick[]
+  emailLogs  EmailLog[]
 
   @@map("campaigns")
 }
@@ -866,14 +963,14 @@ model CampaignClick {
 }
 
 model EmailLog {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   campaignId     String?
   recipientEmail String
   subject        String
-  status         String   // SENT, FAILED
+  status         String // SENT, FAILED
   error          String?
   sentAt         DateTime?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
   campaign Campaign? @relation(fields: [campaignId], references: [id])
 

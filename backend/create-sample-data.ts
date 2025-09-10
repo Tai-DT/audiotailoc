@@ -191,6 +191,45 @@ async function seedAllData() {
   }
   console.log('✅ Products created');
 
+  // 2.b Ensure each category has at least 10 products (generate synthetic samples)
+  console.log('🧩 Ensuring each category has at least 10 products...');
+  const targetPerCategory = 10;
+
+  const allCategories = await prisma.category.findMany({});
+  for (const cat of allCategories) {
+    const existingCount = await prisma.product.count({ where: { categoryId: cat.id } });
+    const toCreate = Math.max(0, targetPerCategory - existingCount);
+    if (toCreate === 0) continue;
+
+    let created = 0;
+    let candidateIndex = 1;
+    while (created < toCreate) {
+      const slug = `${cat.slug}-seed-${candidateIndex}`;
+      // ensure slug doesn't exist
+      const existing = await prisma.product.findUnique({ where: { slug } });
+      if (existing) {
+        candidateIndex++;
+        continue;
+      }
+
+      await prisma.product.create({
+        data: {
+          name: `${cat.name} Mẫu ${candidateIndex}`,
+          slug,
+          description: `Sản phẩm mẫu cho danh mục ${cat.name}`,
+          priceCents: 990000 + (candidateIndex * 100000),
+          categoryId: cat.id,
+          featured: false,
+          imageUrl: '/images/products/placeholder.jpg',
+        },
+      });
+
+      created++;
+      candidateIndex++;
+    }
+  }
+  console.log('✅ Category product counts normalized to at least 10');
+
   // 3. Create services
   console.log('🔧 Creating services...');
   const services = [

@@ -1,5 +1,15 @@
 // API Client for Audio Tài Lộc Backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+const API_BASE_URL: string = (() => {
+  const env = process.env.NEXT_PUBLIC_API_URL;
+  if (env && env.trim().length > 0) return env;
+  if (typeof window !== 'undefined') {
+    const origin = `${window.location.protocol}//${window.location.hostname}`;
+    // Fallback to common local backend port
+    return `${origin}:3010/api/v1`;
+  }
+  // Server-side fallback (dev)
+  return 'http://localhost:3010/api/v1';
+})();
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -100,6 +110,12 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
+    // Add admin API key for backend authentication
+    const adminKey = process.env.ADMIN_API_KEY || process.env.NEXT_PUBLIC_ADMIN_API_KEY;
+    if (adminKey) {
+      headers['X-Admin-Key'] = adminKey;
+    }
+
     return headers;
   }
 
@@ -108,9 +124,11 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
+    let response: Response;
+    let responseText: string;
 
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...options,
         headers: {
           ...this.getHeaders(),
@@ -118,22 +136,33 @@ class ApiClient {
         },
       });
 
-      let data;
+      // First get the response as text to handle potential non-JSON responses
+      responseText = await response.text();
+
+      let data: any;
       try {
-        data = await response.json();
+        data = responseText ? JSON.parse(responseText) : {};
       } catch (parseError) {
-        console.error('Failed to parse response JSON:', parseError);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.error('Failed to parse response as JSON. Response text:', responseText);
+        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
       }
 
       if (!response.ok) {
-        console.error('API Error Response:', {
+        const errorInfo = {
           status: response.status,
           statusText: response.statusText,
-          data,
-          url
-        });
-        throw data;
+          url,
+          requestBody: options.body ? JSON.parse(options.body.toString()) : null,
+          responseHeaders: Object.fromEntries(response.headers.entries()),
+          responseText: responseText.substring(0, 500) // First 500 chars of response
+        };
+
+        console.error('API Error Response:', errorInfo);
+
+        const error = new Error(data?.message || `Request failed with status ${response.status}`);
+        (error as any).response = data;
+        (error as any).status = response.status;
+        throw error;
       }
 
       return data;
@@ -154,9 +183,9 @@ class ApiClient {
   }
 
   // Users endpoints
-  async getUsers(params?: { 
-    page?: number; 
-    limit?: number; 
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     role?: string;
     status?: string;
@@ -279,6 +308,22 @@ class ApiClient {
     return this.request(`/catalog/products/${id}`);
   }
 
+  async checkProductDeletable(id: string) {
+    return this.request(`/catalog/products/${id}/deletable`);
+  }
+
+  async checkSkuExists(sku: string, excludeId?: string) {
+    const query = new URLSearchParams();
+    if (excludeId) query.append('excludeId', excludeId);
+    return this.request(`/catalog/products/check-sku/${encodeURIComponent(sku)}?${query.toString()}`);
+  }
+
+  async generateUniqueSku(baseName?: string) {
+    const query = new URLSearchParams();
+    if (baseName) query.append('baseName', baseName);
+    return this.request(`/catalog/generate-sku?${query.toString()}`);
+  }
+
   async deleteProduct(id: string) {
     return this.request(`/catalog/products/${id}`, {
       method: 'DELETE'
@@ -309,12 +354,11 @@ class ApiClient {
   }
 
   // Services endpoints
-  async getServices(params?: { page?: number; limit?: number; category?: string; type?: string; isActive?: boolean }) {
+  async getServices(params?: { page?: number; limit?: number; typeId?: string; isActive?: boolean }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('pageSize', params.limit.toString());
-    if (params?.category) query.append('category', params.category.toString());
-    if (params?.type) query.append('type', params.type.toString());
+    if (params?.typeId) query.append('typeId', params.typeId.toString());
     if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
 
     const queryString = query.toString();
@@ -325,35 +369,14 @@ class ApiClient {
     return this.request(`/services/${id}`);
   }
 
-  async createService(serviceData: {
-    name: string;
-    description?: string;
-    basePriceCents: number;
-    price: number;
-    duration: number;
-    categoryId: string;
-    typeId: string;
-    requirements?: string;
-    features?: string;
-    imageUrl?: string;
-  }) {
+  async createService(serviceData: any) {
     return this.request('/services', {
       method: 'POST',
       body: JSON.stringify(serviceData)
     });
   }
 
-  async updateService(id: string, serviceData: {
-    name?: string;
-    description?: string;
-    basePriceCents?: number;
-    price?: number;
-    duration?: number;
-    requirements?: string;
-    features?: string;
-    imageUrl?: string;
-    isActive?: boolean;
-  }) {
+  async updateService(id: string, serviceData: any) {
     return this.request(`/services/${id}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData)
@@ -366,16 +389,282 @@ class ApiClient {
     });
   }
 
-  async getServiceCategories() {
-    return this.request('/services/categories');
+  async getServiceTypes() {
+    return this.request('/service-types');
   }
 
-  async getServiceTypes() {
-    return this.request('/services/types');
+  async getServiceType(id: string) {
+    return this.request(`/service-types/${id}`);
+  }
+
+  async createServiceType(serviceTypeData: { name: string; description?: string; isActive?: boolean }) {
+    return this.request('/service-types', {
+      method: 'POST',
+      body: JSON.stringify(serviceTypeData)
+    });
+  }
+
+  async updateServiceType(id: string, serviceTypeData: { name?: string; description?: string; isActive?: boolean }) {
+    return this.request(`/service-types/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(serviceTypeData)
+    });
+  }
+
+  async deleteServiceType(id: string) {
+    return this.request(`/service-types/${id}`, {
+      method: 'DELETE'
+    });
   }
 
   async getServiceStats() {
     return this.request('/services/stats');
+  }
+
+  // Inventory endpoints
+  async getInventory(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    categoryId?: string;
+    lowStock?: boolean;
+    outOfStock?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('pageSize', params.limit.toString());
+    if (params?.search) query.append('search', params.search.toString());
+    if (params?.categoryId) query.append('categoryId', params.categoryId.toString());
+    if (params?.lowStock !== undefined) query.append('lowStockOnly', params.lowStock.toString());
+    if (params?.outOfStock !== undefined) query.append('outOfStock', params.outOfStock.toString());
+    if (params?.sortBy) query.append('sortBy', params.sortBy.toString());
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async adjustInventory(productId: string, data: {
+    stockDelta?: number;
+    reservedDelta?: number;
+    lowStockThreshold?: number;
+    reason?: string;
+    referenceId?: string;
+    referenceType?: string;
+    userId?: string;
+    notes?: string;
+  }) {
+    return this.request(`/inventory/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Inventory Movements endpoints
+  async getInventoryMovements(params?: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.productId) query.append('productId', params.productId.toString());
+    if (params?.type) query.append('type', params.type.toString());
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+    if (params?.sortBy) query.append('sortBy', params.sortBy.toString());
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/movements${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getInventoryMovement(id: string) {
+    return this.request(`/inventory/movements/${id}`);
+  }
+
+  async createInventoryMovement(data: {
+    productId: string;
+    type: 'IN' | 'OUT' | 'RESERVED' | 'UNRESERVED' | 'ADJUSTMENT';
+    quantity: number;
+    reason: string;
+    referenceId?: string;
+    referenceType?: string;
+    userId?: string;
+    notes?: string;
+  }) {
+    return this.request('/inventory/movements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInventoryMovementsByProduct(productId: string, params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.type) query.append('type', params.type.toString());
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/movements/product/${productId}${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getInventoryMovementsSummary(params?: {
+    startDate?: string;
+    endDate?: string;
+    productId?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+    if (params?.productId) query.append('productId', params.productId.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/movements/summary${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // Inventory Alerts endpoints
+  async getInventoryAlerts(params?: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    type?: string;
+    isResolved?: boolean;
+    startDate?: string;
+    endDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.productId) query.append('productId', params.productId.toString());
+    if (params?.type) query.append('type', params.type.toString());
+    if (params?.isResolved !== undefined) query.append('isResolved', params.isResolved.toString());
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+    if (params?.sortBy) query.append('sortBy', params.sortBy.toString());
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/alerts${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getInventoryAlert(id: string) {
+    return this.request(`/inventory/alerts/${id}`);
+  }
+
+  async createInventoryAlert(data: {
+    productId: string;
+    type: 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK' | 'EXPIRING';
+    message: string;
+    threshold?: number;
+    currentStock?: number;
+  }) {
+    return this.request('/inventory/alerts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInventoryAlertsByProduct(productId: string, params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    isResolved?: boolean;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.type) query.append('type', params.type.toString());
+    if (params?.isResolved !== undefined) query.append('isResolved', params.isResolved.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/alerts/product/${productId}${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getActiveInventoryAlerts(params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.type) query.append('type', params.type.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/alerts/active${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getInventoryAlertsSummary(params?: {
+    startDate?: string;
+    endDate?: string;
+    productId?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+    if (params?.productId) query.append('productId', params.productId.toString());
+
+    const queryString = query.toString();
+    return this.request(`/inventory/alerts/summary${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async resolveInventoryAlert(id: string, data?: {
+    resolvedBy?: string;
+    notes?: string;
+  }) {
+    return this.request(`/inventory/alerts/${id}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async bulkResolveInventoryAlerts(data: {
+    alertIds: string[];
+    resolvedBy?: string;
+    notes?: string;
+  }) {
+    return this.request('/inventory/alerts/bulk-resolve', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async checkAndCreateInventoryAlerts() {
+    return this.request('/inventory/alerts/check', {
+      method: 'POST',
+    });
+  }
+
+  async deleteInventoryAlert(id: string) {
+    return this.request(`/inventory/alerts/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async bulkDeleteInventoryAlerts(data: { alertIds: string[] }) {
+    return this.request('/inventory/alerts/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   // File upload endpoints
@@ -454,9 +743,228 @@ class ApiClient {
   async getCurrentUser() {
     return this.request('/auth/me');
   }
+
+  // Banner endpoints
+  async getBanners(params?: {
+    page?: string;
+    active?: boolean;
+    search?: string;
+    skip?: number;
+    take?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page);
+    if (params?.active !== undefined) query.append('active', params.active.toString());
+    if (params?.search) query.append('search', params.search);
+    if (params?.skip !== undefined) query.append('skip', params.skip.toString());
+    if (params?.take !== undefined) query.append('take', params.take.toString());
+    return this.request(`/content/banners?${query.toString()}`);
+  }
+
+  async getBanner(id: string) {
+    return this.request(`/content/banners/${id}`);
+  }
+
+  async createBanner(data: any) {
+    return this.request('/admin/banners', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBanner(id: string, data: any) {
+    return this.request(`/admin/banners/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBanner(id: string) {
+    return this.request(`/admin/banners/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Settings endpoints
+  async getSiteSettings() {
+    return this.request('/content/settings');
+  }
+
+  async getSiteSettingsSection(section: string) {
+    return this.request(`/content/settings/${section}`);
+  }
+
+  async updateSiteSettings(data: any) {
+    return this.request('/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Bookings endpoints
+  async getBookings(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    serviceTypeId?: string;
+    technicianId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    startDate?: string;
+    endDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status.toString());
+    if (params?.serviceTypeId) query.append('serviceTypeId', params.serviceTypeId.toString());
+    if (params?.technicianId) query.append('technicianId', params.technicianId.toString());
+    if (params?.customerName) query.append('customerName', params.customerName.toString());
+    if (params?.customerPhone) query.append('customerPhone', params.customerPhone.toString());
+    if (params?.startDate) query.append('startDate', params.startDate.toString());
+    if (params?.endDate) query.append('endDate', params.endDate.toString());
+    if (params?.sortBy) query.append('sortBy', params.sortBy.toString());
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder.toString());
+
+    const queryString = query.toString();
+    return this.request(`/bookings${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getBooking(id: string) {
+    return this.request(`/bookings/${id}`);
+  }
+
+  async createBooking(bookingData: {
+    serviceTypeId: string;
+    technicianId?: string;
+    customerName: string;
+    customerPhone: string;
+    customerEmail?: string;
+    customerAddress: string;
+    customerCoordinates?: { lat: number; lng: number };
+    scheduledDate: string;
+    scheduledTime: string;
+    notes?: string;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  }) {
+    return this.request('/bookings', {
+      method: 'POST',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBooking(id: string, bookingData: {
+    serviceTypeId?: string;
+    technicianId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    customerAddress?: string;
+    customerCoordinates?: { lat: number; lng: number };
+    scheduledDate?: string;
+    scheduledTime?: string;
+    notes?: string;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  }) {
+    return this.request(`/bookings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBookingStatus(id: string, status: string, notes?: string) {
+    return this.request(`/bookings/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+
+  async assignTechnician(id: string, technicianId: string) {
+    return this.request(`/bookings/${id}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ technicianId }),
+    });
+  }
+
+  async deleteBooking(id: string) {
+    return this.request(`/bookings/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getBookingStats() {
+    return this.request('/bookings/stats');
+  }
+
+  // Technicians endpoints
+  async getTechnicians(params?: {
+    page?: number;
+    limit?: number;
+    serviceTypeId?: string;
+    isActive?: boolean;
+    search?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.serviceTypeId) query.append('serviceTypeId', params.serviceTypeId.toString());
+    if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
+    if (params?.search) query.append('search', params.search.toString());
+
+    const queryString = query.toString();
+    return this.request(`/technicians${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getTechnician(id: string) {
+    return this.request(`/technicians/${id}`);
+  }
+
+  async createTechnician(technicianData: {
+    name: string;
+    phone: string;
+    email?: string;
+    specialization?: string[];
+    serviceTypeIds: string[];
+    isActive?: boolean;
+    notes?: string;
+  }) {
+    return this.request('/technicians', {
+      method: 'POST',
+      body: JSON.stringify(technicianData),
+    });
+  }
+
+  async updateTechnician(id: string, technicianData: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    specialization?: string[];
+    serviceTypeIds?: string[];
+    isActive?: boolean;
+    notes?: string;
+  }) {
+    return this.request(`/technicians/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(technicianData),
+    });
+  }
+
+  async deleteTechnician(id: string) {
+    return this.request(`/technicians/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getTechnicianAvailability(id: string, date: string) {
+    return this.request(`/technicians/${id}/availability?date=${date}`);
+  }
 }
 
+
 // Create and export singleton instance
+
 export const apiClient = new ApiClient(API_BASE_URL);
 
 // Export types

@@ -62,7 +62,20 @@ export class AuthController {
     const tokens = await this.auth.login(dto).catch(() => {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     });
-    return tokens;
+    const user = await this.users.findById(tokens.userId);
+    return {
+      data: {
+        data: {
+          token: tokens.accessToken,
+          user: {
+            id: user?.id,
+            email: user?.email,
+            name: user?.name,
+            role: (user as any)?.role ?? 'USER'
+          }
+        }
+      }
+    };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute for refresh
@@ -98,7 +111,7 @@ export class AuthController {
   async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
     const userId = req.user?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
-    
+
     const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
       throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
     });
@@ -115,4 +128,3 @@ export class AuthController {
     return { userId, email: u?.email ?? null, role: (u as any)?.role ?? null };
   }
 }
-

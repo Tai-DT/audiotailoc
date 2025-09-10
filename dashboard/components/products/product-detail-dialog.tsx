@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import { Star, Image as ImageIcon, Calendar, Eye, Package } from "lucide-react"
+import { Star, Image as ImageIcon, Calendar, Eye, Package, Tag, Settings, Hash, Scale, Ruler, Shield, Zap } from "lucide-react"
 import Image from "next/image"
 
 interface Product {
@@ -139,9 +139,11 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                 // Handle different image data formats safely
                 const imageUrls: string[] = []
 
+                // Ưu tiên sử dụng images array trước
                 if (Array.isArray(product.images) && product.images.length > 0) {
                   imageUrls.push(...product.images)
                 } else if (product.imageUrl) {
+                  // Chỉ sử dụng imageUrl khi không có images array
                   imageUrls.push(product.imageUrl)
                 }
 
@@ -169,8 +171,18 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
           <div className="space-y-4">
             <div>
               <h3 className="text-2xl font-bold">{product.name}</h3>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="text-xs">
+                  ID: {product.id}
+                </Badge>
+                {product.slug && (
+                  <Badge variant="outline" className="text-xs">
+                    Slug: {product.slug}
+                  </Badge>
+                )}
+              </div>
               {product.shortDescription && (
-                <p className="text-muted-foreground mt-1">{product.shortDescription}</p>
+                <p className="text-muted-foreground mt-2">{product.shortDescription}</p>
               )}
               {product.description && (
                 <p className="text-muted-foreground mt-2">{product.description}</p>
@@ -179,14 +191,20 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
 
             <Separator />
 
+            {/* Price Information */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Giá</label>
+                <label className="text-sm font-medium text-muted-foreground">Giá hiện tại</label>
                 <p className="text-2xl font-bold text-green-600">{formatCurrency(product.priceCents)}</p>
                 {product.originalPriceCents && product.originalPriceCents > product.priceCents && (
-                  <p className="text-sm text-muted-foreground line-through">
-                    {formatCurrency(product.originalPriceCents)}
-                  </p>
+                  <div className="mt-1">
+                    <p className="text-sm text-muted-foreground line-through">
+                      {formatCurrency(product.originalPriceCents)}
+                    </p>
+                    <Badge variant="destructive" className="text-xs mt-1">
+                      Giảm {Math.round(((product.originalPriceCents - product.priceCents) / product.originalPriceCents) * 100)}%
+                    </Badge>
+                  </div>
                 )}
               </div>
               <div>
@@ -195,30 +213,55 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
               </div>
             </div>
 
-            {/* Product Details */}
+            {/* Basic Product Details */}
             <div className="grid grid-cols-2 gap-4">
               {product.brand && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Thương hiệu</label>
-                  <p>{product.brand}</p>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Thương hiệu</label>
+                    <p className="font-medium">{product.brand}</p>
+                  </div>
                 </div>
               )}
               {product.model && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Model</label>
-                  <p>{product.model}</p>
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Model</label>
+                    <p className="font-medium">{product.model}</p>
+                  </div>
                 </div>
               )}
               {product.sku && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">SKU</label>
-                  <p>{product.sku}</p>
+                <div className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">SKU</label>
+                    <p className="font-medium font-mono">{product.sku}</p>
+                  </div>
                 </div>
               )}
               {product.stockQuantity !== undefined && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Tồn kho</label>
-                  <p>{product.stockQuantity}</p>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Tồn kho</label>
+                    <div className="flex items-center gap-2">
+                      <p className={`font-medium ${
+                        product.stockQuantity === 0 ? 'text-red-600' :
+                        product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {product.stockQuantity}
+                      </p>
+                      {product.stockQuantity === 0 && (
+                        <Badge variant="destructive" className="text-xs">Hết hàng</Badge>
+                      )}
+                      {product.stockQuantity > 0 && product.stockQuantity < 10 && (
+                        <Badge variant="secondary" className="text-xs">Sắp hết</Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -227,15 +270,21 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
             {(product.weight || product.dimensions) && (
               <div className="grid grid-cols-2 gap-4">
                 {product.weight && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Trọng lượng</label>
-                    <p>{product.weight} kg</p>
+                  <div className="flex items-center gap-2">
+                    <Scale className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Trọng lượng</label>
+                      <p className="font-medium">{product.weight} kg</p>
+                    </div>
                   </div>
                 )}
                 {product.dimensions && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Kích thước</label>
-                    <p>{product.dimensions}</p>
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Kích thước</label>
+                      <p className="font-medium">{product.dimensions}</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -243,17 +292,22 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
 
             {/* Warranty & Features */}
             {(product.warranty || product.features) && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {product.warranty && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Bảo hành</label>
-                    <p>{product.warranty}</p>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Bảo hành</label>
+                      <p className="font-medium">{product.warranty}</p>
+                    </div>
                   </div>
                 )}
                 {product.features && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Tính năng</label>
-                    <p>{product.features}</p>
+                    <div className="mt-1 p-3 bg-muted rounded-md">
+                      <p className="whitespace-pre-line">{product.features}</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -263,15 +317,21 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
             {(product.minOrderQuantity || product.maxOrderQuantity) && (
               <div className="grid grid-cols-2 gap-4">
                 {product.minOrderQuantity && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Số lượng tối thiểu</label>
-                    <p>{product.minOrderQuantity}</p>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Số lượng tối thiểu</label>
+                      <p className="font-medium">{product.minOrderQuantity}</p>
+                    </div>
                   </div>
                 )}
                 {product.maxOrderQuantity && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Số lượng tối đa</label>
-                    <p>{product.maxOrderQuantity}</p>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Số lượng tối đa</label>
+                      <p className="font-medium">{product.maxOrderQuantity}</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -279,16 +339,22 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
 
             {/* Tags */}
             {product.tags && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Tags</label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {product.tags.split(',').map((tag, index) => (
-                    <Badge key={index} variant="outline">{tag.trim()}</Badge>
-                  ))}
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-muted-foreground">Tags</label>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {product.tags.split(',').map((tag, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag.trim()}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
+            {/* Status Badges */}
             <div className="flex flex-wrap gap-2">
               <Badge variant={product.isActive ? "default" : "secondary"}>
                 {product.isActive ? 'Hoạt động' : 'Không hoạt động'}
@@ -299,26 +365,34 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                   Nổi bật
                 </Badge>
               )}
+              {product.isDeleted && (
+                <Badge variant="destructive">
+                  Đã xóa
+                </Badge>
+              )}
             </div>
 
             <Separator />
 
+            {/* Statistics */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Lượt xem:</span>
                 <span className="font-medium">{product.viewCount || 0}</span>
               </div>
-              {product.slug && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Slug:</span>
-                  <span className="font-medium">{product.slug}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Trạng thái:</span>
+                <span className="font-medium">
+                  {product.isDeleted ? 'Đã xóa' : product.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                </span>
+              </div>
             </div>
 
             <Separator />
 
+            {/* Timestamps */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -337,13 +411,16 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
           {product.specifications && Object.keys(product.specifications).length > 0 && (
             <>
               <Separator />
-              <div className="space-y-2">
-                <h4 className="text-lg font-medium">Thông số kỹ thuật</h4>
+              <div className="space-y-3">
+                <h4 className="text-lg font-medium flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Thông số kỹ thuật
+                </h4>
                 <div className="grid grid-cols-1 gap-2">
                   {Object.entries(product.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b">
-                      <span className="font-medium">{key}:</span>
-                      <span>{String(value)}</span>
+                    <div key={key} className="flex justify-between items-center py-2 px-3 border rounded-md bg-muted/30">
+                      <span className="font-medium text-sm">{key}:</span>
+                      <span className="text-sm text-right">{String(value)}</span>
                     </div>
                   ))}
                 </div>
@@ -355,31 +432,40 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
           {(product.metaTitle || product.metaDescription || product.metaKeywords || product.canonicalUrl) && (
             <>
               <Separator />
-              <div className="space-y-2">
-                <h4 className="text-lg font-medium">Thông tin SEO</h4>
-                <div className="space-y-2">
+              <div className="space-y-3">
+                <h4 className="text-lg font-medium flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Thông tin SEO
+                </h4>
+                <div className="space-y-3">
                   {product.metaTitle && (
-                    <div>
+                    <div className="p-3 border rounded-md bg-muted/30">
                       <label className="text-sm font-medium text-muted-foreground">Meta Title</label>
-                      <p className="text-sm">{product.metaTitle}</p>
+                      <p className="text-sm mt-1 font-medium">{product.metaTitle}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Độ dài: {product.metaTitle.length}/60 ký tự
+                      </p>
                     </div>
                   )}
                   {product.metaDescription && (
-                    <div>
+                    <div className="p-3 border rounded-md bg-muted/30">
                       <label className="text-sm font-medium text-muted-foreground">Meta Description</label>
-                      <p className="text-sm">{product.metaDescription}</p>
+                      <p className="text-sm mt-1">{product.metaDescription}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Độ dài: {product.metaDescription.length}/160 ký tự
+                      </p>
                     </div>
                   )}
                   {product.metaKeywords && (
-                    <div>
+                    <div className="p-3 border rounded-md bg-muted/30">
                       <label className="text-sm font-medium text-muted-foreground">Meta Keywords</label>
-                      <p className="text-sm">{product.metaKeywords}</p>
+                      <p className="text-sm mt-1">{product.metaKeywords}</p>
                     </div>
                   )}
                   {product.canonicalUrl && (
-                    <div>
+                    <div className="p-3 border rounded-md bg-muted/30">
                       <label className="text-sm font-medium text-muted-foreground">Canonical URL</label>
-                      <p className="text-sm">{product.canonicalUrl}</p>
+                      <p className="text-sm mt-1 font-mono break-all">{product.canonicalUrl}</p>
                     </div>
                   )}
                 </div>

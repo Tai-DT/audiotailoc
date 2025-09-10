@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test'
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@example.com'
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'password'
-const BASE = process.env.BASE_URL || 'http://127.0.0.1:3001'
+const BASE = process.env.BASE_URL || 'http://localhost:3001'
 
 test.setTimeout(120000)
 

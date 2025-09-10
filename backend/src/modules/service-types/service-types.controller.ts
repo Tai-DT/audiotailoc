@@ -9,8 +9,9 @@ import { AdminGuard } from '../auth/admin.guard';
 @ApiTags('Service Types')
 @Controller('service-types')
 export class ServiceTypesController {
-  constructor(private readonly serviceTypesService: ServiceTypesService) {}
-
+  constructor(private readonly serviceTypesService: ServiceTypesService) {
+    console.log('[ServiceTypesController] Constructor called');
+  }
   @Post()
   @UseGuards(JwtGuard, AdminGuard)
   @ApiBearerAuth()
@@ -21,14 +22,45 @@ export class ServiceTypesController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden. Admin access required.' })
   create(@Body() createServiceTypeDto: CreateServiceTypeDto) {
+    console.log('[ServiceTypesController] Creating service type:', createServiceTypeDto);
     return this.serviceTypesService.create(createServiceTypeDto);
+  }
+
+  @Post('test')
+  @ApiOperation({ summary: 'Test create service type without auth' })
+  testCreate(@Body() createServiceTypeDto: CreateServiceTypeDto) {
+    console.log('[ServiceTypesController] Test creating service type:', createServiceTypeDto);
+    return this.serviceTypesService.create(createServiceTypeDto);
+  }
+
+  @Get('debug')
+  @ApiOperation({ summary: 'Debug endpoint to test service' })
+  debug() {
+    console.log('[ServiceTypesController] Debug endpoint called');
+    return { message: 'Debug endpoint working', timestamp: new Date().toISOString() };
+  }
+
+  @Get('test-endpoint')
+  @ApiOperation({ summary: 'Test endpoint' })
+  testEndpoint() {
+    console.log('[ServiceTypesController] Test endpoint called');
+    return { message: 'Test endpoint working', timestamp: new Date().toISOString() };
+  }
+
+  @Get('simple-test')
+  @ApiOperation({ summary: 'Simple test endpoint' })
+  simpleTest() {
+    console.log('[ServiceTypesController] Simple test called');
+    return { status: 'ok', message: 'Simple test working' };
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all active service types' })
   @ApiResponse({ status: 200, description: 'Return all active service types.' })
-  findAll(@Query('categoryId') categoryId?: string) {
-    return this.serviceTypesService.findAll(categoryId);
+  findAll() {
+    console.log('[ServiceTypesController] GET /service-types called');
+    console.log('[ServiceTypesController] About to call service.findAll()');
+    return this.serviceTypesService.findAll();
   }
 
   @Get(':id')
@@ -52,6 +84,7 @@ export class ServiceTypesController {
     @Param('id') id: string,
     @Body() updateServiceTypeDto: UpdateServiceTypeDto,
   ) {
+    console.log(`[ServiceTypesController] PATCH /service-types/${id} - Data:`, updateServiceTypeDto);
     return this.serviceTypesService.update(id, updateServiceTypeDto);
   }
 
@@ -65,6 +98,7 @@ export class ServiceTypesController {
   @ApiResponse({ status: 403, description: 'Forbidden. Admin access required.' })
   @ApiResponse({ status: 404, description: 'Service type not found.' })
   remove(@Param('id') id: string) {
+    console.log(`[ServiceTypesController] DELETE /service-types/${id}`);
     return this.serviceTypesService.remove(id);
   }
 }

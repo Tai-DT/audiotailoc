@@ -141,12 +141,6 @@ const paymentResult = await mockServices.mockPaymentGateway('create_payment_url'
   orderId: 'order_123'
 });
 
-// Mock AI service
-const aiResult = await mockServices.mockAIService('generate_text', {
-  prompt: 'Test prompt',
-  maxTokens: 100
-});
-
 // Custom mock response
 mockServices.setMockResponse('payment_gateway', 'verify_payment', {
   success: true,
@@ -156,7 +150,6 @@ mockServices.setMockResponse('payment_gateway', 'verify_payment', {
 
 ### Available Mock Services
 - **Payment Gateway** - VNPAY, MOMO simulation
-- **AI Service** - Gemini API simulation
 - **Email Service** - SMTP simulation
 - **SMS Service** - SMS gateway simulation
 - **File Storage** - Cloudinary/MinIO simulation
@@ -332,7 +325,6 @@ JWT_REFRESH_SECRET=test-refresh-secret
 
 # External Services
 VNPAY_TMN_CODE=test_tmn_code
-GEMINI_API_KEY=test_gemini_api_key
 ```
 
 ## Test Categories

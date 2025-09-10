@@ -221,6 +221,8 @@ class ApiClient {
     search?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    limit?: number;
+    featured?: boolean;
   }): Promise<ApiResponse<PaginatedResponse<any>>> {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -234,7 +236,8 @@ class ApiClient {
   }
 
   public async getProduct(slug: string): Promise<ApiResponse<any>> {
-    return this.get(`/catalog/products/${slug}`);
+    // Fetch product detail by slug
+    return this.get(`/catalog/products/slug/${encodeURIComponent(slug)}`);
   }
 
   public async getCategories(): Promise<ApiResponse<any[]>> {
@@ -329,6 +332,41 @@ class ApiClient {
     return this.get(`/services/id/${id}`);
   }
 
+  // Booking methods
+  public async createBooking(data: {
+    serviceId: string;
+    customerName: string;
+    customerPhone: string;
+    customerEmail?: string;
+    customerAddress: string;
+    scheduledAt: string;
+    scheduledTime: string;
+    notes?: string;
+    items?: { itemId: string; quantity: number }[];
+  }): Promise<ApiResponse<any>> {
+    return this.post('/booking', data);
+  }
+
+  public async getBookings(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    return this.get(`/booking?${queryParams.toString()}`);
+  }
+
+  public async getBooking(id: string): Promise<ApiResponse<any>> {
+    return this.get(`/booking/${id}`);
+  }
+
   // i18n methods
   public async getLanguages(): Promise<ApiResponse<string[]>> {
     return this.get('/i18n/languages');
@@ -368,6 +406,8 @@ export const api = {
       search?: string;
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
+      limit?: number;
+      featured?: boolean;
     }) => apiClient.getProducts(params),
     getById: (slug: string) => apiClient.getProduct(slug)
   },
@@ -395,6 +435,35 @@ export const api = {
     create: (orderData: any) => apiClient.createOrder(orderData),
     getAll: () => apiClient.getOrders(),
     getById: (orderId: string) => apiClient.getOrder(orderId)
+  },
+  bookings: {
+    create: (data: {
+      serviceId: string;
+      customerName: string;
+      customerPhone: string;
+      customerEmail?: string;
+      customerAddress: string;
+      scheduledAt: string;
+      scheduledTime: string;
+      notes?: string;
+      items?: { itemId: string; quantity: number }[];
+    }) => apiClient.createBooking(data),
+    getAll: (params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+    }) => apiClient.getBookings(params),
+    getById: (id: string) => apiClient.getBooking(id)
+  },
+  payment: {
+    createIntent: (data: {
+      orderId: string;
+      provider: 'PAYOS' | 'COD';
+      idempotencyKey?: string;
+      returnUrl?: string;
+    }) => apiClient.post('/payments/intents', data),
+    getMethods: () => apiClient.get('/payments/methods'),
+    getStatus: () => apiClient.get('/payments/status')
   }
 };
 

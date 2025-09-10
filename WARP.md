@@ -151,7 +151,7 @@ The application uses Prisma ORM with PostgreSQL. Key models include:
 - **ProductReview**: Product ratings and reviews with moderation
 - **WishlistItem**: User wishlist functionality
 - **Notification**: User notifications system
-- **ChatSession**: Customer support chat
+- **CustomerQuestion**: Zalo customer support inquiries
 
 ### Analytics & Tracking
 - **ProductView/ServiceView**: View tracking for analytics
@@ -163,7 +163,6 @@ The application uses Prisma ORM with PostgreSQL. Key models include:
 ### Backend Modules (`/backend/src/modules`)
 - `auth/`: JWT authentication, guards, role management
 - `admin/`: Admin panel APIs and management functions
-- `ai/`: Google AI integration (Gemini) and embeddings
 - `analytics/`: Usage analytics and reporting
 - `booking/`: Service booking management
 - `cache/`: Redis caching layer
@@ -296,7 +295,7 @@ NEXTAUTH_SECRET="your-nextauth-secret"
 - Analytics tracking for search queries
 
 ### User Experience
-- Real-time chat support
+- Zalo customer support integration
 - Product reviews and ratings
 - Wishlist functionality
 - Order tracking and history

@@ -20,9 +20,7 @@ export class BookingService {
     notes?: string;
     items?: Array<{ itemId: string; quantity: number }>;
   }) {
-    if (!data.userId) {
-      throw new BadRequestException('userId is required');
-    }
+    // userId is optional now to support guest bookings
     const service = await this.prisma.service.findUnique({
       where: { id: data.serviceId },
       include: { items: true },
@@ -34,15 +32,17 @@ export class BookingService {
 
     const booking = await this.prisma.$transaction(async (tx) => {
       // Create booking
+      const createData: any = {
+        serviceId: data.serviceId,
+        scheduledAt: data.scheduledAt,
+        scheduledTime: data.scheduledTime,
+        notes: data.notes,
+        status: ServiceBookingStatus.PENDING,
+      };
+      if (data.userId) createData.userId = data.userId;
+
       const newBooking = await tx.serviceBooking.create({
-        data: {
-          serviceId: data.serviceId,
-          userId: data.userId as string,
-          scheduledAt: data.scheduledAt,
-          scheduledTime: data.scheduledTime,
-          notes: data.notes,
-          status: ServiceBookingStatus.PENDING,
-        },
+        data: createData,
       });
 
       // Add booking items if provided
@@ -95,7 +95,11 @@ export class BookingService {
     const booking = await this.prisma.serviceBooking.findUnique({
       where: { id },
       include: {
-        service: true,
+        service: {
+          include: {
+            serviceType: true,
+          },
+        },
         user: true,
         technician: true,
         items: {
@@ -146,7 +150,11 @@ export class BookingService {
       this.prisma.serviceBooking.findMany({
         where,
         include: {
-          service: true,
+          service: {
+            include: {
+              serviceType: true,
+            },
+          },
           user: true,
           technician: true,
           items: {

@@ -2,29 +2,26 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import { useProductStore } from '@/store/product-store';
 import { useCartStore } from '@/store/cart-store';
 import { useUIStore } from '@/store/ui-store';
 import { ProductCard } from '@/components/products/ProductCard';
 
-interface ProductDetailPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default function ProductDetailPage() {
   const { currentProduct, products, isLoading, error, fetchProduct, fetchProducts } = useProductStore();
   const { addItem } = useCartStore();
   const { addNotification } = useUIStore();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
+  const { slug } = useParams<{ slug: string }>();
+
   useEffect(() => {
-    if (params.slug) {
-      fetchProduct(params.slug);
+    if (slug) {
+      fetchProduct(slug);
     }
-  }, [params.slug, fetchProduct]);
+  }, [slug, fetchProduct]);
 
   useEffect(() => {
     // Fetch related products
