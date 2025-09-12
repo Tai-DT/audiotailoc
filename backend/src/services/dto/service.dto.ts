@@ -86,10 +86,6 @@ export class CreateServiceTypeDto {
   @MaxLength(500)
   description?: string;
 
-  @ApiProperty()
-  @IsUUID()
-  categoryId!: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -126,11 +122,6 @@ export class UpdateServiceTypeDto {
   @IsString()
   @MaxLength(500)
   description?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsUUID()
-  categoryId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

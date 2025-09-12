@@ -23,7 +23,7 @@ if (process && process.stdout && typeof process.stdout.on === 'function') {
 import { AppModule } from './modules/app.module';
 import helmet from 'helmet';
 import compression from 'compression';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { json, urlencoded } from 'express';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -57,13 +57,14 @@ async function bootstrap() {
   app.use(compression({
     level: 6, // Good balance between compression and performance
     threshold: 1024, // Only compress responses larger than 1KB
-    filter: (req: Request, res: Response) => {
+    // Use any to avoid conflicts between different @types/express packages (e.g., multer vs express)
+    filter: (req: any, res: any) => {
       // Don't compress responses with this request header
-      if (req.headers['x-no-compression']) {
+      if (req && req.headers && req.headers['x-no-compression']) {
         return false;
       }
-      // Use compression filter function
-      return compression.filter(req, res);
+      // Use compression filter function - cast to any to avoid incompatible Request types
+      return (compression as any).filter(req, res);
     },
   }));
 
@@ -75,13 +76,11 @@ async function bootstrap() {
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
         imgSrc: ["'self'", "data:", "https:"],
-  // Allow websocket connections for realtime features
-  connectSrc: ["'self'", 'ws:', 'wss:'],
       },
     },
   }));
 
-  // Enhanced CORS configuration - exclude WebSocket upgrades
+  // Enhanced CORS configuration
   const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002');
   const allowedOrigins = corsOrigins.split(',').map((origin: string) => origin.trim());
 
@@ -260,7 +259,7 @@ async function bootstrap() {
     }
   }
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   // Initialize graceful shutdown after server starts (commented out - service doesn't exist)
   // const shutdownService = app.get(GracefulShutdownService);

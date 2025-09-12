@@ -8,6 +8,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+enum CampaignType {
+  EMAIL
+  SMS
+  PUSH
+  SOCIAL
+  PROMOTIONAL
+  NEWSLETTER
+  PRODUCT_UPDATE
+  WELCOME
+  ABANDONED_CART
+}
+
 // User Model
 model User {
   id        String   @id @default(cuid())
@@ -47,12 +73,12 @@ model Product {
   priceCents         Int
   originalPriceCents Int?
   imageUrl           String?
-  images             Json? // Array of image URLs
+  images             String? // Array of image URLs
   categoryId         String?
   brand              String?
   model              String?
   sku                String? @unique
-  specifications     Json? // Product specifications as JSON
+  specifications     String? // Product specifications as JSON
   features           String? // Key features (comma separated)
   warranty           String? // Warranty information
   weight             Float? // Weight in kg
@@ -399,13 +425,6 @@ model ProductReview {
   reports ProductReviewReport[]
 
   @@map("product_reviews")
-}
-
-// Review status enum for moderation
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  REJECTED
 }
 
 // Users can vote helpful/report on reviews
@@ -836,7 +855,7 @@ model Project {
   canonicalUrl    String?
 
   // Additional fields
-  content        String?   @db.Text // Rich HTML content
+  content        String? 
   galleryImages  String? // JSON array of gallery images
   clientLogoUrl  String?
   projectDate    DateTime?
@@ -886,20 +905,6 @@ model ActivityLog {
 // ==========================
 // Marketing Models & Enums
 // ==========================
-
-enum CampaignType {
-  EMAIL
-  SMS
-  PUSH
-  SOCIAL
-}
-
-enum CampaignStatus {
-  DRAFT
-  SCHEDULED
-  SENT
-  CANCELLED
-}
 
 model Campaign {
   id              String         @id @default(cuid())

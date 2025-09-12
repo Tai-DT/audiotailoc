@@ -5,14 +5,11 @@ import {
   Put,
   Delete,
   Body,
-  Param,
-  Query
+  Param
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import {
-  CreateServiceCategoryDto,
-  UpdateServiceCategoryDto,
   CreateServiceTypeDto,
   UpdateServiceTypeDto,
   CreateServiceDto,
@@ -24,118 +21,73 @@ import {
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  // Service Categories
-  @Get('categories')
-  @ApiOperation({ summary: 'Get all service categories' })
-  @ApiResponse({ status: 200, description: 'List of service categories' })
-  async getCategories() {
-    return this.servicesService.findAllCategories();
-  }
-
-  @Get('categories/:id')
-  @ApiOperation({ summary: 'Get service category by ID' })
-  @ApiParam({ name: 'id', description: 'Category ID' })
-  @ApiResponse({ status: 200, description: 'Service category details' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
-  async getCategory(@Param('id') id: string) {
-    return this.servicesService.findCategoryById(id);
-  }
-
-  @Post('categories')
-  @ApiOperation({ summary: 'Create new service category' })
-  @ApiResponse({ status: 201, description: 'Category created successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid input data' })
-  @ApiResponse({ status: 409, description: 'Category slug already exists' })
-  async createCategory(@Body() dto: CreateServiceCategoryDto) {
-    return this.servicesService.createCategory(dto);
-  }
-
-  @Put('categories/:id')
-  @ApiOperation({ summary: 'Update service category' })
-  @ApiParam({ name: 'id', description: 'Category ID' })
-  @ApiResponse({ status: 200, description: 'Category updated successfully' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
-  async updateCategory(@Param('id') id: string, @Body() dto: UpdateServiceCategoryDto) {
-    return this.servicesService.updateCategory(id, dto);
-  }
-
-  @Delete('categories/:id')
-  @ApiOperation({ summary: 'Delete service category' })
-  @ApiParam({ name: 'id', description: 'Category ID' })
-  @ApiResponse({ status: 200, description: 'Category deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
-  @ApiResponse({ status: 400, description: 'Cannot delete category with existing services or types' })
-  async deleteCategory(@Param('id') id: string) {
-    return this.servicesService.deleteCategory(id);
-  }
-
-  // Service Types
+  // Service Types (formerly Categories)
   @Get('types')
   @ApiOperation({ summary: 'Get all service types' })
   @ApiResponse({ status: 200, description: 'List of service types' })
-  async getTypes() {
-    return this.servicesService.findAllTypes();
+  async getServiceTypes() {
+    return this.servicesService.findAllServiceTypes();
   }
 
   @Get('types/:id')
   @ApiOperation({ summary: 'Get service type by ID' })
-  @ApiParam({ name: 'id', description: 'Type ID' })
+  @ApiParam({ name: 'id', description: 'Service Type ID' })
   @ApiResponse({ status: 200, description: 'Service type details' })
-  @ApiResponse({ status: 404, description: 'Type not found' })
-  async getType(@Param('id') id: string) {
-    return this.servicesService.findTypeById(id);
+  @ApiResponse({ status: 404, description: 'Service type not found' })
+  async getServiceType(@Param('id') id: string) {
+    return this.servicesService.findServiceTypeById(id);
   }
 
   @Post('types')
   @ApiOperation({ summary: 'Create new service type' })
-  @ApiResponse({ status: 201, description: 'Type created successfully' })
+  @ApiResponse({ status: 201, description: 'Service type created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  @ApiResponse({ status: 409, description: 'Type slug already exists' })
-  async createType(@Body() dto: CreateServiceTypeDto) {
-    return this.servicesService.createType(dto);
+  @ApiResponse({ status: 409, description: 'Service type slug already exists' })
+  async createServiceType(@Body() dto: CreateServiceTypeDto) {
+    return this.servicesService.createServiceType(dto);
   }
 
   @Put('types/:id')
   @ApiOperation({ summary: 'Update service type' })
-  @ApiParam({ name: 'id', description: 'Type ID' })
-  @ApiResponse({ status: 200, description: 'Type updated successfully' })
-  @ApiResponse({ status: 404, description: 'Type not found' })
-  async updateType(@Param('id') id: string, @Body() dto: UpdateServiceTypeDto) {
-    return this.servicesService.updateType(id, dto);
+  @ApiParam({ name: 'id', description: 'Service Type ID' })
+  @ApiResponse({ status: 200, description: 'Service type updated successfully' })
+  @ApiResponse({ status: 404, description: 'Service type not found' })
+  @ApiResponse({ status: 409, description: 'Service type slug already exists' })
+  async updateServiceType(@Param('id') id: string, @Body() dto: UpdateServiceTypeDto) {
+    return this.servicesService.updateServiceType(id, dto);
   }
 
   @Delete('types/:id')
   @ApiOperation({ summary: 'Delete service type' })
-  @ApiParam({ name: 'id', description: 'Type ID' })
-  @ApiResponse({ status: 200, description: 'Type deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Type not found' })
-  @ApiResponse({ status: 400, description: 'Cannot delete type with existing services' })
-  async deleteType(@Param('id') id: string) {
-    return this.servicesService.deleteType(id);
+  @ApiParam({ name: 'id', description: 'Service Type ID' })
+  @ApiResponse({ status: 200, description: 'Service type deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Service type not found' })
+  @ApiResponse({ status: 400, description: 'Cannot delete service type with services' })
+  async deleteServiceType(@Param('id') id: string) {
+    return this.servicesService.deleteServiceType(id);
   }
 
   // Services
   @Get()
   @ApiOperation({ summary: 'Get all services' })
-  @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
-  @ApiQuery({ name: 'typeId', required: false, description: 'Filter by type ID' })
-  @ApiQuery({ name: 'isActive', required: false, description: 'Filter by active status' })
-  @ApiQuery({ name: 'isFeatured', required: false, description: 'Filter by featured status' })
   @ApiResponse({ status: 200, description: 'List of services' })
-  async getServices(
-    @Query('categoryId') categoryId?: string,
-    @Query('typeId') typeId?: string,
-    @Query('isActive') isActive?: string,
-    @Query('isFeatured') isFeatured?: string
-  ) {
-    const where: any = {};
+  async getServices() {
+    return this.servicesService.findAllServices();
+  }
 
-    if (categoryId) where.categoryId = categoryId;
-    if (typeId) where.typeId = typeId;
-    if (isActive !== undefined) where.isActive = isActive === 'true';
-    if (isFeatured !== undefined) where.isFeatured = isFeatured === 'true';
+  @Get('featured')
+  @ApiOperation({ summary: 'Get featured services' })
+  @ApiResponse({ status: 200, description: 'List of featured services' })
+  async getFeaturedServices() {
+    return this.servicesService.getFeaturedServices();
+  }
 
-    return this.servicesService.findAllServices(where);
+  @Get('by-type/:typeId')
+  @ApiOperation({ summary: 'Get services by type' })
+  @ApiParam({ name: 'typeId', description: 'Service Type ID' })
+  @ApiResponse({ status: 200, description: 'List of services for the type' })
+  async getServicesByType(@Param('typeId') typeId: string) {
+    return this.servicesService.getServicesByType(typeId);
   }
 
   @Get(':id')
@@ -161,6 +113,7 @@ export class ServicesController {
   @ApiParam({ name: 'id', description: 'Service ID' })
   @ApiResponse({ status: 200, description: 'Service updated successfully' })
   @ApiResponse({ status: 404, description: 'Service not found' })
+  @ApiResponse({ status: 409, description: 'Service slug already exists' })
   async updateService(@Param('id') id: string, @Body() dto: UpdateServiceDto) {
     return this.servicesService.updateService(id, dto);
   }
@@ -173,5 +126,14 @@ export class ServicesController {
   @ApiResponse({ status: 400, description: 'Cannot delete service with active bookings' })
   async deleteService(@Param('id') id: string) {
     return this.servicesService.deleteService(id);
+  }
+
+  @Put(':id/view')
+  @ApiOperation({ summary: 'Increment service view count' })
+  @ApiParam({ name: 'id', description: 'Service ID' })
+  @ApiResponse({ status: 200, description: 'View count incremented' })
+  @ApiResponse({ status: 404, description: 'Service not found' })
+  async incrementViewCount(@Param('id') id: string) {
+    return this.servicesService.incrementViewCount(id);
   }
 }

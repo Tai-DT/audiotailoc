@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   ValidationPipe,
   UsePipes,
   Patch,

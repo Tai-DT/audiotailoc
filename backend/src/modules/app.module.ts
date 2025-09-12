@@ -47,7 +47,6 @@ import { MapsModule } from './maps/maps.module';
 
 // Service Management modules - DISABLED FOR MINIMAL STARTUP
 import { ServicesModule } from './services/services.module';
-import { ServiceCategoriesModule } from './service-categories/service-categories.module';
 import { ServiceTypesModule } from './service-types/service-types.module';
 import { BookingModule } from './booking/booking.module';
 import { TechniciansModule } from './technicians/technicians.module';
@@ -94,7 +93,6 @@ const runtimeImports = [
 
     // Services Management
     ServicesModule,
-    ServiceCategoriesModule,
     ServiceTypesModule,
     BookingModule,
     TechniciansModule,

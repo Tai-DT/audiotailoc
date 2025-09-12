@@ -597,7 +597,7 @@ export class HealthService {
       const externalServices = [
         { name: 'VNPay Payment Gateway', url: 'https://sandbox.vnpayment.vn' },
         { name: 'SendGrid Email Service', url: 'https://api.sendgrid.com/v3' },
-        { name: 'Google Maps API', url: 'https://maps.googleapis.com' },
+        { name: 'Goong Maps API', url: 'https://rsapi.goong.io' },
       ];
 
       const results = [];

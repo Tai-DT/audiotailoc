@@ -40,7 +40,7 @@ async function uploadImageFromUrl(url: string, publicId: string, folder: string,
     console.log(`  ✅ Uploaded to: ${result.secure_url}`);
     return result.secure_url;
   } catch (error) {
-    console.error(`  ❌ Failed to upload: ${error.message}`);
+    console.error(`  ❌ Failed to upload: ${(error as Error).message}`);
     return null;
   }
 }
@@ -143,7 +143,7 @@ async function migrateProjectImages() {
           }
         }
       } catch (error) {
-        console.error(`  ❌ Failed to parse gallery images: ${error.message}`);
+        console.error(`  ❌ Failed to parse gallery images: ${(error as Error).message}`);
       }
     }
     
@@ -176,7 +176,7 @@ async function migrateProjectImages() {
         console.log(`✅ Project updated successfully with ${Object.keys(updates).length} new images`);
         successCount++;
       } catch (error) {
-        console.error(`❌ Failed to update project: ${error.message}`);
+        console.error(`❌ Failed to update project: ${(error as Error).message}`);
         failureCount++;
       }
     } else {
