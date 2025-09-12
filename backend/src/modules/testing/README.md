@@ -152,8 +152,8 @@ mockServices.setMockResponse('payment_gateway', 'verify_payment', {
 - **Payment Gateway** - VNPAY, MOMO simulation
 - **Email Service** - SMTP simulation
 - **SMS Service** - SMS gateway simulation
-- **File Storage** - Cloudinary/MinIO simulation
-- **Geolocation** - Google Maps simulation
+- **File Storage** - Cloudinary simulation
+- **Geolocation** - Goong Maps simulation
 - **Notification** - Push notification simulation
 - **Analytics** - Analytics service simulation
 

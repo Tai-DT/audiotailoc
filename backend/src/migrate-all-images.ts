@@ -40,7 +40,7 @@ async function uploadImageFromUrl(url: string, publicId: string, folder: string,
     console.log(`    ✅ Success: ${result.secure_url}`);
     return result.secure_url;
   } catch (error) {
-    console.error(`    ❌ Failed: ${error.message}`);
+    console.error(`    ❌ Failed: ${(error as Error).message}`);
     return null;
   }
 }
@@ -133,7 +133,7 @@ async function migrateProductImages() {
         console.log(`    ✅ Product updated`);
         successCount++;
       } catch (error) {
-        console.error(`    ❌ Failed to update product: ${error.message}`);
+        console.error(`    ❌ Failed to update product: ${(error as Error).message}`);
         failureCount++;
       }
     }
@@ -228,7 +228,7 @@ async function migrateServiceImages() {
         console.log(`    ✅ Service updated`);
         successCount++;
       } catch (error) {
-        console.error(`    ❌ Failed to update service: ${error.message}`);
+        console.error(`    ❌ Failed to update service: ${(error as Error).message}`);
         failureCount++;
       }
     }
@@ -306,7 +306,7 @@ async function migrateBannerImages() {
         console.log(`    ✅ Banner updated`);
         successCount++;
       } catch (error) {
-        console.error(`    ❌ Failed to update banner: ${error.message}`);
+        console.error(`    ❌ Failed to update banner: ${(error as Error).message}`);
         failureCount++;
       }
     }
@@ -444,7 +444,7 @@ async function migrateRemainingProjectImages() {
         console.log(`    ✅ Project updated`);
         successCount++;
       } catch (error) {
-        console.error(`    ❌ Failed to update project: ${error.message}`);
+        console.error(`    ❌ Failed to update project: ${(error as Error).message}`);
         failureCount++;
       }
     }

@@ -23,7 +23,7 @@ export class CatalogController {
 
   @Get('products')
   list(@Query() query: any) {
-    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, categoryId, search } = query;
+    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search } = query;
     return this.catalog.listProducts({
       page: parseInt(page) || 1,
       pageSize: parseInt(pageSize) || 20,

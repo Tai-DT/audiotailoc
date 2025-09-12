@@ -284,7 +284,7 @@ export class BookingService {
       }
     }
 
-    const updated = await this.prisma.serviceBooking.update({
+    await this.prisma.serviceBooking.update({
       where: { id },
       data,
     });

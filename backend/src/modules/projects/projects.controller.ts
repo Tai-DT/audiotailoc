@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query, Pars
 import { ProjectsService } from './projects.service';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtGuard } from '../auth/jwt.guard';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('projects')
 @Controller('projects')

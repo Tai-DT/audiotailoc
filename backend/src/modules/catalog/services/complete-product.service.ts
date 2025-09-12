@@ -252,7 +252,7 @@ export class CompleteProductService {
       where: {
         isDeleted: false,
         isActive: true,
-        name: { contains: query, mode: 'insensitive' },
+        name: { contains: query },
       },
       select: {
         name: true,
@@ -264,7 +264,7 @@ export class CompleteProductService {
     const categories = await this.prisma.category.findMany({
       where: {
         isActive: true,
-        name: { contains: query, mode: 'insensitive' },
+        name: { contains: query },
       },
       select: {
         name: true,

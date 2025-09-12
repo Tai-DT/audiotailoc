@@ -17,7 +17,6 @@ A modern, full-stack e-commerce platform for audio services built with cutting-e
 ### Technical Features
 - ✅ **Modern Stack**: Next.js 15 + NestJS + TypeScript
 - ✅ **Database**: PostgreSQL with Prisma ORM
-- ✅ **Search**: Meilisearch integration
 - ✅ **Caching**: Redis support
 - ✅ **Security**: Comprehensive security headers
 - ✅ **Performance**: Optimized for speed and scalability
@@ -39,7 +38,6 @@ A modern, full-stack e-commerce platform for audio services built with cutting-e
 - **Language**: TypeScript
 - **Database**: PostgreSQL
 - **ORM**: Prisma
-- **Search**: Meilisearch
 - **Cache**: Redis (optional)
 - **Validation**: class-validator
 
@@ -177,9 +175,8 @@ NEXTAUTH_SECRET="your-nextauth-secret"
 
 ### Optional Environment Variables
 - **Email**: SMTP configuration for notifications
-- **File Storage**: Cloudinary or MinIO for file uploads
-- **Search**: MeiliSearch for advanced search
-- **Maps**: Google Maps API for location services
+- **File Storage**: Cloudinary for file uploads
+- **Maps**: Goong Maps API for location services
 - **Monitoring**: Prometheus/Grafana for metrics
 
 ## 📊 Monitoring & Analytics

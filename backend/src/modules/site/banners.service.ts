@@ -31,9 +31,9 @@ export class BannersService {
       ...(isActive !== undefined && { isActive }),
       ...(search && {
         OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { subtitle: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
+          { title: { contains: search } },
+          { subtitle: { contains: search } },
+          { description: { contains: search } },
         ],
       }),
     };

@@ -232,9 +232,13 @@ async function seedData() {
     console.log(`  ✅ Created notifications`);
     
     // ========================================
-    // 7. SEED CHAT SESSIONS & MESSAGES
+    // 7. CHAT SESSIONS & MESSAGES (DISABLED)
     // ========================================
-    console.log('\n💬 Creating Chat Sessions & Messages...');
+    // Note: chatSession and chatMessage models not available in current schema
+    console.log('\n💬 Skipping Chat Sessions (model not available in schema)...');
+    
+    /*
+    // Commented out chat session creation
     for (const user of users.slice(0, 3)) {
       const session = await prisma.chatSession.create({
         data: {
@@ -245,7 +249,6 @@ async function seedData() {
         }
       });
       
-      // Create messages for each session
       const messages = [
         { content: 'Xin chào, tôi cần tư vấn về loa karaoke', role: 'user' },
         { content: 'Chào bạn! Tôi có thể giúp gì cho bạn về loa karaoke?', role: 'ASSISTANT' },
@@ -267,7 +270,7 @@ async function seedData() {
         });
       }
     }
-    console.log(`  ✅ Created chat sessions and messages`);
+    */
     
     // ========================================
     // 8. SEED CUSTOMER QUESTIONS
