@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
-import { CreateBookingDto } from './dto/create-booking.dto';
+// import { CreateBookingDto } from './dto/create-booking.dto';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('bookings')

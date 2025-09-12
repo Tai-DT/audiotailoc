@@ -40,7 +40,7 @@ Frontend application cho hệ thống quản lý dịch vụ âm thanh Audio Tà
 - **Icons**: Heroicons
 - **Notifications**: React Hot Toast
 - **Date/Time**: React Datepicker
-- **Maps**: React Google Maps (tùy chọn)
+- **Maps**: Goong Maps (tùy chọn)
 
 ## 📁 Cấu trúc thư mục
 

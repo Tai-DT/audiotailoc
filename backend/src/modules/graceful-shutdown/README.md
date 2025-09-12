@@ -324,11 +324,6 @@ private async closeFileStorage(): Promise<void> {
       await this.cloudinaryService.close();
     }
 
-    // Close MinIO connections
-    if (this.minioService) {
-      await this.minioService.close();
-    }
-
     this.logger.log('✅ File storage connections closed');
   } catch (error) {
     this.logger.error('Error closing file storage', error);
