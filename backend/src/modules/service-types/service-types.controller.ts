@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ServiceTypesService } from './service-types.service';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
@@ -10,7 +10,6 @@ import { AdminGuard } from '../auth/admin.guard';
 @Controller('service-types')
 export class ServiceTypesController {
   constructor(private readonly serviceTypesService: ServiceTypesService) {
-    console.log('[ServiceTypesController] Constructor called');
   }
   @Post()
   @UseGuards(JwtGuard, AdminGuard)

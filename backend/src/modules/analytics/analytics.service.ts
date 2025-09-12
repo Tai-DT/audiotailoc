@@ -276,17 +276,10 @@ export class AnalyticsService {
   async getUserActivity(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
     
-    const [pageViews, searchQueries, activityLogs] = await Promise.all([
+    const [pageViews] = await Promise.all([
       this.prisma.productView.count({
         where: { timestamp: { gte: startDate, lte: endDate } }
       }),
-      this.prisma.searchQuery.count({
-        where: { timestamp: { gte: startDate, lte: endDate } }
-      }),
-      this.prisma.activityLog.findMany({
-        where: { createdAt: { gte: startDate, lte: endDate } },
-        select: { duration: true }
-      })
     ]);
 
     const sessions = await this.prisma.activityLog.groupBy({
@@ -298,8 +291,14 @@ export class AnalyticsService {
       _count: true
     });
 
-    const avgSessionDuration = activityLogs.length > 0
-      ? activityLogs.reduce((sum, log) => sum + (log.duration || 0), 0) / activityLogs.length
+    // Get actual activity logs for duration calculation
+    const activityLogRecords = await this.prisma.activityLog.findMany({
+      where: { createdAt: { gte: startDate, lte: endDate } },
+      select: { duration: true }
+    });
+
+    const avgSessionDuration = activityLogRecords.length > 0
+      ? activityLogRecords.reduce((sum: number, log: any) => sum + (log.duration || 0), 0) / activityLogRecords.length
       : 0;
 
     return {

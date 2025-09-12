@@ -47,8 +47,8 @@ async function checkModelsData() {
   });
   
   models.push({
-    name: 'ServiceCategories',
-    count: await prisma.serviceCategory.count(),
+    name: 'ServiceTypes',
+    count: await prisma.serviceType.count(),
     minRequired: 3,
     status: '✅ Has Data'
   });
