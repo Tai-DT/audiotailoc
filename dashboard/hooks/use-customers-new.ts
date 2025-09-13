@@ -1,33 +1,28 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
+import { Customer, CustomerStats } from "@/types/customer"
 
-interface Customer {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  avatar?: string
-  address?: string
-  city?: string
-  district?: string
-  totalOrders: number
-  totalSpent: number
-  averageOrderValue: number
-  lastOrderDate?: Date
-  joinDate: Date
-  loyaltyPoints: number
-  segment: "new" | "regular" | "vip" | "inactive"
-  isVIP: boolean
-  isActive: boolean
-  tags?: string[]
-  notes?: string
-}
-
-interface CustomerStats {
-  totalCustomers: number
-  vipCustomers: number
-  averageRevenue: number
-  retentionRate: number
+// API User response interface
+interface ApiUser {
+  id: string;
+  name?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  role?: string;
+  totalSpent?: number;
+  averageOrderValue?: number;
+  lastOrderDate?: string;
+  createdAt: string;
+  loyaltyPoints?: number;
+  isActive?: boolean;
+  tags?: string[];
+  notes?: string;
+  _count?: {
+    orders: number;
+  };
 }
 
 // Mock data for fallback
@@ -40,6 +35,9 @@ const mockCustomers: Customer[] = [
     address: "123 Lê Lợi, Q1",
     city: "TP.HCM",
     district: "Quận 1",
+    role: "customer",
+    createdAt: "2023-03-15T00:00:00Z",
+    updatedAt: "2024-11-28T00:00:00Z",
     totalOrders: 25,
     totalSpent: 45000000,
     averageOrderValue: 1800000,
@@ -60,6 +58,9 @@ const mockCustomers: Customer[] = [
     address: "456 Nguyễn Huệ, Q3",
     city: "TP.HCM",
     district: "Quận 3",
+    role: "customer",
+    createdAt: "2023-08-20T00:00:00Z",
+    updatedAt: "2024-11-20T00:00:00Z",
     totalOrders: 12,
     totalSpent: 18500000,
     averageOrderValue: 1541667,
@@ -80,6 +81,9 @@ const mockCustomers: Customer[] = [
     address: "789 CMT8, Q10",
     city: "TP.HCM",
     district: "Quận 10",
+    role: "customer",
+    createdAt: "2024-10-01T00:00:00Z",
+    updatedAt: "2024-11-15T00:00:00Z",
     totalOrders: 3,
     totalSpent: 4200000,
     averageOrderValue: 1400000,
@@ -104,17 +108,24 @@ export function useCustomers() {
   // Calculate statistics
   const stats: CustomerStats = {
     totalCustomers: customers.length,
+    newCustomers: customers.filter(c => c.segment === "new").length,
     vipCustomers: customers.filter(c => c.isVIP).length,
-    averageRevenue: customers.length > 0
-      ? customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length
+    activeCustomers: customers.filter(c => c.isActive).length,
+    totalRevenue: customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0),
+    averageOrderValue: customers.length > 0
+      ? customers.reduce((sum, c) => sum + (c.averageOrderValue || 0), 0) / customers.length
       : 0,
-    retentionRate: 85.5 // Mock value
+    averageRevenue: customers.length > 0
+      ? customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0) / customers.length
+      : 0,
+    retentionRate: 85.5, // Mock value
+    churnRate: 14.5 // Mock value
   }
 
   // Filtered customers
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = searchQuery === "" || 
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone?.includes(searchQuery)
     
@@ -145,7 +156,7 @@ export function useCustomers() {
       
       // Transform API users to customers format
       if (data.users && data.users.length > 0) {
-        const transformedCustomers = data.users.map((user: any) => ({
+        const transformedCustomers = data.users.map((user: ApiUser) => ({
           id: user.id,
           name: user.name || "Khách hàng",
           email: user.email,
@@ -160,7 +171,7 @@ export function useCustomers() {
           joinDate: new Date(user.createdAt),
           loyaltyPoints: user.loyaltyPoints || 0,
           segment: determineSegment(user),
-          isVIP: user.role === "VIP" || user.totalSpent > 10000000,
+          isVIP: user.role === "VIP" || (user.totalSpent || 0) > 10000000,
           isActive: user.isActive !== false,
           tags: user.tags || [],
           notes: user.notes || ""
@@ -179,8 +190,8 @@ export function useCustomers() {
   }, [API_URL])
 
   // Helper to determine customer segment
-  const determineSegment = (user: any): "new" | "regular" | "vip" | "inactive" => {
-    if (user.totalSpent > 20000000) return "vip"
+  const determineSegment = (user: ApiUser): "new" | "regular" | "vip" | "inactive" => {
+    if ((user.totalSpent || 0) > 20000000) return "vip"
     if (user.lastOrderDate) {
       const daysSinceLastOrder = Math.floor((Date.now() - new Date(user.lastOrderDate).getTime()) / (1000 * 60 * 60 * 24))
       if (daysSinceLastOrder > 90) return "inactive"
@@ -212,7 +223,7 @@ export function useCustomers() {
       }
       
       await fetchCustomers()
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật khách hàng")
     }
   }
@@ -234,7 +245,7 @@ export function useCustomers() {
       if (!response.ok) {
         console.error("Failed to delete customer from API")
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể xóa khách hàng")
     }
   }
@@ -264,7 +275,7 @@ export function useCustomers() {
       } else {
         toast.success(`Đã gửi email đến ${customer.name} (demo)`)
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể gửi email")
     }
   }
@@ -295,17 +306,17 @@ export function useCustomers() {
   }
 
   // Create loyalty reward
-  const createLoyaltyReward = async (customerId: string, points: number, description: string) => {
+  const createLoyaltyReward = async (customerId: string, points: number) => {
     try {
       // Update local state
       setCustomers(prev => prev.map(c => 
         c.id === customerId 
-          ? { ...c, loyaltyPoints: c.loyaltyPoints + points }
+          ? { ...c, loyaltyPoints: (c.loyaltyPoints || 0) + points }
           : c
       ))
       
       toast.success(`Đã thêm ${points} điểm cho khách hàng`)
-    } catch (error) {
+    } catch {
       toast.error("Không thể thêm điểm thưởng")
     }
   }
@@ -316,14 +327,14 @@ export function useCustomers() {
     return segments.map(segment => ({
       segment,
       count: customers.filter(c => c.segment === segment).length,
-      revenue: customers.filter(c => c.segment === segment).reduce((sum, c) => sum + c.totalSpent, 0)
+      revenue: customers.filter(c => c.segment === segment).reduce((sum, c) => sum + (c.totalSpent || 0), 0)
     }))
   }
 
   // Get top customers
   const getTopCustomers = (limit = 5) => {
     return [...customers]
-      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
       .slice(0, limit)
   }
 

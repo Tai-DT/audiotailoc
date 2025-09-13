@@ -215,7 +215,7 @@ export function usePromotions() {
       
       setStats(newStats)
       
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải dữ liệu khuyến mãi")
     } finally {
       setLoading(false)
@@ -258,7 +258,7 @@ export function usePromotions() {
         activePromotions: newPromotion.isActive ? prev.activePromotions + 1 : prev.activePromotions
       }))
       
-    } catch (error) {
+    } catch {
       throw new Error("Failed to create promotion")
     }
   }, [])
@@ -273,7 +273,7 @@ export function usePromotions() {
         promo.id === id ? { ...promo, ...promotionData } : promo
       ))
       
-    } catch (error) {
+    } catch {
       throw new Error("Failed to update promotion")
     }
   }, [])
@@ -302,7 +302,7 @@ export function usePromotions() {
         return updated
       })
       
-    } catch (error) {
+    } catch {
       throw new Error("Failed to delete promotion")
     }
   }, [])
@@ -336,7 +336,7 @@ export function usePromotions() {
         activePromotions: duplicated.isActive ? prev.activePromotions + 1 : prev.activePromotions
       }))
       
-    } catch (error) {
+    } catch {
       throw new Error("Failed to duplicate promotion")
     }
   }, [promotions])
@@ -364,7 +364,7 @@ export function usePromotions() {
         return promo
       }))
       
-    } catch (error) {
+    } catch {
       throw new Error("Failed to toggle promotion")
     }
   }, [])

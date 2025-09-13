@@ -25,7 +25,6 @@ export default function BackupsPage() {
   const {
     backups,
     status,
-    loading,
     createBackup,
     restoreBackup,
     deleteBackup,
@@ -39,7 +38,7 @@ export default function BackupsPage() {
   useEffect(() => {
     fetchBackups()
     fetchStatus()
-  }, [])
+  }, [fetchBackups, fetchStatus])
 
   const handleCreateBackup = async (type: 'full' | 'incremental') => {
     setCreating(true)

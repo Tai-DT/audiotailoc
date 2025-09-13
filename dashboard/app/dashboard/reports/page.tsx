@@ -12,12 +12,9 @@ import {
   DollarSign,
   Users,
   Package,
-  ShoppingCart,
   RefreshCw,
-  FileSpreadsheet,
   FilePieChart,
-  BarChart3,
-  Filter
+  BarChart3
 } from "lucide-react"
 import { useReports } from "@/hooks/use-reports"
 import { format } from "date-fns"
@@ -26,7 +23,6 @@ import { vi } from "date-fns/locale/vi"
 export default function ReportsPage() {
   const {
     reports,
-    loading,
     generateReport,
     downloadReport,
     fetchReports,
@@ -38,7 +34,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     fetchReports()
-  }, [])
+  }, [fetchReports])
 
   const reportTypes = [
     {

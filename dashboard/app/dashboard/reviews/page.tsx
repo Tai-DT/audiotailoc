@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,12 +10,10 @@ import {
   Star,
   MessageSquare,
   ThumbsUp,
-  ThumbsDown,
   CheckCircle,
   XCircle,
   AlertCircle,
-  RefreshCw,
-  Filter
+  RefreshCw
 } from "lucide-react"
 import { useReviews } from "@/hooks/use-reviews"
 import { format } from "date-fns"
@@ -24,11 +23,9 @@ export default function ReviewsPage() {
   const {
     reviews,
     stats,
-    loading,
     fetchReviews,
     approveReview,
     rejectReview,
-    deleteReview,
     respondToReview
   } = useReviews()
 
@@ -37,7 +34,7 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     fetchReviews(activeTab)
-  }, [activeTab])
+  }, [activeTab, fetchReviews])
 
   const renderStars = (rating: number) => {
     return (
@@ -228,11 +225,13 @@ export default function ReviewsPage() {
                                   {review.images && review.images.length > 0 && (
                                     <div className="flex gap-2 mt-3">
                                       {review.images.map((img, idx) => (
-                                        <img
+                                        <Image
                                           key={idx}
                                           src={img}
                                           alt={`Review ${idx + 1}`}
-                                          className="h-16 w-16 object-cover rounded-md"
+                                          width={64}
+                                          height={64}
+                                          className="object-cover rounded-md"
                                         />
                                       ))}
                                     </div>

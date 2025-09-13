@@ -597,4 +597,78 @@ export class CompleteProductController {
   async importCsv(@Body('csvData') csvData: string): Promise<{ imported: number; errors: string[] }> {
     return this.catalogService.importProductsFromCsv(csvData);
   }
+
+  // Public endpoints for frontend
+  @Get('recent')
+  @ApiOperation({
+    summary: 'Get recently added products (Public)',
+    description: 'Get recently added products for public access',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of products to return (1-20)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Recent products retrieved successfully',
+    type: [ProductResponseDto],
+  })
+  async getRecentPublic(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
+    return this.catalogService.getRecentProducts(Math.min(limit || 10, 20));
+  }
+
+  @Get('top-viewed')
+  @ApiOperation({
+    summary: 'Get top viewed products (Public)',
+    description: 'Get most viewed products for public access',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of products to return (1-20)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Top viewed products retrieved successfully',
+    type: [ProductResponseDto],
+  })
+  async getTopViewedPublic(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
+    return this.catalogService.getTopViewedProducts(Math.min(limit || 10, 20));
+  }
+
+  @Get('overview')
+  @ApiOperation({
+    summary: 'Get product overview (Public)',
+    description: 'Get basic product overview for public access',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Product overview retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalProducts: { type: 'number' },
+        featuredProducts: { type: 'number' },
+        categoriesCount: { type: 'number' },
+        recentProducts: { type: 'array', items: { $ref: '#/components/schemas/ProductResponseDto' } },
+      },
+    },
+  })
+  async getOverviewPublic(): Promise<{
+    totalProducts: number;
+    featuredProducts: number;
+    categoriesCount: number;
+    recentProducts: ProductResponseDto[];
+  }> {
+    const analytics = await this.catalogService.getProductAnalytics();
+    return {
+      totalProducts: analytics.totalProducts,
+      featuredProducts: analytics.featuredProducts,
+      categoriesCount: Object.keys(analytics.productsByCategory || {}).length,
+      recentProducts: await this.catalogService.getRecentProducts(5),
+    };
+  }
 }

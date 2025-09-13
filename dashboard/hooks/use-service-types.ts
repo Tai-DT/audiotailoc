@@ -44,8 +44,9 @@ export function useServiceTypes() {
       toast.success('Tạo loại dịch vụ thành công')
       return response.data
     } catch (err) {
-      const status = (err as any)?.status
-      const dataResp = (err as any)?.response
+      const error = err as { status?: number; response?: unknown }
+      const status = error?.status
+      const dataResp = error?.response
       console.error('Error creating service type:', { status, data: dataResp, raw: err })
       // normalize to axios-like error shape
       throw { response: { status, data: dataResp } }
@@ -60,8 +61,9 @@ export function useServiceTypes() {
       toast.success('Cập nhật loại dịch vụ thành công')
       return response.data
     } catch (err) {
-      const status = (err as any)?.status
-      const dataResp = (err as any)?.response
+      const error = err as { status?: number; response?: unknown }
+      const status = error?.status
+      const dataResp = error?.response
       console.error('Error updating service type:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }
@@ -73,8 +75,9 @@ export function useServiceTypes() {
       setServiceTypes(prev => prev.filter(type => type.id !== id))
       toast.success('Xóa loại dịch vụ thành công')
     } catch (err) {
-      const status = (err as any)?.status
-      const dataResp = (err as any)?.response
+      const error = err as { status?: number; response?: unknown }
+      const status = error?.status
+      const dataResp = error?.response
       console.error('Error deleting service type:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }
@@ -90,8 +93,9 @@ export function useServiceTypes() {
       toast.success(`Loại dịch vụ đã ${!isActive ? 'kích hoạt' : 'ngừng hoạt động'}`)
       return response.data
     } catch (err) {
-      const status = (err as any)?.status
-      const dataResp = (err as any)?.response
+      const error = err as { status?: number; response?: unknown }
+      const status = error?.status
+      const dataResp = error?.response
       console.error('Error toggling service type status:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }

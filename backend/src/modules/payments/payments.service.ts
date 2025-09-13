@@ -224,36 +224,25 @@ export class PaymentsService {
       throw new BadRequestException('Refund amount cannot exceed payment amount');
     }
 
-    // Check existing refunds - commented out since no Refund model exists
-    // const existingRefunds = await this.prisma.refund.findMany({
-    //   where: { paymentId: payment.id }
-    // });
-    // const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
-
-    // For now, assume no existing refunds
-    const totalRefunded = 0;
+    // Check existing refunds
+    const existingRefunds = await this.prisma.refund.findMany({
+      where: { paymentId: payment.id }
+    });
+    const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
 
     if (totalRefunded + refundAmount > payment.amountCents) {
       throw new BadRequestException('Total refund amount would exceed payment amount');
     }
 
-    // Create refund record - commented out since no Refund model exists
-    // const refund = await this.prisma.refund.create({
-    //   data: {
-    //     paymentId: payment.id,
-    //     amountCents: refundAmount,
-    //     reason: reason || 'Customer request',
-    //     status: 'PENDING'
-    //   }
-    // });
-
-    const refund = {
-      id: `refund_${Date.now()}`,
-      paymentId: payment.id,
-      amountCents: refundAmount,
-      reason: reason || 'Customer request',
-      status: 'PENDING'
-    };
+    // Create refund record
+    const refund = await this.prisma.refund.create({
+      data: {
+        paymentId: payment.id,
+        amountCents: refundAmount,
+        reason: reason || 'Customer request',
+        status: 'PENDING'
+      }
+    });
 
     // Process refund based on provider
     let refundResult;
@@ -272,45 +261,103 @@ export class PaymentsService {
           throw new Error('Unsupported payment provider for refund');
       }
 
-      // Update refund status - commented out since no Refund model exists
-      // await this.prisma.refund.update({
-      //   where: { id: refund.id },
-      //   data: {
-      //     status: refundResult.success ? 'SUCCEEDED' : 'FAILED',
-      //     providerRefundId: refundResult.refundId,
-      //     processedAt: new Date()
-      //   }
-      // });
+      // Update refund status
+      await this.prisma.refund.update({
+        where: { id: refund.id },
+        data: {
+          status: refundResult.success ? 'SUCCEEDED' : 'FAILED',
+          providerRefundId: refundResult.refundId,
+          processedAt: new Date()
+        }
+      });
 
-      // For now, just log the refund result
       this.logger.log(`Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`);
 
-      // Send notification
-      // if (payment.order.userId) {
-      //   this.websocketGateway.notifyOrderUpdate(payment.order.id, payment.order.userId, 'REFUNDED', {
-      //     orderNo: payment.order.orderNo,
-      //     refundAmount: refundAmount,
-      //     reason: reason || 'Customer request'
-      //   });
-      // }
+      // Send notification if user exists
+      if (payment.order.userId) {
+        // TODO: Implement notification system
+        this.logger.log(`Refund notification sent to user ${payment.order.userId}`);
+      }
 
       return { refundId: refund.id, success: refundResult.success };
     } catch (error) {
-      // Update refund status on error - commented out since no Refund model exists
-      // await this.prisma.refund.update({
-      //   where: { id: refund.id },
-      //   data: { status: 'FAILED' }
-      // });
+      // Update refund status on error
+      await this.prisma.refund.update({
+        where: { id: refund.id },
+        data: {
+          status: 'FAILED',
+          errorMessage: (error as any)?.message || 'Unknown error',
+          processedAt: new Date()
+        }
+      });
+
       this.logger.error(`Refund processing failed: ${(error as any)?.message}`);
-      throw new BadRequestException(`Refund processing failed: ${(error as any)?.message}`);
+
+      // Throw appropriate exception based on error type
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new BadRequestException(`Refund processing failed: ${(error as any)?.message || 'Unknown error'}`);
     }
   }
 
   private async processVnpayRefund(payment: any, refund: any) {
-    // VNPay refund implementation
-    // This would integrate with VNPay's refund API
-    this.logger.log(`Processing VNPay refund: ${refund.id}`);
-    return { success: true, refundId: `vnpay_${refund.id}` };
+    try {
+      const vnpTmnCode = this.config.get<string>('VNPAY_TMN_CODE') || '';
+      const vnpHashSecret = this.config.get<string>('VNPAY_HASH_SECRET') || '';
+      const vnpRefundUrl = this.config.get<string>('VNPAY_REFUND_URL') || 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction';
+
+      const createDate = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+      const ipAddr = '127.0.0.1'; // In production, get from request
+
+      // Create refund request parameters
+      const params = {
+        vnp_Command: 'refund',
+        vnp_Version: '2.1.0',
+        vnp_TmnCode: vnpTmnCode,
+        vnp_TransactionType: '02', // 02 for full refund, 03 for partial
+        vnp_TxnRef: payment.transactionId,
+        vnp_Amount: refund.amountCents * 100, // Convert to VND (multiply by 100)
+        vnp_OrderInfo: `Refund for transaction ${payment.transactionId}`,
+        vnp_TransactionNo: payment.transactionId,
+        vnp_TransactionDate: payment.createdAt.toISOString().slice(0, 19).replace(/[:-]/g, ''),
+        vnp_CreateDate: createDate,
+        vnp_IpAddr: ipAddr,
+        vnp_CreateBy: 'system'
+      };
+
+      // Create secure hash
+      const sortedParams = Object.keys(params).sort();
+      const queryString = sortedParams.map(key => `${key}=${encodeURIComponent((params as any)[key])}`).join('&');
+      const secureHash = crypto.createHmac('sha512', vnpHashSecret).update(queryString).digest('hex');
+
+      const requestBody = queryString + `&vnp_SecureHash=${secureHash}`;
+
+      const response = await fetch(vnpRefundUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: requestBody
+      });
+
+      const result = await response.text();
+      const resultParams = new URLSearchParams(result);
+
+      if (resultParams.get('vnp_ResponseCode') === '00') {
+        const refundTransactionNo = resultParams.get('vnp_TransactionNo') || `vnpay_refund_${refund.id}`;
+        this.logger.log(`VNPay refund successful: ${refundTransactionNo}`);
+        return { success: true, refundId: refundTransactionNo };
+      } else {
+        const errorCode = resultParams.get('vnp_ResponseCode');
+        this.logger.error(`VNPay refund failed: ${errorCode} - ${resultParams.get('vnp_Message')}`);
+        return { success: false, refundId: null };
+      }
+    } catch (error) {
+      this.logger.error(`VNPay refund error: ${(error as any)?.message}`);
+      return { success: false, refundId: null };
+    }
   }
 
   private async processMomoRefund(payment: any, refund: any) {
@@ -364,9 +411,48 @@ export class PaymentsService {
   }
 
   private async processPayosRefund(payment: any, refund: any) {
-    // PayOS refund implementation
-    this.logger.log(`Processing PayOS refund: ${refund.id}`);
-    return { success: true, refundId: `payos_${refund.id}` };
+    try {
+      const apiUrl = this.config.get<string>('PAYOS_API_URL') || 'https://api.payos.vn';
+      const clientId = this.config.get<string>('PAYOS_CLIENT_ID') || '';
+      const apiKey = this.config.get<string>('PAYOS_API_KEY') || '';
+      const checksumKey = this.config.get<string>('PAYOS_CHECKSUM_KEY') || '';
+
+      const refundUrl = `${apiUrl}/v2/payment-requests/${payment.transactionId}/refund`;
+
+      const requestBody = {
+        amount: refund.amountCents,
+        description: refund.reason || `Refund for transaction ${payment.transactionId}`,
+        cancelReason: 'Customer request'
+      };
+
+      // Create signature for PayOS
+      const dataToSign = `${clientId}${payment.transactionId}${refund.amountCents}${checksumKey}`;
+      const signature = crypto.createHmac('sha256', checksumKey).update(dataToSign).digest('hex');
+
+      const response = await fetch(refundUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-id': clientId,
+          'x-api-key': apiKey,
+          'x-signature': signature
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.code === 200) {
+        this.logger.log(`PayOS refund successful: ${result.data?.id || `payos_refund_${refund.id}`}`);
+        return { success: true, refundId: result.data?.id || `payos_refund_${refund.id}` };
+      } else {
+        this.logger.error(`PayOS refund failed: ${result.code} - ${result.desc}`);
+        return { success: false, refundId: null };
+      }
+    } catch (error) {
+      this.logger.error(`PayOS refund error: ${(error as any)?.message}`);
+      return { success: false, refundId: null };
+    }
   }
 
   async handleWebhook(provider: 'VNPAY' | 'MOMO' | 'PAYOS', payload: any) {

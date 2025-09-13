@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
-import { useToast } from '@/components/ui/toast-component';
+import { useToast } from '@/components/ui/use-toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ServiceType } from '@/types/service-type';
 import { serviceTypeApi } from '@/lib/api/service-types';
@@ -23,16 +23,16 @@ export function ServiceTypeList({ categoryId, onSelect, mode = 'manage' }: Servi
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
-  const { showToast, ToastComponent } = useToast();
+  const { toast } = useToast();
 
-  const loadServiceTypes = async () => {
+  const loadServiceTypes = useCallback(async () => {
     try {
       setLoading(true);
       const data = await serviceTypeApi.getAll(categoryId);
       setServiceTypes(data);
     } catch (error) {
       console.error('Failed to load service types:', error);
-      showToast({
+      toast({
         title: 'Lỗi',
         description: 'Không thể tải danh sách loại dịch vụ',
         variant: 'destructive',
@@ -40,24 +40,24 @@ export function ServiceTypeList({ categoryId, onSelect, mode = 'manage' }: Servi
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId, toast]);
 
   useEffect(() => {
     loadServiceTypes();
-  }, [categoryId]);
+  }, [categoryId, loadServiceTypes]);
 
   const handleDelete = async (id: string) => {
     try {
       setIsDeleting(true);
       await serviceTypeApi.delete(id);
       setServiceTypes(prev => prev.filter(type => type.id !== id));
-      showToast({
+      toast({
         title: 'Thành công',
-        description: 'Đã xóa loại dịch vụ',
+        description: 'Đã xóa loại dịch vụ thành công',
       });
     } catch (error) {
       console.error('Failed to delete service type:', error);
-      showToast({
+      toast({
         title: 'Lỗi',
         description: 'Không thể xóa loại dịch vụ',
         variant: 'destructive',

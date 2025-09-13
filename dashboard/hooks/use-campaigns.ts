@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -180,7 +180,7 @@ const mockCampaigns: Campaign[] = [
 export function useCampaigns() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
-  const { user } = useAuth()
+  const { } = useAuth()
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
 
   // Calculate stats
@@ -208,7 +208,7 @@ export function useCampaigns() {
   }
 
   // Fetch campaigns from API
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem("accessToken")
@@ -228,25 +228,49 @@ export function useCampaigns() {
       const data = await response.json()
       
       // Transform API data to match frontend interface
-      const transformedCampaigns = data.map((campaign: any) => ({
-        id: campaign.id,
-        name: campaign.name,
-        description: campaign.description,
-        type: campaign.type?.toLowerCase() || "email",
-        status: campaign.status?.toLowerCase() || "draft",
-        targetAudience: campaign.targetAudience || "Tất cả khách hàng",
-        subject: campaign.subject,
-        content: campaign.content || campaign.description,
-        sentAt: campaign.sentAt ? new Date(campaign.sentAt) : undefined,
-        scheduledAt: campaign.scheduledAt ? new Date(campaign.scheduledAt) : undefined,
-        createdAt: new Date(campaign.createdAt),
-        createdBy: campaign.createdBy || "admin",
-        recipients: campaign._count?.recipients || 0,
-        opens: campaign._count?.opens || 0,
-        clicks: campaign._count?.clicks || 0,
-        conversions: campaign.conversions || 0,
-        revenue: campaign.revenue || 0
-      }))
+      const transformedCampaigns = data.map((campaign: unknown) => {
+        const campaignData = campaign as {
+          id: string;
+          name: string;
+          description?: string;
+          type?: string;
+          status?: string;
+          targetAudience?: string;
+          subject?: string;
+          content?: string;
+          sentAt?: string;
+          scheduledAt?: string;
+          createdAt?: string;
+          updatedAt?: string;
+          createdBy?: string;
+          stats?: {
+            sent?: number;
+            delivered?: number;
+            opened?: number;
+            clicked?: number;
+            bounced?: number;
+          };
+        };
+        return {
+          id: campaignData.id,
+          name: campaignData.name,
+          description: campaignData.description,
+          type: campaignData.type?.toLowerCase() || "email",
+          status: campaignData.status?.toLowerCase() || "draft",
+          targetAudience: campaignData.targetAudience || "Tất cả khách hàng",
+          subject: campaignData.subject,
+          content: campaignData.content || campaignData.description,
+          sentAt: campaignData.sentAt ? new Date(campaignData.sentAt) : undefined,
+          scheduledAt: campaignData.scheduledAt ? new Date(campaignData.scheduledAt) : undefined,
+          createdAt: new Date(campaignData.createdAt || new Date()),
+          createdBy: campaignData.createdBy || "admin",
+          recipients: campaignData.stats?.sent || 0,
+          opens: campaignData.stats?.opened || 0,
+          clicks: campaignData.stats?.clicked || 0,
+          conversions: campaignData.stats?.bounced || 0,
+          revenue: 0
+        };
+      })
       
       setCampaigns(transformedCampaigns)
     } catch (error) {
@@ -257,7 +281,7 @@ export function useCampaigns() {
     } finally {
       setLoading(false)
     }
-  }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create campaign
   const createCampaign = async (campaignData: Partial<Campaign>) => {
@@ -307,7 +331,7 @@ export function useCampaigns() {
       
       // Refresh campaigns list
       await fetchCampaigns()
-    } catch (error) {
+    } catch {
       throw new Error("Không thể tạo chiến dịch")
     }
   }
@@ -346,7 +370,7 @@ export function useCampaigns() {
       
       // Refresh campaigns list
       await fetchCampaigns()
-    } catch (error) {
+    } catch {
       throw new Error("Không thể cập nhật chiến dịch")
     }
   }
@@ -370,7 +394,7 @@ export function useCampaigns() {
       if (!response.ok) {
         console.error("Failed to delete campaign from API")
       }
-    } catch (error) {
+    } catch {
       throw new Error("Không thể xóa chiến dịch")
     }
   }
@@ -400,7 +424,7 @@ export function useCampaigns() {
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500))
-    } catch (error) {
+    } catch {
       throw new Error("Không thể sao chép chiến dịch")
     }
   }
@@ -450,7 +474,7 @@ export function useCampaigns() {
             } 
           : campaign
       ))
-    } catch (error) {
+    } catch {
       throw new Error("Không thể gửi chiến dịch")
     }
   }
@@ -466,7 +490,7 @@ export function useCampaigns() {
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500))
-    } catch (error) {
+    } catch {
       throw new Error("Không thể lên lịch chiến dịch")
     }
   }
@@ -474,7 +498,7 @@ export function useCampaigns() {
   // Load campaigns on mount
   useEffect(() => {
     fetchCampaigns()
-  }, [])
+  }, [fetchCampaigns])
 
   return {
     campaigns,

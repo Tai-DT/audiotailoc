@@ -6,6 +6,8 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
 
 
@@ -63,6 +65,25 @@ export class CatalogController {
   @Get('categories')
   listCategories() {
     return this.catalog.listCategories();
+  }
+
+  @UseGuards(JwtGuard, AdminGuard)
+  @Post('categories')
+  @HttpCode(HttpStatus.CREATED)
+  createCategory(@Body() dto: CreateCategoryDto) {
+    return this.catalog.createCategory(dto);
+  }
+
+  @UseGuards(JwtGuard, AdminGuard)
+  @Patch('categories/:id')
+  updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.catalog.updateCategory(id, dto);
+  }
+
+  @UseGuards(JwtGuard, AdminGuard)
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.catalog.deleteCategory(id);
   }
 
   @Get('products/:id')

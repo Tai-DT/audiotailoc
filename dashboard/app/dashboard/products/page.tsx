@@ -171,7 +171,7 @@ export default function ProductsPage() {
     try {
       const result = await apiClient.deleteProduct(productId)
 
-      if (result.deleted) {
+      if (result.success) {
         toast({
           title: "Success",
           description: "Product deleted successfully",

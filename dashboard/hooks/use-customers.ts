@@ -2,40 +2,14 @@ import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { useAuth } from "@/hooks/use-auth"
 import { apiClient } from "@/lib/api-client"
-
-// Interface matching backend User model
-interface Customer {
-  id: string
-  name?: string
-  email: string
-  phone?: string
-  role: string
-  createdAt: string
-  updatedAt: string
-  // Extended fields from related data
-  orders?: any[]
-  totalOrders?: number
-  totalSpent?: number
-  loyaltyPoints?: number
-}
-
-interface CustomerStats {
-  totalCustomers: number
-  newCustomers: number
-  vipCustomers: number
-  activeCustomers: number
-  totalRevenue: number
-  averageOrderValue: number
-  retentionRate: number
-  churnRate: number
-}
+import { Customer, CustomerStats } from "@/types/customer"
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSegment, setSelectedSegment] = useState("all")
-  const { user } = useAuth()
+  const { } = useAuth()
   const [stats, setStats] = useState<CustomerStats>({
     totalCustomers: 0,
     newCustomers: 0,
@@ -58,18 +32,32 @@ export function useCustomers() {
       })
       
       // Transform backend user data to customer format
-      const customers: Customer[] = response.data?.items?.map((user: any) => ({
-        id: user.id,
-        name: user.name || 'Chưa có tên',
-        email: user.email,
-        phone: user.phone || '',
-        role: user.role || 'USER',
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        totalOrders: user.orders?.length || 0,
-        totalSpent: user.orders?.reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0) / 100 || 0,
-        loyaltyPoints: user.loyaltyAccount?.points || 0
-      })) || []
+      const responseData = response.data as { items?: unknown[] }
+      const customers: Customer[] = responseData?.items?.map((user: unknown) => {
+        const userData = user as {
+          id: string;
+          name?: string;
+          email: string;
+          phone?: string;
+          role?: string;
+          createdAt?: string;
+          updatedAt?: string;
+          orders?: { totalCents?: number }[];
+          loyaltyAccount?: { points?: number };
+        };
+        return {
+          id: userData.id,
+          name: userData.name || 'Chưa có tên',
+          email: userData.email,
+          phone: userData.phone || '',
+          role: userData.role || 'USER',
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
+          totalOrders: userData.orders?.length || 0,
+          totalSpent: (userData.orders?.reduce((sum: number, order: { totalCents?: number }) => sum + (order.totalCents || 0), 0) ?? 0) / 100 || 0,
+          loyaltyPoints: userData.loyaltyAccount?.points || 0
+        };
+      }) || []
       
       setCustomers(customers)
       
@@ -78,13 +66,13 @@ export function useCustomers() {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
       
       const newCustomersCount = customers.filter(c => {
-        const createdDate = new Date(c.createdAt)
+        const createdDate = c.createdAt ? new Date(c.createdAt) : new Date()
         return createdDate >= thirtyDaysAgo
       }).length
       
       const adminCount = customers.filter(c => c.role === 'ADMIN').length
       const activeCount = customers.filter(c => {
-        const updatedDate = new Date(c.updatedAt)
+        const updatedDate = c.updatedAt ? new Date(c.updatedAt) : new Date()
         return updatedDate >= thirtyDaysAgo
       }).length
       
@@ -153,7 +141,7 @@ export function useCustomers() {
         const now = new Date()
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         const activeCount = updated.filter(c => {
-          const updatedDate = new Date(c.updatedAt)
+          const updatedDate = c.updatedAt ? new Date(c.updatedAt) : new Date()
           return updatedDate >= thirtyDaysAgo
         }).length
         
@@ -187,8 +175,8 @@ export function useCustomers() {
           c.email,
           c.phone || '',
           c.role,
-          new Date(c.createdAt).toLocaleDateString('vi-VN'),
-          new Date(c.updatedAt).toLocaleDateString('vi-VN')
+          new Date(c.createdAt || new Date()).toLocaleDateString('vi-VN'),
+          new Date(c.updatedAt || new Date()).toLocaleDateString('vi-VN')
         ].join(','))
       ].join('\n')
       
@@ -211,9 +199,10 @@ export function useCustomers() {
   }, [customers])
 
   // Send email to customer
-  const sendEmail = useCallback(async (customerId: string, subject: string, content: string) => {
+  const sendEmail = useCallback(async (customerId: string, subject: string, message: string) => {
     try {
       // In real implementation, this would call an email API endpoint
+      console.log('Sending email to customer:', customerId, 'Subject:', subject, 'Message:', message)
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       toast.success("Đã gửi email")

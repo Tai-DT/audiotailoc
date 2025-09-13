@@ -1,0 +1,124 @@
+# Audio Tài Lộc - Shell Aliases
+# Add this to your ~/.zshrc or ~/.bashrc file
+
+# Project navigation
+alias at='cd /Users/macbook/Desktop/Code/audiotailoc'
+alias at-backend='cd /Users/macbook/Desktop/Code/audiotailoc/backend'
+alias at-frontend='cd /Users/macbook/Desktop/Code/audiotailoc/frontend'
+alias at-dashboard='cd /Users/macbook/Desktop/Code/audiotailoc/dashboard'
+
+# Development servers
+alias at-dev='npm run dev'
+alias at-start='at && npm run dev'
+alias at-backend-dev='at-backend && npm run start:dev'
+alias at-frontend-dev='at-frontend && npm run dev'
+alias at-dashboard-dev='at-dashboard && npm run dev'
+
+# Testing
+alias at-test='at-backend && npm run test'
+alias at-test-unit='at-backend && npm run test:unit'
+alias at-test-integration='at-backend && npm run test:integration'
+alias at-test-e2e='at-backend && npm run test:e2e'
+alias at-auto-test='at && ./auto-test.sh'
+
+# Building
+alias at-build='at-backend && npm run build'
+alias at-frontend-build='at-frontend && npm run build'
+alias at-dashboard-build='at-dashboard && npm run build'
+
+# Database
+alias at-db-generate='at-backend && npm run prisma:generate'
+alias at-db-migrate='at-backend && npm run prisma:migrate:dev'
+alias at-db-studio='at-backend && npm run prisma:studio'
+alias at-db-reset='at-backend && npm run prisma:migrate:reset'
+
+# Linting and formatting
+alias at-lint='at-backend && npm run lint'
+alias at-typecheck='at-backend && npm run typecheck'
+
+# Auto scripts
+alias at-auto-restart='at && ./auto-restart.sh'
+alias at-auto-deploy='at && ./auto-deploy.sh'
+alias at-auto-deploy-skip-tests='at && ./auto-deploy.sh --skip-tests'
+alias at-auto-deploy-skip-build='at && ./auto-deploy.sh --skip-build'
+
+# Health checks
+alias at-health='curl -s http://localhost:3010/api/v1/health | jq'
+alias at-health-backend='curl -s http://localhost:3010/api/v1/health'
+alias at-health-frontend='curl -s http://localhost:3000/api/health 2>/dev/null || echo "Frontend not running"'
+alias at-health-dashboard='curl -s http://localhost:3001/api/health 2>/dev/null || echo "Dashboard not running"'
+
+# API testing shortcuts
+alias at-login='curl -s -X POST http://localhost:3010/api/v1/auth/login -H "Content-Type: application/json" -d '\''{"email":"admin@audiotailoc.com","password":"Admin123!"}'\'' | jq '\''.data.token'\'''
+alias at-token='TOKEN=$(at-login) && echo "Token: $TOKEN"'
+
+# Quick API tests
+alias at-test-categories='TOKEN=$(at-login) && curl -H "Authorization: Bearer $TOKEN" http://localhost:3010/api/v1/catalog/categories | jq'
+alias at-test-products='TOKEN=$(at-login) && curl -H "Authorization: Bearer $TOKEN" http://localhost:3010/api/v1/catalog/products | jq'
+alias at-test-orders='TOKEN=$(at-login) && curl -H "Authorization: Bearer $TOKEN" http://localhost:3010/api/v1/orders | jq'
+alias at-test-payments='TOKEN=$(at-login) && curl -H "Authorization: Bearer $TOKEN" http://localhost:3010/api/v1/payments/methods | jq'
+
+# Logs
+alias at-logs='tail -f /Users/macbook/Desktop/Code/audiotailoc/logs/*.log'
+alias at-logs-backend='tail -f /Users/macbook/Desktop/Code/audiotailoc/backend/logs/*.log 2>/dev/null || echo "No backend logs found"'
+alias at-logs-error='tail -f /Users/macbook/Desktop/Code/audiotailoc/backend/logs/exceptions.log'
+alias at-logs-rejection='tail -f /Users/macbook/Desktop/Code/audiotailoc/backend/logs/rejections.log'
+
+# Git shortcuts
+alias at-status='at && git status'
+alias at-pull='at && git pull origin master'
+alias at-push='at && git push origin master'
+alias at-commit='at && git add . && git commit -m'
+alias at-diff='at && git diff'
+
+# Docker (if using)
+alias at-docker-up='at && docker-compose up -d'
+alias at-docker-down='at && docker-compose down'
+alias at-docker-logs='at && docker-compose logs -f'
+
+# Cleanup
+alias at-clean='at && find . -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null; find . -name ".next" -type d -exec rm -rf {} + 2>/dev/null; find . -name "dist" -type d -exec rm -rf {} + 2>/dev/null'
+alias at-clean-logs='at && rm -rf logs/*.log'
+
+# Quick status
+at-status-all() {
+    echo "=== Audio Tài Lộc Status ==="
+    echo "📍 Location: $(pwd)"
+    echo "🌐 Backend: $(at-health-backend | jq -r '.status // "Not running"' 2>/dev/null || echo "Not running")"
+    echo "🖥️  Frontend: $(at-health-frontend)"
+    echo "📊 Dashboard: $(at-health-dashboard)"
+    echo "🗄️  Database: $(pg_isready -h localhost -p 5432 >/dev/null 2>&1 && echo "Connected" || echo "Not connected")"
+    echo "📝 Last commit: $(at && git log -1 --oneline 2>/dev/null || echo "No git repo")"
+    echo "📦 Node version: $(node --version 2>/dev/null || echo "Not found")"
+    echo "📦 NPM version: $(npm --version 2>/dev/null || echo "Not found")"
+}
+
+# Quick setup
+at-setup() {
+    echo "🚀 Setting up Audio Tài Lộc..."
+    at
+    echo "📦 Installing backend dependencies..."
+    at-backend && npm install
+    echo "📦 Installing frontend dependencies..."
+    at-frontend && npm install
+    echo "📦 Installing dashboard dependencies..."
+    at-dashboard && npm install
+    echo "🗄️  Setting up database..."
+    at-db-generate
+    at-db-migrate
+    echo "✅ Setup complete!"
+}
+
+# Emergency stop
+at-stop-all() {
+    echo "🛑 Stopping all services..."
+    pkill -f "npm run" || true
+    pkill -f "node" || true
+    at-docker-down 2>/dev/null || true
+    echo "✅ All services stopped"
+}
+
+# Export functions for use in scripts
+export -f at-status-all
+export -f at-setup
+export -f at-stop-all

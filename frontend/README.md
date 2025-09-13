@@ -1,189 +1,161 @@
 # Audio Tài Lộc - Frontend
 
-Frontend application cho hệ thống quản lý dịch vụ âm thanh Audio Tài Lộc, được xây dựng với Next.js 15, TypeScript và Tailwind CSS.
+Frontend của ứng dụng thương mại điện tử Audio Tài Lộc, được xây dựng với Next.js 15, TypeScript và Tailwind CSS.
 
 ## 🚀 Tính năng
 
-### Trang chủ
-- Hero section với thông tin giới thiệu
-- Danh sách dịch vụ nổi bật
-- Testimonials từ khách hàng
-- Form liên hệ
+### 🏠 Trang chủ
+- Hero section với thông tin chính
+- Sản phẩm nổi bật
+- Dịch vụ chuyên nghiệp
+- Dự án tiêu biểu
+- Đánh giá khách hàng
+- Newsletter đăng ký
 
-### Dịch vụ
-- Danh sách tất cả dịch vụ với bộ lọc
-- Trang chi tiết dịch vụ
-- Tìm kiếm và phân loại dịch vụ
-- Chọn hạng mục dịch vụ
+### 🛍️ E-commerce
+- Danh sách sản phẩm với bộ lọc nâng cao
+- Chi tiết sản phẩm
+- Giỏ hàng
+- Đơn hàng
+- Thanh toán
 
-### Đặt lịch
-- Form đặt lịch dịch vụ
-- Chọn thời gian và địa điểm
-- Tính toán giá dịch vụ
-- Xác nhận đặt lịch
+### 🔧 Dịch vụ
+- Danh sách dịch vụ
+- Đặt lịch dịch vụ
+- Quản lý kỹ thuật viên
 
-### Tài khoản người dùng
-- Đăng ký/Đăng nhập
-- Quản lý thông tin cá nhân
-- Lịch sử đặt lịch
-- Theo dõi trạng thái dịch vụ
+### 📊 Admin Dashboard
+- Tổng quan dashboard
+- Quản lý sản phẩm
+- Quản lý đơn hàng
+- Quản lý khách hàng
+- Analytics & Báo cáo
+- Quản lý nội dung
 
-## 🛠️ Công nghệ sử dụng
+## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 15 với App Router
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **State Management**: Zustand
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui + Radix UI
+- **State Management**: TanStack Query (React Query)
 - **HTTP Client**: Axios
-- **Forms**: React Hook Form
-- **Animations**: Framer Motion
-- **Icons**: Heroicons
+- **Forms**: React Hook Form + Zod
 - **Notifications**: React Hot Toast
-- **Date/Time**: React Datepicker
-- **Maps**: Goong Maps (tùy chọn)
+- **Icons**: Lucide React
 
-## 📁 Cấu trúc thư mục
-
-```
-frontend/
-├── app/                    # Next.js 15 App Router (pages & routing)
-│   ├── (auth)/            # Authentication pages
-│   │   ├── login/
-│   │   └── register/
-│   ├── services/          # Services pages
-│   │   ├── page.tsx       # Services list
-│   │   └── [slug]/        # Service detail
-│   ├── booking/           # Booking page
-│   ├── account/           # User account
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Home page
-│   └── globals.css        # Global styles
-├── components/            # Reusable UI components
-│   ├── ui/               # Base UI components
-│   ├── layout/           # Layout components
-│   └── ...
-├── lib/                  # Utilities and configurations
-│   ├── api-client.ts     # API client
-│   ├── utils.ts          # Utility functions
-│   ├── i18n.ts           # Internationalization
-│   ├── seo.ts            # SEO utilities
-│   └── performance.ts    # Performance monitoring
-├── store/                # State management
-│   └── auth.ts           # Authentication store
-├── hooks/                # Custom React hooks
-├── public/               # Static assets
-├── package.json          # Dependencies
-├── tailwind.config.js    # Tailwind v4 config
-├── next.config.js        # Next.js 15 config
-├── postcss.config.js     # PostCSS config
-└── README.md             # Documentation
-```
-
-## 🚀 Cài đặt và chạy
+## 📦 Cài đặt
 
 ### Yêu cầu hệ thống
-- Node.js 18+ 
+- Node.js 18.x trở lên
 - npm hoặc yarn
 
 ### Cài đặt dependencies
+
 ```bash
 npm install
 # hoặc
 yarn install
 ```
 
-### Cấu hình environment
-Tạo file `.env.local` trong thư mục gốc:
+### Cấu hình môi trường
+
+Tạo file `.env.local`:
+
 ```env
+# API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3010/api/v1
-NEXT_PUBLIC_APP_NAME=Audio Tài Lộc
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME="Audio Tài Lộc"
+NEXT_PUBLIC_APP_DESCRIPTION="Thiết bị âm thanh chuyên nghiệp"
+
+# Features
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
 ```
 
-### Chạy development server
+### Chạy ứng dụng
+
 ```bash
+# Development
 npm run dev
 # hoặc
 yarn dev
-```
 
-Ứng dụng sẽ chạy tại `http://localhost:3000`
-
-### Build production
-```bash
+# Build production
 npm run build
-npm start
+# hoặc
+yarn build
+
+# Start production
+npm run start
+# hoặc
+yarn start
 ```
 
-## 📱 Responsive Design
+## 📁 Cấu trúc thư mục
 
-Ứng dụng được thiết kế responsive với các breakpoints:
-- Mobile: < 768px
-- Tablet: 768px - 1024px  
-- Desktop: > 1024px
-
-## 🎨 Design System
-
-### Colors
-- **Primary**: Blue (#2563eb)
-- **Secondary**: Gray (#64748b)
-- **Success**: Green (#10b981)
-- **Warning**: Yellow (#f59e0b)
-- **Error**: Red (#ef4444)
-
-### Typography
-- **Font Family**: Inter
-- **Headings**: Font weight 600-700
-- **Body**: Font weight 400-500
-
-### Components
-- Buttons với các variants: primary, secondary, outline
-- Cards với shadow và border radius
-- Forms với validation
-- Loading states và animations
-
-## 🔐 Authentication
-
-Sử dụng JWT tokens với Zustand store:
-- Login/Register forms
-- Token persistence trong localStorage
-- Auto logout khi token hết hạn
-- Protected routes
-
-## 📊 API Integration
-
-Tích hợp với backend API thông qua:
-- Axios client với interceptors
-- TypeScript interfaces cho type safety
-- Error handling và loading states
-- Request/response caching
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm run test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
+```
+frontend/
+├── app/                    # Next.js App Router
+│   ├── admin/             # Admin dashboard pages
+│   ├── products/          # Product pages
+│   ├── services/          # Service pages
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── admin/            # Admin dashboard components
+│   ├── home/             # Home page components
+│   ├── layout/           # Layout components
+│   ├── products/         # Product components
+│   ├── providers/        # Context providers
+│   └── ui/               # UI components (shadcn/ui)
+├── lib/                   # Utilities and configurations
+│   ├── api.ts            # API client configuration
+│   ├── hooks/            # Custom React hooks
+│   ├── types.ts          # TypeScript type definitions
+│   └── utils.ts          # Utility functions
+└── public/               # Static assets
 ```
 
-## 📦 Deployment
+## 🔗 Kết nối Backend
 
-### Vercel (Recommended)
-```bash
-npm install -g vercel
-vercel
-```
+Frontend được thiết kế để kết nối với backend API của Audio Tài Lộc:
 
-### Docker
-```bash
-docker build -t audiotailoc-frontend .
-docker run -p 3000:3000 audiotailoc-frontend
-```
+- **Base URL**: `http://localhost:3010/api/v1` (development)
+- **Production URL**: `https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1`
+
+### API Endpoints chính:
+
+- **Products**: `/catalog/products`
+- **Categories**: `/catalog/categories`
+- **Orders**: `/orders`
+- **Cart**: `/cart`
+- **Services**: `/services`
+- **Admin Dashboard**: `/admin/*`
+- **Analytics**: `/analytics/*`
+
+## 🎨 UI/UX Features
+
+### Responsive Design
+- Mobile-first approach
+- Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
+- Touch-friendly interface
+
+### Accessibility
+- WCAG 2.1 AA compliant
+- Keyboard navigation
+- Screen reader support
+- High contrast mode
+
+### Performance
+- Server-side rendering (SSR)
+- Static generation where possible
+- Image optimization
+- Code splitting
+- Lazy loading
 
 ## 🔧 Development
 
@@ -191,38 +163,68 @@ docker run -p 3000:3000 audiotailoc-frontend
 - ESLint configuration
 - Prettier formatting
 - TypeScript strict mode
+- Consistent naming conventions
 
-### Git Hooks
-- Pre-commit hooks với linting
-- Commit message conventions
+### Testing
+```bash
+# Run tests
+npm run test
 
-### Performance
-- Image optimization với Next.js Image
-- Code splitting tự động
-- Lazy loading components
-- Bundle analysis
+# Run tests in watch mode
+npm run test:watch
 
-## 📈 Analytics & Monitoring
+# Coverage report
+npm run test:coverage
+```
 
-- Google Analytics integration
-- Error tracking
-- Performance monitoring
-- User behavior analytics
+### Linting
+```bash
+# Check linting
+npm run lint
 
-## 🤝 Contributing
+# Fix linting issues
+npm run lint:fix
+```
 
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push to branch
-5. Tạo Pull Request
+## 📱 Browser Support
 
-## 📄 License
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers (iOS Safari, Chrome Mobile)
 
-MIT License - xem file [LICENSE](../LICENSE) để biết thêm chi tiết.
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect repository to Vercel
+2. Set environment variables
+3. Deploy automatically on push
+
+### Docker
+```bash
+# Build image
+docker build -t audiotailoc-frontend .
+
+# Run container
+docker run -p 3000:3000 audiotailoc-frontend
+```
+
+### Manual Deployment
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
 
 ## 📞 Support
 
-- **Email**: support@audiotailoc.com
-- **Documentation**: [docs.audiotailoc.com](https://docs.audiotailoc.com)
-- **Issues**: [GitHub Issues](https://github.com/audiotailoc/frontend/issues)
+- **Documentation**: Xem thư mục `docs/`
+- **Issues**: Tạo issue trên GitHub
+- **Contact**: dev@audiotailoc.com
+
+## 📄 License
+
+Copyright © 2024 Audio Tài Lộc. All rights reserved.

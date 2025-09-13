@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,9 +60,9 @@ export default function BookingDetailPage() {
     if (params.id) {
       fetchBooking();
     }
-  }, [params.id]);
+  }, [params.id, fetchBooking]);
 
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       const response = await fetch(`/api/bookings/${params.id}`);
       if (response.ok) {
@@ -75,7 +75,7 @@ export default function BookingDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   const updateBookingStatus = async (newStatus: string) => {
     if (!booking) return;

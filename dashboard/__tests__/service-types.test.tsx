@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import { jest } from '@jest/globals'
 import ServiceTypesManager from '../app/dashboard/services/types/page'
-import { useServiceTypes } from '@/hooks/use-service-types'
+import { useServiceTypes, ServiceType } from '@/hooks/use-service-types'
 
 // Mock the hook
 jest.mock('@/hooks/use-service-types')
@@ -17,7 +18,11 @@ jest.mock('sonner', () => ({
 
 // Mock the form dialog
 jest.mock('@/components/services/service-type-form-dialog', () => ({
-  ServiceTypeFormDialog: ({ open, onOpenChange, onSubmit }: any) => (
+  ServiceTypeFormDialog: ({ open, onOpenChange, onSubmit }: { 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void; 
+    onSubmit: (data: Record<string, unknown>) => void;
+  }) => (
     open ? (
       <div data-testid="service-type-form-dialog">
         <button onClick={() => onSubmit({ name: 'Test Service', description: 'Test Description' })}>
@@ -53,14 +58,30 @@ describe('ServiceTypesManager', () => {
     },
   ]
 
-  const mockCreateServiceType = jest.fn()
-  const mockUpdateServiceType = jest.fn()
-  const mockDeleteServiceType = jest.fn()
-  const mockToggleServiceTypeStatus = jest.fn()
+  const mockCreateServiceType = jest.fn() as jest.MockedFunction<
+    (data: Omit<ServiceType, 'id' | 'createdAt' | 'updatedAt'>) => Promise<ServiceType>
+  >
+  mockCreateServiceType.mockResolvedValue(mockServiceTypes[0])
+
+  const mockUpdateServiceType = jest.fn() as jest.MockedFunction<
+    (id: string, data: Partial<ServiceType>) => Promise<ServiceType>
+  >
+  mockUpdateServiceType.mockResolvedValue(mockServiceTypes[0])
+
+  const mockDeleteServiceType = jest.fn() as jest.MockedFunction<
+    (id: string) => Promise<void>
+  >
+  mockDeleteServiceType.mockResolvedValue(undefined)
+
+  const mockToggleServiceTypeStatus = jest.fn() as jest.MockedFunction<
+    (id: string, isActive: boolean) => Promise<ServiceType>
+  >
+  mockToggleServiceTypeStatus.mockResolvedValue(mockServiceTypes[0])
+
   const mockRefresh = jest.fn()
 
   beforeEach(() => {
-    ;(mockUseServiceTypes as any).mockReturnValue({
+    mockUseServiceTypes.mockReturnValue({
       serviceTypes: mockServiceTypes,
       loading: false,
       error: null,
@@ -97,10 +118,15 @@ describe('ServiceTypesManager', () => {
   })
 
   test('shows loading skeleton when loading', () => {
-    ;(mockUseServiceTypes as any).mockReturnValue({
-      ...mockUseServiceTypes(),
+    mockUseServiceTypes.mockReturnValue({
+      serviceTypes: [],
       loading: true,
-      serviceTypes: null,
+      error: null,
+      createServiceType: mockCreateServiceType,
+      updateServiceType: mockUpdateServiceType,
+      deleteServiceType: mockDeleteServiceType,
+      toggleServiceTypeStatus: mockToggleServiceTypeStatus,
+      refresh: mockRefresh,
     })
 
     render(<ServiceTypesManager />)
@@ -120,8 +146,6 @@ describe('ServiceTypesManager', () => {
   })
 
   test('calls createServiceType when form is submitted', async () => {
-    mockCreateServiceType.mockResolvedValue({})
-
     render(<ServiceTypesManager />)
 
     const addButton = screen.getByText('Thêm loại dịch vụ')
@@ -142,7 +166,6 @@ describe('ServiceTypesManager', () => {
   })
 
   test('calls deleteServiceType when delete is confirmed', async () => {
-    mockDeleteServiceType.mockResolvedValue({})
     // Mock window.confirm
     const mockConfirm = jest.spyOn(window, 'confirm')
     mockConfirm.mockReturnValue(true)
@@ -164,8 +187,6 @@ describe('ServiceTypesManager', () => {
   })
 
   test('calls toggleServiceTypeStatus when status toggle is clicked', async () => {
-    mockToggleServiceTypeStatus.mockResolvedValue({})
-
     render(<ServiceTypesManager />)
 
     // Find and click the toggle button (dropdown menu item)
@@ -190,9 +211,15 @@ describe('ServiceTypesManager', () => {
   })
 
   test('shows empty state when no service types exist', () => {
-    ;(mockUseServiceTypes as any).mockReturnValue({
-      ...mockUseServiceTypes(),
+    mockUseServiceTypes.mockReturnValue({
       serviceTypes: [],
+      loading: false,
+      error: null,
+      createServiceType: mockCreateServiceType,
+      updateServiceType: mockUpdateServiceType,
+      deleteServiceType: mockDeleteServiceType,
+      toggleServiceTypeStatus: mockToggleServiceTypeStatus,
+      refresh: mockRefresh,
     })
 
     render(<ServiceTypesManager />)

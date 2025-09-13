@@ -77,6 +77,8 @@ interface Order {
 interface OrderItem {
   id: string
   productName: string
+  productSlug?: string
+  productId?: string
   quantity: number
   price: number
   total: number
@@ -183,11 +185,6 @@ export default function OrdersPage() {
     stockQuantity: number
   }
 
-  // API Response interface
-  interface ProductsResponse {
-    items: Product[]
-  }
-
   const [products, setProducts] = useState<Product[]>([])
 
   // Fetch products for the create order form
@@ -195,15 +192,15 @@ export default function OrdersPage() {
     try {
       const response = await apiClient.getProducts()
       // Backend returns raw object, not wrapped in { data }
-      const raw = response as any
-      const items = raw?.items || raw?.data?.items
+      const raw = response as unknown as Record<string, unknown>
+      const items = raw?.items || ((raw as Record<string, unknown>)?.data as Record<string, unknown>)?.items
       if (items && Array.isArray(items)) {
-        setProducts(items.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          slug: product.slug,
-          priceCents: product.priceCents,
-          stockQuantity: product.stockQuantity ?? 0
+        setProducts(items.map((product: Record<string, unknown>) => ({
+          id: product.id as string,
+          name: product.name as string,
+          slug: product.slug as string,
+          priceCents: product.priceCents as number,
+          stockQuantity: (product.stockQuantity as number) ?? 0
         })))
       } else {
         // Fallback to hardcoded products
@@ -231,8 +228,8 @@ export default function OrdersPage() {
   const ensureProductsForOrder = useCallback(async (order: Order) => {
     const neededKeys = new Set<string>();
     for (const it of order.items || []) {
-      const slug = (it as any).productSlug as string | undefined;
-      const id = (it as any).productId as string | undefined;
+      const slug = it.productSlug;
+      const id = it.productId;
       if (slug) neededKeys.add(`slug:${slug}`);
       if (id) neededKeys.add(`id:${id}`);
     }
@@ -257,15 +254,27 @@ export default function OrdersPage() {
       try {
         if (req.type === 'id') {
           const resp = await apiClient.get(`/catalog/products/${req.value}`);
-          const pd: any = (resp as any) || (resp as any)?.data;
+          const pd = resp.data as Record<string, unknown>;
           if (pd?.id) {
-            fetched.push({ id: pd.id, name: pd.name, slug: pd.slug, priceCents: pd.priceCents, stockQuantity: pd.stockQuantity ?? 0 });
+            fetched.push({ 
+              id: pd.id as string, 
+              name: pd.name as string, 
+              slug: pd.slug as string, 
+              priceCents: pd.priceCents as number, 
+              stockQuantity: (pd.stockQuantity as number) ?? 0 
+            });
           }
         } else {
           const resp = await apiClient.get(`/catalog/products/slug/${req.value}`);
-          const pd: any = (resp as any) || (resp as any)?.data;
+          const pd = resp.data as Record<string, unknown>;
           if (pd?.id) {
-            fetched.push({ id: pd.id, name: pd.name, slug: pd.slug, priceCents: pd.priceCents, stockQuantity: pd.stockQuantity ?? 0 });
+            fetched.push({ 
+              id: pd.id as string, 
+              name: pd.name as string, 
+              slug: pd.slug as string, 
+              priceCents: pd.priceCents as number, 
+              stockQuantity: (pd.stockQuantity as number) ?? 0 
+            });
           }
         }
       } catch (e) {
@@ -303,8 +312,8 @@ export default function OrdersPage() {
       shippingCoordinates: null, // Will be parsed from order data if available
       notes: '',
       items: order.items.map(item => {
-        const slug = (item as any).productSlug as string | undefined;
-        const id = (item as any).productId as string | undefined;
+        const slug = item.productSlug;
+        const id = item.productId;
         // Prefer resolving slug to actual id; fallback to given id; else empty
         const resolvedId = slug ? (products.find(p => p.slug === slug)?.id || '') : (id || '');
         return {

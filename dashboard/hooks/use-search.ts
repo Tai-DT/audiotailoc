@@ -11,7 +11,7 @@ export interface SearchResult {
   description: string
   price?: number
   score?: number
-  metadata?: any
+  metadata?: Record<string, unknown>
 }
 
 export interface SearchHistory {
@@ -47,7 +47,16 @@ export function useSearch() {
   const [error, setError] = useState<string | null>(null)
 
   // Perform search
-  const search = useCallback(async (query: string, type: string = 'all', filters?: any) => {
+  // Track search for analytics
+  const trackSearch = useCallback(async (query: string, resultCount: number) => {
+    try {
+      await apiClient.post('/search/analytics', { query, resultCount })
+    } catch (err) {
+      console.error('Error tracking search:', err)
+    }
+  }, [])
+
+  const search = useCallback(async (query: string, type: string = 'all') => {
     try {
       setLoading(true)
       setError(null)
@@ -95,8 +104,8 @@ export function useSearch() {
       }
       setSearchHistory(prev => [historyItem, ...prev.slice(0, 9)])
 
-      // Track search analytics
-      await trackSearch(query, filtered.length)
+      // Track search analytics (moved outside useCallback to avoid dependency)
+      setTimeout(() => trackSearch(query, filtered.length), 0)
       
     } catch (err) {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
@@ -106,16 +115,7 @@ export function useSearch() {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  // Track search for analytics
-  const trackSearch = useCallback(async (query: string, resultCount: number) => {
-    try {
-      await apiClient.post('/search/analytics', { query, resultCount })
-    } catch (err) {
-      console.error('Error tracking search:', err)
-    }
-  }, [])
+  }, [trackSearch])
 
   // Fetch search history
   const fetchHistory = useCallback(async () => {

@@ -14,12 +14,10 @@ import {
   MessageSquare,
   Send,
   Users,
-  TrendingUp,
   Eye,
   MousePointer,
   Plus,
   Search,
-  Filter,
   Edit,
   Trash2,
   Copy,
@@ -27,12 +25,9 @@ import {
   Pause,
   BarChart3,
   Calendar,
-  Clock,
   Target,
   Zap,
-  Award,
-  DollarSign,
-  CheckCircle
+  DollarSign
 } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -47,7 +42,7 @@ interface Campaign {
   status: "draft" | "scheduled" | "sent" | "cancelled"
   targetAudience: string
   subject?: string
-  content: string
+  content?: string
   sentAt?: Date
   scheduledAt?: Date
   createdAt: Date
@@ -59,17 +54,6 @@ interface Campaign {
   revenue: number
 }
 
-interface CampaignStats {
-  totalCampaigns: number
-  activeCampaigns: number
-  sentCampaigns: number
-  totalRecipients: number
-  averageOpenRate: number
-  averageClickRate: number
-  totalRevenue: number
-  conversionRate: number
-}
-
 export default function CampaignsPage() {
   const {
     campaigns,
@@ -77,10 +61,8 @@ export default function CampaignsPage() {
     loading,
     createCampaign,
     updateCampaign,
-    deleteCampaign,
     duplicateCampaign,
-    sendCampaign,
-    scheduleCampaign
+    sendCampaign
   } = useCampaigns()
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -161,7 +143,7 @@ export default function CampaignsPage() {
       setShowCreateDialog(false)
       setNewCampaign({ type: "email", status: "draft" })
       toast.success("Đã tạo chiến dịch marketing")
-    } catch (error) {
+    } catch {
       toast.error("Không thể tạo chiến dịch")
     }
   }
@@ -173,7 +155,7 @@ export default function CampaignsPage() {
       setShowEditDialog(false)
       setSelectedCampaign(null)
       toast.success("Đã cập nhật chiến dịch")
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật chiến dịch")
     }
   }
@@ -183,7 +165,7 @@ export default function CampaignsPage() {
       try {
         await sendCampaign(id)
         toast.success("Đã gửi chiến dịch thành công")
-      } catch (error) {
+      } catch {
         toast.error("Không thể gửi chiến dịch")
       }
     }
@@ -193,7 +175,7 @@ export default function CampaignsPage() {
     try {
       await duplicateCampaign(campaign.id)
       toast.success("Đã sao chép chiến dịch")
-    } catch (error) {
+    } catch {
       toast.error("Không thể sao chép chiến dịch")
     }
   }
@@ -302,6 +284,7 @@ export default function CampaignsPage() {
                       value={selectedType}
                       onChange={(e) => setSelectedType(e.target.value)}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn loại chiến dịch"
                     >
                       <option value="all">Tất cả loại</option>
                       <option value="email">Email</option>
@@ -313,6 +296,7 @@ export default function CampaignsPage() {
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn trạng thái chiến dịch"
                     >
                       <option value="all">Tất cả trạng thái</option>
                       <option value="draft">Nháp</option>
@@ -640,8 +624,9 @@ export default function CampaignsPage() {
                     <select
                       id="campaign-type"
                       value={newCampaign.type}
-                      onChange={(e) => setNewCampaign({...newCampaign, type: e.target.value as any})}
+                      onChange={(e) => setNewCampaign({...newCampaign, type: e.target.value as Campaign["type"]})}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn loại chiến dịch marketing"
                     >
                       <option value="email">Email</option>
                       <option value="sms">SMS</option>
