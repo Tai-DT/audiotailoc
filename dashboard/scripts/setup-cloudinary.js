@@ -5,8 +5,8 @@
  * Chạy: node scripts/setup-cloudinary.js
  */
 
-const https = require('https');
-const querystring = require('querystring');
+import https from 'https';
+import querystring from 'querystring';
 
 // Cấu hình từ .env
 const CLOUD_NAME = 'dib7tbv7w';
@@ -38,10 +38,7 @@ async function createUploadPreset() {
     timestamp: Math.floor(Date.now() / 1000)
   });
 
-  const signature = require('crypto')
-    .createHash('sha1')
-    .update(`upload_preset=${JSON.stringify(presetData)}&timestamp=${Math.floor(Date.now() / 1000)}${API_SECRET}`)
-    .digest('hex');
+  // Note: Signature calculation removed as it's not used in this script
 
   const options = {
     hostname: 'api.cloudinary.com',

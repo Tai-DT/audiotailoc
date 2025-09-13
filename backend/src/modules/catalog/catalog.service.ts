@@ -325,6 +325,97 @@ export class CatalogService {
     return items;
   }
 
+  async createCategory(data: { name: string; slug: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
+    // Check if slug already exists
+    const existing = await this.prisma.category.findUnique({ where: { slug: data.slug } });
+    if (existing) {
+      throw new Error('Category with this slug already exists');
+    }
+
+    const category = await this.prisma.category.create({
+      data: {
+        name: data.name,
+        slug: data.slug,
+        parentId: data.parentId,
+        isActive: data.isActive ?? true,
+      },
+    });
+
+    // Clear cache
+    await this.cache.deletePattern('categories:*');
+
+    return {
+      id: category.id,
+      slug: category.slug,
+      name: category.name,
+      parentId: category.parentId,
+    };
+  }
+
+  async updateCategory(id: string, data: { name?: string; slug?: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
+    // Check if slug already exists (excluding current category)
+    if (data.slug) {
+      const existing = await this.prisma.category.findFirst({
+        where: { slug: data.slug, id: { not: id } },
+      });
+      if (existing) {
+        throw new Error('Category with this slug already exists');
+      }
+    }
+
+    const category = await this.prisma.category.update({
+      where: { id },
+      data: {
+        ...(data.name && { name: data.name }),
+        ...(data.slug && { slug: data.slug }),
+        ...(data.parentId !== undefined && { parentId: data.parentId }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+    });
+
+    // Clear cache
+    await this.cache.deletePattern('categories:*');
+
+    return {
+      id: category.id,
+      slug: category.slug,
+      name: category.name,
+      parentId: category.parentId,
+    };
+  }
+
+  async deleteCategory(id: string): Promise<{ deleted: boolean; message?: string }> {
+    try {
+      // Check if category has products
+      const productCount = await this.prisma.product.count({
+        where: { categoryId: id },
+      });
+
+      if (productCount > 0) {
+        throw new Error(`Cannot delete category because it has ${productCount} associated product(s). Please remove or reassign the products first.`);
+      }
+
+      // Check if category has subcategories
+      const subcategoryCount = await this.prisma.category.count({
+        where: { parentId: id },
+      });
+
+      if (subcategoryCount > 0) {
+        throw new Error(`Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`);
+      }
+
+      await this.prisma.category.delete({ where: { id } });
+
+      // Clear cache
+      await this.cache.deletePattern('categories:*');
+
+      return { deleted: true };
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return { deleted: false, message: error instanceof Error ? error.message : 'An error occurred while deleting the category' };
+    }
+  }
+
   async removeMany(slugs: string[] | null): Promise<{ deleted: number }> {
     if (!slugs || slugs.length === 0) return { deleted: 0 };
     // The tests expect deleteMany by slug

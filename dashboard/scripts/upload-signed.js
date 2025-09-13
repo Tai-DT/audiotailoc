@@ -5,9 +5,8 @@
  * Sử dụng signed upload với API key
  */
 
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+import crypto from 'crypto';
+import { PrismaClient } from '@prisma/client';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = 'dib7tbv7w';
@@ -114,7 +113,6 @@ async function uploadSigned(imageUrl, productName) {
 
 // Hàm cập nhật database
 async function updateProductImage(productId, imageUrl) {
-  const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
 
   try {

@@ -1,4 +1,7 @@
 // API Client for Audio Tài Lộc Backend
+import { ServiceFormData } from '@/types/service';
+import { CreateBannerDto, UpdateBannerDto } from '@/types/banner';
+import { UpdateSettingsDto } from '@/types/settings';
 const API_BASE_URL: string = (() => {
   const env = process.env.NEXT_PUBLIC_API_URL;
   if (env && env.trim().length > 0) return env;
@@ -19,6 +22,18 @@ export interface ApiResponse<T = unknown> {
   path: string;
   method: string;
 }
+
+export interface ApiError extends Error {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  status?: number;
+}
+
+// Generic data type for request bodies
+export type RequestData = Record<string, unknown> | FormData | string;
 
 export interface ApiError {
   statusCode: number;
@@ -139,10 +154,10 @@ class ApiClient {
       // First get the response as text to handle potential non-JSON responses
       responseText = await response.text();
 
-      let data: any;
+      let data: Record<string, unknown>;
       try {
         data = responseText ? JSON.parse(responseText) : {};
-      } catch (parseError) {
+      } catch {
         console.error('Failed to parse response as JSON. Response text:', responseText);
         throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
       }
@@ -159,13 +174,13 @@ class ApiClient {
 
         console.error('API Error Response:', errorInfo);
 
-        const error = new Error(data?.message || `Request failed with status ${response.status}`);
-        (error as any).response = data;
-        (error as any).status = response.status;
+        const error = new Error(data?.message as string || `Request failed with status ${response.status}`) as ApiError;
+        error.response = { data };
+        error.status = response.status;
         throw error;
       }
 
-      return data;
+      return data as unknown as ApiResponse<T>;
     } catch (error) {
       console.error('API Request failed:', {
         endpoint,
@@ -353,6 +368,14 @@ class ApiClient {
     return this.request('/analytics/dashboard');
   }
 
+  async getRealtimeSales() {
+    return this.request('/analytics/realtime/sales');
+  }
+
+  async getRealtimeOrders() {
+    return this.request('/analytics/realtime/orders');
+  }
+
   // Services endpoints
   async getServices(params?: { page?: number; limit?: number; typeId?: string; isActive?: boolean }) {
     const query = new URLSearchParams();
@@ -369,14 +392,14 @@ class ApiClient {
     return this.request(`/services/${id}`);
   }
 
-  async createService(serviceData: any) {
+  async createService(serviceData: ServiceFormData) {
     return this.request('/services', {
       method: 'POST',
       body: JSON.stringify(serviceData)
     });
   }
 
-  async updateService(id: string, serviceData: any) {
+  async updateService(id: string, serviceData: Partial<ServiceFormData>) {
     return this.request(`/services/${id}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData)
@@ -683,7 +706,7 @@ class ApiClient {
   }
 
   // Generic HTTP methods
-  async get<T>(endpoint: string, options?: { params?: Record<string, any> }): Promise<ApiResponse<T>> {
+  async get<T>(endpoint: string, options?: { params?: Record<string, string | number | boolean> }): Promise<ApiResponse<T>> {
     let url = endpoint;
     if (options?.params) {
       const params = new URLSearchParams();
@@ -700,21 +723,21 @@ class ApiClient {
     return this.request<T>(url, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: RequestData): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: RequestData): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: RequestData): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
@@ -765,14 +788,14 @@ class ApiClient {
     return this.request(`/content/banners/${id}`);
   }
 
-  async createBanner(data: any) {
+  async createBanner(data: CreateBannerDto) {
     return this.request('/admin/banners', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateBanner(id: string, data: any) {
+  async updateBanner(id: string, data: UpdateBannerDto) {
     return this.request(`/admin/banners/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -794,7 +817,7 @@ class ApiClient {
     return this.request(`/content/settings/${section}`);
   }
 
-  async updateSiteSettings(data: any) {
+  async updateSiteSettings(data: UpdateSettingsDto) {
     return this.request('/admin/settings', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -959,6 +982,54 @@ class ApiClient {
 
   async getTechnicianAvailability(id: string, date: string) {
     return this.request(`/technicians/${id}/availability?date=${date}`);
+  }
+
+  // Notifications endpoints
+  async getNotifications(params?: { userId?: string; read?: boolean; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.userId) query.append('userId', params.userId);
+    if (params?.read !== undefined) query.append('read', params.read.toString());
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+
+    return this.request(`/notifications?${query.toString()}`);
+  }
+
+  async getNotificationSettings(userId?: string) {
+    const query = userId ? `?userId=${userId}` : '';
+    return this.request(`/notifications/settings${query}`);
+  }
+
+  async subscribeToNotifications(data: { userId: string; type: string; channel: 'email' | 'sms' | 'push' }) {
+    return this.request('/notifications/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async unsubscribeFromNotifications(data: { userId: string; type: string; channel: 'email' | 'sms' | 'push' }) {
+    return this.request('/notifications/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async markNotificationAsRead(data: { notificationId: string; userId: string }) {
+    return this.request('/notifications/mark-read', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async markAllNotificationsAsRead(userId: string) {
+    return this.request('/notifications/mark-all-read', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  async getNotificationStats(userId: string) {
+    return this.request(`/notifications/stats?userId=${userId}`);
   }
 }
 

@@ -8,10 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { apiClient, CreateProductData, UpdateProductData } from "@/lib/api-client"
+import { apiClient, ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { Loader2, Wand2, ChevronUp, ChevronDown } from "lucide-react"
+
+interface AxiosError {
+  response?: {
+    data?: ApiError;
+    status?: number;
+    headers?: Record<string, string>;
+  };
+  request?: unknown;
+  message?: string;
+}
 
 interface Product {
   id: string
@@ -91,7 +101,7 @@ interface ProductFormData {
 }
 
 export function ProductFormDialog({ product, open, onOpenChange, categories, onSuccess }: ProductFormDialogProps) {
-  const { token } = useAuth()
+  const { } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -407,7 +417,7 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
 
       // More detailed error handling
       let errorMessage = 'Có lỗi xảy ra khi lưu sản phẩm'
-      const axiosError = error as { response?: { data?: any; status?: number; headers?: any }; request?: any; message?: string }
+      const axiosError = error as AxiosError
       if (axiosError.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

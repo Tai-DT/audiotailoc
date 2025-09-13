@@ -17,16 +17,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/components/ui/toast-component';
-import { serviceTypeApi } from '@/lib/api-client';
+import { useToast } from '@/components/ui/use-toast';
+import { ServiceType } from '@/types/service-type';
+import { apiClient } from '@/lib/api-client';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Tên là bắt buộc'),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean().optional(),
 });
 
-type ServiceTypeFormValues = z.infer<typeof formSchema>;
+type ServiceTypeFormValues = {
+  name: string
+  description?: string
+  isActive?: boolean
+}
 
 interface ServiceTypeFormProps {
   initialData?: ServiceType;
@@ -36,7 +41,7 @@ interface ServiceTypeFormProps {
 
 export function ServiceTypeForm({ initialData, onSuccess, onCancel }: ServiceTypeFormProps) {
   const router = useRouter();
-  const { showToast, ToastComponent } = useToast();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const isEdit = !!initialData;
 
@@ -60,14 +65,14 @@ export function ServiceTypeForm({ initialData, onSuccess, onCancel }: ServiceTyp
       setLoading(true);
       
       if (isEdit) {
-        await serviceTypeApi.update(initialData.id, values);
-        showToast({
+        await apiClient.updateServiceType(initialData.id, values);
+        toast({
           title: 'Thành công',
           description: 'Đã cập nhật loại dịch vụ',
         });
       } else {
-        await serviceTypeApi.create(values);
-        showToast({
+        await apiClient.createServiceType(values);
+        toast({
           title: 'Thành công',
           description: 'Đã thêm loại dịch vụ mới',
         });
@@ -76,12 +81,12 @@ export function ServiceTypeForm({ initialData, onSuccess, onCancel }: ServiceTyp
       onSuccess?.();
       
       if (!onSuccess) {
-        router.push('/admin/services/types');
+        router.push('/dashboard/services/types');
         router.refresh();
       }
     } catch (error) {
       console.error('Failed to save service type:', error);
-      showToast({
+      toast({
         title: 'Lỗi',
         description: 'Không thể lưu loại dịch vụ',
         variant: 'destructive',
@@ -140,7 +145,7 @@ export function ServiceTypeForm({ initialData, onSuccess, onCancel }: ServiceTyp
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value}
+                    checked={field.value ?? true}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>

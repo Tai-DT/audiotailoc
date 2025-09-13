@@ -124,33 +124,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiClient.login({ email, password })
 
+      // Backend returns success/data structure, but throws error for 401
+      // So if we get here, login was successful
       if (!response.success) {
         throw new Error(response.message || 'Login failed')
       }
 
-      // Normalize various response shapes from backend
-      // Possible shapes:
-      // - { data: { accessToken, refreshToken } }
-      // - { data: { data: { token, user } } }
-      // - { data: { token, user } }
-      // - { token }
-      const respData: any = response?.data ?? response
+      // Handle nested response structure from backend
+      // Format: { data: { data: { data: { token, user } } } }
+      const respData = response?.data ?? response
       let accessToken: string | null = null
-      let refreshToken: string | null = null
+      let userData: { id: string; email: string; name?: string; role?: string } | null = null
 
-      // Try nested data.data first
-      if (respData?.data && typeof respData.data === 'object') {
-        const inner = respData.data.data ?? respData.data
-        if (inner?.token || inner?.accessToken) {
-          accessToken = inner.token ?? inner.accessToken
-          refreshToken = inner.refreshToken ?? null
-        }
-      }
-
-      // Fallback to top-level fields
-      if (!accessToken) {
-        accessToken = respData?.token ?? respData?.accessToken ?? null
-        refreshToken = respData?.refreshToken ?? null
+      // Extract token from nested structure
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((respData as any)?.data?.data?.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const inner = (respData as any).data.data.data
+        accessToken = inner.token
+        userData = inner.user
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if ((respData as any)?.data?.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const inner = (respData as any).data.data
+        accessToken = inner.token
+        userData = inner.user
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if ((respData as any)?.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        accessToken = (respData as any).data.token
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userData = (respData as any).data.user
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        accessToken = (respData as any)?.token
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userData = (respData as any)?.user
       }
 
       if (!accessToken) {
@@ -160,23 +169,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setToken(accessToken)
 
-      // Store tokens: if refresh token available, store both; otherwise store accessToken only
+      // Store token
       try {
-        if (refreshToken) {
-          setStoredTokens({ accessToken, refreshToken })
-        } else {
-          localStorage.setItem('accessToken', accessToken)
-          localStorage.removeItem('refreshToken')
-        }
+        localStorage.setItem('accessToken', accessToken)
+        localStorage.removeItem('refreshToken') // Backend doesn't return refresh token
       } catch (e) {
         console.error('Failed to store tokens:', e)
       }
 
-      // Ensure token is set before any API calls
+      // Set token in API client
       apiClient.setToken(accessToken)
       console.log('🔐 JWT Token set in ApiClient:', accessToken.substring(0, 30) + '...')
 
-      await refreshUser()
+      // Set user data if available
+      if (userData) {
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          name: userData.name || userData.email.split('@')[0],
+          role: userData.role || 'user'
+        })
+      } else {
+        // Fallback: try to get user data from token or API
+        try {
+          await refreshUser()
+        } catch (error) {
+          console.warn('Could not fetch user data after login:', error)
+          // Set basic user info from email
+          setUser({
+            id: 'unknown',
+            email: email,
+            name: email.split('@')[0],
+            role: 'user'
+          })
+        }
+      }
     } catch (error) {
       console.error('Login error:', error)
       if (error instanceof Error) {

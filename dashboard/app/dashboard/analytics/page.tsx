@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,6 @@ import {
   Eye,
   Activity,
   RefreshCw,
-  Calendar,
   Target,
   Zap,
   Clock
@@ -28,18 +27,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAnalytics } from "@/hooks/use-analytics"
-import { format, subDays } from "date-fns"
-import { vi } from "date-fns/locale/vi"
 
 export default function AnalyticsPage() {
   const {
     overview,
-    trends,
     topServices,
     topProducts,
     userActivity,
     loading,
-    error,
     fetchOverview,
     fetchTrends,
     fetchTopServices,
@@ -50,11 +45,7 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("7days")
   const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    loadAllData()
-  }, [dateRange])
-
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     await Promise.all([
       fetchOverview(dateRange),
       fetchTrends(dateRange),
@@ -62,7 +53,11 @@ export default function AnalyticsPage() {
       fetchTopProducts(),
       fetchUserActivity(dateRange)
     ])
-  }
+  }, [dateRange, fetchOverview, fetchTrends, fetchTopServices, fetchTopProducts, fetchUserActivity])
+
+  useEffect(() => {
+    loadAllData()
+  }, [loadAllData])
 
   const handleRefresh = async () => {
     setRefreshing(true)

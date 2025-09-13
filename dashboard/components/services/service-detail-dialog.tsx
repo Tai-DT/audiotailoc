@@ -21,7 +21,6 @@ export function ServiceDetailDialog({ serviceId, open, onOpenChange, types }: Se
   const { token } = useAuth()
   const [service, setService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   const fetchServiceDetail = useCallback(async () => {
     if (!serviceId) return

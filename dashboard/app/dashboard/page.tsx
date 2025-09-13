@@ -7,10 +7,8 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  BarChart3,
   Package,
   ShoppingCart,
-  Users,
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -38,18 +36,53 @@ import { toast } from "sonner"
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  Legend,
-  PieChart,
-  Pie,
-  Cell
+  ResponsiveContainer
 } from "recharts"
+
+// Analytics data types
+
+interface Order {
+  id: string
+  status: string
+  createdAt: string
+  totalCents: number
+  totalAmount: number
+  user?: {
+    name?: string
+    email: string
+  }
+  customer?: {
+    name?: string
+    email: string
+  }
+}
+
+interface Product {
+  id: string
+  name: string
+  stockQuantity: number
+  price: number
+  imageUrl?: string
+}
+
+interface Service {
+  id: string
+  name: string
+  isActive: boolean
+  price: number
+}
+
+interface User {
+  id: string
+  name?: string
+  email: string
+  createdAt: string
+  role: string
+}
 
 interface DashboardStats {
   revenue: {
@@ -117,23 +150,22 @@ export default function DashboardPage() {
       ])
 
       // Process the data
-      const orders = ordersRes.data?.items || []
-      const products = productsRes.data?.items || []
-      const services = servicesRes.data?.services || []
-      const users = usersRes.data?.items || []
+      const orders = (ordersRes.data as { items?: Order[] })?.items || []
+      const products = (productsRes.data as { items?: Product[] })?.items || []
+      const services = (servicesRes.data as { services?: Service[] })?.services || []
+      const users = (usersRes.data as { items?: User[] })?.items || []
 
       // Calculate stats
       const now = new Date()
-      const todayStart = new Date(now.setHours(0, 0, 0, 0))
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
       // Revenue calculation
-      const totalRevenue = orders.reduce((sum: number, order: any) => 
+      const totalRevenue = orders.reduce((sum: number, order: Order) => 
         sum + (order.totalCents || 0), 0) / 100
 
       const lastMonthRevenue = orders
-        .filter((order: any) => new Date(order.createdAt) < thirtyDaysAgo)
-        .reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0) / 100
+        .filter((order: Order) => new Date(order.createdAt) < thirtyDaysAgo)
+        .reduce((sum: number, order: Order) => sum + (order.totalCents || 0), 0) / 100
 
       const revenueGrowth = lastMonthRevenue > 0 
         ? ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
@@ -150,23 +182,23 @@ export default function DashboardPage() {
       })
 
       // Orders stats
-      const pendingOrders = orders.filter((o: any) => o.status === 'PENDING').length
-      const completedOrders = orders.filter((o: any) => o.status === 'COMPLETED').length
+      const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length
+      const completedOrders = orders.filter((o: Order) => o.status === 'COMPLETED').length
       const ordersGrowth = 23.5 // Mock growth
 
       // Customer stats
-      const newCustomers = users.filter((u: any) => {
+      const newCustomers = users.filter((u: User) => {
         const createdDate = new Date(u.createdAt)
         return createdDate >= thirtyDaysAgo
       }).length
 
       // Product stats
-      const outOfStock = products.filter((p: any) => p.stockQuantity === 0).length
-      const lowStock = products.filter((p: any) => 
+      const outOfStock = products.filter((p: Product) => p.stockQuantity === 0).length
+      const lowStock = products.filter((p: Product) => 
         p.stockQuantity > 0 && p.stockQuantity < 10).length
 
       // Top selling products (mock sales data)
-      const topSellingProducts = products.slice(0, 5).map((p: any) => ({
+      const topSellingProducts = products.slice(0, 5).map((p: Product) => ({
         id: p.id,
         name: p.name,
         sales: Math.floor(Math.random() * 100) + 20,
@@ -175,11 +207,11 @@ export default function DashboardPage() {
       }))
 
       // Service stats
-      const activeServices = services.filter((s: any) => s.isActive).length
+      const activeServices = services.filter((s: Service) => s.isActive).length
       const bookings = Math.floor(Math.random() * 50) + 10 // Mock bookings
 
       // Recent orders
-      const recentOrders = orders.slice(0, 5).map((order: any) => ({
+      const recentOrders = orders.slice(0, 5).map((order: Order) => ({
         id: order.id,
         customer: order.user?.name || 'Khách hàng',
         amount: (order.totalCents || 0) / 100,
@@ -286,8 +318,8 @@ export default function DashboardPage() {
     {
       title: "Doanh thu",
       value: formatCurrency(stats?.revenue.total || 0),
-      change: `${stats?.revenue.growth > 0 ? '+' : ''}${stats?.revenue.growth.toFixed(1)}%`,
-      trend: stats?.revenue.growth > 0 ? "up" : "down",
+      change: `${(stats?.revenue.growth || 0) > 0 ? '+' : ''}${(stats?.revenue.growth || 0).toFixed(1)}%`,
+      trend: (stats?.revenue.growth || 0) > 0 ? "up" : "down",
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-100 dark:bg-green-900/20"
@@ -313,8 +345,8 @@ export default function DashboardPage() {
     {
       title: "Sản phẩm",
       value: stats?.products.total.toString() || "0",
-      change: `${stats?.products.outOfStock} hết hàng`,
-      trend: stats?.products.outOfStock > 0 ? "down" : "up",
+      change: `${stats?.products.outOfStock || 0} hết hàng`,
+      trend: (stats?.products.outOfStock || 0) > 0 ? "down" : "up",
       icon: Package,
       color: "text-orange-600",
       bgColor: "bg-orange-100 dark:bg-orange-900/20"
@@ -329,7 +361,7 @@ export default function DashboardPage() {
   ]
 
   // Chart colors
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+
 
   return (
     <div className="space-y-6">
@@ -417,7 +449,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 12 }} />
                 <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ borderRadius: 12 }} />
+                <Tooltip formatter={(value: number | string) => formatCurrency(Number(value))} contentStyle={{ borderRadius: 12 }} />
                 <Line 
                   type="monotone" 
                   dataKey="value" 

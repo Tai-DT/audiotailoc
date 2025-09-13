@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,14 +15,10 @@ import {
   Plus,
   Minus,
   Search,
-  Filter,
   Download,
   Upload,
-  BarChart3,
   History,
-  ShoppingCart,
   RefreshCw,
-  Eye,
   Edit,
   Trash2
 } from "lucide-react"
@@ -30,62 +27,17 @@ import { vi } from "date-fns/locale"
 import { toast } from "sonner"
 import { useInventory } from "@/hooks/use-inventory"
 
-interface InventoryItem {
-  id: string
-  productId: string
-  productName: string
-  productImage?: string
-  sku: string
-  stock: number
-  reserved: number
-  available: number
-  lowStockThreshold: number
-  status: "in_stock" | "low_stock" | "out_of_stock"
-  lastUpdated: Date
-  category?: string
-  price?: number
-}
 
-interface StockMovement {
-  id: string
-  productId: string
-  productName: string
-  type: "IN" | "OUT" | "ADJUSTMENT"
-  quantity: number
-  reason: string
-  reference?: string
-  referenceId?: string
-  referenceType?: string
-  userId?: string
-  notes?: string
-  createdAt: Date
-  updatedAt?: Date
-}
-
-interface InventoryAlert {
-  id: string
-  productId: string
-  productName: string
-  type: "LOW_STOCK" | "OUT_OF_STOCK" | "OVERSTOCK"
-  message: string
-  threshold: number
-  currentStock: number
-  isResolved: boolean
-  createdAt: Date
-  updatedAt?: Date
-}
 
 export default function InventoryPage() {
   const {
     inventory,
     movements,
     alerts,
-    loading,
     stats,
     updateStock,
     editProduct,
     deleteProduct,
-    createMovement,
     exportInventory,
     importInventory,
     refreshInventory
@@ -95,8 +47,6 @@ export default function InventoryPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [showMovementDialog, setShowMovementDialog] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
 
   const filteredInventory = inventory.filter(item => {
     if (searchQuery && !item.productName.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -112,14 +62,6 @@ export default function InventoryPage() {
     return true
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "in_stock": return "bg-green-500"
-      case "low_stock": return "bg-yellow-500"
-      case "out_of_stock": return "bg-red-500"
-      default: return "bg-gray-500"
-    }
-  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -134,7 +76,7 @@ export default function InventoryPage() {
     try {
       await updateStock(productId, type, quantity, "Manual adjustment")
       toast.success("Đã cập nhật tồn kho")
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật tồn kho")
     }
   }
@@ -314,13 +256,7 @@ export default function InventoryPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {loading ? (
-                          <tr>
-                            <td colSpan={8} className="text-center py-8">
-                              Đang tải...
-                            </td>
-                          </tr>
-                        ) : filteredInventory.length === 0 ? (
+                        {filteredInventory.length === 0 ? (
                           <tr>
                             <td colSpan={8} className="text-center py-8 text-muted-foreground">
                               Không có dữ liệu
@@ -333,20 +269,12 @@ export default function InventoryPage() {
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
                                     {item.productImage ? (
-                                      <img
+                                      <Image
                                         src={item.productImage}
                                         alt={item.productName}
+                                        width={40}
+                                        height={40}
                                         className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                          const parent = target.parentElement;
-                                          if (parent) {
-                                            const icon = document.createElement('div');
-                                            icon.innerHTML = '<svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
-                                            parent.appendChild(icon.firstChild as Node);
-                                          }
-                                        }}
                                       />
                                     ) : (
                                       <Package className="h-5 w-5 text-gray-500" />
@@ -385,7 +313,7 @@ export default function InventoryPage() {
                                   <Button size="sm" variant="outline" onClick={async () => {
                                     const newSku = window.prompt('Nhập SKU mới (bỏ trống để giữ nguyên):', item.sku)
                                     const newStockStr = window.prompt('Nhập tồn kho mới (bỏ trống để giữ nguyên):', String(item.stock))
-                                    const patch: any = {}
+                                    const patch: Partial<{ name: string; sku: string; stockQuantity: number }> = {}
                                     if (newSku !== null && newSku !== item.sku) patch.sku = newSku
                                     if (newStockStr !== null && newStockStr !== String(item.stock)) {
                                       const val = Math.max(0, parseInt(newStockStr || '0', 10) || 0)

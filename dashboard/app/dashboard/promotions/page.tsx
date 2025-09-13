@@ -12,23 +12,15 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   Tag,
   Percent,
-  Gift,
-  Calendar,
   Users,
   TrendingUp,
   Plus,
   Search,
-  Filter,
   Edit,
   Trash2,
   Copy,
-  Eye,
-  Download,
   BarChart3,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+  CheckCircle
 } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -56,15 +48,6 @@ interface Promotion {
   createdBy: string
 }
 
-interface PromotionStats {
-  totalPromotions: number
-  activePromotions: number
-  expiredPromotions: number
-  totalSavings: number
-  totalUsage: number
-  conversionRate: number
-}
-
 export default function PromotionsPage() {
   const {
     promotions,
@@ -73,8 +56,7 @@ export default function PromotionsPage() {
     createPromotion,
     updatePromotion,
     deletePromotion,
-    duplicatePromotion,
-    togglePromotion
+    duplicatePromotion
   } = usePromotions()
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -160,7 +142,7 @@ export default function PromotionsPage() {
       setShowCreateDialog(false)
       setNewPromotion({ type: "percentage", isActive: true })
       toast.success("Đã tạo chương trình khuyến mãi")
-    } catch (error) {
+    } catch {
       toast.error("Không thể tạo chương trình khuyến mãi")
     }
   }
@@ -172,7 +154,7 @@ export default function PromotionsPage() {
       setShowEditDialog(false)
       setSelectedPromotion(null)
       toast.success("Đã cập nhật chương trình khuyến mãi")
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật chương trình khuyến mãi")
     }
   }
@@ -182,7 +164,7 @@ export default function PromotionsPage() {
       try {
         await deletePromotion(id)
         toast.success("Đã xóa chương trình khuyến mãi")
-      } catch (error) {
+      } catch {
         toast.error("Không thể xóa chương trình khuyến mãi")
       }
     }
@@ -192,7 +174,7 @@ export default function PromotionsPage() {
     try {
       await duplicatePromotion(promotion.id)
       toast.success("Đã sao chép chương trình khuyến mãi")
-    } catch (error) {
+    } catch {
       toast.error("Không thể sao chép chương trình khuyến mãi")
     }
   }
@@ -300,6 +282,7 @@ export default function PromotionsPage() {
                       value={selectedType}
                       onChange={(e) => setSelectedType(e.target.value)}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn loại khuyến mãi"
                     >
                       <option value="all">Tất cả loại</option>
                       <option value="percentage">Phần trăm</option>
@@ -311,6 +294,7 @@ export default function PromotionsPage() {
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn trạng thái khuyến mãi"
                     >
                       <option value="all">Tất cả trạng thái</option>
                       <option value="active">Đang hoạt động</option>
@@ -449,7 +433,7 @@ export default function PromotionsPage() {
                       {promotions
                         .sort((a, b) => b.usageCount - a.usageCount)
                         .slice(0, 5)
-                        .map((promo, index) => (
+                        .map((promo) => (
                           <div key={promo.id} className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">{promo.name}</p>
@@ -528,8 +512,9 @@ export default function PromotionsPage() {
                     <select
                       id="promo-type"
                       value={newPromotion.type}
-                      onChange={(e) => setNewPromotion({...newPromotion, type: e.target.value as any})}
+                      onChange={(e) => setNewPromotion({...newPromotion, type: e.target.value as Promotion["type"]})}
                       className="px-3 py-2 border rounded-md"
+                      title="Chọn loại khuyến mãi mới"
                     >
                       <option value="percentage">Phần trăm</option>
                       <option value="fixed_amount">Số tiền cố định</option>

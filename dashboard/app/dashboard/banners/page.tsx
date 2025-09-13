@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 import { apiClient } from "@/lib/api-client"
-import { Banner, BannerListResponse } from "@/types/banner"
+import { Banner, BannerListResponse, UpdateBannerDto } from "@/types/banner"
 import { Plus, RefreshCw } from "lucide-react"
 
 export default function BannersPage() {
@@ -25,7 +25,7 @@ export default function BannersPage() {
       const data = response.data as BannerListResponse
       setBanners(data.items || [])
       setTotal(data.total || 0)
-    } catch (error) {
+    } catch {
       toast({
         title: "Lỗi",
         description: "Không thể tải danh sách banner",
@@ -38,7 +38,7 @@ export default function BannersPage() {
 
   useEffect(() => {
     fetchBanners()
-  }, [])
+  })
 
   const handleCreate = () => {
     setEditingBanner(null)
@@ -58,7 +58,7 @@ export default function BannersPage() {
         description: "Đã xóa banner"
       })
       fetchBanners()
-    } catch (error) {
+    } catch {
       toast({
         title: "Lỗi",
         description: "Không thể xóa banner",
@@ -67,7 +67,7 @@ export default function BannersPage() {
     }
   }
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: UpdateBannerDto) => {
     try {
       if (editingBanner) {
         await apiClient.updateBanner(editingBanner.id, data)
@@ -84,7 +84,7 @@ export default function BannersPage() {
       }
       setIsFormOpen(false)
       fetchBanners()
-    } catch (error) {
+    } catch {
       toast({
         title: "Lỗi",
         description: editingBanner ? "Không thể cập nhật banner" : "Không thể tạo banner",

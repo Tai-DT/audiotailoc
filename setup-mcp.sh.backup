@@ -1,0 +1,535 @@
+#!/bin/bash
+# setup-mcp.sh - Setup MCP (Model Context Protocol) servers
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
+
+PROJECT_ROOT="/Users/macbook/Desktop/Code/audiotailoc"
+MCP_CONFIG="$PROJECT_ROOT/mcp-settings.json"
+
+log() {
+    echo -e "${BLUE}[MCP-SETUP]${NC} $1"
+}
+
+success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+info() {
+      echo -e "${BLUE}MCP Servers configured:${NC}"
+    echo "- ✅ Playwright (Browser automation)"
+    echo "- ✅ Memory (Persistent storage)"
+    echo "- ✅ shadcn (UI components)"
+    echo "- ✅ Filesystem (File operations)"
+    echo "- ✅ Git (Version control)"
+    echo "- ✅ SQLite (Local database)"
+    echo "- ✅ Postgres (PostgreSQL database)"
+    echo "- ✅ Redis (Cache & sessions)"
+    echo "- ✅ Slack (Team communication)"
+    echo "- ✅ Notion (Knowledge base)"
+    echo "- ✅ Figma (Design collaboration)"
+    echo "- ✅ Linear (Issue tracking)"
+    echo "- ✅ Weather (Weather data)"
+    echo "- ✅ Spotify (Music integration)"
+    echo "- ✅ YouTube (Video content)"
+    echo "- ✅ Gmail (Email integration)"
+    echo "- ✅ Everything (System commands)"
+    echo "- ✅ imagesorcery (Image processing)"
+    echo "- ✅ markitdown (Document processing)"
+    echo "- 🌐 Microsoft Docs (Documentation)"
+    echo "- 🌐 DeepWiki (Knowledge base)"
+    echo "- 🌐 Sentry (Error monitoring)"
+    echo "- 🌐 Prisma Postgres (Database)"
+    echo "- 🌐 GitHub Copilot (AI assistance)"${PURPLE}ℹ️  $1${NC}"
+}
+
+# Check prerequisites
+check_prerequisites() {
+    log "Checking prerequisites..."
+
+    # Check Node.js
+    if ! command -v node >/dev/null 2>&1; then
+        error "Node.js is required but not installed"
+        exit 1
+    fi
+    success "Node.js $(node --version) found"
+
+    # Check npm
+    if ! command -v npm >/dev/null 2>&1; then
+        error "npm is required but not installed"
+        exit 1
+    fi
+    success "npm $(npm --version) found"
+
+    # Check Python (for uvx)
+    if ! command -v python3 >/dev/null 2>&1; then
+        warning "Python3 not found - some MCP servers may not work"
+    else
+        success "Python3 $(python3 --version) found"
+    fi
+
+    # Check uv (for uvx)
+    if ! command -v uv >/dev/null 2>&1; then
+        warning "uv not found - installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
+    success "uv $(uv --version) found"
+
+    # Check Docker (for MCP_DOCKER)
+    if ! command -v docker >/dev/null 2>&1; then
+        warning "Docker not found - MCP_DOCKER server will not work"
+    else
+        success "Docker $(docker --version | cut -d' ' -f3) found"
+    fi
+}
+
+# Install Playwright MCP
+install_playwright() {
+    log "Installing Playwright MCP..."
+    if npm install -g @playwright/mcp@latest; then
+        success "Playwright MCP installed"
+    else
+        error "Failed to install Playwright MCP"
+    fi
+}
+
+# Install memory MCP
+install_memory() {
+    log "Installing Memory MCP..."
+    if npm install -g @modelcontextprotocol/server-memory@latest; then
+        success "Memory MCP installed"
+    else
+        error "Failed to install Memory MCP"
+    fi
+}
+
+# Install shadcn MCP
+install_shadcn() {
+    log "Installing shadcn MCP..."
+    if npm install -g shadcn@latest; then
+        success "shadcn MCP installed"
+    else
+        error "Failed to install shadcn MCP"
+    fi
+}
+
+# Install filesystem MCP
+install_filesystem() {
+    log "Installing Filesystem MCP..."
+    if npm install -g @modelcontextprotocol/server-filesystem@latest; then
+        success "Filesystem MCP installed"
+    else
+        error "Failed to install Filesystem MCP"
+    fi
+}
+
+# Install git MCP
+install_git() {
+    log "Installing Git MCP..."
+    if npm install -g @modelcontextprotocol/server-git@latest; then
+        success "Git MCP installed"
+    else
+        error "Failed to install Git MCP"
+    fi
+}
+
+# Install SQLite MCP
+install_sqlite() {
+    log "Installing SQLite MCP..."
+    if npm install -g @modelcontextprotocol/server-sqlite@latest; then
+        success "SQLite MCP installed"
+    else
+        error "Failed to install SQLite MCP"
+    fi
+}
+
+# Install Postgres MCP
+install_postgres() {
+    log "Installing Postgres MCP..."
+    if npm install -g @modelcontextprotocol/server-postgres@latest; then
+        success "Postgres MCP installed"
+    else
+        error "Failed to install Postgres MCP"
+    fi
+}
+
+# Install Redis MCP
+install_redis() {
+    log "Installing Redis MCP..."
+    if npm install -g @modelcontextprotocol/server-redis@latest; then
+        success "Redis MCP installed"
+    else
+        error "Failed to install Redis MCP"
+    fi
+}
+
+# Install Slack MCP
+install_slack() {
+    log "Installing Slack MCP..."
+    if npm install -g @modelcontextprotocol/server-slack@latest; then
+        success "Slack MCP installed"
+    else
+        error "Failed to install Slack MCP"
+    fi
+}
+
+# Install Notion MCP
+install_notion() {
+    log "Installing Notion MCP..."
+    if npm install -g @modelcontextprotocol/server-notion@latest; then
+        success "Notion MCP installed"
+    else
+        error "Failed to install Notion MCP"
+    fi
+}
+
+# Install Figma MCP
+install_figma() {
+    log "Installing Figma MCP..."
+    if npm install -g @modelcontextprotocol/server-figma@latest; then
+        success "Figma MCP installed"
+    else
+        error "Failed to install Figma MCP"
+    fi
+}
+
+# Install Linear MCP
+install_linear() {
+    log "Installing Linear MCP..."
+    if npm install -g @modelcontextprotocol/server-linear@latest; then
+        success "Linear MCP installed"
+    else
+        error "Failed to install Linear MCP"
+    fi
+}
+
+# Install Weather MCP
+install_weather() {
+    log "Installing Weather MCP..."
+    if npm install -g @modelcontextprotocol/server-weather@latest; then
+        success "Weather MCP installed"
+    else
+        error "Failed to install Weather MCP"
+    fi
+}
+
+# Install Spotify MCP
+install_spotify() {
+    log "Installing Spotify MCP..."
+    if npm install -g @modelcontextprotocol/server-spotify@latest; then
+        success "Spotify MCP installed"
+    else
+        error "Failed to install Spotify MCP"
+    fi
+}
+
+# Install YouTube MCP
+install_youtube() {
+    log "Installing YouTube MCP..."
+    if npm install -g @modelcontextprotocol/server-youtube@latest; then
+        success "YouTube MCP installed"
+    else
+        error "Failed to install YouTube MCP"
+    fi
+}
+
+# Install Gmail MCP
+install_gmail() {
+    log "Installing Gmail MCP..."
+    if npm install -g @modelcontextprotocol/server-gmail@latest; then
+        success "Gmail MCP installed"
+    else
+        error "Failed to install Gmail MCP"
+    fi
+}
+
+# Install Everything MCP
+install_everything() {
+    log "Installing Everything MCP..."
+    if npm install -g @modelcontextprotocol/server-everything@latest; then
+        success "Everything MCP installed"
+    else
+        error "Failed to install Everything MCP"
+    fi
+}
+
+# Setup uvx packages
+setup_uvx_packages() {
+    log "Setting up uvx packages..."
+
+    # imagesorcery-mcp
+    if uvx --help >/dev/null 2>&1; then
+        info "Testing imagesorcery-mcp..."
+        if uvx imagesorcery-mcp --help >/dev/null 2>&1; then
+            success "imagesorcery-mcp ready"
+        else
+            warning "imagesorcery-mcp may need additional setup"
+        fi
+
+        info "Testing markitdown-mcp..."
+        if uvx markitdown-mcp --help >/dev/null 2>&1; then
+            success "markitdown-mcp ready"
+        else
+            warning "markitdown-mcp may need additional setup"
+        fi
+    else
+        warning "uvx not available - skipping uvx packages"
+    fi
+}
+
+# Test HTTP MCP servers
+test_http_servers() {
+    log "Testing HTTP MCP servers..."
+
+    # Microsoft Docs
+    if curl -s --head "https://learn.microsoft.com/api/mcp" | grep -q "200"; then
+        success "Microsoft Docs MCP accessible"
+    else
+        warning "Microsoft Docs MCP not accessible"
+    fi
+
+    # DeepWiki
+    if curl -s --head "https://mcp.deepwiki.com/sse" | grep -q "200"; then
+        success "DeepWiki MCP accessible"
+    else
+        warning "DeepWiki MCP not accessible"
+    fi
+
+    # Sentry
+    if curl -s --head "https://mcp.sentry.dev/mcp" | grep -q "200"; then
+        success "Sentry MCP accessible"
+    else
+        warning "Sentry MCP not accessible"
+    fi
+
+    # Prisma Postgres
+    if curl -s --head "https://mcp.prisma.io/mcp" | grep -q "200"; then
+        success "Prisma Postgres MCP accessible"
+    else
+        warning "Prisma Postgres MCP not accessible"
+    fi
+
+    # GitHub Copilot
+    if curl -s --head "https://api.githubcopilot.com/mcp/" | grep -q "200"; then
+        success "GitHub Copilot MCP accessible"
+    else
+        warning "GitHub Copilot MCP not accessible"
+    fi
+}
+
+# Create VS Code settings
+create_vscode_settings() {
+    log "Creating VS Code MCP settings..."
+
+    VSCODE_SETTINGS_DIR="$HOME/Library/Application Support/Code/User"
+    VSCODE_SETTINGS_FILE="$VSCODE_SETTINGS_DIR/settings.json"
+
+    if [ ! -d "$VSCODE_SETTINGS_DIR" ]; then
+        warning "VS Code settings directory not found: $VSCODE_SETTINGS_DIR"
+        return 1
+    fi
+
+    # Backup existing settings
+    if [ -f "$VSCODE_SETTINGS_FILE" ]; then
+        cp "$VSCODE_SETTINGS_FILE" "${VSCODE_SETTINGS_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+        success "VS Code settings backed up"
+    fi
+
+    # Read existing settings
+    if [ -f "$VSCODE_SETTINGS_FILE" ]; then
+        EXISTING_SETTINGS=$(cat "$VSCODE_SETTINGS_FILE" | jq . 2>/dev/null || echo "{}")
+    else
+        EXISTING_SETTINGS="{}"
+    fi
+
+    # Add MCP configuration
+    MCP_CONFIG=$(cat "$MCP_CONFIG")
+    NEW_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq --argjson mcp "$MCP_CONFIG" '. + $mcp')
+
+    echo "$NEW_SETTINGS" > "$VSCODE_SETTINGS_FILE"
+    success "VS Code MCP settings updated"
+}
+
+# Create memory file directory
+setup_memory_storage() {
+    log "Setting up memory storage..."
+
+    MEMORY_DIR="$PROJECT_ROOT/mcp-memory"
+    mkdir -p "$MEMORY_DIR"
+
+    # Create default memory file
+    if [ ! -f "$MEMORY_DIR/default.json" ]; then
+        echo '{"conversations": [], "documents": []}' > "$MEMORY_DIR/default.json"
+        success "Default memory file created"
+    fi
+
+    info "Memory files stored in: $MEMORY_DIR"
+}
+
+# Create MCP test script
+create_test_script() {
+    log "Creating MCP test script..."
+
+    cat > "$PROJECT_ROOT/test-mcp.sh" << 'EOF'
+#!/bin/bash
+# test-mcp.sh - Test MCP server connections
+
+echo "🧪 Testing MCP Servers..."
+echo "========================"
+
+# Test stdio servers
+echo ""
+echo "📡 Testing stdio servers..."
+
+# Playwright
+echo -n "Playwright: "
+if npx @playwright/mcp@latest --help >/dev/null 2>&1; then
+    echo "✅ Working"
+else
+    echo "❌ Failed"
+fi
+
+# Memory
+echo -n "Memory: "
+if npx @modelcontextprotocol/server-memory@latest --help >/dev/null 2>&1; then
+    echo "✅ Working"
+else
+    echo "❌ Failed"
+fi
+
+# shadcn
+echo -n "shadcn: "
+if npx shadcn@latest mcp --help >/dev/null 2>&1; then
+    echo "✅ Working"
+else
+    echo "❌ Failed"
+fi
+
+# uvx packages
+echo ""
+echo "🐍 Testing uvx packages..."
+
+# imagesorcery
+echo -n "imagesorcery: "
+if uvx imagesorcery-mcp --help >/dev/null 2>&1; then
+    echo "✅ Working"
+else
+    echo "❌ Failed"
+fi
+
+# markitdown
+echo -n "markitdown: "
+if uvx markitdown-mcp --help >/dev/null 2>&1; then
+    echo "✅ Working"
+else
+    echo "❌ Failed"
+fi
+
+echo ""
+echo "🌐 Testing HTTP servers..."
+
+# Microsoft Docs
+echo -n "Microsoft Docs: "
+if curl -s --head "https://learn.microsoft.com/api/mcp" | grep -q "200"; then
+    echo "✅ Accessible"
+else
+    echo "❌ Not accessible"
+fi
+
+# DeepWiki
+echo -n "DeepWiki: "
+if curl -s --head "https://mcp.deepwiki.com/sse" | grep -q "200"; then
+    echo "✅ Accessible"
+else
+    echo "❌ Not accessible"
+fi
+
+# Sentry
+echo -n "Sentry: "
+if curl -s --head "https://mcp.sentry.dev/mcp" | grep -q "200"; then
+    echo "✅ Accessible"
+else
+    echo "❌ Not accessible"
+fi
+
+echo ""
+echo "🎉 MCP testing completed!"
+EOF
+
+    chmod +x "$PROJECT_ROOT/test-mcp.sh"
+    success "MCP test script created: test-mcp.sh"
+}
+
+# Main setup function
+main() {
+    echo -e "${PURPLE}🚀 Audio Tài Lộc MCP Setup${NC}"
+    echo -e "${PURPLE}$(printf '%.0s=' {1..50})${NC}"
+
+    if [ ! -f "$MCP_CONFIG" ]; then
+        error "MCP configuration file not found: $MCP_CONFIG"
+        exit 1
+    fi
+
+    check_prerequisites
+    install_playwright
+    install_memory
+    install_shadcn
+    install_filesystem
+    install_git
+    install_sqlite
+    install_postgres
+    install_redis
+    install_slack
+    install_notion
+    install_figma
+    install_linear
+    install_weather
+    install_spotify
+    install_youtube
+    install_gmail
+    install_everything
+    setup_uvx_packages
+    test_http_servers
+    create_vscode_settings
+    setup_memory_storage
+    create_test_script
+
+    echo ""
+    echo -e "${GREEN}🎉 MCP Setup completed!${NC}"
+    echo ""
+    echo -e "${BLUE}Next steps:${NC}"
+    echo "1. Restart VS Code to load MCP settings"
+    echo "2. Run './test-mcp.sh' to verify installations"
+    echo "3. Configure memory file path when prompted"
+    echo ""
+    echo -e "${BLUE}MCP Servers configured:${NC}"
+    echo "- ✅ Playwright (Browser automation)"
+    echo "- ✅ Memory (Persistent storage)"
+    echo "- ✅ shadcn (UI components)"
+    echo "- ✅ imagesorcery (Image processing)"
+    echo "- ✅ markitdown (Document processing)"
+    echo "- ✅ Microsoft Docs (Documentation)"
+    echo "- ✅ DeepWiki (Knowledge base)"
+    echo "- ✅ Sentry (Error monitoring)"
+    echo "- ✅ Prisma Postgres (Database)"
+    echo "- ✅ GitHub Copilot (AI assistance)"
+    echo ""
+    echo -e "${YELLOW}📖 MCP configuration: $MCP_CONFIG${NC}"
+}
+
+# Run main function
+main "$@"

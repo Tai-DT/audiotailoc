@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const backendUrl = `${BACKEND_URL}/api/v1/users?role=CUSTOMER`;
     console.log('Fetching customers from backend:', backendUrl);

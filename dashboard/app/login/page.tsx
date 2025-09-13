@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +12,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route"
 
 export default function LoginPage() {
   const { login } = useAuth()
+  const router = useRouter()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -27,7 +29,7 @@ export default function LoginPage() {
     try {
       await login(formData.email, formData.password)
       // Redirect will be handled by auth context
-      window.location.href = '/dashboard'
+      router.push('/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
     } finally {
@@ -44,10 +46,7 @@ export default function LoginPage() {
 
   return (
     <ProtectedRoute requireAuth={false}>
-      <div 
-        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4"
-        suppressHydrationWarning
-      >
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
@@ -139,7 +138,7 @@ export default function LoginPage() {
             <p>Demo credentials:</p>
             <p className="font-mono text-xs mt-1">
               Email: admin@audiotailoc.com<br />
-              Password: Admin123!
+              Password: Admin1234
             </p>
           </div>
         </CardContent>

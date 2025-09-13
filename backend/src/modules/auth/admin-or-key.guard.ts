@@ -35,9 +35,9 @@ export class AdminOrKeyGuard implements CanActivate {
       const secret = this.config.get<string>('JWT_ACCESS_SECRET') || 'dev_access';
       const payload = jwt.verify(token, secret) as any;
       req.user = payload; // Set user in request for AdminGuard
-      this.logger.debug(`AdminOrKeyGuard: JWT verified for user ${payload.email}`);
+      this.logger.debug(`AdminOrKeyGuard: JWT verified for user ${payload.email}, role: ${payload.role}`);
     } catch (err) {
-      this.logger.debug('AdminOrKeyGuard: Invalid JWT token');
+      this.logger.debug('AdminOrKeyGuard: Invalid JWT token', err);
       return false;
     }
     
