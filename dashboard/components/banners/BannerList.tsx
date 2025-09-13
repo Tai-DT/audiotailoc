@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Banner } from "@/types/banner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -68,9 +69,11 @@ export function BannerList({
           <TableRow key={banner.id}>
             <TableCell>
               <div className="w-20 h-12 bg-gray-100 rounded overflow-hidden">
-                <img 
+                <Image 
                   src={banner.imageUrl} 
                   alt={banner.title}
+                  width={80}
+                  height={48}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80x48'

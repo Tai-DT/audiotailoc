@@ -3,10 +3,11 @@ import { apiClient } from '@/lib/api-client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const booking = await apiClient.get(`/bookings/${params.id}`);
+    const { id } = await params;
+    const booking = await apiClient.get(`/bookings/${id}`);
     return NextResponse.json(booking);
   } catch (error) {
     console.error('Error fetching booking:', error);
@@ -19,11 +20,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const updatedBooking = await apiClient.put(`/bookings/${params.id}`, body);
+    const updatedBooking = await apiClient.put(`/bookings/${id}`, body);
     return NextResponse.json(updatedBooking);
   } catch (error) {
     console.error('Error updating booking:', error);
@@ -36,10 +38,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await apiClient.delete(`/bookings/${params.id}`);
+    const { id } = await params;
+    await apiClient.delete(`/bookings/${id}`);
     return NextResponse.json({ message: 'Booking deleted successfully' });
   } catch (error) {
     console.error('Error deleting booking:', error);

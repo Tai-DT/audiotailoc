@@ -20,4 +20,4 @@ export interface CreateServiceCategoryDto {
   sortOrder?: number;
 }
 
-export interface UpdateServiceCategoryDto extends Partial<CreateServiceCategoryDto> {}
+export type UpdateServiceCategoryDto = Partial<CreateServiceCategoryDto>

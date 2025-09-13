@@ -14,8 +14,8 @@
   - Designed to be called manually or via Codex tasks.
 */
 
-const { spawnSync } = require('node:child_process');
-const { join } = require('node:path');
+import { spawnSync } from 'node:child_process';
+import { join } from 'node:path';
 
 const root = process.cwd();
 const pkgs = [
@@ -163,4 +163,3 @@ main().catch((e) => {
   console.error('Unexpected error:', e);
   process.exitCode = 1;
 });
-

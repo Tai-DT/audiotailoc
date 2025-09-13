@@ -3,18 +3,6 @@ import { toast } from 'sonner';
 import { serviceService } from '@/lib/services/service-service';
 import { Service, ServiceFormData, ServiceType } from '@/types/service';
 
-interface ServicesResponse {
-  services: Service[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-interface TypesResponse {
-  types: ServiceType[];
-  total: number;
-}
-
 export function useServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +23,11 @@ export function useServices() {
       const servicesData = servicesResponse?.data || servicesResponse;
       const typesData = typesResponse?.data || typesResponse;
 
-      setServices(Array.isArray(servicesData) ? servicesData : (servicesData?.services || []));
+      setServices(Array.isArray(servicesData) ? servicesData : ((servicesData as { services?: Service[] })?.services || []));
 
       // Transform types to add value and label fields
-      const typesArray = Array.isArray(typesData) ? typesData : (typesData?.types || []);
-      const transformedTypes = typesArray.map((type: any) => ({
+      const typesArray = Array.isArray(typesData) ? typesData : ((typesData as { types?: ServiceType[] })?.types || []);
+      const transformedTypes = typesArray.map((type: ServiceType) => ({
         ...type,
         value: type.id,
         label: type.name
@@ -56,7 +44,8 @@ export function useServices() {
 
   const createService = async (data: ServiceFormData) => {
     try {
-      const newService = await serviceService.createService(data);
+      const response = await serviceService.createService(data);
+      const newService = response?.data || response;
       setServices(prev => [newService as Service, ...prev]);
       toast.success('Tạo dịch vụ thành công');
       return newService;
@@ -69,7 +58,8 @@ export function useServices() {
 
   const updateService = async (id: string, data: Partial<ServiceFormData>) => {
     try {
-      const updatedService = await serviceService.updateService(id, data);
+      const response = await serviceService.updateService(id, data);
+      const updatedService = response?.data || response;
       setServices(prev =>
         prev.map(service =>
           service.id === id ? { ...service, ...(updatedService as Service) } : service

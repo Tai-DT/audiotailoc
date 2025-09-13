@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit, Trash2, Eye, Video, Link, Image as ImageIcon, Star, StarOff, Power, PowerOff, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Video, Link, Image as ImageIcon, Star, StarOff, Power, PowerOff, Search } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { format } from 'date-fns';
+import { ProjectsResponse } from '@/types/project';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +76,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [featuredFilter, setFeaturedFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProjects, setTotalProjects] = useState(0);
@@ -97,10 +99,11 @@ export default function ProjectsPage() {
         params.append('category', categoryFilter);
       }
 
-      const response = await apiClient.get(`/projects?${params}`);
-      setProjects(response.data.data || []);
-      setTotalPages(response.data.meta?.totalPages || 1);
-      setTotalProjects(response.data.meta?.total || 0);
+      const response = await apiClient.get<ProjectsResponse>(`/projects?${params}`);
+      const responseData = response.data as ProjectsResponse;
+      setProjects(responseData.data || []);
+      setTotalPages(responseData.meta?.totalPages || 1);
+      setTotalProjects(responseData.meta?.total || 0);
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error('Failed to load projects');
@@ -176,12 +179,12 @@ export default function ProjectsPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "default" | "secondary" | "destructive" | "outline" | "success" => {
     switch (status) {
       case 'COMPLETED':
         return 'success';
       case 'IN_PROGRESS':
-        return 'warning';
+        return 'outline'; // Changed from 'warning' to 'outline' since 'warning' doesn't exist in Badge variants
       case 'ON_HOLD':
         return 'destructive';
       case 'DRAFT':
@@ -337,9 +340,11 @@ export default function ProjectsPage() {
                   <TableRow key={project.id}>
                     <TableCell>
                       {project.thumbnailImage ? (
-                        <img
+                        <Image
                           src={project.thumbnailImage}
                           alt={project.name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded object-cover"
                         />
                       ) : (
@@ -359,7 +364,7 @@ export default function ProjectsPage() {
                     <TableCell>{project.client || '-'}</TableCell>
                     <TableCell>{project.category || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(project.status) as any}>
+                      <Badge variant={getStatusColor(project.status)}>
                         {project.status}
                       </Badge>
                     </TableCell>

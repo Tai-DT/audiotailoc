@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback } from 'react'
-import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 export interface Report {
@@ -84,7 +83,7 @@ export function useReports() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [downloadReport])
 
   // Download report
   const downloadReport = useCallback(async (reportId: string) => {
@@ -108,11 +107,7 @@ export function useReports() {
   }, [reports])
 
   // Schedule report
-  const scheduleReport = useCallback(async (options: {
-    type: string
-    schedule: string
-    recipients: string[]
-  }) => {
+  const scheduleReport = useCallback(async () => {
     try {
       // Mock API call
       toast.success('Đã thiết lập báo cáo định kỳ')

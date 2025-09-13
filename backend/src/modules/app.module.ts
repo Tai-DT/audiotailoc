@@ -26,17 +26,17 @@ import { PromotionsModule } from './promotions/promotions.module';
 import { CheckoutModule } from './checkout/checkout.module';
 import { OrdersModule } from './orders/orders.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 // Complete Product API Module
 import { CompleteProductModule } from './catalog/complete-product.module';
 
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
-// import { WebhooksModule } from './webhooks/webhooks.module'; // Disabled due to schema mismatch
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BackupModule } from './backup/backup.module';
 import { MarketingModule } from './marketing/marketing.module';
-import { ReviewsModule } from './customer/reviews.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
 // Additional modules - ENABLING STEP BY STEP
@@ -54,6 +54,7 @@ import { TechniciansModule } from './technicians/technicians.module';
 // Site Content Management
 import { SiteModule } from './site/site.module';
 import { ProjectsModule } from './projects/projects.module';
+import { SeoModule } from './seo/seo.module';
 
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
@@ -74,11 +75,11 @@ const runtimeImports = [
     
     // Support and File Management - ENABLED
     SupportModule,
+    WebhooksModule,
     NotificationsModule,
     FilesModule,
     BackupModule,
     MarketingModule,
-    ReviewsModule,
     MapsModule,
     AnalyticsModule,
     
@@ -87,6 +88,7 @@ const runtimeImports = [
     PaymentsModule,
     OrdersModule,
     InventoryModule,
+    WishlistModule,
 
     // Complete Product API Module - NEW COMPLETE SYSTEM
     CompleteProductModule,
@@ -99,6 +101,7 @@ const runtimeImports = [
 
     // Site Content Management
     SiteModule,
+    SeoModule,
     
     // Portfolio/Projects
     ProjectsModule,

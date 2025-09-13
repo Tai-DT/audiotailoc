@@ -35,7 +35,8 @@ export function useBackups() {
       setLoading(true)
       setError(null)
       const response = await apiClient.get('/api/v1/backup/list')
-      setBackups(response.data?.backups || [])
+      const responseData = response.data as { backups?: Backup[] }
+      setBackups(responseData?.backups || [])
     } catch (err) {
       const errorMessage = 'Không thể tải danh sách backup'
       setError(errorMessage)
@@ -50,7 +51,8 @@ export function useBackups() {
   const fetchStatus = useCallback(async () => {
     try {
       const response = await apiClient.get('/api/v1/backup/status')
-      setStatus(response.data?.status || null)
+      const responseData = response.data as { status?: BackupStatus }
+      setStatus(responseData?.status || null)
     } catch (err) {
       console.error('Error fetching backup status:', err)
     }
@@ -131,11 +133,12 @@ export function useBackups() {
     try {
       setLoading(true)
       const response = await apiClient.get(`/api/v1/backup/${backupId}/download`)
+      const responseData = response.data as { downloadUrl?: string }
       
       // Create download link
-      if (response.data?.downloadUrl) {
+      if (responseData?.downloadUrl) {
         const link = document.createElement('a')
-        link.href = response.data.downloadUrl
+        link.href = responseData.downloadUrl
         link.download = `backup-${backupId}.zip`
         document.body.appendChild(link)
         link.click()

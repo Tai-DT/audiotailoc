@@ -3,8 +3,8 @@
 import { useState, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { X, Upload, Image as ImageIcon, Loader2 } from "lucide-react"
-import { CloudinaryService } from "@/lib/cloudinary"
+import { X, Image as ImageIcon, Loader2 } from "lucide-react"
+import Image from "next/image"
 
 // Declare gtag for TypeScript
 declare global {
@@ -35,18 +35,14 @@ export function ImageUpload({
   onRemove,
   label = "Hình ảnh",
   placeholder = "Chọn hình ảnh...",
-  folder = "products",
   disabled = false,
   className = "",
   accept = "image/*",
   maxSize = 5,
-  maxFiles = 10, // Default max 10 files
-  width = 300,
-  height = 200
+  maxFiles = 10 // Default max 10 files
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // MCP upload function
@@ -253,9 +249,11 @@ export function ImageUpload({
                 {value.map((url, index) => (
                   <div key={index} className="relative group">
                     <div className="w-full h-24 bg-gray-100 rounded-md border overflow-hidden">
-                      <img
+                      <Image
                         src={url}
                         alt={`Uploaded image ${index + 1}`}
+                        width={200}
+                        height={96}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           console.error(`Failed to load image ${index + 1}:`, url)

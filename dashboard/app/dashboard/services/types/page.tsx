@@ -18,7 +18,6 @@ import { ServiceTypeFormDialog } from "@/components/services/service-type-form-d
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale/vi"
 import { Input } from "@/components/ui/input"
-import * as z from "zod"
 
 // Define a type-safe error interface for API errors
 interface ApiError {
@@ -29,16 +28,15 @@ interface ApiError {
   message?: string
 }
 
-const serviceTypeSchema = z.object({
-  name: z.string().min(1, "Tên loại dịch vụ là bắt buộc"),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  isActive: z.boolean().default(true),
-  sortOrder: z.number().min(0).default(0),
-})
-
-type ServiceTypeFormData = z.infer<typeof serviceTypeSchema>
+// Define the form data type directly
+type ServiceTypeFormData = {
+  name: string
+  description?: string
+  icon?: string
+  color?: string
+  isActive: boolean
+  sortOrder: number
+}
 
 interface ServiceType extends ServiceTypeFormData {
   id: string
@@ -94,7 +92,14 @@ export default function ServiceTypesManager() {
       .trim()
   }
 
-  const handleCreateServiceType = useCallback(async (data: ServiceTypeFormData) => {
+  const handleCreateServiceType = useCallback(async (data: {
+    name: string
+    description?: string
+    icon?: string
+    color?: string
+    isActive?: boolean
+    sortOrder?: number
+  }) => {
     try {
       // Add slug and ensure proper data structure
       const serviceTypeData = {
@@ -137,7 +142,14 @@ export default function ServiceTypesManager() {
     }
   }, [createServiceType, refreshServiceTypes])
 
-  const handleUpdateServiceType = useCallback(async (id: string, data: ServiceTypeFormData) => {
+  const handleUpdateServiceType = useCallback(async (id: string, data: {
+    name: string
+    description?: string
+    icon?: string
+    color?: string
+    isActive?: boolean
+    sortOrder?: number
+  }) => {
     try {
       await updateServiceType(id, data)
       toast.success('Cập nhật loại dịch vụ thành công', {
@@ -441,7 +453,7 @@ export default function ServiceTypesManager() {
               if (!open) setSelectedServiceType(null);
               setIsEditDialogOpen(open);
             }}
-            onSubmit={(data: ServiceTypeFormData) => handleUpdateServiceType(selectedServiceType.id, data)}
+            onSubmit={(data) => handleUpdateServiceType(selectedServiceType.id, data)}
           />
         )}
       </div>
