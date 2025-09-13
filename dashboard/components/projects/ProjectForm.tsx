@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,22 +15,24 @@ import {
 } from '@/components/ui/select';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Youtube, Link, Github, Calendar, DollarSign, Users, Tag } from 'lucide-react';
+import { Loader2, Plus, X, Youtube, Link, Github } from 'lucide-react';
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Project, CreateProjectRequest } from '@/types/project';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
+import { AxiosError } from 'axios';
 
 interface ProjectFormProps {
-  project?: any;
+  project?: Project;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
 export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
@@ -41,7 +44,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
   const [client, setClient] = useState('');
   const [clientLogo, setClientLogo] = useState('');
   const [category, setCategory] = useState('');
-  const [status, setStatus] = useState('DRAFT');
+  const [status, setStatus] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'>('DRAFT');
   
   // Media
   const [thumbnailImage, setThumbnailImage] = useState('');
@@ -146,8 +149,11 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       setUploadingImage(true);
       // Use dedicated upload method which sets proper headers and includes auth token
       const response = await apiClient.uploadFile(file);
-      const responseData = response.data as any;
+      const responseData = response.data as { url?: string; secure_url?: string };
       const imageUrl = responseData.url || responseData.secure_url;
+      if (!imageUrl) {
+        throw new Error('Failed to get image URL from response');
+      }
 
       switch (type) {
         case 'thumbnail':
@@ -221,7 +227,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
     try {
       setLoading(true);
 
-      const projectData: any = {
+      const projectData: CreateProjectRequest = {
         name,
         slug,
         shortDescription,
@@ -252,7 +258,6 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
         isActive,
         isFeatured,
         displayOrder: displayOrder || 0,
-        userId: user?.id || 'system',
       };
 
       if (project) {
@@ -264,9 +269,14 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       }
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving project:', error);
-      toast.error(error.response?.data?.message || 'Failed to save project');
+      const message = error instanceof AxiosError 
+        ? error.response?.data?.message 
+        : error instanceof Error 
+          ? error.message 
+          : 'Failed to save project';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -350,7 +360,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
 
           <div className="space-y-2">
             <Label htmlFor="status">Project Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(value) => setStatus(value as 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -386,7 +396,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
                     {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                   {thumbnailImage && (
-                    <img src={thumbnailImage} alt="Thumbnail" className="w-32 h-32 object-cover rounded" />
+                    <Image src={thumbnailImage} alt="Thumbnail" width={128} height={128} className="w-32 h-32 object-cover rounded" />
                   )}
                 </div>
 
@@ -405,7 +415,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
                     {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                   {coverImage && (
-                    <img src={coverImage} alt="Cover" className="w-32 h-32 object-cover rounded" />
+                    <Image src={coverImage} alt="Cover" width={128} height={128} className="w-32 h-32 object-cover rounded" />
                   )}
                 </div>
               </div>
@@ -425,7 +435,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
                   {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                 </div>
                 {clientLogo && (
-                  <img src={clientLogo} alt="Client Logo" className="w-32 h-16 object-contain rounded bg-gray-50" />
+                  <Image src={clientLogo} alt="Client Logo" width={128} height={64} className="w-32 h-16 object-contain rounded bg-gray-50" />
                 )}
               </div>
 
@@ -447,7 +457,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
                   <div className="grid grid-cols-4 gap-2 mt-2">
                     {images.map((img, index) => (
                       <div key={index} className="relative">
-                        <img src={img} alt={`Gallery ${index + 1}`} className="w-full h-24 object-cover rounded" />
+                        <Image src={img} alt={`Gallery ${index + 1}`} width={200} height={96} className="w-full h-24 object-cover rounded" />
                         <Button
                           type="button"
                           variant="destructive"

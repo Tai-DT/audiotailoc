@@ -17,9 +17,7 @@ import {
   Edit,
   Trash2,
   Eye,
-  Filter,
-  X,
-  Calendar
+  X
 } from "lucide-react"
 import { UserFormDialog } from "@/components/users/user-form-dialog"
 import { UserDetailsDialog } from "@/components/users/user-details-dialog"

@@ -7,12 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { useAuth } from "@/lib/auth-context"
 import { ImageUpload } from "@/components/ui/image-upload"
+import Image from "next/image"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
-import { Service, ServiceType, ServiceFormData, AudioEquipmentSpecs } from "@/types/service"
+import { Service, ServiceType, ServiceFormData } from "@/types/service"
 
 interface ServiceFormDialogProps {
   service?: Partial<Service> | null
@@ -23,7 +22,6 @@ interface ServiceFormDialogProps {
 }
 
 export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit }: ServiceFormDialogProps) {
-  const { token } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<ServiceFormData>(() => {
     const defaultValues: ServiceFormData = {
@@ -34,6 +32,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
       duration: 60,
       isActive: true,
       images: [],
+      categoryId: '',
       typeId: '',
       requirements: [],
       includedServices: [],
@@ -75,7 +74,8 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
         basePriceCents: service?.basePriceCents || (service?.price ? service.price * 100 : 0),
         minPrice: service?.minPriceDisplay || (service?.minPrice ? service.minPrice / 100 : undefined),
         maxPrice: service?.maxPriceDisplay || (service?.maxPrice ? service.maxPrice / 100 : undefined),
-        duration: service?.duration || service?.estimatedDuration || 60,
+        duration: service?.duration || 60,
+        categoryId: service?.categoryId || "",
         typeId: service?.typeId || "",
         requirements: service?.requirements
           ? Array.isArray(service.requirements)
@@ -118,6 +118,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
         price: 0,
         basePriceCents: 0,
         duration: 60,
+        categoryId: '',
         typeId: types.length > 0 ? types[0].value : '',
         images: [],
         requirements: [],
@@ -137,7 +138,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
         }
       })
     }
-  }, [service])
+  }, [service, types])
 
   const generateSlug = (name: string) => {
     return name
@@ -172,15 +173,6 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
     setFormData(prev => ({ ...prev, [field]: newArray }))
   }
 
-  const handleEquipmentSpecsChange = (field: keyof AudioEquipmentSpecs, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      equipmentSpecs: {
-        ...prev.equipmentSpecs,
-        [field]: value
-      }
-    }))
-  }
 
 
   const removeImage = (index: number) => {
@@ -211,7 +203,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
       return
     }
 
-    if (formData.priceType === 'RANGE' && formData.minPrice > formData.maxPrice) {
+    if (formData.priceType === 'RANGE' && formData.minPrice && formData.maxPrice && formData.minPrice > formData.maxPrice) {
       toast.error("Giá từ phải nhỏ hơn giá đến")
       return
     }
@@ -220,15 +212,15 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
       setLoading(true)
 
       // Transform data to match backend expectations
-      const serviceData: any = {
+      const serviceData: Partial<ServiceFormData> = {
         name: formData.name,
         slug: formData.slug,
         description: formData.description || '',
         shortDescription: formData.shortDescription,
         typeId: formData.typeId,
         priceType: formData.priceType || 'FIXED',
-        estimatedDuration: formData.duration,
-        imageUrl: formData.images?.[0] || formData.imageUrl || '',
+        duration: formData.duration,
+        images: formData.images || [],
         isActive: formData.isActive ?? true,
         isFeatured: formData.isFeatured ?? false,
         requirements: formData.requirements,
@@ -244,7 +236,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
         serviceData.price = Number(formData.price) || Number(formData.basePriceCents / 100);
       }
 
-      await onSubmit(serviceData)
+      await onSubmit(serviceData as ServiceFormData)
       onOpenChange(false)
     } catch (error) {
       console.error("Error saving service:", error)
@@ -254,12 +246,6 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount / 100)
-  }
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
@@ -461,9 +447,11 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {(Array.isArray(formData.images) ? formData.images : []).map((image, index) => (
                 <div key={index} className="relative group">
-                  <img
+                  <Image
                     src={image}
                     alt={`Hình ảnh ${index + 1}`}
+                    width={200}
+                    height={128}
                     className="rounded-md w-full h-32 object-cover"
                   />
                   <Button

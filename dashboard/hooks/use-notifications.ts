@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api-client'
 import { socketManager } from '@/lib/socket'
 import { toast } from 'sonner'
 
@@ -46,21 +46,38 @@ export function useNotifications() {
       const userId = localStorage.getItem('userId') || 'admin'
       
       // Fetch notifications from API
-      const response = await api.get(`/notifications?userId=${userId}&limit=50`)
+      const response = await apiClient.getNotifications({ 
+        userId, 
+        limit: 50 
+      })
       
       // Transform API response to match Notification interface
-      const apiNotifications = response.notifications || []
-      const transformedNotifications: Notification[] = apiNotifications.map((notif: any) => ({
-        id: notif.id,
-        title: notif.title,
-        message: notif.message || notif.content,
-        type: notif.type || 'info',
-        isRead: notif.isRead || false,
-        channels: notif.channels || ['app'],
-        target: notif.target || 'all',
-        createdAt: notif.createdAt,
-        readAt: notif.readAt
-      }))
+      const apiNotifications = Array.isArray(response.data) ? response.data : []
+      const transformedNotifications: Notification[] = apiNotifications.map((notif: unknown) => {
+        const notificationData = notif as {
+          id: string;
+          title: string;
+          message?: string;
+          content?: string;
+          type?: string;
+          isRead?: boolean;
+          channels?: string[];
+          target?: string;
+          createdAt: string;
+          readAt?: string;
+        };
+        return {
+          id: notificationData.id,
+          title: notificationData.title,
+          message: notificationData.message || notificationData.content || '',
+          type: (notificationData.type as 'info' | 'success' | 'warning' | 'error') || 'info',
+          isRead: notificationData.isRead || false,
+          channels: notificationData.channels || ['app'],
+          target: notificationData.target || 'all',
+          createdAt: notificationData.createdAt,
+          readAt: notificationData.readAt
+        };
+      })
       
       setNotifications(transformedNotifications)
     } catch (err) {
@@ -109,7 +126,7 @@ export function useNotifications() {
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       const userId = localStorage.getItem('userId') || 'admin'
-      await api.post('/notifications/mark-read', {
+      await apiClient.markNotificationAsRead({
         notificationId,
         userId
       })
@@ -129,7 +146,7 @@ export function useNotifications() {
   const markAllAsRead = useCallback(async () => {
     try {
       const userId = localStorage.getItem('userId') || 'admin'
-      await api.post('/notifications/mark-all-read', { userId })
+      await apiClient.markAllNotificationsAsRead(userId)
       
       const now = new Date().toISOString()
       setNotifications(prev => prev.map(n => ({
@@ -175,16 +192,29 @@ export function useNotifications() {
         }
 
         // Handle new notification
-        const handleNewNotification = (data: any) => {
+        const handleNewNotification = (data: unknown) => {
+          const notificationData = data as {
+            id: string;
+            title: string;
+            message?: string;
+            content?: string;
+            type?: string;
+            isRead?: boolean;
+            channels?: string[];
+            target?: string;
+            createdAt: string;
+            readAt?: string;
+          };
           const newNotification: Notification = {
-            id: data.id,
-            title: data.title,
-            message: data.message || data.content,
-            type: data.type || 'info',
-            isRead: false,
-            channels: data.channels || ['app'],
-            target: data.target || 'all',
-            createdAt: data.createdAt || new Date().toISOString()
+            id: notificationData.id,
+            title: notificationData.title,
+            message: notificationData.message || notificationData.content || '',
+            type: (notificationData.type as 'info' | 'success' | 'warning' | 'error') || 'info',
+            isRead: notificationData.isRead || false,
+            channels: notificationData.channels || ['app'],
+            target: notificationData.target || 'all',
+            createdAt: notificationData.createdAt || new Date().toISOString(),
+            readAt: notificationData.readAt
           }
           
           // Add to state
@@ -241,9 +271,10 @@ export function useNotifications() {
         }
 
         // Handle notification update
-        const handleNotificationUpdate = (data: any) => {
+        const handleNotificationUpdate = (data: unknown) => {
+          const updateData = data as { id: string; [key: string]: unknown };
           setNotifications(prev => prev.map(n => 
-            n.id === data.id ? { ...n, ...data } : n
+            n.id === updateData.id ? { ...n, ...updateData } : n
           ))
         }
 

@@ -26,4 +26,4 @@ export interface CreateServiceTypeDto {
   sortOrder?: number;
 }
 
-export interface UpdateServiceTypeDto extends Partial<CreateServiceTypeDto> {}
+export type UpdateServiceTypeDto = Partial<CreateServiceTypeDto>

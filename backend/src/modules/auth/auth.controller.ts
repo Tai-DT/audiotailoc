@@ -64,16 +64,12 @@ export class AuthController {
     });
     const user = await this.users.findById(tokens.userId);
     return {
-      data: {
-        data: {
-          token: tokens.accessToken,
-          user: {
-            id: user?.id,
-            email: user?.email,
-            name: user?.name,
-            role: (user as any)?.role ?? 'USER'
-          }
-        }
+      token: tokens.accessToken,
+      user: {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        role: (user as any)?.role ?? 'USER'
       }
     };
   }

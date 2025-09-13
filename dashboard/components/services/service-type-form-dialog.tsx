@@ -26,7 +26,7 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Palette, Wrench, Eye } from "lucide-react"
+import { Loader2, Wrench, Eye } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 
 const serviceTypeSchema = z.object({
@@ -34,14 +34,29 @@ const serviceTypeSchema = z.object({
   description: z.string().max(500, "Mô tả không được vượt quá 500 ký tự").optional(),
   icon: z.string().max(50, "Tên icon không được vượt quá 50 ký tự").optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Màu sắc phải là mã hex hợp lệ (ví dụ: #3b82f6)").optional().or(z.literal("")),
-  isActive: z.boolean().default(true),
-  sortOrder: z.number().min(0, "Thứ tự phải lớn hơn hoặc bằng 0").max(999, "Thứ tự không được vượt quá 999").default(0),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().min(0, "Thứ tự phải lớn hơn hoặc bằng 0").max(999, "Thứ tự không được vượt quá 999").optional(),
 })
 
-type ServiceTypeFormData = z.infer<typeof serviceTypeSchema>
+type ServiceTypeFormData = {
+  name: string
+  description?: string
+  icon?: string
+  color?: string
+  isActive?: boolean
+  sortOrder?: number
+}
 
 interface ServiceTypeFormDialogProps {
-  serviceType?: any
+  serviceType?: {
+    id: string
+    name: string
+    description?: string
+    icon?: string
+    color?: string
+    isActive: boolean
+    sortOrder: number
+  }
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (data: ServiceTypeFormData) => Promise<void>
@@ -70,9 +85,9 @@ export function ServiceTypeFormDialog({
   const isEditing = !!serviceType
 
   // Get icon component dynamically
-  const getIconComponent = (iconName: string) => {
+  const getIconComponent = (iconName: string | undefined) => {
     if (!iconName) return Wrench
-    const IconComponent = (LucideIcons as any)[iconName]
+    const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName]
     return IconComponent || Wrench
   }
 
@@ -107,6 +122,7 @@ export function ServiceTypeFormDialog({
       }
     } catch (error) {
       // Error is handled by the parent component
+      console.error('Form submission error:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -270,7 +286,7 @@ export function ServiceTypeFormDialog({
                     </div>
                     <FormControl>
                       <Switch
-                        checked={field.value}
+                        checked={field.value ?? true}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>

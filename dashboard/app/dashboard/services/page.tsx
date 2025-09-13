@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,7 @@ import { toast } from "sonner"
 import { useServices } from "@/hooks/use-services"
 import { ServiceFormDialog } from "@/components/services/service-form-dialog"
 import { ServiceDetailDialog } from "@/components/services/service-detail-dialog"
+import { Service, ServiceFormData } from "@/types/service"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale/vi"
 
@@ -23,17 +25,15 @@ export default function ServicesManager() {
   const {
     services,
     loading,
-    error,
     types,
     createService,
     updateService,
     deleteService,
-    toggleServiceStatus,
-    refresh: refreshServices
+    toggleServiceStatus
   } = useServices()
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -47,7 +47,7 @@ export default function ServicesManager() {
       .trim()
   }
 
-  const handleCreateService = async (data: any) => {
+  const handleCreateService = async (data: ServiceFormData) => {
     try {
       // Add slug and ensure proper data structure
       const serviceData = {
@@ -55,7 +55,7 @@ export default function ServicesManager() {
         slug: generateSlug(data.name),
         // Ensure required fields have default values
         basePriceCents: data.basePriceCents || 0,
-        estimatedDuration: data.estimatedDuration || 60, // Default to 60 minutes
+        duration: data.duration || 60, // Default to 60 minutes
         isActive: data.isActive !== false // Default to true if not specified
       }
 
@@ -69,7 +69,7 @@ export default function ServicesManager() {
     }
   }
 
-  const handleUpdateService = async (id: string, data: any) => {
+  const handleUpdateService = async (id: string, data: ServiceFormData) => {
     try {
       await updateService(id, data)
       setIsEditDialogOpen(false)
@@ -98,7 +98,7 @@ export default function ServicesManager() {
     }
   }
 
-  const formatPrice = (service: any) => {
+  const formatPrice = (service: Service) => {
     const formatter = new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
@@ -116,10 +116,10 @@ export default function ServicesManager() {
     }
   };
 
-  const getTypeName = (service: any) => {
-    // First check if type object exists
-    if (service.type && service.type.name) {
-      return service.type.name;
+  const getTypeName = (service: Service) => {
+    // First check if serviceType object exists
+    if (service.serviceType && service.serviceType.name) {
+      return service.serviceType.name;
     }
     // Fallback to finding by ID
     if (service.typeId) {
@@ -185,9 +185,11 @@ export default function ServicesManager() {
                       <div className="flex items-center space-x-4">
                         {service.imageUrl && (
                           <div className="relative h-10 w-10 overflow-hidden rounded-md">
-                            <img
+                            <Image
                               src={service.imageUrl}
                               alt={service.name}
+                              width={40}
+                              height={40}
                               className="h-full w-full object-cover"
                             />
                           </div>
@@ -304,7 +306,7 @@ export default function ServicesManager() {
               if (!open) setSelectedService(null);
               setIsEditDialogOpen(open);
             }}
-            onSubmit={(data: any) => handleUpdateService(selectedService.id, data)}
+            onSubmit={(data: ServiceFormData) => handleUpdateService(selectedService!.id, data)}
             types={types}
           />
         </>

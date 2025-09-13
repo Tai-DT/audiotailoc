@@ -229,7 +229,27 @@ model Payment {
   order  Order          @relation(fields: [orderId], references: [id])
   intent PaymentIntent? @relation(fields: [intentId], references: [id])
 
+  refunds Refund[]
+
   @@map("payments")
+}
+
+// Refund Model
+model Refund {
+  id             String   @id @default(cuid())
+  paymentId      String
+  amountCents    Int
+  reason         String?
+  status         String   @default("PENDING") // PENDING, SUCCEEDED, FAILED, CANCELLED
+  providerRefundId String?
+  errorMessage   String?
+  processedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("refunds")
 }
 
 // Service Category Model - REMOVED

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,11 +16,9 @@ import {
   Mail,
   MessageSquare,
   Smartphone,
-  Users,
   Check,
   X,
   RefreshCw,
-  Filter,
   Plus,
   Settings,
   Clock,
@@ -36,7 +34,6 @@ export default function NotificationsPage() {
   const {
     notifications,
     settings,
-    loading,
     fetchNotifications,
     sendNotification,
     markAsRead,
@@ -57,7 +54,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications()
-  }, [])
+  }, [fetchNotifications])
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -377,6 +374,7 @@ export default function NotificationsPage() {
                         className="w-full px-3 py-2 border rounded-md"
                         value={notificationForm.type}
                         onChange={(e) => setNotificationForm({...notificationForm, type: e.target.value})}
+                        title="Chọn loại thông báo"
                       >
                         <option value="info">Thông tin</option>
                         <option value="success">Thành công</option>
@@ -391,6 +389,7 @@ export default function NotificationsPage() {
                         className="w-full px-3 py-2 border rounded-md"
                         value={notificationForm.target}
                         onChange={(e) => setNotificationForm({...notificationForm, target: e.target.value})}
+                        title="Chọn đối tượng nhận thông báo"
                       >
                         <option value="all">Tất cả người dùng</option>
                         <option value="customers">Khách hàng</option>

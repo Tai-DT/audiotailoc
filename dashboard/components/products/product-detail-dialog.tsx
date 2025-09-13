@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import { Star, Image as ImageIcon, Calendar, Eye, Package, Tag, Settings, Hash, Scale, Ruler, Shield, Zap } from "lucide-react"
+import { Star, Image as ImageIcon, Calendar, Eye, Package, Tag, Settings, Hash, Scale, Ruler, Shield } from "lucide-react"
 import Image from "next/image"
 
 interface Product {

@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Headers, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsIn, IsOptional, IsString, MinLength, IsNumber, Min } from 'class-validator';
+import { PrismaService } from '../../prisma/prisma.service';
 
 class CreateIntentDto {
   @IsString()
@@ -31,7 +32,10 @@ class CreateRefundDto {
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly payments: PaymentsService) {}
+  constructor(
+    private readonly payments: PaymentsService,
+    private readonly prisma: PrismaService
+  ) {}
 
   @Get('methods')
   getPaymentMethods() {
@@ -65,12 +69,112 @@ export class PaymentsController {
     };
   }
 
-  @Get('intents')
-  getPaymentIntents() {
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Get()
+  async getPayments(@Query() query: any) {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    
+    // Filter by status
+    if (query.status) {
+      where.status = query.status;
+    }
+    
+    // Filter by provider
+    if (query.provider) {
+      where.provider = query.provider;
+    }
+    
+    // Search by order number or payment ID
+    if (query.search) {
+      where.OR = [
+        { order: { orderNo: { contains: query.search, mode: 'insensitive' } } },
+        { id: { contains: query.search, mode: 'insensitive' } }
+      ];
+    }
+
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        include: {
+          order: {
+            select: {
+              id: true,
+              orderNo: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      this.prisma.payment.count({ where })
+    ]);
+
     return {
-      intents: [],
-      message: 'Payment intents endpoint',
-      timestamp: new Date().toISOString()
+      payments: payments.map((payment: any) => ({
+        id: payment.id,
+        orderId: payment.order.id,
+        orderNo: payment.order.orderNo,
+        amountCents: payment.amountCents,
+        provider: payment.provider,
+        status: payment.status,
+        createdAt: payment.createdAt,
+        updatedAt: payment.updatedAt,
+        paidAt: payment.status === 'PAID' ? payment.updatedAt : null,
+        user: payment.order.user
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Get('stats')
+  async getPaymentStats() {
+    const [
+      totalPayments,
+      totalRevenue,
+      pendingPayments,
+      failedPayments,
+      refundedPayments,
+      refundedAmount
+    ] = await Promise.all([
+      this.prisma.payment.count(),
+      this.prisma.payment.aggregate({
+        where: { status: 'PAID' },
+        _sum: { amountCents: true }
+      }),
+      this.prisma.payment.count({ where: { status: 'PENDING' } }),
+      this.prisma.payment.count({ where: { status: 'FAILED' } }),
+      this.prisma.payment.count({ where: { status: 'REFUNDED' } }),
+      this.prisma.payment.aggregate({
+        where: { status: 'REFUNDED' },
+        _sum: { amountCents: true }
+      })
+    ]);
+
+    return {
+      totalPayments,
+      totalRevenue: totalRevenue._sum.amountCents || 0,
+      pendingPayments,
+      failedPayments,
+      refundedPayments,
+      refundedAmount: refundedAmount._sum.amountCents || 0
     };
   }
 
@@ -80,7 +184,7 @@ export class PaymentsController {
     return this.payments.createIntent(dto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('refunds')
   createRefund(@Body() dto: CreateRefundDto) {
     return this.payments.createRefund(dto.paymentId, dto.amountCents, dto.reason);

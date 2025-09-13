@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,7 @@ import {
   Filter,
   X
 } from "lucide-react"
-import { useSearch } from "@/hooks/use-search"
+import { useSearch, SearchResult } from "@/hooks/use-search"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale/vi"
 
@@ -44,7 +44,7 @@ export default function SearchPage() {
   useEffect(() => {
     fetchHistory()
     fetchPopular()
-  }, [])
+  }, [fetchHistory, fetchPopular])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,7 +66,7 @@ export default function SearchPage() {
     })
   }
 
-  const renderSearchResult = (result: any) => {
+  const renderSearchResult = (result: SearchResult) => {
     const getTypeIcon = () => {
       switch (result.type) {
         case 'product': return <Package className="h-4 w-4" />
@@ -198,7 +198,7 @@ export default function SearchPage() {
                   ) : query ? (
                     <Card>
                       <CardContent className="pt-6 text-center text-muted-foreground">
-                        Không tìm thấy kết quả nào cho "{query}"
+                        Không tìm thấy kết quả nào cho &quot;{query}&quot;
                       </CardContent>
                     </Card>
                   ) : (
@@ -279,6 +279,7 @@ export default function SearchPage() {
                       className="w-full mt-1 px-3 py-2 border rounded-md"
                       value={filters.type}
                       onChange={(e) => setFilters({...filters, type: e.target.value})}
+                      title="Chọn loại tìm kiếm"
                     >
                       <option value="all">Tất cả</option>
                       <option value="product">Sản phẩm</option>
@@ -294,6 +295,7 @@ export default function SearchPage() {
                       className="w-full mt-1 px-3 py-2 border rounded-md"
                       value={filters.dateRange}
                       onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                      title="Chọn khoảng thời gian tìm kiếm"
                     >
                       <option value="all">Tất cả</option>
                       <option value="today">Hôm nay</option>
@@ -309,6 +311,7 @@ export default function SearchPage() {
                       className="w-full mt-1 px-3 py-2 border rounded-md"
                       value={filters.sortBy}
                       onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
+                      title="Chọn cách sắp xếp kết quả"
                     >
                       <option value="relevance">Độ phù hợp</option>
                       <option value="newest">Mới nhất</option>

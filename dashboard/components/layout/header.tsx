@@ -10,13 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Search, Menu, LogOut, User, Settings, Sun, Moon } from "lucide-react"
+import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react"
+import { ThemeSwitcher } from "@/components/ui/theme-switcher"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
 import { useAuth } from "@/lib/auth-context"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useTheme } from "next-themes"
 
 // Page titles mapping
 const pageTitles: Record<string, string> = {
@@ -44,7 +44,6 @@ const pageTitles: Record<string, string> = {
 export function Header() {
   const { user, logout } = useAuth()
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   
   useEffect(() => {
@@ -94,18 +93,7 @@ export function Header() {
       <div className="flex items-center gap-3">
         {/* Theme Toggle */}
         {mounted && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="h-10 w-10 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5 text-amber-500" />
-            ) : (
-              <Moon className="h-5 w-5 text-blue-600" />
-            )}
-          </Button>
+          <ThemeSwitcher />
         )}
         
         {/* Notifications */}

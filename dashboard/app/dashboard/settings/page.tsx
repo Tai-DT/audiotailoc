@@ -9,14 +9,12 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Settings as SettingsIcon,
   Store,
   Globe,
   Mail,
   Bell,
   Shield,
   Database,
-  Palette,
   Save,
   RefreshCw
 } from "lucide-react"
@@ -74,7 +72,7 @@ export default function SettingsPage() {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000))
       toast.success(`Đã lưu cài đặt ${section}`)
-    } catch (error) {
+    } catch {
       toast.error("Không thể lưu cài đặt")
     }
   }

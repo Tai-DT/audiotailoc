@@ -49,14 +49,6 @@ interface InventoryAlert {
   updatedAt: Date
 }
 
-interface InventoryAlertSummary {
-  totalAlerts: number
-  activeAlerts: number
-  resolvedAlerts: number
-  lowStockAlerts: number
-  outOfStockAlerts: number
-  overstockAlerts: number
-}
 
 interface InventoryStats {
   totalProducts: number

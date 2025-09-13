@@ -61,7 +61,7 @@ export function useAnalytics() {
       const response = await apiClient.get(`/analytics/overview?range=${dateRange}`)
       
       if (response.data) {
-        setOverview(response.data)
+        setOverview(response.data as AnalyticsOverview)
       }
     } catch (err) {
       const errorMessage = 'Không thể tải dữ liệu tổng quan'
@@ -79,7 +79,7 @@ export function useAnalytics() {
       const response = await apiClient.get(`/analytics/trends?range=${dateRange}`)
       
       if (response.data) {
-        setTrends(response.data)
+        setTrends(response.data as AnalyticsTrend[])
       }
     } catch (err) {
       console.error('Error fetching trends:', err)
@@ -93,7 +93,7 @@ export function useAnalytics() {
       const response = await apiClient.get('/analytics/top-services?limit=5')
       
       if (response.data) {
-        setTopServices(response.data)
+        setTopServices(response.data as TopService[])
       }
     } catch (err) {
       console.error('Error fetching top services:', err)
@@ -107,7 +107,7 @@ export function useAnalytics() {
       const response = await apiClient.get('/analytics/top-products?limit=5')
       
       if (response.data) {
-        setTopProducts(response.data)
+        setTopProducts(response.data as TopProduct[])
       }
     } catch (err) {
       console.error('Error fetching top products:', err)
@@ -121,7 +121,7 @@ export function useAnalytics() {
       const response = await apiClient.get(`/analytics/user-activity?range=${dateRange}`)
       
       if (response.data) {
-        setUserActivity(response.data)
+        setUserActivity(response.data as UserActivity)
       }
     } catch (err) {
       console.error('Error fetching user activity:', err)

@@ -5,9 +5,10 @@
  * Chạy: node scripts/upload-product-images.js
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { PrismaClient } from '@prisma/client';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = 'dib7tbv7w';
@@ -128,7 +129,6 @@ async function uploadToCloudinary(imagePath, productName, category) {
 
 // Hàm cập nhật database
 async function updateProductImage(productId, imageUrl) {
-  const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
 
   try {
@@ -195,7 +195,7 @@ async function uploadProductImages() {
   // Dọn dẹp thư mục temp
   try {
     fs.rmSync(tempDir, { recursive: true, force: true });
-  } catch (error) {
+  } catch {
     // Ignore cleanup errors
   }
 

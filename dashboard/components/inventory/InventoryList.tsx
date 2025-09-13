@@ -25,6 +25,16 @@ type Order = {
   items: OrderItem[];
 };
 
+type ProductsResponse = {
+  items?: Product[];
+  data?: { items?: Product[] };
+};
+
+type OrdersResponse = {
+  items?: Order[];
+  data?: { items?: Order[] };
+};
+
 export default function InventoryList() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,9 +43,9 @@ export default function InventoryList() {
   const fetchProducts = useCallback(async () => {
     try {
       const res = await apiClient.getProducts({ limit: 100 });
-      const raw: any = res as any;
-      const items: any[] = raw?.items || raw?.data?.items || [];
-      const mapped: Product[] = items.map((p: any) => ({
+      const raw: ProductsResponse = res as ProductsResponse;
+      const items: Product[] = raw?.items || raw?.data?.items || [];
+      const mapped: Product[] = items.map((p: Product) => ({
         id: p.id,
         name: p.name,
         slug: p.slug,
@@ -57,8 +67,8 @@ export default function InventoryList() {
         apiClient.getOrders({ page: 1, limit: 100, status: "PENDING" }),
         apiClient.getOrders({ page: 1, limit: 100, status: "PROCESSING" }),
       ]);
-      const r1: any = p1 as any;
-      const r2: any = p2 as any;
+      const r1: OrdersResponse = p1 as OrdersResponse;
+      const r2: OrdersResponse = p2 as OrdersResponse;
       const orders: Order[] = [
         ...(r1?.items || r1?.data?.items || []),
         ...(r2?.items || r2?.data?.items || []),

@@ -7,17 +7,17 @@ import { apiClient } from '@/lib/api-client'
 jest.mock('@/lib/api-client')
 const mockApiClient = apiClient as jest.Mocked<typeof apiClient>
 
-// Create mock functions
-const mockGet = jest.fn()
-const mockPost = jest.fn()
-const mockPut = jest.fn()
-const mockDelete = jest.fn()
+// Create mock functions with proper typing
+const mockGet = jest.fn() as jest.MockedFunction<typeof apiClient.get>
+const mockPost = jest.fn() as jest.MockedFunction<typeof apiClient.post>
+const mockPut = jest.fn() as jest.MockedFunction<typeof apiClient.put>
+const mockDelete = jest.fn() as jest.MockedFunction<typeof apiClient.delete>
 
-// Mock the apiClient object
-jest.mocked(apiClient).get = mockGet
-jest.mocked(apiClient).post = mockPost
-jest.mocked(apiClient).put = mockPut
-jest.mocked(apiClient).delete = mockDelete
+// Assign the mocks
+mockApiClient.get = mockGet
+mockApiClient.post = mockPost
+mockApiClient.put = mockPut
+mockApiClient.delete = mockDelete
 
 // Mock toast
 jest.mock('sonner', () => ({
@@ -52,10 +52,38 @@ describe('useServiceTypes', () => {
   ]
 
   beforeEach(() => {
-    mockGet.mockResolvedValue({ data: mockServiceTypes })
-    mockPost.mockResolvedValue({ data: mockServiceTypes[0] })
-    mockPut.mockResolvedValue({ data: mockServiceTypes[0] })
-    mockDelete.mockResolvedValue({})
+    mockGet.mockResolvedValue({ 
+      success: true, 
+      data: mockServiceTypes, 
+      message: 'Success', 
+      timestamp: '2023-01-01T00:00:00Z', 
+      path: '/api/service-types', 
+      method: 'GET' 
+    })
+    mockPost.mockResolvedValue({ 
+      success: true, 
+      data: mockServiceTypes[0], 
+      message: 'Created', 
+      timestamp: '2023-01-01T00:00:00Z', 
+      path: '/api/service-types', 
+      method: 'POST' 
+    })
+    mockPut.mockResolvedValue({ 
+      success: true, 
+      data: mockServiceTypes[0], 
+      message: 'Updated', 
+      timestamp: '2023-01-01T00:00:00Z', 
+      path: '/api/service-types/1', 
+      method: 'PUT' 
+    })
+    mockDelete.mockResolvedValue({ 
+      success: true, 
+      data: null, 
+      message: 'Deleted', 
+      timestamp: '2023-01-01T00:00:00Z', 
+      path: '/api/service-types/1', 
+      method: 'DELETE' 
+    })
   })
 
   afterEach(() => {

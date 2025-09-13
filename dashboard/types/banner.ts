@@ -46,6 +46,6 @@ export interface CreateBannerDto {
   endAt?: string;
 }
 
-export interface UpdateBannerDto extends Partial<CreateBannerDto> {}
+export type UpdateBannerDto = Partial<CreateBannerDto>
 
 export type BannerPage = 'home' | 'about' | 'services' | 'products' | 'contact';

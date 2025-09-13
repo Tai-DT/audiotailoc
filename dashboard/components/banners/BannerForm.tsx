@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Banner } from "@/types/banner"
+import { Banner, CreateBannerDto, UpdateBannerDto } from "@/types/banner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,7 +28,7 @@ interface BannerFormProps {
   banner: Banner | null
   open: boolean
   onClose: () => void
-  onSubmit: (data: any) => void
+  onSubmit: (data: CreateBannerDto | UpdateBannerDto) => void
 }
 
 const pages = [

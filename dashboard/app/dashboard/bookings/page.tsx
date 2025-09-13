@@ -50,14 +50,27 @@ interface Service {
 interface Technician {
   id: string;
   name: string;
-  email: string;
+  email?: string;
 }
 
 interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
+  address?: string;
+}
+
+interface BookingFormData {
+  userId: string;
+  serviceId: string;
+  technicianId: string | null;
+  scheduledAt: string;
+  scheduledTime: string;
+  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  notes?: string;
+  estimatedCosts?: number | null;
+  actualCosts?: number | null;
 }
 
 const statusColors = {
@@ -299,7 +312,7 @@ export default function BookingsPage() {
     }
   };
 
-  const updateBooking = async (id: string, bookingData: any) => {
+  const updateBooking = async (id: string, bookingData: BookingFormData) => {
     try {
       const response = await fetch(`/api/bookings/${id}`, {
         method: 'PUT',
@@ -341,7 +354,7 @@ export default function BookingsPage() {
     }
   };
 
-  const createBooking = async (bookingData: any) => {
+  const createBooking = async (bookingData: BookingFormData) => {
     try {
       const response = await fetch('/api/bookings', {
         method: 'POST',
@@ -592,7 +605,7 @@ function BookingForm({
   technicians: Technician[];
   users: User[];
   booking?: Booking;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: BookingFormData) => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
