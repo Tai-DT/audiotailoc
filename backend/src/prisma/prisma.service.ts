@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -12,6 +13,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       },
       log: ['error'],
     });
+
+    // Extend with Accelerate for better performance
+    Object.assign(this, this.$extends(withAccelerate()));
+
     // Optional startup logs (disabled by default)
     const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
     const logDbUrl = (process.env.LOG_DB_URL || '').toLowerCase() === 'true';
@@ -20,6 +25,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       const masked = url.replace(/:(.*?)@/, ':***@');
       console.log('[Prisma] DATABASE_URL =', masked);
     }
+  }
+
+  // Method to get extended client with Accelerate
+  getAcceleratedClient() {
+    return this.$extends(withAccelerate());
   }
 
   async onModuleInit() {
