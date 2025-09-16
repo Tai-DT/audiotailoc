@@ -48,7 +48,10 @@
     "@nestjs/platform-socket.io": "^11.1.6",
     "@nestjs/swagger": "^7.3.1",
     "@nestjs/throttler": "^6.4.0",
+<<<<<<< HEAD
     "@nestjs/websockets": "^11.1.6",
+=======
+>>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
     "@prisma/client": "^5.17.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@types/archiver": "^6.0.3",
@@ -120,4 +123,8 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.3.3"
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
