@@ -1,0 +1,578 @@
+{
+  "apiCollection": {
+    "name": "Audio Tài Lộc Dashboard APIs",
+    "version": "1.0.0",
+    "baseUrl": {
+      "production": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1",
+      "local": "http://localhost:3010/api/v1"
+    },
+    "authentication": {
+      "type": "Bearer",
+      "required": true,
+      "roles": ["ADMIN"],
+      "guard": "AdminOrKeyGuard"
+    },
+    "documentation": "/docs"
+  },
+  "endpoints": {
+    "admin": {
+      "dashboard": {
+        "method": "GET",
+        "path": "/admin/dashboard",
+        "description": "Admin dashboard overview với thống kê tổng thể",
+        "queryParams": {
+          "startDate": {
+            "type": "string",
+            "format": "ISO date",
+            "required": false,
+            "description": "Ngày bắt đầu"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "ISO date", 
+            "required": false,
+            "description": "Ngày kết thúc"
+          }
+        },
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "overview": {
+              "totalUsers": "number",
+              "totalProducts": "number", 
+              "totalOrders": "number",
+              "totalRevenue": "number",
+              "newUsers": "number",
+              "newOrders": "number",
+              "pendingOrders": "number",
+              "lowStockProducts": "number"
+            },
+            "recentActivities": {
+              "orders": "array",
+              "users": "array"
+            },
+            "period": {
+              "startDate": "string",
+              "endDate": "string"
+            }
+          }
+        },
+        "cacheTime": "5 minutes",
+        "rateLimit": "100/minute"
+      },
+      "userStats": {
+        "method": "GET",
+        "path": "/admin/stats/users",
+        "description": "Thống kê chi tiết về người dùng",
+        "queryParams": {
+          "days": {
+            "type": "string",
+            "default": "30",
+            "required": false,
+            "description": "Số ngày thống kê"
+          }
+        },
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "totalUsers": "number",
+            "activeUsers": "number",
+            "newUsers": "number",
+            "usersByRole": "object"
+          }
+        },
+        "cacheTime": "15 minutes",
+        "rateLimit": "100/minute"
+      },
+      "orderStats": {
+        "method": "GET", 
+        "path": "/admin/stats/orders",
+        "description": "Thống kê chi tiết về đơn hàng và doanh thu",
+        "queryParams": {
+          "days": {
+            "type": "string",
+            "default": "30", 
+            "required": false,
+            "description": "Số ngày thống kê"
+          }
+        },
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "totalOrders": "number",
+            "completedOrders": "number",
+            "pendingOrders": "number", 
+            "cancelledOrders": "number",
+            "totalRevenue": "number",
+            "ordersByStatus": "object"
+          }
+        },
+        "cacheTime": "15 minutes",
+        "rateLimit": "100/minute"
+      },
+      "productStats": {
+        "method": "GET",
+        "path": "/admin/stats/products", 
+        "description": "Thống kê chi tiết về sản phẩm và inventory",
+        "queryParams": {},
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "totalProducts": "number",
+            "activeProducts": "number",
+            "lowStockProducts": "number",
+            "productsByCategory": "object"
+          }
+        },
+        "cacheTime": "15 minutes", 
+        "rateLimit": "100/minute"
+      },
+      "bulkAction": {
+        "method": "POST",
+        "path": "/admin/bulk-action",
+        "description": "Thực hiện hành động hàng loạt",
+        "requestBody": {
+          "action": {
+            "type": "string",
+            "enum": ["delete", "activate", "deactivate", "export"],
+            "required": true
+          },
+          "ids": {
+            "type": "array",
+            "items": "string",
+            "required": true
+          },
+          "type": {
+            "type": "string", 
+            "enum": ["users", "products", "orders"],
+            "required": true
+          }
+        },
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "action": "string",
+            "type": "string", 
+            "affectedCount": "number",
+            "message": "string"
+          }
+        },
+        "rateLimit": "50/minute"
+      },
+      "systemStatus": {
+        "method": "GET",
+        "path": "/admin/system/status",
+        "description": "Trạng thái hệ thống và health check",
+        "queryParams": {},
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "database": "string",
+            "redis": "string",
+            "maintenanceMode": "boolean",
+            "uptime": "number",
+            "memoryUsage": "object",
+            "environment": "string"
+          }
+        },
+        "cacheTime": "1 minute",
+        "rateLimit": "100/minute"
+      },
+      "activityLogs": {
+        "method": "GET",
+        "path": "/admin/logs/activity",
+        "description": "Lịch sử hoạt động và audit trail",
+        "queryParams": {
+          "type": {
+            "type": "string",
+            "required": false,
+            "description": "Loại log cần lấy"
+          },
+          "limit": {
+            "type": "string",
+            "default": "100",
+            "required": false,
+            "description": "Số lượng logs"
+          }
+        },
+        "responseStructure": {
+          "success": "boolean",
+          "data": {
+            "logs": "array",
+            "total": "number", 
+            "type": "string",
+            "limit": "number"
+          },
+          "message": "string"
+        },
+        "rateLimit": "100/minute",
+        "status": "not_implemented"
+      }
+    },
+    "analytics": {
+      "dashboard": {
+        "method": "GET",
+        "path": "/analytics/dashboard",
+        "description": "Dashboard analytics tổng thể với tất cả metrics",
+        "queryParams": {
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "cacheTime": "30 minutes",
+        "rateLimit": "50/minute"
+      },
+      "sales": {
+        "method": "GET", 
+        "path": "/analytics/sales",
+        "description": "Phân tích doanh thu và bán hàng chi tiết",
+        "queryParams": {
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "responseStructure": {
+          "totalSales": "number",
+          "totalOrders": "number",
+          "averageOrderValue": "number", 
+          "salesGrowth": "number",
+          "topSellingProducts": "array",
+          "salesByPeriod": "array",
+          "salesByCategory": "object",
+          "conversionRate": "number"
+        },
+        "cacheTime": "30 minutes",
+        "rateLimit": "50/minute"
+      },
+      "customers": {
+        "method": "GET",
+        "path": "/analytics/customers", 
+        "description": "Phân tích hành vi và segmentation khách hàng",
+        "queryParams": {
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "responseStructure": {
+          "totalCustomers": "number",
+          "newCustomers": "number",
+          "returningCustomers": "number",
+          "customerLifetimeValue": "number",
+          "customerSegments": "object",
+          "topCustomers": "array", 
+          "churnRate": "number",
+          "retentionRate": "number"
+        },
+        "cacheTime": "30 minutes",
+        "rateLimit": "50/minute"
+      },
+      "inventory": {
+        "method": "GET",
+        "path": "/analytics/inventory",
+        "description": "Phân tích tồn kho và inventory management", 
+        "queryParams": {
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "responseStructure": {
+          "totalProducts": "number",
+          "lowStockItems": "number",
+          "outOfStockItems": "number",
+          "inventoryTurnover": "number",
+          "stockValue": "number",
+          "slowMovingItems": "array",
+          "fastMovingItems": "array",
+          "stockMovement": "array"
+        },
+        "cacheTime": "30 minutes",
+        "rateLimit": "50/minute"
+      },
+      "kpis": {
+        "method": "GET",
+        "path": "/analytics/kpis",
+        "description": "Key Performance Indicators của business",
+        "queryParams": {
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "responseStructure": {
+          "revenue": {
+            "current": "number",
+            "target": "number",
+            "growth": "number"
+          },
+          "orders": {
+            "current": "number",
+            "target": "number", 
+            "growth": "number"
+          },
+          "customers": {
+            "acquisition": "number",
+            "retention": "number",
+            "satisfaction": "number"
+          },
+          "operational": {
+            "fulfillmentTime": "number",
+            "returnRate": "number",
+            "supportTickets": "number"
+          }
+        },
+        "cacheTime": "30 minutes",
+        "rateLimit": "50/minute"
+      },
+      "export": {
+        "method": "GET",
+        "path": "/analytics/export/:type",
+        "description": "Export dữ liệu analytics",
+        "pathParams": {
+          "type": {
+            "type": "string",
+            "enum": ["sales", "customers", "inventory", "all"],
+            "required": true
+          }
+        },
+        "queryParams": {
+          "format": {
+            "type": "string",
+            "enum": ["csv", "excel", "pdf"],
+            "default": "csv",
+            "required": false
+          },
+          "startDate": {"type": "string", "format": "ISO date", "required": false},
+          "endDate": {"type": "string", "format": "ISO date", "required": false},
+          "productIds": {"type": "array", "items": "string", "required": false},
+          "categoryIds": {"type": "array", "items": "string", "required": false},
+          "customerSegment": {"type": "string", "required": false},
+          "region": {"type": "string", "required": false},
+          "channel": {"type": "string", "required": false}
+        },
+        "responseStructure": {
+          "filename": "string",
+          "downloadUrl": "string"
+        },
+        "rateLimit": "10/minute"
+      },
+      "realtimeSales": {
+        "method": "GET",
+        "path": "/analytics/realtime/sales",
+        "description": "Dữ liệu bán hàng real-time (hôm nay)",
+        "queryParams": {},
+        "responseStructure": {
+          "totalSales": "number",
+          "totalOrders": "number", 
+          "averageOrderValue": "number",
+          "salesGrowth": "number",
+          "lastUpdated": "string"
+        },
+        "cacheTime": "no cache",
+        "rateLimit": "30/minute"
+      },
+      "realtimeOrders": {
+        "method": "GET",
+        "path": "/analytics/realtime/orders",
+        "description": "Theo dõi đơn hàng real-time",
+        "queryParams": {},
+        "responseStructure": {
+          "todayOrders": "number",
+          "todayRevenue": "number",
+          "averageOrderValue": "number", 
+          "lastUpdated": "string"
+        },
+        "cacheTime": "no cache",
+        "rateLimit": "30/minute"
+      }
+    },
+    "health": {
+      "basic": {
+        "method": "GET",
+        "path": "/health",
+        "description": "Health check cơ bản",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "detailed": {
+        "method": "GET",
+        "path": "/health/detailed",
+        "description": "Health check chi tiết với thông tin system",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "database": {
+        "method": "GET", 
+        "path": "/health/database",
+        "description": "Kiểm tra kết nối database",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "performance": {
+        "method": "GET",
+        "path": "/health/performance", 
+        "description": "Metrics về performance hệ thống",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "system": {
+        "method": "GET",
+        "path": "/health/system",
+        "description": "Thông tin hệ thống (CPU, memory, disk)",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "memory": {
+        "method": "GET",
+        "path": "/health/memory",
+        "description": "Thông tin sử dụng bộ nhớ",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "uptime": {
+        "method": "GET",
+        "path": "/health/uptime",
+        "description": "Thời gian hoạt động hệ thống",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "metrics": {
+        "method": "GET",
+        "path": "/health/metrics",
+        "description": "Metrics ứng dụng tổng thể",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      },
+      "alerts": {
+        "method": "GET",
+        "path": "/health/alerts",
+        "description": "Cảnh báo và alerts đang hoạt động",
+        "authentication": false,
+        "cacheTime": "1 minute"
+      }
+    }
+  },
+  "dashboardWidgets": {
+    "mainDashboard": [
+      {
+        "widget": "overviewCards",
+        "endpoint": "/admin/dashboard",
+        "dataPath": "data.overview",
+        "refreshInterval": 300000,
+        "description": "Tổng quan số liệu chính"
+      },
+      {
+        "widget": "realtimeSalesChart", 
+        "endpoint": "/analytics/realtime/sales",
+        "dataPath": "data",
+        "refreshInterval": 60000,
+        "description": "Biểu đồ doanh thu real-time"
+      },
+      {
+        "widget": "recentOrdersTable",
+        "endpoint": "/admin/dashboard", 
+        "dataPath": "data.recentActivities.orders",
+        "refreshInterval": 300000,
+        "description": "Bảng đơn hàng gần đây"
+      },
+      {
+        "widget": "userStatsChart",
+        "endpoint": "/admin/stats/users",
+        "dataPath": "data.usersByRole",
+        "refreshInterval": 900000,
+        "description": "Biểu đồ thống kê người dùng"
+      },
+      {
+        "widget": "systemStatus",
+        "endpoint": "/admin/system/status",
+        "dataPath": "data",
+        "refreshInterval": 60000,
+        "description": "Trạng thái hệ thống"
+      }
+    ],
+    "analyticsDashboard": [
+      {
+        "widget": "kpiCards",
+        "endpoint": "/analytics/kpis", 
+        "dataPath": "data",
+        "refreshInterval": 1800000,
+        "description": "KPI cards chính"
+      },
+      {
+        "widget": "salesTrendChart",
+        "endpoint": "/analytics/sales",
+        "dataPath": "data.salesByPeriod",
+        "refreshInterval": 1800000,
+        "description": "Biểu đồ xu hướng doanh thu"
+      },
+      {
+        "widget": "customerSegmentChart", 
+        "endpoint": "/analytics/customers",
+        "dataPath": "data.customerSegments",
+        "refreshInterval": 1800000,
+        "description": "Biểu đồ phân khúc khách hàng"
+      },
+      {
+        "widget": "inventoryStatus",
+        "endpoint": "/analytics/inventory",
+        "dataPath": "data",
+        "refreshInterval": 1800000,
+        "description": "Trạng thái tồn kho"
+      }
+    ]
+  },
+  "errorCodes": {
+    "ADMIN_ACCESS_REQUIRED": {
+      "status": 403,
+      "message": "Admin access required for this endpoint"
+    },
+    "INVALID_DATE_RANGE": {
+      "status": 400,
+      "message": "Invalid date range provided"
+    },
+    "BULK_ACTION_ERROR": {
+      "status": 500, 
+      "message": "Failed to perform bulk action"
+    },
+    "ANALYTICS_ERROR": {
+      "status": 500,
+      "message": "Failed to retrieve analytics data"
+    },
+    "SYSTEM_STATUS_ERROR": {
+      "status": 500,
+      "message": "Failed to get system status"
+    }
+  },
+  "rateLimits": {
+    "admin": "100 requests per minute",
+    "analytics": "50 requests per minute", 
+    "realtime": "30 requests per minute",
+    "export": "10 requests per minute",
+    "health": "200 requests per minute"
+  },
+  "implementationNotes": {
+    "authentication": "All admin endpoints require Bearer token with ADMIN role",
+    "caching": "Redis caching implemented for performance optimization",
+    "errorHandling": "Standardized error responses with proper HTTP status codes",
+    "documentation": "Swagger/OpenAPI documentation available at /docs",
+    "monitoring": "Health endpoints for system monitoring and alerts"
+  }
+}
