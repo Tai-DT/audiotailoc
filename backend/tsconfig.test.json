@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["jest", "node"],
+    "isolatedModules": true
+  },
+  "include": [
+    "test/**/*.ts",
+    "src/common/**/*.ts",
+    "src/prisma/**/*.ts",
+    "src/modules/orders/**/*.ts",
+    "src/modules/booking/**/*.ts",
+    "src/modules/notifications/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/modules/backup/**/*"
+  ]
+}
