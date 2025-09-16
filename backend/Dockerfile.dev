@@ -1,0 +1,35 @@
+# Development Dockerfile for Backend
+FROM node:18-alpine
+
+# Install dependencies
+RUN apk add --no-cache libc6-compat curl postgresql-client
+
+# Install pnpm
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN pnpm install
+
+# Copy prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3010
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3010/health || exit 1
+
+# Start development server
+CMD ["pnpm", "start:dev"]
