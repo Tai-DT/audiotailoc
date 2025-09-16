@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "module": "commonjs",
+=======
+    "module": "CommonJS",
+>>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -12,6 +16,7 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
+<<<<<<< HEAD
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
@@ -22,3 +27,20 @@
     }
   }
 }
+=======
+    "strict": true,
+    "moduleResolution": "Node",
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "prisma/**/*", "backend/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "prisma/seed.ts",
+    "src/add-karaoke-products.ts",
+    "src/seed-karaoke.ts",
+    "src/seed-services.ts",
+    "src/modules/backup/**/*"
+  ]
+}
+>>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e

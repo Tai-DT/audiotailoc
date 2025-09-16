@@ -1,5 +1,25 @@
 {
+<<<<<<< HEAD
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.json",
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
+=======
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/main.ts",
+    "src/modules/app.module.ts",
+    "src/modules/health/**/*",
+    "src/modules/logger/**/*",
+    "src/prisma/**/*",
+    "src/common/**/*"
+  ],
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+
+>>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
