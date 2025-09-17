@@ -14,11 +14,11 @@ import { BannersService } from './banners.service';
 import { CreateBannerDto } from './dto/banner-create.dto';
 import { UpdateBannerDto } from './dto/banner-update.dto';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 
 @ApiTags('Admin - Banners')
 @ApiBearerAuth()
-@UseGuards(JwtGuard, AdminGuard)
+@UseGuards(JwtGuard, AdminOrKeyGuard)
 @Controller('admin/banners')
 export class AdminBannersController {
   constructor(private readonly bannersService: BannersService) {}

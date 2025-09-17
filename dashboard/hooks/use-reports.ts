@@ -51,6 +51,27 @@ export function useReports() {
     }
   }, [])
 
+  // Download report
+  const downloadReport = useCallback(async (reportId: string) => {
+    try {
+      const report = reports.find(r => r.id === reportId)
+      if (!report) return
+      
+      // Mock download
+      const link = document.createElement('a')
+      link.href = '#' // Replace with actual download URL
+      link.download = `report-${reportId}.${report.format}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success('Đã bắt đầu tải xuống báo cáo')
+    } catch (err) {
+      toast.error('Không thể tải xuống báo cáo')
+      console.error('Error downloading report:', err)
+    }
+  }, [reports])
+
   // Generate report
   const generateReport = useCallback(async (options: {
     type: string
@@ -85,29 +106,13 @@ export function useReports() {
     }
   }, [downloadReport])
 
-  // Download report
-  const downloadReport = useCallback(async (reportId: string) => {
-    try {
-      const report = reports.find(r => r.id === reportId)
-      if (!report) return
-      
-      // Mock download
-      const link = document.createElement('a')
-      link.href = '#' // Replace with actual download URL
-      link.download = `report-${reportId}.${report.format}`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      toast.success('Đã bắt đầu tải xuống báo cáo')
-    } catch (err) {
-      toast.error('Không thể tải xuống báo cáo')
-      console.error('Error downloading report:', err)
-    }
-  }, [reports])
-
   // Schedule report
-  const scheduleReport = useCallback(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const scheduleReport = useCallback(async (_options?: {
+    type?: string;
+    schedule?: string;
+    recipients?: string[];
+  }) => {
     try {
       // Mock API call
       toast.success('Đã thiết lập báo cáo định kỳ')

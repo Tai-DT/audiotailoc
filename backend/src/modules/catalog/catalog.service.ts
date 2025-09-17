@@ -44,7 +44,7 @@ export class CatalogService {
   constructor(private readonly prisma: PrismaService, /* private readonly search: SearchService, */ private readonly cache: CacheService) {}
 
   async listProducts(
-    params: { page?: number; pageSize?: number; q?: string; minPrice?: number; maxPrice?: number; sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'createdAt'; sortOrder?: 'asc' | 'desc'; featured?: boolean } = {},
+    params: { page?: number; pageSize?: number; q?: string; minPrice?: number; maxPrice?: number; sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount'; sortOrder?: 'asc' | 'desc'; featured?: boolean } = {},
   ): Promise<{ items: ProductDto[]; total: number; page: number; pageSize: number }> {
     const page = Math.max(1, Math.floor(params.page ?? 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
@@ -62,7 +62,7 @@ export class CatalogService {
     if (typeof params.maxPrice === 'number') where.priceCents = { ...(where.priceCents || {}), lte: params.maxPrice };
     if (typeof params.featured === 'boolean') where.featured = params.featured; // Used by unit tests
 
-    const orderByField = (params.sortBy === 'price' ? 'priceCents' : params.sortBy) ?? 'createdAt';
+    const orderByField = (params.sortBy === 'price' ? 'priceCents' : params.sortBy === 'viewCount' ? 'viewCount' : params.sortBy) ?? 'createdAt';
     const orderDirection = params.sortOrder ?? 'desc';
 
     const cacheKey = `products:list:${JSON.stringify({ where, page, pageSize, orderByField, orderDirection })}`;
@@ -238,6 +238,15 @@ export class CatalogService {
     if (data.images !== undefined) {
       updateData.imageUrl = data.images?.[0] || null;
       updateData.images = data.images ? JSON.stringify(data.images) : null;
+    }
+    if (data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl;
+      // If imageUrl is provided directly, also update the images array
+      if (data.imageUrl) {
+        updateData.images = JSON.stringify([data.imageUrl]);
+      } else {
+        updateData.images = null;
+      }
     }
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
     if (data.brand !== undefined) updateData.brand = data.brand;

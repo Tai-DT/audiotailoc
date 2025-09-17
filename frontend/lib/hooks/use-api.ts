@@ -100,6 +100,17 @@ export const useProduct = (id: string) => {
   });
 };
 
+export const useProductBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ['products', 'slug', slug],
+    queryFn: async () => {
+      const response = await apiClient.get(`/catalog/products/slug/${slug}`);
+      return handleApiResponse<Product>(response);
+    },
+    enabled: !!slug,
+  });
+};
+
 export const useProductSearch = (query: string, limit = 10) => {
   return useQuery({
     queryKey: ['products', 'search', query, limit],
@@ -132,7 +143,8 @@ export const useTopViewedProducts = (limit = 10) => {
       const response = await apiClient.get('/catalog/products/analytics/top-viewed', {
         params: { limit },
       });
-      return handleApiResponse<Product[]>(response);
+      const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
+      return paginatedResponse.items;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -145,7 +157,8 @@ export const useRecentProducts = (limit = 10) => {
       const response = await apiClient.get('/catalog/products/analytics/recent', {
         params: { limit },
       });
-      return handleApiResponse<Product[]>(response);
+      const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
+      return paginatedResponse.items;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -342,7 +355,7 @@ export const useServiceTypes = () => {
   return useQuery({
     queryKey: queryKeys.services.types,
     queryFn: async () => {
-      const response = await apiClient.get('/service-types');
+      const response = await apiClient.get('/services/types');
       return handleApiResponse<ServiceType[]>(response);
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
@@ -510,4 +523,28 @@ export const useBusinessKPIs = () => {
   });
 };
 
+// Service Booking hooks
+export const useCreateServiceBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      serviceId: string;
+      customerName: string;
+      phone: string;
+      email: string;
+      address?: string;
+      preferredDate: string;
+      preferredTime: string;
+      notes?: string;
+    }) => {
+      await apiClient.post('/service-bookings', data);
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries if needed
+      queryClient.invalidateQueries({ queryKey: ['service-bookings'] });
+    },
+  });
+};
 

@@ -152,12 +152,6 @@ export function ImageUpload({
           const fileUrl = await uploadToMCP(file)
           uploadedUrls.push(fileUrl)
           
-          // Update progress
-          setUploadProgress(prev => ({
-            ...prev,
-            [file.name]: 100 // Mark as complete
-          }))
-
           // Production monitoring - track successful uploads
           if (typeof window !== 'undefined' && window.gtag) {
             window.gtag('event', 'file_upload_success', {

@@ -79,8 +79,6 @@ export class BannersService {
   }
 
   async update(id: string, data: UpdateBannerDto) {
-    const banner = await this.findById(id);
-    
     return this.prisma.banner.update({
       where: { id },
       data,
@@ -88,8 +86,6 @@ export class BannersService {
   }
 
   async softDelete(id: string) {
-    const banner = await this.findById(id);
-    
     return this.prisma.banner.update({
       where: { id },
       data: {
