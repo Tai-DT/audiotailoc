@@ -8,6 +8,27 @@ export class JwtGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
+    const path = req.route?.path || req.path;
+
+    // Allow public auth routes without authentication
+    const publicRoutes = [
+      '/auth/register',
+      '/auth/login',
+      '/auth/refresh',
+      '/auth/forgot-password',
+      '/auth/reset-password',
+      '/auth/status',
+      '/catalog/products',
+      '/catalog/categories',
+      '/services',
+      '/services/types',
+      '/health'
+    ];
+
+    if (publicRoutes.some(route => path.includes(route))) {
+      return true;
+    }
+
     const header = req.headers['authorization'] as string | undefined;
     if (!header || !header.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing bearer token');

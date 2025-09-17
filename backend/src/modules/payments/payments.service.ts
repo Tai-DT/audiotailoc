@@ -523,6 +523,12 @@ export class PaymentsService {
     // PayOS webhook handling
     const { orderCode, code, id } = payload;
 
+    // Validate required fields
+    if (!orderCode) {
+      this.logger.error('PayOS webhook: missing orderCode in payload');
+      return { error: 1, message: 'Invalid payload: missing orderCode' };
+    }
+
     // PayOS sends orderCode as our orderNo. Resolve to latest intent for this order
     const order = await this.prisma.order.findUnique({ where: { orderNo: orderCode } });
     if (!order) {
@@ -550,6 +556,12 @@ export class PaymentsService {
   }
 
   private async markFailed(provider: 'VNPAY' | 'MOMO' | 'PAYOS', txnRef: string) {
+    // Validate txnRef parameter
+    if (!txnRef) {
+      this.logger.error('markFailed: missing txnRef parameter');
+      return;
+    }
+
     const intent = await this.prisma.paymentIntent.findUnique({ where: { id: txnRef } });
     if (!intent) return;
 
@@ -570,3 +582,5 @@ export class PaymentsService {
     this.logger.log(`Payment marked as failed: ${provider} - ${txnRef}`);
   }
 }
+
+

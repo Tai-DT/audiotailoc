@@ -18,7 +18,7 @@ export class AuthService {
     return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
   }
 
-  async login(dto: { email: string; password: string }) {
+  async login(dto: { email: string; password: string; rememberMe?: boolean }) {
     console.log('🔍 Login attempt for:', dto.email);
 
     // Check if account is locked
@@ -59,7 +59,9 @@ export class AuthService {
     const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET') || 'dev_access';
     const refreshSecret = this.config.get<string>('JWT_REFRESH_SECRET') || 'dev_refresh';
     const accessToken = jwt.sign({ sub: user.id, email: user.email, role: (user as any).role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: '7d' });
+    // Use longer refresh token expiry if remember me is enabled
+    const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
+    const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
 
     console.log('✅ Tokens generated successfully');
     return { accessToken, refreshToken, userId: user.id };

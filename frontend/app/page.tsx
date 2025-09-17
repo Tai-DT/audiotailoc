@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/layout/header';
 import { CategoryNavbar } from '@/components/layout/category-navbar';
-import { Footer } from '@/components/layout/footer';
+import { Footer } from '@/components/layout/Footer';
 import { Hero } from '@/components/home/hero';
 import { FeaturedProducts } from '@/components/home/featured-products';
 import { FeaturedServices } from '@/components/home/featured-services';

@@ -3,7 +3,6 @@
   Usage: npx tsx src/seed-complete-data.ts
 */
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -204,7 +203,6 @@ async function seedData() {
     // 6. SEED NOTIFICATIONS
     // ========================================
     console.log('\n🔔 Creating Notifications...');
-    const notificationTypes = ['ORDER', 'PROMOTION', 'INFO', 'WARNING', 'SUCCESS'];
     const notificationTemplates = [
       { title: 'Đơn hàng đã được xác nhận', message: 'Đơn hàng #ORDER123 của bạn đã được xác nhận', type: 'ORDER' },
       { title: 'Khuyến mãi mới', message: 'Giảm 20% cho tất cả sản phẩm loa karaoke', type: 'PROMOTION' },
@@ -289,11 +287,11 @@ async function seedData() {
       'Pin dùng được bao lâu?'
     ];
     
-    for (const product of products.slice(0, 6)) {
+    for (const _product of products.slice(0, 6)) {
       const numQuestions = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < numQuestions; i++) {
         const user = users[Math.floor(Math.random() * users.length)];
-        const question = await prisma.customerQuestion.create({
+        await prisma.customerQuestion.create({
           data: {
             userId: user.id,
             question: questions[Math.floor(Math.random() * questions.length)],
