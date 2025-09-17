@@ -98,7 +98,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       
       setThumbnailImage(project.thumbnailImage || '');
       setCoverImage(project.coverImage || '');
-      setImages(project.images ? JSON.parse(project.images) : []);
+      setImages(Array.isArray(project.images) ? project.images : (project.images ? JSON.parse(project.images) : []));
       setYoutubeVideoUrl(project.youtubeVideoUrl || '');
       
       setLiveUrl(project.liveUrl || '');
@@ -261,20 +261,20 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       };
 
       if (project) {
-        await apiClient.put(`/projects/${project.id}`, projectData);
+        await apiClient.put(`/projects/${project.id}`, projectData as unknown as Record<string, unknown>);
         toast.success('Project updated successfully');
       } else {
-        await apiClient.post('/projects', projectData);
+        await apiClient.post('/projects', projectData as unknown as Record<string, unknown>);
         toast.success('Project created successfully');
       }
 
       onSuccess();
     } catch (error: unknown) {
       console.error('Error saving project:', error);
-      const message = error instanceof AxiosError 
-        ? error.response?.data?.message 
-        : error instanceof Error 
-          ? error.message 
+      const message = error instanceof AxiosError
+        ? String(((error as AxiosError).response?.data as { message?: string })?.message || 'API Error')
+        : error instanceof Error
+          ? error.message
           : 'Failed to save project';
       toast.error(message);
     } finally {

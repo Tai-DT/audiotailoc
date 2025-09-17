@@ -146,7 +146,7 @@ export class InventoryAlertService {
     };
   }
 
-  async resolve(id: string, userId?: string) {
+  async resolve(id: string, _userId?: string) {
     return this.prisma.inventoryAlert.update({
       where: { id },
       data: {
@@ -165,7 +165,7 @@ export class InventoryAlertService {
     });
   }
 
-  async bulkResolve(ids: string[], userId?: string) {
+  async bulkResolve(ids: string[], _userId?: string) {
     return this.prisma.inventoryAlert.updateMany({
       where: {
         id: { in: ids }

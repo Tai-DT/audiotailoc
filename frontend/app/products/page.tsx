@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
+import { Footer } from '@/components/layout/Footer';
 import { ProductGrid } from '@/components/products/product-grid';
 import { ProductFilters } from '@/components/products/product-filters';
 import { useProducts } from '@/lib/hooks/use-api';

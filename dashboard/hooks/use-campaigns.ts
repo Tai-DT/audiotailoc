@@ -181,7 +181,7 @@ export function useCampaigns() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const { } = useAuth()
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010/api/v1"
 
   // Calculate stats
   const stats: CampaignStats = {
