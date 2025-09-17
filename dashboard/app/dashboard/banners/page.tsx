@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 import { apiClient } from "@/lib/api-client"
-import { Banner, BannerListResponse, UpdateBannerDto } from "@/types/banner"
+import { Banner, BannerListResponse, CreateBannerDto, UpdateBannerDto } from "@/types/banner"
 import { Plus, RefreshCw } from "lucide-react"
 
 export default function BannersPage() {
@@ -67,7 +67,7 @@ export default function BannersPage() {
     }
   }
 
-  const handleFormSubmit = async (data: UpdateBannerDto) => {
+  const handleFormSubmit = async (data: CreateBannerDto | UpdateBannerDto) => {
     try {
       if (editingBanner) {
         await apiClient.updateBanner(editingBanner.id, data)
@@ -76,7 +76,7 @@ export default function BannersPage() {
           description: "Đã cập nhật banner"
         })
       } else {
-        await apiClient.createBanner(data)
+        await apiClient.createBanner(data as CreateBannerDto)
         toast({
           title: "Thành công", 
           description: "Đã tạo banner mới"

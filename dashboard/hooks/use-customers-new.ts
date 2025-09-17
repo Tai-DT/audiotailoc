@@ -103,7 +103,7 @@ export function useCustomers() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSegment, setSelectedSegment] = useState("all")
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010/api/v1"
 
   // Calculate statistics
   const stats: CustomerStats = {

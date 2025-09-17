@@ -25,7 +25,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { JwtGuard } from '../../auth/jwt.guard';
-import { AdminGuard } from '../../auth/admin.guard';
+import { AdminOrKeyGuard } from '../../auth/admin-or-key.guard';
 import { CompleteProductService } from '../services/complete-product.service';
 import {
   CreateProductDto,
@@ -49,7 +49,7 @@ export class CompleteProductController {
   constructor(private readonly catalogService: CompleteProductService) {}
 
   @Post()
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create a new product',
@@ -268,7 +268,7 @@ export class CompleteProductController {
   }
 
   @Put(':id')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update product',
@@ -308,7 +308,7 @@ export class CompleteProductController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -337,7 +337,7 @@ export class CompleteProductController {
   }
 
   @Get(':id/deletable')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Check if product can be deleted',
@@ -365,7 +365,7 @@ export class CompleteProductController {
   }
 
   @Delete()
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -391,7 +391,7 @@ export class CompleteProductController {
   }
 
   @Patch('bulk')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Bulk update products',
@@ -414,7 +414,7 @@ export class CompleteProductController {
   }
 
   @Post(':id/duplicate')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Duplicate product',
@@ -466,7 +466,7 @@ export class CompleteProductController {
   }
 
   @Get('analytics/overview')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get product analytics',
@@ -486,7 +486,7 @@ export class CompleteProductController {
   }
 
   @Get('analytics/top-viewed')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get top viewed products',
@@ -512,7 +512,7 @@ export class CompleteProductController {
   }
 
   @Get('analytics/recent')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get recently added products',
@@ -538,7 +538,7 @@ export class CompleteProductController {
   }
 
   @Get('export/csv')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Export products to CSV',
@@ -564,7 +564,7 @@ export class CompleteProductController {
   }
 
   @Post('import/csv')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Import products from CSV',

@@ -9,7 +9,7 @@ import {
   UseGuards 
 } from '@nestjs/common';
 import { SupportService } from './support.service';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
 import { IsString, IsOptional, IsBoolean, IsArray, IsIn, MinLength } from 'class-validator';
 
@@ -89,7 +89,7 @@ export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   // Knowledge Base endpoints
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('kb/articles')
   createArticle(@Body() dto: CreateArticleDto) {
     return this.supportService.createArticle(dto);
@@ -128,7 +128,7 @@ export class SupportController {
   }
 
   // FAQ endpoints
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('faq')
   createFAQ(@Body() dto: CreateFAQDto) {
     return this.supportService.createFAQ(dto);
@@ -165,7 +165,7 @@ export class SupportController {
     });
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put('tickets/:id/status')
   updateTicketStatus(
     @Param('id') id: string,

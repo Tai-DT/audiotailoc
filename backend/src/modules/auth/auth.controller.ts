@@ -4,7 +4,7 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './jwt.guard';
 import { UsersService } from '../users/users.service';
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
 
 class RegisterDto {
   @IsEmail() email!: string;
@@ -14,6 +14,7 @@ class RegisterDto {
 class LoginDto {
   @IsEmail() email!: string;
   @IsString() password!: string;
+  @IsOptional() @IsBoolean() rememberMe?: boolean;
 }
 
 class RefreshTokenDto {
@@ -53,7 +54,13 @@ export class AuthController {
   async register(@Body() dto: RegisterDto) {
     if (!dto.email || !dto.password) throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
     const user = await this.auth.register(dto);
-    return { user: { id: user.id, email: user.email, name: user.name } };
+    // Auto-login after successful registration
+    const tokens = await this.auth.login({ email: dto.email, password: dto.password });
+    return {
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: { id: user.id, email: user.email, name: user.name }
+    };
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for login
@@ -65,6 +72,7 @@ export class AuthController {
     const user = await this.users.findById(tokens.userId);
     return {
       token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: {
         id: user?.id,
         email: user?.email,

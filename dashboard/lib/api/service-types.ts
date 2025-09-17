@@ -6,9 +6,8 @@ const ENDPOINT = '/service-types';
 export const serviceTypeApi = {
   // Get all service types
   getAll: async (categoryId?: string): Promise<ServiceType[]> => {
-    const { data } = await apiClient.get<ServiceType[]>(ENDPOINT, {
-      params: { categoryId }
-    });
+    const params = categoryId ? { categoryId } : undefined;
+    const { data } = await apiClient.get<ServiceType[]>(ENDPOINT, params ? { params } : {});
     return data;
   },
 
@@ -20,7 +19,7 @@ export const serviceTypeApi = {
 
   // Create a new service type
   create: async (serviceType: CreateServiceTypeDto): Promise<ServiceType> => {
-    const { data } = await apiClient.post<ServiceType>(ENDPOINT, serviceType);
+    const { data } = await apiClient.post<ServiceType>(ENDPOINT, serviceType as unknown as Record<string, unknown>);
     return data;
   },
 
