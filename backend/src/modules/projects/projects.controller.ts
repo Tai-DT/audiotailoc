@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
@@ -47,42 +47,42 @@ export class ProjectsController {
   }
 
   // Admin endpoints
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post()
   @ApiOperation({ summary: 'Create new project' })
   async create(@Body() data: any) {
     return this.projectsService.create(data);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id')
   @ApiOperation({ summary: 'Update project' })
   async update(@Param('id') id: string, @Body() data: any) {
     return this.projectsService.update(id, data);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete project' })
   async remove(@Param('id') id: string) {
     return this.projectsService.remove(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post(':id/toggle-featured')
   @ApiOperation({ summary: 'Toggle project featured status' })
   async toggleFeatured(@Param('id') id: string) {
     return this.projectsService.toggleFeatured(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post(':id/toggle-active')
   @ApiOperation({ summary: 'Toggle project active status' })
   async toggleActive(@Param('id') id: string) {
     return this.projectsService.toggleActive(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id/reorder')
   @ApiOperation({ summary: 'Update project display order' })
   async updateOrder(

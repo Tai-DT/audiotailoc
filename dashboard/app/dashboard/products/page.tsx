@@ -679,29 +679,31 @@ export default function ProductsPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-              <AlertDialogDescription>
-                {checkingDelete ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span>Đang kiểm tra...</span>
-                  </div>
-                ) : deleteCheckResult ? (
-                  <div>
-                    <p className="mb-2">Bạn có chắc chắn muốn xóa sản phẩm này?</p>
-                    {deleteCheckResult.canDelete ? (
-                      <p className="text-green-600 text-sm">✓ Sản phẩm có thể xóa an toàn.</p>
-                    ) : (
-                      <div className="text-red-600 text-sm">
-                        <p>⚠️ {deleteCheckResult.message}</p>
-                        {deleteCheckResult.associatedOrdersCount > 0 && (
-                          <p className="mt-1">Số đơn hàng liên kết: {deleteCheckResult.associatedOrdersCount}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p>Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.</p>
-                )}
+              <AlertDialogDescription asChild>
+                <div>
+                  {checkingDelete ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                      <span>Đang kiểm tra...</span>
+                    </div>
+                  ) : deleteCheckResult ? (
+                    <div>
+                      <p className="mb-2">Bạn có chắc chắn muốn xóa sản phẩm này?</p>
+                      {deleteCheckResult.canDelete ? (
+                        <p className="text-green-600 text-sm">✓ Sản phẩm có thể xóa an toàn.</p>
+                      ) : (
+                        <div className="text-red-600 text-sm">
+                          <p>⚠️ {deleteCheckResult.message}</p>
+                          {deleteCheckResult.associatedOrdersCount > 0 && (
+                            <p className="mt-1">Số đơn hàng liên kết: {deleteCheckResult.associatedOrdersCount}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p>Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.</p>
+                  )}
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

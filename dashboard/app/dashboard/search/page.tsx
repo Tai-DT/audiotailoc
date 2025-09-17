@@ -49,13 +49,13 @@ export default function SearchPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
-      await search(query, activeTab, filters)
+      await search(query, activeTab)
     }
   }
 
   const handleQuickSearch = async (term: string) => {
     setQuery(term)
-    await search(term, activeTab, filters)
+    await search(term, activeTab)
   }
 
   const handleClearFilters = () => {

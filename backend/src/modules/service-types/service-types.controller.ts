@@ -4,7 +4,7 @@ import { ServiceTypesService } from './service-types.service';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
 import { UpdateServiceTypeDto } from './dto/update-service-type.dto';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 
 @ApiTags('Service Types')
 @Controller('service-types')
@@ -12,7 +12,7 @@ export class ServiceTypesController {
   constructor(private readonly serviceTypesService: ServiceTypesService) {
   }
   @Post()
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new service type' })
   @ApiResponse({ status: 201, description: 'The service type has been successfully created.' })
@@ -71,7 +71,7 @@ export class ServiceTypesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a service type' })
   @ApiResponse({ status: 200, description: 'The service type has been successfully updated.' })
@@ -88,7 +88,7 @@ export class ServiceTypesController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a service type' })
   @ApiResponse({ status: 200, description: 'The service type has been successfully deleted.' })

@@ -52,7 +52,7 @@ interface Project {
   slug: string;
   client?: string;
   category?: string;
-  status: string;
+  status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
   isActive: boolean;
   isFeatured: boolean;
   viewCount: number;
@@ -62,6 +62,8 @@ interface Project {
   githubUrl?: string;
   startDate?: string;
   endDate?: string;
+  displayOrder: number;
+  userId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -499,7 +501,7 @@ export default function ProjectsPage() {
             </DialogDescription>
           </DialogHeader>
           <ProjectForm
-            project={selectedProject}
+            project={selectedProject || undefined}
             onSuccess={() => {
               setIsFormOpen(false);
               fetchProjects();

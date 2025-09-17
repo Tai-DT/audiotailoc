@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ProjectsService } from './projects.service';
 import { CloudinaryService } from '../files/cloudinary.service';
@@ -22,7 +22,7 @@ import * as fs from 'fs/promises';
 
 @ApiTags('projects')
 @Controller('projects')
-@UseGuards(JwtGuard, AdminGuard)
+@UseGuards(JwtGuard, AdminOrKeyGuard)
 export class ProjectsUploadController {
   constructor(
     private readonly projectsService: ProjectsService,

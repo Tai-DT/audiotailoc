@@ -14,7 +14,7 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { FilesService } from './files.service';
 
 @ApiTags('Files')
@@ -95,7 +95,7 @@ export class FilesController {
   }
 
   @Post('upload/product-image/:productId')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
@@ -183,7 +183,7 @@ export class FilesController {
   }
 
   @Delete(':fileId')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete file' })
   async deleteFile(@Param('fileId') fileId: string) {

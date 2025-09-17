@@ -1,5 +1,10 @@
 // Common types for the Audio Tài Lộc frontend
 
+export interface ProductSpecification {
+  name: string;
+  value: string;
+}
+
 export interface User {
   id: string;
   email: string;

@@ -47,13 +47,13 @@ export function ProductCard({
       <div className="relative aspect-square overflow-hidden">
         <Link href={`/products/${product.slug}`}>
           <Image
-            src={product.imageUrl || '/placeholder-product.jpg'}
+            src={product.imageUrl || '/placeholder-product.svg'}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/placeholder-product.jpg';
+              target.src = '/placeholder-product.svg';
             }}
           />
         </Link>

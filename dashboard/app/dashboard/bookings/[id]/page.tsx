@@ -56,12 +56,6 @@ export default function BookingDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState('');
 
-  useEffect(() => {
-    if (params.id) {
-      fetchBooking();
-    }
-  }, [params.id, fetchBooking]);
-
   const fetchBooking = useCallback(async () => {
     try {
       const response = await fetch(`/api/bookings/${params.id}`);
@@ -76,6 +70,12 @@ export default function BookingDetailPage() {
       setLoading(false);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchBooking();
+    }
+  }, [params.id, fetchBooking]);
 
   const updateBookingStatus = async (newStatus: string) => {
     if (!booking) return;

@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsOptional } from 'class-validator';
 import { JwtGuard } from '../auth/jwt.guard';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -24,6 +24,7 @@ export class CatalogController {
   constructor(private readonly catalog: CatalogService /* , private readonly searchService: SearchService */) {}
 
   @Get('products')
+  @UseGuards() // Temporarily remove authentication for testing
   list(@Query() query: any) {
     const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search } = query;
     return this.catalog.listProducts({
@@ -67,37 +68,39 @@ export class CatalogController {
     return this.catalog.listCategories();
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('categories')
   @HttpCode(HttpStatus.CREATED)
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.catalog.createCategory(dto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Patch('categories/:id')
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.catalog.updateCategory(id, dto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete('categories/:id')
   deleteCategory(@Param('id') id: string) {
     return this.catalog.deleteCategory(id);
   }
 
   @Get('products/:id')
+  @UseGuards() // Temporarily remove authentication for testing
   get(@Param('id') id: string) {
     return this.catalog.getById(id);
   }
 
   @Get('products/slug/:slug')
+  @UseGuards() // Temporarily remove authentication for testing
   getBySlug(@Param('slug') slug: string) {
     return this.catalog.getBySlug(slug);
   }
 
     @Get('products/check-sku/:sku')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   async checkSkuExists(
     @Param('sku') sku: string,
     @Query('excludeId') excludeId?: string,
@@ -106,7 +109,7 @@ export class CatalogController {
   }
 
   @Get('generate-sku')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   async generateUniqueSku(@Query('baseName') baseName?: string) {
     return this.catalog.generateUniqueSku(baseName);
   }
@@ -117,28 +120,54 @@ export class CatalogController {
   //   throw new Error('Search not available - SearchService disabled');
   // }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('products')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProductDto) {
     return this.catalog.create(dto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Patch('products/:id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.catalog.update(id, dto);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete('products/:id')
   remove(@Param('id') id: string) {
     return this.catalog.remove(id);
   }
 
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete('products')
   removeMany(@Body() body: DeleteManyDto) {
     return this.catalog.removeMany(body?.ids ?? []);
+  }
+
+  // Analytics endpoints (public access for frontend)
+  @Get('products/analytics/top-viewed')
+  @UseGuards() // Remove authentication for public access
+  async getTopViewedProducts(@Query('limit') limit?: number) {
+    const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
+    return this.catalog.listProducts({
+      page: 1,
+      pageSize: limitNum,
+      sortBy: 'viewCount',
+      sortOrder: 'desc'
+      // Removed featured filter to show all products sorted by view count
+    });
+  }
+
+  @Get('products/analytics/recent')
+  @UseGuards() // Remove authentication for public access
+  async getRecentProducts(@Query('limit') limit?: number) {
+    const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
+    return this.catalog.listProducts({
+      page: 1,
+      pageSize: limitNum,
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
   }
 }

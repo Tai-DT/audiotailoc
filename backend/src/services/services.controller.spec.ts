@@ -1,13 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServicesController } from './services.controller';
+import { ServicesService } from './services.service';
 
 describe('ServicesController', () => {
   let controller: ServicesController;
 
   beforeEach(async () => {
+    const mockPrismaService = {};
+    const mockServicesService = {
+      findAllServiceTypes: jest.fn(),
+      findAllServices: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ServicesController],
-    }).compile();
+      providers: [
+        ServicesService,
+        {
+          provide: 'PrismaService',
+          useValue: mockPrismaService,
+        },
+      ],
+    })
+      .overrideProvider(ServicesService)
+      .useValue(mockServicesService)
+      .compile();
 
     controller = module.get<ServicesController>(ServicesController);
   });

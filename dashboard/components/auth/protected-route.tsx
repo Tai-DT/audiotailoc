@@ -35,6 +35,10 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
   if (requireAuth && !user) {
     return null // Will redirect in useEffect
   }
+  
+  if (!requireAuth) {
+    return <>{children}</>
+  }
 
   return <>{children}</>
 }

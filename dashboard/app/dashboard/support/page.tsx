@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import {
   MessageSquare,
@@ -77,7 +77,7 @@ export default function SupportPage() {
         }
       ]
       setTickets(mockTickets)
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải danh sách ticket")
     } finally {
       setLoading(false)
@@ -91,12 +91,12 @@ export default function SupportPage() {
 
       setTickets(prev => prev.map(ticket =>
         ticket.id === ticketId
-          ? { ...ticket, status: newStatus as any, updatedAt: new Date().toISOString() }
+          ? { ...ticket, status: newStatus as SupportTicket['status'], updatedAt: new Date().toISOString() }
           : ticket
       ))
 
       toast.success("Đã cập nhật trạng thái ticket")
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật trạng thái")
     }
   }

@@ -173,6 +173,14 @@ export class CreateProductDto {
   images?: string[];
 
   @ApiPropertyOptional({
+    description: 'Product image URL (primary image)',
+    example: 'https://example.com/image1.jpg',
+  })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @ApiPropertyOptional({
     description: 'Is product active/visible?',
     default: true,
   })

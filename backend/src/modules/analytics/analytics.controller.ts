@@ -55,6 +55,113 @@ export class AnalyticsController {
     return this.analyticsService.getDashboardData(filters);
   }
 
+  @Get('overview')
+  async getOverview(@Query('range') range: string = '7days') {
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+      case '7days':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '30days':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case '90days':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      case '1year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+
+    const filters: AnalyticsFilters = {
+      startDate,
+      endDate,
+    };
+
+    const dashboardData = await this.analyticsService.getDashboardData(filters);
+
+    return {
+      totalRevenue: dashboardData.sales?.totalRevenue || 0,
+      totalOrders: dashboardData.sales?.totalOrders || 0,
+      totalCustomers: dashboardData.customers?.totalCustomers || 0,
+      newCustomers: dashboardData.customers?.newCustomers || 0,
+      conversionRate: dashboardData.sales?.conversionRate || 0,
+      revenueGrowth: dashboardData.sales?.revenueGrowth || 0,
+      ordersGrowth: dashboardData.sales?.orderGrowth || 0,
+      customersGrowth: 0, // Will be calculated from customer metrics
+    };
+  }
+
+  @Get('trends')
+  async getTrends(@Query('range') range: string = '7days') {
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+      case '7days':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '30days':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case '90days':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      case '1year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+
+    const filters: AnalyticsFilters = {
+      startDate,
+      endDate,
+    };
+
+    const dashboardData = await this.analyticsService.getDashboardData(filters);
+
+    // Generate trend data (simplified for now)
+    const trends = [];
+    const days = range === '7days' ? 7 : range === '30days' ? 30 : 7;
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+
+      trends.push({
+        date: date.toISOString().split('T')[0],
+        revenue: Math.floor(Math.random() * 10000) + 1000, // Mock data
+        orders: Math.floor(Math.random() * 50) + 5, // Mock data
+        customers: Math.floor(Math.random() * 20) + 2, // Mock data
+      });
+    }
+
+    return trends;
+  }
+
+  @Get('top-services')
+  async getTopServices(@Query('limit') limit: string = '5') {
+    const limitNum = parseInt(limit) || 5;
+
+    // Mock data for top services
+    const topServices = [
+      { id: '1', name: 'Sửa chữa loa', bookings: 45, revenue: 13500000 },
+      { id: '2', name: 'Bảo dưỡng ampli', bookings: 32, revenue: 9600000 },
+      { id: '3', name: 'Thay linh kiện', bookings: 28, revenue: 8400000 },
+      { id: '4', name: 'Tư vấn hệ thống', bookings: 21, revenue: 6300000 },
+      { id: '5', name: 'Cài đặt âm thanh', bookings: 18, revenue: 5400000 },
+    ];
+
+    return topServices.slice(0, limitNum);
+  }
+
   @Get('sales')
   async getSalesMetrics(@Query() query: AnalyticsQueryDto) {
     const filters: AnalyticsFilters = {

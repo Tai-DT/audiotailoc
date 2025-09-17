@@ -18,6 +18,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "ts-node src/seed.ts",
+    "seed:simple": "node scripts/seed-simple.js",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "test": "jest",
@@ -34,6 +35,7 @@
     "test:cleanup": "node scripts/cleanup-test-data.js"
   },
   "prisma": {
+    "schema": "./prisma/schema.prisma",
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {
@@ -48,10 +50,14 @@
     "@nestjs/platform-socket.io": "^11.1.6",
     "@nestjs/swagger": "^7.3.1",
     "@nestjs/throttler": "^6.4.0",
-<<<<<<< HEAD
+
+
     "@nestjs/websockets": "^11.1.6",
-=======
->>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
+
+
+
+    "@nestjs/websockets": "^11.1.6",
+
     "@prisma/client": "^5.17.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@types/archiver": "^6.0.3",
@@ -73,6 +79,7 @@
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "cron": "^4.3.3",
+    "dotenv": "^17.2.2",
     "express": "^4.19.2",
     "express-rate-limit": "^8.0.1",
     "helmet": "^7.1.0",
@@ -123,8 +130,8 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.3.3"
   }
-<<<<<<< HEAD
+
 }
-=======
+
 }
->>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e
+

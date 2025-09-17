@@ -341,7 +341,7 @@ async function migrateRemainingProjectImages() {
       { field: 'ogImage', prefix: 'og' }
     ];
     
-    for (const { field, prefix } of imageFields) {
+    for (const { field } of imageFields) {
       const value = (project as any)[field];
       if (value && !value.includes('cloudinary')) {
         hasExternalImages = true;
