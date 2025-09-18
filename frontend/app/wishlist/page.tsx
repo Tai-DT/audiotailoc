@@ -26,7 +26,7 @@ export default function WishlistPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   // TODO: Replace with actual useWishlist hook when backend supports it
-  const [wishlist, setWishlist] = React.useState<unknown[]>([]);
+  const [wishlist, setWishlist] = React.useState<Array<{ productId: string; [key: string]: any }>>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

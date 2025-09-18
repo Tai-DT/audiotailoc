@@ -1,4 +1,13 @@
 // Script to create admin user for dashboard login
+// Load environment variables from backend/.env so Prisma can connect
+try {
+  const path = require('path');
+  const dotenvPath = path.resolve(__dirname, '..', '.env');
+  require('dotenv').config({ path: dotenvPath });
+} catch (e) {
+  // Continue even if dotenv isn't available; Prisma may still work if env vars are set
+}
+
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
@@ -46,7 +55,10 @@ async function createAdmin() {
     console.log('🆔 ID:', admin.id);
     
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error('❌ Error creating admin user:', error?.message || error);
+    if (error?.stack) {
+      console.error(error.stack);
+    }
   } finally {
     await prisma.$disconnect();
   }
