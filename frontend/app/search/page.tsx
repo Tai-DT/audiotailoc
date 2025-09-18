@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
@@ -21,7 +21,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [query, setQuery] = React.useState(searchParams.get('q') || '');
@@ -334,5 +334,13 @@ export default function SearchPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading search...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

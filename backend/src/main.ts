@@ -1,42 +1,16 @@
-<<<<<<< HEAD
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // Enable CORS
-  app.enableCors();
-
-  // Global validation pipe
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-    whitelist: true,
-  }));
-
-  // API prefix
-  app.setGlobalPrefix('api/v1');
-
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Audio Tài Lộc API')
-    .setDescription('API documentation for Audio Tài Lộc application')
-    .setVersion('1.0')
-    .addTag('Audio Tài Lộc')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/v1/docs', app, document);
-
-  await app.listen(3010);
-  console.log('🚀 Audio Tài Lộc API is running on: http://localhost:3010');
-  console.log('📚 API Documentation: http://localhost:3010/api/v1/docs');
-}
-bootstrap();
-=======
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { AppModule } from './modules/app.module';
+import helmet from 'helmet';
+import compression from 'compression';
+import type { Request } from 'express';
+import { json, urlencoded } from 'express';
+import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -57,17 +31,6 @@ if (process && process.stdout && typeof process.stdout.on === 'function') {
     console.error('Unhandled stderr error:', err);
   });
 }
-import { AppModule } from './modules/app.module';
-import helmet from 'helmet';
-import compression from 'compression';
-import type { Request } from 'express';
-import { json, urlencoded } from 'express';
-import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -83,7 +46,7 @@ async function bootstrap() {
     'JWT_ACCESS_SECRET',
     'JWT_REFRESH_SECRET'
   ];
-  
+
   const missingVars = requiredEnvVars.filter(varName => !config.get(varName));
   if (missingVars.length > 0) {
     logger.error(`Missing required environment variables: ${missingVars.join(', ')}`);
@@ -124,7 +87,15 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      // Only allow specific origins for production security
+      if (!origin) {
+        // In development, allow localhost without origin (like Postman)
+        if (process.env.NODE_ENV === 'development') {
+          return callback(null, true);
+        }
+        // In production, reject requests without origin for security
+        return callback(new Error('Origin header required'), false);
+      }
 
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
@@ -167,7 +138,7 @@ async function bootstrap() {
       },
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       exceptionFactory: (errors) => {
-        const messages = errors.map(error => 
+        const messages = errors.map(error =>
           `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`
         );
         return new HttpException({
@@ -235,7 +206,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, apiConfig);
-    
+
     // Main documentation
     SwaggerModule.setup('docs', app, document, {
       swaggerOptions: {
@@ -298,12 +269,6 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
 
-  // Initialize graceful shutdown after server starts (commented out - service doesn't exist)
-  // const shutdownService = app.get(GracefulShutdownService);
-  // if (shutdownService) {
-  //   logger.log('🛑 Graceful shutdown service initialized');
-  // }
-
   logger.log(`🚀 Audio Tài Lộc API v1 đang chạy tại: http://localhost:${port}`);
   logger.log(`📚 API v1 Documentation: http://localhost:${port}/docs`);
   logger.log(`🔧 API v1 Tooling: http://localhost:${port}/api/v1/docs`);
@@ -316,4 +281,3 @@ bootstrap().catch((error) => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });
->>>>>>> 029e89d4f9ec5a8bef3dc5c156b96b77b181175e

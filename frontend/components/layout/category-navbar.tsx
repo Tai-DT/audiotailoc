@@ -79,8 +79,8 @@ export function CategoryNavbar() {
   ];
 
   // Use API data if available, otherwise use default categories
-  const displayCategories = categories?.length > 0
-    ? categories.map((cat, index) => ({
+  const displayCategories = (categories?.length ?? 0) > 0
+    ? (categories || []).map((cat, index) => ({
         ...cat,
         icon: defaultCategories[index]?.icon || Settings
       }))
@@ -122,9 +122,9 @@ export function CategoryNavbar() {
                   <p className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </p>
-                  {category.description && (
+                  {(category as any).description && (
                     <p className="text-xs text-muted-foreground/70 mt-1 hidden sm:block">
-                      {category.description}
+                      {(category as any).description}
                     </p>
                   )}
                 </div>

@@ -80,7 +80,7 @@ export default function ServicesPage() {
               {/* Services Grid */}
               <div className="lg:col-span-3">
                 <ServiceGrid
-                  services={data?.data || []}
+                  services={data?.items || []}
                   isLoading={isLoading}
                   totalPages={data?.totalPages || 1}
                   currentPage={filters.page || 1}

@@ -19,8 +19,8 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "ts-node src/seed.ts",
     "seed:simple": "node scripts/seed-simple.js",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -122,4 +122,3 @@
     "typescript": "~5.3.3"
   }
 }
-
