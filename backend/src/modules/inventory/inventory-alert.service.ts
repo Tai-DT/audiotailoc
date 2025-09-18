@@ -206,7 +206,7 @@ export class InventoryAlertService {
       this.prisma.inventoryAlert.count(),
       this.prisma.inventoryAlert.count({ where: { isResolved: false } }),
       this.prisma.inventoryAlert.count({ where: { isResolved: true } }),
-      this.prisma.inventoryAlert.groupBy({
+      (this.prisma.inventoryAlert.groupBy as any)({
         by: ['type'],
         _count: {
           id: true
