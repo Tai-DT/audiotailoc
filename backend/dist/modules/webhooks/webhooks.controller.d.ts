@@ -38,11 +38,14 @@ declare class InventoryWebhookDto {
 export declare class WebhooksController {
     private readonly webhooksService;
     constructor(webhooksService: WebhooksService);
-    handleVNPAYWebhook(data: VNPAYWebhookDto): unknown;
-    handleMOMOWebhook(data: MOMOWebhookDto): unknown;
-    handlePAYOSWebhook(data: PAYOSWebhookDto): unknown;
-    handleOrderStatusWebhook(data: OrderStatusWebhookDto): unknown;
-    handleInventoryWebhook(data: InventoryWebhookDto): unknown;
-    handleZaloWebhook(_data: any, _signature?: string): unknown;
+    handleVNPAYWebhook(data: VNPAYWebhookDto): Promise<import("./webhooks.service").WebhookResult>;
+    handleMOMOWebhook(data: MOMOWebhookDto): Promise<import("./webhooks.service").WebhookResult>;
+    handlePAYOSWebhook(data: PAYOSWebhookDto): Promise<import("./webhooks.service").WebhookResult>;
+    handleOrderStatusWebhook(data: OrderStatusWebhookDto): Promise<import("./webhooks.service").WebhookResult>;
+    handleInventoryWebhook(data: InventoryWebhookDto): Promise<import("./webhooks.service").WebhookResult>;
+    handleZaloWebhook(_data: any, _signature?: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
 }
 export {};

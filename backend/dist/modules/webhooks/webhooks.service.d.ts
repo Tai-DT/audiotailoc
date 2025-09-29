@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
 import { OrdersService } from '../orders/orders.service';
+import { NotificationService } from '../notifications/notification.service';
 export interface WebhookData {
     [key: string]: any;
 }
@@ -16,8 +17,9 @@ export declare class WebhooksService {
     private readonly prisma;
     private readonly paymentsService;
     private readonly ordersService;
+    private readonly notificationService;
     private readonly logger;
-    constructor(config: ConfigService, prisma: PrismaService, paymentsService: PaymentsService, ordersService: OrdersService);
+    constructor(config: ConfigService, prisma: PrismaService, paymentsService: PaymentsService, ordersService: OrdersService, notificationService: NotificationService);
     handleVNPAYWebhook(data: WebhookData): Promise<WebhookResult>;
     handleMOMOWebhook(data: WebhookData): Promise<WebhookResult>;
     handlePAYOSWebhook(data: WebhookData): Promise<WebhookResult>;

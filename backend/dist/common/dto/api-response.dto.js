@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthCheckDto = exports.ErrorResponseDto = exports.PaginatedResponseDto = exports.PaginationDto = exports.ApiResponseDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
@@ -197,6 +196,6 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Additional info',
     }),
-    __metadata("design:type", typeof (_a = typeof Record !== "undefined" && Record) === "function" ? _a : Object)
+    __metadata("design:type", Object)
 ], HealthCheckDto.prototype, "info", void 0);
 //# sourceMappingURL=api-response.dto.js.map

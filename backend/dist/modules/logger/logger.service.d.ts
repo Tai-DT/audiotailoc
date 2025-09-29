@@ -1,4 +1,11 @@
 export declare class LoggerService {
-    findAll(): unknown;
-    getStatus(): unknown;
+    findAll(): Promise<{
+        message: string;
+        status: string;
+    }>;
+    getStatus(): Promise<{
+        module: string;
+        status: string;
+        uptime: number;
+    }>;
 }

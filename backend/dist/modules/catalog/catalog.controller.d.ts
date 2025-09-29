@@ -39,8 +39,8 @@ export declare class CatalogController {
     }>;
     get(id: string): Promise<import("./catalog.service").ProductDto>;
     getBySlug(slug: string): Promise<import("./catalog.service").ProductDto>;
-    checkSkuExists(sku: string, excludeId?: string): unknown;
-    generateUniqueSku(baseName?: string): unknown;
+    checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;
+    generateUniqueSku(baseName?: string): Promise<string>;
     create(dto: CreateProductDto): Promise<import("./catalog.service").ProductDto>;
     update(id: string, dto: UpdateProductDto): Promise<import("./catalog.service").ProductDto>;
     remove(id: string): Promise<{
@@ -50,7 +50,17 @@ export declare class CatalogController {
     removeMany(body: DeleteManyDto): Promise<{
         deleted: number;
     }>;
-    getTopViewedProducts(limit?: number): unknown;
-    getRecentProducts(limit?: number): unknown;
+    getTopViewedProducts(limit?: number): Promise<{
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
+    }>;
+    getRecentProducts(limit?: number): Promise<{
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
+    }>;
 }
 export {};
