@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/main.ts",
+    "src/modules/app.module.ts",
+    "src/modules/health/**/*",
+    "src/modules/logger/**/*",
+    "src/prisma/**/*",
+    "src/common/**/*",
+    // Core modules used by tests and runtime
+    "src/modules/orders/**/*",
+    "src/modules/booking/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*spec.ts"
+  ]
+}
