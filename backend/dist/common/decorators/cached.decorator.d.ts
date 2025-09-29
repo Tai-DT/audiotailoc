@@ -6,5 +6,5 @@ export interface CacheOptions {
     condition?: (args: any[]) => boolean;
 }
 export declare function Cached(options?: CacheOptions): (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void;
-export declare function CacheKey(key: string): any;
-export declare function CacheTTL(ttl: number): any;
+export declare function CacheKey(key: string): import("@nestjs/common").CustomDecorator<string>;
+export declare function CacheTTL(ttl: number): import("@nestjs/common").CustomDecorator<string>;

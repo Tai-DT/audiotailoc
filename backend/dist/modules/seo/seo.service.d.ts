@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 export interface SeoData {
     title: string;
@@ -22,11 +21,10 @@ export interface PageSeoData extends SeoData {
 }
 export declare class SeoService {
     private readonly prisma;
-    private readonly configService;
     private readonly logger;
     private readonly defaultSiteName;
-    private readonly siteUrl;
-    constructor(prisma: PrismaService, configService: ConfigService);
+    private readonly defaultSiteUrl;
+    constructor(prisma: PrismaService);
     getProductSeo(productId: string, lang?: 'vi' | 'en'): Promise<PageSeoData>;
     getCategorySeo(categoryId: string, lang?: 'vi' | 'en'): Promise<PageSeoData>;
     getPageSeo(slug: string, lang?: 'vi' | 'en'): Promise<PageSeoData>;

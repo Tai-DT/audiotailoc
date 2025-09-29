@@ -25,6 +25,5 @@ export declare class CreateProductDto {
     metaDescription?: string;
     model?: string;
     metaKeywords?: string;
-    maxStock?: number;
     canonicalUrl?: string;
 }

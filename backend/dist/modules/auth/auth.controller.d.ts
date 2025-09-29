@@ -28,13 +28,51 @@ export declare class AuthController {
     private readonly auth;
     private readonly users;
     constructor(auth: AuthService, users: UsersService);
-    status(): unknown;
-    register(dto: RegisterDto): unknown;
-    login(dto: LoginDto): unknown;
-    refresh(dto: RefreshTokenDto): unknown;
-    forgotPassword(dto: ForgotPasswordDto): unknown;
-    resetPassword(dto: ResetPasswordDto): unknown;
-    changePassword(req: any, dto: ChangePasswordDto): unknown;
-    me(req: any): unknown;
+    status(): Promise<{
+        authenticated: boolean;
+        message: string;
+        timestamp: string;
+    }>;
+    register(dto: RegisterDto): Promise<{
+        token: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            email: string;
+            name: string;
+        };
+    }>;
+    login(dto: LoginDto): Promise<{
+        token: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            role: any;
+        };
+    }>;
+    refresh(dto: RefreshTokenDto): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
+    changePassword(req: any, dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
+    me(req: any): Promise<{
+        userId: any;
+        email?: undefined;
+        role?: undefined;
+    } | {
+        userId: string;
+        email: string;
+        role: any;
+    }>;
 }
 export {};

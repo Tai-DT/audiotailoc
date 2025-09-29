@@ -17,19 +17,19 @@ export declare class MonitoringService {
     getMetrics(): Promise<string>;
     getHealthCheck(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
         uptime: number;
         memory: NodeJS.MemoryUsage;
         version: string;
     };
     getDetailedHealth(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
         uptime: number;
         memory: {
-            used: any;
-            total: any;
-            percentage: any;
+            used: number;
+            total: number;
+            percentage: number;
         };
         system: {
             platform: NodeJS.Platform;
@@ -38,7 +38,7 @@ export declare class MonitoringService {
         };
         database: {
             status: string;
-            lastCheck: any;
+            lastCheck: string;
         };
     };
 }

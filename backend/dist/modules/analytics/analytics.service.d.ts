@@ -154,9 +154,7 @@ export declare class AnalyticsService {
             value?: number;
         }>;
     }>;
-    private serializeFilters;
-    private buildDownloadUrl;
-    private describePeriod;
+    exportAnalytics(type: 'sales' | 'customers' | 'inventory' | 'all', format: 'csv' | 'excel' | 'pdf', filters?: AnalyticsFilters): Promise<string>;
     private getDateRange;
     private getPreviousPeriod;
     private calculateGrowthRate;

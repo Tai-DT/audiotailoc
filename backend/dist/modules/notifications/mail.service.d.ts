@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 interface OrderEmailData {
@@ -20,17 +19,17 @@ export declare class MailService {
     private transporter;
     private from;
     constructor(config: ConfigService, prisma: PrismaService);
-    send(to: string, subject: string, text: string, html?: string): unknown;
+    send(to: string, subject: string, text: string, html?: string): Promise<any>;
     private generateOrderConfirmationTemplate;
     private generateOrderStatusTemplate;
-    sendOrderConfirmation(to: string, orderData: OrderEmailData): unknown;
+    sendOrderConfirmation(to: string, orderData: OrderEmailData): Promise<any>;
     sendEmail(params: {
         to: string;
         subject: string;
         html: string;
         text?: string;
-    }): unknown;
-    sendOrderStatusUpdate(to: string, orderData: OrderEmailData): unknown;
-    sendWelcomeEmail(to: string, customerName: string): unknown;
+    }): Promise<any>;
+    sendOrderStatusUpdate(to: string, orderData: OrderEmailData): Promise<any>;
+    sendWelcomeEmail(to: string, customerName: string): Promise<any>;
 }
 export {};

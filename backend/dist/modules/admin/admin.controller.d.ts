@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { LoggingService } from '../monitoring/logging.service';
@@ -17,13 +18,169 @@ export declare class AdminController {
     private readonly loggingService;
     private readonly activityLogService;
     constructor(prisma: PrismaService, configService: ConfigService, loggingService: LoggingService, activityLogService: ActivityLogService);
-    getDashboard(query: AdminDashboardDto): unknown;
-    getUserStats(days?: string): unknown;
-    getOrderStats(days?: string): unknown;
-    getProductStats(): unknown;
-    performBulkAction(dto: BulkActionDto): unknown;
-    getSystemStatus(): unknown;
-    getActivityLogs(type?: string, limit?: string, offset?: string, userId?: string, action?: string, startDate?: string, endDate?: string): unknown;
-    cleanupActivityLogs(days?: string): unknown;
+    getDashboard(query: AdminDashboardDto): Promise<{
+        success: boolean;
+        data: {
+            overview: {
+                totalUsers: number;
+                totalProducts: number;
+                totalOrders: number;
+                totalRevenue: number;
+                newUsers: number;
+                newOrders: number;
+                pendingOrders: number;
+                lowStockProducts: number;
+            };
+            recentActivities: {
+                orders: ({
+                    user: {
+                        email: string;
+                        name: string;
+                    };
+                } & {
+                    status: string;
+                    id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    orderNo: string;
+                    userId: string;
+                    subtotalCents: number;
+                    discountCents: number;
+                    shippingCents: number;
+                    totalCents: number;
+                    shippingAddress: string;
+                    shippingCoordinates: string;
+                    promotionCode: string;
+                })[];
+                users: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    createdAt: Date;
+                }[];
+            };
+            period: {
+                startDate: Date;
+                endDate: Date;
+            };
+        };
+    }>;
+    getUserStats(days?: string): Promise<{
+        success: boolean;
+        data: {
+            totalUsers: number;
+            activeUsers: number;
+            newUsers: number;
+            usersByRole: Record<string, number>;
+        };
+    }>;
+    getOrderStats(days?: string): Promise<{
+        success: boolean;
+        data: {
+            totalOrders: number;
+            completedOrders: number;
+            pendingOrders: number;
+            cancelledOrders: number;
+            totalRevenue: number;
+            ordersByStatus: Record<string, number>;
+        };
+    }>;
+    getProductStats(): Promise<{
+        success: boolean;
+        data: {
+            totalProducts: number;
+            activeProducts: number;
+            lowStockProducts: number;
+            productsByCategory: Record<string, number>;
+        };
+    }>;
+    performBulkAction(dto: BulkActionDto): Promise<{
+        success: boolean;
+        data: {
+            action: "delete" | "activate" | "deactivate" | "export";
+            type: "orders" | "users" | "products";
+            affectedCount: any;
+            message: string;
+        };
+    }>;
+    getSystemStatus(): Promise<{
+        success: boolean;
+        data: {
+            database: string;
+            redis: string;
+            maintenanceMode: boolean;
+            uptime: number;
+            memoryUsage: NodeJS.MemoryUsage;
+            environment: any;
+        };
+    }>;
+    getActivityLogs(type?: string, limit?: string, offset?: string, userId?: string, action?: string, startDate?: string, endDate?: string): Promise<{
+        success: boolean;
+        data: {
+            logs: {
+                details: any;
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                };
+                category: string;
+                id: string;
+                createdAt: Date;
+                userId: string;
+                action: string;
+                resource: string;
+                resourceId: string;
+                ipAddress: string;
+                userAgent: string;
+                method: string;
+                url: string;
+                statusCode: number;
+                duration: number;
+                severity: string;
+            }[];
+            total: number;
+            limit: number;
+            offset: number;
+            type: string;
+        };
+        error?: undefined;
+    } | {
+        success: boolean;
+        error: {
+            code: string;
+            message: string;
+            details: string;
+        };
+        data?: undefined;
+    }>;
+    cleanupActivityLogs(days?: string): Promise<{
+        success: boolean;
+        error: {
+            code: string;
+            message: string;
+            details?: undefined;
+        };
+        data?: undefined;
+        message?: undefined;
+    } | {
+        success: boolean;
+        data: {
+            deletedCount: number;
+            cutoffDate: string;
+            days: number;
+        };
+        message: string;
+        error?: undefined;
+    } | {
+        success: boolean;
+        error: {
+            code: string;
+            message: string;
+            details: string;
+        };
+        data?: undefined;
+        message?: undefined;
+    }>;
 }
 export {};

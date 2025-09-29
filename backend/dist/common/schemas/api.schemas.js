@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CartSchema = exports.OrderSchema = exports.UserSchema = exports.CategorySchema = exports.ProductSchema = void 0;
 const swagger_1 = require("@nestjs/swagger");
@@ -91,7 +90,7 @@ __decorate([
             batteryLife: '30 hours',
         },
     }),
-    __metadata("design:type", typeof (_a = typeof Record !== "undefined" && Record) === "function" ? _a : Object)
+    __metadata("design:type", Object)
 ], ProductSchema.prototype, "specifications", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
@@ -285,7 +284,7 @@ __decorate([
             postalCode: '70000',
         },
     }),
-    __metadata("design:type", typeof (_b = typeof Record !== "undefined" && Record) === "function" ? _b : Object)
+    __metadata("design:type", Object)
 ], OrderSchema.prototype, "shippingAddress", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({

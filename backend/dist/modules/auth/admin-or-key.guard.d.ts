@@ -1,10 +1,10 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
+import { AdminGuard } from './admin.guard';
 export declare class AdminOrKeyGuard implements CanActivate {
     private readonly config;
-    private readonly prisma;
+    private readonly adminGuard;
     private readonly logger;
-    constructor(config: ConfigService, prisma: PrismaService);
+    constructor(config: ConfigService, adminGuard: AdminGuard);
     canActivate(context: ExecutionContext): Promise<boolean>;
 }

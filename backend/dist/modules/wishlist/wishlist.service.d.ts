@@ -4,25 +4,24 @@ export declare class WishlistService {
     private prisma;
     constructor(prisma: PrismaService);
     addToWishlist(userId: string, createWishlistDto: CreateWishlistDto): Promise<{
-        products: {
+        product: {
             id: string;
             name: string;
             slug: string;
-            imageUrl: string;
             isActive: boolean;
-            priceCents: bigint;
+            priceCents: number;
+            imageUrl: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         userId: string;
         productId: string;
     }>;
     getWishlist(userId: string): Promise<{
         items: ({
-            products: {
-                categories: {
+            product: {
+                category: {
                     id: string;
                     name: string;
                     slug: string;
@@ -30,17 +29,16 @@ export declare class WishlistService {
                 id: string;
                 name: string;
                 slug: string;
-                imageUrl: string;
                 images: string;
                 isActive: boolean;
-                priceCents: bigint;
-                originalPriceCents: bigint;
+                priceCents: number;
+                originalPriceCents: number;
+                imageUrl: string;
                 stockQuantity: number;
             };
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             userId: string;
             productId: string;
         })[];

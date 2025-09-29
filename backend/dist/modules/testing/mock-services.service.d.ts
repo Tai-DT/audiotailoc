@@ -15,10 +15,8 @@ export declare class MockServicesService {
     private getMockFileStorageResponse;
     mockGeolocationService(operation: string, data?: any): Promise<any>;
     private getMockGeolocationResponse;
-    mockNotificationService(operation: string, data?: any): Promise<{
-        success: boolean;
-        error: string;
-    }>;
+    mockNotificationService(operation: string, data?: any): Promise<any>;
+    private getMockNotificationResponse;
     mockAnalyticsService(operation: string, data?: any): Promise<any>;
     private getMockAnalyticsResponse;
     setMockResponse(service: string, operation: string, response: any): void;
