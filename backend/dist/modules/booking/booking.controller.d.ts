@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { BookingService } from './booking.service';
 import { ServiceBookingStatus } from '../../common/enums';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
@@ -21,7 +20,7 @@ export declare class BookingController {
             itemId: string;
             quantity: number;
         }>;
-    }): unknown;
+    }): Promise<any>;
     getBookings(query: {
         status?: ServiceBookingStatus;
         technicianId?: string;
@@ -31,13 +30,13 @@ export declare class BookingController {
         toDate?: string;
         page?: string;
         pageSize?: string;
-    }): unknown;
+    }): Promise<any>;
     getBookingStats(query: {
         fromDate?: string;
         toDate?: string;
         technicianId?: string;
-    }): unknown;
-    getBooking(id: string): unknown;
+    }): Promise<any>;
+    getBooking(id: string): Promise<any>;
     updateBooking(id: string, updateData: {
         userId?: string;
         serviceId?: string;
@@ -48,20 +47,38 @@ export declare class BookingController {
         notes?: string;
         estimatedCosts?: number;
         actualCosts?: number;
-    }): unknown;
-    updateBookingStatus(id: string, updateStatusDto: UpdateBookingStatusDto): unknown;
+    }): Promise<any>;
+    updateBookingStatus(id: string, updateStatusDto: UpdateBookingStatusDto): Promise<any>;
     assignTechnician(id: string, assignDto: {
         technicianId: string;
         note?: string;
-    }): unknown;
+    }): Promise<any>;
     rescheduleBooking(id: string, rescheduleDto: {
         newDate: string;
         newTime: string;
         note?: string;
-    }): unknown;
+    }): Promise<any>;
     cancelBooking(id: string, cancelDto: {
         reason?: string;
-    }): unknown;
-    createPayment(bookingId: string, createPaymentDto: CreatePaymentDto): unknown;
-    updatePaymentStatus(paymentId: string, updatePaymentDto: UpdatePaymentStatusDto): unknown;
+    }): Promise<any>;
+    createPayment(bookingId: string, createPaymentDto: CreatePaymentDto): Promise<{
+        status: string;
+        id: string;
+        createdAt: Date;
+        provider: string;
+        amountCents: number;
+        transactionId: string;
+        bookingId: string;
+        paidAt: Date;
+    }>;
+    updatePaymentStatus(paymentId: string, updatePaymentDto: UpdatePaymentStatusDto): Promise<{
+        status: string;
+        id: string;
+        createdAt: Date;
+        provider: string;
+        amountCents: number;
+        transactionId: string;
+        bookingId: string;
+        paidAt: Date;
+    }>;
 }

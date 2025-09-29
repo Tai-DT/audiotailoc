@@ -500,7 +500,7 @@ async function main() {
 
       if (existing) {
         console.log(`✓ Updating project: ${projectData.name}`);
-        const { userId, ...updateData } = projectData;
+        const { userId: _userId, ...updateData } = projectData;
         await prisma.project.update({
           where: { slug: projectData.slug },
           data: updateData

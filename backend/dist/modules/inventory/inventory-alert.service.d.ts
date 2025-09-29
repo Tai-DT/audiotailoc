@@ -1,5 +1,5 @@
 import { PrismaService } from '../../prisma/prisma.service';
-export declare class InventoryAlertsService {
+export declare class InventoryAlertService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     create(data: {
@@ -9,8 +9,8 @@ export declare class InventoryAlertsService {
         threshold?: number;
         currentStock?: number;
     }): Promise<{
-        products: {
-            categories: {
+        product: {
+            category: {
                 id: string;
                 name: string;
             };
@@ -20,10 +20,10 @@ export declare class InventoryAlertsService {
         };
     } & {
         message: string;
-        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string;
         productId: string;
         threshold: number;
         currentStock: number;
@@ -43,8 +43,8 @@ export declare class InventoryAlertsService {
         page: number;
         pageSize: number;
         items: ({
-            products: {
-                categories: {
+            product: {
+                category: {
                     id: string;
                     name: string;
                 };
@@ -54,10 +54,10 @@ export declare class InventoryAlertsService {
             };
         } & {
             message: string;
-            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            type: string;
             productId: string;
             threshold: number;
             currentStock: number;
@@ -73,8 +73,8 @@ export declare class InventoryAlertsService {
         page: number;
         pageSize: number;
         items: ({
-            products: {
-                categories: {
+            product: {
+                category: {
                     id: string;
                     name: string;
                 };
@@ -84,10 +84,10 @@ export declare class InventoryAlertsService {
             };
         } & {
             message: string;
-            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            type: string;
             productId: string;
             threshold: number;
             currentStock: number;
@@ -96,17 +96,17 @@ export declare class InventoryAlertsService {
         })[];
     }>;
     resolve(id: string, _userId?: string): Promise<{
-        products: {
+        product: {
             id: string;
             name: string;
             sku: string;
         };
     } & {
         message: string;
-        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string;
         productId: string;
         threshold: number;
         currentStock: number;
@@ -115,8 +115,8 @@ export declare class InventoryAlertsService {
     }>;
     bulkResolve(ids: string[], _userId?: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
     getActiveAlerts(): Promise<({
-        products: {
-            categories: {
+        product: {
+            category: {
                 id: string;
                 name: string;
             };
@@ -126,10 +126,10 @@ export declare class InventoryAlertsService {
         };
     } & {
         message: string;
-        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string;
         productId: string;
         threshold: number;
         currentStock: number;
@@ -142,13 +142,13 @@ export declare class InventoryAlertsService {
         resolved: number;
         byType: any;
     }>;
-    checkAndCreateAlerts(productId?: string): Promise<any[]>;
+    checkAndCreateAlerts(): Promise<any[]>;
     delete(id: string): Promise<{
         message: string;
-        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string;
         productId: string;
         threshold: number;
         currentStock: number;

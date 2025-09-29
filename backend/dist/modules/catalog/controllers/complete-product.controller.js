@@ -12,7 +12,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var CompleteProductController_1;
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompleteProductController = void 0;
 const common_1 = require("@nestjs/common");
@@ -126,7 +125,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [complete_product_dto_1.CreateProductDto]),
-    __metadata("design:returntype", typeof (_a = typeof Promise !== "undefined" && Promise) === "function" ? _a : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
@@ -220,7 +219,7 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [complete_product_dto_1.ProductListQueryDto]),
-    __metadata("design:returntype", typeof (_b = typeof Promise !== "undefined" && Promise) === "function" ? _b : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('search'),
@@ -249,7 +248,7 @@ __decorate([
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", typeof (_c = typeof Promise !== "undefined" && Promise) === "function" ? _c : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "search", null);
 __decorate([
     (0, common_1.Get)('suggestions'),
@@ -278,7 +277,7 @@ __decorate([
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", typeof (_d = typeof Promise !== "undefined" && Promise) === "function" ? _d : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getSuggestions", null);
 __decorate([
     (0, common_1.Get)(':id'),
@@ -303,7 +302,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_e = typeof Promise !== "undefined" && Promise) === "function" ? _e : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)('slug/:slug'),
@@ -328,7 +327,7 @@ __decorate([
     __param(0, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_f = typeof Promise !== "undefined" && Promise) === "function" ? _f : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "findBySlug", null);
 __decorate([
     (0, common_1.Put)(':id'),
@@ -368,7 +367,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, complete_product_dto_1.UpdateProductDto]),
-    __metadata("design:returntype", typeof (_g = typeof Promise !== "undefined" && Promise) === "function" ? _g : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
@@ -399,7 +398,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_h = typeof Promise !== "undefined" && Promise) === "function" ? _h : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "remove", null);
 __decorate([
     (0, common_1.Get)(':id/deletable'),
@@ -429,7 +428,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_j = typeof Promise !== "undefined" && Promise) === "function" ? _j : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "checkDeletable", null);
 __decorate([
     (0, common_1.Delete)(),
@@ -457,7 +456,7 @@ __decorate([
     __param(0, (0, common_1.Query)('ids')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Array]),
-    __metadata("design:returntype", typeof (_k = typeof Promise !== "undefined" && Promise) === "function" ? _k : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "bulkDelete", null);
 __decorate([
     (0, common_1.Patch)('bulk'),
@@ -482,7 +481,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [complete_product_dto_1.BulkUpdateProductsDto]),
-    __metadata("design:returntype", typeof (_l = typeof Promise !== "undefined" && Promise) === "function" ? _l : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "bulkUpdate", null);
 __decorate([
     (0, common_1.Post)(':id/duplicate'),
@@ -513,7 +512,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_m = typeof Promise !== "undefined" && Promise) === "function" ? _m : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "duplicate", null);
 __decorate([
     (0, common_1.Post)(':id/view'),
@@ -538,7 +537,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_o = typeof Promise !== "undefined" && Promise) === "function" ? _o : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "incrementView", null);
 __decorate([
     (0, common_1.Get)('analytics/overview'),
@@ -559,7 +558,7 @@ __decorate([
     }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_p = typeof Promise !== "undefined" && Promise) === "function" ? _p : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getAnalytics", null);
 __decorate([
     (0, common_1.Get)('analytics/top-viewed'),
@@ -587,7 +586,7 @@ __decorate([
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", typeof (_q = typeof Promise !== "undefined" && Promise) === "function" ? _q : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getTopViewed", null);
 __decorate([
     (0, common_1.Get)('analytics/recent'),
@@ -615,7 +614,7 @@ __decorate([
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", typeof (_r = typeof Promise !== "undefined" && Promise) === "function" ? _r : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getRecent", null);
 __decorate([
     (0, common_1.Get)('export/csv'),
@@ -642,7 +641,7 @@ __decorate([
     }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_s = typeof Promise !== "undefined" && Promise) === "function" ? _s : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "exportCsv", null);
 __decorate([
     (0, common_1.Post)('import/csv'),
@@ -679,7 +678,7 @@ __decorate([
     __param(0, (0, common_1.Body)('csvData')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_t = typeof Promise !== "undefined" && Promise) === "function" ? _t : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "importCsv", null);
 __decorate([
     (0, common_1.Get)('recent'),
@@ -701,7 +700,7 @@ __decorate([
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", typeof (_u = typeof Promise !== "undefined" && Promise) === "function" ? _u : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getRecentPublic", null);
 __decorate([
     (0, common_1.Get)('top-viewed'),
@@ -723,7 +722,7 @@ __decorate([
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", typeof (_v = typeof Promise !== "undefined" && Promise) === "function" ? _v : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getTopViewedPublic", null);
 __decorate([
     (0, common_1.Get)('overview'),
@@ -746,7 +745,7 @@ __decorate([
     }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_w = typeof Promise !== "undefined" && Promise) === "function" ? _w : Object)
+    __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getOverviewPublic", null);
 exports.CompleteProductController = CompleteProductController = CompleteProductController_1 = __decorate([
     (0, swagger_1.ApiTags)('Products'),

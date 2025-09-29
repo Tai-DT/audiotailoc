@@ -11,16 +11,49 @@ declare class AnalyticsQueryDto {
 export declare class AnalyticsController {
     private readonly analyticsService;
     constructor(analyticsService: AnalyticsService);
-    getDashboardData(query: AnalyticsQueryDto): unknown;
-    getOverview(range?: string): unknown;
-    getTrends(range?: string): unknown;
-    getTopServices(limit?: string): unknown;
-    getSalesMetrics(query: AnalyticsQueryDto): unknown;
-    getCustomerMetrics(query: AnalyticsQueryDto): unknown;
-    getInventoryMetrics(query: AnalyticsQueryDto): unknown;
-    getBusinessKPIs(query: AnalyticsQueryDto): unknown;
-    exportAnalytics(type: 'sales' | 'customers' | 'inventory' | 'all', format: 'csv' | 'excel' | 'pdf', query: AnalyticsQueryDto): unknown;
-    getRealTimeSales(): unknown;
-    getRealTimeOrders(): unknown;
+    getDashboardData(query: AnalyticsQueryDto): Promise<{
+        sales: import("./analytics.service").SalesMetrics;
+        customers: import("./analytics.service").CustomerMetrics;
+        inventory: import("./analytics.service").InventoryMetrics;
+        kpis: import("./analytics.service").BusinessKPIs;
+        recentActivity: {
+            type: string;
+            description: string;
+            timestamp: Date;
+            value?: number;
+        }[];
+    }>;
+    getOverview(range?: string): Promise<{
+        totalRevenue: number;
+        totalOrders: number;
+        totalCustomers: number;
+        newCustomers: number;
+        conversionRate: number;
+        revenueGrowth: number;
+        ordersGrowth: number;
+        customersGrowth: number;
+    }>;
+    getTrends(range?: string): Promise<any[]>;
+    getTopServices(limit?: string): Promise<{
+        id: string;
+        name: string;
+        bookings: number;
+        revenue: number;
+    }[]>;
+    getSalesMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").SalesMetrics>;
+    getCustomerMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").CustomerMetrics>;
+    getInventoryMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").InventoryMetrics>;
+    getBusinessKPIs(query: AnalyticsQueryDto): Promise<import("./analytics.service").BusinessKPIs>;
+    exportAnalytics(type: 'sales' | 'customers' | 'inventory' | 'all', format: 'csv' | 'excel' | 'pdf', query: AnalyticsQueryDto): Promise<{
+        filename: string;
+        downloadUrl: string;
+    }>;
+    getRealTimeSales(): Promise<import("./analytics.service").SalesMetrics>;
+    getRealTimeOrders(): Promise<{
+        todayOrders: number;
+        todayRevenue: number;
+        averageOrderValue: number;
+        lastUpdated: Date;
+    }>;
 }
 export {};

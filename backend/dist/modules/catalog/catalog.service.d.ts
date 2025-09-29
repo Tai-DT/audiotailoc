@@ -22,7 +22,6 @@ export type ProductDto = {
     weight?: number | null;
     dimensions?: string | null;
     stockQuantity?: number;
-    maxStock?: number;
     minOrderQuantity?: number;
     maxOrderQuantity?: number | null;
     tags?: string | null;
@@ -71,48 +70,28 @@ export declare class CatalogService {
         slug: string;
         name: string;
         parentId: string | null;
-        description: string | null;
-        isActive: boolean;
-        productCount: number;
     }[]>;
-    getCategoryById(id: string): Promise<{
-        id: string;
-        slug: string;
-        name: string;
-        parentId: string | null;
-        description: string | null;
-        isActive: boolean;
-        productCount: number;
-    }>;
     createCategory(data: {
         name: string;
-        slug?: string;
+        slug: string;
         parentId?: string;
         isActive?: boolean;
-        description?: string;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
         parentId: string | null;
-        description: string | null;
-        isActive: boolean;
-        productCount: number;
     }>;
     updateCategory(id: string, data: {
         name?: string;
         slug?: string;
         parentId?: string;
         isActive?: boolean;
-        description?: string;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
         parentId: string | null;
-        description: string | null;
-        isActive: boolean;
-        productCount: number;
     }>;
     deleteCategory(id: string): Promise<{
         deleted: boolean;

@@ -4,22 +4,22 @@ import { MonitoringService } from './monitoring.service';
 export declare class MonitoringController {
     private readonly monitoringService;
     constructor(monitoringService: MonitoringService);
-    getMetrics(response: Response): any;
+    getMetrics(response: Response): Promise<void>;
     getHealth(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
         uptime: number;
         memory: NodeJS.MemoryUsage;
         version: string;
     };
     getDetailedHealth(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
         uptime: number;
         memory: {
-            used: any;
-            total: any;
-            percentage: any;
+            used: number;
+            total: number;
+            percentage: number;
         };
         system: {
             platform: NodeJS.Platform;
@@ -28,12 +28,12 @@ export declare class MonitoringController {
         };
         database: {
             status: string;
-            lastCheck: any;
+            lastCheck: string;
         };
     };
     getReadiness(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
         checks: {
             database: string;
             redis: string;
@@ -42,6 +42,6 @@ export declare class MonitoringController {
     };
     getLiveness(): {
         status: string;
-        timestamp: any;
+        timestamp: string;
     };
 }

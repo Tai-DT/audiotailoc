@@ -130,7 +130,6 @@ let AnalyticsController = class AnalyticsController {
             startDate,
             endDate,
         };
-        const dashboardData = await this.analyticsService.getDashboardData(filters);
         const trends = [];
         const days = range === '7days' ? 7 : range === '30days' ? 30 : 7;
         for (let i = days - 1; i >= 0; i--) {

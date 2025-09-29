@@ -14,21 +14,21 @@ export declare class InventoryMovementService {
         userId?: string;
         notes?: string;
     }): Promise<{
-        products: {
-            id: string;
-            name: string;
-            sku: string;
-        };
-        users: {
+        user: {
             id: string;
             email: string;
             name: string;
         };
+        product: {
+            id: string;
+            name: string;
+            sku: string;
+        };
     } & {
-        type: string;
         id: string;
         createdAt: Date;
         userId: string;
+        type: string;
         productId: string;
         quantity: number;
         previousStock: number;
@@ -46,21 +46,21 @@ export declare class InventoryMovementService {
         page: number;
         pageSize: number;
         items: ({
-            products: {
-                id: string;
-                name: string;
-                sku: string;
-            };
-            users: {
+            user: {
                 id: string;
                 email: string;
                 name: string;
             };
+            product: {
+                id: string;
+                name: string;
+                sku: string;
+            };
         } & {
-            type: string;
             id: string;
             createdAt: Date;
             userId: string;
+            type: string;
             productId: string;
             quantity: number;
             previousStock: number;
@@ -84,8 +84,13 @@ export declare class InventoryMovementService {
         page: number;
         pageSize: number;
         items: ({
-            products: {
-                categories: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            product: {
+                category: {
                     id: string;
                     name: string;
                 };
@@ -93,16 +98,11 @@ export declare class InventoryMovementService {
                 name: string;
                 sku: string;
             };
-            users: {
-                id: string;
-                email: string;
-                name: string;
-            };
         } & {
-            type: string;
             id: string;
             createdAt: Date;
             userId: string;
+            type: string;
             productId: string;
             quantity: number;
             previousStock: number;

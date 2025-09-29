@@ -78,8 +78,16 @@ export declare class TestHelpersService {
         };
     };
     generateTestNotificationData(overrides?: Partial<any>): {
-        disabled: boolean;
+        userId: string;
+        type: string;
+        title: string;
         message: string;
+        data: {
+            orderId: string;
+            status: string;
+        };
+        channels: string[];
+        priority: string;
     };
     generateTestChatMessage(overrides?: Partial<any>): {
         userId: string;

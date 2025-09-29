@@ -51,6 +51,9 @@ export declare class SupportController {
     updateTicketStatus(id: string, dto: UpdateTicketStatusDto): Promise<import("./support.service").SupportTicket>;
     testEmail(body: {
         email: string;
-    }): unknown;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
 }
 export {};

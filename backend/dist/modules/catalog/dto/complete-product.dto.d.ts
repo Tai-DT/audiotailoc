@@ -21,7 +21,6 @@ export declare class CreateProductDto {
     priceCents: number;
     originalPriceCents?: number;
     stockQuantity?: number;
-    maxStock?: number;
     sku?: string;
     warranty?: string;
     features?: string;
@@ -33,7 +32,7 @@ export declare class CreateProductDto {
     model?: string;
     weight?: number;
     dimensions?: string;
-    specifications?: Record<string, any>;
+    specifications?: ProductSpecificationDto[];
     images?: string[];
     isActive?: boolean;
     featured?: boolean;
@@ -50,7 +49,6 @@ export declare class UpdateProductDto {
     priceCents?: number;
     originalPriceCents?: number;
     stockQuantity?: number;
-    maxStock?: number;
     sku?: string;
     warranty?: string;
     features?: string;
@@ -62,7 +60,7 @@ export declare class UpdateProductDto {
     model?: string;
     weight?: number;
     dimensions?: string;
-    specifications?: Record<string, any>;
+    specifications?: ProductSpecificationDto[];
     images?: string[];
     isActive?: boolean;
     featured?: boolean;
@@ -92,19 +90,18 @@ export declare class ProductResponseDto {
     priceCents: number;
     originalPriceCents?: number;
     stockQuantity: number;
-    maxStock?: number;
     sku?: string;
     warranty?: string;
     features?: string;
     minOrderQuantity: number;
     maxOrderQuantity?: number;
     tags?: string;
-    categories?: any;
+    category?: any;
     brand?: string;
     model?: string;
     weight?: number;
     dimensions?: string;
-    specifications?: Record<string, any>;
+    specifications?: ProductSpecificationDto[];
     images?: string[];
     isActive: boolean;
     featured: boolean;

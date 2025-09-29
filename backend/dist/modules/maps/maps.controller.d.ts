@@ -15,9 +15,9 @@ declare class PlaceDetailQueryDto {
 export declare class MapsController {
     private readonly maps;
     constructor(maps: MapsService);
-    geocode(q: GeocodeQueryDto): unknown;
-    directions(q: DirectionsQueryDto): unknown;
-    reverse(q: ReverseQueryDto): unknown;
-    placeDetail(q: PlaceDetailQueryDto): unknown;
+    geocode(q: GeocodeQueryDto): Promise<any>;
+    directions(q: DirectionsQueryDto): Promise<any>;
+    reverse(q: ReverseQueryDto): Promise<any>;
+    placeDetail(q: PlaceDetailQueryDto): Promise<any>;
 }
 export {};

@@ -1,4 +1,4 @@
-import { MarketingService, CampaignsResponse, CampaignsStatsResponse, EmailTemplateResponse } from './marketing.service';
+import { MarketingService } from './marketing.service';
 declare class CreateCampaignDto {
     name: string;
     description: string;
@@ -8,11 +8,6 @@ declare class CreateCampaignDto {
     discountAmount?: number;
     startDate?: string;
     endDate?: string;
-    subject?: string;
-    content?: string;
-    scheduledAt?: string;
-    templateId?: string;
-    createdBy?: string;
 }
 declare class SendEmailDto {
     recipients: string[];
@@ -20,38 +15,101 @@ declare class SendEmailDto {
     content: string;
     templateId?: string;
 }
-declare class ScheduleCampaignDto {
-    scheduledAt: string;
-}
-declare class CreateTemplateDto {
-    name: string;
-    description?: string;
-    category?: string;
-    subject: string;
-    content: string;
-    isActive?: boolean;
-}
-declare class UpdateTemplateDto {
-    name?: string;
-    description?: string;
-    category?: string;
-    subject?: string;
-    content?: string;
-    isActive?: boolean;
-}
 export declare class MarketingController {
     private readonly marketingService;
     constructor(marketingService: MarketingService);
-    getCampaigns(status?: string): Promise<{
-        campaigns: CampaignsResponse[];
-        stats: CampaignsStatsResponse;
-    }>;
+    getCampaigns(status?: string): Promise<({
+        _count: {
+            clicks: number;
+            opens: number;
+            recipients: number;
+        };
+    } & {
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    })[]>;
     getCampaign(id: string): Promise<{
-        campaign: CampaignsResponse;
-        stats: CampaignsStatsResponse;
+        _count: {
+            clicks: number;
+            opens: number;
+            recipients: number;
+        };
+        clicks: {
+            id: string;
+            createdAt: Date;
+            url: string;
+            campaignId: string;
+            recipientEmail: string;
+        }[];
+        opens: {
+            id: string;
+            createdAt: Date;
+            campaignId: string;
+            recipientEmail: string;
+        }[];
+        recipients: {
+            id: string;
+            email: string;
+            name: string;
+            createdAt: Date;
+            campaignId: string;
+        }[];
+    } & {
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
     }>;
-    createCampaign(createCampaignDto: CreateCampaignDto): Promise<CampaignsResponse>;
-    updateCampaign(id: string, updateCampaignDto: Partial<CreateCampaignDto>): Promise<CampaignsResponse>;
+    createCampaign(createCampaignDto: CreateCampaignDto): Promise<{
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    }>;
+    updateCampaign(id: string, updateCampaignDto: Partial<CreateCampaignDto>): Promise<{
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    }>;
     deleteCampaign(id: string): Promise<{
         message: string;
     }>;
@@ -59,39 +117,31 @@ export declare class MarketingController {
         message: string;
         recipientCount: number;
     }>;
-    duplicateCampaign(id: string): Promise<CampaignsResponse>;
-    scheduleCampaign(id: string, dto: ScheduleCampaignDto): Promise<CampaignsResponse>;
     getCampaignStats(id: string): Promise<{
-        totalRecipients: any;
-        totalOpens: any;
-        totalClicks: any;
-        openRate: number;
-        clickRate: number;
+        totalRecipients: number;
+        totalOpens: number;
+        totalClicks: number;
+        openRate: string | number;
+        clickRate: string | number;
         conversionRate: number;
     }>;
     sendEmail(sendEmailDto: SendEmailDto): Promise<{
         total: number;
         sent: number;
         failed: number;
-        results: {
-            email: string;
-            status: "skipped";
-        }[];
+        results: any[];
     }>;
     getEmailTemplates(): Promise<{
-        templates: EmailTemplateResponse[];
-    }>;
-    getEmailTemplate(id: string): Promise<EmailTemplateResponse>;
-    createEmailTemplate(dto: CreateTemplateDto): Promise<EmailTemplateResponse>;
-    updateEmailTemplate(id: string, dto: UpdateTemplateDto): Promise<EmailTemplateResponse>;
-    deleteEmailTemplate(id: string): Promise<{
-        message: string;
-    }>;
+        id: string;
+        name: string;
+        subject: string;
+        content: string;
+    }[]>;
     getEmailStats(startDate?: string, endDate?: string): Promise<{
         totalEmails: number;
         sentEmails: number;
         failedEmails: number;
-        successRate: number;
+        successRate: string | number;
     }>;
     getAudienceSegments(): Promise<{
         id: string;
@@ -119,9 +169,9 @@ export declare class MarketingController {
         totalSpent: number;
         totalRevenue: number;
         roi: number;
-        campaignss: number;
+        campaigns: number;
         averageROI: number;
-        topPerformingCampaigns: string;
+        topPerformingCampaign: string;
         topPerformingChannel: string;
     }>;
     getConversionFunnel(startDate?: string, endDate?: string): Promise<{
