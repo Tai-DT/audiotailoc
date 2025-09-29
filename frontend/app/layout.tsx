@@ -3,8 +3,13 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
+import { ZaloChatWidget } from "@/components/ui/zalo-chat-widget";
+import { CONTACT_CONFIG } from "@/lib/contact-config";
+import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,41 +40,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
-        <QueryProvider>
-          <AuthProvider>
+        <OrganizationStructuredData />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <QueryProvider>
             <CartProvider>
+              <Header />
               {children}
-              <Toaster 
+              <Footer />
+              <Toaster
                 position="top-right"
                 toastOptions={{
                   duration: 4000,
                   style: {
-                    background: '#363636',
-                    color: '#fff',
+                    background: "var(--background)",
+                    color: "var(--foreground)",
                   },
                   success: {
                     duration: 3000,
-                    iconTheme: {
-                      primary: '#4ade80',
-                      secondary: '#fff',
-                    },
                   },
                   error: {
                     duration: 5000,
-                    iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#fff',
-                    },
                   },
                 }}
               />
+              <ZaloChatWidget phoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
             </CartProvider>
-          </AuthProvider>
-        </QueryProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

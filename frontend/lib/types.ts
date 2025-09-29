@@ -29,35 +29,30 @@ export interface Product {
   brand?: string;
   model?: string;
   sku?: string;
-  specifications?: ProductSpecification[];
-  features?: string[];
+  specifications?: ProductSpecification[] | Record<string, string>;
+  features?: string[] | string;
   warranty?: string;
   weight?: number;
   dimensions?: string;
   stockQuantity: number;
-  minOrderQuantity: number;
+  minOrderQuantity?: number;
   maxOrderQuantity?: number;
   tags?: string[];
-  
+
   // SEO Fields
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string[];
-  
-  featured: boolean;
+  canonicalUrl?: string;
+
+  featured?: boolean;
   isActive: boolean;
-  viewCount: number;
+  viewCount?: number;
   createdAt: string;
   updatedAt: string;
-  
   // Relations
   category?: Category;
   reviews?: ProductReview[];
-}
-
-export interface ProductSpecification {
-  key: string;
-  value: string;
 }
 
 export interface Category {
@@ -68,22 +63,15 @@ export interface Category {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  
-  // Relations
+  canonicalUrl?: string;
+  description?: string;
+  imageUrl?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  metaTitle?: string;
   parent?: Category;
   children?: Category[];
   products?: Product[];
-}
-
-export interface CartItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  createdAt: string;
-  updatedAt: string;
-  
-  product: Product;
 }
 
 export interface Cart {
@@ -96,6 +84,17 @@ export interface Cart {
   updatedAt: string;
   
   items: CartItem[];
+}
+
+export interface CartItem {
+  id: string;
+  cartId: string;
+  productId: string;
+  quantity: number;
+  price: number; // This is BigInt in Prisma but we'll use number in TypeScript
+  createdAt: string;
+  updatedAt: string;
+  product?: Product;
 }
 
 export interface Order {
@@ -207,15 +206,43 @@ export interface ProductReview {
   rating: number;
   title?: string;
   comment?: string;
+  images?: string[];
   isVerified: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   upvotes: number;
   downvotes: number;
+  response?: string;
+  helpfulCount?: number;
   createdAt: string;
   updatedAt: string;
-  
-  user: User;
-  product: Product;
+
+  user?: User;
+  product?: Product;
+  userName?: string;
+  productName?: string;
+  reportCount?: number;
+}
+
+export interface Promotion {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  type: 'percentage' | 'fixed' | 'free_shipping';
+  value: number;
+  minOrderAmount?: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  usageCount: number;
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+  categories?: Category[];
+  products?: Product[];
+  customerSegments?: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
 }
 
 export interface Banner {
@@ -227,15 +254,19 @@ export interface Banner {
   mobileImageUrl?: string;
   linkUrl?: string;
   buttonLabel?: string;
+  secondaryButtonLabel?: string;
+  secondaryButtonUrl?: string;
   page: string;
   position: number;
+  locale?: string;
   isActive: boolean;
   startAt?: string;
   endAt?: string;
+  stats?: string;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
-
 export interface Project {
   id: string;
   name: string;
@@ -259,6 +290,7 @@ export interface Project {
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
   isActive: boolean;
   isFeatured: boolean;
+  featured?: boolean;
   viewCount: number;
   createdAt: string;
   updatedAt: string;
@@ -329,19 +361,79 @@ export interface CustomerAnalytics {
   retentionRate: number;
 }
 
-export interface InventoryAnalytics {
-  totalProducts: number;
-  lowStockItems: number;
-  outOfStockItems: number;
-  inventoryTurnover: number;
-  stockValue: number;
-  slowMovingItems: Product[];
-  fastMovingItems: Product[];
-  stockMovement: Array<{
-    date: string;
-    stockIn: number;
-    stockOut: number;
-  }>;
+export interface KnowledgeBaseArticle {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  published: boolean;
+  viewCount: number;
+  helpful: number;
+  notHelpful: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlogAuthor {
+  id: string;
+  name?: string | null;
+  email: string;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  parentId?: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  parent?: BlogCategory | null;
+  children?: BlogCategory[];
+  _count?: {
+    articles: number;
+    children: number;
+  };
+}
+
+export interface BlogArticle {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string | null;
+  imageUrl?: string | null;
+  categoryId: string;
+  authorId: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  publishedAt?: string | null;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  featured?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  category?: BlogCategory;
+  author?: BlogAuthor;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedBlogResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
 }
 
 export interface BusinessKPIs {
@@ -483,5 +575,4 @@ export interface ServiceFilters {
   page?: number;
   pageSize?: number;
 }
-
 

@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
+import { PageBanner } from '@/components/ui/page-banner';
 import { FeaturedServices } from '@/components/home/featured-services';
 import { ServiceGrid } from '@/components/services/service-grid';
 import { ServiceFilters } from '@/components/services/service-filters';
@@ -30,7 +29,6 @@ export default function ServicesPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">
@@ -41,29 +39,21 @@ export default function ServicesPage() {
             </p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main>
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Dịch vụ chuyên nghiệp
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Chúng tôi cung cấp các dịch vụ kỹ thuật âm thanh chuyên nghiệp,
-                từ tư vấn, lắp đặt đến bảo hành và bảo trì hệ thống.
-              </p>
-            </div>
-          </div>
-        </section>
+        {/* Page Banner */}
+        <PageBanner
+          page="services"
+          title="Dịch vụ kỹ thuật chuyên nghiệp"
+          subtitle="Giải pháp toàn diện"
+          description="Audio Tài Lộc cung cấp đầy đủ dịch vụ từ tư vấn, thiết kế, lắp đặt đến bảo trì và bảo hành hệ thống âm thanh chuyên nghiệp cho mọi nhu cầu."
+          showStats={true}
+        />
 
         {/* Services Content */}
         <section className="py-16">
@@ -94,7 +84,6 @@ export default function ServicesPage() {
         {/* Featured Services */}
         <FeaturedServices />
       </main>
-      <Footer />
     </div>
   );
 }

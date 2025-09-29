@@ -113,8 +113,17 @@ export function Footer() {
               <Link href="/terms" className="text-gray-300 hover:text-white text-sm transition-colors">
                 Điều khoản sử dụng
               </Link>
-              <Link href="/shipping" className="text-gray-300 hover:text-white text-sm transition-colors">
+              <Link href="/shipping-policy" className="text-gray-300 hover:text-white text-sm transition-colors">
                 Chính sách giao hàng
+              </Link>
+              <Link href="/warranty" className="text-gray-300 hover:text-white text-sm transition-colors">
+                Chính sách bảo hành
+              </Link>
+              <Link href="/return-policy" className="text-gray-300 hover:text-white text-sm transition-colors">
+                Chính sách đổi trả
+              </Link>
+              <Link href="/technical-support" className="text-gray-300 hover:text-white text-sm transition-colors">
+                Hỗ trợ kỹ thuật
               </Link>
             </div>
           </div>

@@ -7,23 +7,37 @@ import { Button } from '@/components/ui/button';
 import { ProductGrid } from '@/components/products/product-grid';
 import { useTopViewedProducts } from '@/lib/hooks/use-api';
 import { toast } from 'react-hot-toast';
+import { useCart } from '@/components/providers/cart-provider';
 
 export function FeaturedProducts() {
   const { data: products, isLoading } = useTopViewedProducts(8);
+  const { addItem: addCartItem } = useCart();
 
   const handleAddToCart = (productId: string) => {
-    // TODO: Implement add to cart functionality
-    toast.success('Đã thêm vào giỏ hàng');
-  };
+    const product = products?.find((item) => item.id === productId);
 
-  const handleAddToWishlist = (productId: string) => {
-    // TODO: Implement add to wishlist functionality
-    toast.success('Đã thêm vào yêu thích');
+    if (!product) {
+      toast.error('Không tìm thấy sản phẩm để thêm vào giỏ hàng');
+      return;
+    }
+
+    try {
+      addCartItem({
+        id: product.id,
+        name: product.name,
+        price: product.priceCents ?? 0,
+        image: product.images?.[0] ?? product.imageUrl ?? '/placeholder-product.svg',
+        category: product.category?.name ?? 'Sản phẩm',
+        description: product.shortDescription ?? undefined,
+      });
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
+    }
   };
 
   const handleViewProduct = (productId: string) => {
-    // TODO: Implement view product functionality
-    console.log('View product:', productId);
+    window.location.href = `/products/${productId}`;
   };
 
   return (
@@ -43,7 +57,6 @@ export function FeaturedProducts() {
           products={products || []}
           loading={isLoading}
           onAddToCart={handleAddToCart}
-          onAddToWishlist={handleAddToWishlist}
           onViewProduct={handleViewProduct}
         />
 
@@ -59,5 +72,4 @@ export function FeaturedProducts() {
     </section>
   );
 }
-
 

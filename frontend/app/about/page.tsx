@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
+import { PageBanner } from '@/components/ui/page-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,7 +72,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main>
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
@@ -258,7 +256,6 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

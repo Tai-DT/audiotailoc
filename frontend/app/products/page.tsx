@@ -1,16 +1,28 @@
 'use client';
 
 import React from 'react';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
-import { ProductGrid } from '@/components/products/product-grid';
-import { ProductFilters } from '@/components/products/product-filters';
+import { PageBanner } from '@/components/ui/page-banner';
 import { useProducts } from '@/lib/hooks/use-api';
-import { ProductFilters as ProductFiltersType } from '@/lib/types';
+import { ProductFilters } from '@/lib/types';
+import { ProductGrid } from '@/components/products/product-grid';
 import { toast } from 'react-hot-toast';
+import { useCart } from '@/components/providers/cart-provider';
+import { useCategories } from '@/lib/hooks/use-api';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search, Filter, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function ProductsPage() {
-  const [filters, setFilters] = React.useState<ProductFiltersType>({
+  const { addItem: addCartItem } = useCart();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [filters, setFilters] = React.useState<ProductFilters>({
     page: 1,
     pageSize: 20,
     sortBy: 'createdAt',
@@ -18,148 +30,169 @@ export default function ProductsPage() {
   });
 
   const { data, isLoading, error } = useProducts(filters);
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
 
-  const handleFiltersChange = (newFilters: Partial<ProductFiltersType>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+  const handleFiltersChange = (newFilters: Partial<ProductFilters>) => {
+    setFilters((prev: ProductFilters) => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
+    setFilters((prev: ProductFilters) => ({ ...prev, page }));
   };
 
   const handleAddToCart = (productId: string) => {
-    // TODO: Implement add to cart functionality
-    toast.success('Đã thêm vào giỏ hàng');
+    const product = data?.items.find((item) => item.id === productId);
+
+    if (!product) {
+      toast.error('Không tìm thấy sản phẩm để thêm vào giỏ hàng');
+      return;
+    }
+
+    try {
+      addCartItem({
+        productId: product.id,
+        quantity: 1,
+        price: product.priceCents,
+        name: product.name,
+        imageUrl: product.imageUrl,
+      });
+      toast.success('Đã thêm sản phẩm vào giỏ hàng');
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+    }
   };
 
-  const handleAddToWishlist = (productId: string) => {
-    // TODO: Implement add to wishlist functionality
-    toast.success('Đã thêm vào yêu thích');
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleFiltersChange({ q: searchQuery.trim() || undefined });
   };
 
-  const handleViewProduct = (productId: string) => {
-    // TODO: Implement view product functionality
-    console.log('View product:', productId);
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setFilters({
+      page: 1,
+      pageSize: 20,
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
   };
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-500 mb-4">
-              Có lỗi xảy ra khi tải sản phẩm
-            </h1>
-            <p className="text-muted-foreground">
-              Vui lòng thử lại sau hoặc liên hệ hỗ trợ.
-            </p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Sản phẩm</h1>
-          <p className="text-muted-foreground">
-            Khám phá bộ sưu tập thiết bị âm thanh chất lượng cao
-          </p>
-        </div>
+      {/* Page Banner */}
+      <PageBanner
+        page="products"
+        title="Sản phẩm âm thanh chuyên nghiệp"
+        subtitle="Thiết bị chất lượng cao"
+        description="Khám phá bộ sưu tập đầy đủ thiết bị âm thanh chuyên nghiệp từ Audio Tài Lộc. Từ loa, micro, mixer đến hệ thống âm thanh hội trường, chúng tôi có mọi thứ bạn cần."
+        showStats={true}
+      />
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <ProductFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-            />
-          </div>
-
-          {/* Products Grid */}
-          <div className="lg:col-span-3">
-            <div className="mb-6">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-muted-foreground">
-                  {data?.total ? `Hiển thị ${data.items.length} trên ${data.total} sản phẩm` : 'Đang tải...'}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Sắp xếp:</span>
-                  <select
-                    value={`${filters.sortBy}-${filters.sortOrder}`}
-                    onChange={(e) => {
-                      const [sortBy, sortOrder] = e.target.value.split('-');
-                      handleFiltersChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
-                    }}
-                    className="text-sm border rounded px-2 py-1"
-                    title="Chọn cách sắp xếp sản phẩm"
-                  >
-                    <option value="createdAt-desc">Mới nhất</option>
-                    <option value="createdAt-asc">Cũ nhất</option>
-                    <option value="price-asc">Giá thấp đến cao</option>
-                    <option value="price-desc">Giá cao đến thấp</option>
-                    <option value="name-asc">Tên A-Z</option>
-                    <option value="name-desc">Tên Z-A</option>
-                    <option value="viewCount-desc">Xem nhiều nhất</option>
-                  </select>
-                </div>
+      {/* Search and Filters */}
+      <section className="py-8 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="bg-background rounded-lg p-6 shadow-sm">
+            <form onSubmit={handleSearchSubmit} className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+              <Button type="submit" variant="default">
+                <Search className="h-4 w-4 mr-2" />
+                Tìm kiếm
+              </Button>
+            </form>
+
+            <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Lọc theo:</span>
+              </div>
+
+              <Select
+                value={filters.categoryId || ''}
+                onValueChange={(value) => handleFiltersChange({ categoryId: value || undefined })}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Tất cả danh mục" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tất cả danh mục</SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={filters.brand || ''}
+                onValueChange={(value) => handleFiltersChange({ brand: value || undefined })}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Tất cả thương hiệu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tất cả thương hiệu</SelectItem>
+                  {/* Add brand options here */}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={`${filters.sortBy}-${filters.sortOrder}`}
+                onValueChange={(value) => {
+                  const [sortBy, sortOrder] = value.split('-');
+                  handleFiltersChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
+                }}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sắp xếp" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt-desc">Mới nhất</SelectItem>
+                  <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                  <SelectItem value="name-desc">Tên Z-A</SelectItem>
+                  <SelectItem value="priceCents-asc">Giá thấp đến cao</SelectItem>
+                  <SelectItem value="priceCents-desc">Giá cao đến thấp</SelectItem>
+                  <SelectItem value="viewCount-desc">Xem nhiều nhất</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                onClick={handleClearFilters}
+                className="ml-auto"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Xóa bộ lọc
+              </Button>
             </div>
-
-            <ProductGrid
-              products={data?.items || []}
-              loading={isLoading}
-              onAddToCart={handleAddToCart}
-              onAddToWishlist={handleAddToWishlist}
-              onViewProduct={handleViewProduct}
-            />
-
-            {/* Pagination */}
-            {data && data.totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2 mt-8">
-                <button
-                  onClick={() => handlePageChange(filters.page! - 1)}
-                  disabled={!data.hasPrev}
-                  className="px-3 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
-                >
-                  Trước
-                </button>
-                
-                {[...Array(Math.min(5, data.totalPages))].map((_, i) => {
-                  const page = i + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 text-sm border rounded ${
-                        filters.page === page
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-                
-                <button
-                  onClick={() => handlePageChange(filters.page! + 1)}
-                  disabled={!data.hasNext}
-                  className="px-3 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
-                >
-                  Sau
-                </button>
-              </div>
-            )}
           </div>
         </div>
-      </main>
-      <Footer />
+      </section>
+
+      {/* Products Grid */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <ProductGrid
+            products={data?.items || []}
+            loading={isLoading}
+            onAddToCart={handleAddToCart}
+            pagination={{
+              currentPage: filters.page || 1,
+              totalPages: data?.totalPages || 1,
+              onPageChange: handlePageChange,
+            }}
+          />
+        </div>
+      </section>
     </div>
   );
 }

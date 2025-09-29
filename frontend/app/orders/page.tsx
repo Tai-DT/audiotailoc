@@ -3,13 +3,11 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/lib/hooks/use-auth';
 import {
   ShoppingBag,
   Package,
@@ -23,20 +21,22 @@ import {
   MapPin
 } from 'lucide-react';
 import { useOrders } from '@/lib/hooks/use-api';
+import { Order, OrderItem } from '@/lib/types';
 
-type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
-const statusConfig = {
-  pending: { label: 'Chờ xác nhận', color: 'bg-yellow-500', icon: Clock },
-  confirmed: { label: 'Đã xác nhận', color: 'bg-blue-500', icon: Package },
-  processing: { label: 'Đang xử lý', color: 'bg-orange-500', icon: Package },
-  shipped: { label: 'Đang giao', color: 'bg-purple-500', icon: Truck },
-  delivered: { label: 'Đã giao', color: 'bg-green-500', icon: CheckCircle },
-  cancelled: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle }
+const statusConfig: Record<OrderStatus, { label: string; color: string; icon: typeof Clock }> = {
+  PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-500', icon: Clock },
+  CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-500', icon: Package },
+  PROCESSING: { label: 'Đang xử lý', color: 'bg-orange-500', icon: Package },
+  SHIPPED: { label: 'Đang giao', color: 'bg-purple-500', icon: Truck },
+  DELIVERED: { label: 'Đã giao', color: 'bg-green-500', icon: CheckCircle },
+  CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
 };
 
 export default function OrdersPage() {
-  const { isAuthenticated } = useAuth();
+  const { data: user } = useAuth();
+  const isAuthenticated = !!user;
   const router = useRouter();
   const { data: orders, isLoading, error } = useOrders();
 
@@ -67,13 +67,11 @@ export default function OrdersPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -81,13 +79,11 @@ export default function OrdersPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải đơn hàng...</h1>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -95,21 +91,18 @@ export default function OrdersPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4 text-red-600">Có lỗi xảy ra</h1>
             <p className="text-muted-foreground">Không thể tải danh sách đơn hàng</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -146,8 +139,9 @@ export default function OrdersPage() {
             </Card>
           ) : (
             <div className="space-y-6">
-              {orders.items.map((order: any) => {
-                const status = statusConfig[order.status as OrderStatus];
+              {orders.items.map((order: Order) => {
+                const normalizedStatus = (order.status?.toUpperCase?.() || 'PENDING') as OrderStatus;
+                const status = statusConfig[normalizedStatus] ?? statusConfig.PENDING;
                 const StatusIcon = status.icon;
 
                 return (
@@ -168,7 +162,7 @@ export default function OrdersPage() {
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-semibold text-green-600">
-                            {formatPrice(order.totalAmount)}
+                            {formatPrice(order.totalCents / 100)}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Mã đơn: #{order.id.slice(-8)}
@@ -180,7 +174,7 @@ export default function OrdersPage() {
                     <CardContent>
                       {/* Order Items */}
                       <div className="space-y-4 mb-6">
-                        {order.items?.map((item: any) => (
+                        {order.items?.map((item: OrderItem) => (
                           <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
                             <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
                               <Package className="w-8 h-8 text-muted-foreground" />
@@ -211,7 +205,7 @@ export default function OrdersPage() {
                           )}
                           <div className="flex items-center space-x-1">
                             <DollarSign className="w-4 h-4" />
-                            <span>{order.paymentMethod || 'Thanh toán khi nhận hàng'}</span>
+                            <span>Thanh toán khi nhận hàng</span>
                           </div>
                         </div>
 
@@ -222,12 +216,12 @@ export default function OrdersPage() {
                               Chi tiết
                             </Link>
                           </Button>
-                          {order.status === 'delivered' && (
+                          {order.status === 'COMPLETED' && (
                             <Button variant="outline" size="sm">
                               Đánh giá
                             </Button>
                           )}
-                          {['pending', 'confirmed'].includes(order.status) && (
+                          {['PENDING', 'PROCESSING'].includes(order.status) && (
                             <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                               Hủy đơn
                             </Button>
@@ -253,7 +247,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {orders.items.filter((o: any) => o.status === 'delivered').length}
+                    {orders.items.filter((o: Order) => o.status === 'COMPLETED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã giao</div>
                 </CardContent>
@@ -261,7 +255,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {orders.items.filter((o: any) => ['pending', 'confirmed', 'processing'].includes(o.status)).length}
+                    {orders.items.filter((o: Order) => ['PENDING', 'PROCESSING'].includes(o.status)).length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đang xử lý</div>
                 </CardContent>
@@ -269,7 +263,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-red-600">
-                    {orders.items.filter((o: any) => o.status === 'cancelled').length}
+                    {orders.items.filter((o: Order) => o.status === 'CANCELLED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã hủy</div>
                 </CardContent>
@@ -278,7 +272,6 @@ export default function OrdersPage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

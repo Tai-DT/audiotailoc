@@ -1,0 +1,174 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { orderData, paymentMethod } = body;
+
+    // Validate required fields
+    if (!orderData || !paymentMethod) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // For PayOS payment
+    if (paymentMethod === 'payos') {
+      const paymentUrl = await createPayOSPayment(orderData);
+      return NextResponse.json({
+        success: true,
+        paymentMethod: 'payos',
+        paymentUrl,
+        message: 'Redirecting to PayOS payment'
+      });
+    }
+
+    // For COD payment
+    if (paymentMethod === 'cos') {
+      // Process COD order directly
+      const orderResult = await processCODOrder(orderData);
+      return NextResponse.json({
+        success: true,
+        paymentMethod: 'cos',
+        orderId: orderResult.orderId,
+        message: 'COD order created successfully'
+      });
+    }
+
+    return NextResponse.json(
+      { error: 'Invalid payment method' },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    return NextResponse.json(
+      { error: 'Payment processing failed' },
+      { status: 500 }
+    );
+  }
+}
+
+async function createPayOSPayment(orderData: any) {
+  try {
+    // Check if we have real PayOS credentials
+    const hasRealCredentials = process.env.PAYOS_PARTNER_CODE &&
+                              process.env.PAYOS_API_KEY &&
+                              process.env.PAYOS_CHECKSUM_KEY &&
+                              process.env.PAYOS_PARTNER_CODE !== 'demo_partner_code';
+
+    if (hasRealCredentials) {
+      // Use real PayOS API
+      return await createRealPayOSPayment(orderData);
+    } else {
+      // Use demo mode
+      return await createDemoPayOSPayment(orderData);
+    }
+
+  } catch (error) {
+    console.error('PayOS payment creation error:', error);
+    throw new Error('Failed to create PayOS payment');
+  }
+}
+
+async function createRealPayOSPayment(orderData: any) {
+  // Generate unique order code
+  const orderCode = Date.now().toString();
+
+  // Prepare payment data according to PayOS API v2
+  const paymentData = {
+    orderCode: parseInt(orderCode),
+    amount: orderData.finalTotal,
+    description: 'Audio Tai Loc Order',
+    buyerName: orderData.customerName,
+    buyerEmail: orderData.customerEmail,
+    buyerPhone: orderData.customerPhone,
+    buyerAddress: orderData.shippingAddress,
+    items: orderData.items.map((item: any) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.unitPrice
+    })),
+    cancelUrl: `http://localhost:3000/checkout?error=payment_cancelled`,
+    returnUrl: `http://localhost:3000/order-success?method=payosreturnUrl: `${/http://localhost:3000}/order-success?method=payos&orderId=${orderCode}`orderId=${orderCode}`,
+    expiredAt: Math.floor((Date.now() + 15 * 60 * 1000) / 1000), // 15 minutes from now
+    signature: '', // Will be generated below
+  };
+
+  // Generate signature for security
+  const signature = generatePayOSSignature(paymentData, process.env.PAYOS_CHECKSUM_KEY!);
+  paymentData.signature = signature;
+
+  // Call PayOS API to create payment
+  const response = await fetch(process.env.PAYOS_CREATE_PAYMENT_URL!, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.PAYOS_API_KEY!,
+      'x-partner-code': process.env.PAYOS_PARTNER_CODE!,
+    },
+    body: JSON.stringify(paymentData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`PayOS API error: ${response.status} ${response.statusText}`);
+  }
+
+  const result = await response.json();
+
+  if (result.code === '00') {
+    // Payment created successfully
+    return result.data.paymentUrl;
+  } else {
+    throw new Error(`PayOS error: ${result.desc || 'Unknown error'}`);
+  }
+}
+
+async function createDemoPayOSPayment(orderData: any) {
+  // Demo mode - create a working demo URL
+  const orderCode = Date.now().toString();
+
+  const params = new URLSearchParams({
+    orderCode: orderCode,
+    amount: orderData.finalTotal.toString(),
+    description: 'Audio Tai Loc Order',
+    buyerName: orderData.customerName,
+    buyerEmail: orderData.customerEmail,
+    buyerPhone: orderData.customerPhone,
+    returnUrl: `http://localhost:3000/order-success?method=payosreturnUrl: `${/http://localhost:3000}/order-success?method=payos&orderId=${orderCode}`orderId=${orderCode}`,
+    cancelUrl: `${/http://localhost:3000}/checkout`,
+  });
+
+  // Return demo payment URL
+  return `/payment-demo?${params.toString()}`;
+}
+
+function generatePayOSSignature(data: any, checksumKey: string): string {
+  try {
+    // Generate signature according to PayOS documentation
+    // Format: orderCode + amount + description + returnUrl + cancelUrl + | + checksumKey
+    const signatureString = `${data.orderCode}${data.amount}${data.description}${data.returnUrl}${data.cancelUrl}|${checksumKey}`;
+
+    // Use crypto to create HMAC SHA256 hash
+    const crypto = require('crypto');
+    const signature = crypto.createHmac('sha256', checksumKey).update(signatureString).digest('hex');
+
+    return signature;
+  } catch (error) {
+    console.error('Error generating signature:', error);
+    return '';
+  }
+}
+
+async function processCODOrder(orderData: any) {
+  // Mock COD order processing - in real implementation, save to database
+  const orderId = `COD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Here you would typically:
+  // 1. Create order in database with PENDING status
+  // 2. Send confirmation email
+  // 3. Return order details
+
+  return { orderId, status: 'PENDING' };
+}
