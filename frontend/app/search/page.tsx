@@ -3,8 +3,6 @@
 import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductFilters } from '@/components/products/product-filters';
 import { Button } from '@/components/ui/button';
@@ -129,7 +127,6 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         {/* Search Header */}
         <div className="mb-8">
@@ -288,7 +285,6 @@ function SearchContent() {
                     key={product.id}
                     product={product}
                     onAddToCart={(id) => console.log('Add to cart:', id)}
-                    onAddToWishlist={(id) => console.log('Add to wishlist:', id)}
                     onViewProduct={(id) => console.log('View product:', id)}
                   />
                 ))}
@@ -332,7 +328,6 @@ function SearchContent() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 }

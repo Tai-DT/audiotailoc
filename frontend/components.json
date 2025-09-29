@@ -18,5 +18,7 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "registries": {}
+  "registries": {
+    "@shadcn/ui": "https://ui.shadcn.com/r/{name}.json"
+  }
 }

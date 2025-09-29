@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/components/providers/cart-provider';
+import { useCart as useCartContext } from '@/components/providers/cart-provider';
 import {
   ArrowLeft,
   CreditCard,
@@ -24,9 +22,11 @@ import {
   Mail,
   User,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useCreateOrder } from '@/lib/hooks/use-api';
+import { apiClient } from '@/lib/api';
 
 interface ShippingInfo {
   fullName: string;
@@ -45,36 +45,40 @@ interface PaymentMethod {
   icon: string;
 }
 
+type AddressSuggestion = {
+  description?: string;
+  place_id?: string;
+  placeId?: string;
+  name?: string;
+  structured_formatting?: {
+    main_text?: string;
+    secondary_text?: string;
+  };
+};
+
 const paymentMethods: PaymentMethod[] = [
   {
-    id: 'cod',
-    name: 'Thanh toán khi nhận hàng',
+    id: 'payos',
+    name: 'PayOS (VNPay)',
+    description: 'Thanh toán nhanh chóng qua PayOS với VNPay',
+    icon: '💳'
+  },
+  {
+    id: 'cos',
+    name: 'Thanh toán COD',
     description: 'Thanh toán bằng tiền mặt khi nhận hàng',
     icon: '💰'
   },
-  {
-    id: 'bank',
-    name: 'Chuyển khoản ngân hàng',
-    description: 'Thanh toán qua chuyển khoản ngân hàng',
-    icon: '🏦'
-  },
-  {
-    id: 'momo',
-    name: 'Ví MoMo',
-    description: 'Thanh toán nhanh qua ví điện tử MoMo',
-    icon: '📱'
-  },
-  {
-    id: 'zalopay',
-    name: 'ZaloPay',
-    description: 'Thanh toán tiện lợi qua ZaloPay',
-    icon: '💳'
-  }
 ];
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, total, itemCount, clearCart } = useCart();
+  const { items: cartItems, totalPrice, totalItems, clearCart } = useCartContext();
+  const createOrderMutation = useCreateOrder();
+
+  const items = cartItems;
+  const total = totalPrice;
+  const itemCount = totalItems;
   const [currentStep, setCurrentStep] = useState(1);
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     fullName: '',
@@ -83,17 +87,20 @@ export default function CheckoutPage() {
     address: '',
     city: '',
     district: '',
-    notes: ''
+    notes: '',
   });
   const [paymentMethod, setPaymentMethod] = useState<string>('cod');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<AddressSuggestion | null>(null);
+  const [shippingCoordinates, setShippingCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   const shippingFee = total > 500000 ? 0 : 30000;
   const finalTotal = total + shippingFee;
 
-  // Redirect if cart is empty
-  React.useEffect(() => {
+  useEffect(() => {
     if (items.length === 0) {
       router.push('/cart');
     }
@@ -101,39 +108,113 @@ export default function CheckoutPage() {
 
   const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setShippingInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setShippingInfo((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'address') {
+      setSelectedPlace(null);
+      setShippingCoordinates(null);
+    }
+  };
+
+  useEffect(() => {
+    const query = shippingInfo.address.trim();
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        setIsSearchingAddress(true);
+        const response = await apiClient.get('/maps/geocode', { params: { query } });
+
+        // Handle backend response structure: { success: true, data: { predictions: [...] } }
+        const responseData = response.data;
+        let suggestions: AddressSuggestion[] = [];
+
+        if (responseData?.success && responseData?.data) {
+          // Backend returns { success: true, data: { predictions: [...] } }
+          suggestions = responseData.data.predictions || [];
+        } else if (responseData?.predictions) {
+          // Direct API response: { predictions: [...] }
+          suggestions = responseData.predictions || [];
+        } else if (Array.isArray(responseData)) {
+          // Fallback for array response
+          suggestions = responseData;
+        }
+
+        setAddressSuggestions(suggestions);
+      } catch (error) {
+        console.error('Failed to fetch address suggestions', error);
+        setAddressSuggestions([]);
+      } finally {
+        setIsSearchingAddress(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [shippingInfo.address]);
+
+  const handleSelectSuggestion = async (suggestion: AddressSuggestion) => {
+    const description = suggestion.description || suggestion.name || '';
+    const placeId = suggestion.place_id || suggestion.placeId;
+
+    setShippingInfo((prev) => ({ ...prev, address: description }));
+    setSelectedPlace(suggestion);
+    setAddressSuggestions([]);
+
+    if (!placeId) return;
+
+    try {
+      const response = await apiClient.get('/maps/place-detail', { params: { placeId } });
+
+      // Handle backend response structure: { success: true, data: { result: {...} } }
+      const responseData = response.data;
+      let detail = null;
+
+      if (responseData?.success && responseData?.data) {
+        // Backend returns { success: true, data: { result: {...} } }
+        detail = responseData.data.result || responseData.data;
+      } else if (responseData?.result) {
+        // Direct API response: { result: {...} }
+        detail = responseData.result;
+      } else {
+        // Fallback to responseData itself
+        detail = responseData;
+      }
+
+      const location = detail?.geometry?.location;
+      if (location && typeof location.lat === 'number' && typeof location.lng === 'number') {
+        setShippingCoordinates({ lat: location.lat, lng: location.lng });
+      }
+    } catch (error) {
+      console.error('Failed to fetch place detail', error);
+    }
   };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-      // Validate shipping info
-      const required = ['fullName', 'email', 'phone', 'address', 'city', 'district'];
-      const missing = required.filter(field => !shippingInfo[field as keyof ShippingInfo]);
-
+      const required = ['fullName', 'email', 'phone', 'address'];
+      const missing = required.filter((field) => !shippingInfo[field as keyof ShippingInfo]);
       if (missing.length > 0) {
         toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
         return;
       }
-
       if (!shippingInfo.email.includes('@')) {
         toast.error('Email không hợp lệ');
         return;
       }
-
       if (!/^(\+84|84|0)[3|5|7|8|9][0-9]{8}$/.test(shippingInfo.phone)) {
         toast.error('Số điện thoại không hợp lệ');
         return;
       }
     }
 
-    setCurrentStep(prev => Math.min(prev + 1, 3));
+    setCurrentStep((prev) => Math.min(prev + 1, 3));
   };
 
   const handlePrevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handlePlaceOrder = async () => {
@@ -145,31 +226,92 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const orderData = {
+        customerName: shippingInfo.fullName,
+        customerPhone: shippingInfo.phone,
+        customerEmail: shippingInfo.email,
+        shippingAddress: shippingInfo.address,
+        notes: shippingInfo.notes,
+        paymentMethod,
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          name: item.name,
+        })),
+        shippingCoordinates: shippingCoordinates ?? undefined,
+        goongPlaceId: selectedPlace?.place_id || selectedPlace?.placeId,
+        finalTotal,
+      };
 
-      // Clear cart after successful order
-      clearCart();
+      // Process payment based on method
+      if (paymentMethod === 'payos') {
+        const response = await fetch('/api/payment/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderData,
+            paymentMethod: 'payos'
+          }),
+        });
 
-      toast.success('Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
-      router.push('/order-success');
+        const result = await response.json();
+
+        if (result.success && result.paymentUrl) {
+          toast.success('Đang chuyển hướng đến PayOS...');
+          // Redirect to PayOS payment page in the same window
+          window.location.href = result.paymentUrl;
+          return;
+        } else {
+          throw new Error(result.error || 'PayOS payment failed');
+        }
+      }
+
+      if (paymentMethod === 'cod') {
+        const response = await fetch('/api/payment/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderData,
+            paymentMethod: 'cod'
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Đặt hàng COD thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
+          clearCart();
+          router.push(`/order-success?orderId=${result.orderId}&method=cos`);
+          return;
+        } else {
+          throw new Error(result.error || 'COD order failed');
+        }
+      }
+
+      throw new Error('Invalid payment method');
+
     } catch (error) {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
+      console.error('Order creation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra. Vui lòng thử lại.';
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
   };
 
   if (items.length === 0) {
-    return null; // Will redirect
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Link href="/cart">
               <Button variant="outline" size="icon">
@@ -182,37 +324,36 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center space-x-4">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}>
+              <div
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}
+              >
                 <User className="h-5 w-5" />
               </div>
-              <div className={`h-1 w-16 ${
-                currentStep >= 2 ? 'bg-primary' : 'bg-muted'
-              }`} />
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}>
+              <div className={`h-1 w-16 ${currentStep >= 2 ? 'bg-primary' : 'bg-muted'}`} />
+              <div
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}
+              >
                 <CreditCard className="h-5 w-5" />
               </div>
-              <div className={`h-1 w-16 ${
-                currentStep >= 3 ? 'bg-primary' : 'bg-muted'
-              }`} />
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}>
+              <div className={`h-1 w-16 ${currentStep >= 3 ? 'bg-primary' : 'bg-muted'}`}></div>
+              <div
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}
+              >
                 <CheckCircle className="h-5 w-5" />
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2">
-              {/* Step 1: Shipping Information */}
               {currentStep === 1 && (
                 <Card>
                   <CardHeader>
@@ -244,7 +385,7 @@ export default function CheckoutPage() {
                           placeholder="Nhập địa chỉ email"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="phone">Số điện thoại *</Label>
                         <Input
                           id="phone"
@@ -252,16 +393,6 @@ export default function CheckoutPage() {
                           value={shippingInfo.phone}
                           onChange={handleShippingInfoChange}
                           placeholder="Nhập số điện thoại"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="city">Tỉnh/Thành phố *</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={shippingInfo.city}
-                          onChange={handleShippingInfoChange}
-                          placeholder="Nhập tỉnh/thành phố"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -273,16 +404,30 @@ export default function CheckoutPage() {
                           onChange={handleShippingInfoChange}
                           placeholder="Nhập địa chỉ chi tiết"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="district">Quận/Huyện *</Label>
-                        <Input
-                          id="district"
-                          name="district"
-                          value={shippingInfo.district}
-                          onChange={handleShippingInfoChange}
-                          placeholder="Nhập quận/huyện"
-                        />
+                        {isSearchingAddress && (
+                          <p className="text-xs text-muted-foreground">Đang tìm kiếm địa chỉ...</p>
+                        )}
+                        {!isSearchingAddress && addressSuggestions.length > 0 && (
+                          <div className="border rounded-lg mt-2 divide-y bg-background overflow-hidden">
+                            {addressSuggestions.map((suggestion, index) => (
+                              <button
+                                key={`${suggestion.place_id || suggestion.placeId || index}`}
+                                type="button"
+                                className="w-full text-left px-3 py-2 hover:bg-muted"
+                                onClick={() => handleSelectSuggestion(suggestion)}
+                              >
+                                <div className="text-sm font-medium">
+                                  {suggestion.structured_formatting?.main_text || suggestion.description || suggestion.name}
+                                </div>
+                                {suggestion.structured_formatting?.secondary_text && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {suggestion.structured_formatting.secondary_text}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -301,7 +446,6 @@ export default function CheckoutPage() {
                 </Card>
               )}
 
-              {/* Step 2: Payment Method */}
               {currentStep === 2 && (
                 <Card>
                   <CardHeader>
@@ -333,7 +477,6 @@ export default function CheckoutPage() {
                 </Card>
               )}
 
-              {/* Step 3: Order Confirmation */}
               {currentStep === 3 && (
                 <Card>
                   <CardHeader>
@@ -343,7 +486,6 @@ export default function CheckoutPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Shipping Info Summary */}
                     <div className="p-4 bg-muted rounded-lg">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
@@ -351,7 +493,7 @@ export default function CheckoutPage() {
                       </h4>
                       <div className="space-y-1 text-sm">
                         <p><strong>{shippingInfo.fullName}</strong></p>
-                        <p>{shippingInfo.address}, {shippingInfo.district}, {shippingInfo.city}</p>
+                        <p>{shippingInfo.address}</p>
                         <p className="flex items-center gap-2">
                           <Phone className="h-3 w-3" />
                           {shippingInfo.phone}
@@ -360,13 +502,10 @@ export default function CheckoutPage() {
                           <Mail className="h-3 w-3" />
                           {shippingInfo.email}
                         </p>
-                        {shippingInfo.notes && (
-                          <p className="text-muted-foreground">Ghi chú: {shippingInfo.notes}</p>
-                        )}
+                        {shippingInfo.notes && <p className="text-muted-foreground">Ghi chú: {shippingInfo.notes}</p>}
                       </div>
                     </div>
 
-                    {/* Payment Method Summary */}
                     <div className="p-4 bg-muted rounded-lg">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <CreditCard className="h-4 w-4" />
@@ -374,20 +513,19 @@ export default function CheckoutPage() {
                       </h4>
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
-                          {paymentMethods.find(m => m.id === paymentMethod)?.icon}
+                          {paymentMethods.find((m) => m.id === paymentMethod)?.icon}
                         </span>
                         <div>
                           <p className="font-medium">
-                            {paymentMethods.find(m => m.id === paymentMethod)?.name}
+                            {paymentMethods.find((m) => m.id === paymentMethod)?.name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {paymentMethods.find(m => m.id === paymentMethod)?.description}
+                            {paymentMethods.find((m) => m.id === paymentMethod)?.description}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Terms Agreement */}
                     <div className="flex items-start space-x-3 p-4 border rounded-lg">
                       <Checkbox
                         id="terms"
@@ -413,14 +551,12 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            {/* Order Summary Sidebar */}
             <div className="lg:col-span-1">
               <Card className="sticky top-4">
                 <CardHeader>
                   <CardTitle>Tóm tắt đơn hàng</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Order Items */}
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {items.map((item) => (
                       <div key={item.id} className="flex gap-3">
@@ -460,7 +596,6 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="space-y-3 pt-4">
                     {currentStep < 3 ? (
                       <div className="flex gap-3">
@@ -505,7 +640,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

@@ -9,7 +9,6 @@ interface ProductGridProps {
   products: Product[];
   loading?: boolean;
   onAddToCart?: (productId: string) => void;
-  onAddToWishlist?: (productId: string) => void;
   onViewProduct?: (productId: string) => void;
 }
 
@@ -17,12 +16,11 @@ export function ProductGrid({
   products, 
   loading = false, 
   onAddToCart, 
-  onAddToWishlist, 
   onViewProduct 
 }: ProductGridProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {[...Array(8)].map((_, index) => (
           <div key={index} className="space-y-4">
             <Skeleton className="aspect-square w-full" />
@@ -66,18 +64,16 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
         <ProductCard
           key={product.id}
           product={product}
           onAddToCart={onAddToCart}
-          onAddToWishlist={onAddToWishlist}
           onViewProduct={onViewProduct}
         />
       ))}
     </div>
   );
 }
-
 

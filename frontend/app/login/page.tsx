@@ -3,14 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth, useLogin } from '@/lib/hooks/use-auth';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -21,8 +19,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const { login, isAuthenticated } = useAuth();
+  const { data: user } = useAuth();
+  const loginMutation = useLogin();
   const router = useRouter();
+
+  const isAuthenticated = !!user;
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -41,10 +42,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password, rememberMe);
+      await loginMutation.mutateAsync({ email, password, rememberMe });
       router.push('/');
     } catch (error) {
-      // Error is handled by the auth context
+      // Error is handled by the mutation
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -54,10 +55,10 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setIsLoading(true);
     try {
-      await login('demo@audiotailoc.com', 'demo123', rememberMe);
+      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'demo123', rememberMe: true });
       router.push('/');
     } catch (error) {
-      // Error is handled by the auth context
+      // Error is handled by the mutation
       console.error('Demo login error:', error);
     } finally {
       setIsLoading(false);
@@ -66,7 +67,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <Card>
@@ -184,13 +184,11 @@ export default function LoginPage() {
             <ul className="text-sm text-muted-foreground space-y-1">
               <li>• Theo dõi đơn hàng dễ dàng</li>
               <li>• Nhận ưu đãi đặc biệt</li>
-              <li>• Lưu danh sách sản phẩm yêu thích</li>
               <li>• Tư vấn kỹ thuật chuyên nghiệp</li>
             </ul>
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
