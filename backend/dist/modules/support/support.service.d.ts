@@ -1,4 +1,5 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../notifications/mail.service';
 export interface KnowledgeBaseArticle {
     id: string;
     title: string;
@@ -37,7 +38,8 @@ export interface SupportTicket {
 }
 export declare class SupportService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly mailService;
+    constructor(prisma: PrismaService, mailService: MailService);
     createArticle(data: {
         title: string;
         content: string;
@@ -58,14 +60,7 @@ export declare class SupportService {
         pageSize: number;
         totalPages: number;
     }>;
-    updateArticle(id: string, data: {
-        title?: string;
-        content?: string;
-        category?: string;
-        tags?: string[];
-        published?: boolean;
-    }): Promise<KnowledgeBaseArticle>;
-    deleteArticle(_id: string): Promise<void>;
+    getArticle(id: string): Promise<KnowledgeBaseArticle>;
     createFAQ(data: {
         question: string;
         answer: string;

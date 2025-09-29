@@ -1,147 +1,136 @@
-import { CampaignStatus, CampaignType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-export interface CampaignsResponse {
-    id: string;
-    name: string;
-    description: string;
-    type: CampaignType;
-    status: CampaignStatus;
-    targetAudience?: string | null;
-    discountPercent?: number | null;
-    discountAmount?: number | null;
-    subject?: string | null;
-    content?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-    scheduledAt?: string | null;
-    sentAt?: string | null;
-    createdAt: string;
-    updatedAt: string;
-    createdBy?: string | null;
-    templateId?: string | null;
-    template?: {
-        id: string;
-        name: string;
-        description?: string | null;
-        subject: string;
-        content: string;
-    } | null;
-    recipients: number;
-    opens: number;
-    clicks: number;
-    conversions: number;
-    revenue: number;
-}
-export interface CampaignsStatsResponse {
-    totalCampaignss: number;
-    activeCampaignss: number;
-    sentCampaignss: number;
-    totalRecipients: number;
-    averageOpenRate: number;
-    averageClickRate: number;
-    totalRevenue: number;
-    conversionRate: number;
-}
-export interface EmailTemplateResponse {
-    id: string;
-    name: string;
-    description?: string | null;
-    category?: string | null;
-    subject: string;
-    content: string;
-    usageCount: number;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
+import { MailService } from '../notifications/mail.service';
+import { CampaignStatus, CampaignType } from '@prisma/client';
 export declare class MarketingService {
     private readonly prisma;
+    private readonly mailService;
     private readonly logger;
-    constructor(prisma: PrismaService);
-    getCampaignss(status?: CampaignStatus): Promise<{
-        campaignss: CampaignsResponse[];
-        stats: CampaignsStatsResponse;
+    constructor(prisma: PrismaService, mailService: MailService);
+    getCampaigns(status?: CampaignStatus): Promise<({
+        _count: {
+            clicks: number;
+            opens: number;
+            recipients: number;
+        };
+    } & {
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    })[]>;
+    getCampaign(id: string): Promise<{
+        _count: {
+            clicks: number;
+            opens: number;
+            recipients: number;
+        };
+        clicks: {
+            id: string;
+            createdAt: Date;
+            url: string;
+            campaignId: string;
+            recipientEmail: string;
+        }[];
+        opens: {
+            id: string;
+            createdAt: Date;
+            campaignId: string;
+            recipientEmail: string;
+        }[];
+        recipients: {
+            id: string;
+            email: string;
+            name: string;
+            createdAt: Date;
+            campaignId: string;
+        }[];
+    } & {
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
     }>;
-    getCampaigns(id: string): Promise<{
-        campaigns: CampaignsResponse;
-        stats: CampaignsStatsResponse;
-    }>;
-    createCampaigns(data: {
+    createCampaign(data: {
         name: string;
         description: string;
         type: CampaignType;
         targetAudience?: string;
         discountPercent?: number;
         discountAmount?: number;
-        subject?: string;
-        content?: string;
         startDate?: string;
         endDate?: string;
-        scheduledAt?: string;
-        templateId?: string;
-        createdBy?: string;
-    }): Promise<CampaignsResponse>;
-    updateCampaigns(id: string, data: Partial<{
+    }): Promise<{
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    }>;
+    updateCampaign(id: string, data: Partial<{
         name: string;
         description: string;
         type: CampaignType;
         targetAudience: string;
         discountPercent: number;
         discountAmount: number;
-        subject: string;
-        content: string;
-        startDate: string | null;
-        endDate: string | null;
-        scheduledAt: string | null;
-        templateId: string | null;
+        startDate: string;
+        endDate: string;
         status: CampaignStatus;
-        createdBy: string;
-    }>): Promise<CampaignsResponse>;
-    deleteCampaigns(id: string): Promise<{
+    }>): Promise<{
+        status: import(".prisma/client").$Enums.CampaignStatus;
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        type: import(".prisma/client").$Enums.CampaignType;
+        startDate: Date;
+        endDate: Date;
+        targetAudience: string;
+        discountPercent: number;
+        discountAmount: number;
+        sentAt: Date;
+    }>;
+    deleteCampaign(id: string): Promise<{
         message: string;
     }>;
-    duplicateCampaigns(id: string): Promise<CampaignsResponse>;
-    scheduleCampaigns(id: string, scheduledAt: string): Promise<CampaignsResponse>;
-    sendCampaigns(id: string): Promise<{
+    sendCampaign(id: string): Promise<{
         message: string;
         recipientCount: number;
     }>;
-    getCampaignsStats(id: string): Promise<{
-        totalRecipients: any;
-        totalOpens: any;
-        totalClicks: any;
-        openRate: number;
-        clickRate: number;
+    getCampaignStats(id: string): Promise<{
+        totalRecipients: number;
+        totalOpens: number;
+        totalClicks: number;
+        openRate: string | number;
+        clickRate: string | number;
         conversionRate: number;
-    }>;
-    getEmailTemplates(): Promise<{
-        templates: EmailTemplateResponse[];
-    }>;
-    getEmailTemplate(id: string): Promise<EmailTemplateResponse>;
-    createEmailTemplate(data: {
-        name: string;
-        description?: string;
-        category?: string;
-        subject: string;
-        content: string;
-        isActive?: boolean;
-    }): Promise<EmailTemplateResponse>;
-    updateEmailTemplate(id: string, data: Partial<{
-        name: string;
-        description: string;
-        category: string;
-        subject: string;
-        content: string;
-        isActive: boolean;
-    }>): Promise<EmailTemplateResponse>;
-    deleteEmailTemplate(id: string): Promise<{
-        message: string;
-    }>;
-    getEmailStats(startDate?: string, endDate?: string): Promise<{
-        totalEmails: number;
-        sentEmails: number;
-        failedEmails: number;
-        successRate: number;
     }>;
     sendEmail(data: {
         recipients: string[];
@@ -152,10 +141,19 @@ export declare class MarketingService {
         total: number;
         sent: number;
         failed: number;
-        results: {
-            email: string;
-            status: "skipped";
-        }[];
+        results: any[];
+    }>;
+    getEmailTemplates(): Promise<{
+        id: string;
+        name: string;
+        subject: string;
+        content: string;
+    }[]>;
+    getEmailStats(startDate?: string, endDate?: string): Promise<{
+        totalEmails: number;
+        sentEmails: number;
+        failedEmails: number;
+        successRate: string | number;
     }>;
     getAudienceSegments(): Promise<{
         id: string;
@@ -179,13 +177,13 @@ export declare class MarketingService {
         count: number;
         createdAt: Date;
     }>;
-    getROIAnalysis(_startDate?: string, _endDate?: string): Promise<{
+    getROIAnalysis(startDate?: string, endDate?: string): Promise<{
         totalSpent: number;
         totalRevenue: number;
         roi: number;
-        campaignss: number;
+        campaigns: number;
         averageROI: number;
-        topPerformingCampaigns: string;
+        topPerformingCampaign: string;
         topPerformingChannel: string;
     }>;
     getConversionFunnel(_startDate?: string, _endDate?: string): Promise<{
@@ -200,13 +198,9 @@ export declare class MarketingService {
             overall: number;
         };
     }>;
-    private transformCampaigns;
-    private buildCampaignsStats;
-    private transformTemplate;
-    private ensureTemplateExists;
     private getTargetAudience;
-    private sendEmailCampaigns;
-    private sendSMSCampaigns;
-    private sendPushCampaigns;
-    private sendSocialCampaigns;
+    private sendEmailCampaign;
+    private sendSMSCampaign;
+    private sendPushCampaign;
+    private sendSocialCampaign;
 }

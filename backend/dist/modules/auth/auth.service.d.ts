@@ -10,14 +10,34 @@ export declare class AuthService {
         email: string;
         password: string;
         name?: string;
-    }): unknown;
+    }): Promise<{
+        id: string;
+        email: string;
+        name: string;
+        phone: string;
+        role: string;
+        createdAt: Date;
+    }>;
     login(dto: {
         email: string;
         password: string;
         rememberMe?: boolean;
-    }): unknown;
-    refresh(refreshToken: string): unknown;
-    forgotPassword(email: string): unknown;
-    resetPassword(token: string, newPassword: string): unknown;
-    changePassword(userId: string, currentPassword: string, newPassword: string): unknown;
+    }): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        userId: string;
+    }>;
+    refresh(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
+    forgotPassword(email: string): Promise<{
+        success: boolean;
+    }>;
+    resetPassword(token: string, newPassword: string): Promise<{
+        success: boolean;
+    }>;
+    changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{
+        success: boolean;
+    }>;
 }

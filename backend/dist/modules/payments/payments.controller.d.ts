@@ -27,18 +27,90 @@ export declare class PaymentsController {
     getPaymentStatus(): {
         status: string;
         message: string;
-        timestamp: any;
+        timestamp: string;
         supportedProviders: string[];
     };
-    getPayments(query: any): unknown;
-    getPaymentStats(): unknown;
-    createIntent(dto: CreateIntentDto): unknown;
-    createRefund(dto: CreateRefundDto): unknown;
-    vnpayCallback(ref: string): unknown;
-    momoCallback(ref: string): unknown;
-    payosCallback(orderCode?: string, ref?: string): unknown;
-    vnpayWebhook(body: any): unknown;
-    momoWebhook(body: any): unknown;
-    payosWebhook(req: any, body: any, xsig?: string): unknown;
+    getPayments(query: any): Promise<{
+        payments: {
+            id: any;
+            orderId: any;
+            orderNo: any;
+            amountCents: any;
+            provider: any;
+            status: any;
+            createdAt: any;
+            updatedAt: any;
+            paidAt: any;
+            user: any;
+        }[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+        };
+    }>;
+    getPaymentStats(): Promise<{
+        totalPayments: number;
+        totalRevenue: number;
+        pendingPayments: number;
+        failedPayments: number;
+        refundedPayments: number;
+        refundedAmount: number;
+    }>;
+    createIntent(dto: CreateIntentDto): Promise<{
+        intentId: string;
+        redirectUrl: any;
+        paymentMethod: string;
+    } | {
+        intentId: string;
+        redirectUrl: string;
+        paymentMethod?: undefined;
+    }>;
+    createRefund(dto: CreateRefundDto): Promise<{
+        refundId: string;
+        success: any;
+    }>;
+    vnpayCallback(ref: string): Promise<{
+        ok: boolean;
+    }>;
+    momoCallback(ref: string): Promise<{
+        ok: boolean;
+    }>;
+    payosCallback(orderCode?: string, ref?: string): Promise<{
+        ok: boolean;
+    }>;
+    vnpayWebhook(body: any): Promise<{
+        RspCode: string;
+        Message: string;
+    } | {
+        resultCode: number;
+        message: string;
+    } | {
+        error: number;
+        message: string;
+    }>;
+    momoWebhook(body: any): Promise<{
+        RspCode: string;
+        Message: string;
+    } | {
+        resultCode: number;
+        message: string;
+    } | {
+        error: number;
+        message: string;
+    }>;
+    payosWebhook(req: any, body: any, xsig?: string): Promise<{
+        RspCode: string;
+        Message: string;
+    } | {
+        resultCode: number;
+        message: string;
+    } | {
+        error: number;
+        message: string;
+    } | {
+        ok: boolean;
+    }>;
 }
 export {};

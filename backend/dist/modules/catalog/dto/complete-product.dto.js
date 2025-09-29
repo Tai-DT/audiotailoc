@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImportResultDto = exports.ProductSearchSuggestionDto = exports.BulkUpdateProductsDto = exports.ProductAnalyticsDto = exports.ProductListResponseDto = exports.ProductResponseDto = exports.ProductListQueryDto = exports.UpdateProductDto = exports.CreateProductDto = exports.ProductSpecificationDto = exports.SortOrder = exports.ProductSortBy = void 0;
 const class_validator_1 = require("class-validator");
@@ -1004,7 +1003,7 @@ __decorate([
         description: 'Products by category',
         example: { 'audio-cables': 25, 'speakers': 30 },
     }),
-    __metadata("design:type", typeof (_a = typeof Record !== "undefined" && Record) === "function" ? _a : Object)
+    __metadata("design:type", Object)
 ], ProductAnalyticsDto.prototype, "productsByCategory", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({

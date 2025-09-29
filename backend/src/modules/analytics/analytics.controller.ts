@@ -125,8 +125,6 @@ export class AnalyticsController {
       endDate,
     };
 
-    const dashboardData = await this.analyticsService.getDashboardData(filters);
-
     // Generate trend data (simplified for now)
     const trends = [];
     const days = range === '7days' ? 7 : range === '30days' ? 30 : 7;

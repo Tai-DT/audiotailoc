@@ -1,9 +1,11 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
 export declare class OrdersService {
     private readonly prisma;
+    private readonly mail;
     private readonly cache;
-    constructor(prisma: PrismaService, cache: CacheService);
+    constructor(prisma: PrismaService, mail: MailService, cache: CacheService);
     list(params: {
         page?: number;
         pageSize?: number;
@@ -33,34 +35,17 @@ export declare class OrdersService {
         }[];
     }>;
     get(id: string): Promise<{
-        id: string;
-        orderNumber: string;
-        userId: string;
-        status: string;
-        customerName: string;
-        customerEmail: string;
-        customerPhone: string;
-        subtotalCents: number;
-        discountCents: number;
-        shippingCents: number;
-        shippingAddress: string;
-        shippingCoordinates: string;
-        promotionCode: string;
-        createdAt: Date;
-        updatedAt: Date;
         items: {
             id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
             productId: string;
-            productSlug: string;
-            productName: string;
             quantity: number;
+            imageUrl: string;
             price: number;
-            total: number;
-            product: {
-                id: string;
-                name: string;
-                slug: string;
-            };
+            orderId: string;
+            unitPrice: number;
         }[];
         payments: {
             status: string;
@@ -74,6 +59,20 @@ export declare class OrdersService {
             intentId: string;
             transactionId: string;
         }[];
+    } & {
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        orderNo: string;
+        userId: string;
+        subtotalCents: number;
+        discountCents: number;
+        shippingCents: number;
+        totalCents: number;
+        shippingAddress: string;
+        shippingCoordinates: string;
+        promotionCode: string;
     }>;
     updateStatus(id: string, status: string): Promise<{
         status: string;

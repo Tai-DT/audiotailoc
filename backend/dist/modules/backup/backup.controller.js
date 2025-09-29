@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BackupController = void 0;
 const common_1 = require("@nestjs/common");
@@ -487,7 +486,7 @@ __decorate([
     (0, common_1.Get)('status'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_a = typeof Promise !== "undefined" && Promise) === "function" ? _a : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "getStatus", null);
 __decorate([
     (0, common_1.Get)('list'),
@@ -497,41 +496,41 @@ __decorate([
     __param(3, (0, common_1.Query)('offset')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, Number, Number]),
-    __metadata("design:returntype", typeof (_b = typeof Promise !== "undefined" && Promise) === "function" ? _b : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "listBackups", null);
 __decorate([
     (0, common_1.Get)('preflight'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_c = typeof Promise !== "undefined" && Promise) === "function" ? _c : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "getPreflight", null);
 __decorate([
     (0, common_1.Get)(':backupId'),
     __param(0, (0, common_1.Param)('backupId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_d = typeof Promise !== "undefined" && Promise) === "function" ? _d : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "getBackupDetails", null);
 __decorate([
     (0, common_1.Post)('full'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", typeof (_e = typeof Promise !== "undefined" && Promise) === "function" ? _e : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "createFullBackup", null);
 __decorate([
     (0, common_1.Post)('incremental'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", typeof (_f = typeof Promise !== "undefined" && Promise) === "function" ? _f : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "createIncrementalBackup", null);
 __decorate([
     (0, common_1.Post)('files'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", typeof (_g = typeof Promise !== "undefined" && Promise) === "function" ? _g : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "createFileBackup", null);
 __decorate([
     (0, common_1.Post)('restore/:backupId'),
@@ -539,14 +538,14 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", typeof (_h = typeof Promise !== "undefined" && Promise) === "function" ? _h : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "restoreFromBackup", null);
 __decorate([
     (0, common_1.Post)('restore/point-in-time'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", typeof (_j = typeof Promise !== "undefined" && Promise) === "function" ? _j : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "pointInTimeRecovery", null);
 __decorate([
     (0, common_1.Get)(':backupId/download'),
@@ -554,26 +553,26 @@ __decorate([
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", typeof (_k = typeof Promise !== "undefined" && Promise) === "function" ? _k : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "downloadBackup", null);
 __decorate([
     (0, common_1.Delete)(':backupId'),
     __param(0, (0, common_1.Param)('backupId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", typeof (_l = typeof Promise !== "undefined" && Promise) === "function" ? _l : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "deleteBackup", null);
 __decorate([
     (0, common_1.Post)('cleanup'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_m = typeof Promise !== "undefined" && Promise) === "function" ? _m : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "cleanupOldBackups", null);
 __decorate([
     (0, common_1.Get)('analytics/overview'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", typeof (_o = typeof Promise !== "undefined" && Promise) === "function" ? _o : Object)
+    __metadata("design:returntype", Promise)
 ], BackupController.prototype, "getBackupAnalytics", null);
 exports.BackupController = BackupController = __decorate([
     (0, common_1.Controller)('api/v1/backup'),
