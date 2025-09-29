@@ -1,66 +1,30 @@
-# Multi-stage build for production optimization
-FROM node:18-alpine AS base
+# Use Node.js 18 Alpine as base image
+FROM node:18-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Set working directory
 WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm
 
 # Copy package files
-COPY package.json pnpm-lock.yaml* ./
-COPY prisma ./prisma/
+COPY package*.json ./
+COPY yarn.lock ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN yarn install --frozen-lockfile
+
+# Copy Prisma schema
+COPY prisma ./prisma
 
 # Generate Prisma client
-RUN pnpm prisma generate
+RUN npx prisma generate
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm
-
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
 # Build the application
-RUN pnpm build
-
-# Production image, copy all the files and run the app
-FROM base AS runner
-WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm
-
-ENV NODE_ENV production
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nestjs
-
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
-
-# Set correct permissions
-RUN chown -R nestjs:nodejs /app
-USER nestjs
+RUN npm run build
 
 # Expose port
-EXPOSE 4000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:4000/health || exit 1
+EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:prod"]
