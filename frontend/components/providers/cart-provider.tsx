@@ -27,12 +27,14 @@ type CartAction =
   | { type: 'LOAD_CART'; payload: CartItem[] };
 
 interface CartContextType extends CartState {
-  addItem: (item: Omit<CartItem, 'quantity'>) => void;
+  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   isInCart: (id: string) => boolean;
   getItemQuantity: (id: string) => number;
+  totalPrice: number;
+  totalItems: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -40,12 +42,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
+      const quantityToAdd = Math.max(1, action.payload.quantity);
       const existingItem = state.items.find(item => item.id === action.payload.id);
 
       if (existingItem) {
         const updatedItems = state.items.map(item =>
           item.id === action.payload.id
-            ? { ...item, quantity: item.quantity + action.payload.quantity }
+            ? { ...item, quantity: item.quantity + quantityToAdd }
             : item
         );
         return {
@@ -56,7 +59,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         };
       }
 
-      const newItems = [...state.items, action.payload];
+      const newItems = [...state.items, { ...action.payload, quantity: quantityToAdd }];
       return {
         ...state,
         items: newItems,
@@ -145,9 +148,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('audiotailoc-cart', JSON.stringify(state.items));
   }, [state.items]);
 
-  const addItem = (item: Omit<CartItem, 'quantity'>) => {
-    dispatch({ type: 'ADD_ITEM', payload: { ...item, quantity: 1 } });
-    toast.success(`${item.name} đã được thêm vào giỏ hàng!`);
+  const addItem = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    const normalizedQuantity = Math.max(1, quantity);
+    dispatch({ type: 'ADD_ITEM', payload: { ...item, quantity: normalizedQuantity } });
+    toast.success(`${item.name} đã được thêm vào giỏ hàng (${normalizedQuantity})!`);
   };
 
   const removeItem = (id: string) => {
@@ -184,6 +188,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clearCart,
     isInCart,
     getItemQuantity,
+    totalPrice: state.total,
+    totalItems: state.itemCount,
   };
 
   return (

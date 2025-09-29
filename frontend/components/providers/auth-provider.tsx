@@ -1,7 +1,6 @@
-'use client';
-
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { toast } from 'react-hot-toast';
+import { apiClient, API_ENDPOINTS, handleApiResponse, handleApiError } from '@/lib/api';
 
 interface User {
   id: string;
@@ -9,7 +8,7 @@ interface User {
   fullName: string;
   phone?: string;
   avatar?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'manager' | 'disabled';
   createdAt: string;
 }
 
@@ -198,19 +197,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to refresh access token
   const refreshToken = async (refreshTokenValue: string) => {
     try {
-      const response = await fetch('http://localhost:3010/api/v1/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken: refreshTokenValue }),
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.REFRESH, {
+        refreshToken: refreshTokenValue
       });
 
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
+      const data = handleApiResponse<{ accessToken: string; refreshToken: string; user: User }>(response);
 
       // Update stored tokens
       localStorage.setItem('audiotailoc_token', data.accessToken);
@@ -231,6 +222,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('audiotailoc_token');
       localStorage.removeItem('audiotailoc_refresh_token');
       localStorage.removeItem('audiotailoc_token_expiry');
+      throw error;
     }
   };
 
@@ -266,25 +258,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'AUTH_START' });
 
     try {
-      // Simulate API call - replace with actual API endpoint
-      const response = await fetch('http://localhost:3010/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, rememberMe }),
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.LOGIN, {
+        email,
+        password,
+        rememberMe
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng nhập thất bại');
-      }
+      const data = handleApiResponse<{ user: User; token?: string; accessToken?: string; refreshToken?: string }>(response);
 
-      const data = await response.json();
+      if (data.user.role === 'disabled') {
+        dispatch({ type: 'AUTH_ERROR', payload: 'Tài khoản đã bị vô hiệu hóa.' });
+        toast.error('Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.');
+        return;
+      }
 
       // Store user data and tokens
       localStorage.setItem('audiotailoc_user', JSON.stringify(data.user));
-      localStorage.setItem('audiotailoc_token', data.token);
+      const tokenValue = data.token ?? data.accessToken ?? '';
+      if (tokenValue) {
+        localStorage.setItem('audiotailoc_token', tokenValue);
+      }
       if (data.refreshToken) {
         localStorage.setItem('audiotailoc_refresh_token', data.refreshToken);
         // Set token expiry time (15 minutes from now)
@@ -296,9 +289,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_SUCCESS', payload: data.user });
       toast.success('Đăng nhập thành công!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
-      dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
+      const { message } = handleApiError(error);
+      dispatch({ type: 'AUTH_ERROR', payload: message });
+      toast.error(message);
     }
   };
 
@@ -306,26 +299,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'AUTH_START' });
 
     try {
-      // Simulate API call - replace with actual API endpoint
-      const response = await fetch('http://localhost:3010/api/v1/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, userData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng ký thất bại');
+      const data = handleApiResponse<{ user: User; token?: string; accessToken?: string; refreshToken?: string }>(response);
+
+      if (data.user.role === 'disabled') {
+        dispatch({ type: 'AUTH_ERROR', payload: 'Tài khoản đã bị vô hiệu hóa.' });
+        toast.error('Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.');
+        return;
       }
-
-      const data = await response.json();
 
       // Store user data and tokens
       localStorage.setItem('audiotailoc_user', JSON.stringify(data.user));
-      if (data.token) {
-        localStorage.setItem('audiotailoc_token', data.token);
+      const registerToken = data.token ?? data.accessToken;
+      if (registerToken) {
+        localStorage.setItem('audiotailoc_token', registerToken);
         if (data.refreshToken) {
           localStorage.setItem('audiotailoc_refresh_token', data.refreshToken);
           // Set token expiry time (15 minutes from now)
@@ -336,9 +324,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_SUCCESS', payload: data.user });
       toast.success('Đăng ký thành công!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Đăng ký thất bại';
-      dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
+      const { message } = handleApiError(error);
+      dispatch({ type: 'AUTH_ERROR', payload: message });
+      toast.error(message);
     }
   };
 
@@ -359,22 +347,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const token = await getValidToken();
 
-      // Simulate API call - replace with actual API endpoint
-      const response = await fetch('http://localhost:3010/api/v1/auth/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await apiClient.put(API_ENDPOINTS.AUTH.PROFILE, userData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Cập nhật thất bại');
-      }
-
-      const data = await response.json();
+      const data = handleApiResponse<{ user: User }>(response);
 
       // Update stored user data
       localStorage.setItem('audiotailoc_user', JSON.stringify(data.user));
@@ -382,9 +357,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'UPDATE_PROFILE', payload: data.user });
       toast.success('Cập nhật thông tin thành công!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Cập nhật thất bại';
-      dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
+      const { message } = handleApiError(error);
+      dispatch({ type: 'AUTH_ERROR', payload: message });
+      toast.error(message);
     }
   };
 

@@ -5,19 +5,30 @@ import { Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { useSubscribeNewsletter } from '@/lib/hooks/use-api';
+import { toast } from 'react-hot-toast';
 
 export function NewsletterSection() {
   const [email, setEmail] = React.useState('');
-  const [isSubscribed, setIsSubscribed] = React.useState(false);
+  const [name, setName] = React.useState('');
+  const subscribeMutation = useSubscribeNewsletter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // TODO: Implement newsletter subscription
-      console.log('Subscribe email:', email);
-      setIsSubscribed(true);
-      setEmail('');
-      setTimeout(() => setIsSubscribed(false), 3000);
+      try {
+        await subscribeMutation.mutateAsync({ email, name: name || undefined });
+        toast.success('Cảm ơn bạn đã đăng ký! Chúng tôi sẽ gửi thông tin mới nhất đến email của bạn.');
+        setEmail('');
+        setName('');
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('already subscribed')) {
+          toast.error('Email này đã được đăng ký trước đó.');
+        } else {
+          toast.error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+        }
+      }
     }
   };
 
@@ -42,8 +53,8 @@ export function NewsletterSection() {
               </p>
 
               {/* Form */}
-              {!isSubscribed ? (
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <div className="flex-1 space-y-2">
                   <Input
                     type="email"
                     placeholder="Nhập email của bạn"
@@ -52,18 +63,29 @@ export function NewsletterSection() {
                     className="bg-background text-foreground"
                     required
                   />
-                  <Button type="submit" className="whitespace-nowrap">
-                    <Send className="w-4 h-4 mr-2" />
-                    Đăng ký
-                  </Button>
-                </form>
-              ) : (
-                <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4">
-                  <p className="text-green-400 font-medium">
-                    ✓ Cảm ơn bạn đã đăng ký! Chúng tôi sẽ gửi thông tin mới nhất đến email của bạn.
-                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Tên của bạn (tùy chọn)"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-background text-foreground"
+                  />
                 </div>
-              )}
+                <Button
+                  type="submit"
+                  className="whitespace-nowrap sm:w-auto"
+                  disabled={subscribeMutation.isPending}
+                >
+                  {subscribeMutation.isPending ? (
+                    'Đang xử lý...'
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Đăng ký
+                    </>
+                  )}
+                </Button>
+              </form>
 
               {/* Benefits */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 text-sm">
@@ -91,5 +113,4 @@ export function NewsletterSection() {
     </section>
   );
 }
-
 

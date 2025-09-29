@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:3010/api/:path*',
+      },
+    ];
+  },
+  serverExternalPackages: ['axios'],
   images: {
     remotePatterns: [
       {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,11 +62,11 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
       await createBooking.mutateAsync({
         serviceId: service.id,
         customerName: formData.customerName,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        preferredDate: formData.preferredDate,
-        preferredTime: formData.preferredTime,
+        customerPhone: formData.phone,
+        customerEmail: formData.email,
+        customerAddress: formData.address || '',
+        scheduledDate: formData.preferredDate,
+        scheduledTime: formData.preferredTime,
         notes: formData.notes
       });
 
@@ -97,6 +97,9 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
             <CalendarIcon className="h-5 w-5" />
             Đặt lịch dịch vụ: {service.name}
           </DialogTitle>
+          <DialogDescription>
+            Điền thông tin để đặt lịch dịch vụ
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -13,11 +13,16 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
-import { useDashboardOverview } from '@/lib/hooks/use-api';
+import { useDashboardStats, useRealtimeSales, useRealtimeOrders } from '@/lib/hooks/use-analytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardOverview() {
-  const { data: dashboard, isLoading } = useDashboardOverview();
+  const { data: dashboardStats, isLoading: isLoadingStats } = useDashboardStats();
+  const { data: realtimeSales, isLoading: isLoadingSales } = useRealtimeSales();
+  const { data: realtimeOrders, isLoading: isLoadingOrders } = useRealtimeOrders();
+
+  const isLoading = isLoadingStats || isLoadingSales || isLoadingOrders;
+  const dashboard = dashboardStats?.overview;
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -33,7 +38,7 @@ export function DashboardOverview() {
   const overviewCards = [
     {
       title: 'Tổng doanh thu',
-      value: formatCurrency(dashboard?.overview.totalRevenue || 0),
+      value: formatCurrency(dashboard?.totalRevenue || 0),
       change: '+12.5%',
       trend: 'up' as const,
       icon: DollarSign,
@@ -41,7 +46,7 @@ export function DashboardOverview() {
     },
     {
       title: 'Tổng đơn hàng',
-      value: formatNumber(dashboard?.overview.totalOrders || 0),
+      value: formatNumber(dashboard?.totalOrders || 0),
       change: '+8.2%',
       trend: 'up' as const,
       icon: ShoppingCart,
@@ -49,7 +54,7 @@ export function DashboardOverview() {
     },
     {
       title: 'Khách hàng',
-      value: formatNumber(dashboard?.overview.totalUsers || 0),
+      value: formatNumber(dashboard?.totalUsers || 0),
       change: '+15.3%',
       trend: 'up' as const,
       icon: Users,
@@ -57,7 +62,7 @@ export function DashboardOverview() {
     },
     {
       title: 'Sản phẩm',
-      value: formatNumber(dashboard?.overview.totalProducts || 0),
+      value: formatNumber(dashboard?.totalProducts || 0),
       change: '+3.1%',
       trend: 'up' as const,
       icon: Package,
@@ -68,25 +73,25 @@ export function DashboardOverview() {
   const recentStats = [
     {
       title: 'Đơn hàng mới',
-      value: dashboard?.overview.newOrders || 0,
+      value: dashboard?.newOrders || 0,
       icon: ShoppingCart,
       color: 'text-blue-600'
     },
     {
       title: 'Khách hàng mới',
-      value: dashboard?.overview.newUsers || 0,
+      value: dashboard?.newUsers || 0,
       icon: Users,
       color: 'text-green-600'
     },
     {
       title: 'Đơn chờ xử lý',
-      value: dashboard?.overview.pendingOrders || 0,
+      value: dashboard?.pendingOrders || 0,
       icon: ShoppingCart,
       color: 'text-orange-600'
     },
     {
       title: 'Sản phẩm sắp hết',
-      value: dashboard?.overview.lowStockProducts || 0,
+      value: dashboard?.lowStockProducts || 0,
       icon: Package,
       color: 'text-red-600'
     }

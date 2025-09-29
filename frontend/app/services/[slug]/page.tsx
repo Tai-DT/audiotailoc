@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useService } from '@/lib/hooks/use-api';
+import { useServiceBySlug } from '@/lib/hooks/use-api';
 import { ServiceBookingModal } from '@/components/services/service-booking-modal';
 import {
   Star,
@@ -27,6 +25,36 @@ import {
   Award
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { ServiceStructuredData } from '@/components/seo/service-structured-data';
+
+const parseStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item)).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map(item => String(item)).filter(Boolean);
+      }
+    } catch (err) {
+      // Ignore JSON parse error and fallback to comma split
+    }
+
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const currencyFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND'
+});
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -35,7 +63,7 @@ export default function ServiceDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  const { data: service, isLoading, error } = useService(slug);
+  const { data: service, isLoading, error } = useServiceBySlug(slug);
 
   // Handle URL parameter for auto-opening booking modal
   useEffect(() => {
@@ -56,7 +84,6 @@ export default function ServiceDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="grid lg:grid-cols-2 gap-12">
@@ -77,7 +104,6 @@ export default function ServiceDetailPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -85,7 +111,6 @@ export default function ServiceDetailPage() {
   if (error || !service) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">
@@ -102,33 +127,45 @@ export default function ServiceDetailPage() {
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
-  const images = service.images && service.images.length > 0
-    ? service.images
+  const images = parseStringArray(service.images as unknown).length > 0
+    ? parseStringArray(service.images as unknown)
     : ['/placeholder-service.jpg'];
 
-  const formatPrice = (price: number, priceType: string) => {
-    switch (priceType) {
+  const features = parseStringArray(service.features as unknown);
+  const requirements = parseStringArray(service.requirements as unknown);
+  const tags = parseStringArray(service.tags as unknown);
+
+  const formatPrice = () => {
+    switch (service.priceType) {
       case 'FIXED':
-        return `${price.toLocaleString('vi-VN')}₫`;
+        return currencyFormatter.format(service.price ?? service.minPrice ?? 0);
       case 'RANGE':
-        return `Từ ${price.toLocaleString('vi-VN')}₫`;
+        if (service.minPrice && service.maxPrice) {
+          return `${currencyFormatter.format(service.minPrice)} - ${currencyFormatter.format(service.maxPrice)}`;
+        }
+        if (service.minPrice) {
+          return `Từ ${currencyFormatter.format(service.minPrice)}`;
+        }
+        if (service.maxPrice) {
+          return `Đến ${currencyFormatter.format(service.maxPrice)}`;
+        }
+        return 'Liên hệ tư vấn';
       case 'NEGOTIABLE':
         return 'Giá thỏa thuận';
       case 'CONTACT':
         return 'Liên hệ tư vấn';
       default:
-        return `${price.toLocaleString('vi-VN')}₫`;
+        return currencyFormatter.format(service.price ?? 0);
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <ServiceStructuredData service={{ ...service, description: service.description ?? '' }} />
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
@@ -210,8 +247,18 @@ export default function ServiceDetailPage() {
               </div>
 
               <div className="text-3xl font-bold text-primary mb-6">
-                {formatPrice(service.price, service.priceType)}
+                {formatPrice()}
               </div>
+
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {tags.map((tag, index) => (
+                    <Badge key={`${tag}-${index}`} variant="outline">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
               {service.shortDescription && (
                 <p className="text-muted-foreground mb-6">
@@ -245,14 +292,14 @@ export default function ServiceDetailPage() {
             </div>
 
             {/* Service Features */}
-            {service.features && service.features.length > 0 && (
+            {features.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Tính năng nổi bật</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {service.features.map((feature, index) => (
+                    {features.map((feature, index) => (
                       <li key={index} className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -264,14 +311,14 @@ export default function ServiceDetailPage() {
             )}
 
             {/* Requirements */}
-            {service.requirements && service.requirements.length > 0 && (
+            {requirements.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Yêu cầu</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {service.requirements.map((requirement, index) => (
+                    {requirements.map((requirement, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
                         <span className="text-sm">{requirement}</span>
@@ -450,7 +497,6 @@ export default function ServiceDetailPage() {
           </CardContent>
         </Card>
       </main>
-      <Footer />
 
       {/* Service Booking Modal */}
       <ServiceBookingModal
