@@ -2,8 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -76,7 +74,6 @@ export default function ServiceOrdersPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded w-1/4 mb-8" />
@@ -87,7 +84,6 @@ export default function ServiceOrdersPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -95,7 +91,6 @@ export default function ServiceOrdersPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">
@@ -112,7 +107,6 @@ export default function ServiceOrdersPage() {
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -125,7 +119,6 @@ export default function ServiceOrdersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -258,7 +251,6 @@ export default function ServiceOrdersPage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

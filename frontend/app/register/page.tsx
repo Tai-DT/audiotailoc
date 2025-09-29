@@ -3,14 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth, useRegister } from '@/lib/hooks/use-auth';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -26,8 +24,11 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, isAuthenticated } = useAuth();
+  const { data: user } = useAuth();
+  const registerMutation = useRegister();
   const router = useRouter();
+
+  const isAuthenticated = !!user;
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -84,15 +85,15 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register({
+      await registerMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
-        fullName: formData.fullName,
+        name: formData.fullName,
         phone: formData.phone,
       });
       router.push('/');
     } catch (error) {
-      // Error is handled by the auth context
+      // Error is handled by the mutation
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +101,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <Card>
@@ -267,7 +267,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

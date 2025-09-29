@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
+import { PageBanner } from '@/components/ui/page-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +17,7 @@ import {
   Calendar,
   Headphones
 } from 'lucide-react';
+import { ContactSection } from '@/components/home/contact-section';
 import { toast } from 'react-hot-toast';
 
 export default function ContactPage() {
@@ -108,22 +108,15 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main>
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Liên hệ với chúng tôi
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Hãy liên hệ với Audio Tài Lộc để được tư vấn và hỗ trợ tốt nhất
-                về giải pháp âm thanh chuyên nghiệp.
-              </p>
-            </div>
-          </div>
-        </section>
+        {/* Page Banner */}
+        <PageBanner
+          page="contact"
+          title="Liên hệ Audio Tài Lộc"
+          subtitle="Chúng tôi luôn sẵn sàng hỗ trợ"
+          description="Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh phù hợp nhất với nhu cầu của bạn. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7."
+          showStats={true}
+        />
 
         {/* Contact Info Section */}
         <section className="py-16">
@@ -292,6 +285,9 @@ export default function ContactPage() {
           </div>
         </section>
 
+        {/* Contact Section with Zalo Chat */}
+        <ContactSection />
+
         {/* Map Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
@@ -316,7 +312,6 @@ export default function ContactPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

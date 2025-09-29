@@ -3,13 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/components/providers/cart-provider';
 import {
   Minus,
   Plus,
@@ -19,10 +16,18 @@ import {
   CreditCard,
   Truck
 } from 'lucide-react';
+import { useCart as useCartContext } from '@/components/providers/cart-provider';
 import { toast } from 'react-hot-toast';
 
 export default function CartPage() {
-  const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
+  const {
+    items,
+    total,
+    itemCount,
+    updateQuantity,
+    removeItem,
+    clearCart
+  } = useCartContext();
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -36,16 +41,16 @@ export default function CartPage() {
   const handleClearCart = () => {
     if (window.confirm('Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
       clearCart();
+      toast.success('Giỏ hàng đã được làm trống');
     }
   };
 
-  const shippingFee = total > 500000 ? 0 : 30000; // Free shipping over 500k VND
+  const shippingFee = total > 500000 ? 0 : 30000;
   const finalTotal = total + shippingFee;
 
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="max-w-2xl mx-auto text-center">
             <div className="mb-8">
@@ -71,14 +76,12 @@ export default function CartPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -118,7 +121,7 @@ export default function CartPage() {
                       {/* Product Image */}
                       <div className="relative w-20 h-20 flex-shrink-0">
                         <Image
-                          src={item.image}
+                          src={item.image || '/placeholder-product.svg'}
                           alt={item.name}
                           fill
                           className="object-cover rounded-md"
@@ -129,12 +132,11 @@ export default function CartPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {item.description}
+                          ID: {item.id}
                         </p>
                         <div className="flex items-center gap-2 mb-3">
-                          <Badge variant="secondary">{item.category}</Badge>
+                          <Badge variant="secondary">Sản phẩm</Badge>
                         </div>
-
                         {/* Quantity Controls */}
                         <div className="flex items-center gap-3">
                           <div className="flex items-center border rounded-md">
@@ -235,7 +237,6 @@ export default function CartPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

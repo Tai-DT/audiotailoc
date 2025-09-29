@@ -2,8 +2,6 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth, useUpdateProfile } from '@/lib/hooks/use-auth';
 import {
   User,
   Mail,
@@ -28,10 +26,11 @@ import {
   Heart,
   Settings
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, updateProfile } = useAuth();
+  const { data: user } = useAuth();
+  const updateProfileMutation = useUpdateProfile();
+  const isAuthenticated = !!user;
   const router = useRouter();
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
@@ -54,7 +53,7 @@ export default function ProfilePage() {
   React.useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.fullName || '',
+        fullName: user.fullName || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         address: '', // TODO: Add address field to user model
@@ -70,21 +69,20 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     try {
-      await updateProfile({
+      await updateProfileMutation.mutateAsync({
         fullName: formData.fullName,
         phone: formData.phone
       });
       setIsEditing(false);
-      toast.success('Cập nhật thông tin thành công');
     } catch {
-      toast.error('Có lỗi xảy ra khi cập nhật thông tin');
+      // Error handling is managed inside the mutation
     }
   };
 
   const handleCancelEdit = () => {
     if (user) {
       setFormData({
-        fullName: user.fullName || '',
+        fullName: user.fullName || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         address: '',
@@ -98,20 +96,20 @@ export default function ProfilePage() {
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
+  const displayName = user.fullName || user.name || user.email || 'Khách hàng';
+  const avatarFallback = (displayName.charAt(0) || '?').toUpperCase();
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
@@ -120,9 +118,9 @@ export default function ProfilePage() {
               <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={user.avatar} alt={user.fullName} />
+                    <AvatarImage src={user.avatar || undefined} alt={displayName} />
                     <AvatarFallback className="text-2xl">
-                      {user.fullName.charAt(0).toUpperCase()}
+                      {avatarFallback}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -136,7 +134,7 @@ export default function ProfilePage() {
 
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start space-x-3 mb-2">
-                    <h1 className="text-2xl font-bold">{user.fullName}</h1>
+                    <h1 className="text-2xl font-bold">{displayName}</h1>
                     <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                       {user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
                     </Badge>
@@ -349,7 +347,6 @@ export default function ProfilePage() {
           </Tabs>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

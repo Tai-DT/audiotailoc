@@ -4,12 +4,10 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/lib/hooks/use-auth';
 import {
   Heart,
   ShoppingCart,
@@ -20,58 +18,60 @@ import {
   Package
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-// import { useWishlist } from '@/lib/hooks/use-api'; // TODO: Implement when backend supports wishlist
+import { useWishlist, useRemoveFromWishlist } from '@/lib/hooks/use-wishlist';
+import { useAddToCart } from '@/lib/hooks/use-api';
+
+interface WishlistItem {
+  id: string;
+  productId: string;
+  product: {
+    name: string;
+    slug: string;
+    imageUrl?: string;
+    priceCents: number;
+    originalPriceCents?: number;
+    rating?: number;
+    reviewCount?: number;
+    stockQuantity: number;
+    featured?: boolean;
+  };
+}
 
 export default function WishlistPage() {
-  const { isAuthenticated } = useAuth();
+  const { data: user } = useAuth();
+  const isAuthenticated = !!user;
   const router = useRouter();
-  // TODO: Replace with actual useWishlist hook when backend supports it
-  const [wishlist, setWishlist] = React.useState<Array<{ productId: string; [key: string]: any }>>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
 
-  // Mock data for demonstration
-  React.useEffect(() => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setWishlist([
-        {
-          id: '1',
-          productId: '1',
-          product: {
-            name: 'Loa Bluetooth JBL GO 3',
-            slug: 'loa-bluetooth-jbl-go-3',
-            imageUrl: '/placeholder-product.svg',
-            priceCents: 890000,
-            originalPriceCents: 1200000,
-            rating: 4.5,
-            reviewCount: 128,
-            stockQuantity: 15,
-            featured: true
-          }
-        },
-        {
-          id: '2',
-          productId: '2',
-          product: {
-            name: 'Tai nghe Sony WH-1000XM4',
-            slug: 'tai-nghe-sony-wh-1000xm4',
-            imageUrl: '/placeholder-product.svg',
-            priceCents: 8500000,
-            rating: 4.8,
-            reviewCount: 256,
-            stockQuantity: 8,
-            featured: false
-          }
-        }
-      ]);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  // Use real API hooks
+  const { data: wishlistData, isLoading, error } = useWishlist();
+  const removeFromWishlistMutation = useRemoveFromWishlist();
+  const addToCartMutation = useAddToCart();
 
-  const removeFromWishlist = async (productId: string) => {
-    setWishlist(prev => prev.filter(item => item.productId !== productId));
+  const wishlist = wishlistData?.items || [];
+
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      await removeFromWishlistMutation.mutateAsync(productId);
+      toast.success('Đã xóa khỏi danh sách yêu thích');
+    } catch {
+      toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+    }
+  };
+
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await addToCartMutation.mutateAsync({ productId, quantity: 1 });
+      toast.success('Đã thêm vào giỏ hàng');
+    } catch {
+      toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
   };
 
   // Redirect if not authenticated
@@ -81,38 +81,14 @@ export default function WishlistPage() {
     }
   }, [isAuthenticated, router]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
-
-  const handleRemoveFromWishlist = async (productId: string) => {
-    try {
-      await removeFromWishlist(productId);
-      toast.success('Đã xóa khỏi danh sách yêu thích');
-    } catch {
-      toast.error('Có lỗi xảy ra khi xóa sản phẩm');
-    }
-  };
-
-  const handleAddToCart = (productId: string) => {
-    // TODO: Implement add to cart functionality
-    console.log('Adding to cart:', productId);
-    toast.success('Đã thêm vào giỏ hàng');
-  };
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -120,13 +96,11 @@ export default function WishlistPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải danh sách yêu thích...</h1>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -134,21 +108,18 @@ export default function WishlistPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4 text-red-600">Có lỗi xảy ra</h1>
             <p className="text-muted-foreground">Không thể tải danh sách yêu thích</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -186,7 +157,7 @@ export default function WishlistPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {wishlist.map((item: any) => (
+              {wishlist.map((item: WishlistItem) => (
                 <Card key={item.id} className="group hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
                     {/* Product Image */}
@@ -296,7 +267,6 @@ export default function WishlistPage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
