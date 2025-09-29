@@ -1,0 +1,30 @@
+export declare class CreateProductDto {
+    name: string;
+    slug: string;
+    description?: string | null;
+    priceCents: number;
+    originalPriceCents?: number;
+    shortDescription?: string;
+    stockQuantity?: number;
+    sku?: string;
+    warranty?: string;
+    features?: string;
+    minOrderQuantity?: number;
+    maxOrderQuantity?: number;
+    tags?: string;
+    categoryId?: string;
+    brand?: string;
+    weight?: number;
+    dimensions?: string;
+    specifications?: Record<string, any>;
+    images?: string[];
+    imageUrl?: string;
+    isActive?: boolean;
+    featured?: boolean;
+    metaTitle?: string;
+    metaDescription?: string;
+    model?: string;
+    metaKeywords?: string;
+    maxStock?: number;
+    canonicalUrl?: string;
+}
