@@ -6,9 +6,22 @@ const API_BASE_URL: string = (() => {
   const env = process.env.NEXT_PUBLIC_API_URL;
   if (env && env.trim().length > 0) return env;
   if (typeof window !== 'undefined') {
-    const origin = `${window.location.protocol}//${window.location.hostname}`;
-    // Fallback to common local backend port
-    return `${origin}:3010/api/v1`;
+    const protocol = window.location.protocol; // includes trailing ':'
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    // If running on localhost, default to backend port 3010 (common dev setup)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:3010/api/v1`;
+    }
+
+    // In production (e.g. Vercel), if a port is present use it, otherwise use origin without custom port
+    if (port && port.trim().length > 0) {
+      return `${protocol}//${hostname}:${port}/api/v1`;
+    }
+
+    // Default to same origin (no port) for production deployments
+    return `${protocol}//${hostname}/api/v1`;
   }
   // Server-side fallback (dev)
   return 'http://localhost:3010/api/v1';
@@ -1040,3 +1053,8 @@ export const apiClient = new ApiClient(API_BASE_URL);
 
 // Export types
 export type { ApiClient };
+
+// Log the resolved API base URL in browser runtime to help debugging deployments
+if (typeof window !== 'undefined') {
+  console.info('[api-client] Resolved API_BASE_URL ->', API_BASE_URL);
+}
