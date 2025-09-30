@@ -1,5 +1,12 @@
 build:
   docker:
     web: Dockerfile
+  config:
+    NODE_ENV: production
+    NPM_CONFIG_PRODUCTION: false
 run:
-  web: npm start
+  web:
+    command: |
+      npx prisma migrate deploy && npm start
+    env:
+      NODE_ENV: production

@@ -6,7 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { promisify } from 'util';
-import sharp from 'sharp';
 
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
@@ -383,14 +382,15 @@ export class FilesService {
 
   private async createThumbnail(filePath: string, fileId: string): Promise<string> {
     try {
-      const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${fileId}_thumb.jpg`);
+      // Temporarily disabled due to Sharp compatibility issues
+      // const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${fileId}_thumb.jpg`);
       
-      await sharp(filePath)
-        .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toFile(thumbnailPath);
+      // await sharp(filePath)
+      //   .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+      //   .jpeg({ quality: 80 })
+      //   .toFile(thumbnailPath);
 
-      return this.getFileUrl('thumbnails', `${fileId}_thumb.jpg`);
+      return '';
     } catch (error) {
       this.logger.error('Thumbnail creation failed:', error);
       return '';
@@ -399,10 +399,11 @@ export class FilesService {
 
   private async getImageDimensions(buffer: Buffer): Promise<{ width: number; height: number }> {
     try {
-      const metadata = await sharp(buffer).metadata();
+      // Temporarily disabled due to Sharp compatibility issues
+      // const metadata = await sharp(buffer).metadata();
       return {
-        width: metadata.width || 0,
-        height: metadata.height || 0,
+        width: 0,
+        height: 0,
       };
     } catch (error) {
       return { width: 0, height: 0 };

@@ -9,7 +9,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RateLimitGuard = exports.RateLimit = exports.RateLimitMiddleware = void 0;
+exports.RateLimitGuard = exports.RateLimitMiddleware = void 0;
+exports.RateLimit = RateLimit;
 const common_1 = require("@nestjs/common");
 const cache_service_1 = require("../../modules/caching/cache.service");
 let RateLimitMiddleware = class RateLimitMiddleware {
@@ -136,7 +137,6 @@ function RateLimit(_options) {
         };
     };
 }
-exports.RateLimit = RateLimit;
 const common_2 = require("@nestjs/common");
 let RateLimitGuard = class RateLimitGuard {
     constructor(cacheService, options) {

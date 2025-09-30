@@ -86,6 +86,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
+      // Allow health checks without origin header
       // Allow requests with no origin (like mobile apps or curl requests)
       // Only allow specific origins for production security
       if (!origin) {
@@ -93,8 +94,8 @@ async function bootstrap() {
         if (process.env.NODE_ENV === 'development') {
           return callback(null, true);
         }
-        // In production, reject requests without origin for security
-        return callback(new Error('Origin header required'), false);
+        // In production, allow health checks without origin
+        return callback(null, true);
       }
 
       if (allowedOrigins.indexOf(origin) !== -1) {

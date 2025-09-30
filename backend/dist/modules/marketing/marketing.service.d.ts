@@ -20,12 +20,12 @@ export declare class MarketingService {
         updatedAt: Date;
         description: string;
         type: import(".prisma/client").$Enums.CampaignType;
-        startDate: Date;
-        endDate: Date;
-        targetAudience: string;
-        discountPercent: number;
-        discountAmount: number;
-        sentAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        targetAudience: string | null;
+        discountPercent: number | null;
+        discountAmount: number | null;
+        sentAt: Date | null;
     })[]>;
     getCampaign(id: string): Promise<{
         _count: {
@@ -36,20 +36,20 @@ export declare class MarketingService {
         clicks: {
             id: string;
             createdAt: Date;
-            url: string;
+            url: string | null;
+            recipientEmail: string | null;
             campaignId: string;
-            recipientEmail: string;
         }[];
         opens: {
             id: string;
             createdAt: Date;
+            recipientEmail: string | null;
             campaignId: string;
-            recipientEmail: string;
         }[];
         recipients: {
             id: string;
             email: string;
-            name: string;
+            name: string | null;
             createdAt: Date;
             campaignId: string;
         }[];
@@ -61,12 +61,12 @@ export declare class MarketingService {
         updatedAt: Date;
         description: string;
         type: import(".prisma/client").$Enums.CampaignType;
-        startDate: Date;
-        endDate: Date;
-        targetAudience: string;
-        discountPercent: number;
-        discountAmount: number;
-        sentAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        targetAudience: string | null;
+        discountPercent: number | null;
+        discountAmount: number | null;
+        sentAt: Date | null;
     }>;
     createCampaign(data: {
         name: string;
@@ -85,12 +85,12 @@ export declare class MarketingService {
         updatedAt: Date;
         description: string;
         type: import(".prisma/client").$Enums.CampaignType;
-        startDate: Date;
-        endDate: Date;
-        targetAudience: string;
-        discountPercent: number;
-        discountAmount: number;
-        sentAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        targetAudience: string | null;
+        discountPercent: number | null;
+        discountAmount: number | null;
+        sentAt: Date | null;
     }>;
     updateCampaign(id: string, data: Partial<{
         name: string;
@@ -110,12 +110,12 @@ export declare class MarketingService {
         updatedAt: Date;
         description: string;
         type: import(".prisma/client").$Enums.CampaignType;
-        startDate: Date;
-        endDate: Date;
-        targetAudience: string;
-        discountPercent: number;
-        discountAmount: number;
-        sentAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        targetAudience: string | null;
+        discountPercent: number | null;
+        discountAmount: number | null;
+        sentAt: Date | null;
     }>;
     deleteCampaign(id: string): Promise<{
         message: string;

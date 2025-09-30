@@ -9,8 +9,8 @@ export declare class UsersService {
         id: string;
         email: string;
         password: string;
-        name: string;
-        phone: string;
+        name: string | null;
+        phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
@@ -27,9 +27,9 @@ export declare class UsersService {
             discountCents: number;
             shippingCents: number;
             totalCents: number;
-            shippingAddress: string;
-            shippingCoordinates: string;
-            promotionCode: string;
+            shippingAddress: string | null;
+            shippingCoordinates: string | null;
+            promotionCode: string | null;
         }[];
         _count: {
             orders: number;
@@ -38,8 +38,8 @@ export declare class UsersService {
         id: string;
         email: string;
         password: string;
-        name: string;
-        phone: string;
+        name: string | null;
+        phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
@@ -96,8 +96,8 @@ export declare class UsersService {
         id: string;
         email: string;
         password: string;
-        name: string;
-        phone: string;
+        name: string | null;
+        phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;

@@ -44,27 +44,27 @@ export declare class OrdersController {
     get(id: string): Promise<{
         items: {
             id: string;
-            name: string;
+            name: string | null;
             createdAt: Date;
             updatedAt: Date;
-            productId: string;
-            quantity: number;
-            imageUrl: string;
+            imageUrl: string | null;
             price: number;
             orderId: string;
-            unitPrice: number;
+            productId: string;
+            quantity: number;
+            unitPrice: number | null;
         }[];
         payments: {
             status: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            orderId: string;
+            transactionId: string | null;
             provider: string;
             amountCents: number;
-            metadata: string;
-            intentId: string;
-            transactionId: string;
+            metadata: string | null;
+            orderId: string;
+            intentId: string | null;
         }[];
     } & {
         status: string;
@@ -77,9 +77,9 @@ export declare class OrdersController {
         discountCents: number;
         shippingCents: number;
         totalCents: number;
-        shippingAddress: string;
-        shippingCoordinates: string;
-        promotionCode: string;
+        shippingAddress: string | null;
+        shippingCoordinates: string | null;
+        promotionCode: string | null;
     }>;
     updateStatus(id: string, status: string): Promise<{
         status: string;
@@ -92,9 +92,9 @@ export declare class OrdersController {
         discountCents: number;
         shippingCents: number;
         totalCents: number;
-        shippingAddress: string;
-        shippingCoordinates: string;
-        promotionCode: string;
+        shippingAddress: string | null;
+        shippingCoordinates: string | null;
+        promotionCode: string | null;
     }>;
     update(id: string, updateOrderDto: {
         customerName?: string;

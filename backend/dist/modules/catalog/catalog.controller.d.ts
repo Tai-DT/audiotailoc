@@ -19,19 +19,19 @@ export declare class CatalogController {
         id: string;
         slug: string;
         name: string;
-        parentId: string;
+        parentId: string | null;
     }[]>;
     createCategory(dto: CreateCategoryDto): Promise<{
         id: string;
         slug: string;
         name: string;
-        parentId: string;
+        parentId: string | null;
     }>;
     updateCategory(id: string, dto: UpdateCategoryDto): Promise<{
         id: string;
         slug: string;
         name: string;
-        parentId: string;
+        parentId: string | null;
     }>;
     deleteCategory(id: string): Promise<{
         deleted: boolean;

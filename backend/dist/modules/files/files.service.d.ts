@@ -1,4 +1,3 @@
-/// <reference types="multer" />
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CloudinaryService } from './cloudinary.service';

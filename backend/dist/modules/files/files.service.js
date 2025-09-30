@@ -21,18 +21,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 var FilesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -45,7 +52,6 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const crypto = __importStar(require("crypto"));
 const util_1 = require("util");
-const sharp_1 = __importDefault(require("sharp"));
 const writeFile = (0, util_1.promisify)(fs.writeFile);
 const mkdir = (0, util_1.promisify)(fs.mkdir);
 let FilesService = FilesService_1 = class FilesService {
@@ -253,12 +259,7 @@ let FilesService = FilesService_1 = class FilesService {
     }
     async createThumbnail(filePath, fileId) {
         try {
-            const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${fileId}_thumb.jpg`);
-            await (0, sharp_1.default)(filePath)
-                .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: 80 })
-                .toFile(thumbnailPath);
-            return this.getFileUrl('thumbnails', `${fileId}_thumb.jpg`);
+            return '';
         }
         catch (error) {
             this.logger.error('Thumbnail creation failed:', error);
@@ -267,10 +268,9 @@ let FilesService = FilesService_1 = class FilesService {
     }
     async getImageDimensions(buffer) {
         try {
-            const metadata = await (0, sharp_1.default)(buffer).metadata();
             return {
-                width: metadata.width || 0,
-                height: metadata.height || 0,
+                width: 0,
+                height: 0,
             };
         }
         catch (error) {
