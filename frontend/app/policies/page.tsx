@@ -51,7 +51,7 @@ export default function PoliciesPage() {
         setPolicies(data);
       } catch (err) {
         console.error('Error fetching policies:', err);
-        const errorInfo = handleApiError(err as any);
+        const errorInfo = handleApiError(err as { response?: { data?: { message?: string }; status?: number }; message?: string });
         setError(errorInfo.message);
       } finally {
         setLoading(false);

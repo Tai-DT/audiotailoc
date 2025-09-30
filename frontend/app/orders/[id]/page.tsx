@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { OrderItem } from '@/lib/types';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useOrder } from '@/lib/hooks/use-api';
 import {
   ArrowLeft,
   Package,
@@ -25,9 +27,9 @@ import {
 } from 'lucide-react';
 
 interface OrderDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const statusConfig = {
@@ -37,16 +39,10 @@ const statusConfig = {
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
 };
 
-const paymentStatusConfig = {
-  PENDING: { label: 'Chờ thanh toán', color: 'bg-yellow-500' },
-  PAID: { label: 'Đã thanh toán', color: 'bg-green-500' },
-  FAILED: { label: 'Thanh toán thất bại', color: 'bg-red-500' },
-  REFUNDED: { label: 'Đã hoàn tiền', color: 'bg-blue-500' },
-};
-
 export default function OrderDetailPage({ params }: OrderDetailPageProps) {
+  const { id } = React.use(params);
   const { data: user } = useAuth();
-  const { data: order, isLoading, error } = useOrder(params.id);
+  const { data: order, isLoading, error } = useOrder(id);
   const router = useRouter();
 
   // Redirect if not authenticated

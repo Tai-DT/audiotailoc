@@ -18,24 +18,8 @@ import {
   Package
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useWishlist, useRemoveFromWishlist } from '@/lib/hooks/use-wishlist';
+import { useWishlist, useRemoveFromWishlist, WishlistItem } from '@/lib/hooks/use-wishlist';
 import { useAddToCart } from '@/lib/hooks/use-api';
-
-interface WishlistItem {
-  id: string;
-  productId: string;
-  product: {
-    name: string;
-    slug: string;
-    imageUrl?: string;
-    priceCents: number;
-    originalPriceCents?: number;
-    rating?: number;
-    reviewCount?: number;
-    stockQuantity: number;
-    featured?: boolean;
-  };
-}
 
 export default function WishlistPage() {
   const { data: user } = useAuth();
@@ -178,11 +162,6 @@ export default function WishlistPage() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      {item.product?.featured && (
-                        <Badge className="absolute top-3 left-3 bg-orange-500">
-                          Nổi bật
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Product Info */}
@@ -197,12 +176,12 @@ export default function WishlistPage() {
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                           <span className="text-sm text-muted-foreground">
-                            {item.product?.rating || 4.5}
+                            4.5
                           </span>
                         </div>
                         <span className="text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground">
-                          {item.product?.reviewCount || 0} đánh giá
+                          0 đánh giá
                         </span>
                       </div>
 

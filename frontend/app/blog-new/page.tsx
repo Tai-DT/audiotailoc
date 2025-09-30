@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useBlogArticles, useBlogCategories, BlogArticle } from '@/lib/hooks/use-api';
+import { useBlogArticles, useBlogCategories } from '@/lib/hooks/use-api';
+import { BlogArticle } from '@/lib/types';
 
 export default function BlogNewPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,8 +161,8 @@ export default function BlogNewPage() {
                         </div>
                       )}
                       <div className="absolute top-4 left-4">
-                        <Badge className={getCategoryColor(article.category.name)}>
-                          {article.category.name}
+                        <Badge className={getCategoryColor(article.category?.name || 'Uncategorized')}>
+                          {article.category?.name || 'Uncategorized'}
                         </Badge>
                       </div>
                     </div>
