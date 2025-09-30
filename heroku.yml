@@ -6,7 +6,6 @@ build:
     NPM_CONFIG_PRODUCTION: false
 run:
   web:
+    image: web
     command: |
       npx prisma migrate deploy && npm start
-    env:
-      NODE_ENV: production
