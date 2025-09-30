@@ -9,7 +9,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IsStrongPassword = exports.IsSecurePhoneNumber = exports.IsSecureEmail = exports.IsSecureString = exports.InputValidationMiddleware = void 0;
+exports.InputValidationMiddleware = void 0;
+exports.IsSecureString = IsSecureString;
+exports.IsSecureEmail = IsSecureEmail;
+exports.IsSecurePhoneNumber = IsSecurePhoneNumber;
+exports.IsStrongPassword = IsStrongPassword;
 const common_1 = require("@nestjs/common");
 const security_service_1 = require("../../modules/security/security.service");
 let InputValidationMiddleware = class InputValidationMiddleware {
@@ -167,7 +171,6 @@ function IsSecureString(validationOptions) {
         });
     };
 }
-exports.IsSecureString = IsSecureString;
 function IsSecureEmail(validationOptions) {
     return function (object, propertyName) {
         (0, class_validator_1.registerDecorator)({
@@ -196,7 +199,6 @@ function IsSecureEmail(validationOptions) {
         });
     };
 }
-exports.IsSecureEmail = IsSecureEmail;
 function IsSecurePhoneNumber(validationOptions) {
     return function (object, propertyName) {
         (0, class_validator_1.registerDecorator)({
@@ -219,7 +221,6 @@ function IsSecurePhoneNumber(validationOptions) {
         });
     };
 }
-exports.IsSecurePhoneNumber = IsSecurePhoneNumber;
 function IsStrongPassword(validationOptions) {
     return function (object, propertyName) {
         (0, class_validator_1.registerDecorator)({
@@ -249,5 +250,4 @@ function IsStrongPassword(validationOptions) {
         });
     };
 }
-exports.IsStrongPassword = IsStrongPassword;
 //# sourceMappingURL=input-validation.middleware.js.map

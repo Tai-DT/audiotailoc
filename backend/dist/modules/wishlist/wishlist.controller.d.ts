@@ -15,9 +15,9 @@ export declare class WishlistController {
             id: string;
             name: string;
             slug: string;
-            isActive: boolean;
             priceCents: number;
             imageUrl: string;
+            isActive: boolean;
         };
     } & {
         id: string;
@@ -36,12 +36,12 @@ export declare class WishlistController {
                 id: string;
                 name: string;
                 slug: string;
-                images: string;
-                isActive: boolean;
                 priceCents: number;
                 originalPriceCents: number;
                 imageUrl: string;
+                images: string;
                 stockQuantity: number;
+                isActive: boolean;
             };
         } & {
             id: string;

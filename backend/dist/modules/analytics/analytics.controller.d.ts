@@ -16,12 +16,12 @@ export declare class AnalyticsController {
         customers: import("./analytics.service").CustomerMetrics;
         inventory: import("./analytics.service").InventoryMetrics;
         kpis: import("./analytics.service").BusinessKPIs;
-        recentActivity: {
+        recentActivity: Array<{
             type: string;
             description: string;
             timestamp: Date;
             value?: number;
-        }[];
+        }>;
     }>;
     getOverview(range?: string): Promise<{
         totalRevenue: number;

@@ -25,10 +25,10 @@ export declare class InventoryAlertService {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     findAll(params?: {
         page?: number;
@@ -59,10 +59,10 @@ export declare class InventoryAlertService {
             updatedAt: Date;
             type: string;
             productId: string;
-            threshold: number;
+            threshold: number | null;
             currentStock: number;
             isResolved: boolean;
-            resolvedAt: Date;
+            resolvedAt: Date | null;
         })[];
     }>;
     findByProduct(productId: string, params?: {
@@ -89,10 +89,10 @@ export declare class InventoryAlertService {
             updatedAt: Date;
             type: string;
             productId: string;
-            threshold: number;
+            threshold: number | null;
             currentStock: number;
             isResolved: boolean;
-            resolvedAt: Date;
+            resolvedAt: Date | null;
         })[];
     }>;
     resolve(id: string, _userId?: string): Promise<{
@@ -108,10 +108,10 @@ export declare class InventoryAlertService {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     bulkResolve(ids: string[], _userId?: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
     getActiveAlerts(): Promise<({
@@ -131,10 +131,10 @@ export declare class InventoryAlertService {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     })[]>;
     getAlertSummary(): Promise<{
         total: number;
@@ -150,10 +150,10 @@ export declare class InventoryAlertService {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     bulkDelete(ids: string[]): Promise<import(".prisma/client").Prisma.BatchPayload>;
 }

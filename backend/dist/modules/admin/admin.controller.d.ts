@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { LoggingService } from '../monitoring/logging.service';
@@ -48,9 +47,9 @@ export declare class AdminController {
                     discountCents: number;
                     shippingCents: number;
                     totalCents: number;
-                    shippingAddress: string;
-                    shippingCoordinates: string;
-                    promotionCode: string;
+                    shippingAddress: string | null;
+                    shippingCoordinates: string | null;
+                    promotionCode: string | null;
                 })[];
                 users: {
                     id: string;
@@ -127,17 +126,17 @@ export declare class AdminController {
                 category: string;
                 id: string;
                 createdAt: Date;
-                userId: string;
-                action: string;
-                resource: string;
-                resourceId: string;
-                ipAddress: string;
-                userAgent: string;
-                method: string;
-                url: string;
-                statusCode: number;
-                duration: number;
+                userId: string | null;
+                userAgent: string | null;
+                method: string | null;
+                url: string | null;
+                statusCode: number | null;
+                duration: number | null;
                 severity: string;
+                action: string;
+                resource: string | null;
+                resourceId: string | null;
+                ipAddress: string | null;
             }[];
             total: number;
             limit: number;

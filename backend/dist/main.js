@@ -72,7 +72,7 @@ async function bootstrap() {
                 if (process.env.NODE_ENV === 'development') {
                     return callback(null, true);
                 }
-                return callback(new Error('Origin header required'), false);
+                return callback(null, true);
             }
             if (allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);

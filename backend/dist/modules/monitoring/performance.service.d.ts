@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { CacheService } from '../caching/cache.service';
 interface PerformanceMetric {
     name: string;
