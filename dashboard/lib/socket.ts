@@ -23,8 +23,27 @@ class SocketManager {
   private isConnecting = false;
 
   constructor(config: SocketConfig = {}) {
-    // Base URL from env or default; prefer ws:// scheme for websockets
-    this.url = config.url || process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010';
+    // Base URL from config or env. If not provided, derive from current origin.
+    // For localhost use default backend ws port 3010. For production, use same host with wss when page served over https.
+    if (config.url) {
+      this.url = config.url;
+    } else if (process.env.NEXT_PUBLIC_WS_URL && process.env.NEXT_PUBLIC_WS_URL.trim().length > 0) {
+      this.url = process.env.NEXT_PUBLIC_WS_URL;
+    } else if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        this.url = `${protocol}://${hostname}:3010`;
+      } else if (port && port.trim().length > 0) {
+        this.url = `${protocol}://${hostname}:${port}`;
+      } else {
+        this.url = `${protocol}://${hostname}`;
+      }
+    } else {
+      this.url = 'ws://localhost:3010';
+    }
     this.config = {
       autoConnect: false,
       reconnection: true,

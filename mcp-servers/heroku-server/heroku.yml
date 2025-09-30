@@ -1,0 +1,49 @@
+build:
+  docker:
+    web: Dockerfile
+  config:
+    NODE_ENV: production
+    NPM_CONFIG_PRODUCTION: true
+
+run:
+  web: npm start
+  worker:
+    command: npm run worker
+    quantity: 0
+
+processes:
+  web: node dist/index.js
+
+formation:
+  web:
+    quantity: 1
+    size: hobby
+
+addons:
+  - heroku-postgresql:hobby-dev
+  - heroku-redis:hobby-dev
+
+environments:
+  production:
+    formation:
+      web:
+        quantity: 1
+        size: standard-1x
+    addons:
+      - heroku-postgresql:hobby-dev
+      - heroku-redis:hobby-dev
+    env:
+      NODE_ENV: production
+      PRODUCTION: true
+
+  staging:
+    formation:
+      web:
+        quantity: 1
+        size: hobby
+    addons:
+      - heroku-postgresql:hobby-dev
+      - heroku-redis:hobby-dev
+    env:
+      NODE_ENV: staging
+      PRODUCTION: false
