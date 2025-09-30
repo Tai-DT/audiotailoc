@@ -55,6 +55,7 @@ export default function ContactPage() {
         message: ''
       });
     } catch (error) {
+      console.error('Contact form submission error:', error);
       toast.error('Có lỗi xảy ra. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);

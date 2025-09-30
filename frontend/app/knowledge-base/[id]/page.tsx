@@ -151,7 +151,7 @@ const comments: { id: string; author: string; content: string; createdAt: string
       // TODO: Implement article feedback API call
       setUserFeedback(feedback);
       toast.success('Cảm ơn phản hồi của bạn!');
-    } catch (_error) {
+    } catch {
       toast.error('Có lỗi xảy ra, vui lòng thử lại');
     }
   };
@@ -164,7 +164,7 @@ const comments: { id: string; author: string; content: string; createdAt: string
           text: `Đọc bài viết: ${article.title}`,
           url: window.location.href,
         });
-      } catch (_error) {
+      } catch {
         // Fallback to clipboard
         navigator.clipboard.writeText(window.location.href);
         toast.success('Đã sao chép liên kết!');
@@ -182,7 +182,7 @@ const comments: { id: string; author: string; content: string; createdAt: string
       // TODO: Implement comment submission
       toast.success('Bình luận đã được gửi!');
       setComment('');
-    } catch (_error) {
+    } catch {
       toast.error('Có lỗi xảy ra, vui lòng thử lại');
     }
   };

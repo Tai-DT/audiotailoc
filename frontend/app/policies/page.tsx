@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Truck, Shield, RotateCcw, Wrench, FileText, Lock, ChevronDown, Calendar, ArrowRight } from 'lucide-react';
+import { Truck, Shield, Wrench, FileText, Lock, ChevronDown, Calendar, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

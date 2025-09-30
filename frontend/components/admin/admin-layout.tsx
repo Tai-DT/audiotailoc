@@ -9,7 +9,6 @@ import {
   ShoppingCart, 
   Users, 
   Settings, 
-  BarChart3,
   FileText,
   Bell,
   LogOut,
