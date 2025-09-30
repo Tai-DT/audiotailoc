@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, API_ENDPOINTS, handleApiResponse, handleApiError } from '@/lib/api';
-import { authStorage, AUTH_EVENTS } from '@/lib/auth-storage';
+import { authStorage, AUTH_EVENTS, StoredUser } from '@/lib/auth-storage';
 import toast from 'react-hot-toast';
 
 // Types
@@ -44,7 +44,6 @@ export interface AuthResponse {
 export function useAuth() {
   const queryClient = useQueryClient();
   const hasToken = typeof window !== 'undefined' ? Boolean(authStorage.getAccessToken()) : false;
-  const initialUser = typeof window !== 'undefined' ? authStorage.getUser<User>() ?? undefined : undefined;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -70,21 +69,23 @@ export function useAuth() {
   return useQuery({
     queryKey: ['auth', 'profile'],
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.AUTH.PROFILE);
-      const user = handleApiResponse<User>(response);
-      authStorage.setUser(user);
-      return user;
+      try {
+        const response = await apiClient.get(API_ENDPOINTS.AUTH.PROFILE);
+        const user = handleApiResponse<User>(response);
+        authStorage.setUser(user as unknown as StoredUser);
+        return user;
+      } catch (error) {
+        const { status } = handleApiError(error as { response?: { status?: number }; message?: string });
+        if (status === 401 || status === 403) {
+          authStorage.clearSession();
+        }
+        throw error;
+      }
     },
     retry: false,
     staleTime: 10 * 60 * 1000, // 10 minutes
     enabled: hasToken,
-    initialData: initialUser,
-    onError: (error) => {
-      const { status } = handleApiError(error as { response?: { status?: number }; message?: string });
-      if (status === 401 || status === 403) {
-        authStorage.clearSession();
-      }
-    },
+    initialData: hasToken ? undefined : null,
   });
 }
 
@@ -113,7 +114,7 @@ export function useLogin() {
       authStorage.setSession({
         accessToken,
         refreshToken: data.refreshToken,
-        user: data.user,
+        user: data.user as unknown as StoredUser,
         rememberMe: variables.rememberMe,
         expiresInMs: data.expiresInMs,
       });
@@ -152,7 +153,7 @@ export function useRegister() {
       authStorage.setSession({
         accessToken,
         refreshToken: data.refreshToken,
-        user: data.user,
+        user: data.user as unknown as StoredUser,
         expiresInMs: data.expiresInMs,
       });
 
@@ -196,7 +197,7 @@ export function useUpdateProfile() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['auth', 'profile'], data);
-      authStorage.setUser(data);
+      authStorage.setUser(data as unknown as StoredUser);
       toast.success('Cập nhật thông tin thành công!');
     },
     onError: (error: { message?: string }) => {

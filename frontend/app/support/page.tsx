@@ -150,7 +150,7 @@ export default function SupportPage() {
 
       try {
         const blogResponse = await apiClient.get('/blog/articles?published=true');
-        const blogData = handleApiResponse<any>(blogResponse);
+        const blogData = handleApiResponse<{ data?: unknown }>(blogResponse);
         if (blogData?.data && Array.isArray(blogData.data)) {
           setBlogPosts(blogData.data);
         }

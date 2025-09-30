@@ -27,23 +27,35 @@ export function Hero() {
   const primaryHref = banner?.linkUrl ?? '/products';
   const secondaryLabel = banner?.secondaryButtonLabel ?? 'Xem dịch vụ';
   const secondaryHref = banner?.secondaryButtonUrl ?? '/services';
-  const stats: HeroStat[] = banner?.stats ?? [
-    {
-      label: 'Sản phẩm',
-      value: '500+',
-      description: 'Đa dạng thiết bị âm thanh chuyên nghiệp'
-    },
-    {
-      label: 'Khách hàng',
-      value: '1000+',
-      description: 'Đối tác tin tưởng và đồng hành'
-    },
-    {
-      label: 'Kinh nghiệm',
-      value: '5+ năm',
-      description: 'Thiết kế và thi công giải pháp âm thanh'
+  const stats: HeroStat[] = (() => {
+    if (banner?.stats) {
+      try {
+        const parsedStats = typeof banner.stats === 'string'
+          ? JSON.parse(banner.stats)
+          : banner.stats;
+        return Array.isArray(parsedStats) ? parsedStats : [];
+      } catch {
+        return [];
+      }
     }
-  ];
+    return [
+      {
+        label: 'Sản phẩm',
+        value: '500+',
+        description: 'Đa dạng thiết bị âm thanh chuyên nghiệp'
+      },
+      {
+        label: 'Khách hàng',
+        value: '1000+',
+        description: 'Đối tác tin tưởng và đồng hành'
+      },
+      {
+        label: 'Kinh nghiệm',
+        value: '5+ năm',
+        description: 'Thiết kế và thi công giải pháp âm thanh'
+      }
+    ];
+  })();
 
   if (isLoading) {
     return (

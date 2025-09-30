@@ -1,5 +1,5 @@
 import React from 'react';
-import { BlogArticle } from '@/lib/hooks/use-api';
+import { BlogArticle } from '@/lib/types';
 
 interface BlogStructuredDataProps {
   article: BlogArticle;
@@ -31,7 +31,7 @@ export function BlogStructuredData({ article }: BlogStructuredDataProps) {
       '@type': 'WebPage',
       '@id': `https://audiotailoc.com/blog/${article.slug}`,
     },
-    articleSection: article.category.name,
+    articleSection: article.category?.name,
     keywords: article.seoKeywords ? article.seoKeywords.split(',').map(k => k.trim()) : [],
     interactionStatistic: [
       {

@@ -12,9 +12,18 @@ export interface WishlistItem {
   product: {
     id: string;
     name: string;
+    slug: string;
     priceCents: number;
+    originalPriceCents?: number;
     imageUrl?: string;
     images?: string[];
+    isActive: boolean;
+    stockQuantity: number;
+    category?: {
+      id: string;
+      name: string;
+      slug: string;
+    };
   };
   createdAt: string;
 }
