@@ -93,6 +93,7 @@ export default function RegisterPage() {
       });
       router.push('/');
     } catch (error) {
+      console.error('Registration error:', error);
       // Error is handled by the mutation
     } finally {
       setIsLoading(false);

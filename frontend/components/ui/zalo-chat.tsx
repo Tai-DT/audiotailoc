@@ -18,7 +18,6 @@ export function ZaloChat({
   className = ''
 }: ZaloChatProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Load Zalo SDK if not already loaded

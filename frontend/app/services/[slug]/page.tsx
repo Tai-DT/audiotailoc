@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -38,7 +38,7 @@ const parseStringArray = (value: unknown): string[] => {
       if (Array.isArray(parsed)) {
         return parsed.map(item => String(item)).filter(Boolean);
       }
-    } catch (err) {
+    } catch {
       // Ignore JSON parse error and fallback to comma split
     }
 

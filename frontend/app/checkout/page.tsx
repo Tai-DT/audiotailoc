@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { useCart as useCartContext } from '@/components/providers/cart-provider';
 import {
   ArrowLeft,
@@ -22,10 +21,8 @@ import {
   Mail,
   User,
   CheckCircle,
-  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useCreateOrder } from '@/lib/hooks/use-api';
 import { apiClient } from '@/lib/api';
 
 interface ShippingInfo {
@@ -73,12 +70,10 @@ const paymentMethods: PaymentMethod[] = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items: cartItems, totalPrice, totalItems, clearCart } = useCartContext();
-  const createOrderMutation = useCreateOrder();
+  const { items: cartItems, totalPrice, clearCart } = useCartContext();
 
   const items = cartItems;
   const total = totalPrice;
-  const itemCount = totalItems;
   const [currentStep, setCurrentStep] = useState(1);
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     fullName: '',
