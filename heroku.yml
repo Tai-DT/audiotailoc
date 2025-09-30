@@ -7,5 +7,5 @@ build:
 run:
   web:
     image: web
-    command: |
-      npx prisma migrate deploy && npm start
+    command:
+      - npx prisma migrate deploy && npm start
