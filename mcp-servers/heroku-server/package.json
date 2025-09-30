@@ -1,0 +1,29 @@
+{
+  "name": "@audiotailoc/mcp-heroku-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Heroku deployment - specialized for AudioTailoc project",
+  "main": "dist/index.js",
+  "bin": {
+    "audiotailoc-mcp-heroku": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@audiotailoc/mcp-common": "1.0.0",
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["mcp", "heroku", "audiotailoc", "server"],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
