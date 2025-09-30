@@ -53,7 +53,7 @@ export default function ProfilePage() {
   React.useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.fullName || user.name || '',
+        fullName: user.name || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         address: '', // TODO: Add address field to user model
@@ -70,7 +70,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     try {
       await updateProfileMutation.mutateAsync({
-        fullName: formData.fullName,
+        name: formData.fullName,
         phone: formData.phone
       });
       setIsEditing(false);
@@ -82,7 +82,7 @@ export default function ProfilePage() {
   const handleCancelEdit = () => {
     if (user) {
       setFormData({
-        fullName: user.fullName || user.name || '',
+        fullName: user.name || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         address: '',
@@ -105,7 +105,7 @@ export default function ProfilePage() {
     );
   }
 
-  const displayName = user.fullName || user.name || user.email || 'Khách hàng';
+  const displayName = user.name || user.name || user.email || 'Khách hàng';
   const avatarFallback = (displayName.charAt(0) || '?').toUpperCase();
 
   return (
@@ -135,8 +135,8 @@ export default function ProfilePage() {
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start space-x-3 mb-2">
                     <h1 className="text-2xl font-bold">{displayName}</h1>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                      {user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
+                    <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                      {user.role === 'ADMIN' ? 'Quản trị viên' : 'Khách hàng'}
                     </Badge>
                   </div>
                   <p className="text-muted-foreground mb-4">{user.email}</p>
@@ -146,7 +146,7 @@ export default function ProfilePage() {
                       <Calendar className="w-4 h-4" />
                       <span>Tham gia {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
                     </div>
-                    {user.role === 'admin' && (
+                    {user.role === 'ADMIN' && (
                       <div className="flex items-center space-x-1">
                         <Shield className="w-4 h-4" />
                         <span>Quyền quản trị</span>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
                       ) : (
                         <div className="flex items-center space-x-2 p-2 border rounded">
                           <User className="w-4 h-4 text-muted-foreground" />
-                          <span>{user.fullName}</span>
+                          <span>{user.name}</span>
                         </div>
                       )}
                     </div>

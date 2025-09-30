@@ -22,7 +22,7 @@ export function FeaturedBlogSection() {
 
   const articles = articlesResponse?.data ?? [];
 
-  const getCategoryColor = (category: any) => {
+  const getCategoryColor = (category?: { slug?: string }) => {
     const slug = category?.slug;
     const colors: Record<string, string> = {
       'huong-dan-mua-hang': 'bg-blue-100 text-blue-800',

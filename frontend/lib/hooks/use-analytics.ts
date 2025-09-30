@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
-import type { DashboardOverview, CustomerAnalytics, InventoryAnalytics } from '@/lib/types';
+import type { DashboardOverview, CustomerAnalytics } from '@/lib/types';
 
 // Types
 export interface DashboardStats {
@@ -70,6 +70,15 @@ interface RecentActivities {
     email: string;
     createdAt: string;
   }>;
+}
+
+export interface InventoryAnalytics {
+  stockValue: number;
+  outOfStockItems: number;
+  lowStockItems: number;
+  inventoryTurnover: number;
+  stockLevels: Record<string, number>;
+  lastUpdated: string;
 }
 
 export interface BusinessKPIs {

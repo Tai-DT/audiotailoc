@@ -29,18 +29,18 @@ export default function ProductsPage() {
     sortOrder: 'desc'
   });
 
-  const { data, isLoading, error } = useProducts(filters);
-  const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const { data, isLoading } = useProducts(filters);
+  const { data: categories } = useCategories();
 
   const handleFiltersChange = (newFilters: Partial<ProductFilters>) => {
     setFilters((prev: ProductFilters) => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (page: number) => {
-    setFilters((prev: ProductFilters) => ({ ...prev, page }));
+    handleFiltersChange({ page });
   };
 
-  const handleAddToCart = (productId: string) => {
+  const handleAddToCart = async (productId: string) => {
     const product = data?.items.find((item) => item.id === productId);
 
     if (!product) {
@@ -50,14 +50,16 @@ export default function ProductsPage() {
 
     try {
       addCartItem({
-        productId: product.id,
-        quantity: 1,
-        price: product.priceCents,
+        id: product.id,
         name: product.name,
-        imageUrl: product.imageUrl,
-      });
+        price: product.priceCents / 100, // Convert cents to VND
+        image: product.imageUrl || '',
+        category: product.category?.name || 'Uncategorized',
+        description: product.shortDescription || product.description,
+      }, 1);
       toast.success('Đã thêm sản phẩm vào giỏ hàng');
     } catch (error) {
+      console.error('Error adding to cart:', error);
       toast.error('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
     }
   };
@@ -149,7 +151,10 @@ export default function ProductsPage() {
                 value={`${filters.sortBy}-${filters.sortOrder}`}
                 onValueChange={(value) => {
                   const [sortBy, sortOrder] = value.split('-');
-                  handleFiltersChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
+                  handleFiltersChange({ 
+                    sortBy: sortBy as 'createdAt' | 'name' | 'price' | 'updatedAt' | 'viewCount', 
+                    sortOrder: sortOrder as 'asc' | 'desc' 
+                  });
                 }}
               >
                 <SelectTrigger className="w-48">
@@ -185,11 +190,6 @@ export default function ProductsPage() {
             products={data?.items || []}
             loading={isLoading}
             onAddToCart={handleAddToCart}
-            pagination={{
-              currentPage: filters.page || 1,
-              totalPages: data?.totalPages || 1,
-              onPageChange: handlePageChange,
-            }}
           />
         </div>
       </section>
