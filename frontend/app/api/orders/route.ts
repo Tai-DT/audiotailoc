@@ -22,7 +22,8 @@ const resolveBackendBaseUrl = (): string => {
 
 export async function POST(request: NextRequest) {
   const backendBaseUrl = resolveBackendBaseUrl();
-  const targetUrl = new URL('/orders', `${backendBaseUrl}/`);
+  // Use relative path without leading slash to preserve base path
+  const targetUrl = new URL('orders', `${backendBaseUrl}/`);
 
   try {
     const body = await request.json();
@@ -61,7 +62,8 @@ export async function GET(request: NextRequest) {
   const backendBaseUrl = resolveBackendBaseUrl();
   const orderId = request.nextUrl.searchParams.get('id');
 
-  const path = orderId ? `/orders/${orderId}` : '/orders';
+  // Use relative path without leading slash to preserve base path
+  const path = orderId ? `orders/${orderId}` : 'orders';
   const targetUrl = new URL(path, `${backendBaseUrl}/`);
 
   if (!orderId) {

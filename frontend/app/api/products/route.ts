@@ -22,7 +22,11 @@ const resolveBackendBaseUrl = (): string => {
 
 export async function GET(request: NextRequest) {
   const backendBaseUrl = resolveBackendBaseUrl();
-  const targetUrl = new URL('/catalog/products', `${backendBaseUrl}/`);
+  // Use a relative path here (no leading slash). If we pass an absolute
+  // path (starting with '/'), the URL constructor will replace the entire
+  // pathname and drop any base path like '/api/v1'. Using 'catalog/products'
+  // preserves the base path stored in `backendBaseUrl`.
+  const targetUrl = new URL('catalog/products', `${backendBaseUrl}/`);
 
   request.nextUrl.searchParams.forEach((value, key) => {
     targetUrl.searchParams.set(key, value);
