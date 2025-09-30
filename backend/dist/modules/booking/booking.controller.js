@@ -23,145 +23,53 @@ let BookingController = class BookingController {
     constructor(bookingService) {
         this.bookingService = bookingService;
     }
-    async createBooking(createBookingDto) {
-        return this.bookingService.createBooking({
-            ...createBookingDto,
-            scheduledAt: new Date(createBookingDto.scheduledAt),
-        });
+    async findAll(query) {
+        return this.bookingService.findAll();
     }
-    async getBookings(query) {
-        return this.bookingService.getBookings({
-            status: query.status,
-            technicianId: query.technicianId,
-            userId: query.userId,
-            serviceId: query.serviceId,
-            fromDate: query.fromDate ? new Date(query.fromDate) : undefined,
-            toDate: query.toDate ? new Date(query.toDate) : undefined,
-            page: query.page ? parseInt(query.page) : undefined,
-            pageSize: query.pageSize ? parseInt(query.pageSize) : undefined,
-        });
+    async findOne(id) {
+        return this.bookingService.findOne(id);
     }
-    async getBookingStats(query) {
-        return this.bookingService.getBookingStats({
-            fromDate: query.fromDate ? new Date(query.fromDate) : undefined,
-            toDate: query.toDate ? new Date(query.toDate) : undefined,
-            technicianId: query.technicianId,
-        });
+    async updateStatus(id, updateStatusDto) {
+        return this.bookingService.updateStatus(id, updateStatusDto.status);
     }
-    async getBooking(id) {
-        return this.bookingService.getBooking(id);
-    }
-    async updateBooking(id, updateData) {
-        return this.bookingService.updateBooking(id, {
-            ...updateData,
-            scheduledAt: updateData.scheduledAt ? new Date(updateData.scheduledAt) : undefined,
-        });
-    }
-    async updateBookingStatus(id, updateStatusDto) {
-        return this.bookingService.updateBookingStatus(id, updateStatusDto.status, updateStatusDto.note, updateStatusDto.changedBy);
-    }
-    async assignTechnician(id, assignDto) {
-        return this.bookingService.assignTechnician(id, assignDto.technicianId, assignDto.note);
-    }
-    async rescheduleBooking(id, rescheduleDto) {
-        return this.bookingService.rescheduleBooking(id, new Date(rescheduleDto.newDate), rescheduleDto.newTime, rescheduleDto.note);
-    }
-    async cancelBooking(id, cancelDto) {
-        return this.bookingService.cancelBooking(id, cancelDto.reason);
-    }
-    async createPayment(bookingId, createPaymentDto) {
-        return this.bookingService.createPayment(bookingId, createPaymentDto);
+    async createPayment(createPaymentDto) {
+        return this.bookingService.createPayment(createPaymentDto.bookingId || '', createPaymentDto);
     }
     async updatePaymentStatus(paymentId, updatePaymentDto) {
-        return this.bookingService.updatePaymentStatus(paymentId, updatePaymentDto.status, updatePaymentDto.transactionId);
+        return this.bookingService.updatePaymentStatus(paymentId, updatePaymentDto.status);
     }
 };
 exports.BookingController = BookingController;
-__decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "createBooking", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], BookingController.prototype, "getBookings", null);
-__decorate([
-    (0, common_1.Get)('stats'),
-    __param(0, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "getBookingStats", null);
+], BookingController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], BookingController.prototype, "getBooking", null);
-__decorate([
-    (0, common_1.Put)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update booking details' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Booking updated' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "updateBooking", null);
+], BookingController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':id/status'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update booking status' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Booking updated' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, update_booking_status_dto_1.UpdateBookingStatusDto]),
     __metadata("design:returntype", Promise)
-], BookingController.prototype, "updateBookingStatus", null);
+], BookingController.prototype, "updateStatus", null);
 __decorate([
-    (0, common_1.Put)(':id/assign'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    (0, common_1.Post)('payments'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "assignTechnician", null);
-__decorate([
-    (0, common_1.Put)(':id/reschedule'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "rescheduleBooking", null);
-__decorate([
-    (0, common_1.Put)(':id/cancel'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], BookingController.prototype, "cancelBooking", null);
-__decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a booking payment' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Payment created' }),
-    (0, common_1.Post)(':id/payments'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, create_payment_dto_1.CreatePaymentDto]),
+    __metadata("design:paramtypes", [create_payment_dto_1.CreatePaymentDto]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "createPayment", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Update payment status' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Payment updated' }),
     (0, common_1.Put)('payments/:paymentId/status'),
     __param(0, (0, common_1.Param)('paymentId')),
     __param(1, (0, common_1.Body)()),

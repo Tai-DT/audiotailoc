@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Response } from 'express';
 import { MonitoringService } from './monitoring.service';
 export declare class MonitoringController {

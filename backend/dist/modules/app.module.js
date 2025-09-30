@@ -14,7 +14,6 @@ const app_controller_1 = require("./app.controller");
 const logger_module_1 = require("./logger/logger.module");
 const prisma_module_1 = require("../prisma/prisma.module");
 const cache_module_1 = require("./caching/cache.module");
-const testing_module_1 = require("./testing/testing.module");
 const auth_module_1 = require("./auth/auth.module");
 const shared_module_1 = require("./shared/shared.module");
 const users_module_1 = require("./users/users.module");
@@ -52,7 +51,6 @@ const runtimeImports = [
     }),
     prisma_module_1.PrismaModule,
     health_module_1.HealthModule,
-    testing_module_1.TestingModule,
     auth_module_1.AuthModule,
     shared_module_1.SharedModule,
     users_module_1.UsersModule,

@@ -25,10 +25,10 @@ export declare class TechniciansService {
         id: string;
         email: string;
         name: string;
-        phone: string;
+        phone: string | null;
         createdAt: Date;
         isActive: boolean;
-        specialties: string;
+        specialties: string | null;
     }>;
     getTechnicians(params: {
         isActive?: boolean;
@@ -56,10 +56,10 @@ export declare class TechniciansService {
             id: string;
             email: string;
             name: string;
-            phone: string;
+            phone: string | null;
             createdAt: Date;
             isActive: boolean;
-            specialties: string;
+            specialties: string | null;
         })[];
     }>;
     getTechnician(id: string): Promise<{
@@ -72,27 +72,27 @@ export declare class TechniciansService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tags: string;
-                description: string;
-                type: string;
+                tags: string | null;
+                description: string | null;
+                type: string | null;
                 duration: number;
                 slug: string;
-                shortDescription: string;
-                features: string;
-                images: string;
+                shortDescription: string | null;
+                images: string | null;
+                features: string | null;
                 isActive: boolean;
-                isFeatured: boolean;
                 viewCount: number;
                 price: number;
-                metadata: string;
+                minPrice: number | null;
+                maxPrice: number | null;
+                metadata: string | null;
                 basePriceCents: number;
-                minPrice: number;
-                maxPrice: number;
                 priceType: string;
-                typeId: string;
-                seoTitle: string;
-                seoDescription: string;
-                requirements: string;
+                typeId: string | null;
+                isFeatured: boolean;
+                seoTitle: string | null;
+                seoDescription: string | null;
+                requirements: string | null;
             };
         } & {
             status: string;
@@ -100,14 +100,14 @@ export declare class TechniciansService {
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            scheduledAt: Date;
-            notes: string;
+            scheduledAt: Date | null;
+            notes: string | null;
             serviceId: string;
-            technicianId: string;
-            scheduledTime: string;
-            completedAt: Date;
-            estimatedCosts: number;
-            actualCosts: number;
+            technicianId: string | null;
+            scheduledTime: string | null;
+            completedAt: Date | null;
+            estimatedCosts: number | null;
+            actualCosts: number | null;
         })[];
         schedules: {
             id: string;
@@ -122,10 +122,10 @@ export declare class TechniciansService {
         id: string;
         email: string;
         name: string;
-        phone: string;
+        phone: string | null;
         createdAt: Date;
         isActive: boolean;
-        specialties: string;
+        specialties: string | null;
     }>;
     updateTechnician(id: string, data: Partial<{
         name: string;
@@ -150,19 +150,19 @@ export declare class TechniciansService {
         id: string;
         email: string;
         name: string;
-        phone: string;
+        phone: string | null;
         createdAt: Date;
         isActive: boolean;
-        specialties: string;
+        specialties: string | null;
     }>;
     deleteTechnician(id: string): Promise<{
         id: string;
         email: string;
         name: string;
-        phone: string;
+        phone: string | null;
         createdAt: Date;
         isActive: boolean;
-        specialties: string;
+        specialties: string | null;
     }>;
     setTechnicianSchedule(technicianId: string, schedules: Array<{
         date: Date;
@@ -197,10 +197,10 @@ export declare class TechniciansService {
         id: string;
         email: string;
         name: string;
-        phone: string;
+        phone: string | null;
         createdAt: Date;
         isActive: boolean;
-        specialties: string;
+        specialties: string | null;
     })[]>;
     getTechnicianWorkload(technicianId: string, params: {
         fromDate?: Date;

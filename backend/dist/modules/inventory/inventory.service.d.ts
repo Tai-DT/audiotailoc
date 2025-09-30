@@ -24,12 +24,12 @@ export declare class InventoryService {
                 id: string;
                 name: string;
                 slug: string;
-                isActive: boolean;
-                isDeleted: boolean;
                 priceCents: number;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;
+                isActive: boolean;
+                isDeleted: boolean;
             };
         } & {
             id: string;
@@ -79,9 +79,9 @@ export declare class InventoryService {
         orphanedInventoriesList: ({
             product: {
                 name: string;
+                sku: string;
                 isActive: boolean;
                 isDeleted: boolean;
-                sku: string;
             };
         } & {
             id: string;
