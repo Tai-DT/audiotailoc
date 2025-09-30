@@ -7,21 +7,21 @@ RUN apk add --no-cache curl
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY yarn.lock ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
+COPY backend/yarn.lock ./
 
 # Install dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Copy Prisma schema first
-COPY prisma ./prisma/
+# Copy Prisma schema from backend directory
+COPY backend/prisma ./prisma/
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy source code
-COPY . .
+# Copy source code from backend directory
+COPY backend/ .
 
 # Build the application
 RUN npm run build
