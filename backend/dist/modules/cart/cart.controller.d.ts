@@ -16,27 +16,27 @@ export declare class CartController {
             product: {
                 id: string;
                 name: string;
-                images: string;
                 priceCents: number;
                 imageUrl: string;
+                images: string;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            price: number;
+            cartId: string;
             productId: string;
             quantity: number;
-            cartId: string;
-            price: number;
         })[];
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        guestId: string;
-        expiresAt: Date;
+        userId: string | null;
+        guestId: string | null;
+        expiresAt: Date | null;
     }>;
     getGuestCart(cartId: string): Promise<any>;
     addToGuestCart(cartId: string, addToCartDto: AddToCartDto): Promise<any>;

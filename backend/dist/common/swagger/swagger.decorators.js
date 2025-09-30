@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApiFileUploadEndpoint = exports.ApiDeleteEndpoint = exports.ApiUpdateEndpoint = exports.ApiCreateEndpoint = exports.ApiGetByIdEndpoint = exports.ApiListEndpoint = void 0;
+exports.ApiListEndpoint = ApiListEndpoint;
+exports.ApiGetByIdEndpoint = ApiGetByIdEndpoint;
+exports.ApiCreateEndpoint = ApiCreateEndpoint;
+exports.ApiUpdateEndpoint = ApiUpdateEndpoint;
+exports.ApiDeleteEndpoint = ApiDeleteEndpoint;
+exports.ApiFileUploadEndpoint = ApiFileUploadEndpoint;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const swagger_constants_1 = require("./swagger.constants");
@@ -88,7 +93,6 @@ function ApiListEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiListEndpoint = ApiListEndpoint;
 function ApiGetByIdEndpoint(options) {
     const decorators = [
         (0, swagger_1.ApiOperation)({
@@ -127,7 +131,6 @@ function ApiGetByIdEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiGetByIdEndpoint = ApiGetByIdEndpoint;
 function ApiCreateEndpoint(options) {
     const decorators = [
         (0, swagger_1.ApiOperation)({
@@ -168,7 +171,6 @@ function ApiCreateEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiCreateEndpoint = ApiCreateEndpoint;
 function ApiUpdateEndpoint(options) {
     const decorators = [
         (0, swagger_1.ApiOperation)({
@@ -219,7 +221,6 @@ function ApiUpdateEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiUpdateEndpoint = ApiUpdateEndpoint;
 function ApiDeleteEndpoint(options) {
     const decorators = [
         (0, swagger_1.ApiOperation)({
@@ -263,7 +264,6 @@ function ApiDeleteEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiDeleteEndpoint = ApiDeleteEndpoint;
 function ApiFileUploadEndpoint(options) {
     const decorators = [
         (0, swagger_1.ApiOperation)({
@@ -320,5 +320,4 @@ function ApiFileUploadEndpoint(options) {
     }
     return (0, common_1.applyDecorators)(...decorators);
 }
-exports.ApiFileUploadEndpoint = ApiFileUploadEndpoint;
 //# sourceMappingURL=swagger.decorators.js.map

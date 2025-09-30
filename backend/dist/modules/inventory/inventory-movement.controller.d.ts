@@ -27,16 +27,16 @@ export declare class InventoryMovementController {
     } & {
         id: string;
         createdAt: Date;
-        userId: string;
+        userId: string | null;
         type: string;
+        reason: string | null;
         productId: string;
         quantity: number;
         previousStock: number;
         newStock: number;
-        reason: string;
-        referenceId: string;
-        referenceType: string;
-        notes: string;
+        referenceId: string | null;
+        referenceType: string | null;
+        notes: string | null;
     }>;
     findAll(page?: string, pageSize?: string, productId?: string, type?: string, userId?: string, startDate?: string, endDate?: string): Promise<{
         total: number;
@@ -60,16 +60,16 @@ export declare class InventoryMovementController {
         } & {
             id: string;
             createdAt: Date;
-            userId: string;
+            userId: string | null;
             type: string;
+            reason: string | null;
             productId: string;
             quantity: number;
             previousStock: number;
             newStock: number;
-            reason: string;
-            referenceId: string;
-            referenceType: string;
-            notes: string;
+            referenceId: string | null;
+            referenceType: string | null;
+            notes: string | null;
         })[];
     }>;
     findByProduct(productId: string, page?: string, pageSize?: string): Promise<{
@@ -90,16 +90,16 @@ export declare class InventoryMovementController {
         } & {
             id: string;
             createdAt: Date;
-            userId: string;
+            userId: string | null;
             type: string;
+            reason: string | null;
             productId: string;
             quantity: number;
             previousStock: number;
             newStock: number;
-            reason: string;
-            referenceId: string;
-            referenceType: string;
-            notes: string;
+            referenceId: string | null;
+            referenceType: string | null;
+            notes: string | null;
         })[];
     }>;
     getSummary(productId?: string, startDate?: string, endDate?: string): Promise<{

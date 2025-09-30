@@ -25,10 +25,10 @@ export declare class InventoryAlertController {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     findAll(page?: string, pageSize?: string, productId?: string, type?: string, isResolved?: string, startDate?: string, endDate?: string): Promise<{
         total: number;
@@ -51,10 +51,10 @@ export declare class InventoryAlertController {
             updatedAt: Date;
             type: string;
             productId: string;
-            threshold: number;
+            threshold: number | null;
             currentStock: number;
             isResolved: boolean;
-            resolvedAt: Date;
+            resolvedAt: Date | null;
         })[];
     }>;
     findByProduct(productId: string, page?: string, pageSize?: string): Promise<{
@@ -78,10 +78,10 @@ export declare class InventoryAlertController {
             updatedAt: Date;
             type: string;
             productId: string;
-            threshold: number;
+            threshold: number | null;
             currentStock: number;
             isResolved: boolean;
-            resolvedAt: Date;
+            resolvedAt: Date | null;
         })[];
     }>;
     getActiveAlerts(): Promise<({
@@ -101,10 +101,10 @@ export declare class InventoryAlertController {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     })[]>;
     getAlertSummary(): Promise<{
         total: number;
@@ -125,10 +125,10 @@ export declare class InventoryAlertController {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     bulkResolve(data: {
         ids: string[];
@@ -141,10 +141,10 @@ export declare class InventoryAlertController {
         updatedAt: Date;
         type: string;
         productId: string;
-        threshold: number;
+        threshold: number | null;
         currentStock: number;
         isResolved: boolean;
-        resolvedAt: Date;
+        resolvedAt: Date | null;
     }>;
     bulkDelete(data: {
         ids: string[];

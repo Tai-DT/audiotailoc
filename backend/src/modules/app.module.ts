@@ -7,7 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 
 // Global modules
 import { CacheModule } from './caching/cache.module';
-import { TestingModule } from './testing/testing.module';
+// import { TestingModule } from './testing/testing.module';
 
 // Authentication modules
 import { AuthModule } from './auth/auth.module';
@@ -65,7 +65,7 @@ const runtimeImports = [
     }), // Global cache service
     PrismaModule, 
     HealthModule,
-    TestingModule, // Testing utilities
+    // TestingModule, // Testing utilities
     
     // Authentication - CORE ONLY
     AuthModule,

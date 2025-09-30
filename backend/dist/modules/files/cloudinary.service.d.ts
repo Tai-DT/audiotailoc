@@ -1,5 +1,3 @@
-/// <reference types="node" />
-/// <reference types="node" />
 import { ConfigService } from '@nestjs/config';
 import { UploadApiResponse, UploadApiOptions } from 'cloudinary';
 export declare class CloudinaryService {
