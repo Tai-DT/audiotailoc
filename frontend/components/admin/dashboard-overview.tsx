@@ -2,26 +2,21 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   Package, 
   ShoppingCart, 
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
-import { useDashboardStats, useRealtimeSales, useRealtimeOrders } from '@/lib/hooks/use-analytics';
+import { useDashboardStats } from '@/lib/hooks/use-analytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardOverview() {
   const { data: dashboardStats, isLoading: isLoadingStats } = useDashboardStats();
-  const { data: realtimeSales, isLoading: isLoadingSales } = useRealtimeSales();
-  const { data: realtimeOrders, isLoading: isLoadingOrders } = useRealtimeOrders();
 
-  const isLoading = isLoadingStats || isLoadingSales || isLoadingOrders;
+  const isLoading = isLoadingStats;
   const dashboard = dashboardStats?.overview;
 
   const formatCurrency = (cents: number) => {

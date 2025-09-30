@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -223,9 +224,11 @@ export default function BlogDetailPage() {
 
               {article.imageUrl && (
                 <div className="mb-8">
-                  <img
+                  <Image
                     src={article.imageUrl}
                     alt={article.title}
+                    width={800}
+                    height={400}
                     className="w-full rounded-lg object-cover"
                   />
                 </div>

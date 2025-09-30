@@ -45,7 +45,7 @@ async function getProducts(): Promise<Product[]> {
       params: { page: 1, limit: 1000, isActive: true }
     });
     const data = handleApiResponse<PaginatedResponse<Product>>(response);
-    return data.items;
+    return Array.isArray(data?.items) ? data.items : [];
   } catch (error) {
     console.error('Failed to fetch products for sitemap:', error);
     return [];
@@ -58,7 +58,7 @@ async function getServices(): Promise<Service[]> {
       params: { page: 1, limit: 1000, isActive: true }
     });
     const data = handleApiResponse<PaginatedResponse<Service>>(response);
-    return data.items;
+    return Array.isArray(data?.items) ? data.items : [];
   } catch (error) {
     console.error('Failed to fetch services for sitemap:', error);
     return [];
@@ -71,7 +71,7 @@ async function getProjects(): Promise<Project[]> {
       params: { page: 1, limit: 1000, isPublished: true }
     });
     const data = handleApiResponse<PaginatedResponse<Project>>(response);
-    return data.items;
+    return Array.isArray(data?.items) ? data.items : [];
   } catch (error) {
     console.error('Failed to fetch projects for sitemap:', error);
     return [];
@@ -84,7 +84,7 @@ async function getArticles(): Promise<KnowledgeBaseArticle[]> {
       params: { page: 1, limit: 1000, published: true }
     });
     const data = handleApiResponse<PaginatedResponse<KnowledgeBaseArticle>>(response);
-    return data.items;
+    return Array.isArray(data?.items) ? data.items : [];
   } catch (error) {
     console.error('Failed to fetch articles for sitemap:', error);
     return [];
@@ -97,7 +97,7 @@ async function getBlogArticles(): Promise<BlogArticle[]> {
       params: { page: 1, limit: 1000, published: true }
     });
     const data = handleApiResponse<PaginatedBlogResponse<BlogArticle>>(response);
-    return data?.data || [];
+    return Array.isArray(data?.data) ? data.data : [];
   } catch (error) {
     console.error('Failed to fetch blog articles for sitemap:', error);
     return [];

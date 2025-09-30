@@ -1,16 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: __dirname,
-  },
+  // Remove turbopack config to avoid conflict with outputFileTracingRoot
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:3010/api/:path*',
-      },
-    ];
+    // Only use rewrites in development
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:3010/api/:path*',
+        },
+      ];
+    }
+    return [];
   },
   serverExternalPackages: ['axios'],
   images: {

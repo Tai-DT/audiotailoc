@@ -12,9 +12,6 @@ import {
   Clock,
   Home,
   ShoppingBag,
-  Truck,
-  Phone,
-  Mail,
   RefreshCw,
   ArrowLeft
 } from 'lucide-react';

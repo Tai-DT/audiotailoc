@@ -81,7 +81,7 @@ async function bootstrap() {
   }));
 
   // Enhanced CORS configuration
-  const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002');
+  const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
   const allowedOrigins = corsOrigins.split(',').map((origin: string) => origin.trim());
 
   app.enableCors({
@@ -98,7 +98,19 @@ async function bootstrap() {
         return callback(null, true);
       }
 
+      // Check exact match first
       if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } 
+      // Check wildcard patterns for Vercel domains
+      else if (allowedOrigins.some(allowedOrigin => {
+        if (allowedOrigin.includes('*')) {
+          const pattern = allowedOrigin.replace('*', '.*');
+          const regex = new RegExp(pattern);
+          return regex.test(origin);
+        }
+        return false;
+      })) {
         callback(null, true);
       } else {
         logger.warn(`CORS blocked request from: ${origin}`);

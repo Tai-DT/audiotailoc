@@ -10,7 +10,6 @@ import {
   X,
   User,
   LogOut,
-  Settings,
   Phone,
   Mail,
   Clock,

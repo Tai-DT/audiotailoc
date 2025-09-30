@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Search,
   BookOpen,
@@ -8,7 +9,6 @@ import {
   MessageSquare,
   Phone,
   Mail,
-  Clock,
   Send,
   FileText
 } from 'lucide-react';
@@ -17,8 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { apiClient, handleApiResponse, handleApiError } from '@/lib/api';
-import { toast } from 'sonner';
+import { apiClient, handleApiResponse } from '@/lib/api';
 
 interface FAQ {
   id: string;
@@ -144,7 +143,7 @@ export default function SupportPage() {
         if (faqsData) {
           setFaqs(faqsData);
         }
-      } catch (error) {
+      } catch {
         console.log('Using default FAQs data');
       }
 
@@ -154,7 +153,7 @@ export default function SupportPage() {
         if (blogData?.data && Array.isArray(blogData.data)) {
           setBlogPosts(blogData.data);
         }
-      } catch (error) {
+      } catch {
         console.log('Using default blog data');
       }
 
@@ -260,9 +259,11 @@ export default function SupportPage() {
                       <div className="flex items-start gap-3 mb-3">
                         {post.imageUrl && (
                           <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            <img
+                            <Image
                               src={post.imageUrl}
                               alt={post.title}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';

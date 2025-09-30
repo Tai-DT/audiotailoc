@@ -6,8 +6,7 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Play, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBanners } from '@/lib/hooks/use-banners';
-import type { Banner } from '@/lib/types';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MotionWrapper, HoverMotionWrapper } from '@/components/ui/motion-wrapper';
 
 interface HeroStat {
@@ -16,36 +15,9 @@ interface HeroStat {
   description: string;
 }
 
-// Animation variants for smooth transitions
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 300 : -300,
-    opacity: 0,
-    scale: 0.8
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-    scale: 1
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 300 : -300,
-    opacity: 0,
-    scale: 0.8
-  })
-};
-
-const swipeConfidenceThreshold = 10000;
-const swipePower = (offset: number, velocity: number) => {
-  return Math.abs(offset) * velocity;
-};
-
 export function BannerCarousel() {
   const { data: banners, isLoading } = useBanners({ page: 'home', activeOnly: true });
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   const activeBanners = banners || [];
@@ -55,7 +27,6 @@ export function BannerCarousel() {
     if (activeBanners.length <= 1 || !isAutoPlaying) return;
 
     const interval = setInterval(() => {
-      setDirection(1);
       setCurrentIndex((prevIndex) =>
         prevIndex === activeBanners.length - 1 ? 0 : prevIndex + 1
       );
@@ -65,29 +36,15 @@ export function BannerCarousel() {
   }, [activeBanners.length, isAutoPlaying]);
 
   const goToPrevious = () => {
-    setDirection(-1);
     setCurrentIndex(currentIndex === 0 ? activeBanners.length - 1 : currentIndex - 1);
   };
 
   const goToNext = () => {
-    setDirection(1);
     setCurrentIndex(currentIndex === activeBanners.length - 1 ? 0 : currentIndex + 1);
   };
 
   const goToSlide = (index: number) => {
-    setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index);
-  };
-
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    setCurrentIndex((prevIndex) => {
-      if (newDirection === 1) {
-        return prevIndex === activeBanners.length - 1 ? 0 : prevIndex + 1;
-      } else {
-        return prevIndex === 0 ? activeBanners.length - 1 : prevIndex - 1;
-      }
-    });
   };
 
   if (isLoading) {

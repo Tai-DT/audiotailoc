@@ -166,7 +166,7 @@ export function FeaturedProjects() {
                       technologies = typeof project.technologies === 'string' 
                         ? JSON.parse(project.technologies) 
                         : project.technologies || [];
-                    } catch (e) {
+                    } catch {
                       technologies = [];
                     }
                     return technologies && technologies.length > 0 && (

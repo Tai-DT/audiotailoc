@@ -52,9 +52,9 @@ async function getProducts(): Promise<Product[]> {
       params: { page: 1, limit: 1000, isActive: true }
     });
     const data = handleApiResponse<PaginatedResponse<Product>>(response);
-    return data.items;
-  } catch {
-    console.warn('Products API not available during build, skipping products in sitemap');
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch (error) {
+    console.warn('Products API not available during build, skipping products in sitemap:', error);
     return [];
   }
 }
@@ -65,9 +65,9 @@ async function getServices(): Promise<Service[]> {
       params: { page: 1, limit: 1000, isActive: true }
     });
     const data = handleApiResponse<PaginatedResponse<Service>>(response);
-    return data.items;
-  } catch {
-    console.warn('Services API not available during build, skipping services in sitemap');
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch (error) {
+    console.warn('Services API not available during build, skipping services in sitemap:', error);
     return [];
   }
 }
@@ -78,9 +78,9 @@ async function getProjects(): Promise<Project[]> {
       params: { page: 1, limit: 1000, isPublished: true }
     });
     const data = handleApiResponse<PaginatedResponse<Project>>(response);
-    return data.items;
-  } catch {
-    console.warn('Projects API not available during build, skipping projects in sitemap');
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch (error) {
+    console.warn('Projects API not available during build, skipping projects in sitemap:', error);
     return [];
   }
 }
@@ -91,9 +91,9 @@ async function getArticles(): Promise<KnowledgeBaseArticle[]> {
       params: { page: 1, limit: 1000, published: true }
     });
     const data = handleApiResponse<PaginatedResponse<KnowledgeBaseArticle>>(response);
-    return data.items;
-  } catch {
-    console.warn('Knowledge base articles API not available during build, skipping articles in sitemap');
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch (error) {
+    console.warn('Knowledge base articles API not available during build, skipping articles in sitemap:', error);
     return [];
   }
 }
@@ -104,9 +104,9 @@ async function getBlogArticles(): Promise<BlogArticle[]> {
       params: { page: 1, limit: 1000, published: true }
     });
     const data = handleApiResponse<PaginatedBlogResponse<BlogArticle>>(response);
-    return data?.data || [];
-  } catch {
-    console.warn('Blog articles API not available during build, skipping blog articles in sitemap');
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.warn('Blog articles API not available during build, skipping blog articles in sitemap:', error);
     return [];
   }
 }
@@ -132,41 +132,41 @@ export async function GET() {
   const blogArticles = await getBlogArticles();
   const articles = await getArticles();
 
-  const productPages = (products || []).map((product) => ({
+  const productPages = Array.isArray(products) ? products.map((product) => ({
     url: `${baseUrl}/products/${product.id}`,
     lastmod: product.updatedAt,
     priority: 0.8,
     changefreq: 'weekly',
-  }));
+  })) : [];
 
-  const servicePages = (services || []).map((service) => ({
+  const servicePages = Array.isArray(services) ? services.map((service) => ({
     url: `${baseUrl}/services/${service.slug}`,
     lastmod: service.updatedAt,
     priority: 0.8,
     changefreq: 'weekly',
-  }));
+  })) : [];
 
-  const projectPages = (projects || []).map((project) => ({
+  const projectPages = Array.isArray(projects) ? projects.map((project) => ({
     url: `${baseUrl}/projects/${project.slug}`,
     lastmod: project.updatedAt,
     priority: 0.7,
     changefreq: 'monthly',
-  }));
+  })) : [];
 
-  const blogArticlePages = (blogArticles || []).filter((article) => article.status === 'PUBLISHED')
+  const blogArticlePages = Array.isArray(blogArticles) ? blogArticles.filter((article) => article.status === 'PUBLISHED')
     .map((article) => ({
       url: `${baseUrl}/blog/${article.slug}`,
       lastmod: article.updatedAt,
       priority: 0.7,
       changefreq: 'weekly',
-    }));
+    })) : [];
 
-  const articlePages = (articles || []).map((article) => ({
+  const articlePages = Array.isArray(articles) ? articles.map((article) => ({
     url: `${baseUrl}/blog/${article.id}`,
     lastmod: article.updatedAt,
     priority: 0.6,
     changefreq: 'monthly',
-  }));  const allPages: SitemapEntry[] = [
+  })) : [];  const allPages: SitemapEntry[] = [
     ...staticPages,
     ...productPages,
     ...servicePages,
