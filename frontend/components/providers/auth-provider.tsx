@@ -289,7 +289,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_SUCCESS', payload: data.user });
       toast.success('Đăng nhập thành công!');
     } catch (error) {
-      const { message } = handleApiError(error);
+      const { message } = handleApiError(error as { response?: { data?: { message?: string }; status?: number }; message?: string });
       dispatch({ type: 'AUTH_ERROR', payload: message });
       toast.error(message);
     }
@@ -324,7 +324,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_SUCCESS', payload: data.user });
       toast.success('Đăng ký thành công!');
     } catch (error) {
-      const { message } = handleApiError(error);
+      const { message } = handleApiError(error as { response?: { data?: { message?: string }; status?: number }; message?: string });
       dispatch({ type: 'AUTH_ERROR', payload: message });
       toast.error(message);
     }
@@ -357,7 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'UPDATE_PROFILE', payload: data.user });
       toast.success('Cập nhật thông tin thành công!');
     } catch (error) {
-      const { message } = handleApiError(error);
+      const { message } = handleApiError(error as { response?: { data?: { message?: string }; status?: number }; message?: string });
       dispatch({ type: 'AUTH_ERROR', payload: message });
       toast.error(message);
     }

@@ -15,19 +15,6 @@ import { Promotion } from '@/lib/types';
 export default function PromotionsPage() {
   const { data, isLoading, error } = usePromotions({ active: true });
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Page Banner */}
-      <PageBanner
-        page="promotions"
-        title="Chương trình khuyến mãi"
-        subtitle="Ưu đãi đặc biệt"
-        description="Khám phá các chương trình khuyến mãi hấp dẫn từ Audio Tài Lộc. Giảm giá đặc biệt, quà tặng kèm theo và nhiều ưu đãi khác đang chờ đón bạn."
-        showStats={true}
-      />
-export default function PromotionsPage() {
-  const { data, isLoading, error } = usePromotions({ active: true });
-
   const handleCopyCode = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
@@ -119,6 +106,14 @@ export default function PromotionsPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
+        {/* Page Banner */}
+        <PageBanner
+          page="promotions"
+          title="Chương trình khuyến mãi"
+          subtitle="Ưu đãi đặc biệt"
+          description="Khám phá các chương trình khuyến mãi hấp dẫn từ Audio Tài Lộc. Giảm giá đặc biệt, quà tặng kèm theo và nhiều ưu đãi khác đang chờ đón bạn."
+          showStats={true}
+        />
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
           <div className="container mx-auto px-4">

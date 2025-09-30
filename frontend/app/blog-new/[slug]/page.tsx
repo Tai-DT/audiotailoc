@@ -20,20 +20,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useBlogArticleBySlug, useBlogCategories, BlogArticle } from '@/lib/hooks/use-api';
+import { useBlogArticleBySlug } from '@/lib/hooks/use-api';
+import { BlogArticle } from '@/lib/types';
 import { BlogStructuredData } from '@/components/seo/blog-article-structured-data';
 
-interface BlogDetailPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export default function BlogDetailPage({ params }: BlogDetailPageProps) {
-  const { data: article, isLoading } = useBlogArticleBySlug(params.slug);
-  const { data: categoriesData } = useBlogCategories({ published: true });
-
-  const categories = categoriesData?.data || [];
+export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = React.use(params);
+  const { data: article, isLoading } = useBlogArticleBySlug(slug);
 
   if (isLoading) {
     return (
@@ -78,11 +71,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
     }
   };
 
-  const relatedArticles = categories
-    .find(cat => cat.id === article.categoryId)
-    ?.articles
-    ?.filter((art: BlogArticle) => art.id !== article.id)
-    ?.slice(0, 3) || [];
+  const relatedArticles: BlogArticle[] = []; // TODO: Implement related articles logic
 
   return (
     <>
@@ -108,7 +97,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
           <header className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Badge className="bg-blue-100 text-blue-800">
-                {article.category.name}
+                {article.category?.name || 'Uncategorized'}
               </Badge>
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ interface PaymentStatus {
   estimatedDelivery?: string;
 }
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,14 +39,7 @@ export default function OrderSuccessPage() {
   const orderId = searchParams.get('orderId');
   const paymentMethod = searchParams.get('method');
 
-  useEffect(() => {
-    // If we have orderId and paymentMethod, check payment status
-    if (orderId && paymentMethod) {
-      checkPaymentStatus();
-    }
-  }, [orderId, paymentMethod]);
-
-  const checkPaymentStatus = async () => {
+  const checkPaymentStatus = useCallback(async () => {
     if (!orderId || !paymentMethod) return;
 
     setIsLoading(true);
@@ -69,9 +62,17 @@ export default function OrderSuccessPage() {
     } catch (error) {
       console.error('Error checking payment status:', error);
       toast.error('Không thể kiểm tra trạng thái thanh toán', { icon: '❌' });
+    } finally {
       setIsLoading(false);
     }
-  };
+  }, [orderId, paymentMethod]);
+
+  useEffect(() => {
+    // If we have orderId and paymentMethod, check payment status
+    if (orderId && paymentMethod) {
+      checkPaymentStatus();
+    }
+  }, [orderId, paymentMethod, checkPaymentStatus]);
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -253,5 +254,20 @@ export default function OrderSuccessPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Đang tải...</p>
+        </div>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 }

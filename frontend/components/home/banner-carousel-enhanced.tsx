@@ -237,11 +237,23 @@ export function BannerCarousel() {
   }
 
   const currentBanner = activeBanners[currentIndex];
-  const stats: HeroStat[] = currentBanner?.stats || [
-    { label: 'Sản phẩm', value: '500+', description: 'Đa dạng thiết bị âm thanh chuyên nghiệp' },
-    { label: 'Khách hàng', value: '1000+', description: 'Đối tác tin tưởng và đồng hành' },
-    { label: 'Kinh nghiệm', value: '5+ năm', description: 'Thiết kế và thi công giải pháp âm thanh' }
-  ];
+  const stats: HeroStat[] = (() => {
+    if (currentBanner?.stats) {
+      try {
+        const parsedStats = typeof currentBanner.stats === 'string'
+          ? JSON.parse(currentBanner.stats)
+          : currentBanner.stats;
+        return Array.isArray(parsedStats) ? parsedStats : [];
+      } catch {
+        return [];
+      }
+    }
+    return [
+      { label: 'Sản phẩm', value: '500+', description: 'Đa dạng thiết bị âm thanh chuyên nghiệp' },
+      { label: 'Khách hàng', value: '1000+', description: 'Đối tác tin tưởng và đồng hành' },
+      { label: 'Kinh nghiệm', value: '5+ năm', description: 'Thiết kế và thi công giải pháp âm thanh' }
+    ];
+  })();
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">

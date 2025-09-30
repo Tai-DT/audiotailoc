@@ -3,14 +3,16 @@ import { apiClient } from '@/lib/api';
 
 interface BlogDetailLayoutProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: BlogDetailLayoutProps): Promise<Metadata> {
+  const { slug } = await params;
+
   try {
-    const response = await apiClient.get(`/blog/articles/slug/${params.slug}`);
+    const response = await apiClient.get(`/blog/articles/slug/${slug}`);
     const article = response.data;
 
     if (!article) {
