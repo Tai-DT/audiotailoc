@@ -13,11 +13,7 @@ import { useMarkReviewHelpful } from '@/lib/hooks/use-api';
 import { ProductReview } from '@/lib/types';
 import { toast } from 'react-hot-toast';
 
-interface ServiceReviewsProps {
-  serviceId: string;
-}
-
-export default function ServiceReviews({ serviceId }: ServiceReviewsProps) {
+export default function ServiceReviews() {
   const markHelpfulMutation = useMarkReviewHelpful();
 
   const handleMarkHelpful = async (reviewId: string) => {

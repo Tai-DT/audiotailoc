@@ -36,10 +36,6 @@ export default function ProductsPage() {
     setFilters((prev: ProductFilters) => ({ ...prev, ...newFilters, page: 1 }));
   };
 
-  const handlePageChange = (page: number) => {
-    handleFiltersChange({ page });
-  };
-
   const handleAddToCart = async (productId: string) => {
     const product = data?.items.find((item) => item.id === productId);
 

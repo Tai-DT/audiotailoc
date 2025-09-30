@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Phone, FileText } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

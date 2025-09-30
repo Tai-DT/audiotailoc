@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, handleApiResponse, handleApiError } from '../api';
+import { apiClient, handleApiResponse } from '../api';
 import { 
   Product, 
   Category,
@@ -19,7 +19,6 @@ import {
   PaginatedResponse,
   ProductForm,
   CategoryForm,
-  ServiceForm,
   LoginForm,
   RegisterForm,
   Promotion,

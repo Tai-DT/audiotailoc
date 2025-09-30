@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Truck, Shield, RotateCcw, Wrench, FileText, Lock, Calendar, Eye } from 'lucide-react';
+import { ArrowLeft, Truck, Shield, Wrench, FileText, Lock, Calendar, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

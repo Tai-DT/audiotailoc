@@ -345,7 +345,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'AUTH_START' });
 
     try {
-      const token = await getValidToken();
+      await getValidToken();
 
       const response = await apiClient.put(API_ENDPOINTS.AUTH.PROFILE, userData);
 
