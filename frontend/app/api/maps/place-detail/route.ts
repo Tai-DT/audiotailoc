@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const placeId = searchParams.get('placeId');
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const backendUrl = `http://localhost:3010/api/v1/maps/place-detail?placeId=${encodeURIComponent(placeId)}`;
+    const backendUrl = `${API_BASE_URL}/maps/place-detail?placeId=${encodeURIComponent(placeId)}`;
     const response = await fetch(backendUrl);
 
     if (!response.ok) {
