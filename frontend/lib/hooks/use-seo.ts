@@ -132,9 +132,9 @@ export const useProductSEO = (productId: string, product?: Product) => {
             '@type': 'Brand',
             name: globalSEO.data?.siteName || 'Audio Tài Lộc',
           },
-          offers: ((product as any).price || product.priceCents) ? {
+          offers: (('price' in product && product.price) || product.priceCents) ? {
             '@type': 'Offer',
-            price: product.price || (product.priceCents / 100),
+            price: ('price' in product && product.price) || (product.priceCents / 100),
             priceCurrency: 'VND',
             availability: product.isActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           } : undefined,
