@@ -126,7 +126,7 @@ let AnalyticsController = class AnalyticsController {
             default:
                 startDate.setDate(endDate.getDate() - 7);
         }
-        const filters = {
+        const _filters = {
             startDate,
             endDate,
         };
