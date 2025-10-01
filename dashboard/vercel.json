@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_API_URL": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1",
+    "NEXT_PUBLIC_WS_URL": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com",
+    "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "dib7tbv7w"
+  },
+  "functions": {
+    "app/**/*.js": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+}
