@@ -26,11 +26,22 @@ export const metadata: Metadata = {
   description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
   keywords: "thiết bị âm thanh, amplifier, loa, micro, mixer, studio thu âm, hệ thống âm thanh",
   authors: [{ name: "Audio Tài Lộc" }],
+  metadataBase: new URL('https://audiotailoc.com'),
   openGraph: {
     title: "Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp",
     description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
     type: "website",
     locale: "vi_VN",
+    url: "https://audiotailoc.com",
+    siteName: "Audio Tài Lộc",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp",
+    description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
+  },
+  alternates: {
+    canonical: "https://audiotailoc.com",
   },
 };
 

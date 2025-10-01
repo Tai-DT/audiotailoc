@@ -1,13 +1,38 @@
 {
   "version": 2,
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
   "env": {
     "NODE_ENV": "production",
-    "NEXT_PUBLIC_API_URL": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1"
-  }
+    "NEXT_PUBLIC_API_URL": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1",
+    "NEXT_PUBLIC_SITE_URL": "https://audiotailoc.com"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options", 
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
 }

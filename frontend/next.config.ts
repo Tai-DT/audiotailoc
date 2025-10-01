@@ -8,6 +8,30 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  
+  // Custom domain configuration
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+
   // Remove turbopack config to avoid conflict with outputFileTracingRoot
   async rewrites() {
     // Only use rewrites in development
@@ -22,6 +46,7 @@ const nextConfig: NextConfig = {
     }
     return [];
   },
+  
   serverExternalPackages: ['axios'],
   images: {
     remotePatterns: [

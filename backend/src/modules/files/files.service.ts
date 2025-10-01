@@ -380,7 +380,7 @@ export class FilesService {
     }
   }
 
-  private async createThumbnail(filePath: string, fileId: string): Promise<string> {
+  private async createThumbnail(_filePath: string, _fileId: string): Promise<string> {
     try {
       // Temporarily disabled due to Sharp compatibility issues
       // const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${fileId}_thumb.jpg`);
@@ -397,17 +397,13 @@ export class FilesService {
     }
   }
 
-  private async getImageDimensions(buffer: Buffer): Promise<{ width: number; height: number }> {
-    try {
-      // Temporarily disabled due to Sharp compatibility issues
-      // const metadata = await sharp(buffer).metadata();
-      return {
-        width: 0,
-        height: 0,
-      };
-    } catch (error) {
-      return { width: 0, height: 0 };
-    }
+  private async getImageDimensions(_buffer: Buffer): Promise<{ width: number; height: number }> {
+    // Temporarily disabled due to Sharp compatibility issues
+    // const metadata = await sharp(buffer).metadata();
+    return {
+      width: 0,
+      height: 0,
+    };
   }
 
   private getFileUrl(subDir: string, filename: string): string {

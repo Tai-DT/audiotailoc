@@ -164,6 +164,14 @@ export interface Service {
   createdAt: string;
   updatedAt: string;
   
+  // SEO properties
+  seoTitle?: string;
+  metaTitle?: string;
+  seoDescription?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  
   serviceType?: ServiceType;
 }
 
@@ -417,6 +425,8 @@ export interface BlogArticle {
   seoTitle?: string | null;
   seoDescription?: string | null;
   seoKeywords?: string | null;
+  tags?: string[];
+  canonicalUrl?: string;
   featured?: boolean;
   createdAt: string;
   updatedAt: string;
