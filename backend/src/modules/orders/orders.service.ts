@@ -182,9 +182,9 @@ export class OrdersService {
 
     for (const item of orderData.items || []) {
       const itemData: any = {
-        // productId will be assigned only if resolved to a real product below
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || 0,
+        price: item.unitPrice || 0, // Required field for compatibility
         name: item.name || 'Sản phẩm'
       };
 
@@ -203,6 +203,7 @@ export class OrdersService {
 
         if (product) {
           itemData.unitPrice = product.priceCents;
+          itemData.price = product.priceCents; // Keep both fields in sync
           itemData.productId = product.id; // Use actual product ID
           // Prefer product name if not explicitly provided
           if (!item.name && product.name) itemData.name = product.name;
@@ -351,9 +352,9 @@ export class OrdersService {
 
       for (const item of updateData.items) {
         const itemData: any = {
-          // productId will be assigned only if resolved to a real product below
           quantity: item.quantity || 1,
           unitPrice: item.unitPrice || 0,
+          price: item.unitPrice || 0, // Required field for compatibility
           name: item.name || 'Sản phẩm'
         };
 
@@ -371,6 +372,7 @@ export class OrdersService {
 
           if (product) {
             itemData.unitPrice = product.priceCents;
+            itemData.price = product.priceCents; // Keep both fields in sync
             itemData.productId = product.id;
             if (!item.name && product.name) itemData.name = product.name;
           }
