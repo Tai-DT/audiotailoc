@@ -6,8 +6,6 @@ import { usePathname } from 'next/navigation';
 import {
   ShoppingCart,
   Search,
-  Menu,
-  X,
   User,
   LogOut,
   Phone,
@@ -50,6 +48,7 @@ import { useWishlistCount } from '@/lib/hooks/use-wishlist';
 import { useCategories } from '@/lib/hooks/use-api';
 import { useServiceTypes, useServicesByType } from '@/lib/hooks/use-api';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { MobileNav } from '@/components/layout/mobile-nav';
 import type { ServiceType, Service } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -68,12 +67,6 @@ interface NavLink {
   description?: undefined;
 }
 
-interface MobileLink {
-  href: string;
-  label: string;
-  description?: string;
-}
-
 interface SubNavItem {
   label: string;
   href: string;
@@ -82,7 +75,6 @@ interface SubNavItem {
 }
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const { itemCount } = useCart() as { itemCount: number };
   const { data: user } = useAuth() as { data?: { id?: string; name?: string; email?: string; avatar?: string } | null };
@@ -128,15 +120,6 @@ export function Header() {
     { href: '/blog', label: 'Blog' },
     { href: '/support', label: 'Hỗ trợ' },
     { href: '/contact', label: 'Liên hệ' },
-  ];
-
-  const mobileMainLinks: MobileLink[] = [
-    { href: '/products', label: 'Sản phẩm', description: 'Tất cả danh mục sản phẩm' },
-    { href: '/services', label: 'Dịch vụ', description: 'Giải pháp & gói dịch vụ' },
-    { href: '/support', label: 'Hỗ trợ', description: 'Cơ sở kiến thức & FAQ' },
-    { href: '/about', label: 'Giới thiệu', description: 'Về Audio Tài Lộc' },
-    { href: '/blog', label: 'Blog', description: 'Tin tức & chia sẻ' },
-    { href: '/contact', label: 'Liên hệ', description: 'Thông tin liên hệ' },
   ];
 
   const getLinkClasses = (href: string) => {
@@ -491,14 +474,16 @@ export function Header() {
             )}
 
             {/* Mobile Menu Button - Show when navbar is hidden */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 sm:h-10 sm:w-10"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
+            <MobileNav
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              handleSearch={handleSearch}
+              categories={topLevelCategories}
+              serviceTypes={serviceTypes}
+              servicesByType={servicesByType}
+              isAuthenticated={isAuthenticated}
+              wishlistCount={wishlistCount}
+            />
           </div>
         </div>
 
@@ -523,150 +508,6 @@ export function Header() {
           </div>
         </div>
       </div>
-
-      {/* Mobile expanded menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden border-t py-4 space-y-4 bg-background max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Mobile Search */}
-          <form onSubmit={handleSearch} className="px-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Tìm kiếm thiết bị, dịch vụ..."
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </form>
-
-          {/* Mobile Navigation Links */}
-          <div className="grid grid-cols-2 gap-3 px-4 text-sm">
-            {mobileMainLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-lg border p-3 text-foreground hover:border-primary hover:text-primary transition-colors touch-manipulation"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <div className="space-y-1">
-                  <p className="font-medium">{link.label}</p>
-                  {link.description && (
-                    <p className="text-xs text-muted-foreground">{link.description}</p>
-                  )}
-                </div>
-              </Link>
-            ))}
-            {/* Mobile Wishlist */}
-            {isAuthenticated && (
-              <Link
-                href="/wishlist"
-                className="rounded-lg border p-3 text-foreground hover:border-primary hover:text-primary transition-colors touch-manipulation"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-4 w-4" />
-                  <div className="space-y-1">
-                    <p className="font-medium">Yêu thích</p>
-                    {wishlistCount?.count && wishlistCount.count > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {wishlistCount.count}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile User Actions */}
-          {!isAuthenticated && (
-            <div className="px-4 flex gap-2">
-              <Button variant="outline" className="flex-1" asChild>
-                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                  Đăng nhập
-                </Link>
-              </Button>
-              <Button className="flex-1" asChild>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                  Đăng ký
-                </Link>
-              </Button>
-            </div>
-          )}
-
-          {/* Mobile Categories & Services */}
-          {topLevelCategories.length > 0 && (
-            <div className="px-4 space-y-2">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Danh mục sản phẩm
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {topLevelCategories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={category.slug ? `/products?category=${category.slug}` : '/products'}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-foreground transition-colors hover:border-primary hover:text-primary touch-manipulation"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <span className="truncate">{category.name}</span>
-                    <span className="text-xs text-muted-foreground ml-1">
-                      {category.children?.length ? `${category.children.length}` : 'Tất cả'}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(serviceTypes?.length ?? 0) > 0 && (
-            <div className="px-4 space-y-3">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Loại dịch vụ
-              </p>
-              <div className="grid gap-3">
-                {serviceTypes!.map((serviceType: ServiceType) => {
-                  const services: Service[] = servicesByType?.[serviceType.id] ?? [];
-                  return (
-                    <div
-                      key={serviceType.id}
-                      className="rounded-xl border bg-muted/40"
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-foreground touch-manipulation"
-                        onClick={() => {
-                          window.location.href = `/services?type=${serviceType.slug}`;
-                          setIsMenuOpen(false);
-                        }}
-                      >
-                        <span>{serviceType.name}</span>
-                        <span className="text-xs text-primary">Xem tất cả</span>
-                      </button>
-                      {services.length > 0 && (
-                        <div className="border-t px-3 py-2 space-y-1">
-                          {services.slice(0, 4).map((service: Service) => (
-                            <Link
-                              key={service.id}
-                              href={`/services/${service.slug ?? service.id}`}
-                              className="block rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary touch-manipulation"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              {service.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-        </div>
-      )}
 
     </header>
   );
