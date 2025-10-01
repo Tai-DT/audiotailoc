@@ -1,0 +1,19 @@
+{
+  "name": "image-processor",
+  "version": "1.0.0",
+  "description": "Tool for removing background and adding logo to product images",
+  "main": "process-images.js",
+  "scripts": {
+    "process": "node process-images.js",
+    "install-deps": "npm install sharp @tensorflow/tfjs-node @tensorflow-models/deeplab-v3 jimp canvas"
+  },
+  "dependencies": {
+    "sharp": "^0.32.6",
+    "@tensorflow/tfjs-node": "^4.15.0",
+    "@tensorflow-models/deeplab-v3": "^0.2.1",
+    "jimp": "^0.22.10",
+    "canvas": "^2.11.2",
+    "path": "^0.12.7",
+    "fs": "^0.0.1-security"
+  }
+}
