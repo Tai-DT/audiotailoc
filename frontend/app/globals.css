@@ -590,3 +590,13 @@
 .policy-card:nth-child(3) { animation-delay: 200ms; }
 .policy-card:nth-child(4) { animation-delay: 300ms; }
 .policy-card:nth-child(5) { animation-delay: 400ms; }
+
+/* Hide scrollbar for sub-navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
