@@ -218,8 +218,8 @@ export class OrdersService {
       const itemData = {
         productId: product.id,
         quantity: item.quantity || 1,
-        unitPrice: product.priceCents,
         price: product.priceCents,
+        unitPrice: product.priceCents,
         name: product.name
       };
 
