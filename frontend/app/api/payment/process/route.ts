@@ -119,6 +119,9 @@ async function createRealPayOSPayment(orderData: OrderData) {
     // Generate unique order code
     const orderCode = Date.now().toString();
 
+    // Get frontend URL from environment or use default
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
     // Prepare payment data according to PayOS API v2
     const paymentData = {
       orderCode: parseInt(orderCode),
@@ -133,10 +136,10 @@ async function createRealPayOSPayment(orderData: OrderData) {
         quantity: item.quantity,
         price: item.unitPrice
       })),
-      cancelUrl: `http://localhost:3000/checkout?error=payment_cancelled`,
-      returnUrl: `http://localhost:3000/order-success?method=payos&orderId=${orderCode}`,
+      cancelUrl: `${frontendUrl}/checkout?error=payment_cancelled`,
+      returnUrl: `${frontendUrl}/order-success?method=payos&orderId=${orderCode}`,
       expiredAt: Math.floor((Date.now() + 15 * 60 * 1000) / 1000), // 15 minutes from now
-      signature: '', // Will be generated below
+      signature: '', // Will be generated below,
     };
 
     console.log('Payment data prepared:', paymentData);
@@ -188,6 +191,9 @@ async function createDemoPayOSPayment(orderData: OrderData) {
     // Demo mode - create a working demo URL
     const orderCode = Date.now().toString();
 
+    // Get frontend URL from environment or use default
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
     const params = new URLSearchParams();
     params.set('orderCode', orderCode);
     params.set('amount', orderData.finalTotal.toString());
@@ -195,8 +201,8 @@ async function createDemoPayOSPayment(orderData: OrderData) {
     params.set('buyerName', orderData.customerName || '');
     if (orderData.customerEmail) params.set('buyerEmail', orderData.customerEmail);
     if (orderData.customerPhone) params.set('buyerPhone', orderData.customerPhone);
-    params.set('returnUrl', `http://localhost:3000/order-success?method=payos&orderId=${orderCode}`);
-    params.set('cancelUrl', `http://localhost:3000/checkout`);
+    params.set('returnUrl', `${frontendUrl}/order-success?method=payos&orderId=${orderCode}`);
+    params.set('cancelUrl', `${frontendUrl}/checkout`);
 
     const paymentUrl = `/payment-demo?${params.toString()}`;
     console.log('Demo payment URL created:', paymentUrl);

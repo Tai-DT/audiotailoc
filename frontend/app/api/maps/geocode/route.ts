@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('query');
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const backendUrl = `http://localhost:3010/api/v1/maps/geocode?query=${encodeURIComponent(query)}`;
+    const backendUrl = `${API_BASE_URL}/maps/geocode?query=${encodeURIComponent(query)}`;
     const response = await fetch(backendUrl);
 
     if (!response.ok) {
