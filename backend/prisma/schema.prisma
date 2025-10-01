@@ -164,8 +164,9 @@ model OrderItem {
   orderId   String
   productId String
   quantity  Int
-  unitPrice Int
+  price     Int
   name      String?
+  unitPrice Int?
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -64,7 +64,7 @@ async function bootstrap() {
             },
         },
     }));
-    const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002');
+    const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
     const allowedOrigins = corsOrigins.split(',').map((origin) => origin.trim());
     app.enableCors({
         origin: (origin, callback) => {
@@ -75,6 +75,16 @@ async function bootstrap() {
                 return callback(null, true);
             }
             if (allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            }
+            else if (allowedOrigins.some(allowedOrigin => {
+                if (allowedOrigin.includes('*')) {
+                    const pattern = allowedOrigin.replace('*', '.*');
+                    const regex = new RegExp(pattern);
+                    return regex.test(origin);
+                }
+                return false;
+            })) {
                 callback(null, true);
             }
             else {
