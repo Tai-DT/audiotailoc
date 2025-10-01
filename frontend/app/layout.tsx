@@ -21,18 +21,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Canonical / metadata base selection logic
+const CANONICAL_BASE = process.env.NEXT_PUBLIC_CANONICAL_BASE_URL || "https://audiotailoc.com";
+
 export const metadata: Metadata = {
   title: "Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp",
   description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
   keywords: "thiết bị âm thanh, amplifier, loa, micro, mixer, studio thu âm, hệ thống âm thanh",
   authors: [{ name: "Audio Tài Lộc" }],
-  metadataBase: new URL('https://audiotailoc.com'),
+  metadataBase: new URL(CANONICAL_BASE),
   openGraph: {
     title: "Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp",
     description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
     type: "website",
     locale: "vi_VN",
-    url: "https://audiotailoc.com",
+    url: CANONICAL_BASE,
     siteName: "Audio Tài Lộc",
   },
   twitter: {
@@ -41,7 +44,7 @@ export const metadata: Metadata = {
     description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao, dịch vụ kỹ thuật chuyên nghiệp và giải pháp âm thanh toàn diện.",
   },
   alternates: {
-    canonical: "https://audiotailoc.com",
+    canonical: CANONICAL_BASE,
   },
 };
 
