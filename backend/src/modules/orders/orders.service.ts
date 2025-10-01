@@ -185,8 +185,7 @@ export class OrdersService {
         // productId will be assigned only if resolved to a real product below
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || 0,
-        name: item.name || 'Sản phẩm',
-        price: item.unitPrice || 0 // Required field for OrderItem
+        name: item.name || 'Sản phẩm'
       };
 
       // Try to get product price from database
@@ -355,8 +354,7 @@ export class OrdersService {
           // productId will be assigned only if resolved to a real product below
           quantity: item.quantity || 1,
           unitPrice: item.unitPrice || 0,
-          name: item.name || 'Sản phẩm',
-          price: item.unitPrice || 0
+          name: item.name || 'Sản phẩm'
         };
 
         // Try to get product price from database
