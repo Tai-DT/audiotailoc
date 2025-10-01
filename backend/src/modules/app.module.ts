@@ -56,6 +56,9 @@ import { SiteModule } from './site/site.module';
 import { ProjectsModule } from './projects/projects.module';
 import { SeoModule } from './seo/seo.module';
 
+// Test module for payment testing
+import { TestModule } from './test/test.module';
+
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     ConfigModule.forRoot({ isGlobal: true }), 
@@ -105,6 +108,9 @@ const runtimeImports = [
     
     // Portfolio/Projects
     ProjectsModule,
+
+    // Test module for payment testing
+    TestModule,
 ];
 
 if (FEATURE_CHECKOUT) {
