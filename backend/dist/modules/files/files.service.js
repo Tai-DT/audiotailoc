@@ -257,7 +257,7 @@ let FilesService = FilesService_1 = class FilesService {
             }
         }
     }
-    async createThumbnail(filePath, fileId) {
+    async createThumbnail(_filePath, _fileId) {
         try {
             return '';
         }
@@ -266,16 +266,11 @@ let FilesService = FilesService_1 = class FilesService {
             return '';
         }
     }
-    async getImageDimensions(buffer) {
-        try {
-            return {
-                width: 0,
-                height: 0,
-            };
-        }
-        catch (error) {
-            return { width: 0, height: 0 };
-        }
+    async getImageDimensions(_buffer) {
+        return {
+            width: 0,
+            height: 0,
+        };
     }
     getFileUrl(subDir, filename) {
         if (this.cdnUrl) {

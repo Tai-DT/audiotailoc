@@ -42,6 +42,7 @@ const technicians_module_1 = require("./technicians/technicians.module");
 const site_module_1 = require("./site/site.module");
 const projects_module_1 = require("./projects/projects.module");
 const seo_module_1 = require("./seo/seo.module");
+const test_module_1 = require("./test/test.module");
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     config_1.ConfigModule.forRoot({ isGlobal: true }),
@@ -76,6 +77,7 @@ const runtimeImports = [
     site_module_1.SiteModule,
     seo_module_1.SeoModule,
     projects_module_1.ProjectsModule,
+    test_module_1.TestModule,
 ];
 if (FEATURE_CHECKOUT) {
     runtimeImports.push(cart_module_1.CartModule, promotions_module_1.PromotionsModule, checkout_module_1.CheckoutModule);

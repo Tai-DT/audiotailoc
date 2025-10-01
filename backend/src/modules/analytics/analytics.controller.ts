@@ -120,7 +120,7 @@ export class AnalyticsController {
         startDate.setDate(endDate.getDate() - 7);
     }
 
-    const filters: AnalyticsFilters = {
+    const _filters: AnalyticsFilters = {
       startDate,
       endDate,
     };

@@ -23,7 +23,7 @@ let BookingController = class BookingController {
     constructor(bookingService) {
         this.bookingService = bookingService;
     }
-    async findAll(query) {
+    async findAll(_query) {
         return this.bookingService.findAll();
     }
     async findOne(id) {

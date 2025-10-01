@@ -5,7 +5,7 @@ import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 export declare class BookingController {
     private readonly bookingService;
     constructor(bookingService: BookingService);
-    findAll(query: any): Promise<({
+    findAll(_query: any): Promise<({
         user: {
             id: string;
             email: string;
