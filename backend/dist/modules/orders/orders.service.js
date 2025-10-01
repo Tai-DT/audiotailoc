@@ -166,110 +166,85 @@ let OrdersService = class OrdersService {
         return updated;
     }
     async create(orderData) {
+        console.log('=== SIMPLE CREATE ORDER DEBUG ===');
+        console.log('Input data:', JSON.stringify(orderData, null, 2));
         const timestamp = Date.now();
         const random = Math.floor(Math.random() * 1000);
         const orderNo = `ORD${timestamp}${random}`;
+        let userId = orderData.userId;
+        if (!userId) {
+            console.log('Creating guest user...');
+            const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
+            const guestUser = await this.prisma.user.create({
+                data: {
+                    email: uniqueEmail,
+                    password: 'hashed_guest_password',
+                    name: orderData.customerName || 'Khách hàng',
+                    phone: orderData.customerPhone,
+                    role: 'USER'
+                }
+            });
+            userId = guestUser.id;
+            console.log('Guest user created:', userId);
+        }
         const items = [];
         let subtotalCents = 0;
         for (const item of orderData.items || []) {
-            const itemData = {
-                quantity: item.quantity || 1,
-                unitPrice: item.unitPrice || 0,
-                name: item.name || 'Sản phẩm',
-                price: item.unitPrice || 0
-            };
-            try {
-                let product = await this.prisma.product.findUnique({
-                    where: { id: item.productId }
-                });
-                if (!product) {
-                    product = await this.prisma.product.findUnique({
-                        where: { slug: item.productId }
-                    });
-                }
-                if (product) {
-                    itemData.unitPrice = product.priceCents;
-                    itemData.productId = product.id;
-                    if (!item.name && product.name)
-                        itemData.name = product.name;
-                }
-            }
-            catch (error) {
-                console.error('Failed to fetch product:', error);
-            }
-            items.push(itemData);
-            subtotalCents += (itemData.unitPrice || 0) * (itemData.quantity || 1);
-        }
-        try {
-            const shippingAddress = typeof orderData.shippingAddress === 'string'
-                ? orderData.shippingAddress
-                : (orderData.shippingAddress ? JSON.stringify(orderData.shippingAddress) : null);
-            const shippingCoordinates = orderData.shippingCoordinates
-                ? JSON.stringify(orderData.shippingCoordinates)
-                : null;
-            let userId = orderData.userId;
-            if (!userId) {
-                const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
-                const guestUser = await this.prisma.user.create({
-                    data: {
-                        email: uniqueEmail,
-                        password: 'guest_password',
-                        name: orderData.customerName || 'Khách hàng',
-                        phone: orderData.customerPhone,
-                        role: 'USER'
-                    }
-                });
-                userId = guestUser.id;
-            }
-            const order = await this.prisma.$transaction(async (tx) => {
-                for (const item of items) {
-                    if (item.productId) {
-                        const product = await tx.product.findUnique({
-                            where: { id: item.productId },
-                            select: { stockQuantity: true }
-                        });
-                        if (product && product.stockQuantity !== null && product.stockQuantity < item.quantity) {
-                            throw new common_1.BadRequestException('Số lượng tồn kho không đủ cho sản phẩm');
-                        }
-                        await tx.product.update({
-                            where: { id: item.productId },
-                            data: { stockQuantity: { decrement: item.quantity } }
-                        });
-                    }
-                }
-                return await tx.order.create({
-                    data: {
-                        orderNo,
-                        userId,
-                        status: 'PENDING',
-                        subtotalCents,
-                        totalCents: subtotalCents,
-                        shippingAddress,
-                        shippingCoordinates,
-                        items: {
-                            create: items
-                        }
-                    },
-                    include: {
-                        items: true,
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                                phone: true
-                            }
-                        }
-                    }
-                });
+            console.log('Processing item:', item);
+            const product = await this.prisma.product.findUnique({
+                where: { id: item.productId }
             });
-            await this.cache.clearByPrefix('audiotailoc');
-            return order;
+            if (!product) {
+                throw new common_1.BadRequestException(`Product not found: ${item.productId}`);
+            }
+            const itemData = {
+                productId: product.id,
+                quantity: item.quantity || 1,
+                price: product.priceCents,
+                unitPrice: product.priceCents,
+                name: product.name
+            };
+            items.push(itemData);
+            subtotalCents += itemData.price * itemData.quantity;
         }
-        catch (error) {
-            console.error('Error creating order:', error);
-            throw error;
+        console.log('Processed items:', items);
+        console.log('Subtotal:', subtotalCents);
+        const order = await this.prisma.order.create({
+            data: {
+                orderNo,
+                userId,
+                status: 'PENDING',
+                subtotalCents,
+                totalCents: subtotalCents,
+                shippingAddress: orderData.shippingAddress || null
+            }
+        });
+        console.log('Order created:', order.id);
+        for (const itemData of items) {
+            await this.prisma.orderItem.create({
+                data: {
+                    orderId: order.id,
+                    ...itemData
+                }
+            });
         }
+        console.log('Order items created');
+        const fullOrder = await this.prisma.order.findUnique({
+            where: { id: order.id },
+            include: {
+                items: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                }
+            }
+        });
+        console.log('Returning order:', fullOrder?.id);
+        return fullOrder;
     }
     async update(id, updateData) {
         console.log('=== UPDATE ORDER DEBUG ===');
@@ -316,8 +291,8 @@ let OrdersService = class OrdersService {
                 const itemData = {
                     quantity: item.quantity || 1,
                     unitPrice: item.unitPrice || 0,
-                    name: item.name || 'Sản phẩm',
-                    price: item.unitPrice || 0
+                    price: item.unitPrice || 0,
+                    name: item.name || 'Sản phẩm'
                 };
                 try {
                     let product = await this.prisma.product.findUnique({
@@ -330,6 +305,7 @@ let OrdersService = class OrdersService {
                     }
                     if (product) {
                         itemData.unitPrice = product.priceCents;
+                        itemData.price = product.priceCents;
                         itemData.productId = product.id;
                         if (!item.name && product.name)
                             itemData.name = product.name;
