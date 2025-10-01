@@ -172,129 +172,108 @@ export class OrdersService {
   }
 
   async create(orderData: any): Promise<any> {
+    console.log('=== SIMPLE CREATE ORDER DEBUG ===');
+    console.log('Input data:', JSON.stringify(orderData, null, 2));
+
     // Generate unique order number
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
     const orderNo = `ORD${timestamp}${random}`;
 
-    const items: any[] = [];
+    // Handle user creation/connection
+    let userId = orderData.userId;
+    if (!userId) {
+      console.log('Creating guest user...');
+      // Create a guest user if no userId provided
+      const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
+      const guestUser = await this.prisma.user.create({
+        data: {
+          email: uniqueEmail,
+          password: 'hashed_guest_password', // Use a simple string for now
+          name: orderData.customerName || 'Khách hàng',
+          phone: orderData.customerPhone,
+          role: 'USER'
+        }
+      });
+      userId = guestUser.id;
+      console.log('Guest user created:', userId);
+    }
+
+    // Simple item processing
+    const items = [];
     let subtotalCents = 0;
 
     for (const item of orderData.items || []) {
-      const itemData: any = {
+      console.log('Processing item:', item);
+      
+      // Get product
+      const product = await this.prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+
+      if (!product) {
+        throw new BadRequestException(`Product not found: ${item.productId}`);
+      }
+
+      const itemData = {
+        productId: product.id,
         quantity: item.quantity || 1,
-        unitPrice: item.unitPrice || 0,
-        price: item.unitPrice || 0, // Required field for compatibility
-        name: item.name || 'Sản phẩm'
+        unitPrice: product.priceCents,
+        price: product.priceCents,
+        name: product.name
       };
 
-      // Try to get product price from database
-      try {
-        // First try by ID, then by slug
-        let product = await this.prisma.product.findUnique({
-          where: { id: item.productId }
-        });
-
-        if (!product) {
-          product = await this.prisma.product.findUnique({
-            where: { slug: item.productId }
-          });
-        }
-
-        if (product) {
-          itemData.unitPrice = product.priceCents;
-          itemData.price = product.priceCents; // Keep both fields in sync
-          itemData.productId = product.id; // Use actual product ID
-          // Prefer product name if not explicitly provided
-          if (!item.name && product.name) itemData.name = product.name;
-        }
-      } catch (error) {
-        console.error('Failed to fetch product:', error);
-      }
-
       items.push(itemData);
-      subtotalCents += (itemData.unitPrice || 0) * (itemData.quantity || 1);
+      subtotalCents += itemData.price * itemData.quantity;
     }
 
-    try {
-      const shippingAddress = typeof orderData.shippingAddress === 'string'
-        ? orderData.shippingAddress
-        : (orderData.shippingAddress ? JSON.stringify(orderData.shippingAddress) : null);
+    console.log('Processed items:', items);
+    console.log('Subtotal:', subtotalCents);
 
-      const shippingCoordinates = orderData.shippingCoordinates
-        ? JSON.stringify(orderData.shippingCoordinates)
-        : null;
-
-      // Handle user creation/connection
-      let userId = orderData.userId;
-      if (!userId) {
-        // Create a guest user if no userId provided
-        const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
-        const guestUser = await this.prisma.user.create({
-          data: {
-            email: uniqueEmail,
-            password: 'guest_password', // This should be hashed in production
-            name: orderData.customerName || 'Khách hàng',
-            phone: orderData.customerPhone,
-            role: 'USER'
-          }
-        });
-        userId = guestUser.id;
+    // Create order and items separately (no transaction for debugging)
+    const order = await this.prisma.order.create({
+      data: {
+        orderNo,
+        userId,
+        status: 'PENDING',
+        subtotalCents,
+        totalCents: subtotalCents,
+        shippingAddress: orderData.shippingAddress || null
       }
+    });
 
-      // Create order and adjust stock atomically
-      const order = await this.prisma.$transaction(async (tx) => {
-        // Decrease stock for each product in the order
-        for (const item of items) {
-          if (item.productId) {
-            // Ensure stock is sufficient before decrement
-            const product = await tx.product.findUnique({
-              where: { id: item.productId },
-              select: { stockQuantity: true }
-            });
-            if (product && product.stockQuantity !== null && product.stockQuantity < item.quantity) {
-              throw new BadRequestException('Số lượng tồn kho không đủ cho sản phẩm');
-            }
-            await tx.product.update({
-              where: { id: item.productId },
-              data: { stockQuantity: { decrement: item.quantity } }
-            });
+    console.log('Order created:', order.id);
+
+    // Create order items
+    for (const itemData of items) {
+      await this.prisma.orderItem.create({
+        data: {
+          orderId: order.id,
+          ...itemData
+        }
+      });
+    }
+
+    console.log('Order items created');
+
+    // Get full order with items
+    const fullOrder = await this.prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        items: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
           }
         }
+      }
+    });
 
-        return await tx.order.create({
-          data: {
-            orderNo,
-            userId,
-            status: 'PENDING',
-            subtotalCents,
-            totalCents: subtotalCents,
-            shippingAddress,
-            shippingCoordinates,
-            items: {
-              create: items
-            }
-          },
-          include: {
-            items: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true
-              }
-            }
-          }
-        });
-      });
-      // Invalidate cached product lists so stock changes reflect immediately
-      await this.cache.clearByPrefix('audiotailoc');
-      return order;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
-    }
+    console.log('Returning order:', fullOrder?.id);
+    return fullOrder;
   }
 
   async update(id: string, updateData: any): Promise<any> {
