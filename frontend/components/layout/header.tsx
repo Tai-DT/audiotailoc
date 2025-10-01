@@ -166,7 +166,7 @@ export function Header() {
       </div>
 
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center gap-2 sm:gap-4">
+        <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 shrink-0">
             <div className="relative h-8 w-28 sm:h-9 sm:w-36">
@@ -189,10 +189,10 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Navigation Menu - Show from lg breakpoint (1024px) instead of xl (1280px) */}
-          <div className="hidden lg:flex items-center space-x-1 flex-1">
+          {/* Navigation Menu - Centered */}
+          <div className="hidden lg:flex items-center justify-center flex-1">
             <NavigationMenu>
-              <NavigationMenuList className="justify-start">
+              <NavigationMenuList className="justify-center">
                 {/* Products Dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
@@ -487,24 +487,26 @@ export function Header() {
           </div>
         </div>
 
-        {/* Sub navigation - Improved responsive */}
+        {/* Sub navigation - Centered */}
         <div className="border-t border-muted py-2 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide lg:justify-center">
-            {([
-              { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
-              { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
-              { label: 'Mixer', href: '/products?category=mixer', icon: SlidersHorizontal },
-              { label: 'Thanh Lý', href: '/products?category=thanh-ly', icon: PackageSearch },
-            ] as SubNavItem[]).map((item: SubNavItem) => (
-               <Link
-                 key={item.label}
-                 href={item.href}
-                 className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
-               >
-                 <item.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />
-                 <span className="text-xs sm:text-sm">{item.label}</span>
-               </Link>
-             ))}
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
+              {([
+                { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
+                { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
+                { label: 'Mixer', href: '/products?category=mixer', icon: SlidersHorizontal },
+                { label: 'Thanh Lý', href: '/products?category=thanh-ly', icon: PackageSearch },
+              ] as SubNavItem[]).map((item: SubNavItem) => (
+                 <Link
+                   key={item.label}
+                   href={item.href}
+                   className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
+                 >
+                   <item.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                   <span className="text-xs sm:text-sm">{item.label}</span>
+                 </Link>
+               ))}
+            </div>
           </div>
         </div>
       </div>
