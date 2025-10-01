@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Get dashboard API base URL
 const getDashboardApiBase = () => {
+  // Use STRAPI environment variables if available
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL;
+  if (strapiUrl) {
+    return `${strapiUrl}/api`;
+  }
+  
+  // Fallback to localhost for development
   if (typeof window !== 'undefined') {
     return `${window.location.protocol}//${window.location.hostname}:3001/api`;
   }
