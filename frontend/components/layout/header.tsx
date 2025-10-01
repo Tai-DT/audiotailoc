@@ -206,8 +206,8 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Navigation Menu */}
-          <div className="hidden xl:flex items-center space-x-1">
+          {/* Navigation Menu - Show from lg breakpoint (1024px) instead of xl (1280px) */}
+          <div className="hidden lg:flex items-center space-x-1 flex-1">
             <NavigationMenu>
               <NavigationMenuList className="justify-start">
                 {/* Products Dropdown */}
@@ -364,9 +364,9 @@ export function Header() {
             </NavigationMenu>
           </div>
 
-          {/* Search Bar - Center */}
-          <div className="hidden lg:flex-1 lg:max-w-xl xl:block">
-            <form onSubmit={handleSearch} className="relative group">
+          {/* Search Bar - Show from lg breakpoint */}
+          <div className="hidden lg:flex lg:flex-1 lg:max-w-md xl:max-w-xl">
+            <form onSubmit={handleSearch} className="relative group w-full">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
                 <Search className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 {searchQuery && (
@@ -490,11 +490,11 @@ export function Header() {
               </div>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - Show when navbar is hidden */}
             <Button
               variant="ghost"
               size="icon"
-              className="xl:hidden h-9 w-9 sm:h-10 sm:w-10"
+              className="lg:hidden h-9 w-9 sm:h-10 sm:w-10"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -502,9 +502,9 @@ export function Header() {
           </div>
         </div>
 
-        {/* Sub navigation */}
-        <div className="border-t border-muted pt-3 mt-2">
-          <div className="flex items-center gap-3 overflow-x-auto pb-1 lg:justify-center">
+        {/* Sub navigation - Improved responsive */}
+        <div className="border-t border-muted py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide lg:justify-center">
             {([
               { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
               { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
@@ -514,10 +514,10 @@ export function Header() {
                <Link
                  key={item.label}
                  href={item.href}
-                 className="flex items-center gap-2 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm"
+                 className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
                >
-                 <item.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                 <span className="flex-1">{item.label}</span>
+                 <item.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                 <span className="text-xs sm:text-sm">{item.label}</span>
                </Link>
              ))}
           </div>
@@ -526,7 +526,7 @@ export function Header() {
 
       {/* Mobile expanded menu */}
       {isMenuOpen && (
-        <div className="xl:hidden border-t py-4 space-y-4 bg-background">
+        <div className="lg:hidden border-t py-4 space-y-4 bg-background max-h-[calc(100vh-200px)] overflow-y-auto">
           {/* Mobile Search */}
           <form onSubmit={handleSearch} className="px-4">
             <div className="relative">
