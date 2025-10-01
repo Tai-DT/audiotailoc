@@ -8,7 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
@@ -19,7 +19,7 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Get()
-  async findAll(@Query() query: any) {
+  async findAll(@Query() _query: any) {
     return this.bookingService.findAll();
   }
 
