@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Get dashboard API base URL
-const getDashboardApiBase = () => {
-  if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:3001/api`;
-  }
-  return 'http://localhost:3001/api';
+// Get Strapi API base URL from environment or fallback to localhost
+const getStrapiApiBase = () => {
+  return process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:3001/api';
 };
 
 // GET /api/blog/articles - Get all blog articles
@@ -19,9 +16,9 @@ export async function GET(request: NextRequest) {
       params.append(key, value);
     }
 
-    const dashboardUrl = `${getDashboardApiBase()}/blog/articles?${params.toString()}`;
+    const strapiUrl = `${getStrapiApiBase()}/blog/articles?${params.toString()}`;
 
-    const response = await fetch(dashboardUrl, {
+    const response = await fetch(strapiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
