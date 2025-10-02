@@ -32,7 +32,11 @@ export class AdminOrKeyGuard implements CanActivate {
     
     const token = authHeader.slice(7);
     try {
-      const secret = this.config.get<string>('JWT_ACCESS_SECRET') || 'dev_access';
+      const secret = this.config.get<string>('JWT_ACCESS_SECRET');
+      if (!secret) {
+        this.logger.error('JWT_ACCESS_SECRET is not configured');
+        return false;
+      }
       const payload = jwt.verify(token, secret) as any;
       req.user = payload; // Set user in request for AdminGuard
       this.logger.debug(`AdminOrKeyGuard: JWT verified for user ${payload.email}, role: ${payload.role}`);

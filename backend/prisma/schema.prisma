@@ -18,11 +18,12 @@ model User {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   activityLogs       ActivityLog[]
+  blog_articles      blog_articles[]
+  blog_comments      blog_comments[]
   carts              Cart[]
   questions          CustomerQuestion[]
   inventoryMovements InventoryMovement[]
   loyaltyAccount     LoyaltyAccount?
-  notifications      Notification[]
   orders             Order[]
   reviews            ProductReview[]
   productViews       ProductView[]
@@ -41,8 +42,8 @@ model Product {
   name               String
   description        String?
   shortDescription   String?
-  priceCents         Int
-  originalPriceCents Int?
+  priceCents         BigInt
+  originalPriceCents BigInt?
   imageUrl           String?
   images             String?
   categoryId         String?
@@ -105,6 +106,7 @@ model Category {
   children        Category[] @relation("CategoryHierarchy")
   products        Product[]
 
+  @@index([parentId])
   @@map("categories")
 }
 
@@ -127,7 +129,7 @@ model CartItem {
   cartId    String
   productId String
   quantity  Int
-  price     Int
+  price     BigInt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cart      Cart     @relation(fields: [cartId], references: [id])
@@ -164,9 +166,9 @@ model OrderItem {
   orderId   String
   productId String
   quantity  Int
-  price     Int
+  price     BigInt
   name      String?
-  unitPrice Int?
+  unitPrice BigInt?
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -265,19 +267,6 @@ model Service {
   @@map("services")
 }
 
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  type      String   @default("INFO")
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@map("notifications")
-}
-
 model Inventory {
   id                String   @id @default(cuid())
   productId         String   @unique
@@ -355,6 +344,7 @@ model WishlistItem {
   userId    String
   productId String
   createdAt DateTime @default(now())
+  updatedAt DateTime
   product   Product  @relation(fields: [productId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 
@@ -375,6 +365,8 @@ model ProductReview {
   downvotes  Int                   @default(0)
   createdAt  DateTime              @default(now())
   updatedAt  DateTime              @updatedAt
+  images     String?
+  response   String?
   reports    ProductReviewReport[]
   votes      ProductReviewVote[]
   product    Product               @relation(fields: [productId], references: [id])
@@ -461,6 +453,7 @@ model CustomerQuestion {
   category     String?
   satisfaction Int?
   timestamp    DateTime @default(now())
+  updatedAt    DateTime
   user         User?    @relation(fields: [userId], references: [id])
 
   @@map("customer_questions")
@@ -487,6 +480,7 @@ model ServiceItem {
   price        Int
   quantity     Int
   createdAt    DateTime             @default(now())
+  updatedAt    DateTime
   bookingItems ServiceBookingItem[]
   service      Service              @relation(fields: [serviceId], references: [id])
 
@@ -495,7 +489,7 @@ model ServiceItem {
 
 model ServiceBooking {
   id             String                 @id @default(cuid())
-  userId         String
+  userId         String?
   serviceId      String
   technicianId   String?
   status         String                 @default("PENDING")
@@ -510,7 +504,7 @@ model ServiceBooking {
   items          ServiceBookingItem[]
   service        Service                @relation(fields: [serviceId], references: [id])
   technician     Technician?            @relation(fields: [technicianId], references: [id])
-  user           User                   @relation(fields: [userId], references: [id])
+  user           User?                  @relation(fields: [userId], references: [id])
   payments       ServicePayment[]
   history        ServiceStatusHistory[]
 
@@ -571,15 +565,23 @@ model ServicePayment {
 }
 
 model Promotion {
-  id          String    @id @default(cuid())
-  code        String    @unique
-  name        String
-  description String?
-  type        String    @default("PERCENTAGE")
-  value       Int
-  isActive    Boolean   @default(true)
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
+  id               String    @id @default(cuid())
+  code             String    @unique
+  name             String
+  description      String?
+  type             String    @default("PERCENTAGE")
+  value            Int
+  isActive         Boolean   @default(true)
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  created_by       String?
+  max_discount     Int?
+  metadata         Json?
+  min_order_amount Int?
+  starts_at        DateTime?
+  updatedAt        DateTime
+  usage_count      Int       @default(0)
+  usage_limit      Int?
 
   @@map("promotions")
 }
@@ -820,9 +822,15 @@ model Campaign {
   sentAt          DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+  content         String?
+  createdBy       String?
+  scheduledAt     DateTime?
+  subject         String?
+  templateId      String?
   clicks          CampaignClick[]
   opens           CampaignOpen[]
   recipients      CampaignRecipient[]
+  email_templates email_templates?    @relation(fields: [templateId], references: [id])
   emailLogs       EmailLog[]
 
   @@map("campaigns")
@@ -878,20 +886,6 @@ model EmailLog {
   @@map("email_logs")
 }
 
-model contact_messages {
-  id          String   @id
-  name        String
-  email       String
-  phone       String?
-  subject     String
-  message     String
-  company     String?
-  serviceType String?
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-}
-
 model site_settings {
   id        String   @id
   key       String   @unique
@@ -916,6 +910,142 @@ model software {
   isDeleted   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime
+}
+
+model blog_articles {
+  id              String          @id
+  title           String
+  slug            String          @unique
+  content         String
+  excerpt         String?
+  imageUrl        String?
+  categoryId      String
+  authorId        String
+  status          String          @default("DRAFT")
+  publishedAt     DateTime?
+  viewCount       Int             @default(0)
+  likeCount       Int             @default(0)
+  commentCount    Int             @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  featured        Boolean         @default(false)
+  users           User            @relation(fields: [authorId], references: [id])
+  blog_categories blog_categories @relation(fields: [categoryId], references: [id])
+  blog_comments   blog_comments[]
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([featured])
+  @@index([publishedAt])
+  @@index([status])
+}
+
+model blog_categories {
+  id                    String            @id
+  name                  String
+  slug                  String            @unique
+  description           String?
+  imageUrl              String?
+  parentId              String?
+  isActive              Boolean           @default(true)
+  sortOrder             Int               @default(0)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime
+  blog_articles         blog_articles[]
+  blog_categories       blog_categories?  @relation("blog_categoriesToblog_categories", fields: [parentId], references: [id])
+  other_blog_categories blog_categories[] @relation("blog_categoriesToblog_categories")
+
+  @@index([isActive])
+  @@index([parentId])
+}
+
+model blog_comments {
+  id            String        @id
+  articleId     String
+  authorId      String?
+  authorName    String?
+  authorEmail   String?
+  content       String
+  isApproved    Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  blog_articles blog_articles @relation(fields: [articleId], references: [id])
+  users         User?         @relation(fields: [authorId], references: [id])
+
+  @@index([articleId])
+  @@index([isApproved])
+}
+
+model email_templates {
+  id          String     @id
+  name        String
+  description String?
+  category    String?
+  subject     String
+  content     String
+  usageCount  Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  campaigns   Campaign[]
+}
+
+model newsletter_subscriptions {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model policies {
+  id          String   @id
+  slug        String   @unique
+  title       String
+  contentHtml String
+  summary     String?
+  type        String
+  isPublished Boolean  @default(true)
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model site_stats {
+  id           String   @id
+  key          String   @unique
+  value        String
+  label        String
+  description  String?
+  icon         String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+model testimonials {
+  id           String   @id
+  name         String
+  position     String?
+  company      String?
+  content      String
+  avatarUrl    String?
+  rating       Int      @default(5)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([displayOrder])
+  @@index([isActive])
 }
 
 enum ReviewStatus {
