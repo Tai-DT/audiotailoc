@@ -25,7 +25,8 @@ export class ZaloService {
       data: {
         userId,
         question: text,
-        category: 'ZALO_SUPPORT'
+        category: 'ZALO_SUPPORT',
+        updatedAt: new Date()
       }
     });
 

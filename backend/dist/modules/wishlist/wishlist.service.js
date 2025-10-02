@@ -39,6 +39,7 @@ let WishlistService = class WishlistService {
             data: {
                 userId,
                 productId,
+                updatedAt: new Date(),
             },
             include: {
                 product: {

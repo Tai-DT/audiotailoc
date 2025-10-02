@@ -69,7 +69,7 @@ export class OrdersService {
           productName: item.product?.name || item.name || 'Sản phẩm',
           quantity: item.quantity,
           price: item.unitPrice || 0,
-          total: (item.unitPrice || 0) * item.quantity
+          total: Number(item.unitPrice || 0) * item.quantity
         }))
       }))
     }));
@@ -218,8 +218,8 @@ export class OrdersService {
       const itemData = {
         productId: product.id,
         quantity: item.quantity || 1,
-        price: product.priceCents,
-        unitPrice: product.priceCents,
+        price: Number(product.priceCents),
+        unitPrice: Number(product.priceCents),
         name: product.name
       };
 
@@ -350,8 +350,8 @@ export class OrdersService {
           }
 
           if (product) {
-            itemData.unitPrice = product.priceCents;
-            itemData.price = product.priceCents; // Keep both fields in sync
+            itemData.unitPrice = Number(product.priceCents);
+            itemData.price = Number(product.priceCents); // Keep both fields in sync
             itemData.productId = product.id;
             if (!item.name && product.name) itemData.name = product.name;
           }
@@ -439,7 +439,7 @@ export class OrdersService {
         productName: item.product?.name || item.name || 'Sản phẩm',
         quantity: item.quantity,
         price: item.unitPrice || 0,
-        total: (item.unitPrice || 0) * item.quantity
+        total: Number(item.unitPrice || 0) * item.quantity
       }))
     };
   }

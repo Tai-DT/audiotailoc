@@ -10,7 +10,7 @@ export declare class CartService {
             product: {
                 id: string;
                 name: string;
-                priceCents: number;
+                priceCents: bigint;
                 imageUrl: string;
                 images: string;
             };
@@ -18,7 +18,7 @@ export declare class CartService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: number;
+            price: bigint;
             cartId: string;
             productId: string;
             quantity: number;
@@ -71,8 +71,8 @@ export declare class CartService {
                 description: string | null;
                 slug: string;
                 shortDescription: string | null;
-                priceCents: number;
-                originalPriceCents: number | null;
+                priceCents: bigint;
+                originalPriceCents: bigint | null;
                 imageUrl: string | null;
                 images: string | null;
                 categoryId: string | null;
@@ -100,7 +100,7 @@ export declare class CartService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: number;
+            price: bigint;
             cartId: string;
             productId: string;
             quantity: number;

@@ -103,9 +103,9 @@ export class ServicesService {
     // Map services to include computed price field
     const mappedServices = services.map(service => ({
       ...service,
-      price: service.basePriceCents / 100,
-      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+      price: Number(service.basePriceCents) / 100,
+      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
       type: service.serviceType,
     }));
 
@@ -132,9 +132,9 @@ export class ServicesService {
 
     return {
       ...service,
-      price: service.basePriceCents / 100,
-      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+      price: Number(service.basePriceCents) / 100,
+      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
       type: service.serviceType,
     };
   }
@@ -154,7 +154,7 @@ export class ServicesService {
 
     return {
       ...service,
-      price: service.basePriceCents / 100,
+      price: Number(service.basePriceCents) / 100,
       type: service.serviceType,
     };
   }
@@ -272,6 +272,7 @@ export class ServicesService {
         name: data.name,
         price: data.priceCents,
         quantity: 1,
+        updatedAt: new Date(),
       },
     });
   }

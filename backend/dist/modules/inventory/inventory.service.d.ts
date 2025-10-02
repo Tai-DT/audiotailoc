@@ -24,7 +24,7 @@ export declare class InventoryService {
                 id: string;
                 name: string;
                 slug: string;
-                priceCents: number;
+                priceCents: bigint;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;

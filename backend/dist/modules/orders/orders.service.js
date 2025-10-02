@@ -78,7 +78,7 @@ let OrdersService = class OrdersService {
                     productName: item.product?.name || item.name || 'Sản phẩm',
                     quantity: item.quantity,
                     price: item.unitPrice || 0,
-                    total: (item.unitPrice || 0) * item.quantity
+                    total: Number(item.unitPrice || 0) * item.quantity
                 }))
             }))
         }));
@@ -200,8 +200,8 @@ let OrdersService = class OrdersService {
             const itemData = {
                 productId: product.id,
                 quantity: item.quantity || 1,
-                price: product.priceCents,
-                unitPrice: product.priceCents,
+                price: Number(product.priceCents),
+                unitPrice: Number(product.priceCents),
                 name: product.name
             };
             items.push(itemData);
@@ -304,8 +304,8 @@ let OrdersService = class OrdersService {
                         });
                     }
                     if (product) {
-                        itemData.unitPrice = product.priceCents;
-                        itemData.price = product.priceCents;
+                        itemData.unitPrice = Number(product.priceCents);
+                        itemData.price = Number(product.priceCents);
                         itemData.productId = product.id;
                         if (!item.name && product.name)
                             itemData.name = product.name;
@@ -386,7 +386,7 @@ let OrdersService = class OrdersService {
                 productName: item.product?.name || item.name || 'Sản phẩm',
                 quantity: item.quantity,
                 price: item.unitPrice || 0,
-                total: (item.unitPrice || 0) * item.quantity
+                total: Number(item.unitPrice || 0) * item.quantity
             }))
         };
     }

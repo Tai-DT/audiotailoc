@@ -99,7 +99,7 @@ export declare class TechniciansService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
+            userId: string | null;
             scheduledAt: Date | null;
             notes: string | null;
             serviceId: string;
