@@ -86,18 +86,66 @@ export function useProduct(idOrSlug: string) {
   return useQuery({
     queryKey: ['product', idOrSlug],
     queryFn: async () => {
-      // Check if it's a UUID or slug
+      if (!idOrSlug) throw new Error('Missing product identifier');
+
+      // Patterns
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-      
-      const endpoint = isUUID 
-        ? API_ENDPOINTS.PRODUCTS.DETAIL(idOrSlug)
-        : API_ENDPOINTS.PRODUCTS.DETAIL_BY_SLUG(idOrSlug);
-      
-      const response = await apiClient.get(endpoint);
-      return handleApiResponse<Product>(response);
+      // CUID / CUID2 style (simple heuristic: starts with c, length 25-32, alnum)
+      const isCUID = /^c[a-z0-9]{15,}$/i.test(idOrSlug);
+
+      // Allow slug forms like: some-product-name-cmg4t1xtc006vitfly0sjzja1
+      let baseIdOrSlug = idOrSlug;
+      const trailingIdMatch = idOrSlug.match(/(c[a-z0-9]{15,})$/i);
+      if (!isUUID && !isCUID && trailingIdMatch) {
+        baseIdOrSlug = trailingIdMatch[1];
+      }
+
+      const tryDetail = async (val: string) => {
+        const res = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL(val));
+        return handleApiResponse<Product>(res);
+      };
+      const trySlug = async (val: string) => {
+        const res = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL_BY_SLUG(val));
+        return handleApiResponse<Product>(res);
+      };
+
+      // Resolution strategy:
+      // 1. If UUID or CUID -> attempt direct detail
+      // 2. Else attempt slug; if 404 and trailing ID pattern -> fallback to detail
+      // 3. If slug attempt first and fails non-404 -> throw
+
+      try {
+        if (isUUID || isCUID) {
+          return await tryDetail(baseIdOrSlug);
+        }
+
+        // Try as slug first
+        try {
+          return await trySlug(baseIdOrSlug);
+        } catch (err: unknown) {
+          const status = typeof err === 'object' && err !== null && 'response' in err
+            ? (err as { response?: { status?: number } }).response?.status
+            : undefined;
+          if (status === 404 && trailingIdMatch) {
+            // Fallback to detail with extracted ID
+            return await tryDetail(trailingIdMatch[1]);
+          }
+          throw err;
+        }
+      } catch (error) {
+        // Final fallback: if raw looked like ID but failed slug earlier
+        if (!isUUID && !isCUID && trailingIdMatch) {
+          try {
+            return await tryDetail(trailingIdMatch[1]);
+          } catch {
+            throw error;
+          }
+        }
+        throw error;
+      }
     },
     enabled: !!idOrSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
