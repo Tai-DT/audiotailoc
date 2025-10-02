@@ -93,9 +93,9 @@ let ServicesService = class ServicesService {
         ]);
         const mappedServices = services.map(service => ({
             ...service,
-            price: service.basePriceCents / 100,
-            minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-            maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+            price: Number(service.basePriceCents) / 100,
+            minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+            maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
             type: service.serviceType,
         }));
         console.log('[DEBUG] ServicesService.getServices returning:', { total, page, pageSize, servicesCount: services.length });
@@ -118,9 +118,9 @@ let ServicesService = class ServicesService {
         }
         return {
             ...service,
-            price: service.basePriceCents / 100,
-            minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-            maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+            price: Number(service.basePriceCents) / 100,
+            minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+            maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
             type: service.serviceType,
         };
     }
@@ -137,7 +137,7 @@ let ServicesService = class ServicesService {
         }
         return {
             ...service,
-            price: service.basePriceCents / 100,
+            price: Number(service.basePriceCents) / 100,
             type: service.serviceType,
         };
     }
@@ -239,6 +239,7 @@ let ServicesService = class ServicesService {
                 name: data.name,
                 price: data.priceCents,
                 quantity: 1,
+                updatedAt: new Date(),
             },
         });
     }

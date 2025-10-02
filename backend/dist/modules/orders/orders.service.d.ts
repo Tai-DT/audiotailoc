@@ -29,7 +29,7 @@ export declare class OrdersService {
                 productSlug: any;
                 productName: string;
                 quantity: number;
-                price: number;
+                price: number | bigint;
                 total: number;
             }[];
         }[];
@@ -41,11 +41,11 @@ export declare class OrdersService {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
-            price: number;
+            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
-            unitPrice: number | null;
+            unitPrice: bigint | null;
         }[];
         payments: {
             status: string;

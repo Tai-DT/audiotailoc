@@ -8,13 +8,14 @@ export declare class WishlistService {
             id: string;
             name: string;
             slug: string;
-            priceCents: number;
+            priceCents: bigint;
             imageUrl: string;
             isActive: boolean;
         };
     } & {
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         userId: string;
         productId: string;
     }>;
@@ -29,8 +30,8 @@ export declare class WishlistService {
                 id: string;
                 name: string;
                 slug: string;
-                priceCents: number;
-                originalPriceCents: number;
+                priceCents: bigint;
+                originalPriceCents: bigint;
                 imageUrl: string;
                 images: string;
                 stockQuantity: number;
@@ -39,6 +40,7 @@ export declare class WishlistService {
         } & {
             id: string;
             createdAt: Date;
+            updatedAt: Date;
             userId: string;
             productId: string;
         })[];

@@ -21,6 +21,7 @@ export declare class ServicesController {
             id: string;
             name: string;
             createdAt: Date;
+            updatedAt: Date;
             price: number;
             quantity: number;
             serviceId: string;
@@ -94,6 +95,7 @@ export declare class ServicesController {
                 id: string;
                 name: string;
                 createdAt: Date;
+                updatedAt: Date;
                 price: number;
                 quantity: number;
                 serviceId: string;
@@ -237,6 +239,7 @@ export declare class ServicesController {
             id: string;
             name: string;
             createdAt: Date;
+            updatedAt: Date;
             price: number;
             quantity: number;
             serviceId: string;
@@ -246,7 +249,7 @@ export declare class ServicesController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
+            userId: string | null;
             scheduledAt: Date | null;
             notes: string | null;
             serviceId: string;
@@ -310,6 +313,7 @@ export declare class ServicesController {
             id: string;
             name: string;
             createdAt: Date;
+            updatedAt: Date;
             price: number;
             quantity: number;
             serviceId: string;
@@ -370,6 +374,7 @@ export declare class ServicesController {
             id: string;
             name: string;
             createdAt: Date;
+            updatedAt: Date;
             price: number;
             quantity: number;
             serviceId: string;
@@ -457,6 +462,7 @@ export declare class ServicesController {
             id: string;
             name: string;
             createdAt: Date;
+            updatedAt: Date;
             price: number;
             quantity: number;
             serviceId: string;
@@ -492,6 +498,7 @@ export declare class ServicesController {
         id: string;
         name: string;
         createdAt: Date;
+        updatedAt: Date;
         price: number;
         quantity: number;
         serviceId: string;
@@ -503,6 +510,7 @@ export declare class ServicesController {
         id: string;
         name: string;
         createdAt: Date;
+        updatedAt: Date;
         price: number;
         quantity: number;
         serviceId: string;
@@ -511,6 +519,7 @@ export declare class ServicesController {
         id: string;
         name: string;
         createdAt: Date;
+        updatedAt: Date;
         price: number;
         quantity: number;
         serviceId: string;
