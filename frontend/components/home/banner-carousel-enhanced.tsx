@@ -123,13 +123,13 @@ export function BannerCarousel() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/products">
+                  <Link href="/san-pham">
                     <Button size="lg" className="w-full sm:w-auto">
                       Khám phá sản phẩm
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="/services">
+                  <Link href="/dich-vu">
                     <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                       <Play className="mr-2 h-4 w-4" />
                       Xem dịch vụ
@@ -315,7 +315,7 @@ export function BannerCarousel() {
               transition={{ delay: 0.5 }}
             >
               <HoverMotionWrapper>
-                <Link href={currentBanner?.linkUrl ?? '/products'}>
+                <Link href={currentBanner?.linkUrl ?? '/san-pham'}>
                   <Button size="lg" className="w-full sm:w-auto">
                     {currentBanner?.buttonLabel ?? 'Khám phá sản phẩm'}
                     <ArrowRight className="ml-2 h-4 w-4" />

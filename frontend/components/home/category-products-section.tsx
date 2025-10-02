@@ -39,8 +39,8 @@ export function CategoryProductsSection() {
     }
   };
 
-  const handleViewProduct = (productId: string) => {
-    window.location.href = `/products/${productId}`;
+  const handleViewProduct = (productSlug: string) => {
+    window.location.href = `/san-pham/${productSlug}`;
   };
 
   if (categoriesLoading) {
@@ -96,7 +96,7 @@ export function CategoryProductsSection() {
         {/* Category Navigation */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           {displayCategories.map((category) => (
-            <Link key={category.id} href={`/products?category=${category.slug}`}>
+            <Link key={category.id} href={`/san-pham?category=${category.slug}`}>
               <Button
                 variant="outline"
                 className="hover:bg-purple-50 hover:border-purple-200"
@@ -105,7 +105,7 @@ export function CategoryProductsSection() {
               </Button>
             </Link>
           ))}
-          <Link href="/products">
+          <Link href="/san-pham">
             <Button variant="outline">
               Xem tất cả
               <ArrowRight className="ml-2 h-4 w-4" />

@@ -31,10 +31,7 @@ export function SEOManager({ entity }: SEOManagerProps) {
     if (!entity) return;
     
     try {
-      // Here you would make an API call to save SEO data
-      console.log('Saving SEO data for:', entity.id, seoData);
-      
-      // Simulated API call
+      // Save SEO data via API
       const response = await fetch(`/api/seo/${entity.type}/${entity.id}`, {
         method: 'PUT',
         headers: {
@@ -79,10 +76,10 @@ export function SEOManager({ entity }: SEOManagerProps) {
     
     switch (entity.type) {
       case 'product':
-        path = `/products/${entity.slug}`;
+        path = `/san-pham/${entity.slug}`;
         break;
       case 'service':
-        path = `/services/${entity.slug}`;
+        path = `/dich-vu/${entity.slug}`;
         break;
       case 'blog':
         path = `/blog/${entity.slug}`;

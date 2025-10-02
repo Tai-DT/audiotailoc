@@ -15,10 +15,10 @@ PayOS đã được tích hợp đầy đủ vào hệ thống Audio Tài Lộc 
 ### Environment Variables đã cấu hình:
 
 ```bash
-# PayOS Credentials (Đã có trong .env.local)
-PAYOS_PARTNER_CODE=DOTAI3004
-PAYOS_API_KEY=43e30c48-a208-47ad-855a-c1bdf18d748b
-PAYOS_CHECKSUM_KEY=33642e2b053986dbdb178487479fb0191371435d1f9328b8fba61ef6c20a65ab
+# PayOS Credentials (EXAMPLE - DO NOT USE IN PRODUCTION)
+PAYOS_PARTNER_CODE=your_partner_code_here
+PAYOS_API_KEY=your_api_key_here
+PAYOS_CHECKSUM_KEY=your_checksum_key_here
 
 # PayOS API Endpoints
 PAYOS_CREATE_PAYMENT_URL=https://api.payos.vn/v2/payment-requests

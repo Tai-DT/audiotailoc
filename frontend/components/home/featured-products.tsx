@@ -36,8 +36,8 @@ export function FeaturedProducts() {
     }
   };
 
-  const handleViewProduct = (productId: string) => {
-    window.location.href = `/products/${productId}`;
+  const handleViewProduct = (productSlug: string) => {
+    window.location.href = `/san-pham/${productSlug}`;
   };
 
   return (
@@ -61,7 +61,7 @@ export function FeaturedProducts() {
         />
 
         <div className="text-center mt-12">
-          <Link href="/products">
+          <Link href="/san-pham">
             <Button variant="outline" size="lg">
               Xem tất cả sản phẩm
               <ArrowRight className="ml-2 h-4 w-4" />
