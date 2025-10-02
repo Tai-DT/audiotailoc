@@ -33,6 +33,46 @@
       "source": "/home",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/products",
+      "destination": "/san-pham",
+      "permanent": true
+    },
+    {
+      "source": "/products/(.*)",
+      "destination": "/san-pham/$1",
+      "permanent": true
+    },
+    {
+      "source": "/categories",
+      "destination": "/danh-muc",
+      "permanent": true
+    },
+    {
+      "source": "/categories/(.*)",
+      "destination": "/danh-muc/$1",
+      "permanent": true
+    },
+    {
+      "source": "/services",
+      "destination": "/dich-vu",
+      "permanent": true
+    },
+    {
+      "source": "/services/(.*)",
+      "destination": "/dich-vu/$1",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "/du-an",
+      "permanent": true
+    },
+    {
+      "source": "/projects/(.*)",
+      "destination": "/du-an/$1",
+      "permanent": true
     }
   ]
 }
