@@ -74,20 +74,20 @@ export function SimpleHeader({
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
-              href="/products" 
+              href="/san-pham" 
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Sản phẩm
             </Link>
             <Link 
-              href="/services" 
+              href="/dich-vu" 
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Dịch vụ
             </Link>
             <Link 
-              href="/projects" 
-              className="text-sm font-medium transition-colors hover:text-primary"
+              href="/du-an" 
+              className="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 transition-colors"
             >
               Dự án
             </Link>
@@ -240,21 +240,21 @@ export function SimpleHeader({
                 </div>
               </form>
               <Link 
-                href="/products" 
+                href="/san-pham" 
                 className="text-sm font-medium transition-colors hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Sản phẩm
               </Link>
               <Link 
-                href="/services" 
+                href="/dich-vu" 
                 className="text-sm font-medium transition-colors hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dịch vụ
               </Link>
               <Link 
-                href="/projects" 
+                href="/du-an" 
                 className="text-sm font-medium transition-colors hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >

@@ -144,7 +144,7 @@ export default function SupportPage() {
           setFaqs(faqsData);
         }
       } catch {
-        console.log('Using default FAQs data');
+        // Using default FAQs data
       }
 
       try {
@@ -154,7 +154,7 @@ export default function SupportPage() {
           setBlogPosts(blogData.data);
         }
       } catch {
-        console.log('Using default blog data');
+        // Using default blog data
       }
 
     } catch (error) {
@@ -176,7 +176,7 @@ export default function SupportPage() {
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting ticket:', ticketForm);
+    // TODO: Implement actual ticket submission
     // Mock submission
     alert('Yêu cầu hỗ trợ đã được gửi! Chúng tôi sẽ liên hệ với bạn sớm.');
   };

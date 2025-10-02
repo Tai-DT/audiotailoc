@@ -35,8 +35,6 @@ export async function GET(request: NextRequest) {
 
     const apiUrl = `${API_BASE_URL}/projects/featured?limit=${limit}`;
 
-    console.log('Featured projects API request:', apiUrl);
-
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {

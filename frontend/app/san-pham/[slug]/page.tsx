@@ -18,30 +18,21 @@ import ProductReviews from '@/components/products/product-reviews';
 import CreateReviewForm from '@/components/products/create-review-form';
 import { ProductStructuredData } from '@/components/seo/product-structured-data';
 interface ProductDetailPageProps {
-  params: Promise<{ id: string }> | { id: string };
-}
-
-function extractLogicalId(raw: string): string {
-  if (!raw) return raw;
-  // Support patterns like slugified-name-cmg4t1xtc006vitfly0sjzja1
-  const m = raw.match(/(c[a-z0-9]{15,})$/i);
-  if (m) return m[1];
-  return raw;
+  params: Promise<{ slug: string }> | { slug: string };
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   // Handle both Promise params (new pattern) and direct object
   const isPromise = typeof (params as unknown as { then?: unknown }).then === 'function';
-  const resolvedParams = isPromise ? React.use(params as Promise<{ id: string }>) : (params as { id: string });
-  const rawId = resolvedParams.id;
-  const id = extractLogicalId(rawId);
+  const resolvedParams = isPromise ? React.use(params as Promise<{ slug: string }>) : (params as { slug: string });
+  const slug = resolvedParams.slug;
 
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
   const [showCreateReview, setShowCreateReview] = React.useState(false);
-  const { data: product, isLoading: isProductLoading, error: productError } = useProduct(id);
-  const { data: wishlistData, isLoading: isWishlistLoading } = useIsInWishlist(id);
-  const { data: reviewsData } = useProductReviews(id);
+  const { data: product, isLoading: isProductLoading, error: productError } = useProduct(slug);
+  const { data: wishlistData, isLoading: isWishlistLoading } = useIsInWishlist(product?.id || '');
+  const { data: reviewsData } = useProductReviews(product?.id || '');
   const { toggleWishlist, isLoading: isTogglingWishlist } = useToggleWishlist();
   const { addItem: addCartItem } = useCart();
 
@@ -111,7 +102,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }
 
   if (productError) {
-    console.error('Product fetch error for', { rawId, id, productError });
+    console.error('Product fetch error for', { slug, productError });
   }
 
   if (!isProductLoading && (!product || productError)) {
@@ -147,7 +138,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
           <Link href="/" className="hover:text-primary">Trang chủ</Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-primary">Sản phẩm</Link>
+          <Link href="/san-pham" className="hover:text-primary">Sản phẩm</Link>
           <span>/</span>
           <span className="text-foreground">{product.name}</span>
         </nav>
@@ -350,14 +341,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 {/* Create Review Form */}
                 {showCreateReview && (
                   <CreateReviewForm
-                    productId={id}
+                    productId={product?.id || ''}
                     onSuccess={() => setShowCreateReview(false)}
                     onCancel={() => setShowCreateReview(false)}
                   />
                 )}
 
                 {/* Reviews List */}
-                <ProductReviews productId={id} />
+                <ProductReviews productId={product?.id || ''} />
               </div>
             </TabsContent>
             

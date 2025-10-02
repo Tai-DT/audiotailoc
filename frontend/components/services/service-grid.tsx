@@ -199,12 +199,12 @@ function ServiceCard({ service }: ServiceCardProps) {
       </CardContent>
 
       <CardFooter className="flex gap-2">
-        <Link href={`/services/${service.slug}`} className="flex-1">
+        <Link href={`/dich-vu/${service.slug}`} className="flex-1">
           <Button variant="outline" className="w-full">
             Xem chi tiết
           </Button>
         </Link>
-        <Link href={`/services/${service.slug}?action=book`} className="flex-1">
+        <Link href={`/dich-vu/${service.slug}?action=book`} className="flex-1">
           <Button className="w-full">
             Đặt lịch
           </Button>

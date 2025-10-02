@@ -14,7 +14,7 @@ import { useIsInWishlist, useToggleWishlist } from '@/lib/hooks/use-wishlist';
 interface ProductCardProps {
   product: Product;
   onAddToCart?: (productId: string) => void;
-  onViewProduct?: (productId: string) => void;
+  onViewProduct?: (productSlug: string) => void;
 }
 
 export function ProductCard({ 
@@ -60,7 +60,7 @@ export function ProductCard({
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/20">
         <AspectRatio ratio={1}>
-          <Link href={`/products/${product.slug}`}>
+          <Link href={`/san-pham/${product.slug}`}>
             <Image
               src={getProductImage()}
               alt={product.name}
@@ -108,7 +108,7 @@ export function ProductCard({
               variant="secondary"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8"
-              onClick={() => onViewProduct?.(product.id)}
+              onClick={() => onViewProduct?.(product.slug)}
             >
               <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
@@ -155,7 +155,7 @@ export function ProductCard({
         {/* Category */}
         {product.category && (
           <Link 
-            href={`/products?category=${product.category.slug}`}
+            href={`/san-pham?category=${product.category.slug}`}
             className="text-[10px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             {product.category.name}
@@ -163,7 +163,7 @@ export function ProductCard({
         )}
 
         {/* Product Name */}
-  <Link href={`/products/${product.slug}`}>
+  <Link href={`/san-pham/${product.slug}`}>
           <h3 className="font-medium text-xs sm:text-sm mt-1 mb-2 line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem] sm:min-h-[2.8rem]">
             {product.name}
           </h3>

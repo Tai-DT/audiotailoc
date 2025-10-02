@@ -56,7 +56,7 @@ export function FeaturedServices() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Không thể tải dữ liệu dịch vụ. Vui lòng thử lại sau.
             </p>
-            <Link href="/services">
+            <Link href="/dich-vu">
               <Button variant="outline" size="lg">
                 Xem tất cả dịch vụ
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -80,7 +80,7 @@ export function FeaturedServices() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Chưa có dịch vụ nổi bật nào được chọn. Hãy khám phá các dịch vụ khác của chúng tôi!
             </p>
-            <Link href="/services">
+            <Link href="/dich-vu">
               <Button variant="outline" size="lg">
                 Xem tất cả dịch vụ
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -166,7 +166,7 @@ export function FeaturedServices() {
         </div>
 
         <div className="text-center">
-          <Link href="/services">
+          <Link href="/dich-vu">
             <Button variant="outline" size="lg">
               Xem tất cả dịch vụ
               <ArrowRight className="ml-2 h-4 w-4" />

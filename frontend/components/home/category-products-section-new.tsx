@@ -80,10 +80,10 @@ export function CategoryProductsSection() {
         </div>
 
         <div className="text-center">
-          <Link href="/categories">
-            <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+                    <Link href="/danh-muc">
+            <Button variant="outline" size="lg">
               Xem tất cả danh mục
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
