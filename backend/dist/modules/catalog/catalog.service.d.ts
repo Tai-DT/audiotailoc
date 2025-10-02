@@ -71,6 +71,23 @@ export declare class CatalogService {
         name: string;
         parentId: string | null;
     }[]>;
+    getCategoryBySlug(slug: string): Promise<{
+        id: string;
+        slug: string;
+        name: string;
+        parentId: string | null;
+        isActive: boolean;
+    }>;
+    getProductsByCategory(slug: string, params: {
+        page?: number;
+        limit?: number;
+    }): Promise<{
+        items: any[];
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+    }>;
     createCategory(data: {
         name: string;
         slug: string;

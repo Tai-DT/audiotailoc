@@ -334,6 +334,90 @@ export class CatalogService {
     return items;
   }
 
+  async getCategoryBySlug(slug: string): Promise<{ id: string; slug: string; name: string; parentId: string | null; isActive: boolean }> {
+    const key = `categories:slug:${slug}`;
+    const cached = await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null; isActive: boolean }>(key);
+    if (cached) return cached;
+    
+    const category = await this.prisma.category.findUnique({ 
+      where: { slug },
+      select: { id: true, slug: true, name: true, parentId: true, isActive: true }
+    });
+    
+    if (!category) {
+      throw new NotFoundException(`Category with slug '${slug}' not found`);
+    }
+    
+    await this.cache.set(key, category, { ttl: 300 });
+    return category;
+  }
+
+  async getProductsByCategory(slug: string, params: { page?: number; limit?: number }): Promise<{ items: any[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    // First get category by slug
+    const category = await this.getCategoryBySlug(slug);
+    
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 10));
+    const offset = (page - 1) * limit;
+
+    const where = {
+      categoryId: category.id,
+      isDeleted: false,
+      isActive: true,
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    
+    const mappedItems = items.map(item => ({
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      description: item.description,
+      shortDescription: item.shortDescription,
+      priceCents: item.priceCents,
+      originalPriceCents: item.originalPriceCents,
+      imageUrl: item.imageUrl,
+      images: Array.isArray(item.images) ? item.images as string[] : [],
+      category: item.category ? {
+        id: item.category.id,
+        name: item.category.name,
+        slug: item.category.slug,
+      } : undefined,
+      isActive: item.isActive,
+      featured: item.featured,
+      stockQuantity: item.stockQuantity,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }));
+
+    return {
+      items: mappedItems,
+      total,
+      page,
+      pageSize: limit,
+      totalPages,
+    };
+  }
+
   async createCategory(data: { name: string; slug: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
     // Check if slug already exists
     const existing = await this.prisma.category.findUnique({ where: { slug: data.slug } });
