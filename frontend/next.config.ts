@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from 'path';
 
 const nextConfig: NextConfig = {
   // Temporarily disable TypeScript checking to focus on connectivity
@@ -8,6 +9,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  
+  // Fix workspace root inference warning
+  outputFileTracingRoot: path.join(__dirname, '..'),
   
   // Custom domain configuration
   async headers() {
