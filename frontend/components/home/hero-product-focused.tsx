@@ -39,7 +39,7 @@ export function HeroProductFocused() {
             {/* Quick action buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg" className="text-base">
-                <Link href="/products" className="flex items-center gap-2">
+                <Link href="/san-pham" className="flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5" />
                   Xem sản phẩm
                   <ArrowRight className="h-5 w-5" />
@@ -47,7 +47,7 @@ export function HeroProductFocused() {
               </Button>
               
               <Button asChild variant="outline" size="lg" className="text-base">
-                <Link href="/services" className="flex items-center gap-2">
+                <Link href="/dich-vu" className="flex items-center gap-2">
                   <Wrench className="h-5 w-5" />
                   Dịch vụ thi công
                 </Link>

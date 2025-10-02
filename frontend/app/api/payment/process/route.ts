@@ -26,11 +26,8 @@ interface PayOSSignatureData {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Payment process request received');
     const body = await request.json();
     const { orderData, paymentMethod } = body;
-
-    console.log('Request body:', { orderData: !!orderData, paymentMethod });
 
     // Validate required fields
     if (!orderData || !paymentMethod) {
@@ -42,9 +39,7 @@ export async function POST(request: NextRequest) {
 
     // For PayOS payment
     if (paymentMethod === 'payos') {
-      console.log('Processing PayOS payment');
       const paymentUrl = await createPayOSPayment(orderData);
-      console.log('PayOS payment URL created:', paymentUrl);
       return NextResponse.json({
         success: true,
         paymentMethod: 'payos',
@@ -55,7 +50,6 @@ export async function POST(request: NextRequest) {
 
     // For COD payment
     if (paymentMethod === 'cod') {
-      console.log('Processing COD payment');
       const orderResult = await processCODOrder(orderData);
       return NextResponse.json({
         success: true,
@@ -82,27 +76,21 @@ export async function POST(request: NextRequest) {
 
 async function createPayOSPayment(orderData: OrderData) {
   try {
-    console.log('createPayOSPayment called with:', { orderData: !!orderData, customerName: orderData?.customerName });
     // Check if we have real PayOS credentials
     const hasRealCredentials = process.env.PAYOS_PARTNER_CODE &&
                               process.env.PAYOS_API_KEY &&
                               process.env.PAYOS_CHECKSUM_KEY &&
                               process.env.PAYOS_PARTNER_CODE !== 'demo_partner_code';
 
-    console.log('Has real credentials:', hasRealCredentials);
-
     // Try real PayOS API first, fallback to demo if failed
     if (hasRealCredentials) {
-      console.log('Using REAL PayOS API - Production mode enabled!');
       try {
         return await createRealPayOSPayment(orderData);
       } catch (realError) {
         console.error('Real PayOS API failed, falling back to demo mode:', realError instanceof Error ? realError.message : String(realError));
-        console.log('Falling back to demo mode...');
         return await createDemoPayOSPayment(orderData);
       }
     } else {
-      console.log('Using demo mode - PayOS credentials not configured');
       return await createDemoPayOSPayment(orderData);
     }
 
@@ -115,7 +103,6 @@ async function createPayOSPayment(orderData: OrderData) {
 
 async function createRealPayOSPayment(orderData: OrderData) {
   try {
-    console.log('createRealPayOSPayment called with orderData:', orderData);
     // Generate unique order code
     const orderCode = Date.now().toString();
 
@@ -142,14 +129,9 @@ async function createRealPayOSPayment(orderData: OrderData) {
       signature: '', // Will be generated below,
     };
 
-    console.log('Payment data prepared:', paymentData);
-
     // Generate signature for security
     const signature = generatePayOSSignature(paymentData, process.env.PAYOS_CHECKSUM_KEY!);
     paymentData.signature = signature;
-
-    console.log('Generated signature:', signature);
-    console.log('API URL:', process.env.PAYOS_CREATE_PAYMENT_URL);
 
     // Call PayOS API to create payment
     const response = await fetch(process.env.PAYOS_CREATE_PAYMENT_URL!, {
@@ -161,8 +143,6 @@ async function createRealPayOSPayment(orderData: OrderData) {
       },
       body: JSON.stringify(paymentData),
     });
-
-    console.log('PayOS API response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();

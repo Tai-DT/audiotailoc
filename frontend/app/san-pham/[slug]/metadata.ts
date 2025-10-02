@@ -3,6 +3,7 @@ import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
 
 interface Product {
   id: string;
+  slug: string;
   name: string;
   description: string;
   shortDescription?: string;
@@ -17,21 +18,28 @@ interface Product {
   };
 }
 
-async function getProduct(id: string): Promise<Product | null> {
+async function getProductFlexible(idOrSlug: string): Promise<Product | null> {
   try {
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL(id));
-    return handleApiResponse<Product>(response);
+    // First try slug endpoint; if 404 fallback to detail by id
+    try {
+      const bySlug = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL_BY_SLUG(idOrSlug));
+      return handleApiResponse<Product>(bySlug);
+    } catch (err: unknown) {
+      const status = typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number } }).response?.status : undefined;
+      if (status !== 404) throw err;
+      const byId = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL(idOrSlug));
+      return handleApiResponse<Product>(byId);
+    }
   } catch (error) {
     console.error('Failed to fetch product:', error);
     return null;
   }
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const { id } = resolvedParams;
-
-  const product = await getProduct(id);
+  const { slug } = resolvedParams;
+  const product = await getProductFlexible(slug);
 
   if (!product) {
     return {
@@ -69,15 +77,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       images: [image],
     },
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/products/${id}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/san-pham/${product.slug || slug}`,
     },
   };
-}
-
-export default function ProductDetailLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
 }

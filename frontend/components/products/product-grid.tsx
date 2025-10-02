@@ -9,7 +9,7 @@ interface ProductGridProps {
   products: Product[];
   loading?: boolean;
   onAddToCart?: (productId: string) => void;
-  onViewProduct?: (productId: string) => void;
+  onViewProduct?: (productSlug: string) => void;
 }
 
 export function ProductGrid({ 
