@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -17,15 +18,23 @@ import ProductReviews from '@/components/products/product-reviews';
 import CreateReviewForm from '@/components/products/create-review-form';
 import { ProductStructuredData } from '@/components/seo/product-structured-data';
 interface ProductDetailPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }> | { id: string };
+}
+
+function extractLogicalId(raw: string): string {
+  if (!raw) return raw;
+  // Support patterns like slugified-name-cmg4t1xtc006vitfly0sjzja1
+  const m = raw.match(/(c[a-z0-9]{15,})$/i);
+  if (m) return m[1];
+  return raw;
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  // Unwrap params for Next.js 15 compatibility
-  const resolvedParams = React.use(params);
-  const { id } = resolvedParams;
+  // Handle both Promise params (new pattern) and direct object
+  const isPromise = typeof (params as unknown as { then?: unknown }).then === 'function';
+  const resolvedParams = isPromise ? React.use(params as Promise<{ id: string }>) : (params as { id: string });
+  const rawId = resolvedParams.id;
+  const id = extractLogicalId(rawId);
 
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
@@ -101,7 +110,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     );
   }
 
-  if (productError || !product) {
+  if (productError) {
+    console.error('Product fetch error for', { rawId, id, productError });
+  }
+
+  if (!isProductLoading && (!product || productError)) {
+    // Use Next.js notFound for better SEO 404 signaling
+    return notFound();
+  }
+
+  if (!product) {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-8">

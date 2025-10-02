@@ -60,7 +60,7 @@ export function ProductCard({
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/20">
         <AspectRatio ratio={1}>
-          <Link href={`/products/${product.id}`}>
+          <Link href={`/products/${product.slug}`}>
             <Image
               src={getProductImage()}
               alt={product.name}
@@ -163,7 +163,7 @@ export function ProductCard({
         )}
 
         {/* Product Name */}
-        <Link href={`/products/${product.id}`}>
+  <Link href={`/products/${product.slug}`}>
           <h3 className="font-medium text-xs sm:text-sm mt-1 mb-2 line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem] sm:min-h-[2.8rem]">
             {product.name}
           </h3>
