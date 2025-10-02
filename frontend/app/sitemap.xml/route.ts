@@ -23,6 +23,7 @@ interface Product {
   id: string;
   name: string;
   updatedAt: string;
+  slug: string;
 }
 
 interface Service {
@@ -133,7 +134,7 @@ export async function GET() {
   const articles = await getArticles();
 
   const productPages = Array.isArray(products) ? products.map((product) => ({
-    url: `${baseUrl}/products/${product.id}`,
+    url: `${baseUrl}/products/${product.slug}`,
     lastmod: product.updatedAt,
     priority: 0.8,
     changefreq: 'weekly',
