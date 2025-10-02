@@ -234,7 +234,7 @@ export class AnalyticsService {
         id: tp.productId,
         name: product?.name || 'Unknown',
         sold: tp._sum.quantity || 0,
-        revenue: (tp._sum.price || 0) / 100
+        revenue: Number(tp._sum.price || 0) / 100
       };
     });
   }
@@ -333,7 +333,7 @@ export class AnalyticsService {
     
     orderItems.forEach(item => {
       const categoryName = item.product?.category?.name || 'Khác';
-      const revenue = (item.price * item.quantity) / 100;
+      const revenue = (Number(item.price) * item.quantity) / 100;
       categoryRevenue.set(
         categoryName,
         (categoryRevenue.get(categoryName) || 0) + revenue
@@ -595,7 +595,7 @@ export class AnalyticsService {
       // Out of stock products
       const outOfStockProducts = await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
       const inventoryRows = await this.prisma.inventory.findMany({ include: { product: { select: { priceCents: true } } } });
-      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + (row.product?.priceCents || 0) * row.stock, 0);
+      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.product?.priceCents || 0) * row.stock, 0);
 
       // Average inventory turnover (simplified calculation)
       const averageInventoryTurnover = await this.calculateInventoryTurnover(filters);

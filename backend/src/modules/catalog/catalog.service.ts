@@ -82,6 +82,8 @@ export class CatalogService {
     // Parse images field for each product
     const items = rawItems.map(item => ({
       ...item,
+      priceCents: Number(item.priceCents),
+      originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
       images: (typeof item.images === 'string') ? JSON.parse(item.images) : item.images,
       specifications: (typeof item.specifications === 'string') ? JSON.parse(item.specifications) : item.specifications,
     }));
@@ -117,6 +119,8 @@ export class CatalogService {
 
     return {
       ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: parsedImages,
       specifications: parsedSpecifications,
     };
@@ -129,6 +133,8 @@ export class CatalogService {
     // Parse images and specifications fields
     return {
       ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
       specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
     };
@@ -213,6 +219,8 @@ export class CatalogService {
     // Parse images and specifications fields for response
     return {
       ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
       specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
     };
@@ -281,6 +289,8 @@ export class CatalogService {
     // Parse images and specifications fields for response
     return {
       ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
       specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
     };
@@ -393,8 +403,8 @@ export class CatalogService {
       name: item.name,
       description: item.description,
       shortDescription: item.shortDescription,
-      priceCents: item.priceCents,
-      originalPriceCents: item.originalPriceCents,
+      priceCents: Number(item.priceCents),
+      originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
       imageUrl: item.imageUrl,
       images: Array.isArray(item.images) ? item.images as string[] : [],
       category: item.category ? {

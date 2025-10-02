@@ -28,7 +28,7 @@ export declare class InventoryController {
                 id: string;
                 name: string;
                 slug: string;
-                priceCents: number;
+                priceCents: bigint;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;

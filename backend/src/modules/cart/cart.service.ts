@@ -524,7 +524,7 @@ export class CartService {
       where: { cartId: cart.id },
       include: { product: true },
     });
-    const subtotalCents = items.reduce((sum, i) => sum + (i.price || i.product.priceCents) * i.quantity, 0);
+    const subtotalCents = items.reduce((sum, i) => sum + Number(i.price || i.product.priceCents) * i.quantity, 0);
     return { cart, items, subtotalCents };
   }
 }
