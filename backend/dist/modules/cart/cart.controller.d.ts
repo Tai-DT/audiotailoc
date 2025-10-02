@@ -16,7 +16,7 @@ export declare class CartController {
             product: {
                 id: string;
                 name: string;
-                priceCents: number;
+                priceCents: bigint;
                 imageUrl: string;
                 images: string;
             };
@@ -24,7 +24,7 @@ export declare class CartController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: number;
+            price: bigint;
             cartId: string;
             productId: string;
             quantity: number;

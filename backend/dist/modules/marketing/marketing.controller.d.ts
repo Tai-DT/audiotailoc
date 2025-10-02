@@ -31,13 +31,18 @@ export declare class MarketingController {
         createdAt: Date;
         updatedAt: Date;
         description: string;
+        content: string | null;
         type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
+        scheduledAt: Date | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
+        createdBy: string | null;
+        templateId: string | null;
     })[]>;
     getCampaign(id: string): Promise<{
         _count: {
@@ -72,13 +77,18 @@ export declare class MarketingController {
         createdAt: Date;
         updatedAt: Date;
         description: string;
+        content: string | null;
         type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
+        scheduledAt: Date | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
+        createdBy: string | null;
+        templateId: string | null;
     }>;
     createCampaign(createCampaignDto: CreateCampaignDto): Promise<{
         status: import(".prisma/client").$Enums.CampaignStatus;
@@ -87,13 +97,18 @@ export declare class MarketingController {
         createdAt: Date;
         updatedAt: Date;
         description: string;
+        content: string | null;
         type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
+        scheduledAt: Date | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
+        createdBy: string | null;
+        templateId: string | null;
     }>;
     updateCampaign(id: string, updateCampaignDto: Partial<CreateCampaignDto>): Promise<{
         status: import(".prisma/client").$Enums.CampaignStatus;
@@ -102,13 +117,18 @@ export declare class MarketingController {
         createdAt: Date;
         updatedAt: Date;
         description: string;
+        content: string | null;
         type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
+        scheduledAt: Date | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
+        createdBy: string | null;
+        templateId: string | null;
     }>;
     deleteCampaign(id: string): Promise<{
         message: string;

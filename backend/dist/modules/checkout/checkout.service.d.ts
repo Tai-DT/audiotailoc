@@ -33,11 +33,11 @@ export declare class CheckoutService {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
-            price: number;
+            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
-            unitPrice: number | null;
+            unitPrice: bigint | null;
         }[];
         payments: {
             status: string;

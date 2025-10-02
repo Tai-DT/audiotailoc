@@ -51,6 +51,8 @@ let CatalogService = class CatalogService {
         ]);
         const items = rawItems.map(item => ({
             ...item,
+            priceCents: Number(item.priceCents),
+            originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
             images: (typeof item.images === 'string') ? JSON.parse(item.images) : item.images,
             specifications: (typeof item.specifications === 'string') ? JSON.parse(item.specifications) : item.specifications,
         }));
@@ -82,6 +84,8 @@ let CatalogService = class CatalogService {
         }
         return {
             ...product,
+            priceCents: Number(product.priceCents),
+            originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
             images: parsedImages,
             specifications: parsedSpecifications,
         };
@@ -92,6 +96,8 @@ let CatalogService = class CatalogService {
             throw new common_1.NotFoundException('Product not found');
         return {
             ...product,
+            priceCents: Number(product.priceCents),
+            originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
             images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
             specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
@@ -159,6 +165,8 @@ let CatalogService = class CatalogService {
         await this.cache.deletePattern('products:list:*');
         return {
             ...product,
+            priceCents: Number(product.priceCents),
+            originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
             images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
             specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
@@ -238,6 +246,8 @@ let CatalogService = class CatalogService {
         await this.cache.deletePattern('products:list:*');
         return {
             ...product,
+            priceCents: Number(product.priceCents),
+            originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
             images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
             specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
@@ -332,8 +342,8 @@ let CatalogService = class CatalogService {
             name: item.name,
             description: item.description,
             shortDescription: item.shortDescription,
-            priceCents: item.priceCents,
-            originalPriceCents: item.originalPriceCents,
+            priceCents: Number(item.priceCents),
+            originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
             imageUrl: item.imageUrl,
             images: Array.isArray(item.images) ? item.images : [],
             category: item.category ? {
