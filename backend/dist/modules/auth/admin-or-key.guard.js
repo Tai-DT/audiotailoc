@@ -71,7 +71,11 @@ let AdminOrKeyGuard = AdminOrKeyGuard_1 = class AdminOrKeyGuard {
         }
         const token = authHeader.slice(7);
         try {
-            const secret = this.config.get('JWT_ACCESS_SECRET') || 'dev_access';
+            const secret = this.config.get('JWT_ACCESS_SECRET');
+            if (!secret) {
+                this.logger.error('JWT_ACCESS_SECRET is not configured');
+                return false;
+            }
             const payload = jwt.verify(token, secret);
             req.user = payload;
             this.logger.debug(`AdminOrKeyGuard: JWT verified for user ${payload.email}, role: ${payload.role}`);
