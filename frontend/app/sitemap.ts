@@ -16,6 +16,13 @@ interface Service {
   updatedAt: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  updatedAt?: string;
+}
+
 interface Project {
   id: string;
   title: string;
@@ -62,6 +69,17 @@ async function getServices(): Promise<Service[]> {
     return Array.isArray(data?.items) ? data.items : [];
   } catch (error) {
     console.error('Failed to fetch services for sitemap:', error);
+    return [];
+  }
+}
+
+async function getCategories(): Promise<Category[]> {
+  try {
+    const response = await apiClient.get('/catalog/categories');
+    const data = handleApiResponse<Category[]>(response);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Failed to fetch categories for sitemap:', error);
     return [];
   }
 }
@@ -117,19 +135,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/products`,
+      url: `${baseUrl}/san-pham`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/services`,
+      url: `${baseUrl}/dich-vu`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/projects`,
+      url: `${baseUrl}/du-an`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
@@ -157,7 +175,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic product pages
   const products = await getProducts();
   const productPages = products.map((product) => ({
-  url: `${baseUrl}/products/${product.slug}`,
+  url: `${baseUrl}/san-pham/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
@@ -166,16 +184,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic service pages
   const services = await getServices();
   const servicePages = services.map((service) => ({
-    url: `${baseUrl}/services/${service.slug}`,
+    url: `${baseUrl}/dich-vu/${service.slug}`,
     lastModified: new Date(service.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }));
 
+  // Dynamic category pages
+  const categories = await getCategories();
+  const categoryPages = categories.map((category) => ({
+    url: `${baseUrl}/danh-muc/${category.slug}`,
+    lastModified: category.updatedAt ? new Date(category.updatedAt) : new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
   // Dynamic project pages
   const projects = await getProjects();
   const projectPages = projects.map((project) => ({
-    url: `${baseUrl}/projects/${project.slug}`,
+    url: `${baseUrl}/du-an/${project.slug}`,
     lastModified: new Date(project.updatedAt),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
@@ -205,6 +232,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...productPages,
     ...servicePages,
+    ...categoryPages,
     ...projectPages,
     ...blogArticlePages,
     ...articlePages,

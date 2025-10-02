@@ -37,8 +37,8 @@ export function BestSellingProductsSection() {
     }
   };
 
-  const handleViewProduct = (productId: string) => {
-    window.location.href = `/products/${productId}`;
+  const handleViewProduct = (productSlug: string) => {
+    window.location.href = `/san-pham/${productSlug}`;
   };
 
   return (
@@ -58,7 +58,7 @@ export function BestSellingProductsSection() {
               </p>
             </div>
           </div>
-          <Link href="/products?sort=bestselling">
+          <Link href="/san-pham?sort=bestselling">
             <Button variant="ghost" className="hidden sm:flex">
               Xem tất cả
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -74,7 +74,7 @@ export function BestSellingProductsSection() {
         />
 
         <div className="text-center mt-8 sm:hidden">
-          <Link href="/products?sort=bestselling">
+          <Link href="/san-pham?sort=bestselling">
             <Button variant="outline">
               Xem tất cả sản phẩm bán chạy
               <ArrowRight className="ml-2 h-4 w-4" />

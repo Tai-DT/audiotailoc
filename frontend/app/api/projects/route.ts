@@ -36,11 +36,10 @@ function handleApiResponse(response: Response) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
-
-    const apiUrl = `${API_BASE_URL}/projects${queryString ? `?${queryString}` : ''}`;
-
-    console.log('Projects API request:', apiUrl);
+    const apiUrl = new URL('projects', API_BASE_URL);
+    searchParams.forEach((value, key) => {
+      apiUrl.searchParams.set(key, value);
+    });
 
     const response = await fetch(apiUrl, {
       method: 'GET',

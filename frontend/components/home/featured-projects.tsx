@@ -68,7 +68,7 @@ export function FeaturedProjects() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Không thể tải dữ liệu dự án tiêu biểu. Vui lòng thử lại sau.
             </p>
-            <Link href="/projects">
+            <Link href="/du-an">
               <Button variant="outline" size="lg">
                 Xem tất cả dự án
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -92,7 +92,7 @@ export function FeaturedProjects() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Chưa có dự án tiêu biểu nào được chọn. Hãy khám phá các dự án khác của chúng tôi!
             </p>
-            <Link href="/projects">
+            <Link href="/du-an">
               <Button variant="outline" size="lg">
                 Xem tất cả dự án
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -204,7 +204,7 @@ export function FeaturedProjects() {
         </div>
 
         <div className="text-center">
-          <Link href="/projects">
+          <Link href="/du-an">
             <Button variant="outline" size="lg">
               Xem tất cả dự án
               <ArrowRight className="ml-2 h-4 w-4" />

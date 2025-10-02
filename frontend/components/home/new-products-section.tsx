@@ -37,8 +37,8 @@ export function NewProductsSection() {
     }
   };
 
-  const handleViewProduct = (productId: string) => {
-    window.location.href = `/products/${productId}`;
+  const handleViewProduct = (productSlug: string) => {
+    window.location.href = `/san-pham/${productSlug}`;
   };
 
   return (
@@ -58,7 +58,7 @@ export function NewProductsSection() {
               </p>
             </div>
           </div>
-          <Link href="/products?sort=newest">
+          <Link href="/san-pham?sort=newest">
             <Button variant="ghost" className="hidden sm:flex">
               Xem tất cả
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -74,7 +74,7 @@ export function NewProductsSection() {
         />
 
         <div className="text-center mt-8 sm:hidden">
-          <Link href="/products?sort=newest">
+          <Link href="/san-pham?sort=newest">
             <Button variant="outline">
               Xem tất cả sản phẩm mới
               <ArrowRight className="ml-2 h-4 w-4" />
