@@ -5,6 +5,7 @@ import type { BlogArticle, PaginatedBlogResponse } from '@/lib/types';
 interface Product {
   id: string;
   name: string;
+  slug: string;
   updatedAt: string;
 }
 
@@ -156,7 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic product pages
   const products = await getProducts();
   const productPages = products.map((product) => ({
-    url: `${baseUrl}/products/${product.id}`,
+  url: `${baseUrl}/products/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
