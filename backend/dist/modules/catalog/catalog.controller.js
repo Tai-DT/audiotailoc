@@ -49,6 +49,12 @@ let CatalogController = class CatalogController {
     listCategories() {
         return this.catalog.listCategories();
     }
+    getCategoryBySlug(slug) {
+        return this.catalog.getCategoryBySlug(slug);
+    }
+    getProductsByCategory(slug, page, limit) {
+        return this.catalog.getProductsByCategory(slug, { page, limit });
+    }
     createCategory(dto) {
         return this.catalog.createCategory(dto);
     }
@@ -116,6 +122,56 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "listCategories", null);
+__decorate([
+    (0, common_1.Get)('categories/slug/:slug'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get category by slug',
+        description: 'Get detailed category information by slug',
+    }),
+    (0, swagger_1.ApiParam)({
+        name: 'slug',
+        description: 'Category slug',
+        type: String,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Category retrieved successfully',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    }),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "getCategoryBySlug", null);
+__decorate([
+    (0, common_1.Get)('categories/slug/:slug/products'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get products by category slug',
+        description: 'Get paginated products for a specific category',
+    }),
+    (0, swagger_1.ApiParam)({
+        name: 'slug',
+        description: 'Category slug',
+        type: String,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Products retrieved successfully',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    }),
+    __param(0, (0, common_1.Param)('slug')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, Number]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "getProductsByCategory", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Post)('categories'),

@@ -21,6 +21,20 @@ export declare class CatalogController {
         name: string;
         parentId: string | null;
     }[]>;
+    getCategoryBySlug(slug: string): Promise<{
+        id: string;
+        slug: string;
+        name: string;
+        parentId: string | null;
+        isActive: boolean;
+    }>;
+    getProductsByCategory(slug: string, page?: number, limit?: number): Promise<{
+        items: any[];
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+    }>;
     createCategory(dto: CreateCategoryDto): Promise<{
         id: string;
         slug: string;

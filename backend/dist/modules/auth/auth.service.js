@@ -88,8 +88,11 @@ let AuthService = class AuthService {
             throw new Error('bad pass');
         }
         console.log('✅ Login successful, generating tokens...');
-        const accessSecret = this.config.get('JWT_ACCESS_SECRET') || 'dev_access';
-        const refreshSecret = this.config.get('JWT_REFRESH_SECRET') || 'dev_refresh';
+        const accessSecret = this.config.get('JWT_ACCESS_SECRET');
+        const refreshSecret = this.config.get('JWT_REFRESH_SECRET');
+        if (!accessSecret || !refreshSecret) {
+            throw new Error('JWT secrets are not configured');
+        }
         const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
         const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
         const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
@@ -103,11 +106,14 @@ let AuthService = class AuthService {
             const user = await this.users.findById(payload.sub);
             if (!user)
                 throw new Error('User not found');
-            const accessSecret = this.config.get('JWT_ACCESS_SECRET') || 'dev_access';
+            const accessSecret = this.config.get('JWT_ACCESS_SECRET');
+            if (!accessSecret) {
+                throw new Error('JWT access secret is not configured');
+            }
             const newAccessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
             return { accessToken: newAccessToken, refreshToken };
         }
-        catch (error) {
+        catch {
             throw new Error('Invalid refresh token');
         }
     }

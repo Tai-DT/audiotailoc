@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Patch, Delete, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsOptional } from 'class-validator';
 import { JwtGuard } from '../auth/jwt.guard';
@@ -66,6 +66,54 @@ export class CatalogController {
   @Get('categories')
   listCategories() {
     return this.catalog.listCategories();
+  }
+
+  @Get('categories/slug/:slug')
+  @ApiOperation({
+    summary: 'Get category by slug',
+    description: 'Get detailed category information by slug',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: 'Category slug',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Category retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Category not found',
+  })
+  getCategoryBySlug(@Param('slug') slug: string) {
+    return this.catalog.getCategoryBySlug(slug);
+  }
+
+  @Get('categories/slug/:slug/products')
+  @ApiOperation({
+    summary: 'Get products by category slug',
+    description: 'Get paginated products for a specific category',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: 'Category slug',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Products retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Category not found',
+  })
+  getProductsByCategory(
+    @Param('slug') slug: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.catalog.getProductsByCategory(slug, { page, limit });
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)

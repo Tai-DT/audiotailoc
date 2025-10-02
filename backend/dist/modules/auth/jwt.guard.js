@@ -75,7 +75,10 @@ let JwtGuard = class JwtGuard {
         }
         const token = header.slice(7);
         try {
-            const secret = this.config.get('JWT_ACCESS_SECRET') || 'dev_access';
+            const secret = this.config.get('JWT_ACCESS_SECRET');
+            if (!secret) {
+                throw new common_1.UnauthorizedException('JWT configuration error');
+            }
             const payload = jwt.verify(token, secret);
             req.user = payload;
             return true;
