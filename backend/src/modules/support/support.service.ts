@@ -55,25 +55,19 @@ export class SupportService {
     category: string;
     tags?: string[];
     published?: boolean;
+    slug?: string;
   }): Promise<KnowledgeBaseArticle> {
-    // In a real implementation, this would use a proper KB table
-    // For now, we'll simulate the structure
-    const article = {
-      id: `kb_${Date.now()}`,
-      title: data.title,
-      content: data.content,
-      category: data.category,
-      tags: data.tags || [],
-      published: data.published || false,
-      viewCount: 0,
-      helpful: 0,
-      notHelpful: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const created = await this.prisma.knowledgeBaseEntry.create({
+      data: {
+        title: data.title,
+        content: data.content,
+        kind: data.category,
+        tags: data.tags?.join(',') || null,
+        isActive: data.published ?? false,
+      },
+    });
 
-    // Store in a simple way for demo (in real app, use proper database table)
-    return article;
+    return this.mapEntryToArticle(created);
   }
 
   async getArticles(params: {
@@ -122,19 +116,7 @@ export class SupportService {
       this.prisma.knowledgeBaseEntry.count({ where })
     ]);
 
-    const items: KnowledgeBaseArticle[] = entries.map(entry => ({
-      id: entry.id,
-      title: entry.title,
-      content: entry.content,
-      category: entry.kind,
-      tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
-      published: entry.isActive,
-      viewCount: 0, // Could be added to schema later
-      helpful: 0, // Could be added to schema later
-      notHelpful: 0, // Could be added to schema later
-      createdAt: entry.createdAt,
-      updatedAt: entry.updatedAt,
-    }));
+    const items: KnowledgeBaseArticle[] = entries.map(e => this.mapEntryToArticle(e));
 
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -147,15 +129,52 @@ export class SupportService {
     };
   }
 
-  async getArticle(id: string): Promise<KnowledgeBaseArticle> {
-    const entry = await this.prisma.knowledgeBaseEntry.findUnique({
-      where: { id }
+  async getArticle(idOrSlug: string): Promise<KnowledgeBaseArticle> {
+    const entry = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: idOrSlug } });
+    if (!entry) throw new Error('Article not found');
+    // increment view count
+    await this.prisma.knowledgeBaseEntry.update({
+      where: { id: entry.id },
+      data: { viewCount: { increment: 1 } }
     });
+    const refreshed = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: entry.id } });
+    return this.mapEntryToArticle(refreshed!);
+  }
 
-    if (!entry) {
-      throw new Error('Article not found');
-    }
+  async updateArticle(id: string, data: {
+    title?: string;
+    content?: string;
+    category?: string;
+    tags?: string[];
+    published?: boolean;
+    slug?: string;
+  }): Promise<KnowledgeBaseArticle> {
+    const updateData: any = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.content !== undefined) updateData.content = data.content;
+    if (data.category !== undefined) updateData.kind = data.category;
+    if (data.tags !== undefined) updateData.tags = data.tags.join(',');
+    if (data.published !== undefined) updateData.isActive = data.published;
+  // slug not yet enforced in persistence step (pending migration / generation)
+    const updated = await this.prisma.knowledgeBaseEntry.update({ where: { id }, data: updateData });
+    return this.mapEntryToArticle(updated);
+  }
 
+  async deleteArticle(id: string): Promise<{ success: boolean }> {
+    await this.prisma.knowledgeBaseEntry.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async feedback(id: string, helpful: boolean): Promise<KnowledgeBaseArticle> {
+    const updateField = helpful ? 'helpful' : 'notHelpful';
+    const updated = await this.prisma.knowledgeBaseEntry.update({
+      where: { id },
+      data: { [updateField]: { increment: 1 } }
+    });
+    return this.mapEntryToArticle(updated);
+  }
+
+  private mapEntryToArticle(entry: any): KnowledgeBaseArticle {
     return {
       id: entry.id,
       title: entry.title,
@@ -163,9 +182,9 @@ export class SupportService {
       category: entry.kind,
       tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
       published: entry.isActive,
-      viewCount: 0, // Could be added to schema later
-      helpful: 0, // Could be added to schema later
-      notHelpful: 0, // Could be added to schema later
+      viewCount: entry.viewCount ?? 0,
+      helpful: entry.helpful ?? 0,
+      notHelpful: entry.notHelpful ?? 0,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     };
