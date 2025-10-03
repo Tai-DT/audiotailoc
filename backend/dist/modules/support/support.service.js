@@ -19,77 +19,106 @@ let SupportService = class SupportService {
         this.mailService = mailService;
     }
     async createArticle(data) {
-        const article = {
-            id: `kb_${Date.now()}`,
-            title: data.title,
-            content: data.content,
-            category: data.category,
-            tags: data.tags || [],
-            published: data.published || false,
-            viewCount: 0,
-            helpful: 0,
-            notHelpful: 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        return article;
+        const created = await this.prisma.knowledgeBaseEntry.create({
+            data: {
+                title: data.title,
+                content: data.content,
+                kind: data.category,
+                tags: data.tags?.join(',') || null,
+                isActive: data.published ?? false,
+            },
+        });
+        return this.mapEntryToArticle(created);
     }
     async getArticles(params) {
-        const mockArticles = [
-            {
-                id: 'kb_1',
-                title: 'Cách chọn tai nghe phù hợp',
-                content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-                category: 'Hướng dẫn mua hàng',
-                tags: ['tai nghe', 'hướng dẫn'],
-                published: true,
-                viewCount: 150,
-                helpful: 12,
-                notHelpful: 2,
-                createdAt: new Date('2024-01-01'),
-                updatedAt: new Date('2024-01-01'),
-            },
-            {
-                id: 'kb_2',
-                title: 'Chính sách bảo hành sản phẩm',
-                content: 'Thông tin về chính sách bảo hành và hỗ trợ sau bán hàng...',
-                category: 'Chính sách',
-                tags: ['bảo hành', 'chính sách'],
-                published: true,
-                viewCount: 89,
-                helpful: 8,
-                notHelpful: 1,
-                createdAt: new Date('2024-01-02'),
-                updatedAt: new Date('2024-01-02'),
-            },
-        ];
         const page = params.page || 1;
         const pageSize = params.pageSize || 10;
-        const totalCount = mockArticles.length;
+        const skip = (page - 1) * pageSize;
+        const where = {};
+        if (params.published !== undefined) {
+            where.isActive = params.published;
+        }
+        if (params.search) {
+            where.OR = [
+                { title: { contains: params.search, mode: 'insensitive' } },
+                { content: { contains: params.search, mode: 'insensitive' } },
+                { tags: { contains: params.search, mode: 'insensitive' } }
+            ];
+        }
+        if (params.category) {
+            where.kind = params.category;
+        }
+        const [entries, totalCount] = await Promise.all([
+            this.prisma.knowledgeBaseEntry.findMany({
+                where,
+                skip,
+                take: pageSize,
+                orderBy: { createdAt: 'desc' }
+            }),
+            this.prisma.knowledgeBaseEntry.count({ where })
+        ]);
+        const items = entries.map(e => this.mapEntryToArticle(e));
         const totalPages = Math.ceil(totalCount / pageSize);
         return {
-            items: mockArticles,
+            items,
             totalCount,
             page,
             pageSize,
             totalPages,
         };
     }
-    async getArticle(id) {
-        const mockArticle = {
-            id,
-            title: 'Cách chọn tai nghe phù hợp',
-            content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-            category: 'Hướng dẫn mua hàng',
-            tags: ['tai nghe', 'hướng dẫn'],
-            published: true,
-            viewCount: 150,
-            helpful: 12,
-            notHelpful: 2,
-            createdAt: new Date('2024-01-01'),
-            updatedAt: new Date('2024-01-01'),
+    async getArticle(idOrSlug) {
+        const entry = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: idOrSlug } });
+        if (!entry)
+            throw new Error('Article not found');
+        await this.prisma.knowledgeBaseEntry.update({
+            where: { id: entry.id },
+            data: { viewCount: { increment: 1 } }
+        });
+        const refreshed = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: entry.id } });
+        return this.mapEntryToArticle(refreshed);
+    }
+    async updateArticle(id, data) {
+        const updateData = {};
+        if (data.title !== undefined)
+            updateData.title = data.title;
+        if (data.content !== undefined)
+            updateData.content = data.content;
+        if (data.category !== undefined)
+            updateData.kind = data.category;
+        if (data.tags !== undefined)
+            updateData.tags = data.tags.join(',');
+        if (data.published !== undefined)
+            updateData.isActive = data.published;
+        const updated = await this.prisma.knowledgeBaseEntry.update({ where: { id }, data: updateData });
+        return this.mapEntryToArticle(updated);
+    }
+    async deleteArticle(id) {
+        await this.prisma.knowledgeBaseEntry.delete({ where: { id } });
+        return { success: true };
+    }
+    async feedback(id, helpful) {
+        const updateField = helpful ? 'helpful' : 'notHelpful';
+        const updated = await this.prisma.knowledgeBaseEntry.update({
+            where: { id },
+            data: { [updateField]: { increment: 1 } }
+        });
+        return this.mapEntryToArticle(updated);
+    }
+    mapEntryToArticle(entry) {
+        return {
+            id: entry.id,
+            title: entry.title,
+            content: entry.content,
+            category: entry.kind,
+            tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
+            published: entry.isActive,
+            viewCount: entry.viewCount ?? 0,
+            helpful: entry.helpful ?? 0,
+            notHelpful: entry.notHelpful ?? 0,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
         };
-        return mockArticle;
     }
     async createFAQ(data) {
         const faq = {
@@ -188,33 +217,39 @@ let SupportService = class SupportService {
         return ticket;
     }
     async searchKnowledgeBase(query) {
-        const mockResults = [
-            {
-                id: 'kb_1',
-                title: 'Cách chọn tai nghe phù hợp',
-                content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-                category: 'Hướng dẫn mua hàng',
-                tags: ['tai nghe', 'hướng dẫn'],
-                published: true,
-                viewCount: 150,
-                helpful: 12,
-                notHelpful: 2,
-                createdAt: new Date('2024-01-01'),
-                updatedAt: new Date('2024-01-01'),
+        const entries = await this.prisma.knowledgeBaseEntry.findMany({
+            where: {
+                isActive: true,
+                OR: [
+                    { title: { contains: query, mode: 'insensitive' } },
+                    { content: { contains: query, mode: 'insensitive' } },
+                    { tags: { contains: query, mode: 'insensitive' } }
+                ]
             },
-        ];
-        return mockResults.filter(article => article.title.toLowerCase().includes(query.toLowerCase()) ||
-            article.content.toLowerCase().includes(query.toLowerCase()));
+            orderBy: { createdAt: 'desc' },
+            take: 10
+        });
+        return entries.map(entry => ({
+            id: entry.id,
+            title: entry.title,
+            content: entry.content,
+            category: entry.kind,
+            tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
+            published: entry.isActive,
+            viewCount: 0,
+            helpful: 0,
+            notHelpful: 0,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+        }));
     }
     async getCategories() {
-        return [
-            'Hướng dẫn mua hàng',
-            'Chính sách',
-            'Kỹ thuật',
-            'Thanh toán',
-            'Giao hàng',
-            'Bảo hành',
-        ];
+        const categories = await this.prisma.knowledgeBaseEntry.findMany({
+            where: { isActive: true },
+            select: { kind: true },
+            distinct: ['kind']
+        });
+        return categories.map(cat => cat.kind);
     }
     async sendTestEmail(email) {
         try {

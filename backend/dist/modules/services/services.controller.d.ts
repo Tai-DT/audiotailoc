@@ -57,6 +57,7 @@ export declare class ServicesController {
         categoryId?: string;
         typeId?: string;
         isActive?: string;
+        isFeatured?: string;
         page?: string;
         pageSize?: string;
     }): Promise<{

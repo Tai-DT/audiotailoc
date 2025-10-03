@@ -12,6 +12,7 @@ import { FeaturedProjects } from '@/components/home/featured-projects';
 import { TestimonialsSection } from '@/components/home/testimonials-section';
 import { NewsletterSection } from '@/components/home/newsletter-section';
 import { FeaturedBlogSection } from '@/components/home/featured-blog-section';
+import { FeaturedKnowledgeSection } from '@/components/home/featured-knowledge-section';
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <CategoryProductsSection />
       <FeaturedServices />
       <FeaturedBlogSection />
+      <FeaturedKnowledgeSection />
       <FeaturedProjects />
       <TestimonialsSection />
       <NewsletterSection />

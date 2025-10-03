@@ -33,6 +33,7 @@ export class ServicesController {
     categoryId?: string;
     typeId?: string;
     isActive?: string;
+    isFeatured?: string;
     page?: string;
     pageSize?: string;
   }) {
@@ -41,6 +42,7 @@ export class ServicesController {
       categoryId: query.categoryId,
       typeId: query.typeId,
       isActive: query.isActive !== undefined ? query.isActive === 'true' : undefined,
+      isFeatured: query.isFeatured !== undefined ? query.isFeatured === 'true' : undefined,
       page: query.page ? parseInt(query.page) : undefined,
       pageSize: query.pageSize ? parseInt(query.pageSize) : undefined,
     });

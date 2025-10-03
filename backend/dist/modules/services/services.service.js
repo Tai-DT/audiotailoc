@@ -73,6 +73,8 @@ let ServicesService = class ServicesService {
             where.typeId = params.typeId;
         if (params.isActive !== undefined)
             where.isActive = params.isActive;
+        if (params.isFeatured !== undefined)
+            where.isFeatured = params.isFeatured;
         const [total, services] = await this.prisma.$transaction([
             this.prisma.service.count({ where }),
             this.prisma.service.findMany({
