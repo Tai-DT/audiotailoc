@@ -90,6 +90,7 @@ export const API_ENDPOINTS = {
   CATEGORIES: {
     LIST: '/catalog/categories',
     DETAIL: (id: string) => `/catalog/categories/${id}`,
+    DETAIL_BY_SLUG: (slug: string) => `/catalog/categories/slug/${slug}`,
     CREATE: '/catalog/categories',
     UPDATE: (id: string) => `/catalog/categories/${id}`,
     DELETE: (id: string) => `/catalog/categories/${id}`,
@@ -117,6 +118,7 @@ export const API_ENDPOINTS = {
   SERVICES: {
     LIST: '/services',
     DETAIL: (id: string) => `/services/${id}`,
+    DETAIL_BY_SLUG: (slug: string) => `/services/slug/${slug}`,
     TYPES: '/service-types',
     BOOKINGS: '/booking',
     CREATE_BOOKING: '/booking',

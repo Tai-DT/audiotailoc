@@ -288,14 +288,60 @@ export const useCategories = () => {
   });
 };
 
-export const useCategory = (id: string) => {
+export const useCategory = (idOrSlug: string) => {
   return useQuery({
-    queryKey: queryKeys.categories.detail(id),
+    queryKey: ['category', idOrSlug],
     queryFn: async () => {
-      const response = await apiClient.get(`/catalog/categories/${id}`);
+      if (!idOrSlug) throw new Error('Missing category identifier');
+
+      // Check if it's a UUID or CUID
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+      const isCUID = /^c[a-z0-9]{15,}$/i.test(idOrSlug);
+
+      const tryDetail = async (val: string) => {
+        const res = await apiClient.get(`/catalog/categories/${val}`);
+        return handleApiResponse<Category>(res);
+      };
+      const trySlug = async (val: string) => {
+        const res = await apiClient.get(`/catalog/categories/slug/${val}`);
+        return handleApiResponse<Category>(res);
+      };
+
+      try {
+        if (isUUID || isCUID) {
+          return await tryDetail(idOrSlug);
+        }
+
+        // Try as slug first
+        try {
+          return await trySlug(idOrSlug);
+        } catch (err: unknown) {
+          const status = typeof err === 'object' && err !== null && 'response' in err
+            ? (err as { response?: { status?: number } }).response?.status
+            : undefined;
+          if (status === 404) {
+            // Fallback to detail
+            return await tryDetail(idOrSlug);
+          }
+          throw err;
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: !!idOrSlug,
+    staleTime: 15 * 60 * 1000,
+  });
+};
+
+export const useCategoryBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ['categories', 'slug', slug],
+    queryFn: async () => {
+      const response = await apiClient.get(`/catalog/categories/slug/${slug}`);
       return handleApiResponse<Category>(response);
     },
-    enabled: !!id,
+    enabled: !!slug,
   });
 };
 
@@ -414,14 +460,49 @@ export const useServices = (filters: ServiceFilters = {}) => {
   });
 };
 
-export const useService = (id: string) => {
+export const useService = (idOrSlug: string) => {
   return useQuery({
-    queryKey: queryKeys.services.detail(id),
+    queryKey: ['service', idOrSlug],
     queryFn: async () => {
-      const response = await apiClient.get(`/services/${id}`);
-      return handleApiResponse<Service>(response);
+      if (!idOrSlug) throw new Error('Missing service identifier');
+
+      // Check if it's a UUID or CUID
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+      const isCUID = /^c[a-z0-9]{15,}$/i.test(idOrSlug);
+
+      const tryDetail = async (val: string) => {
+        const res = await apiClient.get(`/services/${val}`);
+        return handleApiResponse<Service>(res);
+      };
+      const trySlug = async (val: string) => {
+        const res = await apiClient.get(`/services/slug/${val}`);
+        return handleApiResponse<Service>(res);
+      };
+
+      try {
+        if (isUUID || isCUID) {
+          return await tryDetail(idOrSlug);
+        }
+
+        // Try as slug first
+        try {
+          return await trySlug(idOrSlug);
+        } catch (err: unknown) {
+          const status = typeof err === 'object' && err !== null && 'response' in err
+            ? (err as { response?: { status?: number } }).response?.status
+            : undefined;
+          if (status === 404) {
+            // Fallback to detail
+            return await tryDetail(idOrSlug);
+          }
+          throw err;
+        }
+      } catch (error) {
+        throw error;
+      }
     },
-    enabled: !!id,
+    enabled: !!idOrSlug,
+    staleTime: 5 * 60 * 1000,
   });
 };
 
