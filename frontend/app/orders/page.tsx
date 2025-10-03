@@ -165,7 +165,7 @@ export default function OrdersPage() {
                             {formatPrice(order.totalCents / 100)}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Mã đơn: #{order.id.slice(-8)}
+                            Mã đơn: #{order.orderNo || 'N/A'}
                           </div>
                         </div>
                       </div>

@@ -167,7 +167,7 @@ export default function ServiceOrdersPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">
-                          Đơn hàng #{order.id.slice(-8)}
+                          Đơn hàng #{order.orderNo || 'N/A'}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                           {new Date(order.createdAt).toLocaleDateString('vi-VN')}
