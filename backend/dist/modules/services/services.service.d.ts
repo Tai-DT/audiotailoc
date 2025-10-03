@@ -57,6 +57,7 @@ export declare class ServicesService {
         categoryId?: string;
         typeId?: string;
         isActive?: boolean;
+        isFeatured?: boolean;
         page?: number;
         pageSize?: number;
     }): Promise<{

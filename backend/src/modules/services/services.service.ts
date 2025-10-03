@@ -70,6 +70,7 @@ export class ServicesService {
     categoryId?: string;
     typeId?: string;
     isActive?: boolean;
+    isFeatured?: boolean;
     page?: number;
     pageSize?: number;
   }) {
@@ -80,6 +81,7 @@ export class ServicesService {
     const where: any = {};
     if (params.typeId) where.typeId = params.typeId;
     if (params.isActive !== undefined) where.isActive = params.isActive;
+    if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured;
 
     const [total, services] = await this.prisma.$transaction([
       this.prisma.service.count({ where }),

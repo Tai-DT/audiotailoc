@@ -46,6 +46,7 @@ export declare class SupportService {
         category: string;
         tags?: string[];
         published?: boolean;
+        slug?: string;
     }): Promise<KnowledgeBaseArticle>;
     getArticles(params: {
         category?: string;
@@ -60,7 +61,20 @@ export declare class SupportService {
         pageSize: number;
         totalPages: number;
     }>;
-    getArticle(id: string): Promise<KnowledgeBaseArticle>;
+    getArticle(idOrSlug: string): Promise<KnowledgeBaseArticle>;
+    updateArticle(id: string, data: {
+        title?: string;
+        content?: string;
+        category?: string;
+        tags?: string[];
+        published?: boolean;
+        slug?: string;
+    }): Promise<KnowledgeBaseArticle>;
+    deleteArticle(id: string): Promise<{
+        success: boolean;
+    }>;
+    feedback(id: string, helpful: boolean): Promise<KnowledgeBaseArticle>;
+    private mapEntryToArticle;
     createFAQ(data: {
         question: string;
         answer: string;

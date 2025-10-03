@@ -125,6 +125,15 @@ let SupportController = class SupportController {
     getArticle(id) {
         return this.supportService.getArticle(id);
     }
+    updateArticle(id, dto) {
+        return this.supportService.updateArticle(id, dto);
+    }
+    deleteArticle(id) {
+        return this.supportService.deleteArticle(id);
+    }
+    feedbackArticle(id, body) {
+        return this.supportService.feedback(id, body.helpful);
+    }
     searchKnowledgeBase(query) {
         return this.supportService.searchKnowledgeBase(query);
     }
@@ -184,6 +193,31 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], SupportController.prototype, "getArticle", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Put)('kb/articles/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], SupportController.prototype, "updateArticle", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Delete)('kb/articles/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], SupportController.prototype, "deleteArticle", null);
+__decorate([
+    (0, common_1.Post)('kb/articles/:id/feedback'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], SupportController.prototype, "feedbackArticle", null);
 __decorate([
     (0, common_1.Get)('kb/search'),
     __param(0, (0, common_1.Query)('q')),

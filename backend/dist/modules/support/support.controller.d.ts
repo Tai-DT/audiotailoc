@@ -36,6 +36,20 @@ export declare class SupportController {
         totalPages: number;
     }>;
     getArticle(id: string): Promise<import("./support.service").KnowledgeBaseArticle>;
+    updateArticle(id: string, dto: Partial<{
+        title: string;
+        content: string;
+        category: string;
+        tags: string[];
+        published: boolean;
+        slug: string;
+    }>): Promise<import("./support.service").KnowledgeBaseArticle>;
+    deleteArticle(id: string): Promise<{
+        success: boolean;
+    }>;
+    feedbackArticle(id: string, body: {
+        helpful: boolean;
+    }): Promise<import("./support.service").KnowledgeBaseArticle>;
     searchKnowledgeBase(query: string): Promise<import("./support.service").KnowledgeBaseArticle[]>;
     getKBCategories(): Promise<string[]>;
     createFAQ(dto: CreateFAQDto): Promise<import("./support.service").FAQ>;
