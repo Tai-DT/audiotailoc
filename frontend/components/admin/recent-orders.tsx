@@ -121,7 +121,7 @@ export function RecentOrders() {
                   
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">#{order.orderNo || order.id.slice(-8)}</p>
+                      <p className="font-medium">#{order.orderNo || 'N/A'}</p>
                       {getStatusBadge(order.status)}
                     </div>
                     

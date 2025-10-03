@@ -56,23 +56,20 @@ export const useGlobalSEO = () => {
   return useQuery({
     queryKey: seoKeys.global(),
     queryFn: async (): Promise<GlobalSEOSettings> => {
+      // Check if API URL is configured
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        console.warn('NEXT_PUBLIC_API_URL not configured, using default SEO settings');
+        return getDefaultSEOSettings();
+      }
+
       try {
         const response = await apiClient.get('/seo/global');
         return handleApiResponse<GlobalSEOSettings>(response);
-      } catch {
+      } catch (error) {
         // Fallback to default settings if API not available
-        console.warn('Global SEO settings not available, using defaults');
-        return {
-          siteName: 'Audio Tài Lộc',
-          siteDescription: 'Chuyên cung cấp giải pháp âm thanh chuyên nghiệp cho gia đình và kinh doanh',
-          defaultTitle: 'Audio Tài Lộc - Chuyên gia âm thanh chuyên nghiệp',
-          defaultDescription: 'Audio Tài Lộc chuyên cung cấp dàn karaoke, hệ thống âm thanh hội nghị, âm thanh gym và các dịch vụ lắp đặt, bảo hành chuyên nghiệp tại TP.HCM',
-          defaultKeywords: ['audio', 'âm thanh', 'karaoke', 'loa', 'dàn âm thanh', 'hội nghị', 'lắp đặt'],
-          ogImage: '/og-image.jpg',
-          twitterHandle: '@audiotailoc',
-          googleAnalyticsId: process.env.NEXT_PUBLIC_GA_ID,
-          googleTagManagerId: process.env.NEXT_PUBLIC_GTM_ID,
-        };
+        console.warn('Global SEO settings not available, using defaults:', error);
+        return getDefaultSEOSettings();
       }
     },
     staleTime: 30 * 60 * 1000, // 30 minutes
@@ -80,11 +77,33 @@ export const useGlobalSEO = () => {
   });
 };
 
+// Helper function to get default SEO settings
+function getDefaultSEOSettings(): GlobalSEOSettings {
+  return {
+    siteName: 'Audio Tài Lộc',
+    siteDescription: 'Chuyên cung cấp giải pháp âm thanh chuyên nghiệp cho gia đình và kinh doanh',
+    defaultTitle: 'Audio Tài Lộc - Chuyên gia âm thanh chuyên nghiệp',
+    defaultDescription: 'Audio Tài Lộc chuyên cung cấp dàn karaoke, hệ thống âm thanh hội nghị, âm thanh gym và các dịch vụ lắp đặt, bảo hành chuyên nghiệp tại TP.HCM',
+    defaultKeywords: ['audio', 'âm thanh', 'karaoke', 'loa', 'dàn âm thanh', 'hội nghị', 'lắp đặt'],
+    ogImage: '/og-image.jpg',
+    twitterHandle: '@audiotailoc',
+    googleAnalyticsId: process.env.NEXT_PUBLIC_GA_ID,
+    googleTagManagerId: process.env.NEXT_PUBLIC_GTM_ID,
+  };
+}
+
 // Hook to get SEO data for a specific page
 export const usePageSEO = (path: string) => {
   return useQuery({
     queryKey: seoKeys.page(path),
     queryFn: async (): Promise<PageSEOData | null> => {
+      // Check if API URL is configured
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        console.warn('NEXT_PUBLIC_API_URL not configured, skipping page SEO data');
+        return null;
+      }
+
       try {
         const response = await apiClient.get(`/seo/pages`, {
           params: { path },
@@ -260,6 +279,13 @@ export const useSitemapData = () => {
   return useQuery({
     queryKey: ['seo', 'sitemap'],
     queryFn: async () => {
+      // Check if API URL is configured
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        console.warn('NEXT_PUBLIC_API_URL not configured, skipping sitemap data');
+        return null;
+      }
+
       try {
         const response = await apiClient.get('/seo/sitemap');
         return handleApiResponse(response);
