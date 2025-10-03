@@ -4,6 +4,7 @@ import {
   Get, 
   Post, 
   Put, 
+  Delete,
   Param, 
   Query, 
   UseGuards 
@@ -115,6 +116,29 @@ export class SupportController {
   @Get('kb/articles/:id')
   getArticle(@Param('id') id: string) {
     return this.supportService.getArticle(id);
+  }
+
+  // Update KB Article
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Put('kb/articles/:id')
+  updateArticle(
+    @Param('id') id: string,
+    @Body() dto: Partial<{ title: string; content: string; category: string; tags: string[]; published: boolean; slug: string }>
+  ) {
+    return this.supportService.updateArticle(id, dto);
+  }
+
+  // Delete KB Article
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Delete('kb/articles/:id')
+  deleteArticle(@Param('id') id: string) {
+    return this.supportService.deleteArticle(id);
+  }
+
+  // Feedback (helpful / not helpful)
+  @Post('kb/articles/:id/feedback')
+  feedbackArticle(@Param('id') id: string, @Body() body: { helpful: boolean }) {
+    return this.supportService.feedback(id, body.helpful);
   }
 
   @Get('kb/search')

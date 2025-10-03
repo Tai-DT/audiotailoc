@@ -453,12 +453,193 @@ export const useServices = (filters: ServiceFilters = {}) => {
   return useQuery({
     queryKey: queryKeys.services.list(filters),
     queryFn: async () => {
-      const response = await apiClient.get('/services', { params: filters });
-      return handleApiResponse<PaginatedResponse<Service>>(response);
+      const useProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
+      // Only send backend-accepted params
+      const { page, pageSize, typeId, isActive, q, minPrice, maxPrice, isFeatured, sortBy, sortOrder } = filters as ServiceFilters;
+      const params: Partial<Pick<ServiceFilters,'page'|'pageSize'|'typeId'|'q'|'minPrice'|'maxPrice'|'isFeatured'|'sortBy'|'sortOrder'>> & { isActive?: boolean } = {
+        page,
+        pageSize,
+        typeId,
+        q,
+        minPrice,
+        maxPrice,
+        isFeatured,
+        sortBy,
+        sortOrder,
+      };
+      if (typeof isActive === 'boolean') params.isActive = isActive;
+      (Object.keys(params) as (keyof typeof params)[]).forEach(k => params[k] === undefined && delete params[k]);
+
+      if (useProxy && typeof window !== 'undefined') {
+        const search = new URLSearchParams(params as Record<string,string>).toString();
+        const res = await fetch(`/api/proxy/services${search ? `?${search}` : ''}`);
+        if (!res.ok) throw new Error('Proxy services request failed');
+        const json = await res.json();
+        const mapped = mapServicesApiPayload(json);
+        return mapped;
+      }
+      const response = await apiClient.get('/services', { params });
+      type RawServicesEnvelope = {
+        total?: number;
+        totalCount?: number;
+        page?: number;
+        pageSize?: number;
+        limit?: number;
+        services?: RawServiceRecord[];
+        items?: RawServiceRecord[];
+      };
+      const payload = handleApiResponse<RawServicesEnvelope>(response);
+      return mapServicesApiPayload(payload);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
+
+// Helper to normalize backend services payload shape to PaginatedResponse<Service>
+interface RawServiceRecord {
+  id?: string | number;
+  slug?: string;
+  name?: string;
+  description?: string;
+  shortDescription?: string;
+  price?: number;
+  basePriceCents?: number;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  minPriceDisplay?: number | null;
+  maxPriceDisplay?: number | null;
+  priceType?: string;
+  duration?: number;
+  typeId?: string;
+  images?: string | string[];
+  isActive?: boolean;
+  isFeatured?: boolean;
+  tags?: string | string[];
+  features?: string | string[];
+  requirements?: string | string[];
+  viewCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  type?: { id?: string; name?: string; slug?: string } | null;
+  serviceType?: { id?: string; name?: string; slug?: string } | null;
+}
+
+interface RawServicesPayload {
+  total?: number;
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  limit?: number;
+  services?: RawServiceRecord[];
+  items?: RawServiceRecord[];
+}
+
+function mapServicesApiPayload(raw: RawServicesPayload): PaginatedResponse<Service> {
+  // Backend returns { total, page, pageSize, services: [...] }
+  // Frontend expects { items, totalPages, totalCount?, page, pageSize }
+  if (!raw) return { items: [], totalPages: 0, page: 1, pageSize: 0 } as unknown as PaginatedResponse<Service>;
+  const total: number = raw.total ?? raw.totalCount ?? 0;
+  const page: number = raw.page ?? 1;
+  const pageSize: number = raw.pageSize ?? raw.limit ?? (raw.services?.length || 0);
+  const services: RawServiceRecord[] = (raw.services || raw.items || []) as RawServiceRecord[];
+
+  const items: Service[] = services.map(s => {
+    // Parse potential JSON string fields safely
+    const parseArray = (val: unknown): string[] | undefined => {
+      if (!val) return undefined;
+      if (Array.isArray(val)) return val as string[];
+      if (typeof val === 'string') {
+        try { const parsed = JSON.parse(val); return Array.isArray(parsed) ? parsed : undefined; } catch { return undefined; }
+      }
+      return undefined;
+    };
+
+    const features = parseArray(s.features);
+    const tags = parseArray(s.tags);
+    const images = parseArray(s.images) || (typeof s.images === 'string' ? [s.images] : undefined);
+
+    // Backend maps price: already provided as number (VND) via services.service.ts mapping: price = basePriceCents / 100
+    // Range price display fields: minPriceDisplay / maxPriceDisplay
+    const minPrice = s.minPriceDisplay ?? (typeof s.minPrice === 'number' ? s.minPrice / 100 : undefined);
+    const maxPrice = s.maxPriceDisplay ?? (typeof s.maxPrice === 'number' ? s.maxPrice / 100 : undefined);
+
+    const normalized: Service = {
+      id: String(s.id ?? ''),
+      slug: String(s.slug || s.id || ''),
+      name: s.name || '(No name)',
+      description: s.description || s.shortDescription,
+      shortDescription: s.shortDescription,
+      price: typeof s.price === 'number' ? s.price : (typeof s.basePriceCents === 'number' ? s.basePriceCents / 100 : 0),
+      minPrice,
+      maxPrice,
+      priceType: ((): Service['priceType'] => {
+        switch (s.priceType) {
+          case 'RANGE':
+          case 'NEGOTIABLE':
+          case 'CONTACT':
+          case 'FIXED':
+            return s.priceType as Service['priceType'];
+          default:
+            return 'FIXED';
+        }
+      })(),
+      duration: s.duration || 60,
+      typeId: s.typeId,
+      images,
+      isActive: Boolean(s.isActive),
+      isFeatured: Boolean(s.isFeatured),
+      tags,
+      features,
+      requirements: parseArray(s.requirements),
+      viewCount: s.viewCount ?? 0,
+      createdAt: s.createdAt || new Date().toISOString(),
+      updatedAt: s.updatedAt || s.createdAt || new Date().toISOString(),
+      seoTitle: s.seoTitle,
+      seoDescription: s.seoDescription,
+      metaTitle: s.metaTitle,
+      metaDescription: s.metaDescription,
+      metaKeywords: s.metaKeywords,
+      canonicalUrl: s.canonicalUrl,
+      serviceType: ((): Service['serviceType'] => {
+        const src = (s.type || s.serviceType) as { id?: string; name?: string; slug?: string } | null | undefined;
+        if (!src) return undefined;
+        return {
+          id: src.id || '',
+          name: src.name || 'Loại dịch vụ',
+          slug: src.slug || '',
+          description: undefined,
+          icon: undefined,
+          color: undefined,
+          isActive: true,
+          sortOrder: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          services: undefined,
+        };
+      })(),
+    };
+    return normalized;
+  });
+
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
+  return {
+    items,
+    total: total,
+    page,
+    pageSize,
+    totalPages,
+    hasNext,
+    hasPrev,
+  };
+}
 
 export const useService = (idOrSlug: string) => {
   return useQuery({
@@ -848,7 +1029,21 @@ export const useArticles = (filters: {
   return useQuery({
     queryKey: ['articles', filters],
     queryFn: async () => {
-      const response = await apiClient.get('/support/kb/articles', { params: filters });
+      const useProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
+      // Backend expects: category, published, search, page, pageSize
+      const { category, published, search, page, pageSize } = filters;
+  const params: { category?: string; published?: boolean; search?: string; page?: number; pageSize?: number } = { category, published, search, page, pageSize };
+  (Object.keys(params) as (keyof typeof params)[]).forEach(k => params[k] === undefined && delete params[k]);
+      if (useProxy && typeof window !== 'undefined') {
+        const searchStr = new URLSearchParams(
+          Object.entries(params).reduce<Record<string,string>>((acc,[k,v]) => { acc[k]=String(v); return acc; }, {})
+        ).toString();
+        const res = await fetch(`/api/proxy/support/kb/articles${searchStr ? `?${searchStr}` : ''}`);
+        if (!res.ok) throw new Error('Proxy knowledge base request failed');
+        const json = await res.json();
+        return handleApiResponse<PaginatedResponse<KnowledgeBaseArticle>>({ data: json });
+      }
+      const response = await apiClient.get('/support/kb/articles', { params });
       return handleApiResponse<PaginatedResponse<KnowledgeBaseArticle>>(response);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
