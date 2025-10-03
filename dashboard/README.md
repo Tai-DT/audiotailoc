@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Audio Tài Lộc - Dashboard
 
-## Getting Started
+Hệ thống quản lý dành cho Admin của Audio Tài Lộc.
 
-First, run the development server:
+## ✨ Tính năng
+
+- 📊 **Dashboard Analytics**: Thống kê tổng quan doanh thu, đơn hàng
+- 👥 **User Management**: Quản lý khách hàng và tài khoản
+- 📦 **Product Management**: Quản lý sản phẩm và danh mục
+- 🎯 **Project Portfolio**: Quản lý dự án và portfolio
+- 🛠️ **Service Management**: Quản lý dịch vụ và đặt lịch
+- 📧 **Message Center**: Chat với khách hàng real-time
+- 🎨 **Content Management**: Banner, settings, SEO
+
+## 🚀 Tech Stack
+
+- **Framework**: Next.js 15.5.2 (App Router)
+- **UI**: Tailwind CSS + shadcn/ui
+- **State**: React Query + Zustand
+- **Forms**: React Hook Form + Zod
+- **Auth**: JWT Authentication
+- **Real-time**: Socket.IO
+- **Images**: Cloudinary
+- **Maps**: Goong Maps
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 20.x or later
+- npm or yarn
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your config
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+# Backend API
+NEXT_PUBLIC_API_URL=http://localhost:3010/api/v1
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Cloudinary (for image uploads)
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 
-## Learn More
+# Optional: Admin API Key
+NEXT_PUBLIC_ADMIN_API_KEY=your_admin_key
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🖥️ Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Development server (port 3001)
+npm run dev
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Build for production
+npm run build
 
-## Deploy on Vercel
+# Start production server
+npm start
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Lint code
+npm run lint
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📁 Project Structure
+
+```
+dashboard/
+├── app/                    # Next.js App Router
+│   ├── dashboard/         # Dashboard pages
+│   ├── api/              # API routes
+│   └── globals.css       # Global styles
+├── components/            # Reusable components
+├── lib/                  # Utilities & services
+├── types/               # TypeScript types
+└── hooks/              # Custom React hooks
+```
+
+## 🔐 Authentication
+
+Dashboard requires admin authentication:
+
+1. Login with admin credentials
+2. JWT token stored in localStorage
+3. Protected routes check authentication
+4. Admin role verification on API calls
+
+## 🌐 Deployment
+
+### Vercel (Recommended)
+
+1. Connect GitHub repository
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push
+
+### Manual Deployment
+
+```bash
+# Build production bundle
+npm run build
+
+# Start production server
+npm start
+```
+
+## 📞 Support
+
+- **Backend API**: `http://localhost:3010/api/v1/docs`
+- **Integration Guide**: See `INTEGRATION.md`
+- **Cloudinary Setup**: See `README_CLOUDINARY.md`
+
+---
+
+**🎯 Powered by Audio Tài Lộc Backend APIs**
