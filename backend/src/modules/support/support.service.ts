@@ -89,43 +89,57 @@ export class SupportService {
     pageSize: number;
     totalPages: number;
   }> {
-    // Mock data for demonstration
-    const mockArticles: KnowledgeBaseArticle[] = [
-      {
-        id: 'kb_1',
-        title: 'Cách chọn tai nghe phù hợp',
-        content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-        category: 'Hướng dẫn mua hàng',
-        tags: ['tai nghe', 'hướng dẫn'],
-        published: true,
-        viewCount: 150,
-        helpful: 12,
-        notHelpful: 2,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-      },
-      {
-        id: 'kb_2',
-        title: 'Chính sách bảo hành sản phẩm',
-        content: 'Thông tin về chính sách bảo hành và hỗ trợ sau bán hàng...',
-        category: 'Chính sách',
-        tags: ['bảo hành', 'chính sách'],
-        published: true,
-        viewCount: 89,
-        helpful: 8,
-        notHelpful: 1,
-        createdAt: new Date('2024-01-02'),
-        updatedAt: new Date('2024-01-02'),
-      },
-    ];
-
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
-    const totalCount = mockArticles.length;
+    const skip = (page - 1) * pageSize;
+
+    // Build where clause
+    const where: any = {};
+    
+    if (params.published !== undefined) {
+      where.isActive = params.published;
+    }
+    
+    if (params.search) {
+      where.OR = [
+        { title: { contains: params.search, mode: 'insensitive' } },
+        { content: { contains: params.search, mode: 'insensitive' } },
+        { tags: { contains: params.search, mode: 'insensitive' } }
+      ];
+    }
+
+    if (params.category) {
+      where.kind = params.category;
+    }
+
+    const [entries, totalCount] = await Promise.all([
+      this.prisma.knowledgeBaseEntry.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.knowledgeBaseEntry.count({ where })
+    ]);
+
+    const items: KnowledgeBaseArticle[] = entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      content: entry.content,
+      category: entry.kind,
+      tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
+      published: entry.isActive,
+      viewCount: 0, // Could be added to schema later
+      helpful: 0, // Could be added to schema later
+      notHelpful: 0, // Could be added to schema later
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+    }));
+
     const totalPages = Math.ceil(totalCount / pageSize);
 
     return {
-      items: mockArticles,
+      items,
       totalCount,
       page,
       pageSize,
@@ -134,22 +148,27 @@ export class SupportService {
   }
 
   async getArticle(id: string): Promise<KnowledgeBaseArticle> {
-    // Mock implementation
-    const mockArticle: KnowledgeBaseArticle = {
-      id,
-      title: 'Cách chọn tai nghe phù hợp',
-      content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-      category: 'Hướng dẫn mua hàng',
-      tags: ['tai nghe', 'hướng dẫn'],
-      published: true,
-      viewCount: 150,
-      helpful: 12,
-      notHelpful: 2,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-    };
+    const entry = await this.prisma.knowledgeBaseEntry.findUnique({
+      where: { id }
+    });
 
-    return mockArticle;
+    if (!entry) {
+      throw new Error('Article not found');
+    }
+
+    return {
+      id: entry.id,
+      title: entry.title,
+      content: entry.content,
+      category: entry.kind,
+      tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
+      published: entry.isActive,
+      viewCount: 0, // Could be added to schema later
+      helpful: 0, // Could be added to schema later
+      notHelpful: 0, // Could be added to schema later
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+    };
   }
 
   // FAQ Management
@@ -297,38 +316,42 @@ export class SupportService {
 
   // Search functionality
   async searchKnowledgeBase(query: string): Promise<KnowledgeBaseArticle[]> {
-    // Mock search results
-    const mockResults: KnowledgeBaseArticle[] = [
-      {
-        id: 'kb_1',
-        title: 'Cách chọn tai nghe phù hợp',
-        content: 'Hướng dẫn chi tiết về cách chọn tai nghe phù hợp với nhu cầu...',
-        category: 'Hướng dẫn mua hàng',
-        tags: ['tai nghe', 'hướng dẫn'],
-        published: true,
-        viewCount: 150,
-        helpful: 12,
-        notHelpful: 2,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
+    const entries = await this.prisma.knowledgeBaseEntry.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { content: { contains: query, mode: 'insensitive' } },
+          { tags: { contains: query, mode: 'insensitive' } }
+        ]
       },
-    ];
+      orderBy: { createdAt: 'desc' },
+      take: 10 // Limit search results
+    });
 
-    return mockResults.filter(article => 
-      article.title.toLowerCase().includes(query.toLowerCase()) ||
-      article.content.toLowerCase().includes(query.toLowerCase())
-    );
+    return entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      content: entry.content,
+      category: entry.kind,
+      tags: entry.tags ? entry.tags.split(',').filter(Boolean) : [],
+      published: entry.isActive,
+      viewCount: 0,
+      helpful: 0,
+      notHelpful: 0,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+    }));
   }
 
   async getCategories(): Promise<string[]> {
-    return [
-      'Hướng dẫn mua hàng',
-      'Chính sách',
-      'Kỹ thuật',
-      'Thanh toán',
-      'Giao hàng',
-      'Bảo hành',
-    ];
+    const categories = await this.prisma.knowledgeBaseEntry.findMany({
+      where: { isActive: true },
+      select: { kind: true },
+      distinct: ['kind']
+    });
+
+    return categories.map(cat => cat.kind);
   }
 
   async sendTestEmail(email: string): Promise<{ success: boolean; message: string }> {

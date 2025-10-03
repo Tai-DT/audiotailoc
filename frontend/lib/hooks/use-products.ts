@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
+import { resolveEntityWithFallback } from '@/lib/utils/slug-utils';
 import toast from 'react-hot-toast';
 
 // Types
