@@ -4,6 +4,7 @@
 */
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -68,10 +69,17 @@ async function seedData() {
     ];
     
     for (const tech of technicians) {
-      await prisma.technician.upsert({
+      await prisma.technicians.upsert({
         where: { email: tech.email },
         update: tech,
-        create: tech
+        create: {
+          id: randomUUID(),
+          name: tech.name,
+          phone: tech.phone,
+          email: tech.email,
+          specialties: tech.specialties,
+          isActive: tech.isActive,
+        },
       });
     }
     console.log(`  ✅ Created ${technicians.length} technicians`);
@@ -80,27 +88,38 @@ async function seedData() {
     // 2. SEED SERVICE ITEMS
     // ========================================
     console.log('\n🔧 Creating Service Items...');
-    const services = await prisma.service.findMany({ take: 6 });
+    const services = await prisma.services.findMany({ take: 6 });
     const serviceItems = [];
     
     for (const service of services) {
       const items = [
         {
-          serviceId: service.id,
+          service: { connect: { id: service.id } },
           name: `Gói cơ bản - ${service.name}`,
           price: service.minPrice || 1000000,
-          quantity: 1
+          quantity: 1,
+          updatedAt: new Date()
         },
         {
-          serviceId: service.id,
+          service: { connect: { id: service.id } },
           name: `Gói nâng cao - ${service.name}`,
           price: service.maxPrice || 3000000,
-          quantity: 1
+          quantity: 1,
+          updatedAt: new Date()
         }
       ];
       
       for (const item of items) {
-        const created = await prisma.serviceItem.create({ data: item });
+        const created = await prisma.service_items.create({
+          data: {
+            id: randomUUID(),
+            services: { connect: { id: service.id } },
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            updatedAt: new Date(),
+          },
+        });
         serviceItems.push(created);
       }
     }
@@ -110,8 +129,8 @@ async function seedData() {
     // 3. SEED SERVICE BOOKINGS
     // ========================================
     console.log('\n📅 Creating Service Bookings...');
-    const users = await prisma.user.findMany({ where: { role: 'USER' }, take: 3 });
-    const techniciansList = await prisma.technician.findMany();
+    const users = await prisma.users.findMany({ where: { role: 'USER' }, take: 3 });
+    const techniciansList = await prisma.technicians.findMany();
     
     const bookingStatuses = ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
     const bookings = [];
@@ -122,8 +141,9 @@ async function seedData() {
       const technician = techniciansList[Math.floor(Math.random() * techniciansList.length)];
       const status = bookingStatuses[Math.floor(Math.random() * bookingStatuses.length)];
       
-      const booking = await prisma.serviceBooking.create({
+      const booking = await prisma.service_bookings.create({
         data: {
+          id: randomUUID(),
           userId: user.id,
           serviceId: service.id,
           technicianId: technician.id,
@@ -133,7 +153,8 @@ async function seedData() {
           notes: 'Khách hàng yêu cầu kỹ thuật viên đến đúng giờ',
           estimatedCosts: service.minPrice || 1000000,
           actualCosts: status === 'COMPLETED' ? (service.minPrice || 1000000) : null,
-          completedAt: status === 'COMPLETED' ? new Date() : null
+          completedAt: status === 'COMPLETED' ? new Date() : null,
+          updatedAt: new Date()
         }
       });
       bookings.push(booking);
@@ -144,7 +165,7 @@ async function seedData() {
     // 4. SEED PRODUCT REVIEWS
     // ========================================
     console.log('\n⭐ Creating Product Reviews...');
-    const products = await prisma.product.findMany({ take: 8 });
+    const products = await prisma.products.findMany({ take: 8 });
     
     const reviewComments = [
       'Sản phẩm rất tốt, âm thanh trong trẻo',
@@ -161,8 +182,9 @@ async function seedData() {
       const numReviews = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < numReviews; i++) {
         const user = users[Math.floor(Math.random() * users.length)];
-        await prisma.productReview.create({
+        await prisma.product_reviews.create({
           data: {
+            id: randomUUID(),
             productId: product.id,
             userId: user.id,
             rating: Math.floor(Math.random() * 2) + 4, // 4-5 stars
@@ -172,7 +194,8 @@ async function seedData() {
             status: 'APPROVED',
             upvotes: Math.floor(Math.random() * 20),
             downvotes: Math.floor(Math.random() * 5),
-            createdAt: randomPastDate(90)
+            createdAt: randomPastDate(90),
+            updatedAt: new Date()
           }
         });
       }
@@ -188,11 +211,13 @@ async function seedData() {
       const selectedProducts = products.sort(() => 0.5 - Math.random()).slice(0, numItems);
       
       for (const product of selectedProducts) {
-        await prisma.wishlistItem.create({
+        await prisma.wishlist_items.create({
           data: {
-            userId: user.id,
-            productId: product.id,
-            createdAt: randomPastDate(30)
+            id: randomUUID(),
+            users: { connect: { id: user.id } },
+            products: { connect: { id: product.id } },
+            createdAt: randomPastDate(30),
+            updatedAt: new Date()
           }
         }).catch(() => {}); // Ignore duplicates
       }
@@ -200,9 +225,12 @@ async function seedData() {
     console.log(`  ✅ Created wishlist items`);
     
     // ========================================
-    // 6. SEED NOTIFICATIONS
+    // 6. SEED NOTIFICATIONS (DISABLED - Model not in schema)
     // ========================================
-    console.log('\n🔔 Creating Notifications...');
+    console.log('\n🔔 Skipping Notifications (model not available in schema)...');
+    // Note: notification model is not defined in the current Prisma schema
+    
+    /*
     const notificationTemplates = [
       { title: 'Đơn hàng đã được xác nhận', message: 'Đơn hàng #ORDER123 của bạn đã được xác nhận', type: 'ORDER' },
       { title: 'Khuyến mãi mới', message: 'Giảm 20% cho tất cả sản phẩm loa karaoke', type: 'PROMOTION' },
@@ -228,6 +256,7 @@ async function seedData() {
       }
     }
     console.log(`  ✅ Created notifications`);
+    */
     
     // ========================================
     // 7. CHAT SESSIONS & MESSAGES (DISABLED)
@@ -291,13 +320,15 @@ async function seedData() {
       const numQuestions = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < numQuestions; i++) {
         const user = users[Math.floor(Math.random() * users.length)];
-        await prisma.customerQuestion.create({
+        await prisma.customer_questions.create({
           data: {
-            userId: user.id,
+            id: randomUUID(),
+            users: { connect: { id: user.id } },
             question: questions[Math.floor(Math.random() * questions.length)],
             category: 'product',
             satisfaction: Math.floor(Math.random() * 2) + 4,
-            timestamp: randomPastDate(60)
+            timestamp: randomPastDate(60),
+            updatedAt: new Date()
           }
         });
       }
@@ -352,15 +383,16 @@ async function seedData() {
         type: 'FIXED',
         value: 50000,
         isActive: false,
-        expiresAt: new Date('2024-08-31')
+        expiresAt: new Date('2024-08-31'),
+        updatedAt: new Date()
       }
     ];
     
     for (const promo of promotions) {
-      await prisma.promotion.upsert({
+      await prisma.promotions.upsert({
         where: { code: promo.code },
-        update: promo,
-        create: promo
+        update: { ...promo, updatedAt: new Date() },
+        create: { id: randomUUID(), ...promo, updatedAt: new Date() }
       });
     }
     console.log(`  ✅ Created ${promotions.length} promotions`);
@@ -415,7 +447,7 @@ async function seedData() {
     ];
     
     for (const reward of rewards) {
-      await prisma.loyaltyReward.create({ data: reward });
+      await prisma.loyalty_rewards.create({ data: { id: randomUUID(), ...reward } });
     }
     console.log(`  ✅ Created ${rewards.length} loyalty rewards`);
     
@@ -424,12 +456,14 @@ async function seedData() {
       const points = Math.floor(Math.random() * 5000) + 100;
       const tier = points > 3000 ? 'GOLD' : points > 1500 ? 'SILVER' : 'BRONZE';
       
-      await prisma.loyaltyAccount.create({
+      await prisma.loyalty_accounts.create({
         data: {
-          userId: user.id,
+          id: randomUUID(),
+          users: { connect: { id: user.id } },
           points,
           tier,
-          isActive: true
+          isActive: true,
+          updatedAt: new Date()
         }
       }).catch(() => {}); // Ignore if already exists
     }
@@ -495,7 +529,7 @@ async function seedData() {
     ];
     
     for (const campaign of campaigns) {
-      await prisma.campaign.create({ data: campaign });
+      await prisma.campaigns.create({ data: { id: randomUUID(), ...campaign, updatedAt: new Date() } });
     }
     console.log(`  ✅ Created ${campaigns.length} campaigns`);
     
@@ -504,11 +538,13 @@ async function seedData() {
     // ========================================
     console.log('\n🛒 Creating Carts & Cart Items...');
     for (const user of users) {
-      const cart = await prisma.cart.create({
+      const cart = await prisma.carts.create({
         data: {
-          userId: user.id,
+          id: randomUUID(),
+          users: { connect: { id: user.id } },
           status: 'ACTIVE',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          updatedAt: new Date()
         }
       });
       
@@ -517,12 +553,14 @@ async function seedData() {
       const selectedProducts = products.sort(() => 0.5 - Math.random()).slice(0, numItems);
       
       for (const product of selectedProducts) {
-        await prisma.cartItem.create({
+        await prisma.cart_items.create({
           data: {
-            cartId: cart.id,
-            productId: product.id,
+            id: randomUUID(),
+            carts: { connect: { id: cart.id } },
+            products: { connect: { id: product.id } },
             quantity: Math.floor(Math.random() * 3) + 1,
-            price: product.priceCents
+            price: product.priceCents,
+            updatedAt: new Date()
           }
         }).catch(() => {}); // Ignore duplicates
       }
@@ -544,14 +582,14 @@ async function seedData() {
       let subtotal = 0;
       const orderItems = selectedProducts.map(product => {
         const quantity = Math.floor(Math.random() * 3) + 1;
-        const price = product.priceCents;
+        const price = Number(product.priceCents); // Convert BigInt to Number
         subtotal += price * quantity;
         return {
           productId: product.id,
           quantity,
-          price,
+          price: BigInt(price),
           name: product.name,
-          unitPrice: price,
+          unitPrice: BigInt(price),
           imageUrl: product.imageUrl
         };
       });
@@ -560,10 +598,11 @@ async function seedData() {
       const shipping = 30000; // 30k VND
       const total = subtotal - discount + shipping;
       
-      const order = await prisma.order.create({
+      const order = await prisma.orders.create({
         data: {
+          id: randomUUID(),
           orderNo: `ORD${Date.now()}${i}`,
-          userId: user.id,
+          users: { connect: { id: user.id } },
           subtotalCents: subtotal,
           discountCents: discount,
           shippingCents: shipping,
@@ -575,35 +614,37 @@ async function seedData() {
             '789 Hai Bà Trưng, Q3, TP.HCM'
           ][Math.floor(Math.random() * 3)],
           promotionCode: Math.random() > 0.7 ? 'NEWYEAR2025' : null,
-          items: {
-            create: orderItems
-          },
-          createdAt: randomPastDate(90)
+          createdAt: randomPastDate(90),
+          updatedAt: new Date()
         }
       });
       
       // Create payment for completed orders
       if (status === 'DELIVERED' || status === 'SHIPPED') {
-        const paymentIntent = await prisma.paymentIntent.create({
+        const paymentIntent = await prisma.payment_intents.create({
           data: {
-            orderId: order.id,
+            id: randomUUID(),
+            orders: { connect: { id: order.id } },
             provider: ['VNPAY', 'MOMO', 'PAYOS'][Math.floor(Math.random() * 3)],
             amountCents: total,
             status: 'SUCCEEDED',
             clientSecret: `pi_${Date.now()}_secret`,
-            returnUrl: 'http://localhost:3000/checkout/success'
+            returnUrl: 'http://localhost:3000/checkout/success',
+            updatedAt: new Date()
           }
         });
         
-        await prisma.payment.create({
+        await prisma.payments.create({
           data: {
-            orderId: order.id,
-            intentId: paymentIntent.id,
+            id: randomUUID(),
+            orders: { connect: { id: order.id } },
+            payment_intents: { connect: { id: paymentIntent.id } },
             provider: paymentIntent.provider,
             amountCents: total,
             status: 'COMPLETED',
             transactionId: `TXN${Date.now()}${i}`,
-            metadata: JSON.stringify({ method: 'online' })
+            metadata: JSON.stringify({ method: 'online' }),
+            updatedAt: new Date()
           }
         });
       }
@@ -620,10 +661,12 @@ async function seedData() {
       
       await prisma.inventory.create({
         data: {
-          productId: product.id,
+          id: randomUUID(),
+          products: { connect: { id: product.id } },
           stock,
           reserved,
-          lowStockThreshold: 10
+          lowStockThreshold: 10,
+          updatedAt: new Date()
         }
       }).catch(() => {}); // Ignore if already exists
     }
@@ -639,10 +682,11 @@ async function seedData() {
       const numViews = Math.floor(Math.random() * 20) + 5;
       for (let i = 0; i < numViews; i++) {
         const user = Math.random() > 0.5 ? users[Math.floor(Math.random() * users.length)] : null;
-        await prisma.productView.create({
+        await prisma.product_views.create({
           data: {
-            productId: product.id,
-            userId: user?.id,
+            id: randomUUID(),
+            products: { connect: { id: product.id } },
+            users: user ? { connect: { id: user.id } } : undefined,
             timestamp: randomPastDate(30),
             duration: Math.floor(Math.random() * 300) + 10
           }
@@ -656,10 +700,11 @@ async function seedData() {
       const numViews = Math.floor(Math.random() * 10) + 3;
       for (let i = 0; i < numViews; i++) {
         const user = Math.random() > 0.5 ? users[Math.floor(Math.random() * users.length)] : null;
-        await prisma.serviceView.create({
+        await prisma.service_views.create({
           data: {
-            serviceId: service.id,
-            userId: user?.id,
+            id: randomUUID(),
+            services: { connect: { id: service.id } },
+            users: user ? { connect: { id: user.id } } : undefined,
             timestamp: randomPastDate(30),
             duration: Math.floor(Math.random() * 180) + 5
           }
@@ -668,13 +713,9 @@ async function seedData() {
     }
     console.log(`  ✅ Created service views`);
     
-    // Search Queries
-    const searchTerms = [
-      'loa karaoke', 'loa bluetooth', 'micro không dây', 'amply', 'soundbar',
-      'tai nghe', 'loa JBL', 'loa Sony', 'dịch vụ lắp đặt', 'sửa chữa loa',
-      'bảo trì âm thanh', 'tư vấn âm học', 'phòng thu', 'mixer', 'loa bass'
-    ];
-    
+    // Search Queries (DISABLED - searchQuery model not in schema)
+    console.log('\n🔍 Skipping Search Queries (model not available in schema)...');
+    /*
     for (let i = 0; i < 30; i++) {
       const user = Math.random() > 0.3 ? users[Math.floor(Math.random() * users.length)] : null;
       await prisma.searchQuery.create({
@@ -686,14 +727,16 @@ async function seedData() {
       });
     }
     console.log(`  ✅ Created search queries`);
+    */
     
     // Activity Logs
     const actions = ['LOGIN', 'LOGOUT', 'VIEW_PRODUCT', 'ADD_TO_CART', 'CHECKOUT', 'UPDATE_PROFILE'];
     for (let i = 0; i < 100; i++) {
       const user = Math.random() > 0.2 ? users[Math.floor(Math.random() * users.length)] : null;
-      await prisma.activityLog.create({
+      await prisma.activity_logs.create({
         data: {
-          userId: user?.id,
+          id: randomUUID(),
+          users: user ? { connect: { id: user.id } } : undefined,
           action: actions[Math.floor(Math.random() * actions.length)],
           resource: ['products', 'orders', 'users', 'services'][Math.floor(Math.random() * 4)],
           resourceId: Math.random() > 0.5 ? products[Math.floor(Math.random() * products.length)].id : null,

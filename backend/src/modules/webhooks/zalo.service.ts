@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ZaloService {
@@ -21,12 +22,13 @@ export class ZaloService {
     const text = event?.message?.text || event?.event_name || 'Zalo message';
 
     // Create a customer question instead of chat session/message
-    const customerQuestion = await this.prisma.customerQuestion.create({
+    const customerQuestion = await this.prisma.customer_questions.create({
       data: {
-        userId,
-        question: text,
+        id: randomUUID(),
+        question: String(text),
         category: 'ZALO_SUPPORT',
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...(userId && { users: { connect: { id: userId } } })
       }
     });
 

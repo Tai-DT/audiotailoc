@@ -9,8 +9,8 @@ export declare class InventoryAlertService {
         threshold?: number;
         currentStock?: number;
     }): Promise<{
-        product: {
-            category: {
+        products: {
+            categories: {
                 id: string;
                 name: string;
             };
@@ -20,10 +20,10 @@ export declare class InventoryAlertService {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -43,8 +43,8 @@ export declare class InventoryAlertService {
         page: number;
         pageSize: number;
         items: ({
-            product: {
-                category: {
+            products: {
+                categories: {
                     id: string;
                     name: string;
                 };
@@ -54,10 +54,10 @@ export declare class InventoryAlertService {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -73,8 +73,8 @@ export declare class InventoryAlertService {
         page: number;
         pageSize: number;
         items: ({
-            product: {
-                category: {
+            products: {
+                categories: {
                     id: string;
                     name: string;
                 };
@@ -84,10 +84,10 @@ export declare class InventoryAlertService {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -96,17 +96,17 @@ export declare class InventoryAlertService {
         })[];
     }>;
     resolve(id: string, _userId?: string): Promise<{
-        product: {
+        products: {
             id: string;
             name: string;
             sku: string;
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -115,8 +115,8 @@ export declare class InventoryAlertService {
     }>;
     bulkResolve(ids: string[], _userId?: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
     getActiveAlerts(): Promise<({
-        product: {
-            category: {
+        products: {
+            categories: {
                 id: string;
                 name: string;
             };
@@ -126,10 +126,10 @@ export declare class InventoryAlertService {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -145,10 +145,10 @@ export declare class InventoryAlertService {
     checkAndCreateAlerts(): Promise<any[]>;
     delete(id: string): Promise<{
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;

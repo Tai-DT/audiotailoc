@@ -18,9 +18,25 @@ export declare class InventoryController {
         total: number;
         page: number;
         pageSize: number;
-        items: ({
+        items: {
             product: {
-                category: {
+                priceCents: number;
+                categories: {
+                    id: string;
+                    name: string;
+                    slug: string;
+                };
+                id: string;
+                name: string;
+                slug: string;
+                imageUrl: string;
+                categoryId: string;
+                sku: string;
+                isActive: boolean;
+                isDeleted: boolean;
+            };
+            products: {
+                categories: {
                     id: string;
                     name: string;
                     slug: string;
@@ -35,7 +51,6 @@ export declare class InventoryController {
                 isActive: boolean;
                 isDeleted: boolean;
             };
-        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -43,10 +58,10 @@ export declare class InventoryController {
             stock: number;
             reserved: number;
             lowStockThreshold: number;
-        })[];
+        }[];
     }>;
     adjust(productId: string, dto: AdjustDto): Promise<{
-        product: {
+        products: {
             name: string;
             sku: string;
         };
@@ -70,7 +85,7 @@ export declare class InventoryController {
         orphanedInventoriesCount: number;
         createdInventories: any[];
         orphanedInventoriesList: ({
-            product: {
+            products: {
                 name: string;
                 sku: string;
                 isActive: boolean;

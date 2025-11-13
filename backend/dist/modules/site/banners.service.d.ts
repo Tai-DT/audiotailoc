@@ -11,14 +11,14 @@ export declare class BannersService {
         search?: string;
         skip?: number;
         take?: number;
-        orderBy?: Prisma.BannerOrderByWithRelationInput;
+        orderBy?: Prisma.bannersOrderByWithRelationInput;
     }): Promise<{
         items: {
-            page: string;
+            description: string | null;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            page: string;
             title: string;
             imageUrl: string;
             isActive: boolean;
@@ -38,11 +38,11 @@ export declare class BannersService {
         totalPages: number;
     }>;
     findById(id: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -57,11 +57,11 @@ export declare class BannersService {
         endAt: Date | null;
     }>;
     create(data: CreateBannerDto): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -76,11 +76,11 @@ export declare class BannersService {
         endAt: Date | null;
     }>;
     update(id: string, data: UpdateBannerDto): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -95,11 +95,11 @@ export declare class BannersService {
         endAt: Date | null;
     }>;
     softDelete(id: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -114,11 +114,11 @@ export declare class BannersService {
         endAt: Date | null;
     }>;
     reorder(idsInOrder: string[]): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -133,11 +133,11 @@ export declare class BannersService {
         endAt: Date | null;
     }[]>;
     getActiveBanners(page?: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;

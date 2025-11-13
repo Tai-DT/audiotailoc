@@ -173,7 +173,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
     }
     async sendBulkNotification(userIds, data) {
         const promises = userIds.map(async (userId) => {
-            const user = await this.prisma.user.findUnique({
+            const user = await this.prisma.users.findUnique({
                 where: { id: userId },
                 select: { email: true, phone: true }
             });

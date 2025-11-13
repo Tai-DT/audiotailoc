@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class WishlistService {
@@ -10,7 +11,7 @@ export class WishlistService {
     const { productId } = createWishlistDto;
 
     // Check if product exists
-    const product = await this.prisma.product.findUnique({
+    const product = await this.prisma.products.findUnique({
       where: { id: productId },
     });
 
@@ -19,7 +20,7 @@ export class WishlistService {
     }
 
     // Check if item already exists in wishlist
-    const existingItem = await this.prisma.wishlistItem.findUnique({
+    const existingItem = await this.prisma.wishlist_items.findUnique({
       where: {
         userId_productId: {
           userId,
@@ -33,23 +34,15 @@ export class WishlistService {
     }
 
     // Add to wishlist
-    const wishlistItem = await this.prisma.wishlistItem.create({
+    const wishlistItem = await this.prisma.wishlist_items.create({
       data: {
-        userId,
-        productId,
+        id: randomUUID(),
         updatedAt: new Date(),
+        users: { connect: { id: userId } },
+        products: { connect: { id: productId } }
       },
       include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            priceCents: true,
-            imageUrl: true,
-            isActive: true,
-          },
-        },
+        products: true
       },
     });
 
@@ -57,10 +50,10 @@ export class WishlistService {
   }
 
   async getWishlist(userId: string) {
-    const wishlistItems = await this.prisma.wishlistItem.findMany({
+    const wishlistItems = await this.prisma.wishlist_items.findMany({
       where: { userId },
       include: {
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
@@ -71,7 +64,7 @@ export class WishlistService {
             images: true,
             isActive: true,
             stockQuantity: true,
-            category: {
+            categories: {
               select: {
                 id: true,
                 name: true,
@@ -93,7 +86,7 @@ export class WishlistService {
   }
 
   async removeFromWishlist(userId: string, productId: string) {
-    const wishlistItem = await this.prisma.wishlistItem.findUnique({
+    const wishlistItem = await this.prisma.wishlist_items.findUnique({
       where: {
         userId_productId: {
           userId,
@@ -106,7 +99,7 @@ export class WishlistService {
       throw new NotFoundException('Product not found in wishlist');
     }
 
-    await this.prisma.wishlistItem.delete({
+    await this.prisma.wishlist_items.delete({
       where: {
         userId_productId: {
           userId,
@@ -119,7 +112,7 @@ export class WishlistService {
   }
 
   async isInWishlist(userId: string, productId: string): Promise<boolean> {
-    const item = await this.prisma.wishlistItem.findUnique({
+    const item = await this.prisma.wishlist_items.findUnique({
       where: {
         userId_productId: {
           userId,
@@ -132,7 +125,7 @@ export class WishlistService {
   }
 
   async getWishlistCount(userId: string): Promise<number> {
-    const count = await this.prisma.wishlistItem.count({
+    const count = await this.prisma.wishlist_items.count({
       where: { userId },
     });
 
@@ -140,7 +133,7 @@ export class WishlistService {
   }
 
   async clearWishlist(userId: string) {
-    await this.prisma.wishlistItem.deleteMany({
+    await this.prisma.wishlist_items.deleteMany({
       where: { userId },
     });
 

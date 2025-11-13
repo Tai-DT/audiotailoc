@@ -1,39 +1,32 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../caching/cache.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 export declare class ServicesService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly cache;
+    constructor(prisma: PrismaService, cache: CacheService);
     createService(data: CreateServiceDto): Promise<{
-        serviceType: {
+        service_types: {
+            description: string | null;
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             sortOrder: number;
             slug: string;
             isActive: boolean;
             icon: string | null;
             color: string | null;
         };
-        items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            price: number;
-            quantity: number;
-            serviceId: string;
-        }[];
     } & {
+        tags: string | null;
+        description: string | null;
+        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string | null;
-        description: string | null;
-        type: string | null;
         duration: number;
         slug: string;
         shortDescription: string | null;
@@ -60,239 +53,26 @@ export declare class ServicesService {
         isFeatured?: boolean;
         page?: number;
         pageSize?: number;
-    }): Promise<{
-        total: number;
-        page: number;
-        pageSize: number;
-        services: {
-            price: number;
-            minPriceDisplay: number;
-            maxPriceDisplay: number;
-            type: {
-                id: string;
-                name: string;
-                createdAt: Date;
-                updatedAt: Date;
-                description: string | null;
-                sortOrder: number;
-                slug: string;
-                isActive: boolean;
-                icon: string | null;
-                color: string | null;
-            };
-            serviceType: {
-                id: string;
-                name: string;
-                createdAt: Date;
-                updatedAt: Date;
-                description: string | null;
-                sortOrder: number;
-                slug: string;
-                isActive: boolean;
-                icon: string | null;
-                color: string | null;
-            };
-            items: {
-                id: string;
-                name: string;
-                createdAt: Date;
-                updatedAt: Date;
-                price: number;
-                quantity: number;
-                serviceId: string;
-            }[];
-            _count: {
-                bookings: number;
-            };
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            tags: string | null;
-            description: string | null;
-            duration: number;
-            slug: string;
-            shortDescription: string | null;
-            images: string | null;
-            features: string | null;
-            isActive: boolean;
-            viewCount: number;
-            minPrice: number | null;
-            maxPrice: number | null;
-            metadata: string | null;
-            basePriceCents: number;
-            priceType: string;
-            typeId: string | null;
-            isFeatured: boolean;
-            seoTitle: string | null;
-            seoDescription: string | null;
-            requirements: string | null;
-        }[];
-    }>;
-    getService(id: string): Promise<{
-        price: number;
-        minPriceDisplay: number;
-        maxPriceDisplay: number;
-        type: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        serviceType: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            price: number;
-            quantity: number;
-            serviceId: string;
-        }[];
-        bookings: {
-            status: string;
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            userId: string | null;
-            scheduledAt: Date | null;
-            notes: string | null;
-            serviceId: string;
-            technicianId: string | null;
-            scheduledTime: string | null;
-            completedAt: Date | null;
-            estimatedCosts: number | null;
-            actualCosts: number | null;
-        }[];
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: string | null;
-        description: string | null;
-        duration: number;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        isActive: boolean;
-        viewCount: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
-    getServiceBySlug(slug: string): Promise<{
-        price: number;
-        type: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        serviceType: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            price: number;
-            quantity: number;
-            serviceId: string;
-        }[];
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: string | null;
-        description: string | null;
-        duration: number;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        isActive: boolean;
-        viewCount: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
+    }): Promise<any>;
+    getService(id: string): Promise<any>;
+    getServiceBySlug(slug: string): Promise<any>;
     updateService(id: string, data: UpdateServiceDto): Promise<{
         price: number;
         minPriceDisplay: number;
         maxPriceDisplay: number;
         type: {
+            description: string | null;
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             sortOrder: number;
             slug: string;
             isActive: boolean;
             icon: string | null;
             color: string | null;
         };
-        serviceType: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        items: {
+        service_items: {
             id: string;
             name: string;
             createdAt: Date;
@@ -301,12 +81,24 @@ export declare class ServicesService {
             quantity: number;
             serviceId: string;
         }[];
+        service_types: {
+            description: string | null;
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            sortOrder: number;
+            slug: string;
+            isActive: boolean;
+            icon: string | null;
+            color: string | null;
+        };
+        tags: string | null;
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string | null;
-        description: string | null;
         duration: number;
         slug: string;
         shortDescription: string | null;
@@ -330,30 +122,18 @@ export declare class ServicesService {
         minPriceDisplay: number;
         maxPriceDisplay: number;
         type: {
+            description: string | null;
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             sortOrder: number;
             slug: string;
             isActive: boolean;
             icon: string | null;
             color: string | null;
         };
-        serviceType: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
-            sortOrder: number;
-            slug: string;
-            isActive: boolean;
-            icon: string | null;
-            color: string | null;
-        };
-        items: {
+        service_items: {
             id: string;
             name: string;
             createdAt: Date;
@@ -362,12 +142,24 @@ export declare class ServicesService {
             quantity: number;
             serviceId: string;
         }[];
+        service_types: {
+            description: string | null;
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            sortOrder: number;
+            slug: string;
+            isActive: boolean;
+            icon: string | null;
+            color: string | null;
+        };
+        tags: string | null;
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string | null;
-        description: string | null;
         duration: number;
         slug: string;
         shortDescription: string | null;
@@ -387,13 +179,13 @@ export declare class ServicesService {
         requirements: string | null;
     }>;
     deleteService(id: string): Promise<{
+        tags: string | null;
+        description: string | null;
+        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string | null;
-        description: string | null;
-        type: string | null;
         duration: number;
         slug: string;
         shortDescription: string | null;
@@ -459,11 +251,11 @@ export declare class ServicesService {
         updatedAt: string;
     }[]>;
     getServiceType(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -479,17 +271,32 @@ export declare class ServicesService {
         completedBookings: number;
         totalRevenue: number;
     }>;
+    getServiceItems(): Promise<({
+        services: {
+            id: string;
+            name: string;
+            slug: string;
+        };
+    } & {
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        price: number;
+        quantity: number;
+        serviceId: string;
+    })[]>;
     createServiceType(data: {
         name: string;
         slug?: string;
         description?: string;
         isActive?: boolean;
     }): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -503,11 +310,11 @@ export declare class ServicesService {
         isActive?: boolean;
         sortOrder?: number;
     }): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -515,11 +322,11 @@ export declare class ServicesService {
         color: string | null;
     }>;
     deleteServiceType(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;

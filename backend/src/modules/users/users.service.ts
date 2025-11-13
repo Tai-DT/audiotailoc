@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import * as bcrypt from 'bcryptjs';
@@ -13,11 +14,11 @@ export class UsersService {
   ) { }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.users.findUnique({ where: { email } });
   }
 
   async findById(id: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id },
       include: {
         orders: {
@@ -101,7 +102,7 @@ export class UsersService {
     }
 
     const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
+      this.prisma.users.findMany({
         skip,
         take: params.limit,
         where,
@@ -112,6 +113,11 @@ export class UsersService {
           phone: true,
           role: true,
           createdAt: true,
+          orders: {
+            select: {
+              totalCents: true
+            }
+          },
           _count: {
             select: {
               orders: true
@@ -120,7 +126,7 @@ export class UsersService {
         },
         orderBy
       }),
-      this.prisma.user.count({ where })
+      this.prisma.users.count({ where })
     ]);
 
     return {
@@ -155,13 +161,15 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await this.prisma.user.create({
+    const user = await this.prisma.users.create({
       data: {
+        id: randomUUID(),
         email: createUserDto.email,
         password: hashedPassword,
         name: createUserDto.name,
         phone: createUserDto.phone,
-        role: createUserDto.role || 'USER'
+        role: createUserDto.role || 'USER',
+        updatedAt: new Date()
       },
       select: {
         id: true,
@@ -177,8 +185,8 @@ export class UsersService {
     if (generatedPassword) {
       try {
         await this.sendWelcomeEmail(user.email, user.name || 'User', password);
-      } catch (error) {
-        this.logger.error(`Failed to send welcome email to ${user.email}:`, error);
+      } catch (_error) {
+        this.logger.error(`Failed to send welcome email to ${user.email}:`, _error);
         // Don't fail the user creation if email fails
       }
     }
@@ -194,7 +202,15 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(params.password, 12);
-    return this.prisma.user.create({ data: { email: params.email, password: hashedPassword, name: params.name ?? '' } });
+    return this.prisma.users.create({ 
+      data: { 
+        id: randomUUID(),
+        email: params.email, 
+        password: hashedPassword, 
+        name: params.name ?? '',
+        updatedAt: new Date()
+      } 
+    });
   }
 
   async update(id: string, updateUserDto: { name?: string; phone?: string; role?: 'USER' | 'ADMIN' }) {
@@ -203,7 +219,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id },
       data: updateUserDto,
       select: {
@@ -239,46 +255,46 @@ export class UsersService {
     // Delete orders first (they reference user)
     try {
       // Get all orders for this user
-      const orders = await this.prisma.order.findMany({
+      const orders = await this.prisma.orders.findMany({
         where: { userId: id },
         select: { id: true }
       });
 
       // Delete order items for each order
       for (const order of orders) {
-        await this.prisma.orderItem.deleteMany({
+        await this.prisma.order_items.deleteMany({
           where: { orderId: order.id }
         });
       }
 
       // Delete orders
-      await this.prisma.order.deleteMany({
+      await this.prisma.orders.deleteMany({
         where: { userId: id }
       });
-    } catch (error) {
+    } catch (_error) {
       console.log('Error deleting orders, continuing...');
     }
 
     // Delete cart items and cart
     try {
-      const cart = await this.prisma.cart.findFirst({
+      const cart = await this.prisma.carts.findFirst({
         where: { userId: id }
       });
       if (cart) {
-        await this.prisma.cartItem.deleteMany({
+        await this.prisma.cart_items.deleteMany({
           where: { cartId: cart.id }
         });
-        await this.prisma.cart.delete({
+        await this.prisma.carts.delete({
           where: { id: cart.id }
         });
       }
-    } catch (error) {
+    } catch (_error) {
       console.log('Error deleting cart, continuing...');
     }
 
     // Finally delete the user using transaction
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.delete({
+      await tx.users.delete({
         where: { id }
       });
     }); return { message: 'User deleted successfully' };
@@ -286,15 +302,15 @@ export class UsersService {
 
   async getStats() {
     const [totalUsers, newUsersThisMonth, activeUsers] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({
+      this.prisma.users.count(),
+      this.prisma.users.count({
         where: {
           createdAt: {
             gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
           }
         }
       }),
-      this.prisma.user.count({
+      this.prisma.users.count({
         where: {
           orders: {
             some: {
@@ -318,7 +334,7 @@ export class UsersService {
   async getActivityStats(days: number) {
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-    const dailyStats = await this.prisma.user.groupBy({
+    const dailyStats = await this.prisma.users.groupBy({
       by: ['createdAt'],
       where: {
         createdAt: {
@@ -342,7 +358,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id: userId },
       data: { password: hashedPassword },
       select: {

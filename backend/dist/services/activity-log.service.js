@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityLogService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../prisma/prisma.service");
 let ActivityLogService = class ActivityLogService {
     constructor(prisma) {
@@ -18,8 +19,9 @@ let ActivityLogService = class ActivityLogService {
     }
     async logActivity(data) {
         try {
-            await this.prisma.activityLog.create({
+            await this.prisma.activity_logs.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     userId: data.userId,
                     action: data.action,
                     resource: data.resource,
@@ -60,10 +62,10 @@ let ActivityLogService = class ActivityLogService {
                 where.createdAt.lte = filters.endDate;
         }
         const [logs, total] = await Promise.all([
-            this.prisma.activityLog.findMany({
+            this.prisma.activity_logs.findMany({
                 where,
                 include: {
-                    user: {
+                    users: {
                         select: {
                             id: true,
                             name: true,
@@ -75,7 +77,7 @@ let ActivityLogService = class ActivityLogService {
                 take: filters.limit || 100,
                 skip: filters.offset || 0
             }),
-            this.prisma.activityLog.count({ where })
+            this.prisma.activity_logs.count({ where })
         ]);
         return {
             logs: logs.map(log => ({
@@ -88,7 +90,7 @@ let ActivityLogService = class ActivityLogService {
     async cleanupOldLogs(days = 90) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
-        const result = await this.prisma.activityLog.deleteMany({
+        const result = await this.prisma.activity_logs.deleteMany({
             where: {
                 createdAt: {
                     lt: cutoffDate
@@ -106,7 +108,7 @@ let ActivityLogService = class ActivityLogService {
             if (endDate)
                 where.createdAt.lte = endDate;
         }
-        const stats = await this.prisma.activityLog.groupBy({
+        const stats = await this.prisma.activity_logs.groupBy({
             by: ['category', 'severity'],
             where,
             _count: {

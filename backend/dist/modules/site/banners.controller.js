@@ -73,7 +73,7 @@ __decorate([
 ], BannersController.prototype, "findOne", null);
 exports.BannersController = BannersController = __decorate([
     (0, swagger_1.ApiTags)('Content - Banners'),
-    (0, common_1.Controller)('content/banners'),
+    (0, common_1.Controller)(['content/banners', 'site/banners']),
     __metadata("design:paramtypes", [banners_service_1.BannersService])
 ], BannersController);
 //# sourceMappingURL=banners.controller.js.map

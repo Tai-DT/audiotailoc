@@ -29,11 +29,11 @@ let CheckoutController = class CheckoutController {
         this.checkout = checkout;
     }
     async create(req, dto) {
-        const order = await this.checkout.createOrder(req.user?.sub, { promotionCode: dto.promotionCode });
+        const order = await this.checkout.createOrder(req.users?.sub, { promotionCode: dto.promotionCode });
         return { order };
     }
     async getByOrderNo(req, orderNo) {
-        return this.checkout.getOrderForUserByNo(req.user?.sub, orderNo);
+        return this.checkout.getOrderForUserByNo(req.users?.sub, orderNo);
     }
 };
 exports.CheckoutController = CheckoutController;

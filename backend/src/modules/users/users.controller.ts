@@ -75,7 +75,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get('profile')
   async getProfile(@Req() req: any) {
-    const userId = req.user?.sub;
+    const userId = req.users?.sub;
     if (!userId) {
       throw new UnauthorizedException('User not authenticated');
     }
@@ -103,7 +103,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
-    return this.usersService.remove(id, req.user);
+    return this.usersService.remove(id, req.users);
   }
 
   @UseGuards(AdminOrKeyGuard)

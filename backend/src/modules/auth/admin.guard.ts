@@ -1,53 +1,40 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly config: ConfigService
-  ) {}
+  private readonly logger = new Logger(AdminGuard.name);
+
+  constructor(private readonly config: ConfigService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const user = request.users;
+
+    this.logger.debug(`AdminGuard: Checking user=${user?.email}, role=${user?.role}`);
 
     // Check if user exists in request (set by JWT guard)
     if (!user) {
+      this.logger.debug('AdminGuard: No user in request');
       return false;
     }
 
     // If user has role in JWT payload, check it directly
     if (user.role === 'ADMIN') {
+      this.logger.debug('AdminGuard: User has ADMIN role in JWT');
       return true;
     }
 
-    // Fallback: check user ID from database if available
-    if (user.sub) {
-      try {
-        // Get user details from database
-        const userDetails = await this.usersService.findById(user.sub);
-        
-        // Check if user has admin role
-        if (userDetails && userDetails.role === 'ADMIN') {
-          return true;
-        }
-
-        // Fallback: check against configured admin emails
-        const adminEmails = this.config.get<string>('ADMIN_EMAILS', '');
-        if (adminEmails && userDetails) {
-          const allowedEmails = adminEmails.split(',').map(email => email.trim().toLowerCase());
-          return allowedEmails.includes(userDetails.email.toLowerCase());
-        }
-
-        return false;
-      } catch (error) {
-        // If user not found or any error, deny access
-        return false;
-      }
+    // Fallback: check against configured admin emails
+    const adminEmails = this.config.get<string>('ADMIN_EMAILS', '');
+    if (adminEmails && user.email) {
+      const allowedEmails = adminEmails.split(',').map(email => email.trim().toLowerCase());
+      const isAllowed = allowedEmails.includes(user.email.toLowerCase());
+      this.logger.debug(`AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`);
+      return isAllowed;
     }
 
+    this.logger.debug('AdminGuard: User is not admin');
     return false;
   }
 }

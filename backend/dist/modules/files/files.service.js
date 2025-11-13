@@ -162,7 +162,7 @@ let FilesService = FilesService_1 = class FilesService {
             uploadedAt: new Date().toISOString(),
         };
         const result = await this.uploadFile(file, options, metadata);
-        await this.prisma.product.update({
+        await this.prisma.products.update({
             where: { id: productId },
             data: { imageUrl: result.url },
         });
@@ -182,7 +182,7 @@ let FilesService = FilesService_1 = class FilesService {
             uploadedAt: new Date().toISOString(),
         };
         const result = await this.uploadFile(file, options, metadata);
-        await this.prisma.user.update({
+        await this.prisma.users.update({
             where: { id: userId },
             data: {},
         });

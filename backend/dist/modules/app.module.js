@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const health_module_1 = require("./health/health.module");
 const app_controller_1 = require("./app.controller");
-const logger_module_1 = require("./logger/logger.module");
 const prisma_module_1 = require("../prisma/prisma.module");
 const cache_module_1 = require("./caching/cache.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -34,7 +33,10 @@ const backup_module_1 = require("./backup/backup.module");
 const marketing_module_1 = require("./marketing/marketing.module");
 const analytics_module_1 = require("./analytics/analytics.module");
 const files_module_1 = require("./files/files.module");
+const search_module_1 = require("./search/search.module");
 const maps_module_1 = require("./maps/maps.module");
+const realtime_module_1 = require("./realtime/realtime.module");
+const ai_module_1 = require("./ai/ai.module");
 const services_module_1 = require("./services/services.module");
 const service_types_module_1 = require("./service-types/service-types.module");
 const booking_module_1 = require("./booking/booking.module");
@@ -42,11 +44,11 @@ const technicians_module_1 = require("./technicians/technicians.module");
 const site_module_1 = require("./site/site.module");
 const projects_module_1 = require("./projects/projects.module");
 const seo_module_1 = require("./seo/seo.module");
+const blog_module_1 = require("./blog/blog.module");
 const test_module_1 = require("./test/test.module");
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     config_1.ConfigModule.forRoot({ isGlobal: true }),
-    logger_module_1.LoggerModule,
     cache_module_1.CacheModule.forRoot({
         isGlobal: true,
     }),
@@ -64,6 +66,9 @@ const runtimeImports = [
     marketing_module_1.MarketingModule,
     maps_module_1.MapsModule,
     analytics_module_1.AnalyticsModule,
+    search_module_1.SearchModule,
+    realtime_module_1.RealtimeModule,
+    ai_module_1.AiModule,
     catalog_module_1.CatalogModule,
     payments_module_1.PaymentsModule,
     orders_module_1.OrdersModule,
@@ -76,6 +81,7 @@ const runtimeImports = [
     technicians_module_1.TechniciansModule,
     site_module_1.SiteModule,
     seo_module_1.SeoModule,
+    blog_module_1.BlogModule,
     projects_module_1.ProjectsModule,
     test_module_1.TestModule,
 ];

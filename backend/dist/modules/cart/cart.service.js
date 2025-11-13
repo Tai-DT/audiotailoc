@@ -14,6 +14,7 @@ exports.CartService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const config_1 = require("@nestjs/config");
+const crypto_1 = require("crypto");
 let CartService = CartService_1 = class CartService {
     constructor(prisma, config) {
         this.prisma = prisma;
@@ -21,15 +22,17 @@ let CartService = CartService_1 = class CartService {
         this.logger = new common_1.Logger(CartService_1.name);
     }
     async createGuestCart() {
-        const guestCart = await this.prisma.cart.create({
+        const guestCart = await this.prisma.carts.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
+                updatedAt: new Date(),
                 userId: null,
                 status: 'ACTIVE',
             },
             include: {
-                items: {
+                cart_items: {
                     include: {
-                        product: {
+                        products: {
                             select: {
                                 id: true,
                                 name: true,
@@ -46,16 +49,16 @@ let CartService = CartService_1 = class CartService {
         return guestCart;
     }
     async getGuestCart(cartId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: {
                 id: cartId,
                 userId: null,
                 status: 'ACTIVE'
             },
             include: {
-                items: {
+                cart_items: {
                     include: {
-                        product: {
+                        products: {
                             select: {
                                 id: true,
                                 name: true,
@@ -74,7 +77,7 @@ let CartService = CartService_1 = class CartService {
         return this.calculateCartTotals(cart);
     }
     async addToGuestCart(cartId, productId, quantity = 1) {
-        let cart = await this.prisma.cart.findFirst({
+        let cart = await this.prisma.carts.findFirst({
             where: {
                 id: cartId,
                 userId: null,
@@ -84,29 +87,43 @@ let CartService = CartService_1 = class CartService {
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id: productId }
         });
         if (!product) {
             throw new common_1.NotFoundException('Product not found');
         }
-        const existingItem = await this.prisma.cartItem.findFirst({
+        const inventory = await this.prisma.inventory.findUnique({
+            where: { productId: productId }
+        });
+        if (!inventory) {
+            this.logger.warn(`No inventory record found for product ${productId}`);
+        }
+        else {
+            const availableStock = inventory.stock - inventory.reserved;
+            if (availableStock < quantity) {
+                throw new common_1.NotFoundException(`Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`);
+            }
+        }
+        const existingItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
                 productId
             }
         });
         if (existingItem) {
-            await this.prisma.cartItem.update({
+            await this.prisma.cart_items.update({
                 where: { id: existingItem.id },
                 data: { quantity: existingItem.quantity + quantity }
             });
         }
         else {
-            await this.prisma.cartItem.create({
+            await this.prisma.cart_items.create({
                 data: {
-                    cartId: cart.id,
-                    productId,
+                    id: (0, crypto_1.randomUUID)(),
+                    updatedAt: new Date(),
+                    carts: { connect: { id: cart.id } },
+                    products: { connect: { id: productId } },
                     quantity,
                     price: product.priceCents
                 }
@@ -116,13 +133,13 @@ let CartService = CartService_1 = class CartService {
         return this.getGuestCart(cartId);
     }
     async updateGuestCartItem(cartId, productId, quantity) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
-        const cartItem = await this.prisma.cartItem.findFirst({
+        const cartItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
                 productId
@@ -135,12 +152,12 @@ let CartService = CartService_1 = class CartService {
         if (delta !== 0) {
         }
         if (quantity <= 0) {
-            await this.prisma.cartItem.delete({
+            await this.prisma.cart_items.delete({
                 where: { id: cartItem.id }
             });
         }
         else {
-            await this.prisma.cartItem.update({
+            await this.prisma.cart_items.update({
                 where: { id: cartItem.id },
                 data: { quantity }
             });
@@ -148,76 +165,78 @@ let CartService = CartService_1 = class CartService {
         return this.getGuestCart(cartId);
     }
     async removeFromGuestCart(cartId, productId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
-        const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
+        const item = await this.prisma.cart_items.findFirst({ where: { cartId: cart.id, productId } });
         if (item) {
-            await this.prisma.cartItem.delete({ where: { id: item.id } });
+            await this.prisma.cart_items.delete({ where: { id: item.id } });
         }
         return this.getGuestCart(cartId);
     }
     async clearGuestCart(cartId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
-        const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
+        const items = await this.prisma.cart_items.findMany({ where: { cartId: cart.id } });
         for (const item of items) {
-            await this.prisma.cartItem.delete({ where: { id: item.id } });
+            await this.prisma.cart_items.delete({ where: { id: item.id } });
         }
         return this.getGuestCart(cartId);
     }
     async convertGuestCartToUserCart(cartId, userId) {
-        const guestCart = await this.prisma.cart.findFirst({
+        const guestCart = await this.prisma.carts.findFirst({
             where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!guestCart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
-        const existingUserCart = await this.prisma.cart.findFirst({
+        const existingUserCart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' }
         });
         if (existingUserCart) {
-            const guestItems = await this.prisma.cartItem.findMany({
+            const guestItems = await this.prisma.cart_items.findMany({
                 where: { cartId: guestCart.id }
             });
             for (const item of guestItems) {
-                const existingItem = await this.prisma.cartItem.findFirst({
+                const existingItem = await this.prisma.cart_items.findFirst({
                     where: {
                         cartId: existingUserCart.id,
                         productId: item.productId
                     }
                 });
                 if (existingItem) {
-                    await this.prisma.cartItem.update({
+                    await this.prisma.cart_items.update({
                         where: { id: existingItem.id },
                         data: { quantity: existingItem.quantity + item.quantity }
                     });
                 }
                 else {
-                    await this.prisma.cartItem.create({
+                    await this.prisma.cart_items.create({
                         data: {
-                            cartId: existingUserCart.id,
-                            productId: item.productId,
+                            id: (0, crypto_1.randomUUID)(),
+                            updatedAt: new Date(),
+                            carts: { connect: { id: existingUserCart.id } },
+                            products: { connect: { id: item.productId } },
                             quantity: item.quantity,
                             price: item.price
                         }
                     });
                 }
             }
-            await this.prisma.cart.delete({
+            await this.prisma.carts.delete({
                 where: { id: guestCart.id }
             });
             return this.getUserCart(userId);
         }
         else {
-            await this.prisma.cart.update({
+            await this.prisma.carts.update({
                 where: { id: guestCart.id },
                 data: {
                     userId
@@ -227,15 +246,15 @@ let CartService = CartService_1 = class CartService {
         }
     }
     async getUserCart(userId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: {
                 userId,
                 status: 'ACTIVE'
             },
             include: {
-                items: {
+                cart_items: {
                     include: {
-                        product: {
+                        products: {
                             select: {
                                 id: true,
                                 name: true,
@@ -253,15 +272,17 @@ let CartService = CartService_1 = class CartService {
         return this.calculateCartTotals(cart);
     }
     async createUserCart(userId) {
-        const cart = await this.prisma.cart.create({
+        const cart = await this.prisma.carts.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
+                updatedAt: new Date(),
                 userId,
                 status: 'ACTIVE'
             },
             include: {
-                items: {
+                cart_items: {
                     include: {
-                        product: {
+                        products: {
                             select: {
                                 id: true,
                                 name: true,
@@ -277,7 +298,7 @@ let CartService = CartService_1 = class CartService {
         return this.calculateCartTotals(cart);
     }
     async addToUserCart(userId, productId, quantity = 1) {
-        let cart = await this.prisma.cart.findFirst({
+        let cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
@@ -286,29 +307,31 @@ let CartService = CartService_1 = class CartService {
         if (!cart) {
             throw new Error('Failed to create or find cart');
         }
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id: productId }
         });
         if (!product) {
             throw new common_1.NotFoundException('Product not found');
         }
-        const existingItem = await this.prisma.cartItem.findFirst({
+        const existingItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
                 productId
             }
         });
         if (existingItem) {
-            await this.prisma.cartItem.update({
+            await this.prisma.cart_items.update({
                 where: { id: existingItem.id },
                 data: { quantity: existingItem.quantity + quantity }
             });
         }
         else {
-            await this.prisma.cartItem.create({
+            await this.prisma.cart_items.create({
                 data: {
-                    cartId: cart.id,
-                    productId,
+                    id: (0, crypto_1.randomUUID)(),
+                    updatedAt: new Date(),
+                    carts: { connect: { id: cart.id } },
+                    products: { connect: { id: productId } },
                     quantity,
                     price: product.priceCents
                 }
@@ -317,13 +340,13 @@ let CartService = CartService_1 = class CartService {
         return this.getUserCart(userId);
     }
     async updateUserCartItem(userId, productId, quantity) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
         }
-        const cartItem = await this.prisma.cartItem.findFirst({
+        const cartItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
                 productId
@@ -336,12 +359,12 @@ let CartService = CartService_1 = class CartService {
         if (delta !== 0) {
         }
         if (quantity <= 0) {
-            await this.prisma.cartItem.delete({
+            await this.prisma.cart_items.delete({
                 where: { id: cartItem.id }
             });
         }
         else {
-            await this.prisma.cartItem.update({
+            await this.prisma.cart_items.update({
                 where: { id: cartItem.id },
                 data: { quantity }
             });
@@ -349,34 +372,34 @@ let CartService = CartService_1 = class CartService {
         return this.getUserCart(userId);
     }
     async removeFromUserCart(userId, productId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
         }
-        const item = await this.prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } });
+        const item = await this.prisma.cart_items.findFirst({ where: { cartId: cart.id, productId } });
         if (item) {
-            await this.prisma.cartItem.delete({ where: { id: item.id } });
+            await this.prisma.cart_items.delete({ where: { id: item.id } });
         }
         return this.getUserCart(userId);
     }
     async clearUserCart(userId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
         }
-        const items = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
+        const items = await this.prisma.cart_items.findMany({ where: { cartId: cart.id } });
         for (const item of items) {
-            await this.prisma.cartItem.delete({ where: { id: item.id } });
+            await this.prisma.cart_items.delete({ where: { id: item.id } });
         }
         return this.getUserCart(userId);
     }
     calculateCartTotals(cart) {
         const subtotal = cart.items.reduce((sum, item) => {
-            return sum + ((item.price ?? item.product?.priceCents ?? 0) * item.quantity);
+            return sum + ((item.price ?? item.products?.priceCents ?? 0) * item.quantity);
         }, 0);
         const itemCount = cart.items.reduce((sum, item) => {
             return sum + item.quantity;
@@ -392,7 +415,7 @@ let CartService = CartService_1 = class CartService {
     }
     async cleanupExpiredGuestCarts() {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const expiredCarts = await this.prisma.cart.findMany({
+        const expiredCarts = await this.prisma.carts.findMany({
             where: {
                 userId: null,
                 createdAt: { lt: sevenDaysAgo },
@@ -400,7 +423,7 @@ let CartService = CartService_1 = class CartService {
             }
         });
         for (const cart of expiredCarts) {
-            await this.prisma.cart.update({
+            await this.prisma.carts.update({
                 where: { id: cart.id },
                 data: { status: 'ABANDONED' }
             });
@@ -408,17 +431,17 @@ let CartService = CartService_1 = class CartService {
         this.logger.log(`Cleaned up ${expiredCarts.length} expired guest carts`);
     }
     async getCartWithTotals(userId) {
-        const cart = await this.prisma.cart.findFirst({
+        const cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' },
         });
         if (!cart) {
             return { cart: await this.createUserCart(userId), items: [], subtotalCents: 0 };
         }
-        const items = await this.prisma.cartItem.findMany({
+        const items = await this.prisma.cart_items.findMany({
             where: { cartId: cart.id },
-            include: { product: true },
+            include: { products: true },
         });
-        const subtotalCents = items.reduce((sum, i) => sum + Number(i.price || i.product.priceCents) * i.quantity, 0);
+        const subtotalCents = items.reduce((sum, i) => sum + Number(i.price || i.products.priceCents) * i.quantity, 0);
         return { cart, items, subtotalCents };
     }
 };

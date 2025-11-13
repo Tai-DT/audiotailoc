@@ -20,7 +20,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   const results: ImageFieldInfo[] = [];
 
   // 1. Products - imageUrl, images
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: { isActive: true }
   });
   
@@ -44,7 +44,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   });
 
   // 2. Services - images
-  const services = await prisma.service.findMany({
+  const services = await prisma.services.findMany({
     where: { isActive: true }
   });
   
@@ -68,7 +68,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   });
 
   // 3. Banners - imageUrl, mobileImageUrl
-  const banners = await prisma.banner.findMany({
+  const banners = await prisma.banners.findMany({
     where: { isDeleted: false }
   });
   
@@ -99,7 +99,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   });
 
   // 4. Projects - Already migrated
-  const projects = await prisma.project.findMany({
+  const projects = await prisma.projects.findMany({
     where: { isActive: true }
   });
   
@@ -143,7 +143,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   });
 
   // 5. OrderItems - imageUrl (referenced from products)
-  const orderItems = await prisma.orderItem.findMany({
+  const orderItems = await prisma.order_items.findMany({
     take: 100
   });
   
@@ -170,7 +170,7 @@ async function analyzeImageFields(): Promise<ImageFieldInfo[]> {
   results.push({
     model: 'Technician',
     fields: [],
-    totalRecords: await prisma.technician.count(),
+    totalRecords: await prisma.technicians.count(),
     externalImages: 0,
     cloudinaryImages: 0,
     needsMigration: false

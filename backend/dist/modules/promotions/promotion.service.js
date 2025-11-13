@@ -20,7 +20,7 @@ let PromotionService = class PromotionService {
         if (!code)
             return null;
         const now = new Date();
-        const promo = await this.prisma.promotion.findUnique({ where: { code } });
+        const promo = await this.prisma.promotions.findUnique({ where: { code } });
         if (!promo)
             return null;
         if (promo.expiresAt && promo.expiresAt < now)

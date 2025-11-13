@@ -27,7 +27,7 @@ export declare class CheckoutService {
         promotionCode: string | null;
     }>;
     getOrderForUserByNo(userId: string, orderNo: string): Promise<{
-        items: {
+        order_items: {
             id: string;
             name: string | null;
             createdAt: Date;

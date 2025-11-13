@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
 import { UpdateServiceTypeDto } from './dto/update-service-type.dto';
@@ -10,8 +11,9 @@ export class ServiceTypesService {
   async create(createServiceTypeDto: CreateServiceTypeDto) {
     const slug = await this.generateSlug(createServiceTypeDto.name);
 
-    return this.prisma.serviceType.create({
+    return this.prisma.service_types.create({
       data: {
+        id: randomUUID(),
         name: createServiceTypeDto.name,
         description: createServiceTypeDto.description,
         icon: createServiceTypeDto.icon,
@@ -19,13 +21,14 @@ export class ServiceTypesService {
         sortOrder: createServiceTypeDto.sortOrder || 0,
         slug,
         isActive: createServiceTypeDto.isActive ?? true,
+        updatedAt: new Date(),
       },
     });
   }
 
   async findAll() {
     console.log('[ServiceTypesService] findAll called');
-    const result = await this.prisma.serviceType.findMany({
+    const result = await this.prisma.service_types.findMany({
       orderBy: { sortOrder: 'asc' },
     });
     console.log('[ServiceTypesService] findAll result length:', result.length);
@@ -34,7 +37,7 @@ export class ServiceTypesService {
   }
 
   async findOne(id: string) {
-    const serviceType = await this.prisma.serviceType.findUnique({
+    const serviceType = await this.prisma.service_types.findUnique({
       where: { id },
     });
 
@@ -49,7 +52,7 @@ export class ServiceTypesService {
     console.log(`[ServiceTypesService] Updating service type ${id} with data:`, updateServiceTypeDto);
     await this.findOne(id); // Check if service type exists
 
-    const result = await this.prisma.serviceType.update({
+    const result = await this.prisma.service_types.update({
       where: { id },
       data: updateServiceTypeDto,
     });
@@ -62,7 +65,7 @@ export class ServiceTypesService {
     await this.findOne(id); // Check if service type exists
 
     // Check if type is being used by any services
-    const serviceCount = await this.prisma.service.count({
+    const serviceCount = await this.prisma.services.count({
       where: { typeId: id },
     });
 
@@ -70,7 +73,7 @@ export class ServiceTypesService {
       throw new Error('Cannot delete service type that is being used by services');
     }
 
-    const result = await this.prisma.serviceType.delete({
+    const result = await this.prisma.service_types.delete({
       where: { id },
     });
     console.log(`[ServiceTypesService] Deleted service type ${id}:`, result);
@@ -90,7 +93,7 @@ export class ServiceTypesService {
 
     // Check if slug already exists
     while (true) {
-      const existing = await this.prisma.serviceType.findUnique({
+      const existing = await this.prisma.service_types.findUnique({
         where: { slug },
         select: { id: true },
       });

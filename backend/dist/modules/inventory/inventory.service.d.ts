@@ -14,9 +14,25 @@ export declare class InventoryService {
         total: number;
         page: number;
         pageSize: number;
-        items: ({
+        items: {
             product: {
-                category: {
+                priceCents: number;
+                categories: {
+                    id: string;
+                    name: string;
+                    slug: string;
+                };
+                id: string;
+                name: string;
+                slug: string;
+                imageUrl: string;
+                categoryId: string;
+                sku: string;
+                isActive: boolean;
+                isDeleted: boolean;
+            };
+            products: {
+                categories: {
                     id: string;
                     name: string;
                     slug: string;
@@ -31,7 +47,6 @@ export declare class InventoryService {
                 isActive: boolean;
                 isDeleted: boolean;
             };
-        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -39,7 +54,7 @@ export declare class InventoryService {
             stock: number;
             reserved: number;
             lowStockThreshold: number;
-        })[];
+        }[];
     }>;
     adjust(productId: string, delta: {
         stockDelta?: number;
@@ -53,7 +68,7 @@ export declare class InventoryService {
         userId?: string;
         notes?: string;
     }): Promise<{
-        product: {
+        products: {
             name: string;
             sku: string;
         };
@@ -77,7 +92,7 @@ export declare class InventoryService {
         orphanedInventoriesCount: number;
         createdInventories: any[];
         orphanedInventoriesList: ({
-            product: {
+            products: {
                 name: string;
                 sku: string;
                 isActive: boolean;

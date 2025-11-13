@@ -14,21 +14,21 @@ export declare class InventoryMovementController {
         userId?: string;
         notes?: string;
     }): Promise<{
-        user: {
-            id: string;
-            email: string;
-            name: string;
-        };
-        product: {
+        products: {
             id: string;
             name: string;
             sku: string;
         };
+        users: {
+            id: string;
+            email: string;
+            name: string;
+        };
     } & {
+        type: string;
         id: string;
         createdAt: Date;
         userId: string | null;
-        type: string;
         reason: string | null;
         productId: string;
         quantity: number;
@@ -43,13 +43,8 @@ export declare class InventoryMovementController {
         page: number;
         pageSize: number;
         items: ({
-            user: {
-                id: string;
-                email: string;
-                name: string;
-            };
-            product: {
-                category: {
+            products: {
+                categories: {
                     id: string;
                     name: string;
                 };
@@ -57,11 +52,16 @@ export declare class InventoryMovementController {
                 name: string;
                 sku: string;
             };
+            users: {
+                id: string;
+                email: string;
+                name: string;
+            };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            type: string;
             reason: string | null;
             productId: string;
             quantity: number;
@@ -77,21 +77,21 @@ export declare class InventoryMovementController {
         page: number;
         pageSize: number;
         items: ({
-            user: {
-                id: string;
-                email: string;
-                name: string;
-            };
-            product: {
+            products: {
                 id: string;
                 name: string;
                 sku: string;
             };
+            users: {
+                id: string;
+                email: string;
+                name: string;
+            };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            type: string;
             reason: string | null;
             productId: string;
             quantity: number;

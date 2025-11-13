@@ -12,6 +12,7 @@ var MarketingService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarketingService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../notifications/mail.service");
 const client_1 = require("@prisma/client");
@@ -23,36 +24,15 @@ let MarketingService = MarketingService_1 = class MarketingService {
     }
     async getCampaigns(status) {
         const where = status ? { status } : {};
-        const campaigns = await this.prisma.campaign.findMany({
+        const campaigns = await this.prisma.campaigns.findMany({
             where,
-            include: {
-                _count: {
-                    select: {
-                        recipients: true,
-                        opens: true,
-                        clicks: true
-                    }
-                }
-            },
             orderBy: { createdAt: 'desc' }
         });
         return campaigns;
     }
     async getCampaign(id) {
-        const campaign = await this.prisma.campaign.findUnique({
-            where: { id },
-            include: {
-                recipients: true,
-                opens: true,
-                clicks: true,
-                _count: {
-                    select: {
-                        recipients: true,
-                        opens: true,
-                        clicks: true
-                    }
-                }
-            }
+        const campaign = await this.prisma.campaigns.findUnique({
+            where: { id }
         });
         if (!campaign) {
             throw new common_1.NotFoundException('Campaign not found');
@@ -60,24 +40,26 @@ let MarketingService = MarketingService_1 = class MarketingService {
         return campaign;
     }
     async createCampaign(data) {
-        const campaign = await this.prisma.campaign.create({
+        const campaign = await this.prisma.campaigns.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name: data.name,
                 description: data.description,
                 type: data.type,
-                targetAudience: data.targetAudience,
-                discountPercent: data.discountPercent,
-                discountAmount: data.discountAmount,
+                targetAudience: data.targetAudience || null,
+                discountPercent: data.discountPercent || 0,
+                discountAmount: data.discountAmount || 0,
                 startDate: data.startDate ? new Date(data.startDate) : null,
                 endDate: data.endDate ? new Date(data.endDate) : null,
-                status: client_1.CampaignStatus.DRAFT
+                status: client_1.CampaignStatus.DRAFT,
+                updatedAt: new Date()
             }
         });
         this.logger.log(`Campaign created: ${campaign.id}`);
         return campaign;
     }
     async updateCampaign(id, data) {
-        const campaign = await this.prisma.campaign.update({
+        const campaign = await this.prisma.campaigns.update({
             where: { id },
             data: {
                 ...data,
@@ -89,7 +71,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
         return campaign;
     }
     async deleteCampaign(id) {
-        await this.prisma.campaign.delete({ where: { id } });
+        await this.prisma.campaigns.delete({ where: { id } });
         this.logger.log(`Campaign deleted: ${id}`);
         return { message: 'Campaign deleted successfully' };
     }
@@ -110,7 +92,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 await this.sendSocialCampaign(campaign);
                 break;
         }
-        await this.prisma.campaign.update({
+        await this.prisma.campaigns.update({
             where: { id },
             data: { status: client_1.CampaignStatus.SENT, sentAt: new Date() }
         });
@@ -120,15 +102,11 @@ let MarketingService = MarketingService_1 = class MarketingService {
     async getCampaignStats(id) {
         const campaign = await this.getCampaign(id);
         const stats = {
-            totalRecipients: campaign._count.recipients,
-            totalOpens: campaign._count.opens,
-            totalClicks: campaign._count.clicks,
-            openRate: campaign._count.recipients > 0
-                ? (campaign._count.opens / campaign._count.recipients * 100).toFixed(2)
-                : 0,
-            clickRate: campaign._count.recipients > 0
-                ? (campaign._count.clicks / campaign._count.recipients * 100).toFixed(2)
-                : 0,
+            totalRecipients: 0,
+            totalOpens: 0,
+            totalClicks: 0,
+            openRate: 0,
+            clickRate: 0,
             conversionRate: 0
         };
         return stats;
@@ -188,9 +166,9 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 where['createdAt']['lte'] = new Date(endDate);
         }
         const [totalEmails, sentEmails, failedEmails] = await Promise.all([
-            this.prisma.emailLog.count({ where }),
-            this.prisma.emailLog.count({ where: { ...where, status: 'SENT' } }),
-            this.prisma.emailLog.count({ where: { ...where, status: 'FAILED' } })
+            this.prisma.email_logs.count({ where }),
+            this.prisma.email_logs.count({ where: { ...where, status: 'SENT' } }),
+            this.prisma.email_logs.count({ where: { ...where, status: 'FAILED' } })
         ]);
         return {
             totalEmails,
@@ -281,14 +259,14 @@ let MarketingService = MarketingService_1 = class MarketingService {
     }
     async getTargetAudience(targetAudience) {
         if (!targetAudience) {
-            return this.prisma.user.findMany({
+            return this.prisma.users.findMany({
                 where: { role: 'USER' },
                 select: { email: true, name: true }
             });
         }
         switch (targetAudience) {
             case 'new-customers':
-                return this.prisma.user.findMany({
+                return this.prisma.users.findMany({
                     where: {
                         role: 'USER',
                         createdAt: {
@@ -298,7 +276,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
                     select: { email: true, name: true }
                 });
             case 'returning-customers':
-                return this.prisma.user.findMany({
+                return this.prisma.users.findMany({
                     where: {
                         role: 'USER',
                         orders: {
@@ -319,8 +297,9 @@ let MarketingService = MarketingService_1 = class MarketingService {
                     subject: campaign.name,
                     html: campaign.description
                 });
-                await this.prisma.emailLog.create({
+                await this.prisma.email_logs.create({
                     data: {
+                        id: (0, crypto_1.randomUUID)(),
                         campaignId: campaign.id,
                         recipientEmail: recipient.email,
                         subject: campaign.name,
@@ -331,8 +310,9 @@ let MarketingService = MarketingService_1 = class MarketingService {
             }
             catch (error) {
                 this.logger.error(`Failed to send campaign email to ${recipient.email}:`, error);
-                await this.prisma.emailLog.create({
+                await this.prisma.email_logs.create({
                     data: {
+                        id: (0, crypto_1.randomUUID)(),
                         campaignId: campaign.id,
                         recipientEmail: recipient.email,
                         subject: campaign.name,

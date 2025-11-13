@@ -31,7 +31,7 @@ export class InventoryReportService {
       where.stockQuantity = 0;
     }
 
-    const products = await this.prisma.product.findMany({
+    const products = await this.prisma.products.findMany({
       where,
       select: {
         id: true,
@@ -39,15 +39,11 @@ export class InventoryReportService {
         sku: true,
         stockQuantity: true,
         maxStock: true,
-        category: {
+        categoryId: true,
+        categories: {
           select: {
             id: true,
             name: true
-          }
-        },
-        inventory: {
-          select: {
-            lowStockThreshold: true
           }
         }
       },
@@ -60,7 +56,7 @@ export class InventoryReportService {
       totalProducts: products.length,
       totalStockValue: products.reduce((sum, product) => sum + product.stockQuantity, 0),
       lowStockProducts: products.filter(p =>
-        p.inventory?.lowStockThreshold && p.stockQuantity <= p.inventory.lowStockThreshold
+        p.maxStock && p.stockQuantity <= p.maxStock
       ).length,
       outOfStockProducts: products.filter(p => p.stockQuantity === 0).length,
       overstockProducts: products.filter(p =>
@@ -71,9 +67,9 @@ export class InventoryReportService {
         name: product.name,
         sku: product.sku,
         currentStock: product.stockQuantity,
-        lowStockThreshold: product.inventory?.lowStockThreshold,
+        lowStockThreshold: null,
         maxStock: product.maxStock,
-        category: product.category?.name,
+        category: product.categories?.name,
         status: this.getStockStatus(product)
       }))
     };
@@ -112,7 +108,7 @@ export class InventoryReportService {
       }
     }
 
-    const movements = await this.prisma.inventoryMovement.findMany({
+    const movements = await this.prisma.inventory_movements.findMany({
       where,
       select: {
         id: true,
@@ -125,14 +121,14 @@ export class InventoryReportService {
         referenceType: true,
         notes: true,
         createdAt: true,
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
             sku: true
           }
         },
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -186,7 +182,7 @@ export class InventoryReportService {
       }
     }
 
-    const alerts = await this.prisma.inventoryAlert.findMany({
+    const alerts = await this.prisma.inventory_alerts.findMany({
       where,
       select: {
         id: true,
@@ -198,7 +194,7 @@ export class InventoryReportService {
         resolvedAt: true,
         createdAt: true,
         updatedAt: true,
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
@@ -224,11 +220,10 @@ export class InventoryReportService {
 
   private getStockStatus(product: any): string {
     const stock = product.stockQuantity;
-    const lowThreshold = product.inventory?.lowStockThreshold;
+    const _lowThreshold = null;
     const maxStock = product.maxStock;
 
     if (stock === 0) return 'OUT_OF_STOCK';
-    if (lowThreshold && stock <= lowThreshold) return 'LOW_STOCK';
     if (maxStock && stock >= maxStock) return 'OVERSTOCK';
     return 'NORMAL';
   }

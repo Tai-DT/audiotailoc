@@ -3,6 +3,7 @@
   Usage: npx ts-node src/seed-projects.ts
 */
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -11,18 +12,20 @@ async function main() {
   console.log('🌱 Seeding projects...');
 
   // Create or get admin user for projects
-  let adminUser = await prisma.user.findFirst({
+  let adminUser = await prisma.users.findFirst({
     where: { role: 'ADMIN' }
   });
 
   if (!adminUser) {
     // Create a default admin user if none exists
-    adminUser = await prisma.user.create({
+    adminUser = await prisma.users.create({
       data: {
+        id: randomUUID(),
         email: 'admin@audiotailoc.com',
         password: '$2a$10$YourHashedPasswordHere', // Use bcrypt hash in production
         name: 'Admin',
-        role: 'ADMIN'
+        role: 'ADMIN',
+        updatedAt: new Date()
       }
     });
   }
@@ -30,6 +33,8 @@ async function main() {
   // Sample projects with full information including SEO
   const projects = [
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       slug: 'he-thong-am-thanh-rap-phim-gia-dinh',
       name: 'Hệ thống âm thanh rạp phim gia đình',
       description: 'Thiết kế và lắp đặt hệ thống âm thanh 7.1 surround cho phòng chiếu phim gia đình với các thiết bị cao cấp từ JBL và Yamaha.',
@@ -100,9 +105,11 @@ async function main() {
       }),
       isActive: true,
       isDeleted: false,
-      userId: adminUser.id // Add user reference
+      users: { connect: { id: adminUser.id } } // Add user reference
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       slug: 'he-thong-am-thanh-hoi-truong-500-cho',
       name: 'Hệ thống âm thanh hội trường 500 chỗ',
       description: 'Thiết kế và thi công hệ thống âm thanh chuyên nghiệp cho hội trường Trung tâm Hội nghị Quốc tế với sức chứa 500 người.',
@@ -182,9 +189,11 @@ async function main() {
       }),
       isActive: true,
       isDeleted: false,
-      userId: adminUser.id // Add user reference
+      users: { connect: { id: adminUser.id } } // Add user reference
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       slug: 'he-thong-karaoke-chuyen-nghiep-luxury-ktv',
       name: 'Hệ thống Karaoke chuyên nghiệp Luxury KTV',
       description: 'Thiết kế và lắp đặt hệ thống âm thanh karaoke cao cấp cho chuỗi 20 phòng hát Luxury KTV với công nghệ hiện đại nhất.',
@@ -281,9 +290,11 @@ async function main() {
       }),
       isActive: true,
       isDeleted: false,
-      userId: adminUser.id // Add user reference
+      users: { connect: { id: adminUser.id } } // Add user reference
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       slug: 'am-thanh-nha-hang-skybar-rooftop',
       name: 'Âm thanh nhà hàng SkyBar Rooftop',
       description: 'Thiết kế hệ thống âm thanh ngoài trời cho nhà hàng SkyBar trên sân thượng với khả năng chống thời tiết và chất lượng âm thanh vượt trội.',
@@ -380,9 +391,11 @@ async function main() {
       }),
       isActive: true,
       isDeleted: false,
-      userId: adminUser.id // Add user reference
+      users: { connect: { id: adminUser.id } } // Add user reference
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       slug: 'studio-thu-am-podcast-modern-media',
       name: 'Studio thu âm Podcast Modern Media',
       description: 'Xây dựng studio thu âm chuyên nghiệp cho Modern Media với khả năng recording multi-track và livestream chất lượng cao.',
@@ -485,7 +498,7 @@ async function main() {
       }),
       isActive: true,
       isDeleted: false,
-      userId: adminUser.id // Add user reference
+      users: { connect: { id: adminUser.id } } // Add user reference
     }
   ];
 
@@ -494,20 +507,20 @@ async function main() {
   for (const projectData of projects) {
     try {
       // Check if project exists
-      const existing = await prisma.project.findUnique({
+      const existing = await prisma.projects.findUnique({
         where: { slug: projectData.slug }
       });
 
       if (existing) {
         console.log(`✓ Updating project: ${projectData.name}`);
-        const { userId: _userId, ...updateData } = projectData;
-        await prisma.project.update({
+        const { users: _users, ...updateData } = projectData;
+        await prisma.projects.update({
           where: { slug: projectData.slug },
           data: updateData
         });
       } else {
         console.log(`✓ Creating project: ${projectData.name}`);
-        await prisma.project.create({
+        await prisma.projects.create({
           data: projectData
         });
       }

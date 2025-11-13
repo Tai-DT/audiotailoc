@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../caching/cache.service';
 import { ServiceBookingStatus } from '../../common/enums';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   // Service Management
   async createService(data: CreateServiceDto) {
@@ -15,7 +20,7 @@ export class ServicesService {
 
     // Validate typeId exist if provided
     if (data.typeId) {
-      const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+      const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
       if (!type) {
         throw new BadRequestException('Invalid type ID');
       }
@@ -48,8 +53,9 @@ export class ServicesService {
       priceData.maxPrice = null;
     }
 
-    return this.prisma.service.create({
+    const service = await this.prisma.services.create({
       data: {
+        id: randomUUID(),
         name: data.name,
         slug,
         description: data.description,
@@ -58,12 +64,17 @@ export class ServicesService {
         duration: data.estimatedDuration || 60,
         images: data.imageUrl,
         isActive: data.isActive ?? true,
+        updatedAt: new Date(),
       },
       include: {
-        items: true,
-        serviceType: true,
+        service_types: true,
       },
     });
+
+    // Invalidate list cache
+    await this.cache.del('services:list:*');
+
+    return service;
   }
 
   async getServices(params: {
@@ -74,7 +85,6 @@ export class ServicesService {
     page?: number;
     pageSize?: number;
   }) {
-    console.log('[DEBUG] ServicesService.getServices called with params:', params);
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
 
@@ -83,16 +93,25 @@ export class ServicesService {
     if (params.isActive !== undefined) where.isActive = params.isActive;
     if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured;
 
+    // Generate cache key
+    const cacheKey = `services:list:${JSON.stringify({ where, page, pageSize })}`;
+
+    // Try to get from cache
+    const cached = await this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [total, services] = await this.prisma.$transaction([
-      this.prisma.service.count({ where }),
-      this.prisma.service.findMany({
+      this.prisma.services.count({ where }),
+      this.prisma.services.findMany({
         where,
         include: {
-          items: true,
-          serviceType: true,
+          service_items: true,
+          service_types: true,
           _count: {
             select: {
-              bookings: true,
+              service_bookings: true,
             },
           },
         },
@@ -108,23 +127,30 @@ export class ServicesService {
       price: Number(service.basePriceCents) / 100,
       minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
       maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
-      type: service.serviceType,
+      type: service.service_types,
     }));
 
-    console.log('[DEBUG] ServicesService.getServices returning:', { total, page, pageSize, servicesCount: services.length });
-    return { total, page, pageSize, services: mappedServices };
+    const result = { total, page, pageSize, services: mappedServices };
+
+    // Cache for 5 minutes (300 seconds)
+    await this.cache.set(cacheKey, result, { ttl: 300 });
+
+    return result;
   }
 
   async getService(id: string) {
-    const service = await this.prisma.service.findUnique({
+    // Try to get from cache
+    const cacheKey = `service:${id}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const service = await this.prisma.services.findUnique({
       where: { id },
       include: {
-        items: true,
-        serviceType: true,
-        bookings: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
+        service_items: true,
+        service_types: true,
       },
     });
 
@@ -132,21 +158,33 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    return {
+    const result = {
       ...service,
       price: Number(service.basePriceCents) / 100,
       minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
       maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
-      type: service.serviceType,
+      type: service.service_types,
     };
+
+    // Cache for 10 minutes
+    await this.cache.set(cacheKey, result, { ttl: 600 });
+
+    return result;
   }
 
   async getServiceBySlug(slug: string) {
-    const service = await this.prisma.service.findUnique({
+    // Try to get from cache
+    const cacheKey = `service:slug:${slug}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const service = await this.prisma.services.findUnique({
       where: { slug },
       include: {
-        items: true,
-        serviceType: true,
+        service_items: true,
+        service_types: true,
       },
     });
 
@@ -154,16 +192,21 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    return {
+    const result = {
       ...service,
       price: Number(service.basePriceCents) / 100,
-      type: service.serviceType,
+      type: service.service_types,
     };
+
+    // Cache for 10 minutes
+    await this.cache.set(cacheKey, result, { ttl: 600 });
+
+    return result;
   }
 
   async updateService(id: string, data: UpdateServiceDto) {
     // Check if service exists
-    const existingService = await this.prisma.service.findUnique({
+    const existingService = await this.prisma.services.findUnique({
       where: { id },
     });
     if (!existingService) {
@@ -172,7 +215,7 @@ export class ServicesService {
 
     // Validate typeId if provided
     if (data.typeId) {
-      const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+      const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
       if (!type) {
         throw new BadRequestException('Invalid type ID');
       }
@@ -219,21 +262,28 @@ export class ServicesService {
     if (data.imageUrl !== undefined) updateData.images = data.imageUrl;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    const updated = await this.prisma.service.update({
+    const updated = await this.prisma.services.update({
       where: { id },
       data: updateData,
       include: {
-        items: true,
-        serviceType: true,
+        service_items: true,
+        service_types: true,
       },
     });
+
+    // Invalidate caches
+    await Promise.all([
+      this.cache.del(`service:${id}`),
+      this.cache.del(`service:slug:${existingService.slug}`),
+      this.cache.del('services:list:*'),
+    ]);
 
     return {
       ...updated,
       price: updated.basePriceCents / 100,
       minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
       maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
-      type: updated.serviceType,
+      type: updated.service_types,
     };
   }
 
@@ -245,10 +295,10 @@ export class ServicesService {
   }
 
   async deleteService(id: string) {
-    const _service = await this.getService(id);
+    const service = await this.getService(id);
 
     // Check if service has any bookings
-    const bookingCount = await this.prisma.serviceBooking.count({
+    const bookingCount = await this.prisma.service_bookings.count({
       where: { serviceId: id },
     });
 
@@ -256,9 +306,18 @@ export class ServicesService {
       throw new BadRequestException('Không thể xóa dịch vụ đã có booking');
     }
 
-    return this.prisma.service.delete({
+    const deleted = await this.prisma.services.delete({
       where: { id },
     });
+
+    // Invalidate caches
+    await Promise.all([
+      this.cache.del(`service:${id}`),
+      this.cache.del(`service:slug:${service.slug}`),
+      this.cache.del('services:list:*'),
+    ]);
+
+    return deleted;
   }
 
   // Service Items Management
@@ -268,8 +327,9 @@ export class ServicesService {
   }) {
     await this.getService(serviceId); // Ensure service exists
 
-    return this.prisma.serviceItem.create({
+    return this.prisma.service_items.create({
       data: {
+        id: randomUUID(),
         serviceId,
         name: data.name,
         price: data.priceCents,
@@ -283,7 +343,7 @@ export class ServicesService {
     name: string;
     priceCents: number;
   }>) {
-    const item = await this.prisma.serviceItem.findUnique({
+    const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
 
@@ -295,14 +355,14 @@ export class ServicesService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.priceCents !== undefined) updateData.price = data.priceCents;
 
-    return this.prisma.serviceItem.update({
+    return this.prisma.service_items.update({
       where: { id: itemId },
       data: updateData,
     });
   }
 
   async deleteServiceItem(itemId: string) {
-    const item = await this.prisma.serviceItem.findUnique({
+    const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
 
@@ -311,7 +371,7 @@ export class ServicesService {
     }
 
     // Check if item is used in any bookings
-    const bookingItemCount = await this.prisma.serviceBookingItem.count({
+    const bookingItemCount = await this.prisma.service_booking_items.count({
       where: { serviceItemId: itemId },
     });
 
@@ -319,13 +379,13 @@ export class ServicesService {
       throw new BadRequestException('Không thể xóa mục dịch vụ đã được sử dụng');
     }
 
-    return this.prisma.serviceItem.delete({
+    return this.prisma.service_items.delete({
       where: { id: itemId },
     });
   }
 
   async getServiceTypes() {
-    const types = await this.prisma.serviceType.findMany({
+    const types = await this.prisma.service_types.findMany({
       orderBy: { sortOrder: 'asc' },
     });
 
@@ -344,7 +404,7 @@ export class ServicesService {
   }
 
   async getServiceType(id: string) {
-    const type = await this.prisma.serviceType.findUnique({
+    const type = await this.prisma.service_types.findUnique({
       where: { id },
     });
 
@@ -364,7 +424,7 @@ export class ServicesService {
       .trim();
 
     // Check if slug already exists
-    const existing = await this.prisma.serviceType.findFirst({
+    const existing = await this.prisma.service_types.findFirst({
       where: { slug: baseSlug }
     });
 
@@ -376,7 +436,7 @@ export class ServicesService {
     let counter = 1;
     let uniqueSlug = `${baseSlug}-${counter}`;
 
-    while (await this.prisma.serviceType.findFirst({ where: { slug: uniqueSlug } })) {
+    while (await this.prisma.service_types.findFirst({ where: { slug: uniqueSlug } })) {
       counter++;
       uniqueSlug = `${baseSlug}-${counter}`;
     }
@@ -394,14 +454,14 @@ export class ServicesService {
       completedBookings,
       revenue,
     ] = await Promise.all([
-      this.prisma.service.count(),
-      this.prisma.service.count({ where: { isActive: true } }),
-      this.prisma.serviceBooking.count(),
-      this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.PENDING } }),
-      this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.COMPLETED } }),
-      this.prisma.serviceBookingItem.aggregate({
+      this.prisma.services.count(),
+      this.prisma.services.count({ where: { isActive: true } }),
+      this.prisma.service_bookings.count(),
+      this.prisma.service_bookings.count({ where: { status: ServiceBookingStatus.PENDING } }),
+      this.prisma.service_bookings.count({ where: { status: ServiceBookingStatus.COMPLETED } }),
+      this.prisma.service_booking_items.aggregate({
         where: {
-          booking: { status: ServiceBookingStatus.COMPLETED },
+          service_bookings: { status: ServiceBookingStatus.COMPLETED },
         },
         _sum: { price: true },
       }),
@@ -416,17 +476,35 @@ export class ServicesService {
       totalRevenue: revenue._sum.price || 0,
     };
   }
+  // Service Items
+  async getServiceItems() {
+    return this.prisma.service_items.findMany({
+      include: {
+        services: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   // Service Types Management
   async createServiceType(data: { name: string; slug?: string; description?: string; isActive?: boolean }) {
     const slug = data.slug || await this.generateSlug(data.name);
 
-    return this.prisma.serviceType.create({
+    return this.prisma.service_types.create({
       data: {
+        id: randomUUID(),
         name: data.name,
         slug,
         description: data.description,
         isActive: data.isActive ?? true,
         sortOrder: await this.getNextSortOrder(),
+        updatedAt: new Date(),
       },
     });
   }
@@ -439,7 +517,7 @@ export class ServicesService {
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
 
-    return this.prisma.serviceType.update({
+    return this.prisma.service_types.update({
       where: { id },
       data: updateData,
     });
@@ -447,7 +525,7 @@ export class ServicesService {
 
   async deleteServiceType(id: string) {
     // Check if type is being used by any services
-    const servicesCount = await this.prisma.service.count({
+    const servicesCount = await this.prisma.services.count({
       where: { typeId: id },
     });
 
@@ -455,13 +533,13 @@ export class ServicesService {
       throw new BadRequestException('Không thể xóa loại dịch vụ đang được sử dụng');
     }
 
-    return this.prisma.serviceType.delete({
+    return this.prisma.service_types.delete({
       where: { id },
     });
   }
 
   private async getNextSortOrder(): Promise<number> {
-    const maxSortOrder = await this.prisma.serviceType.aggregate({
+    const maxSortOrder = await this.prisma.service_types.aggregate({
       _max: { sortOrder: true },
     });
     return (maxSortOrder._max.sortOrder || 0) + 1;

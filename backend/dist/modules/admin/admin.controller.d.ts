@@ -32,7 +32,7 @@ export declare class AdminController {
             };
             recentActivities: {
                 orders: ({
-                    user: {
+                    users: {
                         email: string;
                         name: string;
                     };
@@ -97,7 +97,7 @@ export declare class AdminController {
         success: boolean;
         data: {
             action: "delete" | "activate" | "deactivate" | "export";
-            type: "orders" | "users" | "products";
+            type: "orders" | "products" | "users";
             affectedCount: any;
             message: string;
         };
@@ -118,12 +118,11 @@ export declare class AdminController {
         data: {
             logs: {
                 details: any;
-                user: {
+                users: {
                     id: string;
                     email: string;
                     name: string;
                 };
-                category: string;
                 id: string;
                 createdAt: Date;
                 userId: string | null;
@@ -133,6 +132,7 @@ export declare class AdminController {
                 statusCode: number | null;
                 duration: number | null;
                 severity: string;
+                category: string;
                 action: string;
                 resource: string | null;
                 resourceId: string | null;
