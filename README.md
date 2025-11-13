@@ -195,6 +195,19 @@ audiotailoc/
 
 ---
 
+### MCP Configuration
+
+MCP servers are configured in `.cursor/mcp.json`. This repo includes:
+
+- Filesystem MCP with root `/workspace`
+- Postgres MCP pointing to `postgresql://postgres:password@localhost:5432/atl`
+
+To use in Cursor:
+
+1. Ensure Docker services are up: `docker compose up -d postgres`
+2. Open Cursor Settings → MCP and load `.cursor/mcp.json`
+3. Run the scan: `node mcp-project-automation.js`
+
 ## 🧪 Testing
 
 ### Run API Tests
