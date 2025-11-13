@@ -328,16 +328,33 @@ export default function ProfilePage() {
                     <h4 className="font-semibold">Thông báo</h4>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span>Email thông báo đơn hàng</span>
-                        <input type="checkbox" defaultChecked className="rounded" />
+                        <Label htmlFor="notify-orders">Email thông báo đơn hàng</Label>
+                        <input 
+                          type="checkbox" 
+                          id="notify-orders"
+                          defaultChecked 
+                          className="rounded"
+                          aria-label="Nhận email thông báo đơn hàng"
+                        />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span>Khuyến mãi và ưu đãi</span>
-                        <input type="checkbox" defaultChecked className="rounded" />
+                        <Label htmlFor="notify-promotions">Khuyến mãi và ưu đãi</Label>
+                        <input 
+                          type="checkbox" 
+                          id="notify-promotions"
+                          defaultChecked 
+                          className="rounded"
+                          aria-label="Nhận thông báo về khuyến mãi và ưu đãi"
+                        />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span>Cập nhật sản phẩm</span>
-                        <input type="checkbox" className="rounded" />
+                        <Label htmlFor="notify-updates">Cập nhật sản phẩm</Label>
+                        <input 
+                          type="checkbox" 
+                          id="notify-updates"
+                          className="rounded"
+                          aria-label="Nhận thông báo về cập nhật sản phẩm mới"
+                        />
                       </div>
                     </div>
                   </div>
