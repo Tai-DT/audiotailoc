@@ -27,18 +27,20 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Get token from cookie or Authorization header
-  const token = request.cookies.get('audiotailoc_token')?.value || 
-                request.headers.get('Authorization')?.replace('Bearer ', '');
+  const tokenCookie = request.cookies.get('audiotailoc_token');
+  const authHeader = request.headers.get('Authorization');
+  const token = tokenCookie?.value || (authHeader ? authHeader.replace('Bearer ', '') : undefined);
   
   // Get user data from cookie if available
-  const userCookie = request.cookies.get('audiotailoc_user')?.value;
-  let user = null;
+  const userCookie = request.cookies.get('audiotailoc_user');
+  let user: { role?: string } | null = null;
   
-  if (userCookie) {
+  if (userCookie?.value) {
     try {
-      user = JSON.parse(userCookie);
-    } catch {
-      // Invalid user cookie
+      user = JSON.parse(userCookie.value);
+    } catch (error) {
+      // Invalid user cookie, continue without user data
+      console.error('Failed to parse user cookie:', error);
       user = null;
     }
   }
