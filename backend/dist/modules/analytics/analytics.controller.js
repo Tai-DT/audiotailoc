@@ -144,6 +144,43 @@ let AnalyticsController = class AnalyticsController {
         }
         return trends;
     }
+    async getRevenue(period = 'month') {
+        const endDate = new Date();
+        const startDate = new Date();
+        switch (period) {
+            case 'day':
+                startDate.setDate(endDate.getDate() - 1);
+                break;
+            case 'week':
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+            case 'month':
+                startDate.setMonth(endDate.getMonth() - 1);
+                break;
+            case 'quarter':
+                startDate.setMonth(endDate.getMonth() - 3);
+                break;
+            case 'year':
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                break;
+            default:
+                startDate.setMonth(endDate.getMonth() - 1);
+        }
+        const filters = {
+            startDate,
+            endDate,
+        };
+        const salesMetrics = await this.analyticsService.getSalesMetrics(filters);
+        return {
+            period,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            totalRevenue: salesMetrics.totalRevenue || 0,
+            totalOrders: salesMetrics.totalOrders || 0,
+            averageOrderValue: salesMetrics.averageOrderValue || 0,
+            revenueGrowth: salesMetrics.revenueGrowth || 0
+        };
+    }
     async getTopServices(limit = '5') {
         const limitNum = parseInt(limit) || 5;
         const topServices = [
@@ -154,6 +191,51 @@ let AnalyticsController = class AnalyticsController {
             { id: '5', name: 'Cài đặt âm thanh', bookings: 18, revenue: 5400000 },
         ];
         return topServices.slice(0, limitNum);
+    }
+    async getTopProducts(limit = '5') {
+        const limitNum = parseInt(limit) || 5;
+        const topProducts = [
+            { id: '1', name: 'Loa Bluetooth Sony', sold: 125, revenue: 37500000 },
+            { id: '2', name: 'Ampli Denon', sold: 89, revenue: 26700000 },
+            { id: '3', name: 'Micro không dây', sold: 67, revenue: 20100000 },
+            { id: '4', name: 'Dàn karaoke', sold: 45, revenue: 13500000 },
+            { id: '5', name: 'Tai nghe gaming', sold: 34, revenue: 10200000 },
+        ];
+        return topProducts.slice(0, limitNum);
+    }
+    async getUserActivity(range = '7days') {
+        const endDate = new Date();
+        const startDate = new Date();
+        switch (range) {
+            case '7days':
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+            case '30days':
+                startDate.setDate(endDate.getDate() - 30);
+                break;
+            case '90days':
+                startDate.setDate(endDate.getDate() - 90);
+                break;
+            case '1year':
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                break;
+            default:
+                startDate.setDate(endDate.getDate() - 7);
+        }
+        const userActivity = {
+            pageViews: Math.floor(Math.random() * 10000) + 5000,
+            sessions: Math.floor(Math.random() * 1000) + 500,
+            avgSessionDuration: Math.floor(Math.random() * 300) + 120,
+            bounceRate: Math.floor(Math.random() * 30) + 20,
+            uniqueVisitors: Math.floor(Math.random() * 500) + 200,
+            returnVisitors: Math.floor(Math.random() * 300) + 100,
+            topPages: [
+                { path: '/san-pham', views: Math.floor(Math.random() * 1000) + 500 },
+                { path: '/dich-vu', views: Math.floor(Math.random() * 800) + 300 },
+                { path: '/lien-he', views: Math.floor(Math.random() * 400) + 100 },
+            ]
+        };
+        return userActivity;
     }
     async getSalesMetrics(query) {
         const filters = {
@@ -264,12 +346,33 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getTrends", null);
 __decorate([
+    (0, common_1.Get)('revenue'),
+    __param(0, (0, common_1.Query)('period')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getRevenue", null);
+__decorate([
     (0, common_1.Get)('top-services'),
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getTopServices", null);
+__decorate([
+    (0, common_1.Get)('top-products'),
+    __param(0, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getTopProducts", null);
+__decorate([
+    (0, common_1.Get)('user-activity'),
+    __param(0, (0, common_1.Query)('range')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getUserActivity", null);
 __decorate([
     (0, common_1.Get)('sales'),
     __param(0, (0, common_1.Query)()),

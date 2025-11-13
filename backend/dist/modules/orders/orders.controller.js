@@ -27,6 +27,14 @@ let OrdersController = class OrdersController {
     create(createOrderDto) {
         return this.orders.create(createOrderDto);
     }
+    async getStats() {
+        const totalOrders = await this.orders.list({ page: 1, pageSize: 1 });
+        return {
+            totalOrders: totalOrders.total || 0,
+            pendingOrders: totalOrders.total || 0,
+            completedOrders: 0
+        };
+    }
     get(id) {
         return this.orders.get(id);
     }
@@ -58,6 +66,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "create", null);
+__decorate([
+    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Get)('stats'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "getStats", null);
 __decorate([
     (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Get)(':id'),

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -38,8 +39,9 @@ async function main() {
 
   for (const tech of technicians) {
     try {
-      const technician = await prisma.technician.create({
+      const technician = await prisma.technicians.create({
         data: {
+          id: randomUUID(),
           name: tech.name,
           phone: tech.phone,
           email: tech.email,
@@ -66,9 +68,10 @@ async function main() {
         ];
 
         for (const schedule of schedules) {
-          await prisma.technicianSchedule.create({
+          await prisma.technician_schedules.create({
             data: {
-              technicianId: technician.id,
+              id: randomUUID(),
+              technicians: { connect: { id: technician.id } },
               ...schedule,
             },
           });

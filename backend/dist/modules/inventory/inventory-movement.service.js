@@ -11,23 +11,27 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryMovementService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let InventoryMovementService = class InventoryMovementService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async create(data) {
-        return this.prisma.inventoryMovement.create({
-            data,
+        return this.prisma.inventory_movements.create({
+            data: {
+                id: (0, crypto_1.randomUUID)(),
+                ...data
+            },
             include: {
-                product: {
+                products: {
                     select: {
                         id: true,
                         name: true,
                         sku: true
                     }
                 },
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,
@@ -41,20 +45,20 @@ let InventoryMovementService = class InventoryMovementService {
         const page = Math.max(1, Math.floor(params.page ?? 1));
         const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
         const [total, items] = await this.prisma.$transaction([
-            this.prisma.inventoryMovement.count({
+            this.prisma.inventory_movements.count({
                 where: { productId }
             }),
-            this.prisma.inventoryMovement.findMany({
+            this.prisma.inventory_movements.findMany({
                 where: { productId },
                 include: {
-                    product: {
+                    products: {
                         select: {
                             id: true,
                             name: true,
                             sku: true
                         }
                     },
-                    user: {
+                    users: {
                         select: {
                             id: true,
                             name: true,
@@ -97,16 +101,16 @@ let InventoryMovementService = class InventoryMovementService {
             }
         }
         const [total, items] = await this.prisma.$transaction([
-            this.prisma.inventoryMovement.count({ where }),
-            this.prisma.inventoryMovement.findMany({
+            this.prisma.inventory_movements.count({ where }),
+            this.prisma.inventory_movements.findMany({
                 where,
                 include: {
-                    product: {
+                    products: {
                         select: {
                             id: true,
                             name: true,
                             sku: true,
-                            category: {
+                            categories: {
                                 select: {
                                     id: true,
                                     name: true
@@ -114,7 +118,7 @@ let InventoryMovementService = class InventoryMovementService {
                             }
                         }
                     },
-                    user: {
+                    users: {
                         select: {
                             id: true,
                             name: true,
@@ -148,13 +152,13 @@ let InventoryMovementService = class InventoryMovementService {
                 where.createdAt.lte = endDate;
             }
         }
-        const movements = await this.prisma.inventoryMovement.findMany({
+        const movements = await this.prisma.inventory_movements.findMany({
             where,
             select: {
                 type: true,
                 quantity: true,
                 productId: true,
-                product: {
+                products: {
                     select: {
                         name: true,
                         sku: true
@@ -194,8 +198,8 @@ let InventoryMovementService = class InventoryMovementService {
             if (!summary.byProduct[productKey]) {
                 summary.byProduct[productKey] = {
                     productId: movement.productId,
-                    productName: movement.product.name,
-                    productSku: movement.product.sku,
+                    productName: movement.products.name,
+                    productSku: movement.products.sku,
                     stockIn: 0,
                     stockOut: 0,
                     adjustments: 0,

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceCategory, ServiceBookingStatus } from '../../common/enums';
 
@@ -14,7 +15,7 @@ export class TechniciansService {
     specialties: ServiceCategory[];
   }) {
     // Check if phone already exists
-    const existingTechnician = await this.prisma.technician.findFirst({
+    const existingTechnician = await this.prisma.technicians.findFirst({
       where: { phone: data.phone },
     });
 
@@ -22,18 +23,19 @@ export class TechniciansService {
       throw new BadRequestException('Số điện thoại đã được sử dụng');
     }
 
-    return this.prisma.technician.create({
+    return this.prisma.technicians.create({
       data: {
+        id: randomUUID(),
         name: data.name,
         phone: data.phone,
         email: data.email || '',
         specialties: JSON.stringify(data.specialties || []),
       },
       include: {
-        schedules: true,
+        technician_schedules: true,
         _count: {
           select: {
-            bookings: true,
+            service_bookings: true,
           },
         },
       },
@@ -58,14 +60,14 @@ export class TechniciansService {
     }
 
     const [total, technicians] = await this.prisma.$transaction([
-      this.prisma.technician.count({ where }),
-      this.prisma.technician.findMany({
+      this.prisma.technicians.count({ where }),
+      this.prisma.technicians.findMany({
         where,
         include: {
-          schedules: true,
+          technician_schedules: true,
           _count: {
             select: {
-              bookings: true,
+              service_bookings: true,
             },
           },
         },
@@ -80,22 +82,22 @@ export class TechniciansService {
 
   // Get technician by ID
   async getTechnician(id: string) {
-    const technician = await this.prisma.technician.findUnique({
+    const technician = await this.prisma.technicians.findUnique({
       where: { id },
       include: {
-        schedules: {
+        technician_schedules: {
           orderBy: { date: 'asc' },
         },
-        bookings: {
+        service_bookings: {
           orderBy: { scheduledAt: 'desc' },
           take: 10,
           include: {
-            service: true,
+            services: true,
           },
         },
         _count: {
           select: {
-            bookings: true,
+            service_bookings: true,
           },
         },
       },
@@ -120,7 +122,7 @@ export class TechniciansService {
 
     // Check if phone already exists (excluding current technician)
     if (data.phone && data.phone !== technician.phone) {
-      const existingTechnician = await this.prisma.technician.findFirst({
+      const existingTechnician = await this.prisma.technicians.findFirst({
         where: { 
           phone: data.phone,
           id: { not: id },
@@ -139,14 +141,14 @@ export class TechniciansService {
     if (data.specialties !== undefined) updateData.specialties = JSON.stringify(data.specialties || []);
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    return this.prisma.technician.update({
+    return this.prisma.technicians.update({
       where: { id },
       data: updateData,
       include: {
-        schedules: true,
+        technician_schedules: true,
         _count: {
           select: {
-            bookings: true,
+            service_bookings: true,
           },
         },
       },
@@ -158,7 +160,7 @@ export class TechniciansService {
     const _technician = await this.getTechnician(id);
 
     // Check if technician has any pending or in-progress bookings
-    const activeBookings = await this.prisma.serviceBooking.count({
+    const activeBookings = await this.prisma.service_bookings.count({
       where: {
         technicianId: id,
         status: {
@@ -171,13 +173,13 @@ export class TechniciansService {
       throw new BadRequestException('Không thể xóa kỹ thuật viên có booking đang thực hiện');
     }
 
-    return this.prisma.technician.delete({
+    return this.prisma.technicians.delete({
       where: { id },
     });
   }
 
   // Schedule Management
-  async setTechnicianSchedule(technicianId: string, schedules: Array<{
+  async setTechnicianSchedule(technicianId: string, technician_schedules: Array<{
     date: Date;
     startTime: string;
     endTime: string;
@@ -187,15 +189,16 @@ export class TechniciansService {
 
     return this.prisma.$transaction(async (tx) => {
       // Delete existing schedules
-      await tx.technicianSchedule.deleteMany({
+      await tx.technician_schedules.deleteMany({
         where: { technicianId },
       });
 
       // Create new schedules
       const createdSchedules = await Promise.all(
-        schedules.map(schedule =>
-          tx.technicianSchedule.create({
+        technician_schedules.map(schedule =>
+          tx.technician_schedules.create({
             data: {
+              id: randomUUID(),
               technicianId,
               date: schedule.date,
               startTime: schedule.startTime,
@@ -225,7 +228,7 @@ export class TechniciansService {
 
     const where: any = {
       isActive: true,
-      schedules: {
+      technician_schedules: {
         some: {
           date: {
             gte: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate()),
@@ -242,10 +245,10 @@ export class TechniciansService {
       where.specialties = { contains: params.specialty };
     }
 
-    const technicians = await this.prisma.technician.findMany({
+    const technicians = await this.prisma.technicians.findMany({
       where,
       include: {
-        schedules: {
+        technician_schedules: {
           where: {
             date: {
               gte: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate()),
@@ -279,11 +282,11 @@ export class TechniciansService {
       pendingBookings,
       totalRevenue,
     ] = await Promise.all([
-      this.prisma.serviceBooking.count({ where }),
-      this.prisma.serviceBooking.count({ 
+      this.prisma.service_bookings.count({ where }),
+      this.prisma.service_bookings.count({ 
         where: { ...where, status: ServiceBookingStatus.COMPLETED } 
       }),
-      this.prisma.serviceBooking.count({ 
+      this.prisma.service_bookings.count({ 
         where: { 
           ...where, 
           status: { in: [
@@ -294,9 +297,9 @@ export class TechniciansService {
           ] } 
         } 
       }),
-      this.prisma.serviceBookingItem.aggregate({
+      this.prisma.service_booking_items.aggregate({
         where: {
-          booking: { ...where, status: ServiceBookingStatus.COMPLETED },
+          service_bookings: { ...where, status: ServiceBookingStatus.COMPLETED },
         },
         _sum: { price: true },
       }),
@@ -311,6 +314,58 @@ export class TechniciansService {
     };
   }
 
+  // Get technician availability for a specific date
+  async getTechnicianAvailability(technicianId: string, date: Date) {
+    const technician = await this.getTechnician(technicianId);
+    if (!technician) {
+      throw new NotFoundException('Technician not found');
+    }
+
+    // Get schedule for the date
+    const schedule = await this.prisma.technician_schedules.findFirst({
+      where: {
+        technicianId,
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+
+    // Get bookings for the date
+    const bookings = await this.prisma.service_bookings.findMany({
+      where: {
+        technicianId,
+        scheduledAt: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+        status: {
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'],
+        },
+      },
+      select: {
+        id: true,
+        scheduledAt: true,
+        scheduledTime: true,
+        status: true,
+      },
+    });
+
+    return {
+      technician: {
+        id: technician.id,
+        name: technician.name,
+        isActive: technician.isActive,
+      },
+      date: date,
+      schedule: schedule || null,
+      bookings: bookings,
+      isAvailable: schedule?.isAvailable && technician.isActive,
+      bookedSlots: bookings.length,
+    };
+  }
+
   // Get technician statistics
   async getTechnicianStats() {
     const [
@@ -319,24 +374,24 @@ export class TechniciansService {
       totalBookings,
       completedBookings,
     ] = await Promise.all([
-      this.prisma.technician.count(),
-      this.prisma.technician.count({ where: { isActive: true } }),
-      this.prisma.serviceBooking.count(),
-      this.prisma.serviceBooking.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.technicians.count(),
+      this.prisma.technicians.count({ where: { isActive: true } }),
+      this.prisma.service_bookings.count(),
+      this.prisma.service_bookings.count({ where: { status: 'COMPLETED' } }),
     ]);
 
     // Get top performers
-    const topPerformersRaw = await this.prisma.technician.findMany({
+    const topPerformersRaw = await this.prisma.technicians.findMany({
       where: { isActive: true },
       include: {
-        bookings: {
+        service_bookings: {
           where: { status: ServiceBookingStatus.COMPLETED },
           select: { id: true },
         },
       },
     });
     const topPerformers = (topPerformersRaw as any[])
-      .sort((a, b) => (b.bookings?.length || 0) - (a.bookings?.length || 0))
+      .sort((a, b) => (b.service_bookings?.length || 0) - (a.service_bookings?.length || 0))
       .slice(0, 5);
 
     return {

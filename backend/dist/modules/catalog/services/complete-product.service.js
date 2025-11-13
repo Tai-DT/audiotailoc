@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompleteProductService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../../prisma/prisma.service");
 const complete_product_dto_1 = require("../dto/complete-product.dto");
 let CompleteProductService = class CompleteProductService {
@@ -20,22 +21,23 @@ let CompleteProductService = class CompleteProductService {
     async createProduct(createProductDto) {
         const { name, slug, description, shortDescription, priceCents, originalPriceCents, stockQuantity = 0, sku, warranty, features, minOrderQuantity = 1, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive = true, featured = false, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = createProductDto;
         const finalSlug = slug || this.generateSlug(name);
-        const existingProduct = await this.prisma.product.findUnique({
+        const existingProduct = await this.prisma.products.findUnique({
             where: { slug: finalSlug },
         });
         if (existingProduct) {
             throw new common_1.ConflictException(`Product with slug '${finalSlug}' already exists`);
         }
         if (categoryId && categoryId.trim() !== '') {
-            const category = await this.prisma.category.findUnique({
+            const category = await this.prisma.categories.findUnique({
                 where: { id: categoryId },
             });
             if (!category) {
                 throw new common_1.NotFoundException(`Category with ID '${categoryId}' not found`);
             }
         }
-        const product = await this.prisma.product.create({
+        const product = await this.prisma.products.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name,
                 slug: finalSlug,
                 description,
@@ -62,9 +64,10 @@ let CompleteProductService = class CompleteProductService {
                 metaDescription,
                 metaKeywords,
                 canonicalUrl,
+                updatedAt: new Date(),
             },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -108,10 +111,10 @@ let CompleteProductService = class CompleteProductService {
         const orderBy = {};
         orderBy[sortBy] = sortOrder;
         const [products, total] = await Promise.all([
-            this.prisma.product.findMany({
+            this.prisma.products.findMany({
                 where,
                 include: {
-                    category: {
+                    categories: {
                         select: {
                             id: true,
                             name: true,
@@ -123,7 +126,7 @@ let CompleteProductService = class CompleteProductService {
                 skip,
                 take: pageSize,
             }),
-            this.prisma.product.count({ where }),
+            this.prisma.products.count({ where }),
         ]);
         const totalPages = Math.ceil(total / pageSize);
         return {
@@ -178,7 +181,7 @@ let CompleteProductService = class CompleteProductService {
     }
     async getSearchSuggestions(query, limit = 10) {
         const searchLimit = Math.min(Math.max(limit, 1), 20);
-        const products = await this.prisma.product.findMany({
+        const products = await this.prisma.products.findMany({
             where: {
                 isDeleted: false,
                 isActive: true,
@@ -189,7 +192,7 @@ let CompleteProductService = class CompleteProductService {
             },
             take: searchLimit,
         });
-        const categories = await this.prisma.category.findMany({
+        const categories = await this.prisma.categories.findMany({
             where: {
                 isActive: true,
                 name: { contains: query },
@@ -215,10 +218,10 @@ let CompleteProductService = class CompleteProductService {
         return suggestions.slice(0, searchLimit);
     }
     async findProductById(id) {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id, isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -233,10 +236,10 @@ let CompleteProductService = class CompleteProductService {
         return this.mapToProductResponse(product);
     }
     async findProductBySlug(slug) {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { slug, isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -248,14 +251,14 @@ let CompleteProductService = class CompleteProductService {
         if (!product) {
             throw new common_1.NotFoundException(`Product with slug '${slug}' not found`);
         }
-        await this.prisma.product.update({
+        await this.prisma.products.update({
             where: { id: product.id },
             data: { viewCount: { increment: 1 } },
         });
         return this.mapToProductResponse(product);
     }
     async updateProduct(id, updateProductDto) {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id, isDeleted: false },
         });
         if (!product) {
@@ -263,7 +266,7 @@ let CompleteProductService = class CompleteProductService {
         }
         const { name, slug, description, shortDescription, priceCents, originalPriceCents, stockQuantity, sku, warranty, features, minOrderQuantity, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive, featured, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = updateProductDto;
         if (slug && slug !== product.slug) {
-            const existingProduct = await this.prisma.product.findUnique({
+            const existingProduct = await this.prisma.products.findUnique({
                 where: { slug },
             });
             if (existingProduct) {
@@ -271,14 +274,14 @@ let CompleteProductService = class CompleteProductService {
             }
         }
         if (categoryId && categoryId !== product.categoryId) {
-            const category = await this.prisma.category.findUnique({
+            const category = await this.prisma.categories.findUnique({
                 where: { id: categoryId },
             });
             if (!category) {
                 throw new common_1.NotFoundException(`Category with ID '${categoryId}' not found`);
             }
         }
-        const updatedProduct = await this.prisma.product.update({
+        const updatedProduct = await this.prisma.products.update({
             where: { id },
             data: {
                 ...(name && { name }),
@@ -309,7 +312,7 @@ let CompleteProductService = class CompleteProductService {
                 ...(canonicalUrl !== undefined && { canonicalUrl }),
             },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -322,24 +325,26 @@ let CompleteProductService = class CompleteProductService {
     }
     async deleteProduct(id) {
         try {
-            const product = await this.prisma.product.findUnique({
+            const product = await this.prisma.products.findUnique({
                 where: { id, isDeleted: false },
-                include: {
+                select: {
+                    id: true,
+                    name: true,
                     _count: {
-                        select: { orderItems: true }
+                        select: { order_items: true }
                     }
                 }
             });
             if (!product) {
                 return { deleted: false, message: 'Product not found' };
             }
-            if (product._count.orderItems > 0) {
+            if (product._count.order_items > 0) {
                 return {
                     deleted: false,
-                    message: `Cannot delete product "${product.name}" because it has ${product._count.orderItems} associated order(s). Please remove or update the orders first.`
+                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
                 };
             }
-            await this.prisma.product.update({
+            await this.prisma.products.update({
                 where: { id },
                 data: { isDeleted: true },
             });
@@ -354,7 +359,7 @@ let CompleteProductService = class CompleteProductService {
         if (!ids.length) {
             throw new common_1.BadRequestException('No product IDs provided');
         }
-        const products = await this.prisma.product.findMany({
+        const products = await this.prisma.products.findMany({
             where: {
                 id: { in: ids },
                 isDeleted: false,
@@ -365,7 +370,7 @@ let CompleteProductService = class CompleteProductService {
             const missingIds = ids.filter(id => !foundIds.includes(id));
             throw new common_1.NotFoundException(`Products not found: ${missingIds.join(', ')}`);
         }
-        await this.prisma.product.updateMany({
+        await this.prisma.products.updateMany({
             where: { id: { in: ids } },
             data: { isDeleted: true },
         });
@@ -376,7 +381,7 @@ let CompleteProductService = class CompleteProductService {
             throw new common_1.BadRequestException('No product IDs provided');
         }
         if (categoryId) {
-            const category = await this.prisma.category.findUnique({
+            const category = await this.prisma.categories.findUnique({
                 where: { id: categoryId },
             });
             if (!category) {
@@ -394,7 +399,7 @@ let CompleteProductService = class CompleteProductService {
             updateData.featured = featured;
         }
         if (addTags || removeTags) {
-            const products = await this.prisma.product.findMany({
+            const products = await this.prisma.products.findMany({
                 where: { id: { in: productIds }, isDeleted: false },
                 select: { id: true, tags: true },
             });
@@ -408,24 +413,24 @@ let CompleteProductService = class CompleteProductService {
                     const tagsToRemove = removeTags.split(',').map((t) => t.trim());
                     currentTags = currentTags.filter(tag => !tagsToRemove.includes(tag));
                 }
-                await this.prisma.product.update({
+                await this.prisma.products.update({
                     where: { id: product.id },
                     data: { tags: currentTags.join(', ') },
                 });
             }
             return { updated: products.length };
         }
-        const result = await this.prisma.product.updateMany({
+        const result = await this.prisma.products.updateMany({
             where: { id: { in: productIds }, isDeleted: false },
             data: updateData,
         });
         return { updated: result.count };
     }
     async duplicateProduct(id) {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id, isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -440,12 +445,13 @@ let CompleteProductService = class CompleteProductService {
         const baseSlug = this.generateSlug(product.name);
         let newSlug = `${baseSlug}-copy`;
         let counter = 1;
-        while (await this.prisma.product.findUnique({ where: { slug: newSlug } })) {
+        while (await this.prisma.products.findUnique({ where: { slug: newSlug } })) {
             newSlug = `${baseSlug}-copy-${counter}`;
             counter++;
         }
-        const duplicatedProduct = await this.prisma.product.create({
+        const duplicatedProduct = await this.prisma.products.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name: `${product.name} (Copy)`,
                 slug: newSlug,
                 description: product.description,
@@ -472,9 +478,10 @@ let CompleteProductService = class CompleteProductService {
                 metaDescription: product.metaDescription,
                 metaKeywords: product.metaKeywords,
                 canonicalUrl: product.canonicalUrl,
+                updatedAt: new Date(),
             },
             include: {
-                category: {
+                categories: {
                     select: {
                         id: true,
                         name: true,
@@ -486,50 +493,50 @@ let CompleteProductService = class CompleteProductService {
         return this.mapToProductResponse(duplicatedProduct);
     }
     async incrementProductView(id) {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id, isDeleted: false },
         });
         if (!product) {
             throw new common_1.NotFoundException(`Product with ID '${id}' not found`);
         }
-        await this.prisma.product.update({
+        await this.prisma.products.update({
             where: { id },
             data: { viewCount: { increment: 1 } },
         });
     }
     async getProductAnalytics() {
         const [totalProducts, activeProducts, featuredProducts, outOfStockProducts, totalViewsResult, averagePriceResult, productsByCategory, topViewedProducts, recentProducts,] = await Promise.all([
-            this.prisma.product.count({ where: { isDeleted: false } }),
-            this.prisma.product.count({ where: { isDeleted: false, isActive: true } }),
-            this.prisma.product.count({ where: { isDeleted: false, featured: true } }),
-            this.prisma.product.count({ where: { isDeleted: false, stockQuantity: { lte: 0 } } }),
-            this.prisma.product.aggregate({
+            this.prisma.products.count({ where: { isDeleted: false } }),
+            this.prisma.products.count({ where: { isDeleted: false, isActive: true } }),
+            this.prisma.products.count({ where: { isDeleted: false, featured: true } }),
+            this.prisma.products.count({ where: { isDeleted: false, stockQuantity: { lte: 0 } } }),
+            this.prisma.products.aggregate({
                 where: { isDeleted: false },
                 _sum: { viewCount: true },
             }),
-            this.prisma.product.aggregate({
+            this.prisma.products.aggregate({
                 where: { isDeleted: false },
                 _avg: { priceCents: true },
             }),
-            this.prisma.product.groupBy({
+            this.prisma.products.groupBy({
                 by: ['categoryId'],
                 where: { isDeleted: false },
                 _count: { id: true },
             }),
-            this.prisma.product.findMany({
+            this.prisma.products.findMany({
                 where: { isDeleted: false },
                 include: {
-                    category: {
+                    categories: {
                         select: { id: true, name: true, slug: true },
                     },
                 },
                 orderBy: { viewCount: 'desc' },
                 take: 10,
             }),
-            this.prisma.product.findMany({
+            this.prisma.products.findMany({
                 where: { isDeleted: false },
                 include: {
-                    category: {
+                    categories: {
                         select: { id: true, name: true, slug: true },
                     },
                 },
@@ -538,7 +545,7 @@ let CompleteProductService = class CompleteProductService {
             }),
         ]);
         const categoryMap = new Map();
-        const categories = await this.prisma.category.findMany({
+        const categories = await this.prisma.categories.findMany({
             where: {
                 id: { in: productsByCategory.map(p => p.categoryId).filter(Boolean) },
             },
@@ -563,10 +570,10 @@ let CompleteProductService = class CompleteProductService {
         };
     }
     async getTopViewedProducts(limit = 10) {
-        const products = await this.prisma.product.findMany({
+        const products = await this.prisma.products.findMany({
             where: { isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: { id: true, name: true, slug: true },
                 },
             },
@@ -576,10 +583,10 @@ let CompleteProductService = class CompleteProductService {
         return products.map(product => this.mapToProductResponse(product));
     }
     async getRecentProducts(limit = 10) {
-        const products = await this.prisma.product.findMany({
+        const products = await this.prisma.products.findMany({
             where: { isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: { id: true, name: true, slug: true },
                 },
             },
@@ -589,10 +596,10 @@ let CompleteProductService = class CompleteProductService {
         return products.map(product => this.mapToProductResponse(product));
     }
     async exportProductsToCsv() {
-        const products = await this.prisma.product.findMany({
+        const products = await this.prisma.products.findMany({
             where: { isDeleted: false },
             include: {
-                category: {
+                categories: {
                     select: { name: true },
                 },
             },
@@ -623,7 +630,7 @@ let CompleteProductService = class CompleteProductService {
             product.originalPriceCents || '',
             product.stockQuantity,
             product.sku || '',
-            product.category?.name || '',
+            product.categories?.name || '',
             product.brand || '',
             product.model || '',
             product.isActive,
@@ -673,7 +680,7 @@ let CompleteProductService = class CompleteProductService {
                         case 'sku':
                             productData.sku = value || undefined;
                             break;
-                        case 'category':
+                        case 'categories':
                             break;
                         case 'brand':
                             productData.brand = value || undefined;
@@ -691,7 +698,7 @@ let CompleteProductService = class CompleteProductService {
                 });
                 if (productData.name && productData.priceCents) {
                     if (!productData.categoryId) {
-                        const defaultCategory = await this.prisma.category.findFirst({
+                        const defaultCategory = await this.prisma.categories.findFirst({
                             where: { isActive: true },
                         });
                         if (defaultCategory) {
@@ -756,7 +763,7 @@ let CompleteProductService = class CompleteProductService {
             priceCents: product.priceCents,
             originalPriceCents: product.originalPriceCents,
             images: product.images,
-            category: product.category,
+            category: product.categories,
             brand: product.brand,
             model: product.model,
             sku: product.sku,
@@ -780,18 +787,20 @@ let CompleteProductService = class CompleteProductService {
     }
     async checkProductDeletable(id) {
         try {
-            const product = await this.prisma.product.findUnique({
+            const product = await this.prisma.products.findUnique({
                 where: { id, isDeleted: false },
-                include: {
+                select: {
+                    id: true,
+                    name: true,
                     _count: {
-                        select: { orderItems: true }
+                        select: { order_items: true }
                     }
                 }
             });
             if (!product) {
                 return { canDelete: false, message: 'Product not found', associatedOrdersCount: 0 };
             }
-            const associatedOrdersCount = product._count.orderItems;
+            const associatedOrdersCount = product._count.order_items;
             if (associatedOrdersCount > 0) {
                 return {
                     canDelete: false,

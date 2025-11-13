@@ -45,6 +45,7 @@ var UsersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../notifications/mail.service");
 const bcrypt = __importStar(require("bcryptjs"));
@@ -55,10 +56,10 @@ let UsersService = UsersService_1 = class UsersService {
         this.logger = new common_1.Logger(UsersService_1.name);
     }
     async findByEmail(email) {
-        return this.prisma.user.findUnique({ where: { email } });
+        return this.prisma.users.findUnique({ where: { email } });
     }
     async findById(id) {
-        const user = await this.prisma.user.findUnique({
+        const user = await this.prisma.users.findUnique({
             where: { id },
             include: {
                 orders: {
@@ -117,7 +118,7 @@ let UsersService = UsersService_1 = class UsersService {
             orderBy.createdAt = 'desc';
         }
         const [users, total] = await Promise.all([
-            this.prisma.user.findMany({
+            this.prisma.users.findMany({
                 skip,
                 take: params.limit,
                 where,
@@ -128,6 +129,11 @@ let UsersService = UsersService_1 = class UsersService {
                     phone: true,
                     role: true,
                     createdAt: true,
+                    orders: {
+                        select: {
+                            totalCents: true
+                        }
+                    },
                     _count: {
                         select: {
                             orders: true
@@ -136,7 +142,7 @@ let UsersService = UsersService_1 = class UsersService {
                 },
                 orderBy
             }),
-            this.prisma.user.count({ where })
+            this.prisma.users.count({ where })
         ]);
         return {
             users,
@@ -163,13 +169,15 @@ let UsersService = UsersService_1 = class UsersService {
             throw new common_1.BadRequestException('Password is required');
         }
         const hashedPassword = await bcrypt.hash(password, 12);
-        const user = await this.prisma.user.create({
+        const user = await this.prisma.users.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 email: createUserDto.email,
                 password: hashedPassword,
                 name: createUserDto.name,
                 phone: createUserDto.phone,
-                role: createUserDto.role || 'USER'
+                role: createUserDto.role || 'USER',
+                updatedAt: new Date()
             },
             select: {
                 id: true,
@@ -184,8 +192,8 @@ let UsersService = UsersService_1 = class UsersService {
             try {
                 await this.sendWelcomeEmail(user.email, user.name || 'User', password);
             }
-            catch (error) {
-                this.logger.error(`Failed to send welcome email to ${user.email}:`, error);
+            catch (_error) {
+                this.logger.error(`Failed to send welcome email to ${user.email}:`, _error);
             }
         }
         return user;
@@ -196,14 +204,22 @@ let UsersService = UsersService_1 = class UsersService {
             throw new common_1.BadRequestException('Email already exists');
         }
         const hashedPassword = await bcrypt.hash(params.password, 12);
-        return this.prisma.user.create({ data: { email: params.email, password: hashedPassword, name: params.name ?? '' } });
+        return this.prisma.users.create({
+            data: {
+                id: (0, crypto_1.randomUUID)(),
+                email: params.email,
+                password: hashedPassword,
+                name: params.name ?? '',
+                updatedAt: new Date()
+            }
+        });
     }
     async update(id, updateUserDto) {
         const user = await this.findById(id);
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
-        return this.prisma.user.update({
+        return this.prisma.users.update({
             where: { id },
             data: updateUserDto,
             select: {
@@ -228,40 +244,40 @@ let UsersService = UsersService_1 = class UsersService {
             throw new common_1.UnauthorizedException('Cannot delete admin user');
         }
         try {
-            const orders = await this.prisma.order.findMany({
+            const orders = await this.prisma.orders.findMany({
                 where: { userId: id },
                 select: { id: true }
             });
             for (const order of orders) {
-                await this.prisma.orderItem.deleteMany({
+                await this.prisma.order_items.deleteMany({
                     where: { orderId: order.id }
                 });
             }
-            await this.prisma.order.deleteMany({
+            await this.prisma.orders.deleteMany({
                 where: { userId: id }
             });
         }
-        catch (error) {
+        catch (_error) {
             console.log('Error deleting orders, continuing...');
         }
         try {
-            const cart = await this.prisma.cart.findFirst({
+            const cart = await this.prisma.carts.findFirst({
                 where: { userId: id }
             });
             if (cart) {
-                await this.prisma.cartItem.deleteMany({
+                await this.prisma.cart_items.deleteMany({
                     where: { cartId: cart.id }
                 });
-                await this.prisma.cart.delete({
+                await this.prisma.carts.delete({
                     where: { id: cart.id }
                 });
             }
         }
-        catch (error) {
+        catch (_error) {
             console.log('Error deleting cart, continuing...');
         }
         await this.prisma.$transaction(async (tx) => {
-            await tx.user.delete({
+            await tx.users.delete({
                 where: { id }
             });
         });
@@ -269,15 +285,15 @@ let UsersService = UsersService_1 = class UsersService {
     }
     async getStats() {
         const [totalUsers, newUsersThisMonth, activeUsers] = await Promise.all([
-            this.prisma.user.count(),
-            this.prisma.user.count({
+            this.prisma.users.count(),
+            this.prisma.users.count({
                 where: {
                     createdAt: {
                         gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
                     }
                 }
             }),
-            this.prisma.user.count({
+            this.prisma.users.count({
                 where: {
                     orders: {
                         some: {
@@ -298,7 +314,7 @@ let UsersService = UsersService_1 = class UsersService {
     }
     async getActivityStats(days) {
         const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-        const dailyStats = await this.prisma.user.groupBy({
+        const dailyStats = await this.prisma.users.groupBy({
             by: ['createdAt'],
             where: {
                 createdAt: {
@@ -319,7 +335,7 @@ let UsersService = UsersService_1 = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
-        return this.prisma.user.update({
+        return this.prisma.users.update({
             where: { id: userId },
             data: { password: hashedPassword },
             select: {

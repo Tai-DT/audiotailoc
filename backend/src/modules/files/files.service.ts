@@ -196,7 +196,7 @@ export class FilesService {
     const result = await this.uploadFile(file, options, metadata);
 
     // Update product with image URL
-    await this.prisma.product.update({
+    await this.prisma.products.update({
       where: { id: productId },
       data: { imageUrl: result.url },
     });
@@ -225,7 +225,7 @@ export class FilesService {
     const result = await this.uploadFile(file, options, metadata);
 
     // Update user with avatar URL
-    await this.prisma.user.update({
+    await this.prisma.users.update({
       where: { id: userId },
       data: { /* avatarUrl: result.url, */ }, // TODO: Add avatarUrl field to User model
     });

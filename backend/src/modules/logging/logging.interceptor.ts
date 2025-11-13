@@ -101,8 +101,8 @@ export class LoggingInterceptor implements NestInterceptor {
   private extractUserId(request: Request): string | undefined {
     // Try to get user ID from various sources
     return (
-      (request as any).user?.id ||
-      (request as any).user?.userId ||
+      (request as any).users?.id ||
+      (request as any).users?.userId ||
       request.headers['x-user-id'] as string ||
       request.query.userId as string
     );

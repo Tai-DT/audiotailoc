@@ -47,20 +47,20 @@ export class AdminController {
       pendingOrders,
       lowStockProducts
     ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.product.count(),
-      this.prisma.order.count(),
-      this.prisma.order.aggregate({
+      this.prisma.users.count(),
+      this.prisma.products.count(),
+      this.prisma.orders.count(),
+      this.prisma.orders.aggregate({
         where: { status: 'COMPLETED' },
         _sum: { totalCents: true }
       }),
-      this.prisma.user.count({
+      this.prisma.users.count({
         where: { createdAt: { gte: startDate, lte: endDate } }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { createdAt: { gte: startDate, lte: endDate } }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { status: 'PENDING' }
       }),
       this.prisma.inventory.count({
@@ -69,15 +69,15 @@ export class AdminController {
     ]);
 
     // Get recent activities
-    const recentOrders = await this.prisma.order.findMany({
+    const recentOrders = await this.prisma.orders.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: {
-        user: { select: { name: true, email: true } }
+        users: { select: { name: true, email: true } }
       }
     });
 
-    const recentUsers = await this.prisma.user.findMany({
+    const recentUsers = await this.prisma.users.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true, email: true, createdAt: true }
@@ -120,14 +120,14 @@ export class AdminController {
       newUsers,
       usersByRole
     ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({
+      this.prisma.users.count(),
+      this.prisma.users.count({
         where: { updatedAt: { gte: daysAgo } }
       }),
-      this.prisma.user.count({
+      this.prisma.users.count({
         where: { createdAt: { gte: daysAgo } }
       }),
-      this.prisma.user.groupBy({
+      this.prisma.users.groupBy({
         by: ['role'],
         _count: { role: true }
       })
@@ -161,21 +161,21 @@ export class AdminController {
       totalRevenue,
       ordersByStatus
     ] = await Promise.all([
-      this.prisma.order.count(),
-      this.prisma.order.count({
+      this.prisma.orders.count(),
+      this.prisma.orders.count({
         where: { status: 'COMPLETED' }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { status: 'PENDING' }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { status: 'CANCELED' }
       }),
-      this.prisma.order.aggregate({
+      this.prisma.orders.aggregate({
         where: { status: 'COMPLETED' },
         _sum: { totalCents: true }
       }),
-      this.prisma.order.groupBy({
+      this.prisma.orders.groupBy({
         by: ['status'],
         _count: { status: true }
       })
@@ -207,14 +207,14 @@ export class AdminController {
       lowStockProducts,
       productsByCategory
     ] = await Promise.all([
-      this.prisma.product.count(),
-      this.prisma.product.count({
+      this.prisma.products.count(),
+      this.prisma.products.count({
         where: { featured: true }
       }),
       this.prisma.inventory.count({
         where: { stock: { lte: 10 } }
       }),
-      this.prisma.product.groupBy({
+      this.prisma.products.groupBy({
         by: ['categoryId'],
         _count: { categoryId: true }
       })
@@ -246,18 +246,18 @@ export class AdminController {
       case 'users':
         switch (action) {
           case 'delete':
-            result = await this.prisma.user.deleteMany({
+            result = await this.prisma.users.deleteMany({
               where: { id: { in: ids } }
             });
             break;
           case 'activate':
-            result = await this.prisma.user.updateMany({
+            result = await this.prisma.users.updateMany({
               where: { id: { in: ids } },
               data: { role: 'USER' }
             });
             break;
           case 'deactivate':
-            result = await this.prisma.user.updateMany({
+            result = await this.prisma.users.updateMany({
               where: { id: { in: ids } },
               data: { role: 'USER' }
             });
@@ -268,18 +268,18 @@ export class AdminController {
       case 'products':
         switch (action) {
           case 'delete':
-            result = await this.prisma.product.deleteMany({
+            result = await this.prisma.products.deleteMany({
               where: { id: { in: ids } }
             });
             break;
           case 'activate':
-            result = await this.prisma.product.updateMany({
+            result = await this.prisma.products.updateMany({
               where: { id: { in: ids } },
               data: { featured: true }
             });
             break;
           case 'deactivate':
-            result = await this.prisma.product.updateMany({
+            result = await this.prisma.products.updateMany({
               where: { id: { in: ids } },
               data: { featured: false }
             });
@@ -290,18 +290,18 @@ export class AdminController {
       case 'orders':
         switch (action) {
           case 'delete':
-            result = await this.prisma.order.deleteMany({
+            result = await this.prisma.orders.deleteMany({
               where: { id: { in: ids } }
             });
             break;
           case 'activate':
-            result = await this.prisma.order.updateMany({
+            result = await this.prisma.orders.updateMany({
               where: { id: { in: ids } },
               data: { status: 'COMPLETED' }
             });
             break;
           case 'deactivate':
-            result = await this.prisma.order.updateMany({
+            result = await this.prisma.orders.updateMany({
               where: { id: { in: ids } },
               data: { status: 'CANCELED' }
             });
@@ -332,7 +332,7 @@ export class AdminController {
     ] = await Promise.all([
       this.prisma.$queryRaw`SELECT 1 as status`,
       Promise.resolve('OK'), // Placeholder for Redis check
-      this.prisma.systemConfig.findUnique({
+      this.prisma.system_configs.findUnique({
         where: { key: 'maintenance_mode' }
       })
     ]);

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceTypesService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let ServiceTypesService = class ServiceTypesService {
     constructor(prisma) {
@@ -18,8 +19,9 @@ let ServiceTypesService = class ServiceTypesService {
     }
     async create(createServiceTypeDto) {
         const slug = await this.generateSlug(createServiceTypeDto.name);
-        return this.prisma.serviceType.create({
+        return this.prisma.service_types.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name: createServiceTypeDto.name,
                 description: createServiceTypeDto.description,
                 icon: createServiceTypeDto.icon,
@@ -27,12 +29,13 @@ let ServiceTypesService = class ServiceTypesService {
                 sortOrder: createServiceTypeDto.sortOrder || 0,
                 slug,
                 isActive: createServiceTypeDto.isActive ?? true,
+                updatedAt: new Date(),
             },
         });
     }
     async findAll() {
         console.log('[ServiceTypesService] findAll called');
-        const result = await this.prisma.serviceType.findMany({
+        const result = await this.prisma.service_types.findMany({
             orderBy: { sortOrder: 'asc' },
         });
         console.log('[ServiceTypesService] findAll result length:', result.length);
@@ -40,7 +43,7 @@ let ServiceTypesService = class ServiceTypesService {
         return result;
     }
     async findOne(id) {
-        const serviceType = await this.prisma.serviceType.findUnique({
+        const serviceType = await this.prisma.service_types.findUnique({
             where: { id },
         });
         if (!serviceType) {
@@ -51,7 +54,7 @@ let ServiceTypesService = class ServiceTypesService {
     async update(id, updateServiceTypeDto) {
         console.log(`[ServiceTypesService] Updating service type ${id} with data:`, updateServiceTypeDto);
         await this.findOne(id);
-        const result = await this.prisma.serviceType.update({
+        const result = await this.prisma.service_types.update({
             where: { id },
             data: updateServiceTypeDto,
         });
@@ -61,13 +64,13 @@ let ServiceTypesService = class ServiceTypesService {
     async remove(id) {
         console.log(`[ServiceTypesService] Deleting service type ${id}`);
         await this.findOne(id);
-        const serviceCount = await this.prisma.service.count({
+        const serviceCount = await this.prisma.services.count({
             where: { typeId: id },
         });
         if (serviceCount > 0) {
             throw new Error('Cannot delete service type that is being used by services');
         }
-        const result = await this.prisma.serviceType.delete({
+        const result = await this.prisma.service_types.delete({
             where: { id },
         });
         console.log(`[ServiceTypesService] Deleted service type ${id}:`, result);
@@ -83,7 +86,7 @@ let ServiceTypesService = class ServiceTypesService {
         let slug = baseSlug;
         let counter = 1;
         while (true) {
-            const existing = await this.prisma.serviceType.findUnique({
+            const existing = await this.prisma.service_types.findUnique({
                 where: { slug },
                 select: { id: true },
             });

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { SecurityService } from '../security/security.service';
+import { PasswordValidator } from './password-validator';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
@@ -15,50 +16,46 @@ export class AuthService {
   ) {}
 
   async register(dto: { email: string; password: string; name?: string }) {
+    // Validate password strength
+    const passwordValidation = PasswordValidator.validate(dto.password);
+    if (!passwordValidation.isValid) {
+      throw new BadRequestException({
+        message: 'Password does not meet security requirements',
+        errors: passwordValidation.errors
+      });
+    }
+
     return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
   }
 
   async login(dto: { email: string; password: string; rememberMe?: boolean }) {
-    console.log('🔍 Login attempt for:', dto.email);
-
     // Check if account is locked
     if (this.securityService.isAccountLocked(dto.email)) {
       const remainingTime = this.securityService.getRemainingLockoutTime(dto.email);
-      console.log('🔒 Account is locked, remaining time:', Math.ceil(remainingTime / 60000), 'minutes');
       throw new Error(`Account is locked. Try again in ${Math.ceil(remainingTime / 60000)} minutes.`);
     }
 
     const user = await this.users.findByEmail(dto.email);
-    console.log('👤 User lookup result:', !!user);
-    if (user) {
-      console.log('   User ID:', user.id);
-      console.log('   User Email:', user.email);
-      console.log('   User Role:', (user as any).role);
-      console.log('   Password hash exists:', !!user.password);
-    }
 
+    // Use generic error message to prevent user enumeration
     if (!user) {
-      console.log('❌ User not found in database');
-      throw new Error('not found');
+      this.securityService.recordLoginAttempt(dto.email, false);
+      throw new Error('Invalid email or password');
     }
 
-    console.log('🔐 Comparing passwords...');
     const ok = await bcrypt.compare(dto.password, user.password);
-    console.log('🔐 Password comparison result:', ok);
 
     // Record login attempt
-    const success = ok;
-    this.securityService.recordLoginAttempt(dto.email, success);
+    this.securityService.recordLoginAttempt(dto.email, ok);
 
+    // Use generic error message to prevent user enumeration
     if (!ok) {
-      console.log('❌ Password mismatch');
-      throw new Error('bad pass');
+      throw new Error('Invalid email or password');
     }
 
-    console.log('✅ Login successful, generating tokens...');
     const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET');
     const refreshSecret = this.config.get<string>('JWT_REFRESH_SECRET');
-    
+
     if (!accessSecret || !refreshSecret) {
       throw new Error('JWT secrets are not configured');
     }
@@ -67,7 +64,6 @@ export class AuthService {
     const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
     const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
 
-    console.log('✅ Tokens generated successfully');
     return { accessToken, refreshToken, userId: user.id };
   }
 
@@ -75,22 +71,31 @@ export class AuthService {
     try {
       const refreshSecret = this.config.get<string>('JWT_REFRESH_SECRET') || 'dev_refresh';
       const payload = jwt.verify(refreshToken, refreshSecret) as { sub: string };
-      
+
       const user = await this.users.findById(payload.sub);
       if (!user) throw new Error('User not found');
+
+      // Validate user is still active and not disabled
+      const userRole = (user as any).role;
+      if (userRole === 'DISABLED') {
+        throw new Error('User account has been disabled');
+      }
 
       const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET');
       if (!accessSecret) {
         throw new Error('JWT access secret is not configured');
       }
       const newAccessToken = jwt.sign(
-        { sub: user.id, email: user.email, role: (user as any).role ?? 'USER' },
+        { sub: user.id, email: user.email, role: userRole ?? 'USER' },
         accessSecret,
         { expiresIn: '15m' }
       );
-      
+
       return { accessToken: newAccessToken, refreshToken };
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'Invalid refresh token') {
+        throw error;
+      }
       throw new Error('Invalid refresh token');
     }
   }

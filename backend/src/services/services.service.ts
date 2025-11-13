@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateServiceTypeDto,
@@ -13,7 +14,7 @@ export class ServicesService {
 
   // Service Types Management
   async findAllServiceTypes() {
-    return this.prisma.serviceType.findMany({
+    return this.prisma.service_types.findMany({
       orderBy: { sortOrder: 'asc' },
       include: {
         services: {
@@ -24,7 +25,7 @@ export class ServicesService {
   }
 
   async findServiceTypeById(id: string) {
-    const serviceType = await this.prisma.serviceType.findUnique({
+    const serviceType = await this.prisma.service_types.findUnique({
       where: { id },
       include: {
         services: {
@@ -45,7 +46,7 @@ export class ServicesService {
     const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
     // Check if slug exists
-    const existingType = await this.prisma.serviceType.findUnique({
+    const existingType = await this.prisma.service_types.findUnique({
       where: { slug }
     });
 
@@ -53,15 +54,17 @@ export class ServicesService {
       throw new ConflictException('Service type with this slug already exists');
     }
 
-    return this.prisma.serviceType.create({
+    return this.prisma.service_types.create({
       data: {
+        id: randomUUID(),
         name: dto.name,
         slug,
         description: dto.description,
         icon: dto.icon,
         color: dto.color,
         isActive: dto.isActive ?? true,
-        sortOrder: dto.sortOrder ?? 0
+        sortOrder: dto.sortOrder ?? 0,
+        updatedAt: new Date()
       }
     });
   }
@@ -75,7 +78,7 @@ export class ServicesService {
       slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
       // Check if new slug exists
-      const existingType = await this.prisma.serviceType.findFirst({
+      const existingType = await this.prisma.service_types.findFirst({
         where: { slug, id: { not: id } }
       });
 
@@ -84,7 +87,7 @@ export class ServicesService {
       }
     }
 
-    return this.prisma.serviceType.update({
+    return this.prisma.service_types.update({
       where: { id },
       data: {
         name: dto.name,
@@ -106,17 +109,17 @@ export class ServicesService {
       throw new BadRequestException('Cannot delete service type that has services');
     }
 
-    return this.prisma.serviceType.delete({
+    return this.prisma.service_types.delete({
       where: { id }
     });
   }
 
   // Services Management
   async findAllServices() {
-    return this.prisma.service.findMany({
+    return this.prisma.services.findMany({
       where: { isActive: true },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         }
       },
@@ -125,19 +128,19 @@ export class ServicesService {
   }
 
   async findServiceById(id: string) {
-    const service = await this.prisma.service.findUnique({
+    const service = await this.prisma.services.findUnique({
       where: { id },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         },
-        views: {
+        service_views: {
           select: { id: true, timestamp: true }
         },
-        bookings: {
+        service_bookings: {
           select: { id: true, status: true, scheduledAt: true }
         },
-        items: {
+        service_items: {
           select: { id: true, name: true, price: true, quantity: true }
         }
       }
@@ -155,7 +158,7 @@ export class ServicesService {
     const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
     // Check if slug exists
-    const existingService = await this.prisma.service.findUnique({
+    const existingService = await this.prisma.services.findUnique({
       where: { slug }
     });
 
@@ -165,7 +168,7 @@ export class ServicesService {
 
     // Validate service type if provided
     if (dto.typeId) {
-      const serviceType = await this.prisma.serviceType.findUnique({
+      const serviceType = await this.prisma.service_types.findUnique({
         where: { id: dto.typeId }
       });
 
@@ -174,8 +177,9 @@ export class ServicesService {
       }
     }
 
-    return this.prisma.service.create({
+    return this.prisma.services.create({
       data: {
+        id: randomUUID(),
         name: dto.name,
         slug,
         description: dto.description,
@@ -192,10 +196,11 @@ export class ServicesService {
         tags: dto.tags,
         features: dto.features,
         requirements: dto.requirements,
-        metadata: dto.metadata
+        metadata: dto.metadata,
+        updatedAt: new Date()
       },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         }
       }
@@ -211,7 +216,7 @@ export class ServicesService {
       slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
       // Check if new slug exists
-      const existingService = await this.prisma.service.findFirst({
+      const existingService = await this.prisma.services.findFirst({
         where: { slug, id: { not: id } }
       });
 
@@ -222,7 +227,7 @@ export class ServicesService {
 
     // Validate service type if provided
     if (dto.typeId) {
-      const serviceType = await this.prisma.serviceType.findUnique({
+      const serviceType = await this.prisma.service_types.findUnique({
         where: { id: dto.typeId }
       });
 
@@ -231,7 +236,7 @@ export class ServicesService {
       }
     }
 
-    return this.prisma.service.update({
+    return this.prisma.services.update({
       where: { id },
       data: {
         name: dto.name,
@@ -253,7 +258,7 @@ export class ServicesService {
         metadata: dto.metadata
       },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         }
       }
@@ -264,7 +269,7 @@ export class ServicesService {
     const service = await this.findServiceById(id);
 
     // Check if service has active bookings
-    const activeBookings = service.bookings?.filter(booking =>
+    const activeBookings = service.service_bookings?.filter(booking =>
       ['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(booking.status)
     );
 
@@ -272,14 +277,14 @@ export class ServicesService {
       throw new BadRequestException('Cannot delete service that has active bookings');
     }
 
-    return this.prisma.service.delete({
+    return this.prisma.services.delete({
       where: { id }
     });
   }
 
   // Helper methods
   async incrementViewCount(id: string) {
-    return this.prisma.service.update({
+    return this.prisma.services.update({
       where: { id },
       data: {
         viewCount: {
@@ -290,10 +295,10 @@ export class ServicesService {
   }
 
   async getFeaturedServices() {
-    return this.prisma.service.findMany({
+    return this.prisma.services.findMany({
       where: { isActive: true, isFeatured: true },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         }
       },
@@ -303,10 +308,10 @@ export class ServicesService {
   }
 
   async getServicesByType(typeId: string) {
-    return this.prisma.service.findMany({
+    return this.prisma.services.findMany({
       where: { typeId, isActive: true },
       include: {
-        serviceType: {
+        service_types: {
           select: { id: true, name: true, slug: true, icon: true, color: true }
         }
       },

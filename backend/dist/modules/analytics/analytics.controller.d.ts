@@ -34,12 +34,39 @@ export declare class AnalyticsController {
         customersGrowth: number;
     }>;
     getTrends(range?: string): Promise<any[]>;
+    getRevenue(period?: string): Promise<{
+        period: string;
+        startDate: string;
+        endDate: string;
+        totalRevenue: number;
+        totalOrders: number;
+        averageOrderValue: number;
+        revenueGrowth: number;
+    }>;
     getTopServices(limit?: string): Promise<{
         id: string;
         name: string;
         bookings: number;
         revenue: number;
     }[]>;
+    getTopProducts(limit?: string): Promise<{
+        id: string;
+        name: string;
+        sold: number;
+        revenue: number;
+    }[]>;
+    getUserActivity(range?: string): Promise<{
+        pageViews: number;
+        sessions: number;
+        avgSessionDuration: number;
+        bounceRate: number;
+        uniqueVisitors: number;
+        returnVisitors: number;
+        topPages: {
+            path: string;
+            views: number;
+        }[];
+    }>;
     getSalesMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").SalesMetrics>;
     getCustomerMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").CustomerMetrics>;
     getInventoryMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").InventoryMetrics>;

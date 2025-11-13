@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SupportService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../notifications/mail.service");
 let SupportService = class SupportService {
@@ -19,13 +20,15 @@ let SupportService = class SupportService {
         this.mailService = mailService;
     }
     async createArticle(data) {
-        const created = await this.prisma.knowledgeBaseEntry.create({
+        const created = await this.prisma.knowledge_base_entries.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 title: data.title,
                 content: data.content,
                 kind: data.category,
                 tags: data.tags?.join(',') || null,
                 isActive: data.published ?? false,
+                updatedAt: new Date(),
             },
         });
         return this.mapEntryToArticle(created);
@@ -49,13 +52,13 @@ let SupportService = class SupportService {
             where.kind = params.category;
         }
         const [entries, totalCount] = await Promise.all([
-            this.prisma.knowledgeBaseEntry.findMany({
+            this.prisma.knowledge_base_entries.findMany({
                 where,
                 skip,
                 take: pageSize,
                 orderBy: { createdAt: 'desc' }
             }),
-            this.prisma.knowledgeBaseEntry.count({ where })
+            this.prisma.knowledge_base_entries.count({ where })
         ]);
         const items = entries.map(e => this.mapEntryToArticle(e));
         const totalPages = Math.ceil(totalCount / pageSize);
@@ -68,14 +71,14 @@ let SupportService = class SupportService {
         };
     }
     async getArticle(idOrSlug) {
-        const entry = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: idOrSlug } });
+        const entry = await this.prisma.knowledge_base_entries.findUnique({ where: { id: idOrSlug } });
         if (!entry)
             throw new Error('Article not found');
-        await this.prisma.knowledgeBaseEntry.update({
+        await this.prisma.knowledge_base_entries.update({
             where: { id: entry.id },
             data: { viewCount: { increment: 1 } }
         });
-        const refreshed = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: entry.id } });
+        const refreshed = await this.prisma.knowledge_base_entries.findUnique({ where: { id: entry.id } });
         return this.mapEntryToArticle(refreshed);
     }
     async updateArticle(id, data) {
@@ -90,16 +93,16 @@ let SupportService = class SupportService {
             updateData.tags = data.tags.join(',');
         if (data.published !== undefined)
             updateData.isActive = data.published;
-        const updated = await this.prisma.knowledgeBaseEntry.update({ where: { id }, data: updateData });
+        const updated = await this.prisma.knowledge_base_entries.update({ where: { id }, data: updateData });
         return this.mapEntryToArticle(updated);
     }
     async deleteArticle(id) {
-        await this.prisma.knowledgeBaseEntry.delete({ where: { id } });
+        await this.prisma.knowledge_base_entries.delete({ where: { id } });
         return { success: true };
     }
     async feedback(id, helpful) {
         const updateField = helpful ? 'helpful' : 'notHelpful';
-        const updated = await this.prisma.knowledgeBaseEntry.update({
+        const updated = await this.prisma.knowledge_base_entries.update({
             where: { id },
             data: { [updateField]: { increment: 1 } }
         });
@@ -217,7 +220,7 @@ let SupportService = class SupportService {
         return ticket;
     }
     async searchKnowledgeBase(query) {
-        const entries = await this.prisma.knowledgeBaseEntry.findMany({
+        const entries = await this.prisma.knowledge_base_entries.findMany({
             where: {
                 isActive: true,
                 OR: [
@@ -244,7 +247,7 @@ let SupportService = class SupportService {
         }));
     }
     async getCategories() {
-        const categories = await this.prisma.knowledgeBaseEntry.findMany({
+        const categories = await this.prisma.knowledge_base_entries.findMany({
             where: { isActive: true },
             select: { kind: true },
             distinct: ['kind']

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
@@ -13,21 +14,29 @@ export class PaymentsService {
   ) {}
 
   async createIntent(params: { orderId: string; provider: 'PAYOS' | 'COD'; returnUrl?: string }) {
-    const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
+    const order = await this.prisma.orders.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
-    const intent = await this.prisma.paymentIntent.create({
-      data: { orderId: order.id, provider: params.provider, amountCents: order.totalCents, status: 'PENDING', returnUrl: params.returnUrl ?? null },
+    const intent = await this.prisma.payment_intents.create({
+      data: { 
+        id: randomUUID(),
+        orderId: order.id, 
+        provider: params.provider, 
+        amountCents: order.totalCents, 
+        status: 'PENDING', 
+        returnUrl: params.returnUrl ?? null,
+        updatedAt: new Date()
+      },
     });
     // For COD, no redirect needed
     if (params.provider === 'COD') {
-      await this.prisma.order.update({
+      await this.prisma.orders.update({
         where: { id: order.id },
         data: { 
           status: 'CONFIRMED'
         }
       });
       // Update payment intent to mark COD
-      await this.prisma.paymentIntent.update({
+      await this.prisma.payment_intents.update({
         where: { id: intent.id },
         data: { 
           status: 'PENDING',
@@ -175,25 +184,28 @@ export class PaymentsService {
   }
 
   async markPaid(provider: 'VNPAY' | 'MOMO' | 'PAYOS', txnRef: string, transactionId?: string) {
-    const intent = await this.prisma.paymentIntent.findUnique({ where: { id: txnRef } });
+    const intent = await this.prisma.payment_intents.findUnique({ where: { id: txnRef } });
     if (!intent) throw new BadRequestException('Intent not found');
 
-    const order = await this.prisma.order.findUnique({ where: { id: intent.orderId } });
+    const order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
     if (!order) throw new BadRequestException('Order not found');
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.payment.create({
+      await tx.payments.create({
         data: {
+          id: randomUUID(),
           provider,
           orderId: intent.orderId,
           intentId: intent.id,
           amountCents: intent.amountCents,
           status: 'SUCCEEDED',
-          transactionId: transactionId || txnRef
+          transactionId: transactionId || txnRef,
+          updatedAt: new Date()
         }
       });
-      await tx.order.update({ where: { id: intent.orderId }, data: { status: 'PAID' } });
-      await tx.paymentIntent.update({ where: { id: intent.id }, data: { status: 'SUCCEEDED' } });
+      // ✅ Change status to CONFIRMED instead of PAID
+      await tx.orders.update({ where: { id: intent.orderId }, data: { status: 'CONFIRMED' } });
+      await tx.payment_intents.update({ where: { id: intent.id }, data: { status: 'SUCCEEDED' } });
     });
 
     // Send real-time notification
@@ -211,36 +223,42 @@ export class PaymentsService {
   }
 
   async createRefund(paymentId: string, amountCents?: number, reason?: string) {
-    const payment = await this.prisma.payment.findUnique({
+    const payment = await this.prisma.payments.findUnique({
       where: { id: paymentId },
-      include: { order: true }
+      include: { orders: true }
     });
 
     if (!payment) throw new BadRequestException('Payment not found');
     if (payment.status !== 'SUCCEEDED') throw new BadRequestException('Payment not succeeded');
 
-    const refundAmount = amountCents || payment.amountCents;
-    if (refundAmount > payment.amountCents) {
+    // ✅ Validate refund amount properly
+    if (amountCents === undefined || amountCents === null || amountCents <= 0) {
+      throw new BadRequestException('Refund amount must be a positive number');
+    }
+
+    if (amountCents > payment.amountCents) {
       throw new BadRequestException('Refund amount cannot exceed payment amount');
     }
 
     // Check existing refunds
-    const existingRefunds = await this.prisma.refund.findMany({
+    const existingRefunds = await this.prisma.refunds.findMany({
       where: { paymentId: payment.id }
     });
     const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
 
-    if (totalRefunded + refundAmount > payment.amountCents) {
+    if (totalRefunded + amountCents > payment.amountCents) {
       throw new BadRequestException('Total refund amount would exceed payment amount');
     }
 
     // Create refund record
-    const refund = await this.prisma.refund.create({
+    const refund = await this.prisma.refunds.create({
       data: {
+        id: randomUUID(),
         paymentId: payment.id,
-        amountCents: refundAmount,
+        amountCents: amountCents,
         reason: reason || 'Customer request',
-        status: 'PENDING'
+        status: 'PENDING',
+        updatedAt: new Date()
       }
     });
 
@@ -262,7 +280,7 @@ export class PaymentsService {
       }
 
       // Update refund status
-      await this.prisma.refund.update({
+      await this.prisma.refunds.update({
         where: { id: refund.id },
         data: {
           status: refundResult.success ? 'SUCCEEDED' : 'FAILED',
@@ -273,16 +291,16 @@ export class PaymentsService {
 
       this.logger.log(`Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`);
 
-      // Send notification if user exists
-      if (payment.order.userId) {
+      // Send notification if order user exists
+      if (payment.orderId) {
         // TODO: Implement notification system
-        this.logger.log(`Refund notification sent to user ${payment.order.userId}`);
+        this.logger.log(`Refund notification sent for order ${payment.orderId}`);
       }
 
       return { refundId: refund.id, success: refundResult.success };
     } catch (error) {
       // Update refund status on error
-      await this.prisma.refund.update({
+      await this.prisma.refunds.update({
         where: { id: refund.id },
         data: {
           status: 'FAILED',
@@ -318,7 +336,7 @@ export class PaymentsService {
         vnp_TmnCode: vnpTmnCode,
         vnp_TransactionType: '02', // 02 for full refund, 03 for partial
         vnp_TxnRef: payment.transactionId,
-        vnp_Amount: refund.amountCents * 100, // Convert to VND (multiply by 100)
+        vnp_Amount: refund.amountCents, // ✅ Already in cents, don't multiply by 100
         vnp_OrderInfo: `Refund for transaction ${payment.transactionId}`,
         vnp_TransactionNo: payment.transactionId,
         vnp_TransactionDate: payment.createdAt.toISOString().slice(0, 19).replace(/[:-]/g, ''),
@@ -494,13 +512,13 @@ export class PaymentsService {
     const { orderId, resultCode, transId } = payload;
 
     // MOMO sends orderId as our orderNo. Resolve to latest intent for this order
-    const order = await this.prisma.order.findUnique({ where: { orderNo: orderId } });
+    const order = await this.prisma.orders.findUnique({ where: { orderNo: orderId } });
     if (!order) {
       this.logger.error(`MOMO webhook: order not found for orderNo=${orderId}`);
       return { resultCode: 0, message: 'ignored' };
     }
 
-    const intent = await this.prisma.paymentIntent.findFirst({
+    const intent = await this.prisma.payment_intents.findFirst({
       where: { orderId: order.id, provider: 'MOMO' },
       orderBy: { createdAt: 'desc' },
     });
@@ -530,13 +548,13 @@ export class PaymentsService {
     }
 
     // PayOS sends orderCode as our orderNo. Resolve to latest intent for this order
-    const order = await this.prisma.order.findUnique({ where: { orderNo: orderCode } });
+    const order = await this.prisma.orders.findUnique({ where: { orderNo: orderCode } });
     if (!order) {
       this.logger.error(`PayOS webhook: order not found for orderNo=${orderCode}`);
       return { error: 0, message: 'ignored' };
     }
 
-    const intent = await this.prisma.paymentIntent.findFirst({
+    const intent = await this.prisma.payment_intents.findFirst({
       where: { orderId: order.id, provider: 'PAYOS' },
       orderBy: { createdAt: 'desc' },
     });
@@ -562,15 +580,15 @@ export class PaymentsService {
       return;
     }
 
-    const intent = await this.prisma.paymentIntent.findUnique({ where: { id: txnRef } });
+    const intent = await this.prisma.payment_intents.findUnique({ where: { id: txnRef } });
     if (!intent) return;
 
-    await this.prisma.paymentIntent.update({
+    await this.prisma.payment_intents.update({
       where: { id: intent.id },
       data: { status: 'FAILED' }
     });
 
-    const _order = await this.prisma.order.findUnique({ where: { id: intent.orderId } });
+    const _order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
     // if (order?.userId) {
     //   this.websocketGateway.notifyOrderUpdate(order.id, order.userId, 'PAYMENT_FAILED', {
     //     orderNo: order.orderNo,

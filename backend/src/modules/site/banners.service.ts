@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBannerDto } from './dto/banner-create.dto';
 import { UpdateBannerDto } from './dto/banner-update.dto';
@@ -14,7 +15,7 @@ export class BannersService {
     search?: string;
     skip?: number;
     take?: number;
-    orderBy?: Prisma.BannerOrderByWithRelationInput;
+    orderBy?: Prisma.bannersOrderByWithRelationInput;
   }) {
     const {
       page,
@@ -25,7 +26,7 @@ export class BannersService {
       orderBy = { position: 'asc' },
     } = params;
 
-    const where: Prisma.BannerWhereInput = {
+    const where: Prisma.bannersWhereInput = {
       isDeleted: false,
       ...(page && { page }),
       ...(isActive !== undefined && { isActive }),
@@ -39,13 +40,13 @@ export class BannersService {
     };
 
     const [banners, total] = await Promise.all([
-      this.prisma.banner.findMany({
+      this.prisma.banners.findMany({
         where,
         skip,
         take,
         orderBy,
       }),
-      this.prisma.banner.count({ where }),
+      this.prisma.banners.count({ where }),
     ]);
 
     return {
@@ -58,7 +59,7 @@ export class BannersService {
   }
 
   async findById(id: string) {
-    const banner = await this.prisma.banner.findFirst({
+    const banner = await this.prisma.banners.findFirst({
       where: {
         id,
         isDeleted: false,
@@ -73,20 +74,24 @@ export class BannersService {
   }
 
   async create(data: CreateBannerDto) {
-    return this.prisma.banner.create({
-      data,
+    return this.prisma.banners.create({
+      data: {
+        id: randomUUID(),
+        ...data,
+        updatedAt: new Date(),
+      },
     });
   }
 
   async update(id: string, data: UpdateBannerDto) {
-    return this.prisma.banner.update({
+    return this.prisma.banners.update({
       where: { id },
       data,
     });
   }
 
   async softDelete(id: string) {
-    return this.prisma.banner.update({
+    return this.prisma.banners.update({
       where: { id },
       data: {
         isDeleted: true,
@@ -97,7 +102,7 @@ export class BannersService {
 
   async reorder(idsInOrder: string[]) {
     const updates = idsInOrder.map((id, index) =>
-      this.prisma.banner.update({
+      this.prisma.banners.update({
         where: { id },
         data: { position: index },
       })
@@ -109,7 +114,7 @@ export class BannersService {
   async getActiveBanners(page?: string) {
     const now = new Date();
     
-    return this.prisma.banner.findMany({
+    return this.prisma.banners.findMany({
       where: {
         isDeleted: false,
         isActive: true,

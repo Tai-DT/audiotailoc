@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { Prisma } from '@prisma/client';
 import { ServiceBookingStatus } from '../../common/enums';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -15,14 +17,22 @@ export class ServicesService {
 
     // Validate typeId exist if provided
     if (data.typeId) {
-      const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+      const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
       if (!type) {
         throw new BadRequestException('Invalid type ID');
       }
     }
 
     // Handle price based on type
-    let priceData: any = {
+    type PriceData = Partial<{
+      priceType: string;
+      minPrice: number | null;
+      maxPrice: number | null;
+      basePriceCents: number;
+      price: number;
+    }>;
+
+    let priceData: PriceData = {
       priceType: data.priceType || 'FIXED',
     };
 
@@ -48,8 +58,9 @@ export class ServicesService {
       priceData.maxPrice = null;
     }
 
-    return this.prisma.service.create({
+    return this.prisma.services.create({
       data: {
+        id: randomUUID(),
         name: data.name,
         slug,
         description: data.description,
@@ -58,10 +69,11 @@ export class ServicesService {
         duration: data.estimatedDuration || 60,
         images: data.imageUrl,
         isActive: data.isActive ?? true,
+        updatedAt: new Date(),
       },
       include: {
-        items: true,
-        serviceType: true,
+        service_items: true,
+        service_types: true,
       },
     });
   }
@@ -73,24 +85,23 @@ export class ServicesService {
     page?: number;
     pageSize?: number;
   }) {
-    console.log('[DEBUG] ServicesService.getServices called with params:', params);
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
 
-    const where: any = {};
+  const where: Prisma.servicesWhereInput = {};
     if (params.typeId) where.typeId = params.typeId;
     if (params.isActive !== undefined) where.isActive = params.isActive;
 
     const [total, services] = await this.prisma.$transaction([
-      this.prisma.service.count({ where }),
-      this.prisma.service.findMany({
+      this.prisma.services.count({ where }),
+      this.prisma.services.findMany({
         where,
         include: {
-          items: true,
-          serviceType: true,
+          service_items: true,
+          service_types: true,
           _count: {
             select: {
-              bookings: true,
+              service_bookings: true,
             },
           },
         },
@@ -103,26 +114,21 @@ export class ServicesService {
     // Map services to include computed price field
     const mappedServices = services.map(service => ({
       ...service,
-      price: service.basePriceCents / 100,
-      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
-      type: service.serviceType,
+      price: Number(service.basePriceCents) / 100,
+      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
+      type: service.service_types,
     }));
 
-    console.log('[DEBUG] ServicesService.getServices returning:', { total, page, pageSize, servicesCount: services.length });
     return { total, page, pageSize, services: mappedServices };
   }
 
   async getService(id: string) {
-    const service = await this.prisma.service.findUnique({
+    const service = await this.prisma.services.findUnique({
       where: { id },
       include: {
-        items: true,
-        serviceType: true,
-        bookings: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
+        service_items: true,
+        service_types: true,
       },
     });
 
@@ -132,19 +138,19 @@ export class ServicesService {
 
     return {
       ...service,
-      price: service.basePriceCents / 100,
-      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
-      type: service.serviceType,
+      price: Number(service.basePriceCents) / 100,
+      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
+      type: service.service_types,
     };
   }
 
   async getServiceBySlug(slug: string) {
-    const service = await this.prisma.service.findUnique({
+    const service = await this.prisma.services.findUnique({
       where: { slug },
       include: {
-        items: true,
-        serviceType: true,
+        service_items: true,
+        service_types: true,
       },
     });
 
@@ -154,14 +160,14 @@ export class ServicesService {
 
     return {
       ...service,
-      price: service.basePriceCents / 100,
-      type: service.serviceType,
+      price: Number(service.basePriceCents) / 100,
+      type: service.service_types,
     };
   }
 
   async updateService(id: string, data: UpdateServiceDto) {
     // Check if service exists
-    const existingService = await this.prisma.service.findUnique({
+    const existingService = await this.prisma.services.findUnique({
       where: { id },
     });
     if (!existingService) {
@@ -170,13 +176,13 @@ export class ServicesService {
 
     // Validate typeId if provided
     if (data.typeId) {
-      const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+      const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
       if (!type) {
         throw new BadRequestException('Invalid type ID');
       }
     }
 
-    const updateData: any = {};
+  const updateData: Prisma.servicesUncheckedUpdateInput = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.typeId !== undefined) updateData.typeId = data.typeId;
@@ -217,21 +223,21 @@ export class ServicesService {
     if (data.imageUrl !== undefined) updateData.images = data.imageUrl;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    const updated = await this.prisma.service.update({
+    const updated = await this.prisma.services.update({
       where: { id },
       data: updateData,
       include: {
-        items: true,
-        serviceType: true,
+        service_items: true,
+        service_types: true,
       },
     });
 
     return {
       ...updated,
-      price: updated.basePriceCents / 100,
-      minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
-      maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
-      type: updated.serviceType,
+      price: Number(updated.basePriceCents) / 100,
+      minPriceDisplay: updated.minPrice ? Number(updated.minPrice) / 100 : null,
+      maxPriceDisplay: updated.maxPrice ? Number(updated.maxPrice) / 100 : null,
+      type: updated.service_types,
     };
   }
 
@@ -246,7 +252,7 @@ export class ServicesService {
     const _service = await this.getService(id);
 
     // Check if service has any bookings
-    const bookingCount = await this.prisma.serviceBooking.count({
+    const bookingCount = await this.prisma.service_bookings.count({
       where: { serviceId: id },
     });
 
@@ -254,7 +260,7 @@ export class ServicesService {
       throw new BadRequestException('Không thể xóa dịch vụ đã có booking');
     }
 
-    return this.prisma.service.delete({
+    return this.prisma.services.delete({
       where: { id },
     });
   }
@@ -266,12 +272,14 @@ export class ServicesService {
   }) {
     await this.getService(serviceId); // Ensure service exists
 
-    return this.prisma.serviceItem.create({
+    return this.prisma.service_items.create({
       data: {
+        id: randomUUID(),
         serviceId,
         name: data.name,
         price: data.priceCents,
         quantity: 1,
+        updatedAt: new Date(),
       },
     });
   }
@@ -280,7 +288,7 @@ export class ServicesService {
     name: string;
     priceCents: number;
   }>) {
-    const item = await this.prisma.serviceItem.findUnique({
+    const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
 
@@ -288,18 +296,18 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy mục dịch vụ');
     }
 
-    const updateData: any = {};
+  const updateData: Prisma.service_itemsUncheckedUpdateInput = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.priceCents !== undefined) updateData.price = data.priceCents;
 
-    return this.prisma.serviceItem.update({
+    return this.prisma.service_items.update({
       where: { id: itemId },
       data: updateData,
     });
   }
 
   async deleteServiceItem(itemId: string) {
-    const item = await this.prisma.serviceItem.findUnique({
+    const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
 
@@ -308,7 +316,7 @@ export class ServicesService {
     }
 
     // Check if item is used in any bookings
-    const bookingItemCount = await this.prisma.serviceBookingItem.count({
+    const bookingItemCount = await this.prisma.service_booking_items.count({
       where: { serviceItemId: itemId },
     });
 
@@ -316,13 +324,13 @@ export class ServicesService {
       throw new BadRequestException('Không thể xóa mục dịch vụ đã được sử dụng');
     }
 
-    return this.prisma.serviceItem.delete({
+    return this.prisma.service_items.delete({
       where: { id: itemId },
     });
   }
 
   async getServiceTypes() {
-    const types = await this.prisma.serviceType.findMany({
+    const types = await this.prisma.service_types.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
     });
@@ -355,14 +363,14 @@ export class ServicesService {
       completedBookings,
       revenue,
     ] = await Promise.all([
-      this.prisma.service.count(),
-      this.prisma.service.count({ where: { isActive: true } }),
-      this.prisma.serviceBooking.count(),
-      this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.PENDING } }),
-      this.prisma.serviceBooking.count({ where: { status: ServiceBookingStatus.COMPLETED } }),
-      this.prisma.serviceBookingItem.aggregate({
+      this.prisma.services.count(),
+      this.prisma.services.count({ where: { isActive: true } }),
+      this.prisma.service_bookings.count(),
+      this.prisma.service_bookings.count({ where: { status: ServiceBookingStatus.PENDING } }),
+      this.prisma.service_bookings.count({ where: { status: ServiceBookingStatus.COMPLETED } }),
+      this.prisma.service_booking_items.aggregate({
         where: {
-          booking: { status: ServiceBookingStatus.COMPLETED },
+          service_bookings: { status: ServiceBookingStatus.COMPLETED },
         },
         _sum: { price: true },
       }),

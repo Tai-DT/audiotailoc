@@ -15,7 +15,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
 
     // Extend with Accelerate for better performance
-    Object.assign(this, this.$extends(withAccelerate()));
+    // Only use Accelerate in production or when explicitly enabled
+    const useAccelerate = process.env.USE_PRISMA_ACCELERATE === 'true' || process.env.NODE_ENV === 'production';
+    if (useAccelerate) {
+      Object.assign(this, this.$extends(withAccelerate()));
+    }
 
     // Optional startup logs (disabled by default)
     const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';

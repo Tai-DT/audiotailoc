@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
 
 @ApiTags('Content - Banners')
-@Controller('content/banners')
+@Controller(['content/banners', 'site/banners'])
 export class BannersController {
   constructor(private readonly bannersService: BannersService) {}
 

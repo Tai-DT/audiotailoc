@@ -31,12 +31,11 @@ export declare class ActivityLogService {
     }): Promise<{
         logs: {
             details: any;
-            user: {
+            users: {
                 id: string;
                 email: string;
                 name: string;
             };
-            category: string;
             id: string;
             createdAt: Date;
             userId: string | null;
@@ -46,6 +45,7 @@ export declare class ActivityLogService {
             statusCode: number | null;
             duration: number | null;
             severity: string;
+            category: string;
             action: string;
             resource: string | null;
             resourceId: string | null;

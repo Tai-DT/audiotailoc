@@ -4,6 +4,7 @@
 */
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -20,13 +21,13 @@ async function createAdminUser() {
     const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     // Check if admin user already exists
-    const existingAdmin = await prisma.user.findUnique({
+    const existingAdmin = await prisma.users.findUnique({
       where: { email: adminEmail }
     });
 
     if (existingAdmin) {
       console.log('✅ Admin user already exists, updating password...');
-      await prisma.user.update({
+      await prisma.users.update({
         where: { email: adminEmail },
         data: {
           password: hashedPassword,
@@ -36,8 +37,10 @@ async function createAdminUser() {
       });
     } else {
       console.log('✅ Creating new admin user...');
-      await prisma.user.create({
+      await prisma.users.create({
         data: {
+          id: randomUUID(),
+          updatedAt: new Date(),
           email: adminEmail,
           password: hashedPassword,
           name: adminName,

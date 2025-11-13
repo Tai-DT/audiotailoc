@@ -101,7 +101,7 @@ async function bootstrap() {
       // Check exact match first
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
-      } 
+      }
       // Check wildcard patterns for Vercel domains
       else if (allowedOrigins.some(allowedOrigin => {
         if (allowedOrigin.includes('*')) {

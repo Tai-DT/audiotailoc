@@ -98,7 +98,7 @@ let RateLimitMiddleware = class RateLimitMiddleware {
         const forwarded = req.get('X-Forwarded-For');
         const realIP = req.get('X-Real-IP');
         const ip = forwarded?.split(',')[0] || realIP || req.ip || req.connection.remoteAddress;
-        const userId = req.user?.id;
+        const userId = req.users?.id;
         if (userId) {
             return `user:${userId}:${ip}`;
         }
@@ -164,7 +164,7 @@ let RateLimitGuard = class RateLimitGuard {
     }
     getDefaultKey(request) {
         const ip = request.ip || request.connection.remoteAddress;
-        const userId = request.user?.id;
+        const userId = request.users?.id;
         return userId ? `user:${userId}` : `ip:${ip}`;
     }
 };

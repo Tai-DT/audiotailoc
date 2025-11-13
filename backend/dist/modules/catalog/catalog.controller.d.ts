@@ -51,6 +51,12 @@ export declare class CatalogController {
         deleted: boolean;
         message?: string;
     }>;
+    searchProducts(q: string, limit?: number): Promise<{
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
+    }>;
     get(id: string): Promise<import("./catalog.service").ProductDto>;
     getBySlug(slug: string): Promise<import("./catalog.service").ProductDto>;
     checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;

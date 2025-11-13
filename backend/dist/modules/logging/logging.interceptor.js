@@ -77,8 +77,8 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
         }));
     }
     extractUserId(request) {
-        return (request.user?.id ||
-            request.user?.userId ||
+        return (request.users?.id ||
+            request.users?.userId ||
             request.headers['x-user-id'] ||
             request.query.userId);
     }

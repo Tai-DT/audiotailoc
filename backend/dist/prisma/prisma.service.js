@@ -23,7 +23,10 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
             },
             log: ['error'],
         });
-        Object.assign(this, this.$extends((0, extension_accelerate_1.withAccelerate)()));
+        const useAccelerate = process.env.USE_PRISMA_ACCELERATE === 'true' || process.env.NODE_ENV === 'production';
+        if (useAccelerate) {
+            Object.assign(this, this.$extends((0, extension_accelerate_1.withAccelerate)()));
+        }
         const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
         const logDbUrl = (process.env.LOG_DB_URL || '').toLowerCase() === 'true';
         if (logPrisma && logDbUrl) {

@@ -41,8 +41,13 @@ export declare class OrdersController {
         customerEmail?: string;
         notes?: string;
     }): Promise<any>;
+    getStats(): Promise<{
+        totalOrders: number;
+        pendingOrders: number;
+        completedOrders: number;
+    }>;
     get(id: string): Promise<{
-        items: {
+        order_items: {
             id: string;
             name: string | null;
             createdAt: Date;

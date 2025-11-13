@@ -107,17 +107,17 @@ export class AnalyticsService {
 
     // Current period stats
     const [orders, users, revenue] = await Promise.all([
-      this.prisma.order.findMany({
+      this.prisma.orders.findMany({
         where: { createdAt: { gte: startDate, lte: endDate } },
-        include: { items: true }
+        include: { order_items: true }
       }),
-      this.prisma.user.count({
+      this.prisma.users.count({
         where: { 
           role: 'USER',
           createdAt: { gte: startDate, lte: endDate }
         }
       }),
-      this.prisma.order.aggregate({
+      this.prisma.orders.aggregate({
         where: { 
           createdAt: { gte: startDate, lte: endDate },
           status: { in: ['DELIVERED', 'COMPLETED'] }
@@ -128,16 +128,16 @@ export class AnalyticsService {
 
     // Previous period stats for growth calculation
     const [prevOrders, prevUsers, prevRevenue] = await Promise.all([
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { createdAt: { gte: previousPeriod.start, lte: previousPeriod.end } }
       }),
-      this.prisma.user.count({
+      this.prisma.users.count({
         where: { 
           role: 'USER',
           createdAt: { gte: previousPeriod.start, lte: previousPeriod.end }
         }
       }),
-      this.prisma.order.aggregate({
+      this.prisma.orders.aggregate({
         where: { 
           createdAt: { gte: previousPeriod.start, lte: previousPeriod.end },
           status: { in: ['DELIVERED', 'COMPLETED'] }
@@ -154,7 +154,7 @@ export class AnalyticsService {
     return {
       totalRevenue,
       totalOrders,
-      totalCustomers: await this.prisma.user.count({ where: { role: 'USER' } }),
+      totalCustomers: await this.prisma.users.count({ where: { role: 'USER' } }),
       newCustomers: users,
       conversionRate,
       revenueGrowth: this.calculateGrowthRate(totalRevenue, prevTotalRevenue),
@@ -176,17 +176,17 @@ export class AnalyticsService {
       nextDate.setDate(nextDate.getDate() + 1);
 
       const [revenue, orders, customers] = await Promise.all([
-        this.prisma.order.aggregate({
+        this.prisma.orders.aggregate({
           where: {
             createdAt: { gte: date, lt: nextDate },
             status: { in: ['DELIVERED', 'COMPLETED'] }
           },
           _sum: { totalCents: true }
         }),
-        this.prisma.order.count({
+        this.prisma.orders.count({
           where: { createdAt: { gte: date, lt: nextDate } }
         }),
-        this.prisma.user.count({
+        this.prisma.users.count({
           where: {
             role: 'USER',
             createdAt: { gte: date, lt: nextDate }
@@ -207,7 +207,7 @@ export class AnalyticsService {
 
   // Get top products
   async getTopProducts(limit: number = 5) {
-    const topProducts = await this.prisma.orderItem.groupBy({
+    const topProducts = await this.prisma.order_items.groupBy({
       by: ['productId'],
       _sum: {
         quantity: true,
@@ -222,7 +222,7 @@ export class AnalyticsService {
       take: limit
     });
 
-    const products = await this.prisma.product.findMany({
+    const products = await this.prisma.products.findMany({
       where: {
         id: { in: topProducts.map(p => p.productId) }
       }
@@ -241,7 +241,7 @@ export class AnalyticsService {
 
   // Get top services
   async getTopServices(limit: number = 5) {
-    const bookings = await this.prisma.serviceBooking.groupBy({
+    const bookings = await this.prisma.service_bookings.groupBy({
       by: ['serviceId'],
       _count: true,
       _sum: {
@@ -255,7 +255,7 @@ export class AnalyticsService {
       take: limit
     });
 
-    const services = await this.prisma.service.findMany({
+    const services = await this.prisma.services.findMany({
       where: {
         id: { in: bookings.map(b => b.serviceId) }
       }
@@ -277,12 +277,12 @@ export class AnalyticsService {
     const { startDate, endDate } = this.parseDateRange(range);
     
     const [pageViews] = await Promise.all([
-      this.prisma.productView.count({
+      this.prisma.product_views.count({
         where: { timestamp: { gte: startDate, lte: endDate } }
       }),
     ]);
 
-    const sessions = await this.prisma.activityLog.groupBy({
+    const sessions = await this.prisma.activity_logs.groupBy({
       by: ['userId'],
       where: { 
         createdAt: { gte: startDate, lte: endDate },
@@ -292,7 +292,7 @@ export class AnalyticsService {
     });
 
     // Get actual activity logs for duration calculation
-    const activityLogRecords = await this.prisma.activityLog.findMany({
+    const activityLogRecords = await this.prisma.activity_logs.findMany({
       where: { createdAt: { gte: startDate, lte: endDate } },
       select: { duration: true }
     });
@@ -313,17 +313,17 @@ export class AnalyticsService {
   async getRevenueByCategory(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
     
-    const orderItems = await this.prisma.orderItem.findMany({
+    const orderItems = await this.prisma.order_items.findMany({
       where: {
-        order: {
+        orders: {
           createdAt: { gte: startDate, lte: endDate },
           status: { in: ['DELIVERED', 'COMPLETED'] }
         }
       },
       include: {
-        product: {
+        products: {
           include: {
-            category: true
+            categories: true
           }
         }
       }
@@ -332,7 +332,7 @@ export class AnalyticsService {
     const categoryRevenue = new Map<string, number>();
     
     orderItems.forEach(item => {
-      const categoryName = item.product?.category?.name || 'Khác';
+      const categoryName = item.products?.categories?.name || 'Khác';
       const revenue = (Number(item.price) * item.quantity) / 100;
       categoryRevenue.set(
         categoryName,
@@ -351,16 +351,16 @@ export class AnalyticsService {
     const { startDate, endDate } = this.parseDateRange(range);
     
     const [totalCustomers, newCustomers, orders] = await Promise.all([
-      this.prisma.user.count({ where: { role: 'USER' } }),
-      this.prisma.user.count({
+      this.prisma.users.count({ where: { role: 'USER' } }),
+      this.prisma.users.count({
         where: {
           role: 'USER',
           createdAt: { gte: startDate, lte: endDate }
         }
       }),
-      this.prisma.order.findMany({
+      this.prisma.orders.findMany({
         where: { createdAt: { gte: startDate, lte: endDate } },
-        include: { user: true }
+        include: { users: true }
       })
     ]);
 
@@ -383,16 +383,16 @@ export class AnalyticsService {
     const { startDate, endDate } = this.parseDateRange(range);
     
     const [orders, completedOrders, cancelledOrders] = await Promise.all([
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: { createdAt: { gte: startDate, lte: endDate } }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           status: { in: ['DELIVERED', 'COMPLETED'] }
         }
       }),
-      this.prisma.order.count({
+      this.prisma.orders.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           status: 'CANCELLED'
@@ -501,7 +501,7 @@ export class AnalyticsService {
       const { startDate, endDate } = this.getDateRange(filters);
 
       // Total customers
-      const totalCustomers = await this.prisma.user.count({
+      const totalCustomers = await this.prisma.users.count({
         where: {
           role: 'USER',
           createdAt: { lte: endDate },
@@ -509,7 +509,7 @@ export class AnalyticsService {
       });
 
       // New customers in period
-      const newCustomers = await this.prisma.user.count({
+      const newCustomers = await this.prisma.users.count({
         where: {
           role: 'USER',
           createdAt: { gte: startDate, lte: endDate },
@@ -517,7 +517,7 @@ export class AnalyticsService {
       });
 
       // Returning customers (customers with more than one order)
-      const returningCustomersData = await this.prisma.user.findMany({
+      const returningCustomersData = await this.prisma.users.findMany({
         where: {
           role: 'USER',
           orders: { some: { createdAt: { gte: startDate, lte: endDate } } },
@@ -540,7 +540,7 @@ export class AnalyticsService {
       const customerLifetimeValue = await this.calculateCustomerLifetimeValue(filters);
 
       // Average orders per customer
-      const totalOrders = await this.prisma.order.count({
+      const totalOrders = await this.prisma.orders.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           status: { in: ['COMPLETED', 'DELIVERED'] },
@@ -585,7 +585,7 @@ export class AnalyticsService {
 
     try {
       // Total products
-      const totalProducts = await this.prisma.product.count();
+      const totalProducts = await this.prisma.products.count();
 
       // Low stock products (assuming stock level < 10)
       const lowStockProducts = await this.prisma.inventory.count({
@@ -594,8 +594,8 @@ export class AnalyticsService {
 
       // Out of stock products
       const outOfStockProducts = await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
-      const inventoryRows = await this.prisma.inventory.findMany({ include: { product: { select: { priceCents: true } } } });
-      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.product?.priceCents || 0) * row.stock, 0);
+      const inventoryRows = await this.prisma.inventory.findMany({ include: { products: { select: { priceCents: true } } } });
+      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock, 0);
 
       // Average inventory turnover (simplified calculation)
       const averageInventoryTurnover = await this.calculateInventoryTurnover(filters);
@@ -786,13 +786,13 @@ export class AnalyticsService {
     _filters: AnalyticsFilters
   ): Promise<Omit<SalesMetrics, 'revenueGrowth' | 'orderGrowth' | 'topProducts' | 'salesByPeriod'>> {
     // Get orders in the period
-    const orders = await this.prisma.order.findMany({
+    const orders = await this.prisma.orders.findMany({
       where: {
         createdAt: { gte: startDate, lte: endDate },
         status: { in: ['COMPLETED', 'DELIVERED'] },
       },
       include: {
-        items: true,
+        order_items: true,
       },
     });
 

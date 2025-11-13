@@ -40,7 +40,7 @@ export class AppController {
   @Get('api/v1/users')
   async getUsers() {
     try {
-      const users = await this.prisma.user.findMany({
+      const users = await this.prisma.users.findMany({
         take: 10,
         select: {
           id: true,
@@ -66,10 +66,10 @@ export class AppController {
   @Get('api/v1/products')
   async getProducts() {
     try {
-      const products = await this.prisma.product.findMany({
+      const products = await this.prisma.products.findMany({
         take: 10,
         include: {
-          category: true
+          categories: true
         }
       });
       return {

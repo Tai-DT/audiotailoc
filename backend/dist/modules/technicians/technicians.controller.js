@@ -56,6 +56,9 @@ let TechniciansController = class TechniciansController {
     async deleteTechnician(id) {
         return this.techniciansService.deleteTechnician(id);
     }
+    async getTechnicianAvailability(id, date) {
+        return this.techniciansService.getTechnicianAvailability(id, new Date(date));
+    }
     async setTechnicianSchedule(id, scheduleDto) {
         return this.techniciansService.setTechnicianSchedule(id, scheduleDto.schedules.map(s => ({
             date: new Date(s.date),
@@ -109,7 +112,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TechniciansController.prototype, "getTechnicianWorkload", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -124,7 +127,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TechniciansController.prototype, "deleteTechnician", null);
 __decorate([
-    (0, common_1.Put)(':id/schedule'),
+    (0, common_1.Get)(':id/availability'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('date')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TechniciansController.prototype, "getTechnicianAvailability", null);
+__decorate([
+    (0, common_1.Patch)(':id/schedule'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

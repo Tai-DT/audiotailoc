@@ -139,9 +139,12 @@ class ApiClient {
     }
 
     // Add admin API key for backend authentication
-    const adminKey = process.env.ADMIN_API_KEY || process.env.NEXT_PUBLIC_ADMIN_API_KEY;
+    const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY;
     if (adminKey) {
       headers['X-Admin-Key'] = adminKey;
+      console.log('🔑 Admin API Key added to headers');
+    } else {
+      console.warn('⚠️ ADMIN_API_KEY not found in environment variables');
     }
 
     return headers;
@@ -180,14 +183,31 @@ class ApiClient {
           status: response.status,
           statusText: response.statusText,
           url,
+          endpoint,
+          method: options.method || 'GET',
+          hasToken: !!this.token,
           requestBody: options.body ? JSON.parse(options.body.toString()) : null,
           responseHeaders: Object.fromEntries(response.headers.entries()),
           responseText: responseText.substring(0, 500) // First 500 chars of response
         };
 
-        console.error('API Error Response:', errorInfo);
+        // More descriptive error messages
+        let errorMessage = data?.message as string || `Request failed with status ${response.status}`;
+        
+        if (response.status === 401) {
+          errorMessage = 'Unauthorized: Please login again';
+        } else if (response.status === 403) {
+          errorMessage = 'Forbidden: You do not have permission to access this resource';
+        } else if (response.status === 404) {
+          errorMessage = 'Not Found: The requested resource does not exist';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server Error: Please try again later';
+        }
 
-        const error = new Error(data?.message as string || `Request failed with status ${response.status}`) as ApiError;
+        console.error('API Error Response:', errorInfo);
+        console.error('Error Message:', errorMessage);
+
+        const error = new Error(errorMessage) as ApiError;
         error.response = { data };
         error.status = response.status;
         throw error;

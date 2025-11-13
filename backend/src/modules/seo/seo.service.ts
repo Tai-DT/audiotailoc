@@ -33,9 +33,9 @@ export class SeoService {
 
   // Generate SEO data for product page
   async getProductSeo(productId: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
-    const product = await this.prisma.product.findUnique({
+    const product = await this.prisma.products.findUnique({
       where: { id: productId },
-      include: { category: true }
+      include: { categories: true }
     });
 
     if (!product) {
@@ -44,7 +44,7 @@ export class SeoService {
 
     const title = product.name;
     const description = product.description || '';
-    const keywords = `${product.name}, audio, âm thanh, ${product.category?.name || ''}`;
+    const keywords = `${product.name}, audio, âm thanh, ${product.categoryId || ''}`;
     const ogTitle = title;
     const ogDescription = description;
     const canonicalUrl = `${this.defaultSiteUrl}/products/${product.slug}`;
@@ -57,7 +57,7 @@ export class SeoService {
       entitySlug: product.slug,
       title: title || `${product.name} - ${this.defaultSiteName}`,
       description: description || `Mua ${product.name} chất lượng cao tại Audio Tài Lộc`,
-      keywords: keywords || `${product.name}, audio, âm thanh, ${product.category?.name || ''}`,
+      keywords: keywords || `${product.name}, audio, âm thanh, ${product.categoryId || ''}`,
       canonicalUrl,
       ogTitle: ogTitle || title,
       ogDescription: ogDescription || description || '',
@@ -73,7 +73,7 @@ export class SeoService {
 
   // Generate SEO data for category page
   async getCategorySeo(categoryId: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
-    const category = await this.prisma.category.findUnique({
+    const category = await this.prisma.categories.findUnique({
       where: { id: categoryId },
       include: { products: true }
     });
@@ -108,7 +108,7 @@ export class SeoService {
 
   // Generate SEO data for page
   async getPageSeo(slug: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
-    const page = await this.prisma.page.findUnique({
+    const page = await this.prisma.pages.findUnique({
       where: { slug }
     });
 
@@ -143,7 +143,7 @@ export class SeoService {
 
   // Generate SEO data for project
   async getProjectSeo(id: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
-    const project = await this.prisma.project.findUnique({
+    const project = await this.prisma.projects.findUnique({
       where: { id }
     });
 
@@ -208,10 +208,10 @@ export class SeoService {
   // Generate sitemap XML
   async generateSitemap(): Promise<string> {
     const [products, categories, pages, projects] = await Promise.all([
-      this.prisma.product.findMany({ select: { slug: true, updatedAt: true } }),
-      this.prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
-      this.prisma.page.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
-      this.prisma.project.findMany({ select: { id: true, updatedAt: true } })
+      this.prisma.products.findMany({ select: { slug: true, updatedAt: true } }),
+      this.prisma.categories.findMany({ select: { slug: true, updatedAt: true } }),
+      this.prisma.pages.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
+      this.prisma.projects.findMany({ select: { id: true, updatedAt: true } })
     ]);
 
     let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';

@@ -64,6 +64,16 @@ let CatalogController = class CatalogController {
     deleteCategory(id) {
         return this.catalog.deleteCategory(id);
     }
+    searchProducts(q, limit) {
+        const limitNum = Math.min(parseInt(limit?.toString() || '20'), 50);
+        return this.catalog.listProducts({
+            page: 1,
+            pageSize: limitNum,
+            q: q || '',
+            sortBy: 'createdAt',
+            sortOrder: 'desc'
+        });
+    }
     get(id) {
         return this.catalog.getById(id);
     }
@@ -198,6 +208,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "deleteCategory", null);
+__decorate([
+    (0, common_1.Get)('products/search'),
+    (0, common_1.UseGuards)(),
+    __param(0, (0, common_1.Query)('q')),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "searchProducts", null);
 __decorate([
     (0, common_1.Get)('products/:id'),
     (0, common_1.UseGuards)(),

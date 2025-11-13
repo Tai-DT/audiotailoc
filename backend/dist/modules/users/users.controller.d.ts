@@ -17,6 +17,9 @@ export declare class UsersController {
     constructor(usersService: UsersService);
     findAll(page?: string, limit?: string, search?: string, role?: string, status?: string, startDate?: string, endDate?: string, sortBy?: string, sortOrder?: string): Promise<{
         users: {
+            orders: {
+                totalCents: number;
+            }[];
             id: string;
             email: string;
             name: string;

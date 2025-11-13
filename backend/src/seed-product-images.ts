@@ -44,13 +44,13 @@ async function updateProductImages() {
     for (const productImage of productImages) {
       try {
         // Tìm sản phẩm theo slug
-        const product = await prisma.product.findUnique({
+        const product = await prisma.products.findUnique({
           where: { slug: productImage.slug }
         });
 
         if (product) {
           // Cập nhật hình ảnh
-          await prisma.product.update({
+          await prisma.products.update({
             where: { id: product.id },
             data: { imageUrl: productImage.imageUrl }
           });
@@ -69,7 +69,7 @@ async function updateProductImages() {
     // Cập nhật tất cả sản phẩm còn lại với hình ảnh mặc định
     const defaultImageUrl = 'https://res.cloudinary.com/dib7tbv7w/image/upload/v1735756800/audio-products/default-product.jpg';
 
-    const remainingProducts = await prisma.product.findMany({
+    const remainingProducts = await prisma.products.findMany({
       where: {
         imageUrl: {
           not: {
@@ -80,7 +80,7 @@ async function updateProductImages() {
     });
 
     for (const product of remainingProducts) {
-      await prisma.product.update({
+      await prisma.products.update({
         where: { id: product.id },
         data: { imageUrl: defaultImageUrl }
       });

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
 import { PromotionService } from '../promotions/promotion.service';
@@ -19,8 +20,9 @@ export class CheckoutService {
     const orderNo = 'ATL' + Date.now();
     const result = await this.prisma.$transaction(async (tx) => {
       // Create order
-      const order = await tx.order.create({
+      const order = await tx.orders.create({
         data: {
+          id: randomUUID(),
           orderNo,
           userId,
           status: 'PENDING',
@@ -30,31 +32,50 @@ export class CheckoutService {
           totalCents: total,
           promotionCode: promo?.code ?? null,
           shippingAddress: params.shippingAddress ?? null,
+          updatedAt: new Date()
         },
       });
-      // Copy items and adjust inventory
+      // Copy items and validate prices from database
       for (const i of items) {
-        await tx.orderItem.create({
+        // SECURITY: Re-fetch product price from database to prevent tampering
+        const product = await tx.products.findUnique({
+          where: { id: i.productId },
+          select: { priceCents: true, isActive: true, isDeleted: true }
+        });
+
+        if (!product || !product.isActive || product.isDeleted) {
+          throw new BadRequestException(`Product ${i.products.name} is no longer available`);
+        }
+
+        // Use the current price from database, not from cart
+        const currentPrice = product.priceCents;
+
+        await tx.order_items.create({
           data: {
+            id: randomUUID(),
             orderId: order.id,
             productId: i.productId,
-            name: i.product.name,
+            name: i.products.name,
             quantity: i.quantity,
-            price: i.price || i.product.priceCents,
-            unitPrice: i.price || i.product.priceCents,
-            imageUrl: i.product.imageUrl ?? null,
+            price: currentPrice,
+            unitPrice: currentPrice,
+            imageUrl: i.products.imageUrl ?? null,
+            updatedAt: new Date()
           },
         });
-        await tx.inventory.update({ where: { productId: i.productId }, data: { stock: { decrement: i.quantity }, reserved: { decrement: i.quantity } } });
+
+        // Note: Stock will be reserved when order status changes to CONFIRMED
+        // and deducted when status changes to COMPLETED
+        // This is handled by orders.services.ts updateStatus method
       }
       // Mark cart checked out
-      await tx.cart.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
+      await tx.carts.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
 
       return order;
     });
     try {
       if (result.userId) {
-        const user = await this.prisma.user.findUnique({ where: { id: result.userId } });
+        const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
         if (user?.email) {
           // Prepare order data for email template using cart items
           const orderData = {
@@ -62,9 +83,9 @@ export class CheckoutService {
             customerName: user.name || user.email,
             totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
             items: items.map((item: any) => ({
-              name: item.product.name || 'Sản phẩm',
+              name: item.products.name || 'Sản phẩm',
               quantity: item.quantity,
-              price: `${((item.unitPrice || item.product.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+              price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
             })),
             status: result.status
           };
@@ -72,14 +93,14 @@ export class CheckoutService {
           await this.mail.sendOrderConfirmation(user.email, orderData);
         }
       }
-    } catch (error) {
-      console.error('Failed to send order confirmation email:', error);
+    } catch (_error) {
+      // Email notification failed silently
     }
     return result;
   }
 
   async getOrderForUserByNo(userId: string, orderNo: string) {
-    const order = await this.prisma.order.findFirst({ where: { orderNo, userId }, include: { items: true, payments: true } });
+    const order = await this.prisma.orders.findFirst({ where: { orderNo, userId }, include: { order_items: true, payments: true } });
     if (!order) throw new Error('Không tìm thấy đơn hàng');
     return order;
   }

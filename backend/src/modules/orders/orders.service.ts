@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
+import { randomUUID } from 'crypto';
 
 const allowedTransitions: Record<string, string[]> = {
   PENDING: ['PROCESSING', 'CANCELLED', 'COMPLETED'],
@@ -24,22 +25,22 @@ export class OrdersService {
     const where: any = {};
     if (params.status) where.status = params.status;
     return this.prisma.$transaction([
-      this.prisma.order.count({ where }),
-      this.prisma.order.findMany({
+      this.prisma.orders.count({ where }),
+      this.prisma.orders.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          user: {
+          users: {
             select: {
               name: true,
               email: true
             }
           },
-          items: {
+          order_items: {
             include: {
-              product: {
+              products: {
                 select: {
                   name: true,
                   slug: true
@@ -56,17 +57,17 @@ export class OrdersService {
       items: items.map(order => ({
         id: order.id,
         orderNumber: order.orderNo,
-        customerName: order.user?.name || 'N/A',
-        customerEmail: order.user?.email || 'N/A',
+        customerName: order.users?.name || 'N/A',
+        customerEmail: order.users?.email || 'N/A',
         totalAmount: order.totalCents,
         status: order.status,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
-        items: order.items.map(item => ({
+        items: order.order_items.map(item => ({
           id: item.id,
           productId: item.productId,
-          productSlug: (item as any).product?.slug || null,
-          productName: item.product?.name || item.name || 'Sản phẩm',
+          productSlug: (item as any).products?.slug || null,
+          productName: item.products?.name || item.name || 'Sản phẩm',
           quantity: item.quantity,
           price: item.unitPrice || 0,
           total: Number(item.unitPrice || 0) * item.quantity
@@ -76,7 +77,7 @@ export class OrdersService {
   }
 
   async get(id: string) {
-    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true, payments: true } });
+    const order = await this.prisma.orders.findUnique({ where: { id }, include: { order_items: true, payments: true } });
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
     return order;
   }
@@ -89,38 +90,38 @@ export class OrdersService {
     // Debug logs to help diagnose invalid transitions
     console.log('[OrdersService.updateStatus] current=', current, 'requested=', next, 'allowed=', nexts);
     if (!nexts.includes(next)) throw new BadRequestException('Trạng thái không hợp lệ');
-    const updated = await this.prisma.order.update({ where: { id }, data: { status: next } });
+    const updated = await this.prisma.orders.update({ where: { id }, data: { status: next } });
 
     // If order is cancelled from PENDING/PROCESSING, restore stock back to inventory
     if (next === 'CANCELLED' && (current === 'PENDING' || current === 'PROCESSING')) {
       try {
-        const items = await this.prisma.orderItem.findMany({
+        const items = await this.prisma.order_items.findMany({
           where: { orderId: id },
-          include: { product: { select: { id: true, slug: true, name: true } } },
+          include: { products: { select: { id: true, slug: true, name: true } } },
         });
 
         for (const item of items) {
           let targetProductId: string | null = item.productId ?? null;
 
           // Try to resolve via relation if productId is null
-          if (!targetProductId && item.product?.id) {
-            targetProductId = item.product.id;
+          if (!targetProductId && item.products?.id) {
+            targetProductId = item.products.id;
           }
 
           // Try resolve by slug if available
-          if (!targetProductId && item.product?.slug) {
-            const bySlug = await this.prisma.product.findUnique({ where: { slug: item.product.slug } });
+          if (!targetProductId && item.products?.slug) {
+            const bySlug = await this.prisma.products.findUnique({ where: { slug: item.products.slug } });
             if (bySlug) targetProductId = bySlug.id;
           }
 
           // As a last resort, try by name
-          if (!targetProductId && item.product?.name) {
-            const byName = await (this.prisma as any).product.findFirst({ where: { name: item.product.name } });
+          if (!targetProductId && item.products?.name) {
+            const byName = await (this.prisma as any).products.findFirst({ where: { name: item.products.name } });
             if (byName) targetProductId = byName.id;
           }
 
           if (targetProductId) {
-            await this.prisma.product.update({
+            await this.prisma.products.update({
               where: { id: targetProductId },
               data: { stockQuantity: { increment: item.quantity } },
             });
@@ -139,12 +140,12 @@ export class OrdersService {
     // Send notification email if we have the user's email
     if (order.userId) {
       try {
-        const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+        const user = await this.prisma.users.findUnique({ where: { id: order.userId } });
         if (user?.email) {
           // Get order with items for email template
-          const orderWithItems = await this.prisma.order.findUnique({
+          const orderWithItems = await this.prisma.orders.findUnique({
             where: { id: order.id },
-            include: { items: true }
+            include: { order_items: true }
           });
 
           if (orderWithItems) {
@@ -152,7 +153,7 @@ export class OrdersService {
               orderNo: order.orderNo,
               customerName: user.name || user.email,
               totalAmount: `${(order.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
-              items: orderWithItems.items.map((item: any) => ({
+              items: orderWithItems.order_items.map((item: any) => ({
                 name: item.name || 'Sản phẩm',
                 quantity: item.quantity,
                 price: `${(item.unitPrice / 100).toLocaleString('vi-VN')} VNĐ`
@@ -186,13 +187,15 @@ export class OrdersService {
       console.log('Creating guest user...');
       // Create a guest user if no userId provided
       const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
-      const guestUser = await this.prisma.user.create({
+      const guestUser = await this.prisma.users.create({
         data: {
+          id: randomUUID(),
           email: uniqueEmail,
           password: 'hashed_guest_password', // Use a simple string for now
           name: orderData.customerName || 'Khách hàng',
           phone: orderData.customerPhone,
-          role: 'USER'
+          role: 'USER',
+          updatedAt: new Date()
         }
       });
       userId = guestUser.id;
@@ -203,11 +206,11 @@ export class OrdersService {
     const items = [];
     let subtotalCents = 0;
 
-    for (const item of orderData.items || []) {
+    for (const item of orderData.order_items || []) {
       console.log('Processing item:', item);
       
       // Get product
-      const product = await this.prisma.product.findUnique({
+      const product = await this.prisma.products.findUnique({
         where: { id: item.productId }
       });
 
@@ -231,14 +234,16 @@ export class OrdersService {
     console.log('Subtotal:', subtotalCents);
 
     // Create order and items separately (no transaction for debugging)
-    const order = await this.prisma.order.create({
+    const order = await this.prisma.orders.create({
       data: {
+        id: randomUUID(),
         orderNo,
         userId,
         status: 'PENDING',
         subtotalCents,
         totalCents: subtotalCents,
-        shippingAddress: orderData.shippingAddress || null
+        shippingAddress: orderData.shippingAddress || null,
+        updatedAt: new Date()
       }
     });
 
@@ -246,10 +251,12 @@ export class OrdersService {
 
     // Create order items
     for (const itemData of items) {
-      await this.prisma.orderItem.create({
+      await this.prisma.order_items.create({
         data: {
+          id: randomUUID(),
           orderId: order.id,
-          ...itemData
+          ...itemData,
+          updatedAt: new Date()
         }
       });
     }
@@ -257,11 +264,11 @@ export class OrdersService {
     console.log('Order items created');
 
     // Get full order with items
-    const fullOrder = await this.prisma.order.findUnique({
+    const fullOrder = await this.prisma.orders.findUnique({
       where: { id: order.id },
       include: {
-        items: true,
-        user: {
+        order_items: true,
+        users: {
           select: {
             id: true,
             name: true,
@@ -295,7 +302,7 @@ export class OrdersService {
       if (updateData.customerEmail) userUpdate.email = updateData.customerEmail;
 
       if (order.userId) {
-        await this.prisma.user.update({
+        await this.prisma.users.update({
           where: { id: order.userId },
           data: userUpdate
         });
@@ -323,7 +330,7 @@ export class OrdersService {
     // Update items if provided
     if (updateData.items) {
       // Delete existing items
-      await this.prisma.orderItem.deleteMany({ where: { orderId: id } });
+      await this.prisma.order_items.deleteMany({ where: { orderId: id } });
 
       // Recalculate total
       let subtotalCents = 0;
@@ -339,12 +346,12 @@ export class OrdersService {
 
         // Try to get product price from database
         try {
-          let product = await this.prisma.product.findUnique({
+          let product = await this.prisma.products.findUnique({
             where: { id: item.productId }
           });
 
           if (!product) {
-            product = await this.prisma.product.findUnique({
+            product = await this.prisma.products.findUnique({
               where: { slug: item.productId }
             });
           }
@@ -369,19 +376,19 @@ export class OrdersService {
         throw new BadRequestException('Sản phẩm không hợp lệ. Vui lòng chọn lại sản phẩm.');
       }
 
-      updatePayload.items = { create: items };
+      updatePayload.order_items = { create: items };
       updatePayload.subtotalCents = subtotalCents;
       updatePayload.totalCents = subtotalCents;
     }
 
     // Update the order
-    const _updatedOrder = await this.prisma.order.update({
+    const _updatedOrder = await this.prisma.orders.update({
       where: { id },
       data: updatePayload,
       include: {
-        items: {
+        order_items: {
           include: {
-            product: {
+            products: {
               select: {
                 name: true,
                 slug: true
@@ -389,7 +396,7 @@ export class OrdersService {
             }
           }
         },
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -400,12 +407,12 @@ export class OrdersService {
     });
 
     // Get the full order with all fields for return
-    const fullOrder = await this.prisma.order.findUnique({
+    const fullOrder = await this.prisma.orders.findUnique({
       where: { id },
       include: {
-        items: {
+        order_items: {
           include: {
-            product: {
+            products: {
               select: {
                 name: true,
                 slug: true
@@ -413,7 +420,7 @@ export class OrdersService {
             }
           }
         },
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -426,17 +433,17 @@ export class OrdersService {
     return {
       id: fullOrder!.id,
       orderNumber: fullOrder!.orderNo,
-      customerName: fullOrder!.user?.name || 'N/A',
-      customerEmail: fullOrder!.user?.email || 'N/A',
-      customerPhone: fullOrder!.user?.phone || 'N/A',
+      customerName: fullOrder!.users?.name || 'N/A',
+      customerEmail: fullOrder!.users?.email || 'N/A',
+      customerPhone: fullOrder!.users?.phone || 'N/A',
       totalAmount: fullOrder!.totalCents,
       status: fullOrder!.status,
       shippingAddress: fullOrder!.shippingAddress,
       createdAt: fullOrder!.createdAt,
       updatedAt: fullOrder!.updatedAt,
-      items: fullOrder!.items.map(item => ({
+      items: fullOrder!.order_items.map(item => ({
         id: item.id,
-        productName: item.product?.name || item.name || 'Sản phẩm',
+        productName: item.products?.name || item.name || 'Sản phẩm',
         quantity: item.quantity,
         price: item.unitPrice || 0,
         total: Number(item.unitPrice || 0) * item.quantity
@@ -445,18 +452,18 @@ export class OrdersService {
   }
 
   async delete(id: string) {
-    const order = await this.prisma.order.findUnique({
+    const order = await this.prisma.orders.findUnique({
       where: { id },
-      include: { items: true }
+      include: { order_items: true }
     });
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
 
     // If deleting a PENDING/PROCESSING order, restore stock first
     if (order.status === 'PENDING' || order.status === 'PROCESSING') {
       try {
-        for (const item of order.items) {
+        for (const item of order.order_items) {
           if (item.productId) {
-            await this.prisma.product.update({
+            await this.prisma.products.update({
               where: { id: item.productId },
               data: { stockQuantity: { increment: item.quantity } }
             });
@@ -469,9 +476,9 @@ export class OrdersService {
       }
     }
 
-    await this.prisma.orderItem.deleteMany({ where: { orderId: id } });
-    await this.prisma.payment.deleteMany({ where: { orderId: id } });
-    await this.prisma.order.delete({ where: { id } });
+    await this.prisma.order_items.deleteMany({ where: { orderId: id } });
+    await this.prisma.payments.deleteMany({ where: { orderId: id } });
+    await this.prisma.orders.delete({ where: { id } });
     return { message: 'Đơn hàng đã được xóa thành công' };
   }
 }

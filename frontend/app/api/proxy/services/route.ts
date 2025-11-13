@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     });
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, message: 'Proxy fetch services failed', error: String(error) }, { status: 500 });
   }
 }

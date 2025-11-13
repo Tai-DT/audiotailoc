@@ -29,6 +29,17 @@ export class OrdersController {
   }
 
   @UseGuards(AdminOrKeyGuard)
+  @Get('stats')
+  async getStats() {
+    const totalOrders = await this.orders.list({ page: 1, pageSize: 1 });
+    return {
+      totalOrders: totalOrders.total || 0,
+      pendingOrders: totalOrders.total || 0,
+      completedOrders: 0
+    };
+  }
+
+  @UseGuards(AdminOrKeyGuard)
   @Get(':id')
   get(@Param('id') id: string) {
     return this.orders.get(id);

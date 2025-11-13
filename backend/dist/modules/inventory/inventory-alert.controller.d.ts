@@ -9,8 +9,8 @@ export declare class InventoryAlertController {
         threshold?: number;
         currentStock?: number;
     }): Promise<{
-        product: {
-            category: {
+        products: {
+            categories: {
                 id: string;
                 name: string;
             };
@@ -20,10 +20,10 @@ export declare class InventoryAlertController {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -35,8 +35,8 @@ export declare class InventoryAlertController {
         page: number;
         pageSize: number;
         items: ({
-            product: {
-                category: {
+            products: {
+                categories: {
                     id: string;
                     name: string;
                 };
@@ -46,10 +46,10 @@ export declare class InventoryAlertController {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -62,8 +62,8 @@ export declare class InventoryAlertController {
         page: number;
         pageSize: number;
         items: ({
-            product: {
-                category: {
+            products: {
+                categories: {
                     id: string;
                     name: string;
                 };
@@ -73,10 +73,10 @@ export declare class InventoryAlertController {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -85,8 +85,8 @@ export declare class InventoryAlertController {
         })[];
     }>;
     getActiveAlerts(): Promise<({
-        product: {
-            category: {
+        products: {
+            categories: {
                 id: string;
                 name: string;
             };
@@ -96,10 +96,10 @@ export declare class InventoryAlertController {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -113,17 +113,17 @@ export declare class InventoryAlertController {
         byType: any;
     }>;
     resolve(id: string): Promise<{
-        product: {
+        products: {
             id: string;
             name: string;
             sku: string;
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -136,10 +136,10 @@ export declare class InventoryAlertController {
     checkAndCreateAlerts(): Promise<any[]>;
     delete(id: string): Promise<{
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;

@@ -1,4 +1,4 @@
-// This file is deprecated. Use UpstashCacheService from ../caching/cache.service.ts instead
+// This file is deprecated. Use UpstashCacheService from ../caching/cache.services.ts instead
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 

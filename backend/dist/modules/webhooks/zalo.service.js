@@ -13,6 +13,7 @@ exports.ZaloService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const crypto_1 = require("crypto");
 let ZaloService = class ZaloService {
     constructor(cfg, prisma) {
         this.cfg = cfg;
@@ -28,12 +29,13 @@ let ZaloService = class ZaloService {
         const event = body;
         const userId = null;
         const text = event?.message?.text || event?.event_name || 'Zalo message';
-        const customerQuestion = await this.prisma.customerQuestion.create({
+        const customerQuestion = await this.prisma.customer_questions.create({
             data: {
-                userId,
-                question: text,
+                id: (0, crypto_1.randomUUID)(),
+                question: String(text),
                 category: 'ZALO_SUPPORT',
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                ...(userId && { users: { connect: { id: userId } } })
             }
         });
         return customerQuestion.id;

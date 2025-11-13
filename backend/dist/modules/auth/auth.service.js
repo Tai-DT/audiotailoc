@@ -46,6 +46,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("../users/users.service");
 const security_service_1 = require("../security/security.service");
+const password_validator_1 = require("./password-validator");
 const bcrypt = __importStar(require("bcryptjs"));
 const jwt = __importStar(require("jsonwebtoken"));
 const crypto = __importStar(require("crypto"));
@@ -57,37 +58,30 @@ let AuthService = class AuthService {
         this.securityService = securityService;
     }
     async register(dto) {
+        const passwordValidation = password_validator_1.PasswordValidator.validate(dto.password);
+        if (!passwordValidation.isValid) {
+            throw new common_1.BadRequestException({
+                message: 'Password does not meet security requirements',
+                errors: passwordValidation.errors
+            });
+        }
         return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
     }
     async login(dto) {
-        console.log('🔍 Login attempt for:', dto.email);
         if (this.securityService.isAccountLocked(dto.email)) {
             const remainingTime = this.securityService.getRemainingLockoutTime(dto.email);
-            console.log('🔒 Account is locked, remaining time:', Math.ceil(remainingTime / 60000), 'minutes');
             throw new Error(`Account is locked. Try again in ${Math.ceil(remainingTime / 60000)} minutes.`);
         }
         const user = await this.users.findByEmail(dto.email);
-        console.log('👤 User lookup result:', !!user);
-        if (user) {
-            console.log('   User ID:', user.id);
-            console.log('   User Email:', user.email);
-            console.log('   User Role:', user.role);
-            console.log('   Password hash exists:', !!user.password);
-        }
         if (!user) {
-            console.log('❌ User not found in database');
-            throw new Error('not found');
+            this.securityService.recordLoginAttempt(dto.email, false);
+            throw new Error('Invalid email or password');
         }
-        console.log('🔐 Comparing passwords...');
         const ok = await bcrypt.compare(dto.password, user.password);
-        console.log('🔐 Password comparison result:', ok);
-        const success = ok;
-        this.securityService.recordLoginAttempt(dto.email, success);
+        this.securityService.recordLoginAttempt(dto.email, ok);
         if (!ok) {
-            console.log('❌ Password mismatch');
-            throw new Error('bad pass');
+            throw new Error('Invalid email or password');
         }
-        console.log('✅ Login successful, generating tokens...');
         const accessSecret = this.config.get('JWT_ACCESS_SECRET');
         const refreshSecret = this.config.get('JWT_REFRESH_SECRET');
         if (!accessSecret || !refreshSecret) {
@@ -96,7 +90,6 @@ let AuthService = class AuthService {
         const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
         const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
         const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
-        console.log('✅ Tokens generated successfully');
         return { accessToken, refreshToken, userId: user.id };
     }
     async refresh(refreshToken) {
@@ -106,14 +99,21 @@ let AuthService = class AuthService {
             const user = await this.users.findById(payload.sub);
             if (!user)
                 throw new Error('User not found');
+            const userRole = user.role;
+            if (userRole === 'DISABLED') {
+                throw new Error('User account has been disabled');
+            }
             const accessSecret = this.config.get('JWT_ACCESS_SECRET');
             if (!accessSecret) {
                 throw new Error('JWT access secret is not configured');
             }
-            const newAccessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
+            const newAccessToken = jwt.sign({ sub: user.id, email: user.email, role: userRole ?? 'USER' }, accessSecret, { expiresIn: '15m' });
             return { accessToken: newAccessToken, refreshToken };
         }
-        catch {
+        catch (error) {
+            if (error instanceof Error && error.message !== 'Invalid refresh token') {
+                throw error;
+            }
             throw new Error('Invalid refresh token');
         }
     }
