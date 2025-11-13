@@ -49,7 +49,7 @@ async function migrateProjectImages() {
   console.log('🚀 Starting migration of project images to Cloudinary...\n');
   
   // Get all projects
-  const projects = await prisma.project.findMany({
+  const projects = await prisma.projects.findMany({
     where: {
       isActive: true,
     },
@@ -168,7 +168,7 @@ async function migrateProjectImages() {
     // Update project if there are changes
     if (Object.keys(updates).length > 0) {
       try {
-        await prisma.project.update({
+        await prisma.projects.update({
           where: { id: project.id },
           data: updates,
         });

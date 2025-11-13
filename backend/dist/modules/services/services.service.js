@@ -11,16 +11,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServicesService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const cache_service_1 = require("../caching/cache.service");
 const enums_1 = require("../../common/enums");
 let ServicesService = class ServicesService {
-    constructor(prisma) {
+    constructor(prisma, cache) {
         this.prisma = prisma;
+        this.cache = cache;
     }
     async createService(data) {
         const slug = data.slug || this.generateSlug(data.name);
         if (data.typeId) {
-            const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+            const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
             if (!type) {
                 throw new common_1.BadRequestException('Invalid type ID');
             }
@@ -47,8 +50,9 @@ let ServicesService = class ServicesService {
             priceData.minPrice = null;
             priceData.maxPrice = null;
         }
-        return this.prisma.service.create({
+        const service = await this.prisma.services.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name: data.name,
                 slug,
                 description: data.description,
@@ -57,15 +61,16 @@ let ServicesService = class ServicesService {
                 duration: data.estimatedDuration || 60,
                 images: data.imageUrl,
                 isActive: data.isActive ?? true,
+                updatedAt: new Date(),
             },
             include: {
-                items: true,
-                serviceType: true,
+                service_types: true,
             },
         });
+        await this.cache.del('services:list:*');
+        return service;
     }
     async getServices(params) {
-        console.log('[DEBUG] ServicesService.getServices called with params:', params);
         const page = Math.max(1, params.page ?? 1);
         const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
         const where = {};
@@ -75,16 +80,21 @@ let ServicesService = class ServicesService {
             where.isActive = params.isActive;
         if (params.isFeatured !== undefined)
             where.isFeatured = params.isFeatured;
+        const cacheKey = `services:list:${JSON.stringify({ where, page, pageSize })}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
         const [total, services] = await this.prisma.$transaction([
-            this.prisma.service.count({ where }),
-            this.prisma.service.findMany({
+            this.prisma.services.count({ where }),
+            this.prisma.services.findMany({
                 where,
                 include: {
-                    items: true,
-                    serviceType: true,
+                    service_items: true,
+                    service_types: true,
                     _count: {
                         select: {
-                            bookings: true,
+                            service_bookings: true,
                         },
                     },
                 },
@@ -98,60 +108,71 @@ let ServicesService = class ServicesService {
             price: Number(service.basePriceCents) / 100,
             minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
             maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
-            type: service.serviceType,
+            type: service.service_types,
         }));
-        console.log('[DEBUG] ServicesService.getServices returning:', { total, page, pageSize, servicesCount: services.length });
-        return { total, page, pageSize, services: mappedServices };
+        const result = { total, page, pageSize, services: mappedServices };
+        await this.cache.set(cacheKey, result, { ttl: 300 });
+        return result;
     }
     async getService(id) {
-        const service = await this.prisma.service.findUnique({
+        const cacheKey = `service:${id}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+        const service = await this.prisma.services.findUnique({
             where: { id },
             include: {
-                items: true,
-                serviceType: true,
-                bookings: {
-                    orderBy: { createdAt: 'desc' },
-                    take: 10,
-                },
+                service_items: true,
+                service_types: true,
             },
         });
         if (!service) {
             throw new common_1.NotFoundException('Không tìm thấy dịch vụ');
         }
-        return {
+        const result = {
             ...service,
             price: Number(service.basePriceCents) / 100,
             minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
             maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
-            type: service.serviceType,
+            type: service.service_types,
         };
+        await this.cache.set(cacheKey, result, { ttl: 600 });
+        return result;
     }
     async getServiceBySlug(slug) {
-        const service = await this.prisma.service.findUnique({
+        const cacheKey = `service:slug:${slug}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+        const service = await this.prisma.services.findUnique({
             where: { slug },
             include: {
-                items: true,
-                serviceType: true,
+                service_items: true,
+                service_types: true,
             },
         });
         if (!service) {
             throw new common_1.NotFoundException('Không tìm thấy dịch vụ');
         }
-        return {
+        const result = {
             ...service,
             price: Number(service.basePriceCents) / 100,
-            type: service.serviceType,
+            type: service.service_types,
         };
+        await this.cache.set(cacheKey, result, { ttl: 600 });
+        return result;
     }
     async updateService(id, data) {
-        const existingService = await this.prisma.service.findUnique({
+        const existingService = await this.prisma.services.findUnique({
             where: { id },
         });
         if (!existingService) {
             throw new common_1.NotFoundException('Service not found');
         }
         if (data.typeId) {
-            const type = await this.prisma.serviceType.findUnique({ where: { id: data.typeId } });
+            const type = await this.prisma.service_types.findUnique({ where: { id: data.typeId } });
             if (!type) {
                 throw new common_1.BadRequestException('Invalid type ID');
             }
@@ -202,41 +223,53 @@ let ServicesService = class ServicesService {
             updateData.images = data.imageUrl;
         if (data.isActive !== undefined)
             updateData.isActive = data.isActive;
-        const updated = await this.prisma.service.update({
+        const updated = await this.prisma.services.update({
             where: { id },
             data: updateData,
             include: {
-                items: true,
-                serviceType: true,
+                service_items: true,
+                service_types: true,
             },
         });
+        await Promise.all([
+            this.cache.del(`service:${id}`),
+            this.cache.del(`service:slug:${existingService.slug}`),
+            this.cache.del('services:list:*'),
+        ]);
         return {
             ...updated,
             price: updated.basePriceCents / 100,
             minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
             maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
-            type: updated.serviceType,
+            type: updated.service_types,
         };
     }
     async updateServiceImage(id, imagePath) {
         return this.updateService(id, { imageUrl: imagePath });
     }
     async deleteService(id) {
-        const _service = await this.getService(id);
-        const bookingCount = await this.prisma.serviceBooking.count({
+        const service = await this.getService(id);
+        const bookingCount = await this.prisma.service_bookings.count({
             where: { serviceId: id },
         });
         if (bookingCount > 0) {
             throw new common_1.BadRequestException('Không thể xóa dịch vụ đã có booking');
         }
-        return this.prisma.service.delete({
+        const deleted = await this.prisma.services.delete({
             where: { id },
         });
+        await Promise.all([
+            this.cache.del(`service:${id}`),
+            this.cache.del(`service:slug:${service.slug}`),
+            this.cache.del('services:list:*'),
+        ]);
+        return deleted;
     }
     async addServiceItem(serviceId, data) {
         await this.getService(serviceId);
-        return this.prisma.serviceItem.create({
+        return this.prisma.service_items.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 serviceId,
                 name: data.name,
                 price: data.priceCents,
@@ -246,7 +279,7 @@ let ServicesService = class ServicesService {
         });
     }
     async updateServiceItem(itemId, data) {
-        const item = await this.prisma.serviceItem.findUnique({
+        const item = await this.prisma.service_items.findUnique({
             where: { id: itemId },
         });
         if (!item) {
@@ -257,30 +290,30 @@ let ServicesService = class ServicesService {
             updateData.name = data.name;
         if (data.priceCents !== undefined)
             updateData.price = data.priceCents;
-        return this.prisma.serviceItem.update({
+        return this.prisma.service_items.update({
             where: { id: itemId },
             data: updateData,
         });
     }
     async deleteServiceItem(itemId) {
-        const item = await this.prisma.serviceItem.findUnique({
+        const item = await this.prisma.service_items.findUnique({
             where: { id: itemId },
         });
         if (!item) {
             throw new common_1.NotFoundException('Không tìm thấy mục dịch vụ');
         }
-        const bookingItemCount = await this.prisma.serviceBookingItem.count({
+        const bookingItemCount = await this.prisma.service_booking_items.count({
             where: { serviceItemId: itemId },
         });
         if (bookingItemCount > 0) {
             throw new common_1.BadRequestException('Không thể xóa mục dịch vụ đã được sử dụng');
         }
-        return this.prisma.serviceItem.delete({
+        return this.prisma.service_items.delete({
             where: { id: itemId },
         });
     }
     async getServiceTypes() {
-        const types = await this.prisma.serviceType.findMany({
+        const types = await this.prisma.service_types.findMany({
             orderBy: { sortOrder: 'asc' },
         });
         return types.map(type => ({
@@ -297,7 +330,7 @@ let ServicesService = class ServicesService {
         }));
     }
     async getServiceType(id) {
-        const type = await this.prisma.serviceType.findUnique({
+        const type = await this.prisma.service_types.findUnique({
             where: { id },
         });
         if (!type) {
@@ -312,7 +345,7 @@ let ServicesService = class ServicesService {
             .replace(/\s+/g, '-')
             .replace(/--+/g, '-')
             .trim();
-        const existing = await this.prisma.serviceType.findFirst({
+        const existing = await this.prisma.service_types.findFirst({
             where: { slug: baseSlug }
         });
         if (!existing) {
@@ -320,7 +353,7 @@ let ServicesService = class ServicesService {
         }
         let counter = 1;
         let uniqueSlug = `${baseSlug}-${counter}`;
-        while (await this.prisma.serviceType.findFirst({ where: { slug: uniqueSlug } })) {
+        while (await this.prisma.service_types.findFirst({ where: { slug: uniqueSlug } })) {
             counter++;
             uniqueSlug = `${baseSlug}-${counter}`;
         }
@@ -328,14 +361,14 @@ let ServicesService = class ServicesService {
     }
     async getServiceStats() {
         const [totalServices, activeServices, totalBookings, pendingBookings, completedBookings, revenue,] = await Promise.all([
-            this.prisma.service.count(),
-            this.prisma.service.count({ where: { isActive: true } }),
-            this.prisma.serviceBooking.count(),
-            this.prisma.serviceBooking.count({ where: { status: enums_1.ServiceBookingStatus.PENDING } }),
-            this.prisma.serviceBooking.count({ where: { status: enums_1.ServiceBookingStatus.COMPLETED } }),
-            this.prisma.serviceBookingItem.aggregate({
+            this.prisma.services.count(),
+            this.prisma.services.count({ where: { isActive: true } }),
+            this.prisma.service_bookings.count(),
+            this.prisma.service_bookings.count({ where: { status: enums_1.ServiceBookingStatus.PENDING } }),
+            this.prisma.service_bookings.count({ where: { status: enums_1.ServiceBookingStatus.COMPLETED } }),
+            this.prisma.service_booking_items.aggregate({
                 where: {
-                    booking: { status: enums_1.ServiceBookingStatus.COMPLETED },
+                    service_bookings: { status: enums_1.ServiceBookingStatus.COMPLETED },
                 },
                 _sum: { price: true },
             }),
@@ -349,15 +382,31 @@ let ServicesService = class ServicesService {
             totalRevenue: revenue._sum.price || 0,
         };
     }
+    async getServiceItems() {
+        return this.prisma.service_items.findMany({
+            include: {
+                services: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
     async createServiceType(data) {
         const slug = data.slug || await this.generateSlug(data.name);
-        return this.prisma.serviceType.create({
+        return this.prisma.service_types.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 name: data.name,
                 slug,
                 description: data.description,
                 isActive: data.isActive ?? true,
                 sortOrder: await this.getNextSortOrder(),
+                updatedAt: new Date(),
             },
         });
     }
@@ -373,24 +422,24 @@ let ServicesService = class ServicesService {
             updateData.isActive = data.isActive;
         if (data.sortOrder !== undefined)
             updateData.sortOrder = data.sortOrder;
-        return this.prisma.serviceType.update({
+        return this.prisma.service_types.update({
             where: { id },
             data: updateData,
         });
     }
     async deleteServiceType(id) {
-        const servicesCount = await this.prisma.service.count({
+        const servicesCount = await this.prisma.services.count({
             where: { typeId: id },
         });
         if (servicesCount > 0) {
             throw new common_1.BadRequestException('Không thể xóa loại dịch vụ đang được sử dụng');
         }
-        return this.prisma.serviceType.delete({
+        return this.prisma.service_types.delete({
             where: { id },
         });
     }
     async getNextSortOrder() {
-        const maxSortOrder = await this.prisma.serviceType.aggregate({
+        const maxSortOrder = await this.prisma.service_types.aggregate({
             _max: { sortOrder: true },
         });
         return (maxSortOrder._max.sortOrder || 0) + 1;
@@ -399,6 +448,7 @@ let ServicesService = class ServicesService {
 exports.ServicesService = ServicesService;
 exports.ServicesService = ServicesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        cache_service_1.CacheService])
 ], ServicesService);
 //# sourceMappingURL=services.service.js.map

@@ -12,15 +12,17 @@ const users_module_1 = require("../users/users.module");
 const security_module_1 = require("../security/security.module");
 const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
+const admin_guard_1 = require("./admin.guard");
+const admin_or_key_guard_1 = require("./admin-or-key.guard");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [users_module_1.UsersModule, security_module_1.SecurityModule],
-        providers: [auth_service_1.AuthService],
+        providers: [auth_service_1.AuthService, admin_guard_1.AdminGuard, admin_or_key_guard_1.AdminOrKeyGuard],
         controllers: [auth_controller_1.AuthController],
-        exports: [auth_service_1.AuthService, users_module_1.UsersModule],
+        exports: [auth_service_1.AuthService],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

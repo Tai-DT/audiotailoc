@@ -6,6 +6,7 @@ import { AdminBannersController } from './admin-banners.controller';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
 import { AdminSettingsController } from './admin-settings.controller';
+import { SimpleSettingsController } from './simple-settings.controller';
 
 @Module({
   imports: [PrismaModule],
@@ -14,6 +15,7 @@ import { AdminSettingsController } from './admin-settings.controller';
     AdminBannersController,
     SettingsController,
     AdminSettingsController,
+    SimpleSettingsController,
   ],
   providers: [BannersService, SettingsService],
   exports: [BannersService, SettingsService],

@@ -242,7 +242,7 @@ export class NotificationService {
   async sendBulkNotification(userIds: string[], data: Omit<NotificationData, 'userId'>): Promise<void> {
     const promises = userIds.map(async (userId) => {
       // Get user email from database
-      const user = await this.prisma.user.findUnique({ 
+      const user = await this.prisma.users.findUnique({ 
         where: { id: userId },
         select: { email: true, phone: true }
       });

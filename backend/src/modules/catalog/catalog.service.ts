@@ -1,4 +1,5 @@
  import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../caching/cache.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -70,8 +71,8 @@ export class CatalogService {
     if (cached) return cached;
 
     const [total, rawItems] = await this.prisma.$transaction([
-      this.prisma.product.count({ where }),
-      this.prisma.product.findMany({
+      this.prisma.products.count({ where }),
+      this.prisma.products.findMany({
         where,
         orderBy: { [orderByField]: orderDirection },
         skip: (page - 1) * pageSize,
@@ -94,7 +95,7 @@ export class CatalogService {
   }
 
   async getById(id: string): Promise<ProductDto> {
-    const product = await this.prisma.product.findUnique({ where: { id } });
+    const product = await this.prisma.products.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
     // Parse images and specifications fields
@@ -127,7 +128,7 @@ export class CatalogService {
   }
 
   async getBySlug(slug: string): Promise<ProductDto> {
-    const product = await (this.prisma as any).product.findUnique({ where: { slug } });
+    const product = await (this.prisma as any).products.findUnique({ where: { slug } });
     if (!product) throw new NotFoundException('Product not found');
 
     // Parse images and specifications fields
@@ -145,7 +146,7 @@ export class CatalogService {
     if (excludeId) {
       where.id = { not: excludeId };
     }
-    const count = await this.prisma.product.count({ where });
+    const count = await this.prisma.products.count({ where });
     return count > 0;
   }
 
@@ -175,7 +176,7 @@ export class CatalogService {
     }
 
     // Ensure slug uniqueness
-    const existed = await this.prisma.product.findUnique({ where: { slug: data.slug } });
+    const existed = await this.prisma.products.findUnique({ where: { slug: data.slug } });
     if (existed) {
       throw new Error('Product with this slug already exists');
     }
@@ -211,7 +212,7 @@ export class CatalogService {
       isActive: data.isActive ?? true,
     };
 
-    const product = await this.prisma.product.create({ data: productData });
+    const product = await this.prisma.products.create({ data: productData });
 
     // Clear cache
     await this.cache.deletePattern('products:list:*');
@@ -228,7 +229,7 @@ export class CatalogService {
 
   async update(id: string, data: UpdateProductDto): Promise<ProductDto> {
     // Check if product exists
-    const existingProduct = await this.prisma.product.findUnique({ where: { id } });
+    const existingProduct = await this.prisma.products.findUnique({ where: { id } });
     if (!existingProduct) {
       throw new NotFoundException('Product not found');
     }
@@ -278,7 +279,7 @@ export class CatalogService {
     if (data.featured !== undefined) updateData.featured = data.featured;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    const product = await this.prisma.product.update({
+    const product = await this.prisma.products.update({
       where: { id },
       data: updateData
     });
@@ -299,11 +300,13 @@ export class CatalogService {
   async remove(id: string): Promise<{ deleted: boolean; message?: string }> {
     try {
       // Check if product exists
-      const product = await this.prisma.product.findUnique({
+      const product = await this.prisma.products.findUnique({
         where: { id },
-        include: {
+        select: {
+          id: true,
+          name: true,
           _count: {
-            select: { orderItems: true }
+            select: { order_items: true }
           }
         }
       });
@@ -313,10 +316,10 @@ export class CatalogService {
       }
 
       // Check if product has associated order items
-      if (product._count.orderItems > 0) {
+      if (product._count.order_items > 0) {
         return {
           deleted: false,
-          message: `Cannot delete product "${product.name}" because it has ${product._count.orderItems} associated order(s). Please remove or update the orders first.`
+          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
         };
       }
 
@@ -326,7 +329,7 @@ export class CatalogService {
       });
 
       // Safe to delete
-      const res = await this.prisma.product.deleteMany({ where: { id } });
+      const res = await this.prisma.products.deleteMany({ where: { id } });
       await this.cache.deletePattern('products:list:*');
       return { deleted: (res.count ?? 0) > 0 };
     } catch (error) {
@@ -339,7 +342,7 @@ export class CatalogService {
     const key = 'categories:list';
     const cached = await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null }[]>(key);
     if (cached) return cached;
-    const items = await this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+    const items = await this.prisma.categories.findMany({ orderBy: { name: 'asc' } });
     await this.cache.set(key, items, { ttl: 300 });
     return items;
   }
@@ -349,7 +352,7 @@ export class CatalogService {
     const cached = await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null; isActive: boolean }>(key);
     if (cached) return cached;
     
-    const category = await this.prisma.category.findUnique({ 
+    const category = await this.prisma.categories.findUnique({ 
       where: { slug },
       select: { id: true, slug: true, name: true, parentId: true, isActive: true }
     });
@@ -377,10 +380,10 @@ export class CatalogService {
     };
 
     const [items, total] = await Promise.all([
-      this.prisma.product.findMany({
+      this.prisma.products.findMany({
         where,
         include: {
-          category: {
+          categories: {
             select: {
               id: true,
               name: true,
@@ -392,7 +395,7 @@ export class CatalogService {
         skip: offset,
         take: limit,
       }),
-      this.prisma.product.count({ where }),
+      this.prisma.products.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -407,10 +410,10 @@ export class CatalogService {
       originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
       imageUrl: item.imageUrl,
       images: Array.isArray(item.images) ? item.images as string[] : [],
-      category: item.category ? {
-        id: item.category.id,
-        name: item.category.name,
-        slug: item.category.slug,
+      category: item.categories ? {
+        id: item.categories.id,
+        name: item.categories.name,
+        slug: item.categories.slug,
       } : undefined,
       isActive: item.isActive,
       featured: item.featured,
@@ -430,16 +433,18 @@ export class CatalogService {
 
   async createCategory(data: { name: string; slug: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
     // Check if slug already exists
-    const existing = await this.prisma.category.findUnique({ where: { slug: data.slug } });
+    const existing = await this.prisma.categories.findUnique({ where: { slug: data.slug } });
     if (existing) {
       throw new Error('Category with this slug already exists');
     }
 
-    const category = await this.prisma.category.create({
+    const category = await this.prisma.categories.create({
       data: {
+        id: randomUUID(),
+        updatedAt: new Date(),
         name: data.name,
         slug: data.slug,
-        parentId: data.parentId,
+        ...(data.parentId && { parent: { connect: { id: data.parentId } } }),
         isActive: data.isActive ?? true,
       },
     });
@@ -458,7 +463,7 @@ export class CatalogService {
   async updateCategory(id: string, data: { name?: string; slug?: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
     // Check if slug already exists (excluding current category)
     if (data.slug) {
-      const existing = await this.prisma.category.findFirst({
+      const existing = await this.prisma.categories.findFirst({
         where: { slug: data.slug, id: { not: id } },
       });
       if (existing) {
@@ -466,7 +471,7 @@ export class CatalogService {
       }
     }
 
-    const category = await this.prisma.category.update({
+    const category = await this.prisma.categories.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
@@ -490,7 +495,7 @@ export class CatalogService {
   async deleteCategory(id: string): Promise<{ deleted: boolean; message?: string }> {
     try {
       // Check if category has products
-      const productCount = await this.prisma.product.count({
+      const productCount = await this.prisma.products.count({
         where: { categoryId: id },
       });
 
@@ -499,7 +504,7 @@ export class CatalogService {
       }
 
       // Check if category has subcategories
-      const subcategoryCount = await this.prisma.category.count({
+      const subcategoryCount = await this.prisma.categories.count({
         where: { parentId: id },
       });
 
@@ -507,7 +512,7 @@ export class CatalogService {
         throw new Error(`Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`);
       }
 
-      await this.prisma.category.delete({ where: { id } });
+      await this.prisma.categories.delete({ where: { id } });
 
       // Clear cache
       await this.cache.deletePattern('categories:*');
@@ -522,7 +527,7 @@ export class CatalogService {
   async removeMany(slugs: string[] | null): Promise<{ deleted: number }> {
     if (!slugs || slugs.length === 0) return { deleted: 0 };
     // The tests expect deleteMany by slug
-    const res = await (this.prisma as any).product.deleteMany({ where: { slug: { in: slugs } } });
+    const res = await (this.prisma as any).products.deleteMany({ where: { slug: { in: slugs } } });
     await this.cache.deletePattern('products:list:*');
     return { deleted: res.count };
   }

@@ -4,11 +4,11 @@ export declare class BannersController {
     constructor(bannersService: BannersService);
     findAll(page?: string, active?: string, search?: string, skip?: string, take?: string): Promise<{
         items: {
-            page: string;
+            description: string | null;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            page: string;
             title: string;
             imageUrl: string;
             isActive: boolean;
@@ -28,11 +28,11 @@ export declare class BannersController {
         totalPages: number;
     }>;
     getActive(page?: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -47,11 +47,11 @@ export declare class BannersController {
         endAt: Date | null;
     }[]>;
     findOne(id: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;

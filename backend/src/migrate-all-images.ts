@@ -52,7 +52,7 @@ async function migrateProductImages() {
   console.log('\n📦 MIGRATING PRODUCT IMAGES...');
   console.log('─'.repeat(50));
   
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: { isActive: true }
   });
   
@@ -126,7 +126,7 @@ async function migrateProductImages() {
     // Update product if there are changes
     if (Object.keys(updates).length > 0) {
       try {
-        await prisma.product.update({
+        await prisma.products.update({
           where: { id: product.id },
           data: updates,
         });
@@ -149,7 +149,7 @@ async function migrateServiceImages() {
   console.log('\n🔧 MIGRATING SERVICE IMAGES...');
   console.log('─'.repeat(50));
   
-  const services = await prisma.service.findMany({
+  const services = await prisma.services.findMany({
     where: { isActive: true }
   });
   
@@ -221,7 +221,7 @@ async function migrateServiceImages() {
     // Update service if there are changes
     if (Object.keys(updates).length > 0) {
       try {
-        await prisma.service.update({
+        await prisma.services.update({
           where: { id: service.id },
           data: updates,
         });
@@ -244,7 +244,7 @@ async function migrateBannerImages() {
   console.log('\n🎨 MIGRATING BANNER IMAGES...');
   console.log('─'.repeat(50));
   
-  const banners = await prisma.banner.findMany({
+  const banners = await prisma.banners.findMany({
     where: { isDeleted: false }
   });
   
@@ -299,7 +299,7 @@ async function migrateBannerImages() {
     // Update banner if there are changes
     if (Object.keys(updates).length > 0) {
       try {
-        await prisma.banner.update({
+        await prisma.banners.update({
           where: { id: banner.id },
           data: updates,
         });
@@ -322,7 +322,7 @@ async function migrateRemainingProjectImages() {
   console.log('\n📁 MIGRATING REMAINING PROJECT IMAGES...');
   console.log('─'.repeat(50));
   
-  const projects = await prisma.project.findMany({
+  const projects = await prisma.projects.findMany({
     where: { isActive: true }
   });
   
@@ -437,7 +437,7 @@ async function migrateRemainingProjectImages() {
     // Update project if there are changes
     if (Object.keys(updates).length > 0) {
       try {
-        await prisma.project.update({
+        await prisma.projects.update({
           where: { id: project.id },
           data: updates,
         });
@@ -479,28 +479,28 @@ async function main() {
     // Run analysis to verify
     console.log('\n🔍 Running post-migration analysis...\n');
     
-    const products = await prisma.product.count({
+    const products = await prisma.products.count({
       where: { 
         isActive: true,
         imageUrl: { contains: 'cloudinary' }
       }
     });
     
-    const services = await prisma.service.count({
+    const services = await prisma.services.count({
       where: {
         isActive: true,
         images: { contains: 'cloudinary' }
       }
     });
     
-    const banners = await prisma.banner.count({
+    const banners = await prisma.banners.count({
       where: {
         isDeleted: false,
         imageUrl: { contains: 'cloudinary' }
       }
     });
     
-    const projects = await prisma.project.count({
+    const projects = await prisma.projects.count({
       where: {
         isActive: true,
         thumbnailImage: { contains: 'cloudinary' }

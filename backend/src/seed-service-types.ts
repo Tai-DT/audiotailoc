@@ -3,6 +3,7 @@
   Usage: npx ts-node src/seed-service-types.ts
 */
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -12,6 +13,8 @@ async function main() {
 
   const serviceTypes = [
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Home Theater',
       description: 'Hệ thống âm thanh rạp phim gia đình với công nghệ surround sound hiện đại',
       icon: '🎬',
@@ -21,6 +24,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Commercial Audio',
       description: 'Giải pháp âm thanh chuyên nghiệp cho văn phòng, cửa hàng và không gian thương mại',
       icon: '🏢',
@@ -30,6 +35,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Karaoke System',
       description: 'Hệ thống karaoke chuyên nghiệp cho phòng hát và giải trí',
       icon: '🎤',
@@ -39,6 +46,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Restaurant Audio',
       description: 'Âm thanh chất lượng cao cho nhà hàng và quán ăn',
       icon: '🍽️',
@@ -48,6 +57,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Studio Recording',
       description: 'Thiết bị thu âm chuyên nghiệp cho studio và podcast',
       icon: '🎵',
@@ -57,6 +68,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Conference System',
       description: 'Hệ thống âm thanh hội nghị và hội thảo chuyên nghiệp',
       icon: '🎙️',
@@ -66,6 +79,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Outdoor Audio',
       description: 'Giải pháp âm thanh ngoài trời chống thời tiết',
       icon: '🌞',
@@ -75,6 +90,8 @@ async function main() {
       isActive: true,
     },
     {
+      id: randomUUID(),
+      updatedAt: new Date(),
       name: 'Sound Reinforcement',
       description: 'Hệ thống khuếch đại âm thanh cho sự kiện và biểu diễn',
       icon: '🔊',
@@ -90,19 +107,19 @@ async function main() {
   for (const serviceTypeData of serviceTypes) {
     try {
       // Check if service type exists
-      const existing = await prisma.serviceType.findUnique({
+      const existing = await prisma.service_types.findUnique({
         where: { slug: serviceTypeData.slug }
       });
 
       if (existing) {
         console.log(`✓ Updating service type: ${serviceTypeData.name}`);
-        await prisma.serviceType.update({
+        await prisma.service_types.update({
           where: { slug: serviceTypeData.slug },
           data: serviceTypeData
         });
       } else {
         console.log(`✓ Creating service type: ${serviceTypeData.name}`);
-        await prisma.serviceType.create({
+        await prisma.service_types.create({
           data: serviceTypeData
         });
       }

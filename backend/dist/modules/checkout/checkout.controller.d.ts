@@ -23,7 +23,7 @@ export declare class CheckoutController {
         };
     }>;
     getByOrderNo(req: any, orderNo: string): Promise<{
-        items: {
+        order_items: {
             id: string;
             name: string | null;
             createdAt: Date;

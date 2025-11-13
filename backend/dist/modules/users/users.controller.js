@@ -83,7 +83,7 @@ let UsersController = class UsersController {
         });
     }
     async getProfile(req) {
-        const userId = req.user?.sub;
+        const userId = req.users?.sub;
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }
@@ -99,7 +99,7 @@ let UsersController = class UsersController {
         return this.usersService.update(id, updateUserDto);
     }
     async remove(id, req) {
-        return this.usersService.remove(id, req.user);
+        return this.usersService.remove(id, req.users);
     }
     async getStats() {
         return this.usersService.getStats();

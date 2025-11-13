@@ -1,32 +1,23 @@
-// Global test setup
-import 'reflect-metadata';
+// Test setup file
+import { config } from 'dotenv';
 
-// Mock environment variables
+// Load test environment variables
+config({ path: '.env.test' });
+
+// Set test environment
 process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/testdb';
-process.env.JWT_SECRET = 'test-jwt-secret';
-process.env.REDIS_URL = 'redis://localhost:6379';
+process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret';
 
-// Mock external services
-jest.mock('redis', () => ({
-  createClient: jest.fn(() => ({
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-  })),
-}));
+// Mock console methods to reduce noise in tests
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
 
-jest.mock('ioredis', () => {
-  return jest.fn().mockImplementation(() => ({
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-  }));
-});
-
-// Increase timeout for integration tests
+// Increase timeout for all tests
 jest.setTimeout(30000);

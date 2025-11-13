@@ -32,7 +32,7 @@ let ProjectsService = class ProjectsService {
             where.category = category;
         }
         const [projects, total] = await Promise.all([
-            this.prisma.project.findMany({
+            this.prisma.projects.findMany({
                 where,
                 skip,
                 take: limit,
@@ -41,7 +41,7 @@ let ProjectsService = class ProjectsService {
                     { createdAt: 'desc' },
                 ],
                 include: {
-                    user: {
+                    users: {
                         select: {
                             id: true,
                             name: true,
@@ -50,7 +50,7 @@ let ProjectsService = class ProjectsService {
                     },
                 },
             }),
-            this.prisma.project.count({ where }),
+            this.prisma.projects.count({ where }),
         ]);
         return {
             data: projects,
@@ -63,7 +63,7 @@ let ProjectsService = class ProjectsService {
         };
     }
     async findFeatured() {
-        return this.prisma.project.findMany({
+        return this.prisma.projects.findMany({
             where: {
                 isActive: true,
                 isFeatured: true,
@@ -76,10 +76,10 @@ let ProjectsService = class ProjectsService {
         });
     }
     async findBySlug(slug) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { slug },
             include: {
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,
@@ -91,17 +91,17 @@ let ProjectsService = class ProjectsService {
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        await this.prisma.project.update({
+        await this.prisma.projects.update({
             where: { id: project.id },
             data: { viewCount: { increment: 1 } },
         });
         return project;
     }
     async findById(id) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
             include: {
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,
@@ -119,7 +119,7 @@ let ProjectsService = class ProjectsService {
         if (!data.slug) {
             data.slug = this.generateSlug(data.name);
         }
-        const existingProject = await this.prisma.project.findUnique({
+        const existingProject = await this.prisma.projects.findUnique({
             where: { slug: data.slug },
         });
         if (existingProject) {
@@ -141,10 +141,10 @@ let ProjectsService = class ProjectsService {
         if (data.youtubeVideoUrl) {
             data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
         }
-        return this.prisma.project.create({
+        return this.prisma.projects.create({
             data,
             include: {
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,
@@ -155,7 +155,7 @@ let ProjectsService = class ProjectsService {
         });
     }
     async update(id, data) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
@@ -163,7 +163,7 @@ let ProjectsService = class ProjectsService {
         }
         if (data.name && data.name !== project.name && !data.slug) {
             data.slug = this.generateSlug(data.name);
-            const existingProject = await this.prisma.project.findFirst({
+            const existingProject = await this.prisma.projects.findFirst({
                 where: {
                     slug: data.slug,
                     NOT: { id },
@@ -189,11 +189,11 @@ let ProjectsService = class ProjectsService {
         if (data.youtubeVideoUrl) {
             data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
         }
-        return this.prisma.project.update({
+        return this.prisma.projects.update({
             where: { id },
             data,
             include: {
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,
@@ -204,49 +204,49 @@ let ProjectsService = class ProjectsService {
         });
     }
     async remove(id) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        await this.prisma.project.delete({
+        await this.prisma.projects.delete({
             where: { id },
         });
         return { message: 'Project deleted successfully' };
     }
     async toggleFeatured(id) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        return this.prisma.project.update({
+        return this.prisma.projects.update({
             where: { id },
             data: { isFeatured: !project.isFeatured },
         });
     }
     async toggleActive(id) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        return this.prisma.project.update({
+        return this.prisma.projects.update({
             where: { id },
             data: { isActive: !project.isActive },
         });
     }
     async updateDisplayOrder(id, displayOrder) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        return this.prisma.project.update({
+        return this.prisma.projects.update({
             where: { id },
             data: { displayOrder },
         });
@@ -263,17 +263,17 @@ let ProjectsService = class ProjectsService {
         return match ? match[1] : null;
     }
     async updateImages(id, imageData) {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        return this.prisma.project.update({
+        return this.prisma.projects.update({
             where: { id },
             data: imageData,
             include: {
-                user: {
+                users: {
                     select: {
                         id: true,
                         name: true,

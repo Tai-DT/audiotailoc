@@ -9,10 +9,7 @@ export declare class TechniciansController {
         email?: string;
         specialties: ServiceCategory[];
     }): Promise<{
-        _count: {
-            bookings: number;
-        };
-        schedules: {
+        technician_schedules: {
             id: string;
             createdAt: Date;
             date: Date;
@@ -21,6 +18,9 @@ export declare class TechniciansController {
             endTime: string;
             isAvailable: boolean;
         }[];
+        _count: {
+            service_bookings: number;
+        };
     } & {
         id: string;
         email: string;
@@ -40,10 +40,7 @@ export declare class TechniciansController {
         page: number;
         pageSize: number;
         technicians: ({
-            _count: {
-                bookings: number;
-            };
-            schedules: {
+            technician_schedules: {
                 id: string;
                 createdAt: Date;
                 date: Date;
@@ -52,6 +49,9 @@ export declare class TechniciansController {
                 endTime: string;
                 isAvailable: boolean;
             }[];
+            _count: {
+                service_bookings: number;
+            };
         } & {
             id: string;
             email: string;
@@ -68,7 +68,7 @@ export declare class TechniciansController {
         specialty?: ServiceCategory;
         duration?: string;
     }): Promise<({
-        schedules: {
+        technician_schedules: {
             id: string;
             createdAt: Date;
             date: Date;
@@ -94,18 +94,15 @@ export declare class TechniciansController {
         topPerformers: any[];
     }>;
     getTechnician(id: string): Promise<{
-        _count: {
-            bookings: number;
-        };
-        bookings: ({
-            service: {
+        service_bookings: ({
+            services: {
+                tags: string | null;
+                description: string | null;
+                type: string | null;
                 id: string;
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tags: string | null;
-                description: string | null;
-                type: string | null;
                 duration: number;
                 slug: string;
                 shortDescription: string | null;
@@ -140,7 +137,7 @@ export declare class TechniciansController {
             estimatedCosts: number | null;
             actualCosts: number | null;
         })[];
-        schedules: {
+        technician_schedules: {
             id: string;
             createdAt: Date;
             date: Date;
@@ -149,6 +146,9 @@ export declare class TechniciansController {
             endTime: string;
             isAvailable: boolean;
         }[];
+        _count: {
+            service_bookings: number;
+        };
     } & {
         id: string;
         email: string;
@@ -175,10 +175,7 @@ export declare class TechniciansController {
         specialties?: ServiceCategory[];
         isActive?: boolean;
     }): Promise<{
-        _count: {
-            bookings: number;
-        };
-        schedules: {
+        technician_schedules: {
             id: string;
             createdAt: Date;
             date: Date;
@@ -187,6 +184,9 @@ export declare class TechniciansController {
             endTime: string;
             isAvailable: boolean;
         }[];
+        _count: {
+            service_bookings: number;
+        };
     } & {
         id: string;
         email: string;
@@ -204,6 +204,31 @@ export declare class TechniciansController {
         createdAt: Date;
         isActive: boolean;
         specialties: string | null;
+    }>;
+    getTechnicianAvailability(id: string, date: string): Promise<{
+        technician: {
+            id: string;
+            name: string;
+            isActive: boolean;
+        };
+        date: Date;
+        schedule: {
+            id: string;
+            createdAt: Date;
+            date: Date;
+            technicianId: string;
+            startTime: string;
+            endTime: string;
+            isAvailable: boolean;
+        };
+        bookings: {
+            status: string;
+            id: string;
+            scheduledAt: Date;
+            scheduledTime: string;
+        }[];
+        isAvailable: boolean;
+        bookedSlots: number;
     }>;
     setTechnicianSchedule(id: string, scheduleDto: {
         schedules: Array<{

@@ -56,6 +56,9 @@ export declare class UsersService {
         sortOrder?: 'asc' | 'desc';
     }): Promise<{
         users: {
+            orders: {
+                totalCents: number;
+            }[];
             id: string;
             email: string;
             name: string;

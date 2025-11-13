@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 
@@ -57,13 +58,15 @@ export class SupportService {
     published?: boolean;
     slug?: string;
   }): Promise<KnowledgeBaseArticle> {
-    const created = await this.prisma.knowledgeBaseEntry.create({
+    const created = await this.prisma.knowledge_base_entries.create({
       data: {
+        id: randomUUID(),
         title: data.title,
         content: data.content,
         kind: data.category,
         tags: data.tags?.join(',') || null,
         isActive: data.published ?? false,
+        updatedAt: new Date(),
       },
     });
 
@@ -107,13 +110,13 @@ export class SupportService {
     }
 
     const [entries, totalCount] = await Promise.all([
-      this.prisma.knowledgeBaseEntry.findMany({
+      this.prisma.knowledge_base_entries.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' }
       }),
-      this.prisma.knowledgeBaseEntry.count({ where })
+      this.prisma.knowledge_base_entries.count({ where })
     ]);
 
     const items: KnowledgeBaseArticle[] = entries.map(e => this.mapEntryToArticle(e));
@@ -130,14 +133,14 @@ export class SupportService {
   }
 
   async getArticle(idOrSlug: string): Promise<KnowledgeBaseArticle> {
-    const entry = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: idOrSlug } });
+    const entry = await this.prisma.knowledge_base_entries.findUnique({ where: { id: idOrSlug } });
     if (!entry) throw new Error('Article not found');
     // increment view count
-    await this.prisma.knowledgeBaseEntry.update({
+    await this.prisma.knowledge_base_entries.update({
       where: { id: entry.id },
       data: { viewCount: { increment: 1 } }
     });
-    const refreshed = await this.prisma.knowledgeBaseEntry.findUnique({ where: { id: entry.id } });
+    const refreshed = await this.prisma.knowledge_base_entries.findUnique({ where: { id: entry.id } });
     return this.mapEntryToArticle(refreshed!);
   }
 
@@ -156,18 +159,18 @@ export class SupportService {
     if (data.tags !== undefined) updateData.tags = data.tags.join(',');
     if (data.published !== undefined) updateData.isActive = data.published;
   // slug not yet enforced in persistence step (pending migration / generation)
-    const updated = await this.prisma.knowledgeBaseEntry.update({ where: { id }, data: updateData });
+    const updated = await this.prisma.knowledge_base_entries.update({ where: { id }, data: updateData });
     return this.mapEntryToArticle(updated);
   }
 
   async deleteArticle(id: string): Promise<{ success: boolean }> {
-    await this.prisma.knowledgeBaseEntry.delete({ where: { id } });
+    await this.prisma.knowledge_base_entries.delete({ where: { id } });
     return { success: true };
   }
 
   async feedback(id: string, helpful: boolean): Promise<KnowledgeBaseArticle> {
     const updateField = helpful ? 'helpful' : 'notHelpful';
-    const updated = await this.prisma.knowledgeBaseEntry.update({
+    const updated = await this.prisma.knowledge_base_entries.update({
       where: { id },
       data: { [updateField]: { increment: 1 } }
     });
@@ -335,7 +338,7 @@ export class SupportService {
 
   // Search functionality
   async searchKnowledgeBase(query: string): Promise<KnowledgeBaseArticle[]> {
-    const entries = await this.prisma.knowledgeBaseEntry.findMany({
+    const entries = await this.prisma.knowledge_base_entries.findMany({
       where: {
         isActive: true,
         OR: [
@@ -364,7 +367,7 @@ export class SupportService {
   }
 
   async getCategories(): Promise<string[]> {
-    const categories = await this.prisma.knowledgeBaseEntry.findMany({
+    const categories = await this.prisma.knowledge_base_entries.findMany({
       where: { isActive: true },
       select: { kind: true },
       distinct: ['kind']

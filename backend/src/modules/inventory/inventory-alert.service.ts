@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -12,21 +13,23 @@ export class InventoryAlertService {
     threshold?: number;
     currentStock?: number;
   }) {
-    return this.prisma.inventoryAlert.create({
+    return this.prisma.inventory_alerts.create({
       data: {
+        id: randomUUID(),
         productId: data.productId,
         type: data.type,
         message: data.message,
         threshold: data.threshold,
-        currentStock: data.currentStock ?? 0
+        currentStock: data.currentStock ?? 0,
+        updatedAt: new Date()
       },
       include: {
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
             sku: true,
-            category: {
+            categories: {
               select: {
                 id: true,
                 name: true
@@ -75,16 +78,16 @@ export class InventoryAlertService {
     }
 
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.inventoryAlert.count({ where }),
-      this.prisma.inventoryAlert.findMany({
+      this.prisma.inventory_alerts.count({ where }),
+      this.prisma.inventory_alerts.findMany({
         where,
         include: {
-          product: {
+          products: {
             select: {
               id: true,
               name: true,
               sku: true,
-              category: {
+              categories: {
                 select: {
                   id: true,
                   name: true
@@ -112,18 +115,18 @@ export class InventoryAlertService {
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
 
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.inventoryAlert.count({
+      this.prisma.inventory_alerts.count({
         where: { productId }
       }),
-      this.prisma.inventoryAlert.findMany({
+      this.prisma.inventory_alerts.findMany({
         where: { productId },
         include: {
-          product: {
+          products: {
             select: {
               id: true,
               name: true,
               sku: true,
-              category: {
+              categories: {
                 select: {
                   id: true,
                   name: true
@@ -147,14 +150,14 @@ export class InventoryAlertService {
   }
 
   async resolve(id: string, _userId?: string) {
-    return this.prisma.inventoryAlert.update({
+    return this.prisma.inventory_alerts.update({
       where: { id },
       data: {
         isResolved: true,
         resolvedAt: new Date()
       },
       include: {
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
@@ -166,7 +169,7 @@ export class InventoryAlertService {
   }
 
   async bulkResolve(ids: string[], _userId?: string) {
-    return this.prisma.inventoryAlert.updateMany({
+    return this.prisma.inventory_alerts.updateMany({
       where: {
         id: { in: ids }
       },
@@ -178,17 +181,17 @@ export class InventoryAlertService {
   }
 
   async getActiveAlerts() {
-    return this.prisma.inventoryAlert.findMany({
+    return this.prisma.inventory_alerts.findMany({
       where: {
         isResolved: false
       },
       include: {
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
             sku: true,
-            category: {
+            categories: {
               select: {
                 id: true,
                 name: true
@@ -203,10 +206,10 @@ export class InventoryAlertService {
 
   async getAlertSummary() {
     const [totalAlerts, activeAlerts, resolvedAlerts, alertsByType] = await this.prisma.$transaction([
-      this.prisma.inventoryAlert.count(),
-      this.prisma.inventoryAlert.count({ where: { isResolved: false } }),
-      this.prisma.inventoryAlert.count({ where: { isResolved: true } }),
-      (this.prisma.inventoryAlert.groupBy as any)({
+      this.prisma.inventory_alerts.count(),
+      this.prisma.inventory_alerts.count({ where: { isResolved: false } }),
+      this.prisma.inventory_alerts.count({ where: { isResolved: true } }),
+      (this.prisma.inventory_alerts.groupBy as any)({
         by: ['type'],
         _count: {
           id: true
@@ -233,7 +236,7 @@ export class InventoryAlertService {
 
   async checkAndCreateAlerts() {
     // Get all products with their current stock and inventory settings
-    const products = await this.prisma.product.findMany({
+    const products = await this.prisma.products.findMany({
       select: {
         id: true,
         name: true,
@@ -257,7 +260,7 @@ export class InventoryAlertService {
 
       // Check low stock alert
       if (lowStockThreshold && currentStock <= lowStockThreshold) {
-        const existingAlert = await this.prisma.inventoryAlert.findFirst({
+        const existingAlert = await this.prisma.inventory_alerts.findFirst({
           where: {
             productId: product.id,
             type: 'LOW_STOCK',
@@ -278,7 +281,7 @@ export class InventoryAlertService {
 
       // Check out of stock alert
       if (currentStock === 0) {
-        const existingAlert = await this.prisma.inventoryAlert.findFirst({
+        const existingAlert = await this.prisma.inventory_alerts.findFirst({
           where: {
             productId: product.id,
             type: 'OUT_OF_STOCK',
@@ -298,7 +301,7 @@ export class InventoryAlertService {
 
       // Check overstock alert
       if (maxStock && currentStock >= maxStock) {
-        const existingAlert = await this.prisma.inventoryAlert.findFirst({
+        const existingAlert = await this.prisma.inventory_alerts.findFirst({
           where: {
             productId: product.id,
             type: 'OVERSTOCK',
@@ -322,13 +325,13 @@ export class InventoryAlertService {
   }
 
   async delete(id: string) {
-    return this.prisma.inventoryAlert.delete({
+    return this.prisma.inventory_alerts.delete({
       where: { id }
     });
   }
 
   async bulkDelete(ids: string[]) {
-    return this.prisma.inventoryAlert.deleteMany({
+    return this.prisma.inventory_alerts.deleteMany({
       where: {
         id: { in: ids }
       }

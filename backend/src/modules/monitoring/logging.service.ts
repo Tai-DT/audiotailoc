@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as winston from 'winston';
@@ -284,21 +285,22 @@ export class LoggingService {
     severity: string;
   }): Promise<void> {
     try {
-      await this.prisma.activityLog.create({
+      await this.prisma.activity_logs.create({
         data: {
-          userId: data.userId,
+          id: randomUUID(),
+          userId: data.userId || null,
           action: data.action,
-          resource: data.resource,
-          resourceId: data.resourceId,
+          resource: data.resource || null,
+          resourceId: data.resourceId || null,
           details: data.details,
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
-          method: data.method,
-          url: data.url,
-          statusCode: data.statusCode,
-          duration: data.duration,
+          ipAddress: data.ipAddress || null,
+          userAgent: data.userAgent || null,
+          method: data.method || null,
+          url: data.url || null,
+          statusCode: data.statusCode || null,
+          duration: data.duration || null,
           category: data.category,
-          severity: data.severity,
+          severity: data.severity
         }
       });
     } catch (error) {

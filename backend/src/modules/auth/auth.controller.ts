@@ -113,7 +113,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for change password
   @Put('change-password')
   async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
-    const userId = req.user?.sub as string | undefined;
+    const userId = req.users?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
 
     const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
@@ -126,7 +126,7 @@ export class AuthController {
   @SkipThrottle() // Skip rate limiting for authenticated /me requests
   @Get('me')
   async me(@Req() req: any) {
-    const userId = req.user?.sub as string | undefined;
+    const userId = req.users?.sub as string | undefined;
     if (!userId) return { userId: null };
     const u = await this.users.findById(userId);
     return { userId, email: u?.email ?? null, role: (u as any)?.role ?? null };

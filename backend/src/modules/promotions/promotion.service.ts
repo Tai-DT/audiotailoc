@@ -8,7 +8,7 @@ export class PromotionService {
   async validate(code?: string): Promise<{ code: string; type: 'PERCENT' | 'FIXED'; value: number } | null> {
     if (!code) return null;
     const now = new Date();
-    const promo = await this.prisma.promotion.findUnique({ where: { code } });
+    const promo = await this.prisma.promotions.findUnique({ where: { code } });
     if (!promo) return null;
     // Align with schema fields
     if (promo.expiresAt && promo.expiresAt < now) return null;

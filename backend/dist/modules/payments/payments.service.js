@@ -15,9 +15,10 @@ var PaymentsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const config_1 = require("@nestjs/config");
-const crypto_1 = __importDefault(require("crypto"));
+const crypto_2 = __importDefault(require("crypto"));
 let PaymentsService = PaymentsService_1 = class PaymentsService {
     constructor(prisma, config) {
         this.prisma = prisma;
@@ -25,20 +26,28 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         this.logger = new common_1.Logger(PaymentsService_1.name);
     }
     async createIntent(params) {
-        const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
+        const order = await this.prisma.orders.findUnique({ where: { id: params.orderId } });
         if (!order)
             throw new common_1.BadRequestException('Order not found');
-        const intent = await this.prisma.paymentIntent.create({
-            data: { orderId: order.id, provider: params.provider, amountCents: order.totalCents, status: 'PENDING', returnUrl: params.returnUrl ?? null },
+        const intent = await this.prisma.payment_intents.create({
+            data: {
+                id: (0, crypto_1.randomUUID)(),
+                orderId: order.id,
+                provider: params.provider,
+                amountCents: order.totalCents,
+                status: 'PENDING',
+                returnUrl: params.returnUrl ?? null,
+                updatedAt: new Date()
+            },
         });
         if (params.provider === 'COD') {
-            await this.prisma.order.update({
+            await this.prisma.orders.update({
                 where: { id: order.id },
                 data: {
                     status: 'CONFIRMED'
                 }
             });
-            await this.prisma.paymentIntent.update({
+            await this.prisma.payment_intents.update({
                 where: { id: intent.id },
                 data: {
                     status: 'PENDING',
@@ -65,7 +74,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 .sort()
                 .map((k) => `${k}=${params[k]}`)
                 .join('&');
-            const vnp_SecureHash = crypto_1.default.createHmac('sha256', secret).update(signData).digest('hex');
+            const vnp_SecureHash = crypto_2.default.createHmac('sha256', secret).update(signData).digest('hex');
             return `${this.config.get('VNPAY_PAY_URL') || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'}?${signData}&vnp_SecureHash=${vnp_SecureHash}`;
         }
         if (intent.provider === 'PAYOS') {
@@ -88,7 +97,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                     payload.partnerCode = partnerCode;
                 }
                 const dataStr = JSON.stringify(payload);
-                const sig = crypto_1.default.createHmac('sha256', checksumKey).update(dataStr).digest('hex');
+                const sig = crypto_2.default.createHmac('sha256', checksumKey).update(dataStr).digest('hex');
                 const headers = {
                     'content-type': 'application/json',
                     'x-client-id': clientId,
@@ -130,7 +139,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             const requestType = 'payWithATM';
             const extraData = '';
             const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
-            const signature = crypto_1.default.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+            const signature = crypto_2.default.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
             const requestBody = {
                 partnerCode,
                 accessKey,
@@ -168,55 +177,61 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         }
     }
     async markPaid(provider, txnRef, transactionId) {
-        const intent = await this.prisma.paymentIntent.findUnique({ where: { id: txnRef } });
+        const intent = await this.prisma.payment_intents.findUnique({ where: { id: txnRef } });
         if (!intent)
             throw new common_1.BadRequestException('Intent not found');
-        const order = await this.prisma.order.findUnique({ where: { id: intent.orderId } });
+        const order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
         if (!order)
             throw new common_1.BadRequestException('Order not found');
         await this.prisma.$transaction(async (tx) => {
-            await tx.payment.create({
+            await tx.payments.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     provider,
                     orderId: intent.orderId,
                     intentId: intent.id,
                     amountCents: intent.amountCents,
                     status: 'SUCCEEDED',
-                    transactionId: transactionId || txnRef
+                    transactionId: transactionId || txnRef,
+                    updatedAt: new Date()
                 }
             });
-            await tx.order.update({ where: { id: intent.orderId }, data: { status: 'PAID' } });
-            await tx.paymentIntent.update({ where: { id: intent.id }, data: { status: 'SUCCEEDED' } });
+            await tx.orders.update({ where: { id: intent.orderId }, data: { status: 'CONFIRMED' } });
+            await tx.payment_intents.update({ where: { id: intent.id }, data: { status: 'SUCCEEDED' } });
         });
         this.logger.log(`Payment marked as paid: ${provider} - ${txnRef}`);
         return { ok: true };
     }
     async createRefund(paymentId, amountCents, reason) {
-        const payment = await this.prisma.payment.findUnique({
+        const payment = await this.prisma.payments.findUnique({
             where: { id: paymentId },
-            include: { order: true }
+            include: { orders: true }
         });
         if (!payment)
             throw new common_1.BadRequestException('Payment not found');
         if (payment.status !== 'SUCCEEDED')
             throw new common_1.BadRequestException('Payment not succeeded');
-        const refundAmount = amountCents || payment.amountCents;
-        if (refundAmount > payment.amountCents) {
+        if (amountCents === undefined || amountCents === null || amountCents <= 0) {
+            throw new common_1.BadRequestException('Refund amount must be a positive number');
+        }
+        if (amountCents > payment.amountCents) {
             throw new common_1.BadRequestException('Refund amount cannot exceed payment amount');
         }
-        const existingRefunds = await this.prisma.refund.findMany({
+        const existingRefunds = await this.prisma.refunds.findMany({
             where: { paymentId: payment.id }
         });
         const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
-        if (totalRefunded + refundAmount > payment.amountCents) {
+        if (totalRefunded + amountCents > payment.amountCents) {
             throw new common_1.BadRequestException('Total refund amount would exceed payment amount');
         }
-        const refund = await this.prisma.refund.create({
+        const refund = await this.prisma.refunds.create({
             data: {
+                id: (0, crypto_1.randomUUID)(),
                 paymentId: payment.id,
-                amountCents: refundAmount,
+                amountCents: amountCents,
                 reason: reason || 'Customer request',
-                status: 'PENDING'
+                status: 'PENDING',
+                updatedAt: new Date()
             }
         });
         let refundResult;
@@ -234,7 +249,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 default:
                     throw new Error('Unsupported payment provider for refund');
             }
-            await this.prisma.refund.update({
+            await this.prisma.refunds.update({
                 where: { id: refund.id },
                 data: {
                     status: refundResult.success ? 'SUCCEEDED' : 'FAILED',
@@ -243,13 +258,13 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 }
             });
             this.logger.log(`Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`);
-            if (payment.order.userId) {
-                this.logger.log(`Refund notification sent to user ${payment.order.userId}`);
+            if (payment.orderId) {
+                this.logger.log(`Refund notification sent for order ${payment.orderId}`);
             }
             return { refundId: refund.id, success: refundResult.success };
         }
         catch (error) {
-            await this.prisma.refund.update({
+            await this.prisma.refunds.update({
                 where: { id: refund.id },
                 data: {
                     status: 'FAILED',
@@ -277,7 +292,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 vnp_TmnCode: vnpTmnCode,
                 vnp_TransactionType: '02',
                 vnp_TxnRef: payment.transactionId,
-                vnp_Amount: refund.amountCents * 100,
+                vnp_Amount: refund.amountCents,
                 vnp_OrderInfo: `Refund for transaction ${payment.transactionId}`,
                 vnp_TransactionNo: payment.transactionId,
                 vnp_TransactionDate: payment.createdAt.toISOString().slice(0, 19).replace(/[:-]/g, ''),
@@ -287,7 +302,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             };
             const sortedParams = Object.keys(params).sort();
             const queryString = sortedParams.map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
-            const secureHash = crypto_1.default.createHmac('sha512', vnpHashSecret).update(queryString).digest('hex');
+            const secureHash = crypto_2.default.createHmac('sha512', vnpHashSecret).update(queryString).digest('hex');
             const requestBody = queryString + `&vnp_SecureHash=${secureHash}`;
             const response = await fetch(vnpRefundUrl, {
                 method: 'POST',
@@ -326,7 +341,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             const transId = payment.transactionId;
             const description = refund.reason || 'Refund request';
             const rawSignature = `accessKey=${accessKey}&amount=${amount}&description=${description}&orderId=${orderId}&partnerCode=${partnerCode}&requestId=${requestId}&transId=${transId}`;
-            const signature = crypto_1.default.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+            const signature = crypto_2.default.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
             const requestBody = {
                 partnerCode,
                 accessKey,
@@ -371,7 +386,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 cancelReason: 'Customer request'
             };
             const dataToSign = `${clientId}${payment.transactionId}${refund.amountCents}${checksumKey}`;
-            const signature = crypto_1.default.createHmac('sha256', checksumKey).update(dataToSign).digest('hex');
+            const signature = crypto_2.default.createHmac('sha256', checksumKey).update(dataToSign).digest('hex');
             const response = await fetch(refundUrl, {
                 method: 'POST',
                 headers: {
@@ -429,12 +444,12 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
     }
     async handleMomoWebhook(payload) {
         const { orderId, resultCode, transId } = payload;
-        const order = await this.prisma.order.findUnique({ where: { orderNo: orderId } });
+        const order = await this.prisma.orders.findUnique({ where: { orderNo: orderId } });
         if (!order) {
             this.logger.error(`MOMO webhook: order not found for orderNo=${orderId}`);
             return { resultCode: 0, message: 'ignored' };
         }
-        const intent = await this.prisma.paymentIntent.findFirst({
+        const intent = await this.prisma.payment_intents.findFirst({
             where: { orderId: order.id, provider: 'MOMO' },
             orderBy: { createdAt: 'desc' },
         });
@@ -457,12 +472,12 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             this.logger.error('PayOS webhook: missing orderCode in payload');
             return { error: 1, message: 'Invalid payload: missing orderCode' };
         }
-        const order = await this.prisma.order.findUnique({ where: { orderNo: orderCode } });
+        const order = await this.prisma.orders.findUnique({ where: { orderNo: orderCode } });
         if (!order) {
             this.logger.error(`PayOS webhook: order not found for orderNo=${orderCode}`);
             return { error: 0, message: 'ignored' };
         }
-        const intent = await this.prisma.paymentIntent.findFirst({
+        const intent = await this.prisma.payment_intents.findFirst({
             where: { orderId: order.id, provider: 'PAYOS' },
             orderBy: { createdAt: 'desc' },
         });
@@ -484,14 +499,14 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             this.logger.error('markFailed: missing txnRef parameter');
             return;
         }
-        const intent = await this.prisma.paymentIntent.findUnique({ where: { id: txnRef } });
+        const intent = await this.prisma.payment_intents.findUnique({ where: { id: txnRef } });
         if (!intent)
             return;
-        await this.prisma.paymentIntent.update({
+        await this.prisma.payment_intents.update({
             where: { id: intent.id },
             data: { status: 'FAILED' }
         });
-        const _order = await this.prisma.order.findUnique({ where: { id: intent.orderId } });
+        const _order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
         this.logger.log(`Payment marked as failed: ${provider} - ${txnRef}`);
     }
 };

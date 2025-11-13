@@ -6,11 +6,11 @@ export declare class AdminBannersController {
     constructor(bannersService: BannersService);
     findAll(page?: string, search?: string, skip?: string, take?: string): Promise<{
         items: {
-            page: string;
+            description: string | null;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            page: string;
             title: string;
             imageUrl: string;
             isActive: boolean;
@@ -30,11 +30,11 @@ export declare class AdminBannersController {
         totalPages: number;
     }>;
     findOne(id: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -49,11 +49,11 @@ export declare class AdminBannersController {
         endAt: Date | null;
     }>;
     create(data: CreateBannerDto): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -68,11 +68,11 @@ export declare class AdminBannersController {
         endAt: Date | null;
     }>;
     update(id: string, data: UpdateBannerDto): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -87,11 +87,11 @@ export declare class AdminBannersController {
         endAt: Date | null;
     }>;
     remove(id: string): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;
@@ -108,11 +108,11 @@ export declare class AdminBannersController {
     reorder(data: {
         ids: string[];
     }): Promise<{
-        page: string;
+        description: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        page: string;
         title: string;
         imageUrl: string;
         isActive: boolean;

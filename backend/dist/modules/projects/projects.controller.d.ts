@@ -4,26 +4,26 @@ export declare class ProjectsController {
     constructor(projectsService: ProjectsService);
     list(page: number, limit: number, status?: string, featured?: string, category?: string): Promise<{
         data: ({
-            user: {
+            users: {
                 id: string;
                 email: string;
                 name: string;
             };
         } & {
-            category: string | null;
             client: string | null;
             status: string;
+            tags: string | null;
+            description: string | null;
+            content: string | null;
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            tags: string | null;
-            description: string | null;
-            content: string | null;
             startDate: Date | null;
             endDate: Date | null;
             duration: string | null;
+            category: string | null;
             slug: string;
             shortDescription: string | null;
             images: string | null;
@@ -37,6 +37,7 @@ export declare class ProjectsController {
             isDeleted: boolean;
             viewCount: number;
             isFeatured: boolean;
+            results: string | null;
             clientLogo: string | null;
             technologies: string | null;
             thumbnailImage: string | null;
@@ -50,7 +51,6 @@ export declare class ProjectsController {
             budget: string | null;
             displayOrder: number;
             testimonial: string | null;
-            results: string | null;
             challenges: string | null;
             solutions: string | null;
             ogTitle: string | null;
@@ -70,20 +70,20 @@ export declare class ProjectsController {
         };
     }>;
     getFeatured(): Promise<{
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -97,6 +97,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -110,7 +111,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -123,26 +123,26 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }[]>;
     getBySlug(slug: string): Promise<{
-        user: {
+        users: {
             id: string;
             email: string;
             name: string;
         };
     } & {
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -156,6 +156,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -169,7 +170,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -182,26 +182,26 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }>;
     getById(id: string): Promise<{
-        user: {
+        users: {
             id: string;
             email: string;
             name: string;
         };
     } & {
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -215,6 +215,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -228,7 +229,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -241,26 +241,26 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }>;
     create(data: any): Promise<{
-        user: {
+        users: {
             id: string;
             email: string;
             name: string;
         };
     } & {
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -274,6 +274,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -287,7 +288,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -300,26 +300,26 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }>;
     update(id: string, data: any): Promise<{
-        user: {
+        users: {
             id: string;
             email: string;
             name: string;
         };
     } & {
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -333,6 +333,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -346,7 +347,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -362,20 +362,20 @@ export declare class ProjectsController {
         message: string;
     }>;
     toggleFeatured(id: string): Promise<{
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -389,6 +389,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -402,7 +403,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -415,20 +415,20 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }>;
     toggleActive(id: string): Promise<{
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -442,6 +442,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -455,7 +456,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;
@@ -468,20 +468,20 @@ export declare class ProjectsController {
         completionDate: Date | null;
     }>;
     updateOrder(id: string, displayOrder: number): Promise<{
-        category: string | null;
         client: string | null;
         status: string;
+        tags: string | null;
+        description: string | null;
+        content: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        tags: string | null;
-        description: string | null;
-        content: string | null;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        category: string | null;
         slug: string;
         shortDescription: string | null;
         images: string | null;
@@ -495,6 +495,7 @@ export declare class ProjectsController {
         isDeleted: boolean;
         viewCount: number;
         isFeatured: boolean;
+        results: string | null;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -508,7 +509,6 @@ export declare class ProjectsController {
         budget: string | null;
         displayOrder: number;
         testimonial: string | null;
-        results: string | null;
         challenges: string | null;
         solutions: string | null;
         ogTitle: string | null;

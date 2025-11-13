@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateSettingsDto } from './dto/settings-update.dto';
 
@@ -7,7 +8,7 @@ export class SettingsService {
   constructor(private prisma: PrismaService) {}
 
   async getSettings() {
-    const configs = await this.prisma.systemConfig.findMany({
+    const configs = await this.prisma.system_configs.findMany({
       where: {
         key: {
           startsWith: 'site.',
@@ -29,7 +30,7 @@ export class SettingsService {
   }
 
   async getSection(section: string) {
-    const config = await this.prisma.systemConfig.findUnique({
+    const config = await this.prisma.system_configs.findUnique({
       where: {
         key: `site.${section}`,
       },
@@ -51,16 +52,16 @@ export class SettingsService {
 
     if (data.general) {
       updates.push(
-        this.prisma.systemConfig.upsert({
+        this.prisma.system_configs.upsert({
           where: { key: 'site.general' },
           update: { 
             value: JSON.stringify(data.general),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
-          create: {
+          create: { id: randomUUID(),
             key: 'site.general',
             value: JSON.stringify(data.general),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
         })
       );
@@ -68,16 +69,16 @@ export class SettingsService {
 
     if (data.about) {
       updates.push(
-        this.prisma.systemConfig.upsert({
+        this.prisma.system_configs.upsert({
           where: { key: 'site.about' },
           update: { 
             value: JSON.stringify(data.about),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
-          create: {
+          create: { id: randomUUID(),
             key: 'site.about',
             value: JSON.stringify(data.about),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
         })
       );
@@ -85,16 +86,16 @@ export class SettingsService {
 
     if (data.socials) {
       updates.push(
-        this.prisma.systemConfig.upsert({
+        this.prisma.system_configs.upsert({
           where: { key: 'site.socials' },
           update: { 
             value: JSON.stringify(data.socials),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
-          create: {
+          create: { id: randomUUID(),
             key: 'site.socials',
             value: JSON.stringify(data.socials),
-            type: 'JSON',
+            type: 'JSON', updatedAt: new Date(),
           },
         })
       );

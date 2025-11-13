@@ -1,6 +1,9 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
+import { CreateNotificationDto } from './dto/create-notification.dto';
 
+@ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationService: NotificationService) {}
@@ -15,6 +18,13 @@ export class NotificationsController {
       return { notifications: [], pagination: { page, limit, total: 0, totalPages: 0 } };
     }
     return this.notificationService.listNotifications(userId, { read, page, limit });
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new notification' })
+  @ApiResponse({ status: 201, description: 'Notification created successfully' })
+  async createNotification(@Body() data: CreateNotificationDto) {
+    return this.notificationService.createNotification(data);
   }
 
   @Get('settings')

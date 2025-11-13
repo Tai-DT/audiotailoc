@@ -1,14 +1,45 @@
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: 'src',
+  rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   collectCoverageFrom: [
-    '**/*.(t|j)s',
+    'src/**/*.(t|j)s',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.dto.ts',
+    '!src/**/*.entity.ts',
+    '!src/**/*.enum.ts',
+    '!src/**/*.decorator.ts',
+    '!src/migrations/**',
+    '!src/**/*.spec.ts',
   ],
-  coverageDirectory: '../coverage',
+  coverageDirectory: './coverage',
   testEnvironment: 'node',
   testTimeout: 30000,
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  coverageThresholds: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+  },
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/test/',
+    '.module.ts',
+    '.interface.ts',
+    '.dto.ts',
+  ],
 };

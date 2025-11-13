@@ -98,7 +98,7 @@ export class CacheInterceptor implements NestInterceptor {
       path: request.path,
       method: request.method,
       query: this.sortObjectKeys(request.query),
-      userId: (request as any).user?.id,
+      userId: (request as any).users?.id,
       headers: this.getRelevantHeaders(request.headers),
     };
 

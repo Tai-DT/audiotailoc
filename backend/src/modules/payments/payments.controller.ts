@@ -91,26 +91,26 @@ export class PaymentsController {
     // Search by order number or payment ID
     if (query.search) {
       where.OR = [
-        { order: { orderNo: { contains: query.search, mode: 'insensitive' } } },
+        { orders: { orderNo: { contains: query.search, mode: 'insensitive' } } },
         { id: { contains: query.search, mode: 'insensitive' } }
       ];
     }
 
     const [payments, total] = await Promise.all([
-      this.prisma.payment.findMany({
+      this.prisma.payments.findMany({
         where,
         include: {
-          order: {
+          orders: {
             select: {
               id: true,
               orderNo: true,
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
+            users: {
+              select: {
+                id: true,
+                name: true,
+                email: true
               }
+            }
             }
           }
         },
@@ -118,21 +118,21 @@ export class PaymentsController {
         skip,
         take: limit
       }),
-      this.prisma.payment.count({ where })
+      this.prisma.payments.count({ where })
     ]);
 
     return {
       payments: payments.map((payment: any) => ({
         id: payment.id,
-        orderId: payment.order.id,
-        orderNo: payment.order.orderNo,
+        orderId: payment.orders.id,
+        orderNo: payment.orders.orderNo,
         amountCents: payment.amountCents,
         provider: payment.provider,
         status: payment.status,
         createdAt: payment.createdAt,
         updatedAt: payment.updatedAt,
         paidAt: payment.status === 'PAID' ? payment.updatedAt : null,
-        user: payment.order.user
+        user: payment.orders.user
       })),
       pagination: {
         page,
@@ -154,15 +154,15 @@ export class PaymentsController {
       refundedPayments,
       refundedAmount
     ] = await Promise.all([
-      this.prisma.payment.count(),
-      this.prisma.payment.aggregate({
+      this.prisma.payments.count(),
+      this.prisma.payments.aggregate({
         where: { status: 'PAID' },
         _sum: { amountCents: true }
       }),
-      this.prisma.payment.count({ where: { status: 'PENDING' } }),
-      this.prisma.payment.count({ where: { status: 'FAILED' } }),
-      this.prisma.payment.count({ where: { status: 'REFUNDED' } }),
-      this.prisma.payment.aggregate({
+      this.prisma.payments.count({ where: { status: 'PENDING' } }),
+      this.prisma.payments.count({ where: { status: 'FAILED' } }),
+      this.prisma.payments.count({ where: { status: 'REFUNDED' } }),
+      this.prisma.payments.aggregate({
         where: { status: 'REFUNDED' },
         _sum: { amountCents: true }
       })

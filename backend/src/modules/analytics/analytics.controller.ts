@@ -144,6 +144,49 @@ export class AnalyticsController {
     return trends;
   }
 
+  @Get('revenue')
+  async getRevenue(@Query('period') period: string = 'month') {
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (period) {
+      case 'day':
+        startDate.setDate(endDate.getDate() - 1);
+        break;
+      case 'week':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(endDate.getMonth() - 1);
+        break;
+      case 'quarter':
+        startDate.setMonth(endDate.getMonth() - 3);
+        break;
+      case 'year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      default:
+        startDate.setMonth(endDate.getMonth() - 1);
+    }
+
+    const filters: AnalyticsFilters = {
+      startDate,
+      endDate,
+    };
+
+    const salesMetrics = await this.analyticsService.getSalesMetrics(filters);
+    
+    return {
+      period,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      totalRevenue: salesMetrics.totalRevenue || 0,
+      totalOrders: salesMetrics.totalOrders || 0,
+      averageOrderValue: salesMetrics.averageOrderValue || 0,
+      revenueGrowth: salesMetrics.revenueGrowth || 0
+    };
+  }
+
   @Get('top-services')
   async getTopServices(@Query('limit') limit: string = '5') {
     const limitNum = parseInt(limit) || 5;
@@ -158,6 +201,63 @@ export class AnalyticsController {
     ];
 
     return topServices.slice(0, limitNum);
+  }
+
+  @Get('top-products')
+  async getTopProducts(@Query('limit') limit: string = '5') {
+    const limitNum = parseInt(limit) || 5;
+
+    // Mock data for top products
+    const topProducts = [
+      { id: '1', name: 'Loa Bluetooth Sony', sold: 125, revenue: 37500000 },
+      { id: '2', name: 'Ampli Denon', sold: 89, revenue: 26700000 },
+      { id: '3', name: 'Micro không dây', sold: 67, revenue: 20100000 },
+      { id: '4', name: 'Dàn karaoke', sold: 45, revenue: 13500000 },
+      { id: '5', name: 'Tai nghe gaming', sold: 34, revenue: 10200000 },
+    ];
+
+    return topProducts.slice(0, limitNum);
+  }
+
+  @Get('user-activity')
+  async getUserActivity(@Query('range') range: string = '7days') {
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+      case '7days':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '30days':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case '90days':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      case '1year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+
+    // Mock user activity data
+    const userActivity = {
+      pageViews: Math.floor(Math.random() * 10000) + 5000,
+      sessions: Math.floor(Math.random() * 1000) + 500,
+      avgSessionDuration: Math.floor(Math.random() * 300) + 120, // seconds
+      bounceRate: Math.floor(Math.random() * 30) + 20, // percentage
+      uniqueVisitors: Math.floor(Math.random() * 500) + 200,
+      returnVisitors: Math.floor(Math.random() * 300) + 100,
+      topPages: [
+        { path: '/san-pham', views: Math.floor(Math.random() * 1000) + 500 },
+        { path: '/dich-vu', views: Math.floor(Math.random() * 800) + 300 },
+        { path: '/lien-he', views: Math.floor(Math.random() * 400) + 100 },
+      ]
+    };
+
+    return userActivity;
   }
 
   @Get('sales')

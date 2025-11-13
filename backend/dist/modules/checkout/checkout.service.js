@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckoutService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const cart_service_1 = require("../cart/cart.service");
 const promotion_service_1 = require("../promotions/promotion.service");
@@ -32,8 +33,9 @@ let CheckoutService = class CheckoutService {
         const total = Math.max(0, subtotalCents - discount) + shipping;
         const orderNo = 'ATL' + Date.now();
         const result = await this.prisma.$transaction(async (tx) => {
-            const order = await tx.order.create({
+            const order = await tx.orders.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     orderNo,
                     userId,
                     status: 'PENDING',
@@ -43,37 +45,47 @@ let CheckoutService = class CheckoutService {
                     totalCents: total,
                     promotionCode: promo?.code ?? null,
                     shippingAddress: params.shippingAddress ?? null,
+                    updatedAt: new Date()
                 },
             });
             for (const i of items) {
-                await tx.orderItem.create({
+                const product = await tx.products.findUnique({
+                    where: { id: i.productId },
+                    select: { priceCents: true, isActive: true, isDeleted: true }
+                });
+                if (!product || !product.isActive || product.isDeleted) {
+                    throw new common_1.BadRequestException(`Product ${i.products.name} is no longer available`);
+                }
+                const currentPrice = product.priceCents;
+                await tx.order_items.create({
                     data: {
+                        id: (0, crypto_1.randomUUID)(),
                         orderId: order.id,
                         productId: i.productId,
-                        name: i.product.name,
+                        name: i.products.name,
                         quantity: i.quantity,
-                        price: i.price || i.product.priceCents,
-                        unitPrice: i.price || i.product.priceCents,
-                        imageUrl: i.product.imageUrl ?? null,
+                        price: currentPrice,
+                        unitPrice: currentPrice,
+                        imageUrl: i.products.imageUrl ?? null,
+                        updatedAt: new Date()
                     },
                 });
-                await tx.inventory.update({ where: { productId: i.productId }, data: { stock: { decrement: i.quantity }, reserved: { decrement: i.quantity } } });
             }
-            await tx.cart.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
+            await tx.carts.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
             return order;
         });
         try {
             if (result.userId) {
-                const user = await this.prisma.user.findUnique({ where: { id: result.userId } });
+                const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
                 if (user?.email) {
                     const orderData = {
                         orderNo: result.orderNo,
                         customerName: user.name || user.email,
                         totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
                         items: items.map((item) => ({
-                            name: item.product.name || 'Sản phẩm',
+                            name: item.products.name || 'Sản phẩm',
                             quantity: item.quantity,
-                            price: `${((item.unitPrice || item.product.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+                            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
                         })),
                         status: result.status
                     };
@@ -81,13 +93,12 @@ let CheckoutService = class CheckoutService {
                 }
             }
         }
-        catch (error) {
-            console.error('Failed to send order confirmation email:', error);
+        catch (_error) {
         }
         return result;
     }
     async getOrderForUserByNo(userId, orderNo) {
-        const order = await this.prisma.order.findFirst({ where: { orderNo, userId }, include: { items: true, payments: true } });
+        const order = await this.prisma.orders.findFirst({ where: { orderNo, userId }, include: { order_items: true, payments: true } });
         if (!order)
             throw new Error('Không tìm thấy đơn hàng');
         return order;

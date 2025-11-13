@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const res = await fetch(`${API_BASE}/support/kb/articles/${params.id}`, {
+    const { id } = await params;
+    const res = await fetch(`${API_BASE}/support/kb/articles/${id}`, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-store',
     });
@@ -15,10 +16,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json();
-    const res = await fetch(`${API_BASE}/support/kb/articles/${params.id}`, {
+    const res = await fetch(`${API_BASE}/support/kb/articles/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(body),
@@ -30,9 +32,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const res = await fetch(`${API_BASE}/support/kb/articles/${params.id}`, {
+    const { id } = await params;
+    const res = await fetch(`${API_BASE}/support/kb/articles/${id}`, {
       method: 'DELETE',
       headers: { 'Accept': 'application/json' },
     });

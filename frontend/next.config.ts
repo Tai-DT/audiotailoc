@@ -2,6 +2,19 @@ import type { NextConfig } from "next";
 import path from 'path';
 
 const nextConfig: NextConfig = {
+  // Fix workspace root inference warning
+  outputFileTracingRoot: path.join(__dirname, '..'),
+  
+  // Enable Turbopack for faster builds
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+  
   // Temporarily disable TypeScript checking to focus on connectivity
   typescript: {
     ignoreBuildErrors: true,
@@ -9,11 +22,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
-  // Fix workspace root inference warning only in development
-  ...(process.env.NODE_ENV === 'development' && {
-    outputFileTracingRoot: path.join(__dirname, '..'),
-  }),
   
   // Performance optimizations
   experimental: {
@@ -45,14 +53,6 @@ const nextConfig: NextConfig = {
       'react-hook-form',
       'framer-motion'
     ],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
   
   // Webpack optimizations
@@ -94,13 +94,15 @@ const nextConfig: NextConfig = {
 
   // Remove turbopack config to avoid conflict with outputFileTracingRoot
   async rewrites() {
-    // Only use rewrites in development
+    // Only use rewrites in development to proxy API requests to backend
     if (process.env.NODE_ENV === 'development') {
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+      // Remove /api/v1 suffix if present to get base backend URL
+      const backendBase = backendUrl.replace(/\/api\/v1\/?$/, '');
       return [
         {
-          source: '/api/:path*',
-          destination: `${backendUrl.replace('/api/v1', '')}/:path*`,
+          source: '/api/v1/:path*',
+          destination: `${backendBase}/api/v1/:path*`,
         },
       ];
     }

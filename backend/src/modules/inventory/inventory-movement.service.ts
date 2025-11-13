@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -17,17 +18,20 @@ export class InventoryMovementService {
     userId?: string;
     notes?: string;
   }) {
-    return this.prisma.inventoryMovement.create({
-      data,
+    return this.prisma.inventory_movements.create({
+      data: {
+        id: randomUUID(),
+        ...data
+      },
       include: {
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
             sku: true
           }
         },
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -43,20 +47,20 @@ export class InventoryMovementService {
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
 
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.inventoryMovement.count({
+      this.prisma.inventory_movements.count({
         where: { productId }
       }),
-      this.prisma.inventoryMovement.findMany({
+      this.prisma.inventory_movements.findMany({
         where: { productId },
         include: {
-          product: {
+          products: {
             select: {
               id: true,
               name: true,
               sku: true
             }
           },
-          user: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -115,16 +119,16 @@ export class InventoryMovementService {
     }
 
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.inventoryMovement.count({ where }),
-      this.prisma.inventoryMovement.findMany({
+      this.prisma.inventory_movements.count({ where }),
+      this.prisma.inventory_movements.findMany({
         where,
         include: {
-          product: {
+          products: {
             select: {
               id: true,
               name: true,
               sku: true,
-              category: {
+              categories: {
                 select: {
                   id: true,
                   name: true
@@ -132,7 +136,7 @@ export class InventoryMovementService {
               }
             }
           },
-          user: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -171,13 +175,13 @@ export class InventoryMovementService {
       }
     }
 
-    const movements = await this.prisma.inventoryMovement.findMany({
+    const movements = await this.prisma.inventory_movements.findMany({
       where,
       select: {
         type: true,
         quantity: true,
         productId: true,
-        product: {
+        products: {
           select: {
             name: true,
             sku: true
@@ -221,8 +225,8 @@ export class InventoryMovementService {
       if (!summary.byProduct[productKey]) {
         summary.byProduct[productKey] = {
           productId: movement.productId,
-          productName: movement.product.name,
-          productSku: movement.product.sku,
+          productName: movement.products.name,
+          productSku: movement.products.sku,
           stockIn: 0,
           stockOut: 0,
           adjustments: 0,

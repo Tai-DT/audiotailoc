@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -50,6 +51,11 @@ export class ServicesController {
 
   // Service categories have been removed from the system
 
+  @Get('items')
+  async getServiceItems() {
+    return this.servicesService.getServiceItems();
+  }
+
   @Get('types')
   getServiceTypes() {
     return this.servicesService.getServiceTypes();
@@ -93,7 +99,7 @@ export class ServicesController {
     return this.servicesService.getServiceBySlug(slug);
   }
 
-  @Put(':id')
+  @Patch(':id')
   async updateService(
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto

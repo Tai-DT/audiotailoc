@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -7,51 +8,59 @@ async function seedServices() {
 
   try {
     // Check existing data
-    const existingTypes = await prisma.serviceType.findMany();
-    const existingServices = await prisma.service.findMany();
+    const existingTypes = await prisma.service_types.findMany();
+    const existingServices = await prisma.services.findMany();
 
     console.log(`📊 Found: ${existingTypes.length} service types, ${existingServices.length} services`);
 
     // Create Service Types if none exist
     if (existingTypes.length === 0) {
       console.log('🚀 Creating service types...');
-      await prisma.serviceType.createMany({
+      await prisma.service_types.createMany({
         data: [
           {
+            id: randomUUID(),
             name: 'Audio Equipment',
             slug: 'audio-equipment',
             description: 'Professional audio equipment installation and setup',
             icon: 'speaker',
             color: '#3B82F6',
             isActive: true,
-            sortOrder: 1
+            sortOrder: 1,
+            updatedAt: new Date()
           },
           {
+            id: randomUUID(),
             name: 'Home Theater',
             slug: 'home-theater',
             description: 'Complete home theater system installation',
             icon: 'tv',
             color: '#8B5CF6',
             isActive: true,
-            sortOrder: 2
+            sortOrder: 2,
+            updatedAt: new Date()
           },
           {
+            id: randomUUID(),
             name: 'Professional Sound',
             slug: 'professional-sound',
             description: 'Professional sound system for events and venues',
             icon: 'microphone',
             color: '#10B981',
             isActive: true,
-            sortOrder: 3
+            sortOrder: 3,
+            updatedAt: new Date()
           },
           {
+            id: randomUUID(),
             name: 'Maintenance',
             slug: 'maintenance',
             description: 'Regular maintenance and support services',
             icon: 'wrench',
             color: '#F59E0B',
             isActive: true,
-            sortOrder: 4
+            sortOrder: 4,
+            updatedAt: new Date()
           }
         ]
       });
@@ -60,7 +69,7 @@ async function seedServices() {
     }
 
     // Get service types for creating services
-    const serviceTypes = await prisma.serviceType.findMany();
+    const serviceTypes = await prisma.service_types.findMany();
     const audioEquipmentType = serviceTypes.find(t => t.slug === 'audio-equipment');
     const homeTheaterType = serviceTypes.find(t => t.slug === 'home-theater');
     const professionalSoundType = serviceTypes.find(t => t.slug === 'professional-sound');
@@ -73,6 +82,7 @@ async function seedServices() {
       const servicesData = [
         // Audio Equipment Services
         {
+          id: randomUUID(),
           name: 'Speaker Installation',
           slug: 'speaker-installation',
           description: 'Professional speaker installation service for home and office',
@@ -88,9 +98,11 @@ async function seedServices() {
           isFeatured: true,
           tags: JSON.stringify(['speaker', 'installation', 'audio']),
           features: JSON.stringify(['Professional installation', 'Cable management', 'Sound testing', '30-day warranty']),
-          requirements: JSON.stringify(['Power outlet access', 'Wall mounting permission', 'Clear workspace'])
+          requirements: JSON.stringify(['Power outlet access', 'Wall mounting permission', 'Clear workspace']),
+          updatedAt: new Date()
         },
         {
+          id: randomUUID(),
           name: 'Audio System Setup',
           slug: 'audio-system-setup',
           description: 'Complete audio system configuration and optimization',
@@ -100,11 +112,13 @@ async function seedServices() {
           price: 200000,
           duration: 180,
           isActive: true,
-          isFeatured: false
+          isFeatured: false,
+          updatedAt: new Date()
         },
 
         // Home Theater Services
         {
+          id: randomUUID(),
           name: 'Home Theater Installation',
           slug: 'home-theater-installation',
           description: 'Complete home theater system installation including TV, speakers, and receivers',
@@ -117,9 +131,11 @@ async function seedServices() {
           priceType: 'RANGE',
           duration: 360, // 6 hours
           isActive: true,
-          isFeatured: true
+          isFeatured: true,
+          updatedAt: new Date()
         },
         {
+          id: randomUUID(),
           name: 'TV Wall Mounting',
           slug: 'tv-wall-mounting',
           description: 'Professional TV wall mounting service with cable management',
@@ -129,11 +145,13 @@ async function seedServices() {
           price: 80000,
           duration: 90,
           isActive: true,
-          isFeatured: false
+          isFeatured: false,
+          updatedAt: new Date()
         },
 
         // Professional Sound Services
         {
+          id: randomUUID(),
           name: 'Event Sound Setup',
           slug: 'event-sound-setup',
           description: 'Professional sound system setup for events, conferences, and performances',
@@ -144,9 +162,11 @@ async function seedServices() {
           priceType: 'NEGOTIABLE',
           duration: 480, // 8 hours
           isActive: true,
-          isFeatured: true
+          isFeatured: true,
+          updatedAt: new Date()
         },
         {
+          id: randomUUID(),
           name: 'Studio Recording Setup',
           slug: 'studio-recording-setup',
           description: 'Recording studio equipment installation and acoustic treatment',
@@ -156,11 +176,13 @@ async function seedServices() {
           price: 2000000,
           duration: 720, // 12 hours
           isActive: true,
-          isFeatured: false
+          isFeatured: false,
+          updatedAt: new Date()
         },
 
         // Maintenance Services
         {
+          id: randomUUID(),
           name: 'Audio Equipment Maintenance',
           slug: 'audio-equipment-maintenance',
           description: 'Regular maintenance and cleaning of audio equipment',
@@ -170,9 +192,11 @@ async function seedServices() {
           price: 100000,
           duration: 120,
           isActive: true,
-          isFeatured: false
+          isFeatured: false,
+          updatedAt: new Date()
         },
         {
+          id: randomUUID(),
           name: 'System Troubleshooting',
           slug: 'system-troubleshooting',
           description: 'Diagnosis and repair of audio system issues',
@@ -183,11 +207,12 @@ async function seedServices() {
           priceType: 'FIXED',
           duration: 60,
           isActive: true,
-          isFeatured: false
+          isFeatured: false,
+          updatedAt: new Date()
         }
       ];
 
-      await prisma.service.createMany({
+      await prisma.services.createMany({
         data: servicesData
       });
 

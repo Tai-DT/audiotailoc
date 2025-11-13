@@ -21,16 +21,16 @@ let SeoService = SeoService_1 = class SeoService {
         this.defaultSiteUrl = 'https://audiotailoc.com';
     }
     async getProductSeo(productId, lang = 'vi') {
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id: productId },
-            include: { category: true }
+            include: { categories: true }
         });
         if (!product) {
             return this.getDefaultSeo('product', lang);
         }
         const title = product.name;
         const description = product.description || '';
-        const keywords = `${product.name}, audio, âm thanh, ${product.category?.name || ''}`;
+        const keywords = `${product.name}, audio, âm thanh, ${product.categoryId || ''}`;
         const ogTitle = title;
         const ogDescription = description;
         const canonicalUrl = `${this.defaultSiteUrl}/products/${product.slug}`;
@@ -41,7 +41,7 @@ let SeoService = SeoService_1 = class SeoService {
             entitySlug: product.slug,
             title: title || `${product.name} - ${this.defaultSiteName}`,
             description: description || `Mua ${product.name} chất lượng cao tại Audio Tài Lộc`,
-            keywords: keywords || `${product.name}, audio, âm thanh, ${product.category?.name || ''}`,
+            keywords: keywords || `${product.name}, audio, âm thanh, ${product.categoryId || ''}`,
             canonicalUrl,
             ogTitle: ogTitle || title,
             ogDescription: ogDescription || description || '',
@@ -55,7 +55,7 @@ let SeoService = SeoService_1 = class SeoService {
         };
     }
     async getCategorySeo(categoryId, lang = 'vi') {
-        const category = await this.prisma.category.findUnique({
+        const category = await this.prisma.categories.findUnique({
             where: { id: categoryId },
             include: { products: true }
         });
@@ -85,7 +85,7 @@ let SeoService = SeoService_1 = class SeoService {
         };
     }
     async getPageSeo(slug, lang = 'vi') {
-        const page = await this.prisma.page.findUnique({
+        const page = await this.prisma.pages.findUnique({
             where: { slug }
         });
         if (!page) {
@@ -115,7 +115,7 @@ let SeoService = SeoService_1 = class SeoService {
         };
     }
     async getProjectSeo(id, lang = 'vi') {
-        const project = await this.prisma.project.findUnique({
+        const project = await this.prisma.projects.findUnique({
             where: { id }
         });
         if (!project) {
@@ -171,10 +171,10 @@ let SeoService = SeoService_1 = class SeoService {
     }
     async generateSitemap() {
         const [products, categories, pages, projects] = await Promise.all([
-            this.prisma.product.findMany({ select: { slug: true, updatedAt: true } }),
-            this.prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
-            this.prisma.page.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
-            this.prisma.project.findMany({ select: { id: true, updatedAt: true } })
+            this.prisma.products.findMany({ select: { slug: true, updatedAt: true } }),
+            this.prisma.categories.findMany({ select: { slug: true, updatedAt: true } }),
+            this.prisma.pages.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
+            this.prisma.projects.findMany({ select: { id: true, updatedAt: true } })
         ]);
         let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
         sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';

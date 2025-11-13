@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ServiceBookingStatus } from './common/enums';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -7,9 +8,9 @@ async function main() {
   console.log('🌱 Seeding bookings...');
 
   // Get existing data
-  const services = await prisma.service.findMany({ take: 3 });
-  const users = await prisma.user.findMany({ take: 2 });
-  const technicians = await prisma.technician.findMany({ take: 2 });
+  const services = await prisma.services.findMany({ take: 3 });
+  const users = await prisma.users.findMany({ take: 2 });
+  const technicians = await prisma.technicians.findMany({ take: 2 });
 
   if (services.length === 0 || users.length === 0) {
     console.log('❌ No services or users found. Please run seed-services.ts and seed-users.ts first.');
@@ -54,13 +55,18 @@ async function main() {
 
   for (const booking of bookings) {
     try {
-      const createdBooking = await prisma.serviceBooking.create({
-        data: booking,
+      const createdBooking = await prisma.service_bookings.create({
+        data: {
+          id: randomUUID(),
+          ...booking,
+          updatedAt: new Date(),
+        },
       });
 
       // Create status history
-      await prisma.serviceStatusHistory.create({
+      await prisma.service_status_history.create({
         data: {
+          id: randomUUID(),
           bookingId: createdBooking.id,
           status: booking.status,
           newStatus: booking.status,

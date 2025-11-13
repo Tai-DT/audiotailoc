@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -81,7 +82,7 @@ export class TechniciansController {
     });
   }
 
-  @Put(':id')
+  @Patch(':id')
   async updateTechnician(
     @Param('id') id: string,
     @Body() updateTechnicianDto: {
@@ -100,7 +101,15 @@ export class TechniciansController {
     return this.techniciansService.deleteTechnician(id);
   }
 
-  @Put(':id/schedule')
+  @Get(':id/availability')
+  async getTechnicianAvailability(
+    @Param('id') id: string,
+    @Query('date') date: string
+  ) {
+    return this.techniciansService.getTechnicianAvailability(id, new Date(date));
+  }
+
+  @Patch(':id/schedule')
   async setTechnicianSchedule(
     @Param('id') id: string,
     @Body() scheduleDto: {

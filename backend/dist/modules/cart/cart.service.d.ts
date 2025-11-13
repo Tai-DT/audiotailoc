@@ -6,8 +6,8 @@ export declare class CartService {
     private readonly logger;
     constructor(prisma: PrismaService, config: ConfigService);
     createGuestCart(): Promise<{
-        items: ({
-            product: {
+        cart_items: ({
+            products: {
                 id: string;
                 name: string;
                 priceCents: bigint;
@@ -19,8 +19,8 @@ export declare class CartService {
             createdAt: Date;
             updatedAt: Date;
             price: bigint;
-            cartId: string;
             productId: string;
+            cartId: string;
             quantity: number;
         })[];
     } & {
@@ -61,14 +61,14 @@ export declare class CartService {
             expiresAt: Date | null;
         };
         items: ({
-            product: {
+            products: {
                 model: string | null;
+                tags: string | null;
+                description: string | null;
                 id: string;
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tags: string | null;
-                description: string | null;
                 slug: string;
                 shortDescription: string | null;
                 priceCents: bigint;
@@ -101,8 +101,8 @@ export declare class CartService {
             createdAt: Date;
             updatedAt: Date;
             price: bigint;
-            cartId: string;
             productId: string;
+            cartId: string;
             quantity: number;
         })[];
         subtotalCents: number;

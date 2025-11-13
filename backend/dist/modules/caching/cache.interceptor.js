@@ -72,7 +72,7 @@ let CacheInterceptor = CacheInterceptor_1 = class CacheInterceptor {
             path: request.path,
             method: request.method,
             query: this.sortObjectKeys(request.query),
-            userId: request.user?.id,
+            userId: request.users?.id,
             headers: this.getRelevantHeaders(request.headers),
         };
         return this.cacheService.generateKeyFromObject(keyData, 'http');
