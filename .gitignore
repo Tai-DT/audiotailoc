@@ -31,6 +31,29 @@ Thumbs.db
 logs/
 *.log
 
+# Temporary report files
+*_REPORT.md
+*_SUMMARY.md
+*_COMPLETE.md
+*_STATUS.md
+*_GUIDE.md
+*_INDEX.md
+*_ANALYSIS.md
+*_FIX*.md
+*_CHECK*.md
+*_DEBUG*.md
+*COMPLETION*.md
+*TESTING*.md
+*DELIVERY*.md
+*IMPROVEMENT*.md
+*OPTIMIZATION*.md
+
+# Test and temporary scripts
+test-*.sh
+test-*.html
+test-*.js
+fix-*.sh
+
 # Database
 *.db
 *.sqlite
