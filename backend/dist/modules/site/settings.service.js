@@ -11,13 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SettingsService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let SettingsService = class SettingsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async getSettings() {
-        const configs = await this.prisma.systemConfig.findMany({
+        const configs = await this.prisma.system_configs.findMany({
             where: {
                 key: {
                     startsWith: 'site.',
@@ -37,7 +38,7 @@ let SettingsService = class SettingsService {
         return settings;
     }
     async getSection(section) {
-        const config = await this.prisma.systemConfig.findUnique({
+        const config = await this.prisma.system_configs.findUnique({
             where: {
                 key: `site.${section}`,
             },
@@ -55,44 +56,44 @@ let SettingsService = class SettingsService {
     async updateSettings(data) {
         const updates = [];
         if (data.general) {
-            updates.push(this.prisma.systemConfig.upsert({
+            updates.push(this.prisma.system_configs.upsert({
                 where: { key: 'site.general' },
                 update: {
                     value: JSON.stringify(data.general),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
-                create: {
+                create: { id: (0, crypto_1.randomUUID)(),
                     key: 'site.general',
                     value: JSON.stringify(data.general),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
             }));
         }
         if (data.about) {
-            updates.push(this.prisma.systemConfig.upsert({
+            updates.push(this.prisma.system_configs.upsert({
                 where: { key: 'site.about' },
                 update: {
                     value: JSON.stringify(data.about),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
-                create: {
+                create: { id: (0, crypto_1.randomUUID)(),
                     key: 'site.about',
                     value: JSON.stringify(data.about),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
             }));
         }
         if (data.socials) {
-            updates.push(this.prisma.systemConfig.upsert({
+            updates.push(this.prisma.system_configs.upsert({
                 where: { key: 'site.socials' },
                 update: {
                     value: JSON.stringify(data.socials),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
-                create: {
+                create: { id: (0, crypto_1.randomUUID)(),
                     key: 'site.socials',
                     value: JSON.stringify(data.socials),
-                    type: 'JSON',
+                    type: 'JSON', updatedAt: new Date(),
                 },
             }));
         }

@@ -5,6 +5,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { OrdersService } from '../orders/orders.service';
 import { NotificationService } from '../notifications/notification.service';
 import * as crypto from 'crypto';
+import { randomUUID } from 'crypto';
 
 export interface WebhookData {
   [key: string]: any;
@@ -49,9 +50,9 @@ export class WebhooksService {
       } = data;
 
       // Find payment intent
-      const paymentIntent = await this.prisma.paymentIntent.findUnique({
+      const paymentIntent = await this.prisma.payment_intents.findUnique({
         where: { id: vnp_TxnRef },
-        include: { order: true },
+        include: { orders: true },
       });
 
       if (!paymentIntent) {
@@ -74,19 +75,21 @@ export class WebhooksService {
       const status = isSuccess ? 'COMPLETED' : 'FAILED';
 
       // Update payment intent
-      await this.prisma.paymentIntent.update({
+      await this.prisma.payment_intents.update({
         where: { id: vnp_TxnRef },
         data: { status: status as any },
       });
 
               // Create payment record
-        const payment = await this.prisma.payment.create({
+        const payment = await this.prisma.payments.create({
           data: {
+            id: randomUUID(),
             orderId: paymentIntent.orderId,
             amountCents: parseInt(vnp_Amount),
             provider: 'VNPAY',
             status: status as any,
             transactionId: vnp_TransactionNo,
+            updatedAt: new Date(),
             // metadata: {
             //   responseCode: vnp_ResponseCode,
             //   orderInfo: vnp_OrderInfo,
@@ -101,9 +104,9 @@ export class WebhooksService {
         
         // Send notification
         await this.notificationService.sendNotification({
-          userId: paymentIntent.order.userId || undefined,
+          userId: paymentIntent.orders.userId || undefined,
           title: 'Thanh toán thành công',
-          message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+          message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
           type: 'PAYMENT',
           priority: 'HIGH',
           channels: ['EMAIL', 'PUSH'],
@@ -146,9 +149,9 @@ export class WebhooksService {
       } = data;
 
       // Find payment intent
-      const paymentIntent = await this.prisma.paymentIntent.findUnique({
+      const paymentIntent = await this.prisma.payment_intents.findUnique({
         where: { id: orderId },
-        include: { order: true },
+        include: { orders: true },
       });
 
       if (!paymentIntent) {
@@ -170,19 +173,21 @@ export class WebhooksService {
       const status = isSuccess ? 'COMPLETED' : 'FAILED';
 
               // Update payment intent
-        await this.prisma.paymentIntent.update({
+        await this.prisma.payment_intents.update({
           where: { id: orderId },
           data: { status: status as any },
         });
 
               // Create payment record
-        const payment = await this.prisma.payment.create({
+        const payment = await this.prisma.payments.create({
           data: {
+            id: randomUUID(),
             orderId: paymentIntent.orderId,
             amountCents: parseInt(amount),
             provider: 'MOMO',
             status: status as any,
             transactionId: transId,
+            updatedAt: new Date(),
             // metadata: {
             //   resultCode,
             //   message,
@@ -196,9 +201,9 @@ export class WebhooksService {
         
         // Send notification
         await this.notificationService.sendNotification({
-          userId: paymentIntent.order.userId || undefined,
+          userId: paymentIntent.orders.userId || undefined,
           title: 'Thanh toán thành công',
-          message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+          message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
           type: 'PAYMENT',
           priority: 'HIGH',
           channels: ['EMAIL', 'PUSH'],
@@ -241,9 +246,9 @@ export class WebhooksService {
       } = data;
 
       // Find payment intent
-      const paymentIntent = await this.prisma.paymentIntent.findUnique({
+      const paymentIntent = await this.prisma.payment_intents.findUnique({
         where: { id: orderCode },
-        include: { order: true },
+        include: { orders: true },
       });
 
       if (!paymentIntent) {
@@ -265,19 +270,21 @@ export class WebhooksService {
       const paymentStatus = isSuccess ? 'COMPLETED' : 'FAILED';
 
               // Update payment intent
-        await this.prisma.paymentIntent.update({
+        await this.prisma.payment_intents.update({
           where: { id: orderCode },
           data: { status: paymentStatus as any },
         });
 
               // Create payment record
-        const payment = await this.prisma.payment.create({
+        const payment = await this.prisma.payments.create({
           data: {
+            id: randomUUID(),
             orderId: paymentIntent.orderId,
             amountCents: parseInt(amount),
             provider: 'PAYOS',
             status: paymentStatus as any,
             transactionId,
+            updatedAt: new Date(),
             // metadata: {
             //   status,
             //   description,
@@ -291,9 +298,9 @@ export class WebhooksService {
         
         // Send notification
         await this.notificationService.sendNotification({
-          userId: paymentIntent.order.userId || undefined,
+          userId: paymentIntent.orders.userId || undefined,
           title: 'Thanh toán thành công',
-          message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+          message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
           type: 'PAYMENT',
           priority: 'HIGH',
           channels: ['EMAIL', 'PUSH'],
@@ -378,9 +385,9 @@ export class WebhooksService {
       await this.ordersService.updateStatus(orderId, status);
 
       // Get order details
-      const order = await this.prisma.order.findUnique({
+      const order = await this.prisma.orders.findUnique({
         where: { id: orderId },
-        include: { user: true },
+        include: { users: true },
       });
 
       if (!order) {
@@ -437,7 +444,7 @@ export class WebhooksService {
       }
 
       // Get product details
-      const product = await this.prisma.product.findUnique({
+      const product = await this.prisma.products.findUnique({
         where: { id: productId },
       });
 

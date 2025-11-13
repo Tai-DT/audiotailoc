@@ -21,8 +21,7 @@ class DevServer {
     return new Promise((resolve, reject) => {
       const backendProcess = spawn('npm', ['run', 'start:dev'], {
         cwd: this.backendDir,
-        stdio: 'inherit',
-        shell: true
+        stdio: 'inherit'
       });
 
       backendProcess.on('error', (error) => {
@@ -46,8 +45,7 @@ class DevServer {
     return new Promise((resolve, reject) => {
       const frontendProcess = spawn('npm', ['run', 'dev'], {
         cwd: this.frontendDir,
-        stdio: 'inherit',
-        shell: true
+        stdio: 'inherit'
       });
 
       frontendProcess.on('error', (error) => {
@@ -71,8 +69,7 @@ class DevServer {
     return new Promise((resolve) => {
       const studioProcess = spawn('npx', ['prisma', 'studio'], {
         cwd: this.backendDir,
-        stdio: 'inherit',
-        shell: true
+        stdio: 'inherit'
       });
 
       // Wait for Prisma Studio to be ready

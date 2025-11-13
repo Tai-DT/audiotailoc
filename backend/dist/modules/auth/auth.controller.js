@@ -143,7 +143,7 @@ let AuthController = class AuthController {
         return { message: 'Password has been reset successfully' };
     }
     async changePassword(req, dto) {
-        const userId = req.user?.sub;
+        const userId = req.users?.sub;
         if (!userId)
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
         const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
@@ -152,7 +152,7 @@ let AuthController = class AuthController {
         return { message: 'Password has been changed successfully' };
     }
     async me(req) {
-        const userId = req.user?.sub;
+        const userId = req.users?.sub;
         if (!userId)
             return { userId: null };
         const u = await this.users.findById(userId);

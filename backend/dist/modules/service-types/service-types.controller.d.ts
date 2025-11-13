@@ -5,11 +5,11 @@ export declare class ServiceTypesController {
     private readonly serviceTypesService;
     constructor(serviceTypesService: ServiceTypesService);
     create(createServiceTypeDto: CreateServiceTypeDto): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -17,11 +17,11 @@ export declare class ServiceTypesController {
         color: string | null;
     }>;
     testCreate(createServiceTypeDto: CreateServiceTypeDto): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -41,11 +41,11 @@ export declare class ServiceTypesController {
         message: string;
     };
     findAll(): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -53,11 +53,11 @@ export declare class ServiceTypesController {
         color: string | null;
     }[]>;
     findOne(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -65,11 +65,11 @@ export declare class ServiceTypesController {
         color: string | null;
     }>;
     update(id: string, updateServiceTypeDto: UpdateServiceTypeDto): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -77,11 +77,11 @@ export declare class ServiceTypesController {
         color: string | null;
     }>;
     remove(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;

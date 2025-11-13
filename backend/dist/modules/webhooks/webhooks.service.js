@@ -51,6 +51,7 @@ const payments_service_1 = require("../payments/payments.service");
 const orders_service_1 = require("../orders/orders.service");
 const notification_service_1 = require("../notifications/notification.service");
 const crypto = __importStar(require("crypto"));
+const crypto_1 = require("crypto");
 let WebhooksService = WebhooksService_1 = class WebhooksService {
     constructor(config, prisma, paymentsService, ordersService, notificationService) {
         this.config = config;
@@ -68,9 +69,9 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                 throw new common_1.BadRequestException('Invalid VNPAY webhook signature');
             }
             const { vnp_TxnRef, vnp_ResponseCode, vnp_Amount, vnp_TransactionNo, vnp_OrderInfo: _vnp_OrderInfo, vnp_PayDate: _vnp_PayDate, } = data;
-            const paymentIntent = await this.prisma.paymentIntent.findUnique({
+            const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: vnp_TxnRef },
-                include: { order: true },
+                include: { orders: true },
             });
             if (!paymentIntent) {
                 throw new common_1.BadRequestException('Payment intent not found');
@@ -86,25 +87,27 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             }
             const isSuccess = vnp_ResponseCode === '00';
             const status = isSuccess ? 'COMPLETED' : 'FAILED';
-            await this.prisma.paymentIntent.update({
+            await this.prisma.payment_intents.update({
                 where: { id: vnp_TxnRef },
                 data: { status: status },
             });
-            const payment = await this.prisma.payment.create({
+            const payment = await this.prisma.payments.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     orderId: paymentIntent.orderId,
                     amountCents: parseInt(vnp_Amount),
                     provider: 'VNPAY',
                     status: status,
                     transactionId: vnp_TransactionNo,
+                    updatedAt: new Date(),
                 },
             });
             if (isSuccess) {
                 await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
                 await this.notificationService.sendNotification({
-                    userId: paymentIntent.order.userId || undefined,
+                    userId: paymentIntent.orders.userId || undefined,
                     title: 'Thanh toán thành công',
-                    message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+                    message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
                     type: 'PAYMENT',
                     priority: 'HIGH',
                     channels: ['EMAIL', 'PUSH'],
@@ -135,9 +138,9 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                 throw new common_1.BadRequestException('Invalid MOMO webhook signature');
             }
             const { orderId, resultCode, amount, transId, message: _message, } = data;
-            const paymentIntent = await this.prisma.paymentIntent.findUnique({
+            const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: orderId },
-                include: { order: true },
+                include: { orders: true },
             });
             if (!paymentIntent) {
                 throw new common_1.BadRequestException('Payment intent not found');
@@ -152,25 +155,27 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             }
             const isSuccess = resultCode === 0;
             const status = isSuccess ? 'COMPLETED' : 'FAILED';
-            await this.prisma.paymentIntent.update({
+            await this.prisma.payment_intents.update({
                 where: { id: orderId },
                 data: { status: status },
             });
-            const payment = await this.prisma.payment.create({
+            const payment = await this.prisma.payments.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     orderId: paymentIntent.orderId,
                     amountCents: parseInt(amount),
                     provider: 'MOMO',
                     status: status,
                     transactionId: transId,
+                    updatedAt: new Date(),
                 },
             });
             if (isSuccess) {
                 await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
                 await this.notificationService.sendNotification({
-                    userId: paymentIntent.order.userId || undefined,
+                    userId: paymentIntent.orders.userId || undefined,
                     title: 'Thanh toán thành công',
-                    message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+                    message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
                     type: 'PAYMENT',
                     priority: 'HIGH',
                     channels: ['EMAIL', 'PUSH'],
@@ -201,9 +206,9 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                 throw new common_1.BadRequestException('Invalid PAYOS webhook signature');
             }
             const { orderCode, status, amount, transactionId, description: _description, } = data;
-            const paymentIntent = await this.prisma.paymentIntent.findUnique({
+            const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: orderCode },
-                include: { order: true },
+                include: { orders: true },
             });
             if (!paymentIntent) {
                 throw new common_1.BadRequestException('Payment intent not found');
@@ -218,25 +223,27 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             }
             const isSuccess = status === 'PAID';
             const paymentStatus = isSuccess ? 'COMPLETED' : 'FAILED';
-            await this.prisma.paymentIntent.update({
+            await this.prisma.payment_intents.update({
                 where: { id: orderCode },
                 data: { status: paymentStatus },
             });
-            const payment = await this.prisma.payment.create({
+            const payment = await this.prisma.payments.create({
                 data: {
+                    id: (0, crypto_1.randomUUID)(),
                     orderId: paymentIntent.orderId,
                     amountCents: parseInt(amount),
                     provider: 'PAYOS',
                     status: paymentStatus,
                     transactionId,
+                    updatedAt: new Date(),
                 },
             });
             if (isSuccess) {
                 await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
                 await this.notificationService.sendNotification({
-                    userId: paymentIntent.order.userId || undefined,
+                    userId: paymentIntent.orders.userId || undefined,
                     title: 'Thanh toán thành công',
-                    message: `Đơn hàng ${paymentIntent.order.orderNo} đã được thanh toán thành công`,
+                    message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
                     type: 'PAYMENT',
                     priority: 'HIGH',
                     channels: ['EMAIL', 'PUSH'],
@@ -307,9 +314,9 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             this.logger.log('Processing order status webhook:', data);
             const { orderId, status, reason } = data;
             await this.ordersService.updateStatus(orderId, status);
-            const order = await this.prisma.order.findUnique({
+            const order = await this.prisma.orders.findUnique({
                 where: { id: orderId },
-                include: { user: true },
+                include: { users: true },
             });
             if (!order) {
                 throw new common_1.BadRequestException('Order not found');
@@ -358,7 +365,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                     },
                 });
             }
-            const product = await this.prisma.product.findUnique({
+            const product = await this.prisma.products.findUnique({
                 where: { id: productId },
             });
             if (!product) {

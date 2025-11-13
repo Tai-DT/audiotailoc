@@ -1,0 +1,219 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  # Backend Tests and Build
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: TypeScript type check
+      run: npm run typecheck
+    
+    - name: Lint code
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Run tests
+      run: npm test
+      continue-on-error: true
+      env:
+        DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        JWT_ACCESS_SECRET: test-secret
+        JWT_REFRESH_SECRET: test-refresh-secret
+    
+    - name: Build
+      run: npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build
+        path: backend/dist/
+        retention-days: 7
+
+  # Dashboard Tests and Build
+  dashboard:
+    name: Dashboard CI
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./dashboard
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: dashboard/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: TypeScript type check
+      run: npx tsc --noEmit
+    
+    - name: Lint code
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dashboard-build
+        path: dashboard/.next/
+        retention-days: 7
+
+  # Frontend Tests and Build
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: TypeScript type check
+      run: npx tsc --noEmit
+      continue-on-error: true
+    
+    - name: Lint code
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/.next/
+        retention-days: 7
+
+  # Security Audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run security audit - Backend
+      working-directory: ./backend
+      run: npm audit --production --audit-level=moderate
+      continue-on-error: true
+    
+    - name: Run security audit - Dashboard
+      working-directory: ./dashboard
+      run: npm audit --production --audit-level=moderate
+      continue-on-error: true
+    
+    - name: Run security audit - Frontend
+      working-directory: ./frontend
+      run: npm audit --production --audit-level=moderate
+      continue-on-error: true
+
+  # Deploy to Production (only on master/main)
+  deploy:
+    name: Deploy to Production
+    needs: [backend, dashboard, frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy Backend to Heroku
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: ${{ secrets.HEROKU_BACKEND_APP_NAME }}
+        heroku_email: ${{ secrets.HEROKU_EMAIL }}
+        appdir: backend
+      continue-on-error: true
+    
+    - name: Deploy Dashboard to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_DASHBOARD_PROJECT_ID }}
+        working-directory: ./dashboard
+        vercel-args: '--prod'
+      continue-on-error: true
+    
+    - name: Deploy Frontend to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
+        working-directory: ./frontend
+        vercel-args: '--prod'
+      continue-on-error: true
+    
+    - name: Notify deployment status
+      run: |
+        echo "Deployment completed!"
+        echo "Backend: ${{ secrets.HEROKU_BACKEND_APP_NAME }}.herokuapp.com"
+        echo "Dashboard: Deployed to Vercel"
+        echo "Frontend: Deployed to Vercel"

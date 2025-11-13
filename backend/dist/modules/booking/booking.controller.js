@@ -16,9 +16,12 @@ exports.BookingController = void 0;
 const common_1 = require("@nestjs/common");
 const booking_service_1 = require("./booking.service");
 const swagger_1 = require("@nestjs/swagger");
+const create_booking_dto_1 = require("./dto/create-booking.dto");
+const update_booking_dto_1 = require("./dto/update-booking.dto");
 const update_booking_status_dto_1 = require("./dto/update-booking-status.dto");
 const create_payment_dto_1 = require("./dto/create-payment.dto");
 const update_payment_status_dto_1 = require("./dto/update-payment-status.dto");
+const assign_technician_dto_1 = require("./dto/assign-technician.dto");
 let BookingController = class BookingController {
     constructor(bookingService) {
         this.bookingService = bookingService;
@@ -29,8 +32,20 @@ let BookingController = class BookingController {
     async findOne(id) {
         return this.bookingService.findOne(id);
     }
+    async create(createBookingDto) {
+        return this.bookingService.create(createBookingDto);
+    }
+    async update(id, updateBookingDto) {
+        return this.bookingService.update(id, updateBookingDto);
+    }
+    async delete(id) {
+        return this.bookingService.delete(id);
+    }
     async updateStatus(id, updateStatusDto) {
         return this.bookingService.updateStatus(id, updateStatusDto.status);
+    }
+    async assignTechnician(id, assignDto) {
+        return this.bookingService.assignTechnician(id, assignDto.technicianId);
     }
     async createPayment(createPaymentDto) {
         return this.bookingService.createPayment(createPaymentDto.bookingId || '', createPaymentDto);
@@ -55,13 +70,46 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Put)(':id/status'),
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_booking_dto_1.CreateBookingDto]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "delete", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, update_booking_status_dto_1.UpdateBookingStatusDto]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Patch)(':id/assign'),
+    (0, swagger_1.ApiOperation)({ summary: 'Assign technician to booking' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Technician assigned successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Booking or technician not found' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, assign_technician_dto_1.AssignTechnicianDto]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "assignTechnician", null);
 __decorate([
     (0, common_1.Post)('payments'),
     __param(0, (0, common_1.Body)()),

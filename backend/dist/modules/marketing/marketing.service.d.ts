@@ -6,21 +6,15 @@ export declare class MarketingService {
     private readonly mailService;
     private readonly logger;
     constructor(prisma: PrismaService, mailService: MailService);
-    getCampaigns(status?: CampaignStatus): Promise<({
-        _count: {
-            clicks: number;
-            opens: number;
-            recipients: number;
-        };
-    } & {
+    getCampaigns(status?: CampaignStatus): Promise<{
         status: import(".prisma/client").$Enums.CampaignStatus;
+        description: string;
+        content: string | null;
+        type: import(".prisma/client").$Enums.CampaignType;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        content: string | null;
-        type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
@@ -31,42 +25,16 @@ export declare class MarketingService {
         sentAt: Date | null;
         createdBy: string | null;
         templateId: string | null;
-    })[]>;
+    }[]>;
     getCampaign(id: string): Promise<{
-        _count: {
-            clicks: number;
-            opens: number;
-            recipients: number;
-        };
-        clicks: {
-            id: string;
-            createdAt: Date;
-            url: string | null;
-            recipientEmail: string | null;
-            campaignId: string;
-        }[];
-        opens: {
-            id: string;
-            createdAt: Date;
-            recipientEmail: string | null;
-            campaignId: string;
-        }[];
-        recipients: {
-            id: string;
-            email: string;
-            name: string | null;
-            createdAt: Date;
-            campaignId: string;
-        }[];
-    } & {
         status: import(".prisma/client").$Enums.CampaignStatus;
+        description: string;
+        content: string | null;
+        type: import(".prisma/client").$Enums.CampaignType;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        content: string | null;
-        type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
@@ -89,13 +57,13 @@ export declare class MarketingService {
         endDate?: string;
     }): Promise<{
         status: import(".prisma/client").$Enums.CampaignStatus;
+        description: string;
+        content: string | null;
+        type: import(".prisma/client").$Enums.CampaignType;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        content: string | null;
-        type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
@@ -119,13 +87,13 @@ export declare class MarketingService {
         status: CampaignStatus;
     }>): Promise<{
         status: import(".prisma/client").$Enums.CampaignStatus;
+        description: string;
+        content: string | null;
+        type: import(".prisma/client").$Enums.CampaignType;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        content: string | null;
-        type: import(".prisma/client").$Enums.CampaignType;
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
@@ -148,8 +116,8 @@ export declare class MarketingService {
         totalRecipients: number;
         totalOpens: number;
         totalClicks: number;
-        openRate: string | number;
-        clickRate: string | number;
+        openRate: number;
+        clickRate: number;
         conversionRate: number;
     }>;
     sendEmail(data: {

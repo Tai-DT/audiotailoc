@@ -81,8 +81,8 @@ let LoggingMiddleware = LoggingMiddleware_1 = class LoggingMiddleware {
         next();
     }
     extractUserId(request) {
-        return (request.user?.id ||
-            request.user?.userId ||
+        return (request.users?.id ||
+            request.users?.userId ||
             request.headers['x-user-id'] ||
             request.query.userId);
     }

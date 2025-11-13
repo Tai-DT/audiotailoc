@@ -11,33 +11,33 @@ export class SimpleAnalyticsService {
     try {
       // Get basic counts
       const [userCount, productCount, orderCount] = await Promise.all([
-        this.prisma.user.count(),
-        this.prisma.product.count(),
-        this.prisma.order.count(),
+        this.prisma.users.count(),
+        this.prisma.products.count(),
+        this.prisma.orders.count(),
       ]);
 
       // Get recent orders
-      const recentOrders = await this.prisma.order.findMany({
+      const recentOrders = await this.prisma.orders.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { name: true, email: true } },
-          items: {
+          users: { select: { name: true, email: true } },
+          order_items: {
             include: {
-              product: { select: { name: true } }
+              products: { select: { name: true } }
             }
           }
         }
       });
 
       // Calculate total revenue
-      const totalRevenue = await this.prisma.order.aggregate({
+      const totalRevenue = await this.prisma.orders.aggregate({
         _sum: { totalCents: true },
         where: { status: { not: 'CANCELLED' } }
       });
 
       // Get top products
-      const topProducts = await this.prisma.product.findMany({
+      const topProducts = await this.prisma.products.findMany({
         take: 5,
         orderBy: { viewCount: 'desc' },
         select: {
@@ -46,7 +46,7 @@ export class SimpleAnalyticsService {
           priceCents: true,
           viewCount: true,
           _count: {
-            select: { orderItems: true }
+            select: { order_items: true }
           }
         }
       });
@@ -73,18 +73,18 @@ export class SimpleAnalyticsService {
         recentOrders: recentOrders.map(order => ({
           id: order.id,
           orderNo: order.orderNo,
-          customerName: order.user?.name || 'Guest',
+          customerName: order.users?.name || 'Guest',
           totalCents: order.totalCents,
           status: order.status,
           createdAt: order.createdAt,
-          itemCount: order.items.length
+          itemCount: order.order_items.length
         })),
         topProducts: topProducts.map(product => ({
           id: product.id,
           name: product.name,
           priceCents: product.priceCents,
           viewCount: product.viewCount,
-          orderCount: product._count.orderItems
+          orderCount: product._count?.order_items || 0
         }))
       };
     } catch (error) {
@@ -95,12 +95,12 @@ export class SimpleAnalyticsService {
 
   async getSalesMetrics() {
     // Simple sales metrics
-    const totalRevenue = await this.prisma.order.aggregate({
+    const totalRevenue = await this.prisma.orders.aggregate({
       _sum: { totalCents: true },
       where: { status: { not: 'CANCELLED' } }
     });
 
-    const orderCount = await this.prisma.order.count({
+    const orderCount = await this.prisma.orders.count({
       where: { status: { not: 'CANCELLED' } }
     });
 

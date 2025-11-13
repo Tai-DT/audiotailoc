@@ -20,56 +20,56 @@ async function checkModelsData() {
   // Core Models
   models.push({
     name: 'Users',
-    count: await prisma.user.count(),
+    count: await prisma.users.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Products',
-    count: await prisma.product.count(),
+    count: await prisma.products.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Categories',
-    count: await prisma.category.count(),
+    count: await prisma.categories.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Services',
-    count: await prisma.service.count(),
+    count: await prisma.services.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'ServiceTypes',
-    count: await prisma.serviceType.count(),
+    count: await prisma.service_types.count(),
     minRequired: 3,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'ServiceTypes',
-    count: await prisma.serviceType.count(),
+    count: await prisma.service_types.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Projects',
-    count: await prisma.project.count(),
+    count: await prisma.projects.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Banners',
-    count: await prisma.banner.count(),
+    count: await prisma.banners.count(),
     minRequired: 3,
     status: '✅ Has Data'
   });
@@ -77,42 +77,42 @@ async function checkModelsData() {
   // E-commerce Models
   models.push({
     name: 'Orders',
-    count: await prisma.order.count(),
+    count: await prisma.orders.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'OrderItems',
-    count: await prisma.orderItem.count(),
+    count: await prisma.order_items.count(),
     minRequired: 20,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Cart',
-    count: await prisma.cart.count(),
+    count: await prisma.carts.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'CartItems',
-    count: await prisma.cartItem.count(),
+    count: await prisma.cart_items.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Payments',
-    count: await prisma.payment.count(),
+    count: await prisma.payments.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'PaymentIntents',
-    count: await prisma.paymentIntent.count(),
+    count: await prisma.payment_intents.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
@@ -120,28 +120,29 @@ async function checkModelsData() {
   // Customer Engagement Models
   models.push({
     name: 'ProductReviews',
-    count: await prisma.productReview.count(),
+    count: await prisma.product_reviews.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'WishlistItems',
-    count: await prisma.wishlistItem.count(),
+    count: await prisma.wishlist_items.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
-  models.push({
-    name: 'Notifications',
-    count: await prisma.notification.count(),
-    minRequired: 10,
-    status: '✅ Has Data'
-  });
+  // Notifications model removed - not in schema
+  // models.push({
+  //   name: 'Notifications',
+  //   count: await prisma.notification.count(),
+  //   minRequired: 10,
+  //   status: '✅ Has Data'
+  // });
   
   models.push({
     name: 'CustomerQuestions',
-    count: await prisma.customerQuestion.count(),
+    count: await prisma.customer_questions.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
@@ -149,21 +150,21 @@ async function checkModelsData() {
   // Service Booking Models
   models.push({
     name: 'ServiceBookings',
-    count: await prisma.serviceBooking.count(),
+    count: await prisma.service_bookings.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Technicians',
-    count: await prisma.technician.count(),
+    count: await prisma.technicians.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'ServiceItems',
-    count: await prisma.serviceItem.count(),
+    count: await prisma.service_items.count(),
     minRequired: 10,
     status: '✅ Has Data'
   });
@@ -171,14 +172,14 @@ async function checkModelsData() {
   // Marketing Models
   models.push({
     name: 'Campaigns',
-    count: await prisma.campaign.count(),
+    count: await prisma.campaigns.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'Promotions',
-    count: await prisma.promotion.count(),
+    count: await prisma.promotions.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
@@ -186,14 +187,14 @@ async function checkModelsData() {
   // Loyalty Models
   models.push({
     name: 'LoyaltyAccounts',
-    count: await prisma.loyaltyAccount.count(),
+    count: await prisma.loyalty_accounts.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'LoyaltyRewards',
-    count: await prisma.loyaltyReward.count(),
+    count: await prisma.loyalty_rewards.count(),
     minRequired: 5,
     status: '✅ Has Data'
   });
@@ -201,28 +202,28 @@ async function checkModelsData() {
   // Analytics Models
   models.push({
     name: 'ProductViews',
-    count: await prisma.productView.count(),
+    count: await prisma.product_views.count(),
     minRequired: 50,
     status: '✅ Has Data'
   });
   
   models.push({
     name: 'ServiceViews',
-    count: await prisma.serviceView.count(),
+    count: await prisma.service_views.count(),
     minRequired: 20,
     status: '✅ Has Data'
   });
   
-  models.push({
-    name: 'SearchQueries',
-    count: await prisma.searchQuery.count(),
-    minRequired: 20,
-    status: '✅ Has Data'
-  });
+  // models.push({
+  //   name: 'SearchQueries',
+  //   count: await prisma.searchQuery.count(),
+  //   minRequired: 20,
+  //   status: '✅ Has Data'
+  // });
   
   models.push({
     name: 'ActivityLogs',
-    count: await prisma.activityLog.count(),
+    count: await prisma.activity_logs.count(),
     minRequired: 50,
     status: '✅ Has Data'
   });

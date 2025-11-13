@@ -29,6 +29,7 @@
     "src/add-karaoke-products.ts",
     "src/seed-karaoke.ts",
     "src/seed-services.ts",
-    "src/modules/backup/**/*"
+    "src/modules/backup/**/*",
+    "src/common/INTEGRATION_EXAMPLES.ts"
   ]
 }

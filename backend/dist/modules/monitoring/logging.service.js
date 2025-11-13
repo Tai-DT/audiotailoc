@@ -48,6 +48,7 @@ var LoggingService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoggingService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const winston = __importStar(require("winston"));
@@ -240,21 +241,22 @@ let LoggingService = LoggingService_1 = class LoggingService {
     }
     async saveActivityLog(data) {
         try {
-            await this.prisma.activityLog.create({
+            await this.prisma.activity_logs.create({
                 data: {
-                    userId: data.userId,
+                    id: (0, crypto_1.randomUUID)(),
+                    userId: data.userId || null,
                     action: data.action,
-                    resource: data.resource,
-                    resourceId: data.resourceId,
+                    resource: data.resource || null,
+                    resourceId: data.resourceId || null,
                     details: data.details,
-                    ipAddress: data.ipAddress,
-                    userAgent: data.userAgent,
-                    method: data.method,
-                    url: data.url,
-                    statusCode: data.statusCode,
-                    duration: data.duration,
+                    ipAddress: data.ipAddress || null,
+                    userAgent: data.userAgent || null,
+                    method: data.method || null,
+                    url: data.url || null,
+                    statusCode: data.statusCode || null,
+                    duration: data.duration || null,
                     category: data.category,
-                    severity: data.severity,
+                    severity: data.severity
                 }
             });
         }

@@ -6,6 +6,12 @@ const API_BASE_URL = configuredBaseUrl && configuredBaseUrl.length > 0
   ? configuredBaseUrl
   : 'http://localhost:3010/api/v1';
 
+// Debug: Log the API base URL (only in development)
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  console.log('[API Client] Base URL:', API_BASE_URL);
+  console.log('[API Client] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+}
+
 // Create axios instance with default config
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -18,6 +24,12 @@ export const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
+    // Debug: Log the full request URL
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      const fullUrl = config.baseURL + (config.url || '');
+      console.log('[API Client] Request:', config.method?.toUpperCase(), fullUrl);
+    }
+    
     const token = authStorage.getAccessToken();
     if (token) {
       config.headers = config.headers || {};
@@ -44,6 +56,17 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Debug: Log API errors
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      console.error('[API Client] Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        fullResponse: error.response?.data,
+      });
+    }
+    
     const status = error.response?.status;
     if (status === 401 || status === 403) {
       const hadSession = Boolean(authStorage.getAccessToken());

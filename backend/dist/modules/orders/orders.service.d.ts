@@ -35,7 +35,7 @@ export declare class OrdersService {
         }[];
     }>;
     get(id: string): Promise<{
-        items: {
+        order_items: {
             id: string;
             name: string | null;
             createdAt: Date;

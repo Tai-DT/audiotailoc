@@ -3,6 +3,7 @@
   Usage: pnpm --filter @audiotailoc/backend ts-node src/seed.ts
 */
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -15,24 +16,25 @@ async function main() {
     .filter(Boolean);
   if (adminEnv.length > 0) {
     for (const email of adminEnv) {
-      await prisma.user
+      await prisma.users
         .update({ where: { email }, data: { role: 'ADMIN' } })
         .catch(() => Promise.resolve());
     }
   }
 
   // Categories
-  const catSpeakers = await prisma.category.upsert({ where: { slug: 'loa' }, update: {}, create: { slug: 'loa', name: 'Loa' } });
-  const catHeadphones = await prisma.category.upsert({ where: { slug: 'tai-nghe' }, update: {}, create: { slug: 'tai-nghe', name: 'Tai nghe' } });
+  const catSpeakers = await prisma.categories.upsert({ where: { slug: 'loa' }, update: {}, create: { id: randomUUID(), slug: 'loa', name: 'Loa', updatedAt: new Date() } });
+  const catHeadphones = await prisma.categories.upsert({ where: { slug: 'tai-nghe' }, update: {}, create: { id: randomUUID(), slug: 'tai-nghe', name: 'Tai nghe', updatedAt: new Date() } });
 
   // Promotions
   const now = new Date();
   const nextYear = new Date(now.getTime());
   nextYear.setFullYear(now.getFullYear() + 1);
-  await prisma.promotion.upsert({
+  await prisma.promotions.upsert({
     where: { code: 'WELCOME10' },
-    update: {},
+    update: { updatedAt: new Date() },
     create: {
+      id: randomUUID(),
       code: 'WELCOME10',
       name: 'Welcome 10%',
       description: 'Giảm 10% cho khách hàng mới',
@@ -40,6 +42,7 @@ async function main() {
       value: 10,
       isActive: true,
       expiresAt: nextYear,
+      updatedAt: new Date(),
     },
   });
 
@@ -97,25 +100,34 @@ async function main() {
   for (const item of items) {
     // Upsert to keep idempotent
     // Note: sequential upserts to avoid DB write spikes
-    const p = await prisma.product.upsert({
+    const p = await prisma.products.upsert({
       where: { slug: item.slug },
       update: item,
-      create: item,
+      create: {
+        id: randomUUID(),
+        updatedAt: new Date(),
+        slug: item.slug,
+        name: item.name,
+        description: item.description,
+        priceCents: item.priceCents,
+        imageUrl: item.imageUrl,
+        categories: { connect: { id: item.categoryId } }
+      },
     });
     // Seed KB entry for product if not exists
-    const exists = await prisma.knowledgeBaseEntry.findFirst({ where: { productId: p.id, kind: 'PRODUCT' } });
+    const exists = await prisma.knowledge_base_entries.findFirst({ where: { productId: p.id, kind: 'PRODUCT' } });
     if (!exists) {
-      await prisma.knowledgeBaseEntry.create({ data: { kind: 'PRODUCT', title: p.name, content: p.description || '', productId: p.id } });
+      await prisma.knowledge_base_entries.create({ data: { id: randomUUID(), updatedAt: new Date(), kind: 'PRODUCT', title: p.name, content: p.description || '', products: { connect: { id: p.id } } } });
     }
   }
 
   // Seed FAQ entries if none
-  const faqCount = await prisma.knowledgeBaseEntry.count({ where: { kind: 'FAQ' } });
+  const faqCount = await prisma.knowledge_base_entries.count({ where: { kind: 'FAQ' } });
   if (faqCount === 0) {
-    await prisma.knowledgeBaseEntry.createMany({
+    await prisma.knowledge_base_entries.createMany({
       data: [
-        { kind: 'FAQ', title: 'Chính sách đổi trả', content: 'Đổi trả trong 7 ngày với sản phẩm còn nguyên vẹn.' },
-        { kind: 'FAQ', title: 'Bảo hành', content: 'Bảo hành 12 tháng cho tất cả sản phẩm chính hãng.' },
+        { id: randomUUID(), updatedAt: new Date(), kind: 'FAQ', title: 'Chính sách đổi trả', content: 'Đổi trả trong 7 ngày với sản phẩm còn nguyên vẹn.' },
+        { id: randomUUID(), updatedAt: new Date(), kind: 'FAQ', title: 'Bảo hành', content: 'Bảo hành 12 tháng cho tất cả sản phẩm chính hãng.' },
       ],
     });
   }
@@ -172,7 +184,7 @@ async function main() {
 
   for (const banner of banners) {
     // Check if banner exists, then update or create
-    const exists = await prisma.banner.findFirst({
+    const exists = await prisma.banners.findFirst({
       where: { 
         title: banner.title,
         page: banner.page,
@@ -181,13 +193,17 @@ async function main() {
     });
     
     if (exists) {
-      await prisma.banner.update({
+      await prisma.banners.update({
         where: { id: exists.id },
         data: banner,
       });
     } else {
-      await prisma.banner.create({
-        data: banner,
+      await prisma.banners.create({
+        data: {
+          id: randomUUID(),
+          updatedAt: new Date(),
+          ...banner
+        },
       });
     }
   }
@@ -257,16 +273,20 @@ async function main() {
   ];
 
   for (const setting of siteSettings) {
-    await prisma.systemConfig.upsert({
+    await prisma.system_configs.upsert({
       where: { key: setting.key },
       update: { value: setting.value, type: setting.type },
-      create: setting,
+      create: {
+        id: randomUUID(),
+        updatedAt: new Date(),
+        ...setting
+      },
     });
   }
 
   // Create sample notifications for admin emails if users exist
   if (adminEnv.length > 0) {
-    const admins = await prisma.user.findMany({ where: { email: { in: adminEnv } }, select: { id: true, email: true } });
+    const admins = await prisma.users.findMany({ where: { email: { in: adminEnv } }, select: { id: true, email: true } });
     for (const admin of admins) {
       const hasAny = await (prisma as any).notification.count({ where: { userId: admin.id } }).catch(() => 0);
       if (hasAny === 0) {

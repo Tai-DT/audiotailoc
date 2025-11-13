@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
-import { MailService } from './mail.service';
-import { NotificationService } from './notification.service';
-// import { WebSocketModule } from '../../websocket/websocket.module';
+ import { Module } from '@nestjs/common';
+ import { PrismaModule } from '../../prisma/prisma.module';
+ import { MailService } from './mail.service';
+ import { NotificationService } from './notification.service';
+ import { NotificationGateway } from './notification.gateway';
 
-@Module({
-  imports: [], // [WebSocketModule],
-  providers: [MailService, NotificationService],
-  exports: [MailService, NotificationService],
-})
-export class NotificationsModule {}
+ @Module({
+   imports: [PrismaModule],
+   providers: [MailService, NotificationService, NotificationGateway],
+   exports: [MailService, NotificationService, NotificationGateway],
+ })
+ export class NotificationsModule {}

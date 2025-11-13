@@ -37,6 +37,9 @@ let ServicesController = class ServicesController {
             pageSize: query.pageSize ? parseInt(query.pageSize) : undefined,
         });
     }
+    async getServiceItems() {
+        return this.servicesService.getServiceItems();
+    }
     getServiceTypes() {
         return this.servicesService.getServiceTypes();
     }
@@ -102,6 +105,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ServicesController.prototype, "getServices", null);
 __decorate([
+    (0, common_1.Get)('items'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ServicesController.prototype, "getServiceItems", null);
+__decorate([
     (0, common_1.Get)('types'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -157,7 +166,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ServicesController.prototype, "getServiceBySlug", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

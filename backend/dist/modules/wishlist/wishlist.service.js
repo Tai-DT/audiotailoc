@@ -12,19 +12,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WishlistService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const crypto_1 = require("crypto");
 let WishlistService = class WishlistService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async addToWishlist(userId, createWishlistDto) {
         const { productId } = createWishlistDto;
-        const product = await this.prisma.product.findUnique({
+        const product = await this.prisma.products.findUnique({
             where: { id: productId },
         });
         if (!product) {
             throw new common_1.NotFoundException('Product not found');
         }
-        const existingItem = await this.prisma.wishlistItem.findUnique({
+        const existingItem = await this.prisma.wishlist_items.findUnique({
             where: {
                 userId_productId: {
                     userId,
@@ -35,32 +36,24 @@ let WishlistService = class WishlistService {
         if (existingItem) {
             throw new common_1.ConflictException('Product already in wishlist');
         }
-        const wishlistItem = await this.prisma.wishlistItem.create({
+        const wishlistItem = await this.prisma.wishlist_items.create({
             data: {
-                userId,
-                productId,
+                id: (0, crypto_1.randomUUID)(),
                 updatedAt: new Date(),
+                users: { connect: { id: userId } },
+                products: { connect: { id: productId } }
             },
             include: {
-                product: {
-                    select: {
-                        id: true,
-                        name: true,
-                        slug: true,
-                        priceCents: true,
-                        imageUrl: true,
-                        isActive: true,
-                    },
-                },
+                products: true
             },
         });
         return wishlistItem;
     }
     async getWishlist(userId) {
-        const wishlistItems = await this.prisma.wishlistItem.findMany({
+        const wishlistItems = await this.prisma.wishlist_items.findMany({
             where: { userId },
             include: {
-                product: {
+                products: {
                     select: {
                         id: true,
                         name: true,
@@ -71,7 +64,7 @@ let WishlistService = class WishlistService {
                         images: true,
                         isActive: true,
                         stockQuantity: true,
-                        category: {
+                        categories: {
                             select: {
                                 id: true,
                                 name: true,
@@ -91,7 +84,7 @@ let WishlistService = class WishlistService {
         };
     }
     async removeFromWishlist(userId, productId) {
-        const wishlistItem = await this.prisma.wishlistItem.findUnique({
+        const wishlistItem = await this.prisma.wishlist_items.findUnique({
             where: {
                 userId_productId: {
                     userId,
@@ -102,7 +95,7 @@ let WishlistService = class WishlistService {
         if (!wishlistItem) {
             throw new common_1.NotFoundException('Product not found in wishlist');
         }
-        await this.prisma.wishlistItem.delete({
+        await this.prisma.wishlist_items.delete({
             where: {
                 userId_productId: {
                     userId,
@@ -113,7 +106,7 @@ let WishlistService = class WishlistService {
         return { message: 'Product removed from wishlist successfully' };
     }
     async isInWishlist(userId, productId) {
-        const item = await this.prisma.wishlistItem.findUnique({
+        const item = await this.prisma.wishlist_items.findUnique({
             where: {
                 userId_productId: {
                     userId,
@@ -124,13 +117,13 @@ let WishlistService = class WishlistService {
         return !!item;
     }
     async getWishlistCount(userId) {
-        const count = await this.prisma.wishlistItem.count({
+        const count = await this.prisma.wishlist_items.count({
             where: { userId },
         });
         return count;
     }
     async clearWishlist(userId) {
-        await this.prisma.wishlistItem.deleteMany({
+        await this.prisma.wishlist_items.deleteMany({
             where: { userId },
         });
         return { message: 'Wishlist cleared successfully' };

@@ -12,8 +12,8 @@ export declare class CartController {
     getCart(cartId?: string, userId?: string): Promise<any>;
     addToCart(addToCartDto: AddToCartDto, cartId?: string, userId?: string): Promise<any>;
     createGuestCart(): Promise<{
-        items: ({
-            product: {
+        cart_items: ({
+            products: {
                 id: string;
                 name: string;
                 priceCents: bigint;
@@ -25,8 +25,8 @@ export declare class CartController {
             createdAt: Date;
             updatedAt: Date;
             price: bigint;
-            cartId: string;
             productId: string;
+            cartId: string;
             quantity: number;
         })[];
     } & {

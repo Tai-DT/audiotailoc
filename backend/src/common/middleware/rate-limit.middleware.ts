@@ -123,7 +123,7 @@ export class RateLimitMiddleware implements NestMiddleware {
     const ip = forwarded?.split(',')[0] || realIP || req.ip || req.connection.remoteAddress;
     
     // For authenticated users, use user ID + IP
-    const userId = (req as any).user?.id;
+    const userId = (req as any).users?.id;
     if (userId) {
       return `user:${userId}:${ip}`;
     }
@@ -205,7 +205,7 @@ export class RateLimitGuard implements CanActivate {
 
   private getDefaultKey(request: any): string {
     const ip = request.ip || request.connection.remoteAddress;
-    const userId = request.user?.id;
+    const userId = request.users?.id;
     return userId ? `user:${userId}` : `ip:${ip}`;
   }
 }

@@ -1,25 +1,23 @@
-import { IsString, IsOptional, IsArray, IsDateString, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsDateString, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateBookingDto {
-  @IsUUID()
+  @IsString()
   serviceId!: string;
 
   @IsOptional()
-  @IsUUID()
-  userId?: string;
-
   @IsString()
-  customerName!: string;
-
-  @IsString()
-  customerPhone!: string;
+  @Transform(({ value }) => (value === '' || value === null || value === undefined ? null : value))
+  userId?: string | null;
 
   @IsOptional()
   @IsString()
-  customerEmail?: string;
+  @Transform(({ value }) => (value === '' || value === null || value === undefined ? null : value))
+  technicianId?: string | null;
 
+  @IsOptional()
   @IsString()
-  customerAddress!: string;
+  status?: string;
 
   @IsDateString()
   scheduledAt!: string;
@@ -29,9 +27,14 @@ export class CreateBookingDto {
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  @Transform(({ value }) => (value === '' || value === null || value === undefined ? null : value))
+  notes?: string | null;
+
+  @IsOptional()
+  @IsNumber()
+  estimatedCosts?: number;
 
   @IsOptional()
   @IsArray()
-  items?: Array<{ itemId: string; quantity: number }>;
+  items?: Array<{ itemId: string; quantity: number; price?: number }>;
 }

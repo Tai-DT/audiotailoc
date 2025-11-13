@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SharedModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const users_module_1 = require("../users/users.module");
+const admin_guard_1 = require("../auth/admin.guard");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const jwt_guard_1 = require("../auth/jwt.guard");
 let SharedModule = class SharedModule {
@@ -18,9 +18,9 @@ exports.SharedModule = SharedModule;
 exports.SharedModule = SharedModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule, users_module_1.UsersModule],
-        providers: [admin_or_key_guard_1.AdminOrKeyGuard, jwt_guard_1.JwtGuard],
-        exports: [admin_or_key_guard_1.AdminOrKeyGuard, jwt_guard_1.JwtGuard, users_module_1.UsersModule],
+        imports: [config_1.ConfigModule],
+        providers: [admin_guard_1.AdminGuard, admin_or_key_guard_1.AdminOrKeyGuard, jwt_guard_1.JwtGuard],
+        exports: [admin_guard_1.AdminGuard, admin_or_key_guard_1.AdminOrKeyGuard, jwt_guard_1.JwtGuard],
     })
 ], SharedModule);
 //# sourceMappingURL=shared.module.js.map

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface ActivityLogData {
@@ -23,8 +24,9 @@ export class ActivityLogService {
 
   async logActivity(data: ActivityLogData) {
     try {
-      await this.prisma.activityLog.create({
+      await this.prisma.activity_logs.create({
         data: {
+          id: randomUUID(),
           userId: data.userId,
           action: data.action,
           resource: data.resource,
@@ -72,10 +74,10 @@ export class ActivityLogService {
     }
 
     const [logs, total] = await Promise.all([
-      this.prisma.activityLog.findMany({
+      this.prisma.activity_logs.findMany({
         where,
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -87,7 +89,7 @@ export class ActivityLogService {
         take: filters.limit || 100,
         skip: filters.offset || 0
       }),
-      this.prisma.activityLog.count({ where })
+      this.prisma.activity_logs.count({ where })
     ]);
 
     return {
@@ -103,7 +105,7 @@ export class ActivityLogService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const result = await this.prisma.activityLog.deleteMany({
+    const result = await this.prisma.activity_logs.deleteMany({
       where: {
         createdAt: {
           lt: cutoffDate
@@ -122,7 +124,7 @@ export class ActivityLogService {
       if (endDate) where.createdAt.lte = endDate;
     }
 
-    const stats = await this.prisma.activityLog.groupBy({
+    const stats = await this.prisma.activity_logs.groupBy({
       by: ['category', 'severity'],
       where,
       _count: {

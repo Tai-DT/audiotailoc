@@ -5,11 +5,11 @@ export declare class ServiceTypesService {
     private prisma;
     constructor(prisma: PrismaService);
     create(createServiceTypeDto: CreateServiceTypeDto): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -17,11 +17,11 @@ export declare class ServiceTypesService {
         color: string | null;
     }>;
     findAll(): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -29,11 +29,11 @@ export declare class ServiceTypesService {
         color: string | null;
     }[]>;
     findOne(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -41,11 +41,11 @@ export declare class ServiceTypesService {
         color: string | null;
     }>;
     update(id: string, updateServiceTypeDto: UpdateServiceTypeDto): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;
@@ -53,11 +53,11 @@ export declare class ServiceTypesService {
         color: string | null;
     }>;
     remove(id: string): Promise<{
+        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         sortOrder: number;
         slug: string;
         isActive: boolean;

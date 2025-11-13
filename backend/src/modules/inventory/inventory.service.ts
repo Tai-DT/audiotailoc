@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InventoryMovementService } from './inventory-movement.service';
 import { InventoryAlertService } from './inventory-alert.service';
@@ -17,73 +18,52 @@ export class InventoryService {
     // Prisma doesn't support field-to-field comparisons in filters. We'll fetch
     // with a coarse where and filter in memory when lowStockOnly is requested.
     const baseWhere: any = params.lowStockOnly ? { lowStockThreshold: { gt: 0 } } : {};
-    const [_totalAll, _itemsPage] = await this.prisma.$transaction([
-      this.prisma.inventory.findMany({ 
-        where: baseWhere, 
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              sku: true,
-              slug: true,
-              priceCents: true,
-              imageUrl: true,
-              isActive: true,
-              isDeleted: true,
-              categoryId: true,
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true
-                }
+    
+    const all = await this.prisma.inventory.findMany({ 
+      where: baseWhere, 
+      include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            slug: true,
+            priceCents: true,
+            imageUrl: true,
+            isActive: true,
+            isDeleted: true,
+            categoryId: true,
+            categories: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
               }
             }
           }
-        },
-        orderBy: { updatedAt: 'desc' } 
-      }),
-      this.prisma.inventory.findMany({ 
-        where: baseWhere, 
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              sku: true,
-              slug: true,
-              priceCents: true,
-              imageUrl: true,
-              isActive: true,
-              isDeleted: true,
-              categoryId: true,
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: { updatedAt: 'desc' } 
-      }),
-    ]);
-    const all = _totalAll;
+        }
+      },
+      orderBy: { updatedAt: 'desc' } 
+    });
+    
     const filtered = params.lowStockOnly
       ? all.filter((i) => i.lowStockThreshold > 0 && i.stock <= i.lowStockThreshold)
       : all;
     const total = filtered.length;
     const start = (page - 1) * pageSize;
-    const items = filtered.slice(start, start + pageSize);
+    const items = filtered.slice(start, start + pageSize).map(item => ({
+      ...item,
+      product: item.products ? {
+        ...item.products,
+        priceCents: item.products.priceCents ? Number(item.products.priceCents) : null
+      } : null
+    }));
     return { total, page, pageSize, items };
   }
 
   async adjust(productId: string, delta: { stockDelta?: number; reservedDelta?: number; lowStockThreshold?: number; stock?: number; reserved?: number; reason?: string; referenceId?: string; referenceType?: string; userId?: string; notes?: string }) {
     // First check if product exists and is active
-    const product = await this.prisma.product.findUnique({
+    const product = await this.prisma.products.findUnique({
       where: { id: productId },
       select: { id: true, isActive: true, isDeleted: true, name: true }
     });
@@ -129,12 +109,14 @@ export class InventoryService {
       where: { productId },
       update: data,
       create: {
+        id: randomUUID(),
         productId,
         stock: typeof delta.stock === 'number' ? delta.stock : (typeof delta.stockDelta === 'number' ? delta.stockDelta : 0),
         reserved: typeof delta.reserved === 'number' ? delta.reserved : (typeof delta.reservedDelta === 'number' ? delta.reservedDelta : 0),
         lowStockThreshold: delta.lowStockThreshold || 0,
+        updatedAt: new Date()
       },
-      include: { product: { select: { name: true, sku: true } } }
+      include: { products: { select: { name: true, sku: true } } }
     });
 
     // Calculate actual changes for movement tracking
@@ -195,7 +177,7 @@ export class InventoryService {
     // Check if inventory exists
     const inventory = await this.prisma.inventory.findUnique({
       where: { productId },
-      include: { product: { select: { name: true, sku: true } } }
+      include: { products: { select: { name: true, sku: true } } }
     });
 
     if (!inventory) {
@@ -210,14 +192,14 @@ export class InventoryService {
     return { 
       message: 'Inventory deleted successfully',
       productId,
-      productName: inventory.product.name,
-      sku: inventory.product.sku
+      productName: inventory.products.name,
+      sku: inventory.products.sku
     };
   }
 
   async syncWithProducts() {
     // Find all products that should have inventory but don't
-    const productsWithoutInventory = await this.prisma.product.findMany({
+    const productsWithoutInventory = await this.prisma.products.findMany({
       where: {
         isDeleted: false,
         isActive: true,
@@ -236,12 +218,14 @@ export class InventoryService {
     for (const product of productsWithoutInventory) {
       const inventory = await this.prisma.inventory.create({
         data: {
+          id: randomUUID(),
           productId: product.id,
           stock: product.stockQuantity || 0,
           reserved: 0,
-          lowStockThreshold: 0
+          lowStockThreshold: 0,
+          updatedAt: new Date()
         },
-        include: { product: { select: { name: true, sku: true } } }
+        include: { products: { select: { name: true, sku: true } } }
       });
       createdInventories.push(inventory);
     }
@@ -249,14 +233,14 @@ export class InventoryService {
     // Find inventory records for deleted/inactive products
     const orphanedInventories = await this.prisma.inventory.findMany({
       where: {
-        product: {
+        products: {
           OR: [
             { isDeleted: true },
             { isActive: false }
           ]
         }
       },
-      include: { product: { select: { name: true, sku: true, isDeleted: true, isActive: true } } }
+      include: { products: { select: { name: true, sku: true, isDeleted: true, isActive: true } } }
     });
 
     return {

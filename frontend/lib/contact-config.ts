@@ -10,7 +10,9 @@ export const CONTACT_CONFIG = {
   // Other contact methods
   phone: {
     number: '0987654321',
-    display: '0987 654 321'
+    display: '0987 654 321',
+    hotline: '1900 2468',
+    hotlineNumber: '19002468'
   },
 
   email: 'info@audiotailoc.com',

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
-import { LoggerModule } from './logger/logger.module';
+// import { LoggerModule } from './logger/logger.module';
 import { PrismaModule } from '../prisma/prisma.module';
 
 // Global modules
@@ -41,9 +41,13 @@ import { AnalyticsModule } from './analytics/analytics.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
-// import { SearchModule } from './search/search.module'; // Disabled due to schema mismatch
+import { SearchModule } from './search/search.module';
 // Removed ApiVersioningModule - using single v1 API
 import { MapsModule } from './maps/maps.module';
+
+// Advanced features
+import { RealtimeModule } from './realtime/realtime.module';
+import { AiModule } from './ai/ai.module';
 
 // Service Management modules - DISABLED FOR MINIMAL STARTUP
 import { ServicesModule } from './services/services.module';
@@ -55,6 +59,7 @@ import { TechniciansModule } from './technicians/technicians.module';
 import { SiteModule } from './site/site.module';
 import { ProjectsModule } from './projects/projects.module';
 import { SeoModule } from './seo/seo.module';
+import { BlogModule } from './blog/blog.module';
 
 // Test module for payment testing
 import { TestModule } from './test/test.module';
@@ -62,7 +67,7 @@ import { TestModule } from './test/test.module';
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     ConfigModule.forRoot({ isGlobal: true }), 
-    LoggerModule,
+    // LoggerModule,
     CacheModule.forRoot({
       isGlobal: true,
     }), // Global cache service
@@ -85,6 +90,11 @@ const runtimeImports = [
     MarketingModule,
     MapsModule,
     AnalyticsModule,
+
+    // Advanced Features - ENABLED
+    SearchModule,
+    RealtimeModule,
+    AiModule,
     
     // E-commerce modules - ENABLING STEP BY STEP
     CatalogModule,
@@ -105,6 +115,7 @@ const runtimeImports = [
     // Site Content Management
     SiteModule,
     SeoModule,
+    BlogModule,
     
     // Portfolio/Projects
     ProjectsModule,

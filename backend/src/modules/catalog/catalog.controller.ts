@@ -135,6 +135,19 @@ export class CatalogController {
     return this.catalog.deleteCategory(id);
   }
 
+  @Get('products/search')
+  @UseGuards()
+  searchProducts(@Query('q') q: string, @Query('limit') limit?: number) {
+    const limitNum = Math.min(parseInt(limit?.toString() || '20'), 50);
+    return this.catalog.listProducts({
+      page: 1,
+      pageSize: limitNum,
+      q: q || '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
+  }
+
   @Get('products/:id')
   @UseGuards() // Temporarily remove authentication for testing
   get(@Param('id') id: string) {

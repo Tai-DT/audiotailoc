@@ -8,586 +8,32 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-model User {
-  id                 String              @id @default(cuid())
-  email              String              @unique
-  password           String
-  name               String?
-  phone              String?
-  role               String              @default("USER")
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  activityLogs       ActivityLog[]
-  blog_articles      blog_articles[]
-  blog_comments      blog_comments[]
-  carts              Cart[]
-  questions          CustomerQuestion[]
-  inventoryMovements InventoryMovement[]
-  loyaltyAccount     LoyaltyAccount?
-  orders             Order[]
-  reviews            ProductReview[]
-  productViews       ProductView[]
-  projects           Project[]
-  searchQueries      SearchQuery[]
-  ServiceBooking     ServiceBooking[]
-  serviceViews       ServiceView[]
-  wishlistItems      WishlistItem[]
+model activity_logs {
+  id         String   @id
+  userId     String?
+  action     String
+  resource   String?
+  resourceId String?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  method     String?
+  url        String?
+  statusCode Int?
+  duration   Int?
+  category   String   @default("user_activity")
+  severity   String   @default("info")
+  createdAt  DateTime @default(now())
+  users      users?   @relation(fields: [userId], references: [id])
 
-  @@map("users")
-}
-
-model Product {
-  id                 String               @id @default(cuid())
-  slug               String               @unique
-  name               String
-  description        String?
-  shortDescription   String?
-  priceCents         BigInt
-  originalPriceCents BigInt?
-  imageUrl           String?
-  images             String?
-  categoryId         String?
-  brand              String?
-  model              String?
-  sku                String?              @unique
-  specifications     String?
-  features           String?
-  warranty           String?
-  weight             Float?
-  dimensions         String?
-  stockQuantity      Int                  @default(0)
-  minOrderQuantity   Int                  @default(1)
-  maxOrderQuantity   Int?
-  maxStock           Int?
-  tags               String?
-  metaTitle          String?
-  metaDescription    String?
-  metaKeywords       String?
-  canonicalUrl       String?
-  featured           Boolean              @default(false)
-  isActive           Boolean              @default(true)
-  isDeleted          Boolean              @default(false)
-  viewCount          Int                  @default(0)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  cartItems          CartItem[]
-  inventory          Inventory?
-  InventoryAlert     InventoryAlert[]
-  InventoryMovement  InventoryMovement[]
-  knowledgeEntries   KnowledgeBaseEntry[]
-  orderItems         OrderItem[]
-  reviews            ProductReview[]
-  views              ProductView[]
-  category           Category?            @relation(fields: [categoryId], references: [id])
-  wishlistItems      WishlistItem[]
-
-  @@index([isDeleted])
-  @@index([isActive])
-  @@index([featured])
-  @@index([categoryId])
-  @@map("products")
-}
-
-model Category {
-  id              String     @id @default(cuid())
-  name            String
-  slug            String     @unique
-  parentId        String?
-  isActive        Boolean    @default(true)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  canonicalUrl    String?
-  description     String?
-  imageUrl        String?
-  metaDescription String?
-  metaKeywords    String?
-  metaTitle       String?
-  parent          Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children        Category[] @relation("CategoryHierarchy")
-  products        Product[]
-
-  @@index([parentId])
-  @@map("categories")
-}
-
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String?
-  guestId   String?
-  status    String     @default("ACTIVE")
-  expiresAt DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  items     CartItem[]
-  user      User?      @relation(fields: [userId], references: [id])
-
-  @@map("carts")
-}
-
-model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  productId String
-  quantity  Int
-  price     BigInt
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-
-  @@unique([cartId, productId])
-  @@map("cart_items")
-}
-
-model Order {
-  id                  String          @id @default(cuid())
-  orderNo             String          @unique
-  userId              String
-  subtotalCents       Int             @default(0)
-  discountCents       Int             @default(0)
-  shippingCents       Int             @default(0)
-  totalCents          Int
-  status              String          @default("PENDING")
-  shippingAddress     String?
-  shippingCoordinates String?
-  promotionCode       String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  items               OrderItem[]
-  user                User            @relation(fields: [userId], references: [id])
-  paymentIntents      PaymentIntent[]
-  payments            Payment[]
-
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     BigInt
-  name      String?
-  unitPrice BigInt?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-
-  @@map("order_items")
-}
-
-model Payment {
-  id            String         @id @default(cuid())
-  orderId       String
-  intentId      String?
-  provider      String
-  amountCents   Int
-  status        String         @default("PENDING")
-  transactionId String?
-  metadata      String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  intent        PaymentIntent? @relation(fields: [intentId], references: [id])
-  order         Order          @relation(fields: [orderId], references: [id])
-  refunds       Refund[]
-
-  @@map("payments")
-}
-
-model Refund {
-  id               String    @id @default(cuid())
-  paymentId        String
-  amountCents      Int
-  reason           String?
-  status           String    @default("PENDING")
-  providerRefundId String?
-  processedAt      DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  errorMessage     String?
-  payment          Payment   @relation(fields: [paymentId], references: [id])
-
-  @@map("refunds")
-}
-
-model ServiceType {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  description String?
-  icon        String?
-  color       String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  services    Service[]
-
-  @@index([isActive])
-  @@index([sortOrder])
-  @@map("service_types")
-}
-
-model Service {
-  id               String           @id @default(cuid())
-  slug             String           @unique
-  name             String
-  description      String?
-  shortDescription String?
-  basePriceCents   Int              @default(0)
-  price            Int              @default(0)
-  minPrice         Int?
-  maxPrice         Int?
-  priceType        String           @default("FIXED")
-  duration         Int
-  typeId           String?
-  images           String?
-  isActive         Boolean          @default(true)
-  isFeatured       Boolean          @default(false)
-  seoTitle         String?
-  seoDescription   String?
-  type             String?
-  tags             String?
-  features         String?
-  requirements     String?
-  metadata         String?
-  viewCount        Int              @default(0)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  bookings         ServiceBooking[]
-  items            ServiceItem[]
-  views            ServiceView[]
-  serviceType      ServiceType?     @relation(fields: [typeId], references: [id])
-
-  @@index([isActive])
-  @@index([isFeatured])
-  @@index([typeId])
-  @@map("services")
-}
-
-model Inventory {
-  id                String   @id @default(cuid())
-  productId         String   @unique
-  stock             Int      @default(0)
-  reserved          Int      @default(0)
-  lowStockThreshold Int      @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  product           Product  @relation(fields: [productId], references: [id])
-
-  @@map("inventory")
-}
-
-model InventoryMovement {
-  id            String   @id @default(cuid())
-  productId     String
-  type          String
-  quantity      Int
-  previousStock Int
-  newStock      Int
-  reason        String?
-  referenceId   String?
-  referenceType String?
-  userId        String?
-  notes         String?
-  createdAt     DateTime @default(now())
-  product       Product  @relation(fields: [productId], references: [id])
-  user          User?    @relation(fields: [userId], references: [id])
-
-  @@index([productId])
-  @@index([type])
+  @@index([action])
+  @@index([category])
   @@index([createdAt])
-  @@map("inventory_movements")
+  @@index([userId])
 }
 
-model InventoryAlert {
-  id           String    @id @default(cuid())
-  productId    String
-  type         String
-  message      String
-  threshold    Int?
-  currentStock Int
-  isResolved   Boolean   @default(false)
-  resolvedAt   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  product      Product   @relation(fields: [productId], references: [id])
-
-  @@index([productId])
-  @@index([type])
-  @@index([isResolved])
-  @@index([createdAt])
-  @@map("inventory_alerts")
-}
-
-model InventoryReport {
-  id          String   @id @default(cuid())
-  type        String
-  title       String
-  description String?
-  parameters  String?
-  data        String?
-  generatedBy String?
-  generatedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([type])
-  @@index([generatedAt])
-  @@map("inventory_reports")
-}
-
-model WishlistItem {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  product   Product  @relation(fields: [productId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@unique([userId, productId])
-  @@map("wishlist_items")
-}
-
-model ProductReview {
-  id         String                @id @default(cuid())
-  userId     String
-  productId  String
-  rating     Int
-  title      String?
-  comment    String?
-  isVerified Boolean               @default(false)
-  status     ReviewStatus          @default(APPROVED)
-  upvotes    Int                   @default(0)
-  downvotes  Int                   @default(0)
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
-  images     String?
-  response   String?
-  reports    ProductReviewReport[]
-  votes      ProductReviewVote[]
-  product    Product               @relation(fields: [productId], references: [id])
-  user       User                  @relation(fields: [userId], references: [id])
-
-  @@map("product_reviews")
-}
-
-model ProductReviewVote {
-  id        String        @id @default(cuid())
-  reviewId  String
-  userId    String
-  isUpvote  Boolean       @default(true)
-  createdAt DateTime      @default(now())
-  review    ProductReview @relation(fields: [reviewId], references: [id])
-
-  @@unique([reviewId, userId])
-  @@index([reviewId])
-  @@map("product_review_votes")
-}
-
-model ProductReviewReport {
-  id        String        @id @default(cuid())
-  reviewId  String
-  userId    String
-  reason    String
-  createdAt DateTime      @default(now())
-  review    ProductReview @relation(fields: [reviewId], references: [id])
-
-  @@index([reviewId])
-  @@map("product_review_reports")
-}
-
-model Page {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  content     String
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("pages")
-}
-
-model SearchQuery {
-  id        String   @id @default(cuid())
-  query     String
-  userId    String?
-  timestamp DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
-
-  @@map("search_queries")
-}
-
-model ProductView {
-  id        String   @id @default(cuid())
-  productId String
-  userId    String?
-  timestamp DateTime @default(now())
-  duration  Int?
-  product   Product  @relation(fields: [productId], references: [id])
-  user      User?    @relation(fields: [userId], references: [id])
-
-  @@map("product_views")
-}
-
-model ServiceView {
-  id        String   @id @default(cuid())
-  serviceId String
-  userId    String?
-  timestamp DateTime @default(now())
-  duration  Int?
-  service   Service  @relation(fields: [serviceId], references: [id])
-  user      User?    @relation(fields: [userId], references: [id])
-
-  @@map("service_views")
-}
-
-model CustomerQuestion {
-  id           String   @id @default(cuid())
-  userId       String?
-  question     String
-  category     String?
-  satisfaction Int?
-  timestamp    DateTime @default(now())
-  updatedAt    DateTime
-  user         User?    @relation(fields: [userId], references: [id])
-
-  @@map("customer_questions")
-}
-
-model Technician {
-  id          String               @id @default(cuid())
-  name        String
-  email       String               @unique
-  phone       String?
-  specialties String?
-  isActive    Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  bookings    ServiceBooking[]
-  schedules   TechnicianSchedule[]
-
-  @@map("technicians")
-}
-
-model ServiceItem {
-  id           String               @id @default(cuid())
-  serviceId    String
-  name         String
-  price        Int
-  quantity     Int
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime
-  bookingItems ServiceBookingItem[]
-  service      Service              @relation(fields: [serviceId], references: [id])
-
-  @@map("service_items")
-}
-
-model ServiceBooking {
-  id             String                 @id @default(cuid())
-  userId         String?
-  serviceId      String
-  technicianId   String?
-  status         String                 @default("PENDING")
-  scheduledAt    DateTime?
-  scheduledTime  String?
-  completedAt    DateTime?
-  notes          String?
-  estimatedCosts Int?                   @default(0)
-  actualCosts    Int?
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  items          ServiceBookingItem[]
-  service        Service                @relation(fields: [serviceId], references: [id])
-  technician     Technician?            @relation(fields: [technicianId], references: [id])
-  user           User?                  @relation(fields: [userId], references: [id])
-  payments       ServicePayment[]
-  history        ServiceStatusHistory[]
-
-  @@map("service_bookings")
-}
-
-model ServiceBookingItem {
-  id            String         @id @default(cuid())
-  bookingId     String
-  serviceItemId String
-  quantity      Int
-  price         Int
-  createdAt     DateTime       @default(now())
-  booking       ServiceBooking @relation(fields: [bookingId], references: [id])
-  serviceItem   ServiceItem    @relation(fields: [serviceItemId], references: [id])
-
-  @@map("service_booking_items")
-}
-
-model TechnicianSchedule {
-  id           String     @id @default(cuid())
-  technicianId String
-  date         DateTime
-  startTime    String
-  endTime      String
-  isAvailable  Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  technician   Technician @relation(fields: [technicianId], references: [id])
-
-  @@map("technician_schedules")
-}
-
-model ServiceStatusHistory {
-  id        String         @id @default(cuid())
-  bookingId String
-  status    String
-  newStatus String
-  note      String?
-  changedBy String?
-  createdAt DateTime       @default(now())
-  booking   ServiceBooking @relation(fields: [bookingId], references: [id])
-
-  @@map("service_status_history")
-}
-
-model ServicePayment {
-  id            String         @id @default(cuid())
-  bookingId     String
-  provider      String
-  amountCents   Int
-  status        String         @default("PENDING")
-  transactionId String?
-  paidAt        DateTime?
-  createdAt     DateTime       @default(now())
-  booking       ServiceBooking @relation(fields: [bookingId], references: [id])
-
-  @@map("service_payments")
-}
-
-model Promotion {
-  id               String    @id @default(cuid())
-  code             String    @unique
-  name             String
-  description      String?
-  type             String    @default("PERCENTAGE")
-  value            Int
-  isActive         Boolean   @default(true)
-  expiresAt        DateTime?
-  createdAt        DateTime  @default(now())
-  created_by       String?
-  max_discount     Int?
-  metadata         Json?
-  min_order_amount Int?
-  starts_at        DateTime?
-  updatedAt        DateTime
-  usage_count      Int       @default(0)
-  usage_limit      Int?
-
-  @@map("promotions")
-}
-
-model Banner {
-  id             String    @id @default(cuid())
+model banners {
+  id             String    @id
   title          String
   subtitle       String?
   description    String?
@@ -603,131 +49,551 @@ model Banner {
   endAt          DateTime?
   isDeleted      Boolean   @default(false)
   createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  updatedAt      DateTime
 
-  @@index([page])
   @@index([isActive])
   @@index([isDeleted])
+  @@index([page])
   @@index([position])
-  @@map("banners")
 }
 
-model SystemConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  type      String   @default("STRING")
+model blog_articles {
+  id              String          @id
+  title           String
+  slug            String          @unique
+  content         String
+  excerpt         String?
+  imageUrl        String?
+  categoryId      String
+  authorId        String
+  status          String          @default("DRAFT")
+  publishedAt     DateTime?
+  viewCount       Int             @default(0)
+  likeCount       Int             @default(0)
+  commentCount    Int             @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  featured        Boolean         @default(false)
+  users           users           @relation(fields: [authorId], references: [id])
+  blog_categories blog_categories @relation(fields: [categoryId], references: [id])
+  blog_comments   blog_comments[]
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([featured])
+  @@index([publishedAt])
+  @@index([status])
+}
+
+model blog_categories {
+  id                    String            @id
+  name                  String
+  slug                  String            @unique
+  description           String?
+  imageUrl              String?
+  parentId              String?
+  isActive              Boolean           @default(true)
+  sortOrder             Int               @default(0)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime
+  blog_articles         blog_articles[]
+  blog_categories       blog_categories?  @relation("blog_categoriesToblog_categories", fields: [parentId], references: [id])
+  other_blog_categories blog_categories[] @relation("blog_categoriesToblog_categories")
+
+  @@index([isActive])
+  @@index([parentId])
+}
+
+model blog_comments {
+  id            String        @id
+  articleId     String
+  authorId      String?
+  authorName    String?
+  authorEmail   String?
+  content       String
+  isApproved    Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  blog_articles blog_articles @relation(fields: [articleId], references: [id])
+  users         users?        @relation(fields: [authorId], references: [id])
+
+  @@index([articleId])
+  @@index([isApproved])
+}
+
+model campaign_clicks {
+  id             String    @id
+  campaignId     String
+  recipientEmail String?
+  url            String?
+  createdAt      DateTime  @default(now())
+  campaigns      campaigns @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+}
+
+model campaign_opens {
+  id             String    @id
+  campaignId     String
+  recipientEmail String?
+  createdAt      DateTime  @default(now())
+  campaigns      campaigns @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+}
+
+model campaign_recipients {
+  id         String    @id
+  campaignId String
+  email      String
+  name       String?
+  createdAt  DateTime  @default(now())
+  campaigns  campaigns @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+}
+
+model campaigns {
+  id                  String                @id
+  name                String
+  description         String
+  type                CampaignType
+  status              CampaignStatus        @default(DRAFT)
+  targetAudience      String?
+  discountPercent     Int?
+  discountAmount      Int?
+  startDate           DateTime?
+  endDate             DateTime?
+  sentAt              DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  content             String?
+  createdBy           String?
+  scheduledAt         DateTime?
+  subject             String?
+  templateId          String?
+  campaign_clicks     campaign_clicks[]
+  campaign_opens      campaign_opens[]
+  campaign_recipients campaign_recipients[]
+  email_templates     email_templates?      @relation(fields: [templateId], references: [id])
+  email_logs          email_logs[]
+}
+
+model cart_items {
+  id        String   @id
+  cartId    String
+  productId String
+  quantity  Int
+  price     BigInt
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
+  carts     carts    @relation(fields: [cartId], references: [id])
+  products  products @relation(fields: [productId], references: [id])
 
-  @@map("system_configs")
+  @@unique([cartId, productId])
 }
 
-model LoyaltyAccount {
-  id           String              @id @default(cuid())
-  userId       String              @unique
-  points       Int                 @default(0)
-  tier         String              @default("BRONZE")
-  isActive     Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  user         User                @relation(fields: [userId], references: [id])
-  transactions PointTransaction[]
-  redemptions  RedemptionHistory[]
-
-  @@map("loyalty_accounts")
+model carts {
+  id         String       @id
+  userId     String?
+  guestId    String?
+  status     String       @default("ACTIVE")
+  expiresAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  cart_items cart_items[]
+  users      users?       @relation(fields: [userId], references: [id])
 }
 
-model PointTransaction {
-  id          String         @id @default(cuid())
-  accountId   String
-  amount      Int
-  type        String
-  description String?
-  expiresAt   DateTime?
-  createdAt   DateTime       @default(now())
-  account     LoyaltyAccount @relation(fields: [accountId], references: [id])
+model categories {
+  id               String       @id
+  name             String
+  slug             String       @unique
+  parentId         String?
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime
+  canonicalUrl     String?
+  description      String?
+  imageUrl         String?
+  metaDescription  String?
+  metaKeywords     String?
+  metaTitle        String?
+  categories       categories?  @relation("categoriesTocategories", fields: [parentId], references: [id])
+  other_categories categories[] @relation("categoriesTocategories")
+  products         products[]
 
-  @@map("point_transactions")
+  @@index([parentId])
 }
 
-model RedemptionHistory {
-  id         String         @id @default(cuid())
-  accountId  String
-  rewardId   String
-  pointsUsed Int
-  status     String         @default("COMPLETED")
-  createdAt  DateTime       @default(now())
-  account    LoyaltyAccount @relation(fields: [accountId], references: [id])
-  reward     LoyaltyReward  @relation(fields: [rewardId], references: [id])
-
-  @@map("redemption_history")
+model customer_questions {
+  id           String   @id
+  userId       String?
+  question     String
+  category     String?
+  satisfaction Int?
+  timestamp    DateTime @default(now())
+  updatedAt    DateTime
+  users        users?   @relation(fields: [userId], references: [id])
 }
 
-model LoyaltyReward {
-  id          String              @id @default(cuid())
+model email_logs {
+  id             String     @id
+  campaignId     String?
+  recipientEmail String
+  subject        String
+  status         String
+  error          String?
+  sentAt         DateTime?
+  createdAt      DateTime   @default(now())
+  campaigns      campaigns? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+}
+
+model email_templates {
+  id          String      @id
   name        String
   description String?
-  pointsCost  Int
-  value       Int
-  type        String              @default("DISCOUNT")
-  isActive    Boolean             @default(true)
-  createdAt   DateTime            @default(now())
-  redemptions RedemptionHistory[]
-
-  @@map("loyalty_rewards")
+  category    String?
+  subject     String
+  content     String
+  usageCount  Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  campaigns   campaigns[]
 }
 
-model Webhook {
-  id        String   @id @default(cuid())
-  url       String
-  secret    String
-  events    String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-
-  @@map("webhooks")
+model inventory {
+  id                String   @id
+  productId         String   @unique
+  stock             Int      @default(0)
+  reserved          Int      @default(0)
+  lowStockThreshold Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+  products          products @relation(fields: [productId], references: [id])
 }
 
-model KnowledgeBaseEntry {
-  id         String   @id @default(cuid())
-  slug       String?  @unique
+model inventory_alerts {
+  id           String    @id
+  productId    String
+  type         String
+  message      String
+  threshold    Int?
+  currentStock Int
+  isResolved   Boolean   @default(false)
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
+  products     products  @relation(fields: [productId], references: [id])
+
+  @@index([createdAt])
+  @@index([isResolved])
+  @@index([productId])
+  @@index([type])
+}
+
+model inventory_movements {
+  id            String   @id
+  productId     String
+  type          String
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  reason        String?
+  referenceId   String?
+  referenceType String?
+  userId        String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  products      products @relation(fields: [productId], references: [id])
+  users         users?   @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([productId])
+  @@index([type])
+}
+
+model inventory_reports {
+  id          String   @id
+  type        String
+  title       String
+  description String?
+  parameters  String?
+  data        String?
+  generatedBy String?
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@index([generatedAt])
+  @@index([type])
+}
+
+model knowledge_base_entries {
+  id         String    @id
   kind       String
   title      String
   content    String
   productId  String?
   tags       String?
   embedding  String?
-  isActive   Boolean  @default(true)
-  viewCount  Int      @default(0)
-  helpful    Int      @default(0)
-  notHelpful Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  product    Product? @relation(fields: [productId], references: [id])
-
-  @@map("knowledge_base_entries")
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  helpful    Int       @default(0)
+  notHelpful Int       @default(0)
+  slug       String?   @unique
+  viewCount  Int       @default(0)
+  products   products? @relation(fields: [productId], references: [id])
 }
 
-model PaymentIntent {
-  id           String    @id @default(cuid())
+model loyalty_accounts {
+  id                 String               @id
+  userId             String               @unique
+  points             Int                  @default(0)
+  tier               String               @default("BRONZE")
+  isActive           Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  users              users                @relation(fields: [userId], references: [id])
+  point_transactions point_transactions[]
+  redemption_history redemption_history[]
+}
+
+model loyalty_rewards {
+  id                 String               @id
+  name               String
+  description        String?
+  pointsCost         Int
+  value              Int
+  type               String               @default("DISCOUNT")
+  isActive           Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  redemption_history redemption_history[]
+}
+
+model newsletter_subscriptions {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model order_items {
+  id        String   @id
+  orderId   String
+  productId String
+  quantity  Int
+  price     BigInt
+  name      String?
+  unitPrice BigInt?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  orders    orders   @relation(fields: [orderId], references: [id])
+  products  products @relation(fields: [productId], references: [id])
+}
+
+model orders {
+  id                  String            @id
+  orderNo             String            @unique
+  userId              String
+  subtotalCents       Int               @default(0)
+  discountCents       Int               @default(0)
+  shippingCents       Int               @default(0)
+  totalCents          Int
+  status              String            @default("PENDING")
+  shippingAddress     String?
+  shippingCoordinates String?
+  promotionCode       String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime
+  order_items         order_items[]
+  users               users             @relation(fields: [userId], references: [id])
+  payment_intents     payment_intents[]
+  payments            payments[]
+}
+
+model pages {
+  id          String   @id
+  slug        String   @unique
+  title       String
+  content     String
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model payment_intents {
+  id           String     @id
   orderId      String
   provider     String
   amountCents  Int
-  status       String    @default("PENDING")
+  status       String     @default("PENDING")
   clientSecret String?
   returnUrl    String?
   metadata     String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  order        Order     @relation(fields: [orderId], references: [id])
-  payments     Payment[]
-
-  @@map("payment_intents")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  orders       orders     @relation(fields: [orderId], references: [id])
+  payments     payments[]
 }
 
-model Project {
-  id               String    @id @default(cuid())
+model payments {
+  id              String           @id
+  orderId         String
+  intentId        String?
+  provider        String
+  amountCents     Int
+  status          String           @default("PENDING")
+  transactionId   String?
+  metadata        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  payment_intents payment_intents? @relation(fields: [intentId], references: [id])
+  orders          orders           @relation(fields: [orderId], references: [id])
+  refunds         refunds[]
+}
+
+model point_transactions {
+  id               String           @id
+  accountId        String
+  amount           Int
+  type             String
+  description      String?
+  expiresAt        DateTime?
+  createdAt        DateTime         @default(now())
+  loyalty_accounts loyalty_accounts @relation(fields: [accountId], references: [id])
+}
+
+model policies {
+  id          String   @id
+  slug        String   @unique
+  title       String
+  contentHtml String
+  summary     String?
+  type        String
+  isPublished Boolean  @default(true)
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model product_review_reports {
+  id              String          @id
+  reviewId        String
+  userId          String
+  reason          String
+  createdAt       DateTime        @default(now())
+  product_reviews product_reviews @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId])
+}
+
+model product_review_votes {
+  id              String          @id
+  reviewId        String
+  userId          String
+  isUpvote        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  product_reviews product_reviews @relation(fields: [reviewId], references: [id])
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+}
+
+model product_reviews {
+  id                     String                   @id
+  userId                 String
+  productId              String
+  rating                 Int
+  title                  String?
+  comment                String?
+  isVerified             Boolean                  @default(false)
+  status                 ReviewStatus             @default(APPROVED)
+  upvotes                Int                      @default(0)
+  downvotes              Int                      @default(0)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  images                 String?
+  response               String?
+  product_review_reports product_review_reports[]
+  product_review_votes   product_review_votes[]
+  products               products                 @relation(fields: [productId], references: [id])
+  users                  users                    @relation(fields: [userId], references: [id])
+}
+
+model product_views {
+  id        String   @id
+  productId String
+  userId    String?
+  timestamp DateTime @default(now())
+  duration  Int?
+  products  products @relation(fields: [productId], references: [id])
+  users     users?   @relation(fields: [userId], references: [id])
+}
+
+model products {
+  id                     String                   @id
+  slug                   String                   @unique
+  name                   String
+  description            String?
+  shortDescription       String?
+  priceCents             BigInt
+  originalPriceCents     BigInt?
+  imageUrl               String?
+  images                 String?
+  categoryId             String?
+  brand                  String?
+  model                  String?
+  sku                    String?                  @unique
+  specifications         String?
+  features               String?
+  warranty               String?
+  weight                 Float?
+  dimensions             String?
+  stockQuantity          Int                      @default(0)
+  minOrderQuantity       Int                      @default(1)
+  maxOrderQuantity       Int?
+  maxStock               Int?
+  tags                   String?
+  metaTitle              String?
+  metaDescription        String?
+  metaKeywords           String?
+  canonicalUrl           String?
+  featured               Boolean                  @default(false)
+  isActive               Boolean                  @default(true)
+  isDeleted              Boolean                  @default(false)
+  viewCount              Int                      @default(0)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  cart_items             cart_items[]
+  inventory              inventory?
+  inventory_alerts       inventory_alerts[]
+  inventory_movements    inventory_movements[]
+  knowledge_base_entries knowledge_base_entries[]
+  order_items            order_items[]
+  product_reviews        product_reviews[]
+  product_views          product_views[]
+  categories             categories?              @relation(fields: [categoryId], references: [id])
+  wishlist_items         wishlist_items[]
+
+  @@index([categoryId])
+  @@index([featured])
+  @@index([isActive])
+  @@index([isDeleted])
+}
+
+model projects {
+  id               String    @id
   name             String
   slug             String    @unique
   description      String?
@@ -777,117 +643,197 @@ model Project {
   featured         Boolean   @default(false)
   isDeleted        Boolean   @default(false)
   createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  user             User      @relation(fields: [userId], references: [id])
+  updatedAt        DateTime
+  users            users     @relation(fields: [userId], references: [id])
 
-  @@index([slug])
-  @@index([status])
   @@index([isActive])
   @@index([isFeatured])
-  @@map("projects")
+  @@index([slug])
+  @@index([status])
 }
 
-model ActivityLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  action     String
-  resource   String?
-  resourceId String?
-  details    String?
-  ipAddress  String?
-  userAgent  String?
-  method     String?
-  url        String?
-  statusCode Int?
-  duration   Int?
-  category   String   @default("user_activity")
-  severity   String   @default("info")
-  createdAt  DateTime @default(now())
-  user       User?    @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([action])
-  @@index([category])
-  @@index([createdAt])
-  @@map("activity_logs")
+model promotions {
+  id               String    @id
+  code             String    @unique
+  name             String
+  description      String?
+  type             String    @default("PERCENTAGE")
+  value            Int
+  isActive         Boolean   @default(true)
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  created_by       String?
+  max_discount     Int?
+  metadata         Json?
+  min_order_amount Int?
+  starts_at        DateTime?
+  updatedAt        DateTime
+  usage_count      Int       @default(0)
+  usage_limit      Int?
 }
 
-model Campaign {
-  id              String              @id @default(cuid())
-  name            String
-  description     String
-  type            CampaignType
-  status          CampaignStatus      @default(DRAFT)
-  targetAudience  String?
-  discountPercent Int?
-  discountAmount  Int?
-  startDate       DateTime?
-  endDate         DateTime?
-  sentAt          DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  content         String?
-  createdBy       String?
-  scheduledAt     DateTime?
-  subject         String?
-  templateId      String?
-  clicks          CampaignClick[]
-  opens           CampaignOpen[]
-  recipients      CampaignRecipient[]
-  email_templates email_templates?    @relation(fields: [templateId], references: [id])
-  emailLogs       EmailLog[]
-
-  @@map("campaigns")
+model redemption_history {
+  id               String           @id
+  accountId        String
+  rewardId         String
+  pointsUsed       Int
+  status           String           @default("COMPLETED")
+  createdAt        DateTime         @default(now())
+  loyalty_accounts loyalty_accounts @relation(fields: [accountId], references: [id])
+  loyalty_rewards  loyalty_rewards  @relation(fields: [rewardId], references: [id])
 }
 
-model CampaignRecipient {
-  id         String   @id @default(cuid())
-  campaignId String
-  email      String
-  name       String?
-  createdAt  DateTime @default(now())
-  campaign   Campaign @relation(fields: [campaignId], references: [id])
-
-  @@index([campaignId])
-  @@map("campaign_recipients")
+model refunds {
+  id               String    @id
+  paymentId        String
+  amountCents      Int
+  reason           String?
+  status           String    @default("PENDING")
+  providerRefundId String?
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  errorMessage     String?
+  payments         payments  @relation(fields: [paymentId], references: [id])
 }
 
-model CampaignOpen {
-  id             String   @id @default(cuid())
-  campaignId     String
-  recipientEmail String?
-  createdAt      DateTime @default(now())
-  campaign       Campaign @relation(fields: [campaignId], references: [id])
-
-  @@index([campaignId])
-  @@map("campaign_opens")
+model search_queries {
+  id        String   @id
+  query     String
+  userId    String?
+  timestamp DateTime @default(now())
+  users     users?   @relation(fields: [userId], references: [id])
 }
 
-model CampaignClick {
-  id             String   @id @default(cuid())
-  campaignId     String
-  recipientEmail String?
-  url            String?
-  createdAt      DateTime @default(now())
-  campaign       Campaign @relation(fields: [campaignId], references: [id])
-
-  @@index([campaignId])
-  @@map("campaign_clicks")
+model service_booking_items {
+  id               String           @id
+  bookingId        String
+  serviceItemId    String
+  quantity         Int
+  price            Int
+  createdAt        DateTime         @default(now())
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
+  service_items    service_items    @relation(fields: [serviceItemId], references: [id])
 }
 
-model EmailLog {
-  id             String    @id @default(cuid())
-  campaignId     String?
-  recipientEmail String
-  subject        String
-  status         String
-  error          String?
-  sentAt         DateTime?
-  createdAt      DateTime  @default(now())
-  campaign       Campaign? @relation(fields: [campaignId], references: [id])
+model service_bookings {
+  id                     String                   @id
+  userId                 String?
+  serviceId              String
+  technicianId           String?
+  status                 String                   @default("PENDING")
+  scheduledAt            DateTime?
+  scheduledTime          String?
+  completedAt            DateTime?
+  notes                  String?
+  estimatedCosts         Int?                     @default(0)
+  actualCosts            Int?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  service_booking_items  service_booking_items[]
+  services               services                 @relation(fields: [serviceId], references: [id])
+  technicians            technicians?             @relation(fields: [technicianId], references: [id])
+  users                  users?                   @relation(fields: [userId], references: [id])
+  service_payments       service_payments[]
+  service_status_history service_status_history[]
+}
 
-  @@index([campaignId])
-  @@map("email_logs")
+model service_items {
+  id                    String                  @id
+  serviceId             String
+  name                  String
+  price                 Int
+  quantity              Int
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  service_booking_items service_booking_items[]
+  services              services                @relation(fields: [serviceId], references: [id])
+}
+
+model service_payments {
+  id               String           @id
+  bookingId        String
+  provider         String
+  amountCents      Int
+  status           String           @default("PENDING")
+  transactionId    String?
+  paidAt           DateTime?
+  createdAt        DateTime         @default(now())
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
+}
+
+model service_status_history {
+  id               String           @id
+  bookingId        String
+  status           String
+  newStatus        String
+  note             String?
+  changedBy        String?
+  createdAt        DateTime         @default(now())
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
+}
+
+model service_types {
+  id          String     @id
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?
+  color       String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  services    services[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model service_views {
+  id        String   @id
+  serviceId String
+  userId    String?
+  timestamp DateTime @default(now())
+  duration  Int?
+  services  services @relation(fields: [serviceId], references: [id])
+  users     users?   @relation(fields: [userId], references: [id])
+}
+
+model services {
+  id               String             @id
+  slug             String             @unique
+  name             String
+  description      String?
+  shortDescription String?
+  basePriceCents   Int                @default(0)
+  price            Int                @default(0)
+  minPrice         Int?
+  maxPrice         Int?
+  priceType        String             @default("FIXED")
+  duration         Int
+  typeId           String?
+  images           String?
+  isActive         Boolean            @default(true)
+  isFeatured       Boolean            @default(false)
+  seoTitle         String?
+  seoDescription   String?
+  type             String?
+  tags             String?
+  features         String?
+  requirements     String?
+  metadata         String?
+  viewCount        Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  service_bookings service_bookings[]
+  service_items    service_items[]
+  service_views    service_views[]
+  service_types    service_types?     @relation(fields: [typeId], references: [id])
+
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([typeId])
 }
 
 model site_settings {
@@ -896,6 +842,22 @@ model site_settings {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime
+}
+
+model site_stats {
+  id           String   @id
+  key          String   @unique
+  value        String
+  label        String
+  description  String?
+  icon         String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([displayOrder])
+  @@index([isActive])
 }
 
 model software {
@@ -916,123 +878,36 @@ model software {
   updatedAt   DateTime
 }
 
-model blog_articles {
-  id              String          @id
-  title           String
-  slug            String          @unique
-  content         String
-  excerpt         String?
-  imageUrl        String?
-  categoryId      String
-  authorId        String
-  status          String          @default("DRAFT")
-  publishedAt     DateTime?
-  viewCount       Int             @default(0)
-  likeCount       Int             @default(0)
-  commentCount    Int             @default(0)
-  seoTitle        String?
-  seoDescription  String?
-  seoKeywords     String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime
-  featured        Boolean         @default(false)
-  users           User            @relation(fields: [authorId], references: [id])
-  blog_categories blog_categories @relation(fields: [categoryId], references: [id])
-  blog_comments   blog_comments[]
-
-  @@index([authorId])
-  @@index([categoryId])
-  @@index([featured])
-  @@index([publishedAt])
-  @@index([status])
-}
-
-model blog_categories {
-  id                    String            @id
-  name                  String
-  slug                  String            @unique
-  description           String?
-  imageUrl              String?
-  parentId              String?
-  isActive              Boolean           @default(true)
-  sortOrder             Int               @default(0)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime
-  blog_articles         blog_articles[]
-  blog_categories       blog_categories?  @relation("blog_categoriesToblog_categories", fields: [parentId], references: [id])
-  other_blog_categories blog_categories[] @relation("blog_categoriesToblog_categories")
-
-  @@index([isActive])
-  @@index([parentId])
-}
-
-model blog_comments {
-  id            String        @id
-  articleId     String
-  authorId      String?
-  authorName    String?
-  authorEmail   String?
-  content       String
-  isApproved    Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime
-  blog_articles blog_articles @relation(fields: [articleId], references: [id])
-  users         User?         @relation(fields: [authorId], references: [id])
-
-  @@index([articleId])
-  @@index([isApproved])
-}
-
-model email_templates {
-  id          String     @id
-  name        String
-  description String?
-  category    String?
-  subject     String
-  content     String
-  usageCount  Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime
-  campaigns   Campaign[]
-}
-
-model newsletter_subscriptions {
+model system_configs {
   id        String   @id
-  email     String   @unique
-  name      String?
-  isActive  Boolean  @default(true)
+  key       String   @unique
+  value     String
+  type      String   @default("STRING")
   createdAt DateTime @default(now())
   updatedAt DateTime
 }
 
-model policies {
-  id          String   @id
-  slug        String   @unique
-  title       String
-  contentHtml String
-  summary     String?
-  type        String
-  isPublished Boolean  @default(true)
-  viewCount   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
+model technician_schedules {
+  id           String      @id
+  technicianId String
+  date         DateTime
+  startTime    String
+  endTime      String
+  isAvailable  Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  technicians  technicians @relation(fields: [technicianId], references: [id])
 }
 
-model site_stats {
-  id           String   @id
-  key          String   @unique
-  value        String
-  label        String
-  description  String?
-  icon         String?
-  isActive     Boolean  @default(true)
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
-
-  @@index([displayOrder])
-  @@index([isActive])
+model technicians {
+  id                   String                 @id
+  name                 String
+  email                String                 @unique
+  phone                String?
+  specialties          String?
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  service_bookings     service_bookings[]
+  technician_schedules technician_schedules[]
 }
 
 model testimonials {
@@ -1052,10 +927,51 @@ model testimonials {
   @@index([isActive])
 }
 
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  REJECTED
+model users {
+  id                  String                @id
+  email               String                @unique
+  password            String
+  name                String?
+  phone               String?
+  role                String                @default("USER")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  activity_logs       activity_logs[]
+  blog_articles       blog_articles[]
+  blog_comments       blog_comments[]
+  carts               carts[]
+  customer_questions  customer_questions[]
+  inventory_movements inventory_movements[]
+  loyalty_accounts    loyalty_accounts?
+  orders              orders[]
+  product_reviews     product_reviews[]
+  product_views       product_views[]
+  projects            projects[]
+  search_queries      search_queries[]
+  service_bookings    service_bookings[]
+  service_views       service_views[]
+  wishlist_items      wishlist_items[]
+}
+
+model webhooks {
+  id        String   @id
+  url       String
+  secret    String
+  events    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model wishlist_items {
+  id        String   @id
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  products  products @relation(fields: [productId], references: [id])
+  users     users    @relation(fields: [userId], references: [id])
+
+  @@unique([userId, productId])
 }
 
 enum CampaignStatus {
@@ -1075,4 +991,10 @@ enum CampaignType {
   SMS
   PUSH
   SOCIAL
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
