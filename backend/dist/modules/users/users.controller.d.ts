@@ -66,6 +66,26 @@ export declare class UsersController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    exportUserData(req: any): Promise<{
+        exportDate: string;
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            phone: string;
+            role: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        orders: any;
+        cart: {
+            items: any;
+        };
+        statistics: {
+            totalOrders: any;
+            totalSpent: number;
+        };
+    }>;
     findOne(id: string): Promise<{
         orders: {
             status: string;

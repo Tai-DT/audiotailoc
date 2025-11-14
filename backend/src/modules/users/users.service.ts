@@ -379,6 +379,84 @@ export class UsersService {
     return password;
   }
 
+  async exportUserData(userId: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        orders: {
+          include: {
+            order_items: {
+              include: {
+                products: {
+                  select: {
+                    name: true,
+                    slug: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        carts: {
+          include: {
+            cart_items: {
+              include: {
+                products: {
+                  select: {
+                    name: true,
+                    slug: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Remove sensitive data
+    const { password: _, ...userData } = user;
+
+    return {
+      exportDate: new Date().toISOString(),
+      user: {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        phone: userData.phone,
+        role: userData.role,
+        createdAt: userData.createdAt,
+        updatedAt: userData.updatedAt
+      },
+      orders: (userData as any).orders.map((order: any) => ({
+        id: order.id,
+        status: order.status,
+        totalCents: order.totalCents,
+        createdAt: order.createdAt,
+        items: order.order_items.map((item: any) => ({
+          productName: item.products?.name,
+          quantity: item.quantity,
+          priceCents: item.price
+        }))
+      })),
+      cart: (userData as any).carts.length > 0 ? {
+        items: (userData as any).carts[0].cart_items.map((item: any) => ({
+          productName: item.products?.name,
+          quantity: item.quantity,
+          addedAt: item.createdAt
+        }))
+      } : null,
+      statistics: {
+        totalOrders: (userData as any).orders.length,
+        totalSpent: (userData as any).orders.reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0) / 100
+      }
+    };
+  }
+
   private async sendWelcomeEmail(email: string, name: string, password: string): Promise<void> {
     const subject = 'Chào mừng bạn đến với Audio Tài Lộc';
     const html = `

@@ -198,7 +198,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <p className="text-muted-foreground mb-6">
               Hiện tại danh mục này chưa có sản phẩm nào.
             </p>
-            <Link href="/san-pham">
+            <Link href="/products">
               <Button>
                 Khám phá sản phẩm khác
               </Button>

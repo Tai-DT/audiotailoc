@@ -137,5 +137,25 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     private generateRandomPassword;
+    exportUserData(userId: string): Promise<{
+        exportDate: string;
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            phone: string;
+            role: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        orders: any;
+        cart: {
+            items: any;
+        };
+        statistics: {
+            totalOrders: any;
+            totalSpent: number;
+        };
+    }>;
     private sendWelcomeEmail;
 }

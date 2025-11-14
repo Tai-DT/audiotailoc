@@ -176,4 +176,22 @@ export declare class AnalyticsService {
     private calculateProfitMargin;
     private calculateMarketingROI;
     private getRecentActivity;
+    getRevenueChartData(days?: number): Promise<{
+        dates: string[];
+        values: number[];
+    }>;
+    getTopSellingProductsReal(limit?: number): Promise<{
+        id: string;
+        name: string;
+        salesCount: number;
+        revenue: number;
+        stock: number;
+    }[]>;
+    getGrowthMetricsReal(): Promise<{
+        ordersGrowth: number;
+        customersGrowth: number;
+    }>;
+    getBookingsTodayReal(): Promise<{
+        bookingsToday: number;
+    }>;
 }
