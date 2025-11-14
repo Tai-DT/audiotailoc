@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
 import { Button } from './button';
 
 interface ZaloChatProps {
@@ -42,15 +41,9 @@ export function ZaloChat({
   }, [phoneNumber]);
 
   const handleChatClick = () => {
-    if (isLoaded && window.zaloSDK) {
-      // Open Zalo chat
-      const zaloUrl = `https://zalo.me/${phoneNumber}`;
-      window.open(zaloUrl, '_blank', 'width=400,height=600');
-    } else {
-      // Fallback: open Zalo app or web
-      const zaloUrl = `https://zalo.me/${phoneNumber}`;
-      window.open(zaloUrl, '_blank');
-    }
+    // Open Zalo chat with correct URL format
+    const zaloUrl = `https://zalo.me/${phoneNumber.replace(/[\s\-\(\)\+]/g, '')}`;
+    window.open(zaloUrl, '_blank', 'width=400,height=600');
   };
 
   const positionClasses = {
@@ -72,28 +65,56 @@ export function ZaloChat({
         onClick={handleChatClick}
         className={`
           ${sizeClasses[size]}
-          rounded-full bg-blue-500 hover:bg-blue-600
+          rounded-full bg-[#0068FF] hover:bg-[#0052CC]
           text-white shadow-lg hover:shadow-xl
           transition-all duration-300 ease-in-out
           flex items-center justify-center
           group relative overflow-hidden
+          border-2 border-white
         `}
-        title="Chat với chúng tôi qua Zalo"
+        title="Chat Zalo: 0768426262"
       >
-        {/* Zalo logo background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Zalo logo background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0084FF] to-[#0052CC] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Zalo icon */}
-        <MessageCircle className="w-6 h-6 relative z-10" />
+        {/* Zalo Logo SVG */}
+        <svg
+          className="w-7 h-7 relative z-10"
+          viewBox="0 0 48 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M24 4C12.96 4 4 12.96 4 24c0 9.52 6.64 17.52 15.52 19.52V48l4.48-4.48c11.04 0 20-8.96 20-20S35.04 4 24 4z"
+            fill="white"
+          />
+          <path
+            d="M17.28 27.76c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.32 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.8 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.32 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88z"
+            fill="#0068FF"
+          />
+        </svg>
 
         {/* Pulse animation */}
-        <div className="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-20" />
+        <div className="absolute inset-0 rounded-full bg-[#0068FF] animate-ping opacity-20" />
       </Button>
 
-      {/* Tooltip */}
-      <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-        Chat Zalo
-        <div className="absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800" />
+      {/* Tooltip with phone number */}
+      <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none shadow-xl">
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 48 48"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M24 4C12.96 4 4 12.96 4 24c0 9.52 6.64 17.52 15.52 19.52V48l4.48-4.48c11.04 0 20-8.96 20-20S35.04 4 24 4z"
+              fill="#0068FF"
+            />
+          </svg>
+          <span className="font-semibold">0768426262</span>
+        </div>
+        <div className="absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
       </div>
     </div>
   );

@@ -110,19 +110,25 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Page Banner */}
-        <PageBanner
-          page="contact"
-          title="Liên hệ Audio Tài Lộc"
-          subtitle="Chúng tôi luôn sẵn sàng hỗ trợ"
-          description="Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh phù hợp nhất với nhu cầu của bạn. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7."
-          showStats={true}
-        />
+        {/* Compact Page Header */}
+        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Liên hệ</div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                Liên hệ Audio Tài Lộc
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Contact Info Section */}
-        <section className="py-16">
+        <section className="py-8">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {contactInfo.map((info, index) => (
                 <Card key={index} className="text-center">
                   <CardContent className="pt-6">

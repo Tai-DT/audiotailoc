@@ -77,8 +77,8 @@ export function CategoryProductsSection() {
   const displayCategories = categories?.slice(0, 4) || [];
 
   return (
-    <section className="py-16 bg-muted/30">
-      <div className="container mx-auto px-4">
+    <section className="py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-muted/30 via-muted/20 to-background">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">

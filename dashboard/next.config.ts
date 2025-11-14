@@ -1,12 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: false, // Enable ESLint during builds
-  },
-  typescript: {
-    ignoreBuildErrors: false, // Enable TypeScript checking during builds
-  },
   // Performance optimizations
   compress: true, // Enable compression
   poweredByHeader: false, // Remove X-Powered-By header for security
@@ -41,6 +35,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'phuctruongaudio.vn',
+        port: '',
+        pathname: '/**',
+      },
     ],
     dangerouslyAllowSVG: true,
     unoptimized: false, // Enable image optimization
@@ -68,6 +68,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', '@radix-ui/react-icons'],
   },
+  turbopack: {},
 };
 
 export default nextConfig;

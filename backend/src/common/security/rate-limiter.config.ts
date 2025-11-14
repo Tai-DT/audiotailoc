@@ -106,7 +106,7 @@ export class RateLimiterConfigService {
       {
         pattern: '/auth/login',
         windowMs: this.isDevelopment ? 60 * 1000 : 15 * 60 * 1000,
-        maxRequests: this.isDevelopment ? 100 : 5,
+        maxRequests: this.isDevelopment ? 1000 : 5,
         methods: ['POST'],
         message: 'Too many login attempts, please try again later',
         enableInDev: true,

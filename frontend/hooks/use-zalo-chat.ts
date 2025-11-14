@@ -4,16 +4,11 @@ import { useCallback } from 'react';
 
 export function useZaloChat() {
   const openZaloChat = useCallback((phoneNumber: string) => {
-    // Clean and format phone number
-    const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
-    const formattedPhoneNumber = cleanPhoneNumber.startsWith('+84')
-      ? cleanPhoneNumber
-      : cleanPhoneNumber.startsWith('84')
-      ? `+${cleanPhoneNumber}`
-      : `+84${cleanPhoneNumber}`;
+    // Clean phone number (remove spaces, dashes, parentheses, plus signs)
+    const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
 
     // Try to open Zalo app first, fallback to web
-    const zaloUrl = `https://zalo.me/${formattedPhoneNumber}`;
+    const zaloUrl = `https://zalo.me/${cleanPhoneNumber}`;
 
     // Check if it's a mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -22,7 +17,7 @@ export function useZaloChat() {
 
     if (isMobile) {
       // Try to open Zalo app
-      const zaloAppUrl = `zalo://chat?phone=${formattedPhoneNumber}`;
+      const zaloAppUrl = `zalo://chat?phone=${cleanPhoneNumber}`;
 
       // Create a hidden iframe to try opening the app
       const iframe = document.createElement('iframe');

@@ -179,33 +179,30 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        const errorInfo = {
-          status: response.status,
-          statusText: response.statusText,
-          url,
-          endpoint,
-          method: options.method || 'GET',
-          hasToken: !!this.token,
-          requestBody: options.body ? JSON.parse(options.body.toString()) : null,
-          responseHeaders: Object.fromEntries(response.headers.entries()),
-          responseText: responseText.substring(0, 500) // First 500 chars of response
-        };
-
         // More descriptive error messages
         let errorMessage = data?.message as string || `Request failed with status ${response.status}`;
-        
+
         if (response.status === 401) {
           errorMessage = 'Unauthorized: Please login again';
         } else if (response.status === 403) {
           errorMessage = 'Forbidden: You do not have permission to access this resource';
         } else if (response.status === 404) {
           errorMessage = 'Not Found: The requested resource does not exist';
+        } else if (response.status === 429) {
+          errorMessage = data?.message as string || 'Too many requests. Please wait a moment and try again.';
         } else if (response.status >= 500) {
           errorMessage = 'Server Error: Please try again later';
         }
 
-        console.error('API Error Response:', errorInfo);
-        console.error('Error Message:', errorMessage);
+        // Minimal logging - only in development and only once per error type
+        if (process.env.NODE_ENV === 'development' && response.status >= 500) {
+          // Only log unique endpoint+status combinations
+          const errorKey = `${endpoint}-${response.status}`;
+          if (!sessionStorage.getItem(errorKey)) {
+            console.warn(`API: ${endpoint} returned ${response.status}`);
+            sessionStorage.setItem(errorKey, 'logged');
+          }
+        }
 
         const error = new Error(errorMessage) as ApiError;
         error.response = { data };
@@ -215,12 +212,15 @@ class ApiClient {
 
       return data as unknown as ApiResponse<T>;
     } catch (error) {
-      console.error('API Request failed:', {
-        endpoint,
-        url,
-        error: error instanceof Error ? error.message : error,
-        stack: error instanceof Error ? error.stack : undefined
-      });
+      // Only log unexpected errors in development (exclude auth, rate limit, not found)
+      if (process.env.NODE_ENV === 'development' && error instanceof Error) {
+        const isExpectedError = error.message.includes('Unauthorized') || 
+                               error.message.includes('Too many requests') ||
+                               error.message.includes('Not Found');
+        if (!isExpectedError) {
+          console.warn('API Request failed:', endpoint, '|', error.message);
+        }
+      }
       throw error;
     }
   }

@@ -2,7 +2,6 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageBanner } from '@/components/ui/page-banner';
 import { useProducts } from '@/lib/hooks/use-api';
 import { ProductFilters } from '@/lib/types';
 import { ProductGrid } from '@/components/products/product-grid';
@@ -26,6 +25,7 @@ function ProductsPageContent() {
 
   const { addItem: addCartItem } = useCart();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [categoryNotFound, setCategoryNotFound] = React.useState(false);
   const [filters, setFilters] = React.useState<ProductFilters>({
     page: 1,
     pageSize: 20,
@@ -34,21 +34,26 @@ function ProductsPageContent() {
   });
 
   const { data, isLoading } = useProducts(filters);
-  const { data: categories } = useCategories();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   // Set category filter based on URL parameter
   React.useEffect(() => {
-    if (categorySlug && categories) {
+    if (!categories) return;
+
+    if (categorySlug) {
       const category = categories.find((cat: { slug: string; id: string }) => cat.slug === categorySlug);
       if (category) {
         setFilters((prev: ProductFilters) => ({ ...prev, categoryId: category.id, page: 1 }));
+        setCategoryNotFound(false);
       } else {
-        // If category slug not found, clear the filter
+        // Category slug not found in database
+        setCategoryNotFound(true);
         setFilters((prev: ProductFilters) => ({ ...prev, categoryId: undefined, page: 1 }));
       }
-    } else if (!categorySlug) {
+    } else {
       // Clear category filter when no slug in URL
       setFilters((prev: ProductFilters) => ({ ...prev, categoryId: undefined, page: 1 }));
+      setCategoryNotFound(false);
     }
   }, [categorySlug, categories]);
 
@@ -87,6 +92,7 @@ function ProductsPageContent() {
 
   const handleClearFilters = () => {
     setSearchQuery('');
+    setCategoryNotFound(false);
     setFilters({
       page: 1,
       pageSize: 20,
@@ -106,23 +112,40 @@ function ProductsPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Page Banner */}
-      <PageBanner
-        page="products"
-        title={currentCategory ? `Sản phẩm ${currentCategory.name}` : "Sản phẩm âm thanh chuyên nghiệp"}
-        subtitle={currentCategory ? currentCategory.name : "Thiết bị chất lượng cao"}
-        description={currentCategory
-          ? `Khám phá bộ sưu tập ${currentCategory.name} chất lượng cao từ Audio Tài Lộc.`
-          : "Khám phá bộ sưu tập đầy đủ thiết bị âm thanh chuyên nghiệp từ Audio Tài Lộc. Từ loa, micro, mixer đến hệ thống âm thanh hội trường, chúng tôi có mọi thứ bạn cần."
-        }
-        showStats={true}
-      />
+      {/* Compact Page Header */}
+      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-3xl">
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sản phẩm</div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              {currentCategory ? currentCategory.name : "Tất cả sản phẩm"}
+            </h1>
+            {currentCategory?.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {currentCategory.description}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Category Not Found Alert */}
+      {categoryNotFound && (
+        <div className="border-b bg-destructive/5">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-destructive">
+              <X className="h-4 w-4 flex-shrink-0" />
+              <span><strong>Không tìm thấy "{categorySlug}"</strong> - Hiển thị tất cả sản phẩm</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filters */}
-      <section className="py-6 sm:py-8 bg-muted/30">
+      <section className="py-3 bg-muted/30 border-b">
         <div className="container mx-auto px-4">
-          <div className="bg-background rounded-lg p-4 sm:p-6 shadow-sm">
-            <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="bg-background rounded-lg p-3 shadow-sm">
+            <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2 mb-3">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
@@ -130,22 +153,22 @@ function ProductsPageContent() {
                   placeholder="Tìm kiếm sản phẩm..."
                   value={searchQuery}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 sm:h-auto"
+                  className="pl-10 h-9"
                 />
               </div>
-              <Button type="submit" variant="default" className="w-full sm:w-auto h-10 sm:h-auto touch-manipulation">
+              <Button type="submit" variant="default" className="w-full sm:w-auto h-9">
                 <Search className="h-4 w-4 sm:mr-2" />
-                <span className="sm:inline">Tìm kiếm</span>
+                <span className="hidden sm:inline">Tìm kiếm</span>
               </Button>
             </form>
 
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Lọc theo:</span>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-start sm:items-center">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Filter className="h-3.5 w-3.5" />
+                <span>Lọc:</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full sm:w-auto sm:flex sm:flex-wrap">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full sm:w-auto sm:flex sm:flex-wrap">
                 <Select
                   value={filters.categoryId || 'all'}
                   onValueChange={(value: string) => {
@@ -166,9 +189,10 @@ function ProductsPageContent() {
                       window.history.replaceState({}, '', url.toString());
                     }
                   }}
+                  disabled={categoriesLoading}
                 >
-                  <SelectTrigger className="w-full sm:w-48 h-10">
-                    <SelectValue placeholder="Tất cả danh mục" />
+                  <SelectTrigger className="w-full sm:w-44 h-9 text-sm">
+                    <SelectValue placeholder={categoriesLoading ? "Đang tải..." : "Tất cả danh mục"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả danh mục</SelectItem>
@@ -184,7 +208,7 @@ function ProductsPageContent() {
                   value={filters.brand || 'all'}
                   onValueChange={(value: string) => handleFiltersChange({ brand: value === 'all' ? undefined : value })}
                 >
-                  <SelectTrigger className="w-full sm:w-48 h-10">
+                  <SelectTrigger className="w-full sm:w-44 h-9 text-sm">
                     <SelectValue placeholder="Tất cả thương hiệu" />
                   </SelectTrigger>
                   <SelectContent>
@@ -205,7 +229,7 @@ function ProductsPageContent() {
                     });
                   }}
                 >
-                  <SelectTrigger className="w-full sm:w-48 h-10">
+                  <SelectTrigger className="w-full sm:w-44 h-9 text-sm">
                     <SelectValue placeholder="Sắp xếp" />
                   </SelectTrigger>
                   <SelectContent>
@@ -221,11 +245,13 @@ function ProductsPageContent() {
 
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleClearFilters}
-                className="w-full sm:w-auto sm:ml-auto h-10 touch-manipulation"
+                className="w-full sm:w-auto sm:ml-auto h-9 text-sm"
               >
-                <X className="h-4 w-4 mr-2" />
-                Xóa bộ lọc
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                <span className="hidden sm:inline">Xóa bộ lọc</span>
+                <span className="sm:hidden">Xóa</span>
               </Button>
             </div>
           </div>
@@ -233,11 +259,22 @@ function ProductsPageContent() {
       </section>
 
       {/* Products Grid */}
-      <section className="py-8 sm:py-12">
+      <section className="py-4">
         <div className="container mx-auto px-4">
+          {/* Product Count and Active Filters */}
+          {(currentCategory || filters.q) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                {data?.items.length || 0} sản phẩm
+                {currentCategory && <span className="font-medium text-foreground"> • {currentCategory.name}</span>}
+                {filters.q && <span className="font-medium text-foreground"> • "{filters.q}"</span>}
+              </span>
+            </div>
+          )}
+          
           <ProductGrid
             products={data?.items || []}
-            loading={isLoading}
+            loading={isLoading || categoriesLoading}
             onAddToCart={handleAddToCart}
           />
         </div>

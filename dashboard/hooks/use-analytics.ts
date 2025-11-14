@@ -43,6 +43,24 @@ export interface UserActivity {
   bounceRate: number
 }
 
+export interface AnalyticsFilters {
+  dateRange: '7days' | '30days' | '90days' | '1year' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+  productId?: string;
+  serviceId?: string;
+  userId?: string;
+  status?: string;
+}
+
+export interface ExportOptions {
+  format: 'pdf' | 'excel' | 'csv';
+  includeCharts: boolean;
+  dateRange: string;
+  filters?: AnalyticsFilters;
+}
+
 export function useAnalytics() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
   const [trends, setTrends] = useState<AnalyticsTrend[]>([])

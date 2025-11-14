@@ -29,7 +29,7 @@ let RateLimitMiddleware = class RateLimitMiddleware {
         const isDevelopment = process.env.NODE_ENV === 'development';
         if (endpoint.includes('/auth/login')) {
             options.windowMs = isDevelopment ? 60 * 1000 : 15 * 60 * 1000;
-            options.maxRequests = isDevelopment ? 100 : 5;
+            options.maxRequests = isDevelopment ? 1000 : 5;
             options.message = 'Too many login attempts, please try again later';
         }
         else if (endpoint.includes('/auth/register')) {
