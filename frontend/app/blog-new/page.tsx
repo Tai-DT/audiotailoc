@@ -65,42 +65,43 @@ export default function BlogNewPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Blog & Kiến thức
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-sm text-gray-600 max-w-3xl mx-auto">
               Khám phá kiến thức âm thanh, hướng dẫn sử dụng, và những thông tin hữu ích từ Audio Tài Lộc
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="flex-1">
             {/* Search and Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-              <div className="flex flex-col sm:flex-row gap-4">
+            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <form onSubmit={handleSearch} className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                       type="text"
                       placeholder="Tìm kiếm bài viết..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 w-full"
+                      className="pl-10 pr-4 py-2 w-full h-9 text-sm"
                     />
                   </div>
                 </form>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     variant={selectedCategory === '' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('')}
-                    className="whitespace-nowrap"
+                    className="whitespace-nowrap h-9 text-sm px-3"
+                    size="sm"
                   >
                     Tất cả
                   </Button>
@@ -109,7 +110,8 @@ export default function BlogNewPage() {
                       key={category.id}
                       variant={selectedCategory === category.id ? 'default' : 'outline'}
                       onClick={() => setSelectedCategory(category.id)}
-                      className="whitespace-nowrap"
+                      className="whitespace-nowrap h-9 text-sm px-3"
+                      size="sm"
                     >
                       {category.name}
                     </Button>

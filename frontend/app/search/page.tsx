@@ -50,7 +50,8 @@ function SearchContent() {
   };
 
   const filteredResults = React.useMemo(() => {
-    if (!searchResults) return [];
+    // Ensure searchResults is an array
+    if (!searchResults || !Array.isArray(searchResults)) return [];
 
     let results = [...searchResults];
 

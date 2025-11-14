@@ -178,19 +178,21 @@ export default function CategoriesPage() {
   if (servicesLoading || typesLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <PageBanner
-          page="categories"
-          title="Danh mục dịch vụ"
-          subtitle="Khám phá theo danh mục"
-          description="Tìm kiếm dịch vụ âm thanh theo từng danh mục chuyên biệt. Từ lắp đặt, bảo trì đến tư vấn kỹ thuật - tất cả đều có tại Audio Tài Lộc."
-          showStats={true}
-        />
-        <div className="container mx-auto px-4 py-8">
+        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-3xl">
+              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Danh mục</div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Danh mục dịch vụ</h1>
+              <p className="text-sm text-muted-foreground">Tìm kiếm dịch vụ theo từng danh mục chuyên biệt</p>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="h-6 bg-gray-200 rounded mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded"></div>
+                <div key={i} className="h-48 bg-gray-200 rounded"></div>
               ))}
             </div>
           </div>
@@ -202,26 +204,24 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Page Banner */}
-        <PageBanner
-          page="categories"
-          title="Danh mục dịch vụ"
-          subtitle="Khám phá theo danh mục"
-          description="Tìm kiếm dịch vụ âm thanh theo từng danh mục chuyên biệt. Từ lắp đặt, bảo trì đến tư vấn kỹ thuật - tất cả đều có tại Audio Tài Lộc."
-          showStats={true}
-        />
-
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-4">Dịch vụ của chúng tôi</h1>
-            <p className="text-gray-600">
-              Khám phá các dịch vụ âm thanh chuyên nghiệp tại Audio Tài Lộc
-            </p>
+        {/* Compact Page Header */}
+        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-3xl">
+              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Danh mục</div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                Danh mục dịch vụ
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Tìm kiếm dịch vụ âm thanh theo từng danh mục chuyên biệt. Từ lắp đặt, bảo trì đến tư vấn kỹ thuật.
+              </p>
+            </div>
           </div>
+        </div>
 
+        <div className="container mx-auto px-4 py-6">
           {/* Filters and Search */}
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="flex-1">

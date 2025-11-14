@@ -14,7 +14,7 @@ export function OrganizationStructuredData() {
     },
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+84-1900-XXX-XXX',
+      telephone: '+84-768-426-262',
       contactType: 'customer service',
       availableLanguage: 'Vietnamese',
     },

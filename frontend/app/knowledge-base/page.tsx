@@ -239,24 +239,22 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Page Banner */}
-      <PageBanner
-        page="knowledge-base"
-        title="Kiến thức âm thanh"
-        subtitle="Học hỏi và phát triển"
-        description="Nơi chia sẻ kiến thức chuyên sâu về âm thanh, kỹ thuật, công nghệ và xu hướng mới nhất trong ngành. Cập nhật liên tục những bài viết hữu ích từ đội ngũ chuyên gia."
-        showStats={true}
-      />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">Kiến thức âm thanh</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Khám phá các bài viết hướng dẫn, mẹo vặt và kiến thức chuyên môn về âm thanh
-            từ đội ngũ kỹ thuật viên giàu kinh nghiệm của Audio Tài Lộc
-          </p>
+      {/* Compact Page Header */}
+      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Kiến thức</div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              Kiến thức âm thanh
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Khám phá các bài viết hướng dẫn, mẹo vặt và kiến thức chuyên môn từ đội ngũ kỹ thuật viên Audio Tài Lộc
+            </p>
+          </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
 
         {/* Search and Filters */}
         <Card className="mb-8">

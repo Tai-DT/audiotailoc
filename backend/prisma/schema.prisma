@@ -387,6 +387,24 @@ model newsletter_subscriptions {
   updatedAt DateTime
 }
 
+model notifications {
+  id        String   @id
+  userId    String
+  type      String
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  users     users    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
 model order_items {
   id        String   @id
   orderId   String
@@ -951,6 +969,7 @@ model users {
   service_bookings    service_bookings[]
   service_views       service_views[]
   wishlist_items      wishlist_items[]
+  notifications       notifications[]
 }
 
 model webhooks {

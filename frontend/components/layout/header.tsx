@@ -58,6 +58,7 @@ interface Category {
   name: string;
   slug?: string;
   parentId?: string | null;
+  description?: string;
   children?: Category[];
 }
 
@@ -135,22 +136,22 @@ export function Header() {
       {/* Top info bar */}
       <div className="hidden lg:block border-b bg-gradient-primary/5">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between text-sm py-2 text-muted-foreground">
-            <div className="flex items-center space-x-6">
-              <span className="flex items-center space-x-2 hover:text-primary transition-colors">
-                <Phone className="h-4 w-4 text-primary" />
-                <span>Hotline: 1900 636 525</span>
+          <div className="flex items-center justify-between text-xs py-1.5 text-muted-foreground">
+            <div className="flex items-center space-x-4">
+              <span className="flex items-center space-x-1.5 hover:text-primary transition-colors">
+                <Phone className="h-3.5 w-3.5 text-primary" />
+                <span>Hotline: 0768 426 262</span>
               </span>
-              <span className="hidden xl:flex items-center space-x-2 hover:text-primary transition-colors">
-                <Mail className="h-4 w-4 text-primary" />
+              <span className="hidden xl:flex items-center space-x-1.5 hover:text-primary transition-colors">
+                <Mail className="h-3.5 w-3.5 text-primary" />
                 <span>support@audiotailoc.com</span>
               </span>
-              <span className="hidden xl:flex items-center space-x-2 hover:text-accent transition-colors">
-                <Clock className="h-4 w-4 text-accent" />
+              <span className="hidden xl:flex items-center space-x-1.5 hover:text-accent transition-colors">
+                <Clock className="h-3.5 w-3.5 text-accent" />
                 <span>08:00 - 21:00 (T2 - CN)</span>
               </span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Link href="/shipping" className="hover:text-primary hover-audio transition-colors">
                 Chính sách giao hàng
               </Link>
@@ -166,25 +167,25 @@ export function Header() {
       </div>
 
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
+        <div className="flex h-14 items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 shrink-0">
-            <div className="relative h-8 w-28 sm:h-9 sm:w-36">
+            <div className="relative h-7 w-24 sm:h-8 sm:w-32">
               <Image
                 src="/images/logo/logo-light.svg"
                 alt="Audio Tài Lộc"
-                width={144}
-                height={36}
+                width={128}
+                height={32}
                 priority
-                className="h-8 w-28 sm:h-9 sm:w-36 object-contain dark:hidden"
+                className="h-7 w-24 sm:h-8 sm:w-32 object-contain dark:hidden"
               />
               <Image
                 src="/images/logo/logo-dark.svg"
                 alt="Audio Tài Lộc"
-                width={144}
-                height={36}
+                width={128}
+                height={32}
                 priority
-                className="hidden h-8 w-28 sm:h-9 sm:w-36 object-contain dark:block"
+                className="hidden h-7 w-24 sm:h-8 sm:w-32 object-contain dark:block"
               />
             </div>
           </Link>
@@ -205,44 +206,53 @@ export function Header() {
                     Sản phẩm
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="grid gap-3 p-6 md:w-[480px] lg:w-[600px] lg:grid-cols-2">
+                    <div className="grid gap-2 p-4 md:w-[420px] lg:w-[520px] lg:grid-cols-2">
                       {isLoadingCategories ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-muted-foreground">Đang tải danh mục...</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-muted-foreground">Đang tải danh mục...</p>
                         </div>
                       ) : isCategoriesError ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-destructive">Không thể tải danh mục sản phẩm</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-destructive">Không thể tải danh mục sản phẩm</p>
                         </div>
                       ) : topLevelCategories.length === 0 ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-muted-foreground">Chưa có danh mục sản phẩm</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-muted-foreground">Chưa có danh mục sản phẩm</p>
                         </div>
                       ) : (
                         topLevelCategories.map((category: Category) => (
-                          <div key={category.id} className="space-y-2">
+                          <div key={category.id} className="space-y-1.5">
                             <Link
                               href={category.slug ? `/products?category=${category.slug}` : '/products'}
-                              className="block text-base font-semibold text-foreground transition-colors hover:text-primary"
+                              className="block text-sm font-semibold text-foreground transition-colors hover:text-primary"
                             >
                               {category.name}
                             </Link>
-                            <div className="space-y-1">
-                              <Link
-                                href={`/products?category=${category.slug}`}
-                                className="block text-sm text-muted-foreground transition-colors hover:text-primary"
-                              >
-                                Tất cả sản phẩm
-                              </Link>
-                              {category.children?.map((child: Category) => (
+                            {/* Category Description - Công dụng */}
+                            {category.description && (
+                              <p className="text-xs text-muted-foreground/80 line-clamp-2 mb-1">
+                                {category.description}
+                              </p>
+                            )}
+                            <div className="space-y-0.5">
+                              {category.children && category.children.length > 0 ? (
+                                category.children.slice(0, 4).map((child: Category) => (
+                                  <Link
+                                    key={child.id}
+                                    href={`/products?category=${child.slug}`}
+                                    className="block text-xs text-muted-foreground transition-colors hover:text-primary"
+                                  >
+                                    {child.name}
+                                  </Link>
+                                ))
+                              ) : (
                                 <Link
-                                  key={child.id}
-                                  href={`/products?category=${child.slug}`}
-                                  className="block text-sm text-muted-foreground transition-colors hover:text-primary"
+                                  href={`/products?category=${category.slug}`}
+                                  className="block text-xs text-muted-foreground transition-colors hover:text-primary"
                                 >
-                                  {child.name}
+                                  Xem tất cả {category.name}
                                 </Link>
-                              ))}
+                              )}
                             </div>
                           </div>
                         ))
@@ -263,52 +273,52 @@ export function Header() {
                     Dịch vụ
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="grid gap-6 p-6 md:w-[520px] lg:w-[680px]">
+                    <div className="grid gap-4 p-4 md:w-[460px] lg:w-[580px]">
                       {isLoadingServiceTypes ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-muted-foreground">Đang tải loại dịch vụ...</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-muted-foreground">Đang tải loại dịch vụ...</p>
                         </div>
                       ) : isServiceTypesError ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-destructive">Không thể tải loại dịch vụ</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-destructive">Không thể tải loại dịch vụ</p>
                         </div>
                       ) : !serviceTypes?.length ? (
-                        <div className="col-span-full text-center py-4">
-                          <p className="text-sm text-muted-foreground">Chưa có loại dịch vụ</p>
+                        <div className="col-span-full text-center py-3">
+                          <p className="text-xs text-muted-foreground">Chưa có loại dịch vụ</p>
                         </div>
                       ) : (
-                        serviceTypes.map((serviceType: ServiceType) => {
+                        serviceTypes.slice(0, 3).map((serviceType: ServiceType) => {
                           const services: Service[] = servicesByType?.[serviceType.id] ?? [];
                           return (
-                            <div key={serviceType.id} className="rounded-xl border bg-card/80 p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="space-y-1">
+                            <div key={serviceType.id} className="rounded-lg border bg-card/80 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="space-y-0.5">
                                   <Link
                                     href={`/services?type=${serviceType.slug}`}
-                                    className="block text-base font-semibold text-foreground transition-colors hover:text-primary"
+                                    className="block text-sm font-semibold text-foreground transition-colors hover:text-primary"
                                   >
                                     {serviceType.name}
                                   </Link>
                                   {serviceType.description && (
-                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                    <p className="text-xs text-muted-foreground line-clamp-1">
                                       {serviceType.description}
                                     </p>
                                   )}
                                 </div>
                                 <Link
                                   href={`/services?type=${serviceType.slug}`}
-                                  className="text-xs font-medium text-primary hover:underline"
+                                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
                                 >
                                   Xem tất cả
                                 </Link>
                               </div>
                               {services.length > 0 && (
-                                <div className="mt-4 grid gap-2">
-                                  {services.slice(0, 4).map((service: Service) => (
+                                <div className="mt-2 grid gap-1.5">
+                                  {services.slice(0, 3).map((service: Service) => (
                                     <Link
                                       key={service.id}
                                       href={`/services/${service.slug ?? service.id}`}
-                                      className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                                      className="flex items-center justify-between rounded-md border px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                                     >
                                       <span className="line-clamp-1">{service.name}</span>
                                       <span className="text-xs font-medium text-primary/70">Chi tiết</span>
@@ -488,9 +498,9 @@ export function Header() {
         </div>
 
         {/* Sub navigation - Centered */}
-        <div className="border-t border-muted py-2 sm:py-3">
+        <div className="border-t border-muted py-1.5">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
               {([
                 { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
                 { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
@@ -500,10 +510,10 @@ export function Header() {
                  <Link
                    key={item.label}
                    href={item.href}
-                   className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
+                   className="group flex items-center gap-1 sm:gap-1.5 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2 sm:px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
                  >
-                   <item.icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />
-                   <span className="text-xs sm:text-sm">{item.label}</span>
+                   <item.icon className="h-3 w-3 transition-transform group-hover:scale-110 flex-shrink-0" />
+                   <span className="text-xs">{item.label}</span>
                  </Link>
                ))}
             </div>
