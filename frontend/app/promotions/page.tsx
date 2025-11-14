@@ -106,28 +106,20 @@ export default function PromotionsPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Page Banner */}
-        <PageBanner
-          page="promotions"
-          title="Chương trình khuyến mãi"
-          subtitle="Ưu đãi đặc biệt"
-          description="Khám phá các chương trình khuyến mãi hấp dẫn từ Audio Tài Lộc. Giảm giá đặc biệt, quà tặng kèm theo và nhiều ưu đãi khác đang chờ đón bạn."
-          showStats={true}
-        />
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Khuyến mãi & Ưu đãi
+        {/* Compact Page Header */}
+        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Khuyến mãi</div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                Chương trình khuyến mãi
               </h1>
-              <p className="text-xl text-muted-foreground">
-                Khám phá các chương trình khuyến mãi hấp dẫn từ Audio Tài Lộc.
-                Tiết kiệm ngay với mã giảm giá và ưu đãi đặc biệt.
+              <p className="text-sm text-muted-foreground">
+                Khám phá các chương trình khuyến mãi hấp dẫn. Giảm giá đặc biệt, quà tặng kèm theo và nhiều ưu đãi khác.
               </p>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* Promotions Content */}
         <section className="py-16">

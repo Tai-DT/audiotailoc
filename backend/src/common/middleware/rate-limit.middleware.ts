@@ -31,7 +31,7 @@ export class RateLimitMiddleware implements NestMiddleware {
 
     if (endpoint.includes('/auth/login')) {
       options.windowMs = isDevelopment ? 60 * 1000 : 15 * 60 * 1000; // 1 minute in dev, 15 minutes in prod
-      options.maxRequests = isDevelopment ? 100 : 5; // 100 login attempts in dev, 5 in prod
+      options.maxRequests = isDevelopment ? 1000 : 5; // 1000 login attempts in dev, 5 in prod
       options.message = 'Too many login attempts, please try again later';
     } else if (endpoint.includes('/auth/register')) {
       options.windowMs = isDevelopment ? 60 * 1000 : 60 * 60 * 1000; // 1 minute in dev, 1 hour in prod

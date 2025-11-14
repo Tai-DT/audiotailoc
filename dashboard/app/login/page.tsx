@@ -135,10 +135,10 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo credentials:</p>
-            <p className="font-mono text-xs mt-1">
+            <p className="font-semibold mb-2">Demo credentials:</p>
+            <p className="font-mono text-xs">
               Email: admin@audiotailoc.com<br />
-              Password: Admin1234
+              Password: admin123
             </p>
           </div>
         </CardContent>

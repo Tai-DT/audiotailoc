@@ -12,12 +12,14 @@ const prisma_module_1 = require("../../prisma/prisma.module");
 const mail_service_1 = require("./mail.service");
 const notification_service_1 = require("./notification.service");
 const notification_gateway_1 = require("./notification.gateway");
+const notifications_controller_1 = require("./notifications.controller");
 let NotificationsModule = class NotificationsModule {
 };
 exports.NotificationsModule = NotificationsModule;
 exports.NotificationsModule = NotificationsModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule],
+        controllers: [notifications_controller_1.NotificationsController],
         providers: [mail_service_1.MailService, notification_service_1.NotificationService, notification_gateway_1.NotificationGateway],
         exports: [mail_service_1.MailService, notification_service_1.NotificationService, notification_gateway_1.NotificationGateway],
     })

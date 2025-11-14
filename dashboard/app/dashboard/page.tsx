@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import {
   Package,
   ShoppingCart,
@@ -127,7 +128,7 @@ interface DashboardStats {
   }
 }
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { user, token } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -141,19 +142,35 @@ export default function DashboardPage() {
     try {
       setRefreshing(true)
       
-      // Fetch multiple data sources in parallel
-      const [ordersRes, productsRes, servicesRes, usersRes] = await Promise.all([
-        apiClient.getOrders({ limit: 10, page: 1 }),
-        apiClient.getProducts({ limit: 100, page: 1 }),
-        apiClient.getServices({ limit: 100, page: 1 }),
-        apiClient.getUsers({ limit: 100, role: 'USER' })
+      // Fetch multiple data sources in parallel with individual error handling
+      const [ordersRes, productsRes, servicesRes, usersRes] = await Promise.allSettled([
+        apiClient.getOrders({ limit: 10, page: 1 }).catch(err => {
+          console.warn('Failed to fetch orders:', err.message)
+          return { data: { items: [] } }
+        }),
+        apiClient.getProducts({ limit: 100, page: 1 }).catch(err => {
+          console.warn('Failed to fetch products:', err.message)
+          return { data: { items: [] } }
+        }),
+        apiClient.getServices({ limit: 100, page: 1 }).catch(err => {
+          console.warn('Failed to fetch services:', err.message)
+          return { data: { services: [] } }
+        }),
+        apiClient.getUsers({ limit: 100, role: 'USER' }).catch(err => {
+          console.warn('Failed to fetch users:', err.message)
+          return { data: { items: [] } }
+        })
       ])
 
-      // Process the data
-      const orders = (ordersRes.data as { items?: Order[] })?.items || []
-      const products = (productsRes.data as { items?: Product[] })?.items || []
-      const services = (servicesRes.data as { services?: Service[] })?.services || []
-      const users = (usersRes.data as { items?: User[] })?.items || []
+      // Extract data from settled promises
+      const orders = (ordersRes.status === 'fulfilled' ? 
+        (ordersRes.value.data as { items?: Order[] })?.items : []) || []
+      const products = (productsRes.status === 'fulfilled' ? 
+        (productsRes.value.data as { items?: Product[] })?.items : []) || []
+      const services = (servicesRes.status === 'fulfilled' ? 
+        (servicesRes.value.data as { services?: Service[] })?.services : []) || []
+      const users = (usersRes.status === 'fulfilled' ? 
+        (usersRes.value.data as { items?: User[] })?.items : []) || []
 
       // Calculate stats
       const now = new Date()
@@ -191,7 +208,7 @@ export default function DashboardPage() {
           }))
         }
       } catch (error) {
-        console.error('Failed to fetch revenue chart:', error)
+        console.warn('Failed to fetch revenue chart:', error instanceof Error ? error.message : 'Unknown error')
       }
 
       // Orders stats
@@ -207,7 +224,7 @@ export default function DashboardPage() {
         ordersGrowth = growthData?.ordersGrowth || 0
         customersGrowth = growthData?.customersGrowth || 0
       } catch (error) {
-        console.error('Failed to fetch growth metrics:', error)
+        console.warn('Failed to fetch growth metrics:', error instanceof Error ? error.message : 'Unknown error')
       }
 
       // Customer stats
@@ -240,7 +257,7 @@ export default function DashboardPage() {
           stock: p.stock
         }))
       } catch (error) {
-        console.error('Failed to fetch top products:', error)
+        console.warn('Failed to fetch top products:', error instanceof Error ? error.message : 'Unknown error')
         // Fallback to products list if API fails
         topSellingProducts = products.slice(0, 5).map((p: Product) => ({
           id: p.id,
@@ -261,7 +278,7 @@ export default function DashboardPage() {
         const bookingsData = (bookingsRes.data as { bookingsToday?: number })
         bookings = bookingsData?.bookingsToday || 0
       } catch (error) {
-        console.error('Failed to fetch bookings:', error)
+        console.warn('Failed to fetch bookings:', error instanceof Error ? error.message : 'Unknown error')
       }
 
       // Recent orders
@@ -306,7 +323,7 @@ export default function DashboardPage() {
 
       setStats(dashboardStats)
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      console.warn('Error fetching dashboard data:', error instanceof Error ? error.message : 'Unknown error')
       toast.error("Không thể tải dữ liệu dashboard")
     } finally {
       setLoading(false)
@@ -667,5 +684,13 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function DashboardPageWrapper() {
+  return (
+    <ProtectedRoute>
+      <DashboardPage />
+    </ProtectedRoute>
   )
 }

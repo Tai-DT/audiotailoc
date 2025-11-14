@@ -191,7 +191,7 @@ export default function BookingsPage() {
           ]);
         }
       } else {
-        console.error('Failed to fetch services:', response.statusText);
+        console.warn('Failed to fetch services:', response.statusText);
         // Use mock services as fallback
         setServices([
           { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
@@ -201,7 +201,7 @@ export default function BookingsPage() {
         ]);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.warn('Error fetching services:', error instanceof Error ? error.message : 'Unknown error');
       // Use mock services as fallback
       setServices([
         { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
@@ -232,7 +232,7 @@ export default function BookingsPage() {
           ]);
         }
       } else {
-        console.error('Failed to fetch technicians:', response.statusText);
+        console.warn('Failed to fetch technicians:', response.statusText);
         // Use mock technicians as fallback
         setTechnicians([
           { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
@@ -242,7 +242,7 @@ export default function BookingsPage() {
         ]);
       }
     } catch (error) {
-      console.error('Error fetching technicians:', error);
+      console.warn('Error fetching technicians:', error instanceof Error ? error.message : 'Unknown error');
       // Use mock technicians as fallback
       setTechnicians([
         { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },

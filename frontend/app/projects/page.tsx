@@ -33,35 +33,42 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Page Banner */}
-        <PageBanner
-          page="projects"
-          title="Dự án âm thanh nổi bật"
-          subtitle="Thực tế và chất lượng"
-          description="Khám phá các dự án âm thanh mà Audio Tài Lộc đã thực hiện thành công. Từ hội trường, nhà hát đến hệ thống âm thanh sân khấu, chúng tôi tạo nên chất lượng âm thanh hoàn hảo."
-          showStats={true}
-        />
+        {/* Compact Page Header */}
+        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-3xl">
+              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Dự án</div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                Dự án âm thanh nổi bật
+              </h1>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                Khám phá các dự án âm thanh mà Audio Tài Lộc đã thực hiện thành công. Từ hội trường, nhà hát đến hệ thống âm thanh sân khấu, chúng tôi tạo nên chất lượng âm thanh hoàn hảo.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Projects Content */}
-        <section className="py-16">
+        <section className="py-6">
           <div className="container mx-auto px-4">
-            <div className="mb-6 flex flex-col gap-4 lg:hidden">
+            <div className="mb-4 flex flex-col gap-3 lg:hidden">
               <Button
                 variant="outline"
-                className="w-full justify-between"
+                size="sm"
+                className="w-full justify-between h-9 text-sm"
                 onClick={() => setShowFilters((prev) => !prev)}
               >
                 <span>Bộ lọc dự án</span>
                 {showFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
               </Button>
               {showFilters && (
-                <div className="border rounded-lg p-4">
+                <div className="border rounded-lg p-3">
                   <ProjectFilters />
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-6">
               {/* Sidebar Filters - Desktop */}
               <aside className="hidden lg:block lg:w-64 flex-shrink-0">
                 <div className="sticky top-24">

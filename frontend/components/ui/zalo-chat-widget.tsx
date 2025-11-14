@@ -13,19 +13,12 @@ export function ZaloChatWidget({
   position = 'bottom-right',
   size = 'medium'
 }: ZaloChatWidgetProps) {
-  // Validate phone number format (remove spaces, dashes, etc.)
-  const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
-
-  // Ensure phone number starts with country code
-  const formattedPhoneNumber = cleanPhoneNumber.startsWith('+84')
-    ? cleanPhoneNumber
-    : cleanPhoneNumber.startsWith('84')
-    ? `+${cleanPhoneNumber}`
-    : `+84${cleanPhoneNumber}`;
+  // Clean phone number (remove spaces, dashes, parentheses, plus signs)
+  const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
 
   return (
     <ZaloChat
-      phoneNumber={formattedPhoneNumber}
+      phoneNumber={cleanPhoneNumber}
       position={position}
       size={size}
     />

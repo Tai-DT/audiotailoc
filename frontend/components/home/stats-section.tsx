@@ -47,76 +47,72 @@ export function StatsSection() {
     const defaultStats = [
       {
         label: 'Khách hàng hài lòng',
-        value: '1.2K+',
-        description: 'Được tin tưởng bởi các doanh nghiệp, studio và nhà hát lớn'
+        value: '10,000+',
+        icon: '👥'
       },
       {
-        label: 'Thiết bị & giải pháp',
-        value: '650+',
-        description: 'Danh mục sản phẩm chuyên sâu cho mọi nhu cầu âm thanh'
+        label: 'Năm kinh nghiệm',
+        value: '15+',
+        icon: '🏆'
       },
       {
         label: 'Đánh giá trung bình',
         value: '4.9/5',
-        description: 'Chất lượng dịch vụ vượt mong đợi từ khách hàng'
+        icon: '⭐'
       },
       {
-        label: 'Năm kinh nghiệm',
-        value: '7+',
-        description: 'Đồng hành cùng hơn 300 dự án âm thanh toàn quốc'
+        label: 'Bảo hành chính hãng',
+        value: '100%',
+        icon: '🔒'
       }
     ];
 
     return (
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <span className="inline-flex items-center rounded-full border px-4 py-1 text-sm font-medium text-primary border-primary/30">
-              Giá trị chúng tôi mang lại
+      <section className="relative py-16 sm:py-20 lg:py-24 overflow-hidden">
+        {/* Dark gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-black" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
+        
+        <div className="container relative mx-auto px-4">
+          {/* Compact header */}
+          <div className="text-center mb-12 lg:mb-16">
+            <span className="inline-block px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full mb-4">
+              Tại sao chọn chúng tôi
             </span>
-            <h2 className="mt-6 text-3xl md:text-4xl font-bold tracking-tight">
-              Audio Tài Lộc – đối tác âm thanh đáng tin cậy của bạn
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent mb-4">
+              Audio Tài Lộc - Đối tác âm thanh tin cậy
             </h2>
-            <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Từ tư vấn, thiết kế hệ thống đến cung cấp thiết bị, chúng tôi luôn đặt trải nghiệm khách hàng lên hàng đầu.
+            <p className="text-base sm:text-lg text-gray-300/80 max-w-3xl mx-auto">
+              Thiết bị chất lượng cao, giá cạnh tranh, bảo hành chính hãng và đội ngũ hỗ trợ tận tâm
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {defaultStats.map((stat, index) => {
-              const icons = ['Users', 'Package', 'Star', 'Award'];
-              const iconComponents = {
-                Users: '👥',
-                Package: '📦',
-                Star: '⭐',
-                Award: '🏆'
-              };
-
-              return (
-                <div
-                  key={index}
-                  className="relative overflow-hidden rounded-2xl border bg-card/80 backdrop-blur transition-all hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
-                  <div className="relative p-6 space-y-6">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-                      <span className="text-2xl">{iconComponents[icons[index] as keyof typeof iconComponents]}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-4xl font-bold tracking-tight text-foreground">
-                        {stat.value}
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground/90">
-                        {stat.label}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-6">
-                      {stat.description}
-                    </p>
+          {/* Stats grid - compact */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {defaultStats.map((stat, index) => (
+              <div
+                key={index}
+                className="group relative"
+              >
+                {/* Card */}
+                <div className="relative h-full bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-gray-800/60 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/20">
+                  {/* Icon */}
+                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 text-primary mb-4 transition-transform group-hover:scale-110">
+                    <span className="text-2xl sm:text-3xl">{stat.icon}</span>
+                  </div>
+                  
+                  {/* Value */}
+                  <div className="text-3xl sm:text-4xl font-bold text-primary mb-1 tracking-tight">
+                    {stat.value}
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-sm sm:text-base text-gray-300/90 font-medium">
+                    {stat.label}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -125,21 +121,27 @@ export function StatsSection() {
 
   // Render with real data from API
   return (
-    <section className="py-24">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <span className="inline-flex items-center rounded-full border px-4 py-1 text-sm font-medium text-primary border-primary/30">
-            Giá trị chúng tôi mang lại
+    <section className="relative py-16 sm:py-20 lg:py-24 overflow-hidden">
+      {/* Dark gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-black" />
+      <div className="absolute inset-0 bg-grid-white/[0.05] bg-center" />
+      
+      <div className="container relative mx-auto px-4">
+        {/* Compact header */}
+        <div className="text-center mb-12 lg:mb-16">
+          <span className="inline-block px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full mb-4">
+            Tại sao chọn chúng tôi
           </span>
-          <h2 className="mt-6 text-3xl md:text-4xl font-bold tracking-tight">
-            Audio Tài Lộc – đối tác âm thanh đáng tin cậy của bạn
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent mb-4">
+            Audio Tài Lộc - Đối tác âm thanh tin cậy
           </h2>
-          <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Từ tư vấn, thiết kế hệ thống đến cung cấp thiết bị, chúng tôi luôn đặt trải nghiệm khách hàng lên hàng đầu.
+          <p className="text-base sm:text-lg text-gray-300/80 max-w-3xl mx-auto">
+            Thiết bị chất lượng cao, giá cạnh tranh, bảo hành chính hãng và đội ngũ hỗ trợ tận tâm
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stats grid - compact */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {stats.map((stat: SiteStat) => {
             const iconComponents = {
               Users: '👥',
@@ -153,28 +155,33 @@ export function StatsSection() {
             return (
               <div
                 key={stat.id}
-                className="relative overflow-hidden rounded-2xl border bg-card/80 backdrop-blur transition-all hover:-translate-y-1 hover:shadow-xl"
+                className="group relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
-                <div className="relative p-6 space-y-6">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-                    <span className="text-2xl">
+                {/* Card */}
+                <div className="relative h-full bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-gray-800/60 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/20">
+                  {/* Icon */}
+                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 text-primary mb-4 transition-transform group-hover:scale-110">
+                    <span className="text-2xl sm:text-3xl">
                       {stat.icon && iconComponents[stat.icon as keyof typeof iconComponents]
                         ? iconComponents[stat.icon as keyof typeof iconComponents]
                         : '📊'
                       }
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-4xl font-bold tracking-tight text-foreground">
-                      {stat.value}
-                    </div>
-                    <h3 className="text-base font-semibold text-foreground/90">
-                      {stat.label}
-                    </h3>
+                  
+                  {/* Value */}
+                  <div className="text-3xl sm:text-4xl font-bold text-primary mb-1 tracking-tight">
+                    {stat.value}
                   </div>
+                  
+                  {/* Label */}
+                  <div className="text-sm sm:text-base text-gray-300/90 font-medium">
+                    {stat.label}
+                  </div>
+
+                  {/* Description - optional */}
                   {stat.description && (
-                    <p className="text-sm text-muted-foreground leading-6">
+                    <p className="text-xs text-gray-400/80 mt-2 line-clamp-2">
                       {stat.description}
                     </p>
                   )}

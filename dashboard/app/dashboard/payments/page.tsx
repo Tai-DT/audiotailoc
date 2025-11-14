@@ -76,8 +76,9 @@ export default function PaymentsManager() {
     fetchStats()
   }, [fetchPayments, fetchStats])
 
-  // Filter payments
-  const filteredPayments = payments.filter(payment => {
+  // Filter payments - ensure payments is an array
+  const paymentsArray = Array.isArray(payments) ? payments : []
+  const filteredPayments = paymentsArray.filter(payment => {
     const matchesSearch = payment.orderNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || payment.status === statusFilter

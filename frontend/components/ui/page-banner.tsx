@@ -42,39 +42,39 @@ export function PageBanner({
   ];
 
   return (
-    <section className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background py-16 md:py-24">
+    <section className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background py-8 md:py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4">
+          <Badge variant="secondary" className="mb-3">
             {page}
           </Badge>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {title}
           </h1>
 
           {subtitle && (
-            <p className="text-xl md:text-2xl text-muted-foreground mb-6">
+            <p className="text-lg md:text-xl text-muted-foreground mb-4">
               {subtitle}
             </p>
           )}
 
           {description && (
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {description}
             </p>
           )}
 
           {showStats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
               {stats.map((stat, index) => (
                 <Card key={index} className="border-none shadow-sm bg-background/50 backdrop-blur-sm">
-                  <CardContent className="p-6 text-center">
-                    <stat.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-                    <div className="text-2xl font-bold text-primary mb-1">
+                  <CardContent className="p-4 text-center">
+                    <stat.icon className="h-6 w-6 mx-auto mb-2 text-primary" />
+                    <div className="text-xl font-bold text-primary mb-0.5">
                       {stat.value}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {stat.label}
                     </div>
                   </CardContent>
