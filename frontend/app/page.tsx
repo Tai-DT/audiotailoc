@@ -18,16 +18,25 @@ export default function Home() {
   return (
     <main className="bg-background">
       <BannerCarousel />
-      <StatsSection />
+      {/* Core Product Sections - Maximum Focus */}
       <FeaturedProducts />
+      <CategoryProductsSection />
       <NewProductsSection />
       <BestSellingProductsSection />
-      <CategoryProductsSection />
+      
+      {/* Service Section - Secondary Focus */}
       <FeaturedServices />
-      <FeaturedBlogSection />
-      <FeaturedKnowledgeSection />
-      <FeaturedProjects />
+      
+      {/* Trust & Social Proof */}
+      <StatsSection />
       <TestimonialsSection />
+      
+      {/* Portfolio & Content */}
+      <FeaturedProjects />
+      <FeaturedKnowledgeSection />
+      <FeaturedBlogSection />
+      
+      {/* Conversion */}
       <NewsletterSection />
     </main>
   );

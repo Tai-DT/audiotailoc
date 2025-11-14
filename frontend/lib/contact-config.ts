@@ -2,17 +2,17 @@
 export const CONTACT_CONFIG = {
   // Zalo chat configuration
   zalo: {
-    phoneNumber: '0987654321', // Replace with your actual Zalo phone number
+    phoneNumber: '0768426262', // Số Zalo chính thức
     displayName: 'Audio Tài Lộc',
     welcomeMessage: 'Xin chào! Chúng tôi có thể giúp gì cho bạn?'
   },
 
   // Other contact methods
   phone: {
-    number: '0987654321',
-    display: '0987 654 321',
-    hotline: '1900 2468',
-    hotlineNumber: '19002468'
+    number: '0768426262',
+    display: '0768 426 262',
+    hotline: '0768 426 262',
+    hotlineNumber: '0768426262'
   },
 
   email: 'info@audiotailoc.com',

@@ -38,6 +38,7 @@ export declare class ProjectsController {
             category: string | null;
             isFeatured: boolean;
             results: string | null;
+            displayOrder: number;
             clientLogo: string | null;
             technologies: string | null;
             thumbnailImage: string | null;
@@ -49,7 +50,6 @@ export declare class ProjectsController {
             liveUrl: string | null;
             teamSize: number | null;
             budget: string | null;
-            displayOrder: number;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;
@@ -98,6 +98,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -109,7 +110,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -157,6 +157,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -168,7 +169,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -216,6 +216,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -227,7 +228,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -275,6 +275,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -286,7 +287,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -334,6 +334,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -345,7 +346,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -390,6 +390,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -401,7 +402,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -443,6 +443,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -454,7 +455,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;
@@ -496,6 +496,7 @@ export declare class ProjectsController {
         category: string | null;
         isFeatured: boolean;
         results: string | null;
+        displayOrder: number;
         clientLogo: string | null;
         technologies: string | null;
         thumbnailImage: string | null;
@@ -507,7 +508,6 @@ export declare class ProjectsController {
         liveUrl: string | null;
         teamSize: number | null;
         budget: string | null;
-        displayOrder: number;
         testimonial: string | null;
         challenges: string | null;
         solutions: string | null;

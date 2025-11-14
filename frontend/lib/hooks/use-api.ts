@@ -749,7 +749,7 @@ export const useFeaturedServices = (limit = 4) => {
         },
       });
       const data = handleApiResponse<PaginatedResponse<Service>>(response);
-      return data.items;
+      return data.items || [];
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
   });

@@ -131,9 +131,9 @@ function ServicesPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-4">
         {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
+        <nav className="flex items-center space-x-2 text-xs text-muted-foreground mb-4">
           <Link href="/" className="hover:text-primary">
             Home
           </Link>
@@ -141,15 +141,15 @@ function ServicesPageContent() {
           <span className="text-foreground">Dịch vụ</span>
         </nav>
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Danh sách dịch vụ</h1>
-          <p className="text-muted-foreground">
+        {/* Compact Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1">Danh sách dịch vụ</h1>
+          <p className="text-sm text-muted-foreground">
             Khám phá các dịch vụ chuyên nghiệp của chúng tôi
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar - Filters */}
           <aside className="lg:col-span-1">
             <ServiceFilters 

@@ -240,12 +240,12 @@ export default function SupportPage() {
         </section>
 
         {/* Blog Articles */}
-        <section className="py-16">
+        <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="flex items-center gap-3 mb-8">
                 <BookOpen className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-bold">Bài viết từ Blog</h2>
+                <h2 className="text-2xl font-bold text-foreground">Bài viết từ Blog</h2>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -272,12 +272,12 @@ export default function SupportPage() {
                           </div>
                         )}
                         <div className="flex-1">
-                          <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors duration-300">
-                            {post.title}
-                          </CardTitle>
-                          {post.blog_categories && (
-                            <p className="text-sm text-primary mt-1">{post.blog_categories.name}</p>
-                          )}
+                          <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors duration-300 text-foreground">
+                                  {post.title}
+                                </CardTitle>
+                                {post.blog_categories && (
+                                  <p className="text-sm text-primary mt-1">{post.blog_categories.name}</p>
+                                )}
                         </div>
                       </div>
                     </CardHeader>
@@ -321,14 +321,14 @@ export default function SupportPage() {
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center gap-3 mb-8">
                 <HelpCircle className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-bold">Câu hỏi thường gặp</h2>
+                <h2 className="text-2xl font-bold text-foreground">Câu hỏi thường gặp</h2>
               </div>
 
               <div className="space-y-4">
                 {faqs.map((faq) => (
                   <Card key={faq.id} className="cursor-pointer" onClick={() => toggleFaq(faq.id)}>
                     <CardHeader>
-                      <CardTitle className="text-lg">{faq.question}</CardTitle>
+                      <CardTitle className="text-lg text-foreground">{faq.question}</CardTitle>
                     </CardHeader>
                     {expandedFaq === faq.id && (
                       <CardContent>
@@ -349,7 +349,7 @@ export default function SupportPage() {
               <div className="grid lg:grid-cols-2 gap-12">
                 {/* Contact Information */}
                 <div>
-                  <h2 className="text-3xl font-bold mb-8">Liên hệ hỗ trợ</h2>
+                  <h2 className="text-3xl font-bold mb-8 text-foreground">Liên hệ hỗ trợ</h2>
 
                   <div className="space-y-6">
                     <div className="flex items-start gap-4">
