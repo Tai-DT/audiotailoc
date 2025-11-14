@@ -2,6 +2,10 @@ import { MetadataRoute } from 'next';
 import { apiClient, handleApiResponse } from '@/lib/api';
 import type { BlogArticle, PaginatedBlogResponse } from '@/lib/types';
 
+// Make sitemap dynamic to allow API calls
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
+
 interface Product {
   id: string;
   name: string;
@@ -112,13 +116,32 @@ async function getArticles(): Promise<KnowledgeBaseArticle[]> {
 
 async function getBlogArticles(): Promise<BlogArticle[]> {
   try {
-    const response = await apiClient.get('/blog/articles', {
-      params: { page: 1, limit: 1000, published: true }
+    // Use dashboard URL if available, otherwise skip
+    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || process.env.DASHBOARD_URL;
+    
+    if (!dashboardUrl) {
+      console.warn('No dashboard URL configured, skipping blog sitemap entries');
+      return [];
+    }
+
+    const response = await fetch(`${dashboardUrl}/api/blog/articles?page=1&limit=1000&published=true`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 3600 }, // Cache for 1 hour
     });
-    const data = handleApiResponse<PaginatedBlogResponse<BlogArticle>>(response);
+
+    if (!response.ok) {
+      console.warn(`Blog articles API returned ${response.status}, skipping blog sitemap entries`);
+      return [];
+    }
+
+    const data = await response.json() as PaginatedBlogResponse<BlogArticle>;
     return Array.isArray(data?.data) ? data.data : [];
   } catch (error) {
     console.error('Failed to fetch blog articles for sitemap:', error);
+    // Return empty array to allow sitemap generation to continue
     return [];
   }
 }
