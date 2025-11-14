@@ -122,6 +122,43 @@ let PaymentsController = class PaymentsController {
             supportedProviders: ['COD', 'PAYOS']
         };
     }
+    async getMyPayments(req) {
+        const userId = req.users?.sub;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+        const payments = await this.prisma.payments.findMany({
+            where: {
+                orders: {
+                    userId: userId
+                }
+            },
+            include: {
+                orders: {
+                    select: {
+                        id: true,
+                        orderNo: true,
+                        totalCents: true,
+                        status: true,
+                        createdAt: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        return payments.map((payment) => ({
+            id: payment.id,
+            orderId: payment.orders?.id,
+            orderNo: payment.orders?.orderNo,
+            description: `Payment for order ${payment.orders?.orderNo || payment.id}`,
+            amount: payment.amountCents,
+            provider: payment.provider,
+            status: payment.status,
+            transactionId: payment.id,
+            createdAt: payment.createdAt,
+            updatedAt: payment.updatedAt
+        }));
+    }
     async getPayments(query) {
         const page = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 20;
@@ -265,6 +302,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "getPaymentStatus", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('my-payments'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "getMyPayments", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Get)(),

@@ -1,4 +1,5 @@
 import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService, AnalyticsFilters } from './analytics.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsOptional, IsDateString, IsArray, IsString } from 'class-validator';
@@ -175,7 +176,7 @@ export class AnalyticsController {
     };
 
     const salesMetrics = await this.analyticsService.getSalesMetrics(filters);
-    
+
     return {
       period,
       startDate: startDate.toISOString(),
@@ -185,6 +186,36 @@ export class AnalyticsController {
       averageOrderValue: salesMetrics.averageOrderValue || 0,
       revenueGrowth: salesMetrics.revenueGrowth || 0
     };
+  }
+
+  @Get('revenue/chart')
+  @ApiOperation({ summary: 'Get revenue chart data for dashboard' })
+  async getRevenueChart(@Query('days') days?: string) {
+    const daysNum = days ? parseInt(days) : 7;
+    const result = await this.analyticsService.getRevenueChartData(daysNum);
+    return result;
+  }
+
+  @Get('products/top-selling-real')
+  @ApiOperation({ summary: 'Get real top selling products from orders' })
+  async getTopSellingProductsReal(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit) : 5;
+    const result = await this.analyticsService.getTopSellingProductsReal(limitNum);
+    return result;
+  }
+
+  @Get('growth-metrics')
+  @ApiOperation({ summary: 'Get growth metrics for orders and customers' })
+  async getGrowthMetricsReal() {
+    const result = await this.analyticsService.getGrowthMetricsReal();
+    return result;
+  }
+
+  @Get('services/bookings-today-real')
+  @ApiOperation({ summary: 'Get real service bookings count for today' })
+  async getBookingsTodayReal() {
+    const result = await this.analyticsService.getBookingsTodayReal();
+    return result;
   }
 
   @Get('top-services')

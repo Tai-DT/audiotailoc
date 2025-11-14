@@ -45,6 +45,45 @@ export class BookingService {
     return booking;
   }
 
+  async findByUserId(userId: string) {
+    return this.prisma.service_bookings.findMany({
+      where: { userId },
+      include: {
+        services: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        },
+        technicians: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          }
+        },
+        service_booking_items: {
+          include: {
+            service_items: {
+              select: {
+                name: true,
+              }
+            },
+          },
+        },
+        service_payments: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+          }
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async create(createBookingDto: any) {
     const { items, ...bookingData } = createBookingDto;
 

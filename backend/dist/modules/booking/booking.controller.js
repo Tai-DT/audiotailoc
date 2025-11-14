@@ -22,12 +22,20 @@ const update_booking_status_dto_1 = require("./dto/update-booking-status.dto");
 const create_payment_dto_1 = require("./dto/create-payment.dto");
 const update_payment_status_dto_1 = require("./dto/update-payment-status.dto");
 const assign_technician_dto_1 = require("./dto/assign-technician.dto");
+const jwt_guard_1 = require("../auth/jwt.guard");
 let BookingController = class BookingController {
     constructor(bookingService) {
         this.bookingService = bookingService;
     }
     async findAll(_query) {
         return this.bookingService.findAll();
+    }
+    async getMyBookings(req) {
+        const userId = req.users?.sub;
+        if (!userId) {
+            throw new common_1.UnauthorizedException('User not authenticated');
+        }
+        return this.bookingService.findByUserId(userId);
     }
     async findOne(id) {
         return this.bookingService.findOne(id);
@@ -62,6 +70,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('my-bookings'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get current user bookings' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns user bookings' }),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "getMyBookings", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

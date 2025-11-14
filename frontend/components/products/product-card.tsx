@@ -60,7 +60,7 @@ export function ProductCard({
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/20">
         <AspectRatio ratio={1}>
-          <Link href={`/san-pham/${product.slug}`}>
+          <Link href={`/products/${product.slug}`}>
             <Image
               src={getProductImage()}
               alt={product.name}
@@ -155,7 +155,7 @@ export function ProductCard({
         {/* Category */}
         {product.category && (
           <Link 
-            href={`/san-pham?category=${product.category.slug}`}
+            href={`/products?category=${product.category.slug}`}
             className="text-[10px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             {product.category.name}
@@ -163,7 +163,7 @@ export function ProductCard({
         )}
 
         {/* Product Name */}
-  <Link href={`/san-pham/${product.slug}`}>
+  <Link href={`/products/${product.slug}`}>
           <h3 className="font-medium text-xs sm:text-sm mt-1 mb-2 line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem] sm:min-h-[2.8rem]">
             {product.name}
           </h3>

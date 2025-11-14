@@ -72,13 +72,13 @@ export declare class TechniciansService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                duration: number;
                 slug: string;
                 shortDescription: string | null;
                 images: string | null;
                 features: string | null;
                 isActive: boolean;
                 viewCount: number;
+                duration: number;
                 price: number;
                 minPrice: number | null;
                 maxPrice: number | null;

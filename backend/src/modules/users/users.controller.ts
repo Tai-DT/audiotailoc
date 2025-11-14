@@ -83,6 +83,16 @@ export class UsersController {
   }
 
   @UseGuards(JwtGuard)
+  @Get('export-data')
+  async exportUserData(@Req() req: any) {
+    const userId = req.users?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+    return this.usersService.exportUserData(userId);
+  }
+
+  @UseGuards(JwtGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.usersService.findById(id);
