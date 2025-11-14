@@ -10,9 +10,9 @@ export declare class ServiceTypesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
         slug: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string | null;
         color: string | null;
     }>;
@@ -22,9 +22,9 @@ export declare class ServiceTypesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
         slug: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string | null;
         color: string | null;
     }[]>;
@@ -34,9 +34,9 @@ export declare class ServiceTypesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
         slug: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string | null;
         color: string | null;
     }>;
@@ -46,9 +46,9 @@ export declare class ServiceTypesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
         slug: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string | null;
         color: string | null;
     }>;
@@ -58,9 +58,9 @@ export declare class ServiceTypesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
         slug: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string | null;
         color: string | null;
     }>;

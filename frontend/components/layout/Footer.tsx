@@ -35,10 +35,10 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-base sm:text-lg">Liên kết nhanh</h3>
             <nav className="space-y-2">
-              <Link href="/san-pham" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/products" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Sản phẩm
               </Link>
-              <Link href="/dich-vu" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/services" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Dịch vụ
               </Link>
               <Link href="/du-an" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
@@ -57,19 +57,19 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-base sm:text-lg">Danh mục</h3>
             <nav className="space-y-2">
-                            <Link href="/san-pham?category=amplifiers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+                            <Link href="/products?category=amplifiers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Amply
               </Link>
-              <Link href="/san-pham?category=speakers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/products?category=speakers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Loa
               </Link>
-              <Link href="/san-pham?category=microphones" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/products?category=microphones" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Micro
               </Link>
-              <Link href="/san-pham?category=mixers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/products?category=mixers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Mixer
               </Link>
-              <Link href="/san-pham?category=accessories" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
+              <Link href="/products?category=accessories" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
                 Phụ kiện
               </Link>
             </nav>

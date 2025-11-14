@@ -30,6 +30,18 @@ export declare class PaymentsController {
         timestamp: string;
         supportedProviders: string[];
     };
+    getMyPayments(req: any): Promise<{
+        id: any;
+        orderId: any;
+        orderNo: any;
+        description: string;
+        amount: any;
+        provider: any;
+        status: any;
+        transactionId: any;
+        createdAt: any;
+        updatedAt: any;
+    }[]>;
     getPayments(query: any): Promise<{
         payments: {
             id: any;

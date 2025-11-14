@@ -38,7 +38,7 @@ export default function ArticleDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 prose dark:prose-invert">
-      <a href="/kien-thuc" className="no-underline text-sm text-blue-600 hover:underline">← Quay lại</a>
+      <a href="/knowledge" className="no-underline text-sm text-blue-600 hover:underline">← Quay lại</a>
       <h1>{data.title}</h1>
       <p className="text-xs text-slate-500">Chuyên mục: {data.category} • Lượt xem: {data.viewCount}</p>
       <hr />

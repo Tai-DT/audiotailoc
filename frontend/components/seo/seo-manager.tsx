@@ -76,10 +76,10 @@ export function SEOManager({ entity }: SEOManagerProps) {
     
     switch (entity.type) {
       case 'product':
-        path = `/san-pham/${entity.slug}`;
+        path = `/products/${entity.slug}`;
         break;
       case 'service':
-        path = `/dich-vu/${entity.slug}`;
+        path = `/services/${entity.slug}`;
         break;
       case 'blog':
         path = `/blog/${entity.slug}`;

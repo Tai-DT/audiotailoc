@@ -69,6 +69,48 @@ export class PaymentsController {
     };
   }
 
+  @UseGuards(JwtGuard)
+  @Get('my-payments')
+  async getMyPayments(@Req() req: any) {
+    const userId = req.users?.sub;
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const payments = await this.prisma.payments.findMany({
+      where: {
+        orders: {
+          userId: userId
+        }
+      },
+      include: {
+        orders: {
+          select: {
+            id: true,
+            orderNo: true,
+            totalCents: true,
+            status: true,
+            createdAt: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return payments.map((payment: any) => ({
+      id: payment.id,
+      orderId: payment.orders?.id,
+      orderNo: payment.orders?.orderNo,
+      description: `Payment for order ${payment.orders?.orderNo || payment.id}`,
+      amount: payment.amountCents,
+      provider: payment.provider,
+      status: payment.status,
+      transactionId: payment.id,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt
+    }));
+  }
+
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Get()
   async getPayments(@Query() query: any) {

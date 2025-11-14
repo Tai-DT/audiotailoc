@@ -43,6 +43,24 @@ export declare class AnalyticsController {
         averageOrderValue: number;
         revenueGrowth: number;
     }>;
+    getRevenueChart(days?: string): Promise<{
+        dates: string[];
+        values: number[];
+    }>;
+    getTopSellingProductsReal(limit?: string): Promise<{
+        id: string;
+        name: string;
+        salesCount: number;
+        revenue: number;
+        stock: number;
+    }[]>;
+    getGrowthMetricsReal(): Promise<{
+        ordersGrowth: number;
+        customersGrowth: number;
+    }>;
+    getBookingsTodayReal(): Promise<{
+        bookingsToday: number;
+    }>;
     getTopServices(limit?: string): Promise<{
         id: string;
         name: string;

@@ -933,4 +933,123 @@ export class AnalyticsService {
       },
     ];
   }
+
+  // NEW METHODS FOR DASHBOARD //
+
+  async getRevenueChartData(days: number = 7) {
+    const dates: string[] = [];
+    const values: number[] = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const dayRevenue = await this.prisma.orders.aggregate({
+        where: {
+          createdAt: { gte: date, lt: nextDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] }
+        },
+        _sum: { totalCents: true }
+      });
+
+      dates.push(date.toISOString().split('T')[0]);
+      values.push((dayRevenue._sum.totalCents || 0) / 100);
+    }
+
+    return { dates, values };
+  }
+
+  async getTopSellingProductsReal(limit: number = 5) {
+    const topProducts = await this.prisma.order_items.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true,
+        price: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: limit
+    });
+
+    const products = await this.prisma.products.findMany({
+      where: {
+        id: { in: topProducts.map(p => p.productId).filter(Boolean) }
+      },
+      include: {
+        inventory: {
+          select: { stock: true }
+        }
+      }
+    });
+
+    return topProducts.map(tp => {
+      const product = products.find(p => p.id === tp.productId);
+      return {
+        id: tp.productId,
+        name: product?.name || 'Unknown Product',
+        salesCount: tp._sum.quantity || 0,
+        revenue: Number(tp._sum.price || 0) / 100,
+        stock: product?.inventory?.stock || 0
+      };
+    });
+  }
+
+  async getGrowthMetricsReal() {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(today.getDate() - 14);
+
+    // Current period (last 7 days)
+    const [currentOrders, currentCustomers] = await Promise.all([
+      this.prisma.orders.count({
+        where: { createdAt: { gte: sevenDaysAgo, lte: today } }
+      }),
+      this.prisma.users.count({
+        where: {
+          role: 'USER',
+          createdAt: { gte: sevenDaysAgo, lte: today }
+        }
+      })
+    ]);
+
+    // Previous period (14-7 days ago)
+    const [previousOrders, previousCustomers] = await Promise.all([
+      this.prisma.orders.count({
+        where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } }
+      }),
+      this.prisma.users.count({
+        where: {
+          role: 'USER',
+          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo }
+        }
+      })
+    ]);
+
+    return {
+      ordersGrowth: this.calculateGrowthRate(currentOrders, previousOrders),
+      customersGrowth: this.calculateGrowthRate(currentCustomers, previousCustomers)
+    };
+  }
+
+  async getBookingsTodayReal() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const bookingsToday = await this.prisma.service_bookings.count({
+      where: {
+        createdAt: { gte: today, lt: tomorrow }
+      }
+    });
+
+    return { bookingsToday };
+  }
 }

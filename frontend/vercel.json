@@ -36,12 +36,12 @@
     },
     {
       "source": "/products",
-      "destination": "/san-pham",
+      "destination": "/products",
       "permanent": true
     },
     {
       "source": "/products/(.*)",
-      "destination": "/san-pham/$1",
+      "destination": "/products/$1",
       "permanent": true
     },
     {
@@ -56,12 +56,12 @@
     },
     {
       "source": "/services",
-      "destination": "/dich-vu",
+      "destination": "/services",
       "permanent": true
     },
     {
       "source": "/services/(.*)",
-      "destination": "/dich-vu/$1",
+      "destination": "/services/$1",
       "permanent": true
     },
     {

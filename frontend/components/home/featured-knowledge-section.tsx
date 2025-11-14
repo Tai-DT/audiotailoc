@@ -35,7 +35,7 @@ export function FeaturedKnowledgeSection() {
           {articles.map(article => (
             <Link
               key={article.id}
-              href={`/kien-thuc/${article.id}`}
+              href={`/knowledge/${article.id}`}
               className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="mb-3">
@@ -64,7 +64,7 @@ export function FeaturedKnowledgeSection() {
 
         <div className="text-center">
           <Link
-            href="/kien-thuc"
+            href="/knowledge"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Xem tất cả bài viết

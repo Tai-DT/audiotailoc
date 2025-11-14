@@ -37,7 +37,7 @@ export default function KienThucPage() {
         <ul className="grid gap-4 md:grid-cols-2">
           {articles.map(article => (
             <li key={article.id} className="border rounded-md p-4 hover:shadow-sm transition">
-              <a href={`/kien-thuc/${article.id}`} className="block">
+              <a href={`/knowledge/${article.id}`} className="block">
                 <h2 className="font-semibold text-lg line-clamp-2 mb-2">{article.title}</h2>
                 <p className="text-xs text-slate-500 mb-2">Chuyên mục: {article.category}</p>
                 <div className="text-xs flex flex-wrap gap-2 text-slate-500">

@@ -171,20 +171,44 @@ export default function DashboardPage() {
         ? ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
         : 100
 
-      // Generate revenue chart data (mock for now)
-      const revenueChart = Array.from({ length: 7 }, (_, i) => {
+      // Fetch real revenue chart data from analytics API
+      let revenueChart = Array.from({ length: 7 }, (_, i) => {
         const date = new Date()
         date.setDate(date.getDate() - (6 - i))
         return {
           date: date.toLocaleDateString('vi-VN', { weekday: 'short' }),
-          value: Math.floor(Math.random() * 10000000) + 5000000
+          value: 0
         }
       })
+
+      try {
+        const revenueChartRes = await apiClient.getRevenueChart(7)
+        const chartData = (revenueChartRes.data as { dates?: string[], values?: number[] })
+        if (chartData?.dates && chartData?.values && Array.isArray(chartData.values)) {
+          revenueChart = chartData.dates.map((date: string, i: number) => ({
+            date: new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' }),
+            value: (chartData.values as number[])[i] || 0
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to fetch revenue chart:', error)
+      }
 
       // Orders stats
       const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length
       const completedOrders = orders.filter((o: Order) => o.status === 'COMPLETED').length
-      const ordersGrowth = 23.5 // Mock growth
+
+      // Fetch real growth metrics from analytics API
+      let ordersGrowth = 0
+      let customersGrowth = 0
+      try {
+        const growthRes = await apiClient.getGrowthMetrics()
+        const growthData = (growthRes.data as { ordersGrowth?: number, customersGrowth?: number })
+        ordersGrowth = growthData?.ordersGrowth || 0
+        customersGrowth = growthData?.customersGrowth || 0
+      } catch (error) {
+        console.error('Failed to fetch growth metrics:', error)
+      }
 
       // Customer stats
       const newCustomers = users.filter((u: User) => {
@@ -197,18 +221,48 @@ export default function DashboardPage() {
       const lowStock = products.filter((p: Product) => 
         p.stockQuantity > 0 && p.stockQuantity < 10).length
 
-      // Top selling products (mock sales data)
-      const topSellingProducts = products.slice(0, 5).map((p: Product) => ({
-        id: p.id,
-        name: p.name,
-        sales: Math.floor(Math.random() * 100) + 20,
-        revenue: p.price * (Math.floor(Math.random() * 100) + 20),
-        stock: p.stockQuantity || 0
-      }))
+      // Fetch real top selling products from analytics API
+      let topSellingProducts: Array<{ id: string; name: string; sales: number; revenue: number; stock: number }> = []
+      try {
+        const topProductsRes = await apiClient.getTopSellingProductsReal(5)
+        const topProductsData = (topProductsRes.data as Array<{
+          id: string;
+          name: string;
+          salesCount: number;
+          revenue: number;
+          stock: number
+        }>) || []
+        topSellingProducts = topProductsData.map(p => ({
+          id: p.id,
+          name: p.name,
+          sales: p.salesCount,
+          revenue: p.revenue,
+          stock: p.stock
+        }))
+      } catch (error) {
+        console.error('Failed to fetch top products:', error)
+        // Fallback to products list if API fails
+        topSellingProducts = products.slice(0, 5).map((p: Product) => ({
+          id: p.id,
+          name: p.name,
+          sales: 0,
+          revenue: 0,
+          stock: p.stockQuantity || 0
+        }))
+      }
 
       // Service stats
       const activeServices = services.filter((s: Service) => s.isActive).length
-      const bookings = Math.floor(Math.random() * 50) + 10 // Mock bookings
+
+      // Fetch real bookings count from analytics API
+      let bookings = 0
+      try {
+        const bookingsRes = await apiClient.getBookingsTodayReal()
+        const bookingsData = (bookingsRes.data as { bookingsToday?: number })
+        bookings = bookingsData?.bookingsToday || 0
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error)
+      }
 
       // Recent orders
       const recentOrders = orders.slice(0, 5).map((order: Order) => ({
@@ -235,7 +289,7 @@ export default function DashboardPage() {
         customers: {
           total: users.length,
           new: newCustomers,
-          growth: 18.2
+          growth: customersGrowth
         },
         products: {
           total: products.length,
