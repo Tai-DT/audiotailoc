@@ -158,13 +158,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/san-pham`,
+      url: `${baseUrl}/products`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/dich-vu`,
+      url: `${baseUrl}/services`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.9,
@@ -198,7 +198,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic product pages
   const products = await getProducts();
   const productPages = products.map((product) => ({
-  url: `${baseUrl}/san-pham/${product.slug}`,
+  url: `${baseUrl}/products/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
@@ -207,7 +207,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic service pages
   const services = await getServices();
   const servicePages = services.map((service) => ({
-    url: `${baseUrl}/dich-vu/${service.slug}`,
+    url: `${baseUrl}/services/${service.slug}`,
     lastModified: new Date(service.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,

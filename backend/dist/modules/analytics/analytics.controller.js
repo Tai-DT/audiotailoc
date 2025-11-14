@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const analytics_service_1 = require("./analytics.service");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const class_validator_1 = require("class-validator");
@@ -180,6 +181,24 @@ let AnalyticsController = class AnalyticsController {
             averageOrderValue: salesMetrics.averageOrderValue || 0,
             revenueGrowth: salesMetrics.revenueGrowth || 0
         };
+    }
+    async getRevenueChart(days) {
+        const daysNum = days ? parseInt(days) : 7;
+        const result = await this.analyticsService.getRevenueChartData(daysNum);
+        return result;
+    }
+    async getTopSellingProductsReal(limit) {
+        const limitNum = limit ? parseInt(limit) : 5;
+        const result = await this.analyticsService.getTopSellingProductsReal(limitNum);
+        return result;
+    }
+    async getGrowthMetricsReal() {
+        const result = await this.analyticsService.getGrowthMetricsReal();
+        return result;
+    }
+    async getBookingsTodayReal() {
+        const result = await this.analyticsService.getBookingsTodayReal();
+        return result;
     }
     async getTopServices(limit = '5') {
         const limitNum = parseInt(limit) || 5;
@@ -352,6 +371,36 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getRevenue", null);
+__decorate([
+    (0, common_1.Get)('revenue/chart'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get revenue chart data for dashboard' }),
+    __param(0, (0, common_1.Query)('days')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getRevenueChart", null);
+__decorate([
+    (0, common_1.Get)('products/top-selling-real'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get real top selling products from orders' }),
+    __param(0, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getTopSellingProductsReal", null);
+__decorate([
+    (0, common_1.Get)('growth-metrics'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get growth metrics for orders and customers' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getGrowthMetricsReal", null);
+__decorate([
+    (0, common_1.Get)('services/bookings-today-real'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get real service bookings count for today' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getBookingsTodayReal", null);
 __decorate([
     (0, common_1.Get)('top-services'),
     __param(0, (0, common_1.Query)('limit')),

@@ -354,6 +354,79 @@ let UsersService = UsersService_1 = class UsersService {
         }
         return password;
     }
+    async exportUserData(userId) {
+        const user = await this.prisma.users.findUnique({
+            where: { id: userId },
+            include: {
+                orders: {
+                    include: {
+                        order_items: {
+                            include: {
+                                products: {
+                                    select: {
+                                        name: true,
+                                        slug: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                carts: {
+                    include: {
+                        cart_items: {
+                            include: {
+                                products: {
+                                    select: {
+                                        name: true,
+                                        slug: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        const { password: _, ...userData } = user;
+        return {
+            exportDate: new Date().toISOString(),
+            user: {
+                id: userData.id,
+                email: userData.email,
+                name: userData.name,
+                phone: userData.phone,
+                role: userData.role,
+                createdAt: userData.createdAt,
+                updatedAt: userData.updatedAt
+            },
+            orders: userData.orders.map((order) => ({
+                id: order.id,
+                status: order.status,
+                totalCents: order.totalCents,
+                createdAt: order.createdAt,
+                items: order.order_items.map((item) => ({
+                    productName: item.products?.name,
+                    quantity: item.quantity,
+                    priceCents: item.price
+                }))
+            })),
+            cart: userData.carts.length > 0 ? {
+                items: userData.carts[0].cart_items.map((item) => ({
+                    productName: item.products?.name,
+                    quantity: item.quantity,
+                    addedAt: item.createdAt
+                }))
+            } : null,
+            statistics: {
+                totalOrders: userData.orders.length,
+                totalSpent: userData.orders.reduce((sum, order) => sum + (order.totalCents || 0), 0) / 100
+            }
+        };
+    }
     async sendWelcomeEmail(email, name, password) {
         const subject = 'Chào mừng bạn đến với Audio Tài Lộc';
         const html = `

@@ -11,12 +11,18 @@ const common_1 = require("@nestjs/common");
 const analytics_service_1 = require("./analytics.service");
 const analytics_controller_1 = require("./analytics.controller");
 const guards_module_1 = require("../auth/guards.module");
+const prisma_module_1 = require("../../prisma/prisma.module");
+const cache_module_1 = require("../caching/cache.module");
 let AnalyticsModule = class AnalyticsModule {
 };
 exports.AnalyticsModule = AnalyticsModule;
 exports.AnalyticsModule = AnalyticsModule = __decorate([
     (0, common_1.Module)({
-        imports: [guards_module_1.GuardsModule],
+        imports: [
+            guards_module_1.GuardsModule,
+            prisma_module_1.PrismaModule,
+            cache_module_1.CacheModule.forRoot({ isGlobal: false, ttl: 300 }),
+        ],
         providers: [analytics_service_1.AnalyticsService],
         controllers: [analytics_controller_1.AnalyticsController],
         exports: [analytics_service_1.AnalyticsService],

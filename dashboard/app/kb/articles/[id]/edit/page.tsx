@@ -12,13 +12,18 @@ interface KBArticleDetail {
   updatedAt: string;
 }
 
-export default function EditKBArticlePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditKBArticlePage({ params }: { params: Promise<{ id: string }> }) {
+  const [id, setId] = React.useState<string>('');
+
+  React.useEffect(() => {
+    params.then(p => setId(p.id));
+  }, [params]);
   const [data, setData] = useState<KBArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!id) return;
     setLoading(true); setLoadError(null);
     try {
       const res = await fetch(`/api/admin/kb/articles/${id}`);
@@ -30,7 +35,7 @@ export default function EditKBArticlePage({ params }: { params: { id: string } }
     } finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (id) load(); }, [id, load]);
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');

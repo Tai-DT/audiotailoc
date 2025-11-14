@@ -18,8 +18,8 @@ export declare class BookingService {
             createdAt: Date;
             price: number;
             quantity: number;
-            serviceItemId: string;
             bookingId: string;
+            serviceItemId: string;
         })[];
         service_payments: {
             status: string;
@@ -39,13 +39,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;
@@ -108,8 +108,8 @@ export declare class BookingService {
             createdAt: Date;
             price: number;
             quantity: number;
-            serviceItemId: string;
             bookingId: string;
+            serviceItemId: string;
         })[];
         service_payments: {
             status: string;
@@ -129,13 +129,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;
@@ -182,6 +182,49 @@ export declare class BookingService {
         estimatedCosts: number | null;
         actualCosts: number | null;
     }>;
+    findByUserId(userId: string): Promise<({
+        service_booking_items: ({
+            service_items: {
+                name: string;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            price: number;
+            quantity: number;
+            bookingId: string;
+            serviceItemId: string;
+        })[];
+        service_payments: {
+            status: string;
+            id: string;
+            createdAt: Date;
+        }[];
+        services: {
+            id: string;
+            name: string;
+            slug: string;
+        };
+        technicians: {
+            id: string;
+            name: string;
+            phone: string;
+        };
+    } & {
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
+        scheduledAt: Date | null;
+        notes: string | null;
+        serviceId: string;
+        technicianId: string | null;
+        scheduledTime: string | null;
+        completedAt: Date | null;
+        estimatedCosts: number | null;
+        actualCosts: number | null;
+    })[]>;
     create(createBookingDto: any): Promise<{
         service_booking_items: ({
             service_items: {
@@ -198,8 +241,8 @@ export declare class BookingService {
             createdAt: Date;
             price: number;
             quantity: number;
-            serviceItemId: string;
             bookingId: string;
+            serviceItemId: string;
         })[];
         services: {
             tags: string | null;
@@ -209,13 +252,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;
@@ -278,8 +321,8 @@ export declare class BookingService {
             createdAt: Date;
             price: number;
             quantity: number;
-            serviceItemId: string;
             bookingId: string;
+            serviceItemId: string;
         })[];
         services: {
             tags: string | null;
@@ -289,13 +332,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;
@@ -355,13 +398,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;
@@ -424,8 +467,8 @@ export declare class BookingService {
             createdAt: Date;
             price: number;
             quantity: number;
-            serviceItemId: string;
             bookingId: string;
+            serviceItemId: string;
         })[];
         services: {
             tags: string | null;
@@ -435,13 +478,13 @@ export declare class BookingService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            duration: number;
             slug: string;
             shortDescription: string | null;
             images: string | null;
             features: string | null;
             isActive: boolean;
             viewCount: number;
+            duration: number;
             price: number;
             minPrice: number | null;
             maxPrice: number | null;

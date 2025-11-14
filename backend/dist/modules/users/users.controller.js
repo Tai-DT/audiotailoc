@@ -89,6 +89,13 @@ let UsersController = class UsersController {
         }
         return this.usersService.findById(userId);
     }
+    async exportUserData(req) {
+        const userId = req.users?.sub;
+        if (!userId) {
+            throw new common_1.UnauthorizedException('User not authenticated');
+        }
+        return this.usersService.exportUserData(userId);
+    }
     async findOne(id) {
         return this.usersService.findById(id);
     }
@@ -133,6 +140,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('export-data'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "exportUserData", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)(':id'),

@@ -1064,6 +1064,23 @@ class ApiClient {
   async getNotificationStats(userId: string) {
     return this.request(`/notifications/stats?userId=${userId}`);
   }
+
+  // Analytics endpoints
+  async getRevenueChart(days: number = 7) {
+    return this.request(`/analytics/revenue/chart?days=${days}`);
+  }
+
+  async getTopSellingProductsReal(limit: number = 5) {
+    return this.request(`/analytics/products/top-selling-real?limit=${limit}`);
+  }
+
+  async getGrowthMetrics() {
+    return this.request('/analytics/growth-metrics');
+  }
+
+  async getBookingsTodayReal() {
+    return this.request('/analytics/services/bookings-today-real');
+  }
 }
 
 
