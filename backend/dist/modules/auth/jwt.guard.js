@@ -41,14 +41,16 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var JwtGuard_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JwtGuard = void 0;
 const common_1 = require("@nestjs/common");
 const jwt = __importStar(require("jsonwebtoken"));
 const config_1 = require("@nestjs/config");
-let JwtGuard = class JwtGuard {
+let JwtGuard = JwtGuard_1 = class JwtGuard {
     constructor(config) {
         this.config = config;
+        this.logger = new common_1.Logger(JwtGuard_1.name);
     }
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
@@ -71,25 +73,36 @@ let JwtGuard = class JwtGuard {
         }
         const header = req.headers['authorization'];
         if (!header || !header.startsWith('Bearer ')) {
+            this.logger.warn(`Missing or invalid authorization header for ${path}`);
             throw new common_1.UnauthorizedException('Missing bearer token');
         }
         const token = header.slice(7);
         try {
             const secret = this.config.get('JWT_ACCESS_SECRET');
             if (!secret) {
+                this.logger.error('JWT_ACCESS_SECRET is not configured');
                 throw new common_1.UnauthorizedException('JWT configuration error');
             }
             const payload = jwt.verify(token, secret);
             req.user = payload;
             return true;
         }
-        catch {
-            throw new common_1.UnauthorizedException('Invalid token');
+        catch (error) {
+            if (error instanceof jwt.TokenExpiredError) {
+                this.logger.warn(`Expired token for ${path}`);
+                throw new common_1.UnauthorizedException('Token has expired');
+            }
+            else if (error instanceof jwt.JsonWebTokenError) {
+                this.logger.warn(`Invalid token for ${path}: ${error.message}`);
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            this.logger.error(`Token verification failed for ${path}:`, error);
+            throw new common_1.UnauthorizedException('Token verification failed');
         }
     }
 };
 exports.JwtGuard = JwtGuard;
-exports.JwtGuard = JwtGuard = __decorate([
+exports.JwtGuard = JwtGuard = JwtGuard_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], JwtGuard);

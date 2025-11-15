@@ -161,6 +161,14 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true)
+      
+      // Ensure we have a valid token
+      if (!token) {
+        console.warn('No auth token available, skipping orders fetch')
+        setLoading(false)
+        return
+      }
+      
       const response = await apiClient.getOrders({
         page: currentPage,
         limit: pageSize,
@@ -171,10 +179,18 @@ export default function OrdersPage() {
       setTotalOrders(data.total)
     } catch (error) {
       console.error('Failed to fetch orders:', error)
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        // You can add a toast notification here if you have a toast system
+        console.error('Error message:', error.message)
+      }
+      // Reset state on error
+      setOrders([])
+      setTotalOrders(0)
     } finally {
       setLoading(false)
     }
-  }, [currentPage, pageSize, statusFilter])
+  }, [token, currentPage, pageSize, statusFilter])
 
   // Product interface
   interface Product {

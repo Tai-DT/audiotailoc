@@ -1,0 +1,78 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Protect some routes on the frontend. This previously used the `middleware.ts`
+// convention; Next.js 16 recommends `proxy.ts` files. The logic is unchanged.
+
+const protectedRoutes = [
+  '/profile',
+  '/orders',
+  '/wishlist',
+  '/booking-history',
+  '/payment-history',
+  '/service-orders',
+  '/customer-admin',
+]
+
+const adminRoutes = ['/admin']
+
+const authRoutes = ['/login', '/register']
+
+export function proxy(request: NextRequest) {
+  try {
+    const { pathname } = request.nextUrl
+
+    const tokenCookie = request.cookies.get('audiotailoc_token')
+    const authHeader = request.headers.get('Authorization')
+    const token = tokenCookie?.value || (authHeader ? authHeader.replace('Bearer ', '') : undefined)
+
+    const userCookie = request.cookies.get('audiotailoc_user')
+    let user: { role?: string } | null = null
+    if (userCookie?.value) {
+      try {
+        user = JSON.parse(userCookie.value)
+      } catch {
+        user = null
+      }
+    }
+
+    const isAuthenticated = !!token
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'MODERATOR'
+
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+    if (isProtectedRoute && !isAuthenticated) {
+      const url = new URL('/login', request.url)
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+
+    if (isAdminRoute && !isAuthenticated) {
+      const url = new URL('/login', request.url)
+      url.searchParams.set('redirect', pathname)
+      url.searchParams.set('requireAdmin', 'true')
+      return NextResponse.redirect(url)
+    }
+
+    if (isAdminRoute && isAuthenticated && !isAdmin) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    if (isAuthRoute && isAuthenticated) {
+      const redirectTo = request.nextUrl.searchParams.get('redirect') || '/'
+      return NextResponse.redirect(new URL(redirectTo, request.url))
+    }
+
+    return NextResponse.next()
+  } catch {
+    return NextResponse.next()
+  }
+}
+
+export const config = {
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}

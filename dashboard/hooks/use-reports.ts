@@ -44,7 +44,6 @@ export function useReports() {
       
       setReports(mockReports)
     } catch (err) {
-      console.error('Error fetching reports:', err)
       toast.error('Không thể tải danh sách báo cáo')
     } finally {
       setLoading(false)
@@ -68,7 +67,6 @@ export function useReports() {
       toast.success('Đã bắt đầu tải xuống báo cáo')
     } catch (err) {
       toast.error('Không thể tải xuống báo cáo')
-      console.error('Error downloading report:', err)
     }
   }, [reports])
 
@@ -100,7 +98,6 @@ export function useReports() {
       }, 1000)
     } catch (err) {
       toast.error('Không thể tạo báo cáo')
-      console.error('Error generating report:', err)
     } finally {
       setLoading(false)
     }
@@ -118,7 +115,6 @@ export function useReports() {
       toast.success('Đã thiết lập báo cáo định kỳ')
     } catch (err) {
       toast.error('Không thể thiết lập báo cáo định kỳ')
-      console.error('Error scheduling report:', err)
     }
   }, [])
 

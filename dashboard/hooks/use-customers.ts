@@ -97,7 +97,6 @@ export function useCustomers() {
       setStats(newStats)
       
     } catch (error) {
-      console.error('Error fetching customers:', error)
       toast.error("Không thể tải dữ liệu khách hàng")
     } finally {
       setLoading(false)
@@ -121,7 +120,6 @@ export function useCustomers() {
       
       toast.success("Đã cập nhật thông tin khách hàng")
     } catch (error) {
-      console.error('Error updating customer:', error)
       toast.error("Không thể cập nhật khách hàng")
       throw error
     }
@@ -157,7 +155,6 @@ export function useCustomers() {
       
       toast.success("Đã xóa khách hàng")
     } catch (error) {
-      console.error('Error deleting customer:', error)
       toast.error("Không thể xóa khách hàng")
       throw error
     }
@@ -193,7 +190,6 @@ export function useCustomers() {
       
       toast.success("Đã xuất danh sách khách hàng")
     } catch (error) {
-      console.error('Error exporting customers:', error)
       toast.error("Không thể xuất danh sách")
     }
   }, [customers])
@@ -207,7 +203,6 @@ export function useCustomers() {
       
       toast.success("Đã gửi email")
     } catch (error) {
-      console.error('Error sending email:', error)
       toast.error("Không thể gửi email")
     }
   }, [])
