@@ -28,7 +28,6 @@ export function useServiceTypes() {
       console.log('[useServiceTypes] GET /service-types response:', response)
       setServiceTypes(response.data || [])
     } catch (err) {
-      console.error('Error fetching service types:', err)
       setError('Không thể tải danh sách loại dịch vụ')
       toast.error('Không thể tải danh sách loại dịch vụ')
     } finally {
@@ -47,7 +46,6 @@ export function useServiceTypes() {
       const error = err as { status?: number; response?: unknown }
       const status = error?.status
       const dataResp = error?.response
-      console.error('Error creating service type:', { status, data: dataResp, raw: err })
       // normalize to axios-like error shape
       throw { response: { status, data: dataResp } }
     }
@@ -64,7 +62,6 @@ export function useServiceTypes() {
       const error = err as { status?: number; response?: unknown }
       const status = error?.status
       const dataResp = error?.response
-      console.error('Error updating service type:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }
   }
@@ -78,7 +75,6 @@ export function useServiceTypes() {
       const error = err as { status?: number; response?: unknown }
       const status = error?.status
       const dataResp = error?.response
-      console.error('Error deleting service type:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }
   }
@@ -96,7 +92,6 @@ export function useServiceTypes() {
       const error = err as { status?: number; response?: unknown }
       const status = error?.status
       const dataResp = error?.response
-      console.error('Error toggling service type status:', { status, data: dataResp, raw: err })
       throw { response: { status, data: dataResp } }
     }
   }

@@ -1,18 +1,20 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, Copy } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { toast } from "sonner"
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -21,6 +23,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Get redirect URL from query params
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
+
+  // If already authenticated, redirect
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, router, redirectTo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -28,10 +40,16 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password)
-      // Redirect will be handled by auth context
-      router.push('/dashboard')
+      // Redirect to the intended page or dashboard
+      router.push(redirectTo)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(errorMessage)
+      
+      // Show helpful hint if using wrong password format
+      if (errorMessage.includes('credentials') || errorMessage.includes('password')) {
+        setError('Invalid email or password. Please make sure you are using the correct credentials (Password is case-sensitive).');
+      }
     } finally {
       setIsLoading(false)
     }
@@ -136,9 +154,40 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p className="font-semibold mb-2">Demo credentials:</p>
-            <p className="font-mono text-xs">
-              Email: admin@audiotailoc.com<br />
-              Password: admin123
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-mono text-xs">Email: admin@audiotailoc.com</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText('admin@audiotailoc.com');
+                    toast.success('Email copied to clipboard');
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-mono text-xs">Password: Admin1234</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText('Admin1234');
+                    toast.success('Password copied to clipboard');
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+              ⚠️ Password is case-sensitive
             </p>
           </div>
         </CardContent>

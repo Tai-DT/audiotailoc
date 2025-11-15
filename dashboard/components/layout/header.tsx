@@ -10,8 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react"
+import { Search, Menu, LogOut, User, Settings } from "lucide-react"
 import { ThemeSwitcher } from "@/components/ui/theme-switcher"
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
 import { useAuth } from "@/lib/auth-context"
@@ -97,16 +98,7 @@ export function Header() {
         )}
         
         {/* Notifications */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative h-10 w-10 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200"
-        >
-          <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-          <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-medium shadow-lg">
-            3
-          </span>
-        </Button>
+        <NotificationDropdown />
 
         {/* User menu */}
         <DropdownMenu>

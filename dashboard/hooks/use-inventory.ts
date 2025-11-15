@@ -147,7 +147,6 @@ export function useInventory() {
       }
       setStats(newStats)
     } catch (error) {
-      console.error('Failed to fetch inventory:', error)
       toast.error('Không thể tải dữ liệu tồn kho')
     } finally {
       setLoading(false)
@@ -184,7 +183,6 @@ export function useInventory() {
 
       setMovements(mappedMovements)
     } catch (error) {
-      console.error("Failed to fetch movements:", error)
       toast.error('Không thể tải dữ liệu biến động kho')
     }
   }, [])
@@ -216,7 +214,6 @@ export function useInventory() {
 
       setAlerts(mappedAlerts)
     } catch (error) {
-      console.error("Failed to fetch alerts:", error)
       toast.error('Không thể tải dữ liệu cảnh báo')
     }
   }, [])
@@ -255,7 +252,6 @@ export function useInventory() {
       await fetchInventory()
       toast.success('Đã cập nhật tồn kho thành công')
     } catch (_error) {
-      console.error('Failed to update stock:', _error)
       throw new Error('Không thể cập nhật tồn kho')
     }
   }, [inventory, fetchInventory])

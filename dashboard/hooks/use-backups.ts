@@ -41,7 +41,6 @@ export function useBackups() {
       const errorMessage = 'Không thể tải danh sách backup'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error fetching backups:', err)
     } finally {
       setLoading(false)
     }
@@ -54,7 +53,7 @@ export function useBackups() {
       const responseData = response.data as { status?: BackupStatus }
       setStatus(responseData?.status || null)
     } catch (err) {
-      console.error('Error fetching backup status:', err)
+      // Silent error
     }
   }, [])
 
@@ -84,7 +83,6 @@ export function useBackups() {
       await fetchStatus()
     } catch (err) {
       toast.error('Không thể tạo backup')
-      console.error('Error creating backup:', err)
       throw err
     } finally {
       setLoading(false)
@@ -102,7 +100,6 @@ export function useBackups() {
       await fetchStatus()
     } catch (err) {
       toast.error('Không thể khôi phục backup')
-      console.error('Error restoring backup:', err)
       throw err
     } finally {
       setLoading(false)
@@ -121,7 +118,6 @@ export function useBackups() {
       await fetchStatus()
     } catch (err) {
       toast.error('Không thể xóa backup')
-      console.error('Error deleting backup:', err)
       throw err
     } finally {
       setLoading(false)
@@ -148,7 +144,6 @@ export function useBackups() {
       }
     } catch (err) {
       toast.error('Không thể tải xuống backup')
-      console.error('Error downloading backup:', err)
       throw err
     } finally {
       setLoading(false)
@@ -165,7 +160,6 @@ export function useBackups() {
       await fetchStatus()
     } catch (err) {
       toast.error('Không thể khôi phục theo thời điểm')
-      console.error('Error with point-in-time restore:', err)
       throw err
     } finally {
       setLoading(false)
@@ -185,8 +179,7 @@ export function useBackups() {
       await fetchBackups()
       await fetchStatus()
     } catch (err) {
-      toast.error('Không thể dọn dẹp backup cũ')
-      console.error('Error cleaning up backups:', err)
+      toast.error('Không thể dọc dẹp backup cũ')
       throw err
     } finally {
       setLoading(false)

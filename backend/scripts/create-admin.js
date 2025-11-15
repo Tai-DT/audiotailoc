@@ -10,6 +10,7 @@ try {
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const prisma = new PrismaClient();
 
@@ -19,7 +20,7 @@ async function createAdmin() {
     const adminPassword = 'Admin1234';
     
     // Check if admin already exists
-    const existingAdmin = await prisma.user.findUnique({
+    const existingAdmin = await prisma.users.findUnique({
       where: { email: adminEmail }
     });
     
@@ -27,7 +28,7 @@ async function createAdmin() {
       console.log('✅ Admin user already exists:', adminEmail);
       
       // Update to ensure ADMIN role
-      await prisma.user.update({
+      await prisma.users.update({
         where: { email: adminEmail },
         data: { role: 'ADMIN' }
       });
@@ -38,13 +39,19 @@ async function createAdmin() {
     // Hash password
     const hashedPassword = await bcrypt.hash(adminPassword, 12);
     
+    // Generate UUID for the user
+    const userId = crypto.randomUUID();
+    const now = new Date();
+    
     // Create admin user
-    const admin = await prisma.user.create({
+    const admin = await prisma.users.create({
       data: {
+        id: userId,
         email: adminEmail,
         password: hashedPassword,
         name: 'Admin User',
-        role: 'ADMIN'
+        role: 'ADMIN',
+        updatedAt: now
       }
     });
     

@@ -181,7 +181,6 @@ export function useCustomers() {
         setCustomers(mockCustomers)
       }
     } catch (error) {
-      console.error("Customer fetch error:", error)
       setCustomers(mockCustomers)
       toast.error("Đang sử dụng dữ liệu mẫu")
     } finally {
@@ -243,7 +242,6 @@ export function useCustomers() {
       setCustomers(prev => prev.filter(c => c.id !== id))
       
       if (!response.ok) {
-        console.error("Failed to delete customer from API")
       }
     } catch {
       toast.error("Không thể xóa khách hàng")

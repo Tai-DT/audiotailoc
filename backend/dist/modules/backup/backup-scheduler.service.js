@@ -42,7 +42,9 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             this.startAllSchedules();
         }
         else {
-            this.logger.warn('Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.');
+            if (process.env.NODE_ENV !== 'test') {
+                this.logger.warn('Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.');
+            }
         }
     }
     async onModuleDestroy() {
@@ -199,7 +201,9 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
     createCronJob(schedule) {
         try {
             if (!isCronAvailable || !CronJobCtor) {
-                this.logger.warn(`Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`);
+                if (process.env.NODE_ENV !== 'test') {
+                    this.logger.warn(`Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`);
+                }
                 schedule.status = "inactive";
                 schedule.errorMessage = "cron package not available";
                 return;
