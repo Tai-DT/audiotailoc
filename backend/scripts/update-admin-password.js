@@ -13,7 +13,7 @@ async function updateAdminPassword() {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update admin password
-    const updatedAdmin = await prisma.user.update({
+    const updatedAdmin = await prisma.users.update({
       where: { email: adminEmail },
       data: {
         password: hashedPassword,

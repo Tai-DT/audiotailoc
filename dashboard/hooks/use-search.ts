@@ -52,7 +52,7 @@ export function useSearch() {
     try {
       await apiClient.post('/search/analytics', { query, resultCount })
     } catch (err) {
-      console.error('Error tracking search:', err)
+      // Silent error
     }
   }, [])
 
@@ -61,31 +61,20 @@ export function useSearch() {
       setLoading(true)
       setError(null)
       
-      // Mock data for now - replace with actual API call
-      const mockResults: SearchResult[] = [
-        {
-          id: '1',
-          type: 'product',
-          title: 'Loa JBL EON615',
-          description: 'Loa chuyên nghiệp công suất 1000W',
-          price: 15000000,
-          score: 0.95
-        },
-        {
-          id: '2',
-          type: 'service',
-          title: 'Lắp đặt hệ thống âm thanh',
-          description: 'Dịch vụ lắp đặt âm thanh chuyên nghiệp',
-          price: 5000000,
-          score: 0.88
-        }
-      ]
-
-      // Filter by type
-      let filtered = mockResults
-      if (type !== 'all') {
-        filtered = mockResults.filter(r => r.type === type)
-      }
+      // Call backend search API
+      const response = await apiClient.request(`/api/v1/search?q=${encodeURIComponent(query)}&type=${type}`)
+      const results = response.data?.results || []
+      
+      // Transform backend results to match SearchResult interface
+      const filtered: SearchResult[] = results.map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        title: item.name || item.title,
+        description: item.description || '',
+        price: item.price,
+        score: item.score,
+        metadata: item
+      }))
 
       setSearchResults({
         all: filtered,
@@ -111,7 +100,6 @@ export function useSearch() {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error searching:', err)
     } finally {
       setLoading(false)
     }
@@ -120,32 +108,32 @@ export function useSearch() {
   // Fetch search history
   const fetchHistory = useCallback(async () => {
     try {
-      // Mock data - replace with actual API call
-      const mockHistory: SearchHistory[] = [
-        { id: '1', query: 'loa JBL', timestamp: '2025-09-08T10:30:00Z', resultCount: 12 },
-        { id: '2', query: 'micro', timestamp: '2025-09-08T09:15:00Z', resultCount: 8 },
-        { id: '3', query: 'dịch vụ lắp đặt', timestamp: '2025-09-08T08:45:00Z', resultCount: 5 }
-      ]
-      setSearchHistory(mockHistory)
+      // TODO: Backend API for search history not implemented yet
+      // Keep search history in local state only for now
+      setSearchHistory([])
     } catch (err) {
-      console.error('Error fetching search history:', err)
+      // Silent error handling
     }
   }, [])
 
   // Fetch popular searches
   const fetchPopular = useCallback(async () => {
     try {
-      // Mock data - replace with actual API call
-      const mockPopular: PopularSearch[] = [
-        { id: '1', query: 'loa karaoke', count: 245 },
-        { id: '2', query: 'micro không dây', count: 189 },
-        { id: '3', query: 'mixer', count: 156 },
-        { id: '4', query: 'sửa chữa loa', count: 134 },
-        { id: '5', query: 'amply', count: 112 }
-      ]
-      setPopularSearches(mockPopular)
+      // Call backend API for popular searches
+      const response = await apiClient.request('/api/v1/search/popular?limit=10')
+      const popular = response.data || []
+      
+      // Transform to match PopularSearch interface
+      const transformed: PopularSearch[] = popular.map((item: any, index: number) => ({
+        id: item.id || index.toString(),
+        query: item.query,
+        count: item.count || 0
+      }))
+      
+      setPopularSearches(transformed)
     } catch (err) {
-      console.error('Error fetching popular searches:', err)
+      // Silent error - fallback to empty array
+      setPopularSearches([])
     }
   }, [])
 
@@ -158,10 +146,17 @@ export function useSearch() {
   // Get search suggestions
   const getSuggestions = useCallback(async (query: string) => {
     try {
-      const response = await apiClient.get(`/search/suggestions?q=${encodeURIComponent(query)}`)
-      return response.data || []
+      if (!query || query.trim().length < 2) {
+        return []
+      }
+      
+      // Call backend API for search suggestions
+      const response = await apiClient.request(`/api/v1/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+      const suggestions = response.data || []
+      
+      // Return array of suggestion strings
+      return suggestions.map((item: any) => item.query || item)
     } catch (err) {
-      console.error('Error getting suggestions:', err)
       return []
     }
   }, [])
@@ -197,7 +192,6 @@ export function useSearch() {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error searching:', err)
     } finally {
       setLoading(false)
     }

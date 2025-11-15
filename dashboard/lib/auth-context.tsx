@@ -75,6 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     clearStoredTokens()
     apiClient.clearToken()
+    
+    // Redirect to login if we're in the browser
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      // Only redirect if we're on a protected route
+      if (currentPath.startsWith('/dashboard')) {
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }
+    }
   }, [])
 
   const refreshToken = useCallback(async () => {
@@ -234,8 +243,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Set up global 401 handler
+    apiClient.setUnauthorizedHandler(() => {
+      console.warn('Unauthorized request detected - logging out')
+      logout()
+    })
+
     initAuth()
-  }, [])
+  }, [logout])
 
   // Auto refresh token before expiration
   useEffect(() => {

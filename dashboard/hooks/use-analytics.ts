@@ -85,7 +85,6 @@ export function useAnalytics() {
       const errorMessage = 'Không thể tải dữ liệu tổng quan'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error fetching overview:', err)
     } finally {
       setLoading(false)
     }
@@ -100,7 +99,6 @@ export function useAnalytics() {
         setTrends(response.data as AnalyticsTrend[])
       }
     } catch (err) {
-      console.error('Error fetching trends:', err)
       toast.error('Không thể tải dữ liệu xu hướng')
     }
   }, [])
@@ -114,7 +112,6 @@ export function useAnalytics() {
         setTopServices(response.data as TopService[])
       }
     } catch (err) {
-      console.error('Error fetching top services:', err)
       toast.error('Không thể tải dữ liệu dịch vụ')
     }
   }, [])
@@ -128,7 +125,6 @@ export function useAnalytics() {
         setTopProducts(response.data as TopProduct[])
       }
     } catch (err) {
-      console.error('Error fetching top products:', err)
       toast.error('Không thể tải dữ liệu sản phẩm')
     }
   }, [])
@@ -142,7 +138,6 @@ export function useAnalytics() {
         setUserActivity(response.data as UserActivity)
       }
     } catch (err) {
-      console.error('Error fetching user activity:', err)
       toast.error('Không thể tải dữ liệu hoạt động người dùng')
     }
   }, [])

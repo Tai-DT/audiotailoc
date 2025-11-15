@@ -9,7 +9,8 @@ export class AdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.users;
+    // Fix: should be request.user (singular) not request.users (plural)
+    const user = request.user || request.users;
 
     this.logger.debug(`AdminGuard: Checking user=${user?.email}, role=${user?.role}`);
 

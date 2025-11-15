@@ -20,7 +20,7 @@ let AdminGuard = AdminGuard_1 = class AdminGuard {
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
-        const user = request.users;
+        const user = request.user || request.users;
         this.logger.debug(`AdminGuard: Checking user=${user?.email}, role=${user?.role}`);
         if (!user) {
             this.logger.debug('AdminGuard: No user in request');
