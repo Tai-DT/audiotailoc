@@ -116,9 +116,14 @@ export interface UpdateProductData {
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
+  private onUnauthorized: (() => void) | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+  }
+
+  setUnauthorizedHandler(handler: () => void) {
+    this.onUnauthorized = handler;
   }
 
   setToken(token: string) {
@@ -139,11 +144,11 @@ class ApiClient {
     }
 
     // Add admin API key for backend authentication
-    const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY;
+    // Try both server and client side env vars
+    const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY;
     if (adminKey) {
       headers['X-Admin-Key'] = adminKey;
-      console.log('🔑 Admin API Key added to headers');
-    } else {
+    } else if (typeof window !== 'undefined') {
       console.warn('⚠️ ADMIN_API_KEY not found in environment variables');
     }
 
@@ -174,8 +179,7 @@ class ApiClient {
       try {
         data = responseText ? JSON.parse(responseText) : {};
       } catch {
-        console.error('Failed to parse response as JSON. Response text:', responseText);
-        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
+        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
       }
 
       if (!response.ok) {
@@ -183,25 +187,39 @@ class ApiClient {
         let errorMessage = data?.message as string || `Request failed with status ${response.status}`;
 
         if (response.status === 401) {
-          errorMessage = 'Unauthorized: Please login again';
+          // Check if this is a login attempt
+          if (endpoint.includes('/auth/login')) {
+            errorMessage = data?.message as string || 'Invalid email or password. Please check your credentials and try again.';
+          } else {
+            // Use backend's specific error message for better UX
+            const backendMessage = data?.message as string || '';
+            if (backendMessage.toLowerCase().includes('expired')) {
+              errorMessage = 'Your session has expired. Please login again.';
+            } else if (backendMessage.toLowerCase().includes('invalid')) {
+              errorMessage = 'Invalid authentication token. Please login again.';
+            } else {
+              errorMessage = backendMessage || 'Unauthorized: Your session has expired. Please login again';
+            }
+          }
+          // Clear tokens on 401
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+          // Trigger unauthorized handler if set (but not for login failures)
+          if (this.onUnauthorized && !endpoint.includes('/auth/login')) {
+            this.onUnauthorized();
+          }
         } else if (response.status === 403) {
-          errorMessage = 'Forbidden: You do not have permission to access this resource';
+          errorMessage = 'Access Denied: You do not have permission to access this resource. Please check your credentials.';
         } else if (response.status === 404) {
           errorMessage = 'Not Found: The requested resource does not exist';
         } else if (response.status === 429) {
           errorMessage = data?.message as string || 'Too many requests. Please wait a moment and try again.';
         } else if (response.status >= 500) {
           errorMessage = 'Server Error: Please try again later';
-        }
-
-        // Minimal logging - only in development and only once per error type
-        if (process.env.NODE_ENV === 'development' && response.status >= 500) {
-          // Only log unique endpoint+status combinations
-          const errorKey = `${endpoint}-${response.status}`;
-          if (!sessionStorage.getItem(errorKey)) {
-            console.warn(`API: ${endpoint} returned ${response.status}`);
-            sessionStorage.setItem(errorKey, 'logged');
-          }
         }
 
         const error = new Error(errorMessage) as ApiError;
@@ -212,15 +230,7 @@ class ApiClient {
 
       return data as unknown as ApiResponse<T>;
     } catch (error) {
-      // Only log unexpected errors in development (exclude auth, rate limit, not found)
-      if (process.env.NODE_ENV === 'development' && error instanceof Error) {
-        const isExpectedError = error.message.includes('Unauthorized') || 
-                               error.message.includes('Too many requests') ||
-                               error.message.includes('Not Found');
-        if (!isExpectedError) {
-          console.warn('API Request failed:', endpoint, '|', error.message);
-        }
-      }
+      // Silent error handling - errors are thrown to be caught by UI components
       throw error;
     }
   }
@@ -783,6 +793,9 @@ class ApiClient {
 
   // Auth endpoints
   async login(credentials: { email: string; password: string }) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔐 Attempting login for:', credentials.email);
+    }
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
@@ -1026,6 +1039,19 @@ class ApiClient {
     if (params?.limit) query.append('limit', params.limit.toString());
 
     return this.request(`/notifications?${query.toString()}`);
+  }
+
+  async createNotification(data: {
+    title: string;
+    message: string;
+    type: string;
+    target: string;
+    channels: string[];
+  }) {
+    return this.request('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async getNotificationSettings(userId?: string) {

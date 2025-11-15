@@ -15,7 +15,7 @@ async function createSampleOrders() {
     }
 
     // Get existing user
-    const user = await prisma.user.findFirst();
+    const user = await prisma.users.findFirst();
     if (!user) {
       console.log('No users found. Please create a user first.');
       return;

@@ -44,7 +44,6 @@ export function usePayments() {
       const errorMessage = 'Không thể tải danh sách thanh toán'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error fetching payments:', err)
     } finally {
       setLoading(false)
     }
@@ -56,7 +55,7 @@ export function usePayments() {
       const response = await apiClient.get('/payments/stats')
       setStats(response.data as PaymentStats)
     } catch (err) {
-      console.error('Error fetching payment stats:', err)
+      // Silent error
     }
   }, [])
 
@@ -72,7 +71,6 @@ export function usePayments() {
       return response.data
     } catch (err) {
       toast.error('Không thể tạo intent thanh toán')
-      console.error('Error creating payment intent:', err)
       throw err
     }
   }, [])
@@ -92,7 +90,6 @@ export function usePayments() {
       await fetchStats()
     } catch (err) {
       toast.error('Không thể xử lý hoàn tiền')
-      console.error('Error processing refund:', err)
       throw err
     } finally {
       setLoading(false)
@@ -105,7 +102,6 @@ export function usePayments() {
       const response = await apiClient.get('/payments/methods')
       return response.data
     } catch (err) {
-      console.error('Error fetching payment methods:', err)
       return { methods: [] }
     }
   }, [])
@@ -116,7 +112,6 @@ export function usePayments() {
       const response = await apiClient.get('/payments/status')
       return response.data
     } catch (err) {
-      console.error('Error fetching payment status:', err)
       return { status: 'unknown' }
     }
   }, [])

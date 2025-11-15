@@ -114,7 +114,6 @@ export function useReviews() {
       const errorMessage = 'Không thể tải danh sách đánh giá'
       setError(errorMessage)
       toast.error(errorMessage)
-      console.error('Error fetching reviews:', err)
     } finally {
       setLoading(false)
     }
@@ -133,7 +132,6 @@ export function useReviews() {
       ))
     } catch (err) {
       toast.error('Không thể duyệt đánh giá')
-      console.error('Error approving review:', err)
       throw err
     } finally {
       setLoading(false)
@@ -153,7 +151,6 @@ export function useReviews() {
       ))
     } catch (err) {
       toast.error('Không thể từ chối đánh giá')
-      console.error('Error rejecting review:', err)
       throw err
     } finally {
       setLoading(false)
@@ -173,7 +170,6 @@ export function useReviews() {
       ))
     } catch (err) {
       toast.error('Không thể phản hồi đánh giá')
-      console.error('Error responding to review:', err)
       throw err
     } finally {
       setLoading(false)
@@ -191,7 +187,6 @@ export function useReviews() {
       setReviews(prev => prev.filter(review => review.id !== reviewId))
     } catch (err) {
       toast.error('Không thể xóa đánh giá')
-      console.error('Error deleting review:', err)
       throw err
     } finally {
       setLoading(false)
@@ -210,7 +205,7 @@ export function useReviews() {
           : review
       ))
     } catch (err) {
-      console.error('Error marking review as helpful:', err)
+      // Silent error
     }
   }, [])
 
@@ -228,7 +223,6 @@ export function useReviews() {
       ))
     } catch (err) {
       toast.error('Không thể báo cáo đánh giá')
-      console.error('Error reporting review:', err)
     }
   }, [])
 

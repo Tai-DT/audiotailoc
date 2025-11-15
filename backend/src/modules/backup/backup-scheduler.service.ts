@@ -59,12 +59,17 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     // Initialize backup schedules (will work without cron for manual backups)
     await this.initializeDefaultSchedules();
 
+    // If cron is available, start schedules. In test environment we don't
+    // want to log warnings about missing optional packages, so guard logs
+    // when NODE_ENV === 'test'.
     if (isCronAvailable) {
       this.startAllSchedules();
     } else {
-      this.logger.warn(
-        'Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.',
-      );
+      if (process.env.NODE_ENV !== 'test') {
+        this.logger.warn(
+          'Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.',
+        );
+      }
     }
   }
 
@@ -280,9 +285,13 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
   private createCronJob(schedule: BackupSchedule) {
     try {
       if (!isCronAvailable || !CronJobCtor) {
-        this.logger.warn(
-          `Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`,
-        );
+        // Avoid noisy warnings during unit tests. Tests can still inspect
+        // schedule creation without cron by checking schedule.status, etc.
+        if (process.env.NODE_ENV !== 'test') {
+          this.logger.warn(
+            `Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`,
+          );
+        }
         schedule.status = "inactive";
         schedule.errorMessage = "cron package not available";
         return;

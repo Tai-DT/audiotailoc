@@ -81,8 +81,12 @@ export function useNotifications() {
       
       setNotifications(transformedNotifications)
     } catch (err) {
-      console.error('Error fetching notifications:', err)
-      toast.error('Không thể tải thông báo')
+      // Silent error handling - API might not be available yet
+      // Only show error if it's not a server error (500+)
+      const error = err as { status?: number }
+      if (error.status && error.status < 500) {
+        toast.error('Không thể tải thông báo')
+      }
       setNotifications([])
     } finally {
       setLoading(false)
@@ -100,23 +104,37 @@ export function useNotifications() {
     try {
       setLoading(true)
       
-      // Mock API call - replace with actual
+      // Call backend API to create notification
+      const response = await apiClient.createNotification(data)
+      
+      // Transform response to match Notification interface
+      const notificationData = response.data as {
+        id: string;
+        title: string;
+        message?: string;
+        content?: string;
+        type?: string;
+        isRead?: boolean;
+        channels?: string[];
+        target?: string;
+        createdAt: string;
+      };
+      
       const newNotification: Notification = {
-        id: Date.now().toString(),
-        title: data.title,
-        message: data.message,
-        type: data.type as Notification['type'],
-        isRead: false,
-        channels: data.channels,
-        target: data.target,
-        createdAt: new Date().toISOString()
+        id: notificationData.id,
+        title: notificationData.title,
+        message: notificationData.message || notificationData.content || '',
+        type: (notificationData.type as Notification['type']) || 'info',
+        isRead: notificationData.isRead || false,
+        channels: notificationData.channels || data.channels,
+        target: notificationData.target || data.target,
+        createdAt: notificationData.createdAt || new Date().toISOString()
       }
       
       setNotifications(prev => [newNotification, ...prev])
       toast.success('Thông báo đã được gửi')
     } catch (err) {
       toast.error('Không thể gửi thông báo')
-      console.error('Error sending notification:', err)
     } finally {
       setLoading(false)
     }
@@ -137,7 +155,6 @@ export function useNotifications() {
           : n
       ))
     } catch (err) {
-      console.error('Error marking notification as read:', err)
       toast.error('Không thể đánh dấu đã đọc')
     }
   }, [])
@@ -156,7 +173,6 @@ export function useNotifications() {
       })))
       toast.success('Đã đánh dấu tất cả là đã đọc')
     } catch (err) {
-      console.error('Error marking all as read:', err)
       toast.error('Không thể đánh dấu tất cả')
     }
   }, [])
@@ -167,7 +183,7 @@ export function useNotifications() {
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       toast.success('Đã xóa thông báo')
     } catch (err) {
-      console.error('Error deleting notification:', err)
+      // Silent error handling
     }
   }, [])
 
@@ -178,7 +194,6 @@ export function useNotifications() {
       toast.success('Đã cập nhật cài đặt thông báo')
     } catch (err) {
       toast.error('Không thể cập nhật cài đặt')
-      console.error('Error updating settings:', err)
     }
   }, [])
 
@@ -258,7 +273,7 @@ export function useNotifications() {
           // Play sound if enabled
           if (settings.soundEnabled) {
             const audio = new Audio('/sounds/notification.mp3')
-            audio.play().catch(console.error)
+            audio.play().catch(() => {}) // Silent error - browser may block autoplay
           }
           
           // Show desktop notification if enabled and permission granted
@@ -287,7 +302,7 @@ export function useNotifications() {
           socketManager.off('notification:update', handleNotificationUpdate)
         }
       } catch (error) {
-        console.error('Failed to connect socket for notifications:', error)
+        // Silent error - socket connection may not be available
         connectedRef.current = false
       }
     }

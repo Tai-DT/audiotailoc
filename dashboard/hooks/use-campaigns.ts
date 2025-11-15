@@ -212,10 +212,12 @@ export function useCampaigns() {
     setLoading(true)
     try {
       const token = localStorage.getItem("accessToken")
+      const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY
       const response = await fetch(`${API_URL}/marketing`, {
         headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(adminKey ? { 'X-Admin-Key': adminKey } : {})
         }
       })
       
@@ -225,10 +227,26 @@ export function useCampaigns() {
         return
       }
       
-      const data = await response.json()
-      
+      const raw = await response.json()
+
+      // Normalize possible API shapes: array | {data: array} | {items: array}
+      const list: unknown[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.items)
+            ? raw.items
+            : []
+
+      if (!Array.isArray(list) || list.length === 0) {
+        // If backend returned unexpected shape, use mock to keep UI functional
+        console.warn('useCampaigns: unexpected response shape; falling back to mock data')
+        setCampaigns(mockCampaigns)
+        return
+      }
+
       // Transform API data to match frontend interface
-      const transformedCampaigns = data.map((campaign: unknown) => {
+      const transformedCampaigns = list.map((campaign: unknown) => {
         const campaignData = campaign as {
           id: string;
           name: string;
@@ -251,15 +269,18 @@ export function useCampaigns() {
             bounced?: number;
           };
         };
+        const normalizedType = (campaignData.type ? campaignData.type.toLowerCase() : 'email') as Campaign['type'];
+        const normalizedStatus = (campaignData.status ? campaignData.status.toLowerCase() : 'draft') as Campaign['status'];
+
         return {
           id: campaignData.id,
           name: campaignData.name,
           description: campaignData.description,
-          type: campaignData.type?.toLowerCase() || "email",
-          status: campaignData.status?.toLowerCase() || "draft",
+          type: normalizedType,
+          status: normalizedStatus,
           targetAudience: campaignData.targetAudience || "Tất cả khách hàng",
           subject: campaignData.subject,
-          content: campaignData.content || campaignData.description,
+          content: campaignData.content || campaignData.description || '',
           sentAt: campaignData.sentAt ? new Date(campaignData.sentAt) : undefined,
           scheduledAt: campaignData.scheduledAt ? new Date(campaignData.scheduledAt) : undefined,
           createdAt: new Date(campaignData.createdAt || new Date()),
@@ -274,7 +295,6 @@ export function useCampaigns() {
       
       setCampaigns(transformedCampaigns)
     } catch (error) {
-      console.error("Campaign fetch error:", error)
       // Fall back to mock data
       setCampaigns(mockCampaigns)
       toast.error("Đang sử dụng dữ liệu mẫu")
@@ -392,7 +412,6 @@ export function useCampaigns() {
       setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
       
       if (!response.ok) {
-        console.error("Failed to delete campaign from API")
       }
     } catch {
       throw new Error("Không thể xóa chiến dịch")

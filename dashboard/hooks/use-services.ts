@@ -34,7 +34,6 @@ export function useServices() {
       }));
       setTypes(transformedTypes);
     } catch (err) {
-      console.error('Error fetching services data:', err);
       setError('Failed to load services. Please try again later.');
       toast.error('Failed to load services');
     } finally {
@@ -50,7 +49,6 @@ export function useServices() {
       toast.success('Tạo dịch vụ thành công');
       return newService;
     } catch (error) {
-      console.error('Error creating service:', error);
       toast.error('Không thể tạo dịch vụ');
       throw error;
     }
@@ -68,7 +66,6 @@ export function useServices() {
       toast.success('Cập nhật dịch vụ thành công');
       return updatedService;
     } catch (error) {
-      console.error('Error updating service:', error);
       toast.error('Không thể cập nhật dịch vụ');
       throw error;
     }
@@ -80,7 +77,6 @@ export function useServices() {
       setServices(prev => prev.filter(service => service.id !== id));
       toast.success('Service deleted successfully');
     } catch (error) {
-      console.error('Error deleting service:', error);
       toast.error('Failed to delete service');
       throw error;
     }
@@ -91,7 +87,6 @@ export function useServices() {
       await updateService(id, { isActive: !isActive });
       toast.success(`Service ${isActive ? 'deactivated' : 'activated'} successfully`);
     } catch (error) {
-      console.error('Error toggling service status:', error);
       throw error;
     }
   };

@@ -11,7 +11,7 @@ async function checkDatabaseStats() {
   try {
     // Count all tables
     const counts = {
-      users: await prisma.user.count(),
+      users: await prisma.users.count(),
       products: await prisma.product.count(),
       categories: await prisma.category.count(),
       orders: await prisma.order.count(),
