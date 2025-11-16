@@ -120,7 +120,7 @@ let CatalogController = class CatalogController {
 exports.CatalogController = CatalogController;
 __decorate([
     (0, common_1.Get)('products'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -210,7 +210,7 @@ __decorate([
 ], CatalogController.prototype, "deleteCategory", null);
 __decorate([
     (0, common_1.Get)('products/search'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Query)('q')),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
@@ -219,7 +219,7 @@ __decorate([
 ], CatalogController.prototype, "searchProducts", null);
 __decorate([
     (0, common_1.Get)('products/:id'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -227,7 +227,7 @@ __decorate([
 ], CatalogController.prototype, "get", null);
 __decorate([
     (0, common_1.Get)('products/slug/:slug'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -286,7 +286,7 @@ __decorate([
 ], CatalogController.prototype, "removeMany", null);
 __decorate([
     (0, common_1.Get)('products/analytics/top-viewed'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -294,7 +294,7 @@ __decorate([
 ], CatalogController.prototype, "getTopViewedProducts", null);
 __decorate([
     (0, common_1.Get)('products/analytics/recent'),
-    (0, common_1.UseGuards)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
