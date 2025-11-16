@@ -11,15 +11,14 @@ import {
   QueryPatterns,
   TransactionManager,
   DatabaseHealthCheck,
-  getPrismaClient,
-} from '@common/database';
+} from './database/query-patterns';
 
 import {
   CacheManager,
   CacheInvalidation,
   CacheKeyBuilder,
   CACHE_PRESETS,
-} from '@common/cache';
+} from './cache/cache-manager';
 
 /**
  * Example 1: Product Service with Full Optimization
@@ -60,10 +59,10 @@ export class OptimizedProductService {
             id: true,
             name: true,
             slug: true,
-            price: true,
+            priceCents: true,
             imageUrl: true,
             description: true,
-            reviews: { take: 5, orderBy: { createdAt: 'desc' } },
+            product_reviews: { take: 5, orderBy: { createdAt: 'desc' } },
           },
         }),
       { ttl: 3600000, tags: ['products'] }
@@ -80,7 +79,7 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.paginate(
-          this.prisma.product,
+          this.prisma.products,
           {
             page,
             pageSize: 20,
@@ -88,7 +87,7 @@ export class OptimizedProductService {
               id: true,
               name: true,
               slug: true,
-              price: true,
+              priceCents: true,
               imageUrl: true,
             },
           },
@@ -108,11 +107,11 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.search(
-          this.prisma.product,
+          this.prisma.products,
           query,
           ['name', 'description', 'tags'],
           { isActive: true },
-          limit: 20
+          { take: 20 }
         ),
       { ttl: 600000, tags: ['search'] }
     );
@@ -128,7 +127,7 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.getPopular(
-          this.prisma.product,
+          this.prisma.products,
           10,
           'viewCount',
           { featured: true, isActive: true }
@@ -185,9 +184,9 @@ export class OptimizedProductService {
     // Execute in transaction
     await this.transactionManager.execute(async (tx) => {
       await this.queryPatterns.bulkUpdate(
-        tx.product,
+        tx.products,
         updateData,
-        batchSize: 100
+        { take: 100 }
       );
     });
 
@@ -327,7 +326,7 @@ export class OptimizedOrderService {
         for (const item of items) {
           const product = await tx.products.findUnique({
             where: { id: item.productId },
-            select: { id: true, price: true, stockQuantity: true },
+            select: { id: true, priceCents: true, stockQuantity: true },
           });
 
           if (!product) {
@@ -344,7 +343,7 @@ export class OptimizedOrderService {
               orderId: order.id,
               productId: item.productId,
               quantity: item.quantity,
-              price: product.price,
+              price: product.priceCents,
             },
           });
 
@@ -354,7 +353,7 @@ export class OptimizedOrderService {
             data: { stock: { decrement: item.quantity } },
           });
 
-          total += Number(product.price) * item.quantity;
+          total += Number(product.priceCents) * item.quantity;
         }
 
         // Update order total
@@ -386,7 +385,7 @@ export class OptimizedOrderService {
       () =>
         this.prisma.orders.findMany({
           where: { userId },
-          include: { items: true },
+          include: { order_items: true },
           orderBy: { createdAt: 'desc' },
           take: 50,
         }),
@@ -565,7 +564,7 @@ export class OptimizedServiceBookingService {
       () =>
         this.prisma.service_bookings.findMany({
           where: { userId },
-          include: { service: true, technician: true },
+          include: { services: true, technicians: true },
           orderBy: { scheduledAt: 'desc' },
         }),
       { ttl: 1800000, tags: [`user:${userId}:bookings`] }

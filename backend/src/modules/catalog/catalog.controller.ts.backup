@@ -24,7 +24,7 @@ export class CatalogController {
   constructor(private readonly catalog: CatalogService /* , private readonly searchService: SearchService */) {}
 
   @Get('products')
-  @UseGuards(JwtGuard) // Re-enable authentication
+  @UseGuards() // Temporarily remove authentication for testing
   list(@Query() query: any) {
     const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search } = query;
     return this.catalog.listProducts({
@@ -136,7 +136,7 @@ export class CatalogController {
   }
 
   @Get('products/search')
-  @UseGuards(JwtGuard)
+  @UseGuards()
   searchProducts(@Query('q') q: string, @Query('limit') limit?: number) {
     const limitNum = Math.min(parseInt(limit?.toString() || '20'), 50);
     return this.catalog.listProducts({
@@ -149,13 +149,13 @@ export class CatalogController {
   }
 
   @Get('products/:id')
-  @UseGuards(JwtGuard) // Re-enable authentication
+  @UseGuards() // Temporarily remove authentication for testing
   get(@Param('id') id: string) {
     return this.catalog.getById(id);
   }
 
   @Get('products/slug/:slug')
-  @UseGuards(JwtGuard) // Re-enable authentication
+  @UseGuards() // Temporarily remove authentication for testing
   getBySlug(@Param('slug') slug: string) {
     return this.catalog.getBySlug(slug);
   }
@@ -208,7 +208,7 @@ export class CatalogController {
 
   // Analytics endpoints (public access for frontend)
   @Get('products/analytics/top-viewed')
-  @UseGuards(JwtGuard) // Re-enable authentication for analytics
+  @UseGuards() // Remove authentication for public access
   async getTopViewedProducts(@Query('limit') limit?: number) {
     const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
     return this.catalog.listProducts({
@@ -221,7 +221,7 @@ export class CatalogController {
   }
 
   @Get('products/analytics/recent')
-  @UseGuards(JwtGuard) // Re-enable authentication for analytics
+  @UseGuards() // Remove authentication for public access
   async getRecentProducts(@Query('limit') limit?: number) {
     const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
     return this.catalog.listProducts({
