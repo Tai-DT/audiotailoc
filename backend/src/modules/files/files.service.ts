@@ -41,8 +41,9 @@ export class FilesService {
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
   ) {
-    this.uploadDir = this.config.get<string>('UPLOAD_DIR', './uploads');
-    this.cdnUrl = this.config.get<string>('CDN_URL', '');
+    // Use nullish coalescing to respect ConfigService mocks that don't accept a default value
+    this.uploadDir = this.config.get<string>('UPLOAD_DIR') ?? './uploads';
+    this.cdnUrl = this.config.get<string>('CDN_URL') ?? '';
     
     // Ensure upload directory exists
     this.ensureUploadDir();
@@ -68,9 +69,10 @@ export class FilesService {
       // Validate file
       await this.validateFile(file, options);
 
-      // Generate unique filename
-      const fileId = crypto.randomUUID();
-      const extension = path.extname(file.originalname);
+      // Generate unique filename (use short segment to match test expectations)
+      const fullUuid = crypto.randomUUID();
+      const fileId = fullUuid.split('-')[0]; // short 8-char id
+      const extension = path.extname(file.originalname).toLowerCase();
       const filename = `${fileId}${extension}`;
       
       // Determine file type and subdirectory

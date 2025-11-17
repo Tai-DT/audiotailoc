@@ -17,12 +17,12 @@ export class PaymentsService {
     const order = await this.prisma.orders.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
     const intent = await this.prisma.payment_intents.create({
-      data: { 
+      data: {
         id: randomUUID(),
-        orderId: order.id, 
-        provider: params.provider, 
-        amountCents: order.totalCents, 
-        status: 'PENDING', 
+        orderId: order.id,
+        provider: params.provider,
+        amountCents: order.totalCents,
+        status: 'PENDING',
         returnUrl: params.returnUrl ?? null,
         updatedAt: new Date()
       },
@@ -31,23 +31,31 @@ export class PaymentsService {
     if (params.provider === 'COD') {
       await this.prisma.orders.update({
         where: { id: order.id },
-        data: { 
+        data: {
           status: 'CONFIRMED'
         }
       });
       // Update payment intent to mark COD
       await this.prisma.payment_intents.update({
         where: { id: intent.id },
-        data: { 
+        data: {
           status: 'PENDING',
           metadata: JSON.stringify({ paymentMethod: 'COD' })
         }
       });
-      return { intentId: intent.id, redirectUrl: null, paymentMethod: 'COD' };
+      return {
+        intentId: intent.id,
+        redirectUrl: null,
+        paymentMethod: 'COD'
+      };
     }
-    
+
     const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider as 'PAYOS' }, order);
-    return { intentId: intent.id, redirectUrl };
+    return {
+      intentId: intent.id,
+      redirectUrl,
+      paymentMethod: params.provider
+    };
   }
 
   private async buildRedirectUrl(

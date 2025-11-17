@@ -18,6 +18,20 @@ export class CheckoutService {
     const total = Math.max(0, subtotalCents - discount) + shipping;
 
     const orderNo = 'ATL' + Date.now();
+
+    // Format shipping address - lưu đầy đủ thông tin từ frontend
+    const shippingAddressData = params.shippingAddress
+      ? JSON.stringify({
+          fullName: params.shippingAddress.fullName,
+          phone: params.shippingAddress.phone,
+          email: params.shippingAddress.email,
+          address: params.shippingAddress.address,
+          notes: params.shippingAddress.notes || null,
+          coordinates: params.shippingAddress.coordinates,
+          goongPlaceId: params.shippingAddress.goongPlaceId,
+        })
+      : null;
+
     const result = await this.prisma.$transaction(async (tx) => {
       // Create order
       const order = await tx.orders.create({
@@ -31,7 +45,7 @@ export class CheckoutService {
           shippingCents: shipping,
           totalCents: total,
           promotionCode: promo?.code ?? null,
-          shippingAddress: params.shippingAddress ?? null,
+          shippingAddress: shippingAddressData,
           updatedAt: new Date()
         },
       });
@@ -73,29 +87,35 @@ export class CheckoutService {
 
       return order;
     });
-    try {
-      if (result.userId) {
-        const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
-        if (user?.email) {
-          // Prepare order data for email template using cart items
-          const orderData = {
-            orderNo: result.orderNo,
-            customerName: user.name || user.email,
-            totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
-            items: items.map((item: any) => ({
-              name: item.products.name || 'Sản phẩm',
-              quantity: item.quantity,
-              price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
-            })),
-            status: result.status
-          };
 
-          await this.mail.sendOrderConfirmation(user.email, orderData);
-        }
+    try {
+      // Get user info for email notification
+      let userEmail = params.shippingAddress?.email;
+      if (!userEmail && result.userId) {
+        const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
+        userEmail = user?.email;
+      }
+
+      if (userEmail) {
+        // Prepare order data for email template using cart items
+        const orderData = {
+          orderNo: result.orderNo,
+          customerName: params.shippingAddress?.fullName || 'Khách hàng',
+          totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
+          items: items.map((item: any) => ({
+            name: item.products.name || 'Sản phẩm',
+            quantity: item.quantity,
+            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+          })),
+          status: result.status
+        };
+
+        await this.mail.sendOrderConfirmation(userEmail, orderData);
       }
     } catch (_error) {
       // Email notification failed silently
     }
+
     return result;
   }
 

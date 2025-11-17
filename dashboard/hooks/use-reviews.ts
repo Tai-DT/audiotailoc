@@ -110,7 +110,7 @@ export function useReviews() {
 
       setReviews(filtered)
       setStats(mockStats)
-    } catch (err) {
+    } catch {
       const errorMessage = 'Không thể tải danh sách đánh giá'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -130,9 +130,8 @@ export function useReviews() {
       setReviews(prev => prev.map(review => 
         review.id === reviewId ? { ...review, status: 'approved' as const } : review
       ))
-    } catch (err) {
+    } catch {
       toast.error('Không thể duyệt đánh giá')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -149,9 +148,8 @@ export function useReviews() {
       setReviews(prev => prev.map(review => 
         review.id === reviewId ? { ...review, status: 'rejected' as const } : review
       ))
-    } catch (err) {
+    } catch {
       toast.error('Không thể từ chối đánh giá')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -168,9 +166,8 @@ export function useReviews() {
       setReviews(prev => prev.map(review => 
         review.id === reviewId ? { ...review, response } : review
       ))
-    } catch (err) {
+    } catch {
       toast.error('Không thể phản hồi đánh giá')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -185,9 +182,8 @@ export function useReviews() {
       
       // Remove from local state
       setReviews(prev => prev.filter(review => review.id !== reviewId))
-    } catch (err) {
+    } catch {
       toast.error('Không thể xóa đánh giá')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -204,7 +200,7 @@ export function useReviews() {
           ? { ...review, helpfulCount: review.helpfulCount + 1 } 
           : review
       ))
-    } catch (err) {
+    } catch {
       // Silent error
     }
   }, [])
@@ -221,7 +217,7 @@ export function useReviews() {
           ? { ...review, reportCount: review.reportCount + 1 } 
           : review
       ))
-    } catch (err) {
+    } catch {
       toast.error('Không thể báo cáo đánh giá')
     }
   }, [])

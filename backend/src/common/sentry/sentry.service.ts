@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
  * Define the interface for sentry/node package.
  * Note: @sentry/node must be installed via: npm install @sentry/node
  */
-interface SentryError extends Error {
+interface _SentryError extends Error {
   statusCode?: number;
   code?: string;
 }

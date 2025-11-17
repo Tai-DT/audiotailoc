@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Query, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query, Delete, UnprocessableEntityException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -35,6 +35,17 @@ export class AdminController {
   async getDashboard(@Query() query: AdminDashboardDto) {
     const startDate = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
+
+    // Validate parsed dates and return 422 for invalid inputs
+    if (query.startDate && isNaN(startDate.getTime())) {
+      throw new UnprocessableEntityException('Invalid startDate');
+    }
+    if (query.endDate && isNaN(endDate.getTime())) {
+      throw new UnprocessableEntityException('Invalid endDate');
+    }
+    if (startDate > endDate) {
+      throw new UnprocessableEntityException('startDate must be before endDate');
+    }
 
     // Get counts
     const [
@@ -112,7 +123,9 @@ export class AdminController {
   @ApiOperation({ summary: 'Get user statistics' })
   @ApiResponse({ status: 200, description: 'User statistics' })
   async getUserStats(@Query('days') days = '30') {
-    const daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    const parsedDays = parseInt(days, 10);
+    const safeDays = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 30;
+    const daysAgo = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
     
     const [
       totalUsers,
@@ -151,7 +164,9 @@ export class AdminController {
   @ApiOperation({ summary: 'Get order statistics' })
   @ApiResponse({ status: 200, description: 'Order statistics' })
   async getOrderStats(@Query('days') days = '30') {
-    const _daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    const parsedDays = parseInt(days, 10);
+    const safeDays = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 30;
+    const _daysAgo = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
     
     const [
       totalOrders,

@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, handleApiResponse } from '../api';
-import { 
-  Product, 
+import { apiClient, handleApiResponse, API_ENDPOINTS } from '../api';
+import {
+  Product,
   Category,
-  Order, 
-  Cart, 
-  Service, 
-  ServiceType, 
+  Order,
+  Cart,
+  Service,
+  ServiceType,
   User,
   Project,
   DashboardOverview,
@@ -184,7 +184,8 @@ export const useProductSearch = (query: string, limit = 10) => {
       const response = await apiClient.get('/catalog/products/search', {
         params: { q: query, limit },
       });
-      return handleApiResponse<Product[]>(response);
+      const result = handleApiResponse<{ data: Product[], pagination: any }>(response);
+      return result.data || [];
     },
     enabled: !!query && query.length > 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -209,8 +210,8 @@ export const useTopViewedProducts = (limit = 10) => {
       const response = await apiClient.get('/catalog/products/analytics/top-viewed', {
         params: { limit },
       });
-      const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
-      return paginatedResponse.items;
+      const result = handleApiResponse<{ data: Product[], pagination: any }>(response);
+      return result.data || [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -223,8 +224,8 @@ export const useRecentProducts = (limit = 10) => {
       const response = await apiClient.get('/catalog/products/analytics/recent', {
         params: { limit },
       });
-      const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
-      return paginatedResponse.items;
+      const result = handleApiResponse<{ data: Product[], pagination: any }>(response);
+      return result.data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -282,7 +283,8 @@ export const useCategories = () => {
     queryKey: queryKeys.categories.list(),
     queryFn: async () => {
       const response = await apiClient.get('/catalog/categories');
-      return handleApiResponse<Category[]>(response);
+      const result = handleApiResponse<{ data: Category[] }>(response);
+      return result.data || [];
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
@@ -890,7 +892,8 @@ export const useProfile = () => {
   return useQuery({
     queryKey: queryKeys.user.profile(),
     queryFn: async () => {
-      const response = await apiClient.get('/auth/profile');
+      const { API_ENDPOINTS } = await import('../api');
+      const response = await apiClient.get(API_ENDPOINTS.AUTH.PROFILE);
       return handleApiResponse<User>(response);
     },
   });

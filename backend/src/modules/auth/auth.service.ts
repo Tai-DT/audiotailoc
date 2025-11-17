@@ -25,7 +25,23 @@ export class AuthService {
       });
     }
 
-    return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+    try {
+      return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+    } catch (error) {
+      // Handle different types of errors that might contain duplicate email message
+      console.log('AuthService.register error:', error);
+      console.log('Error type:', typeof error);
+      console.log('Error instanceof BadRequestException:', error instanceof BadRequestException);
+      if (error instanceof BadRequestException) {
+        const errorMessage = error.message || error.toString();
+        console.log('Error message:', errorMessage);
+        if (errorMessage.includes('Email already exists')) {
+          console.log('Throwing BadRequestException for duplicate email');
+          throw new BadRequestException('Email already exists');
+        }
+      }
+      throw error;
+    }
   }
 
   async login(dto: { email: string; password: string; rememberMe?: boolean }) {

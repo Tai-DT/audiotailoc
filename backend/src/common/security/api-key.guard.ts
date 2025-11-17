@@ -39,7 +39,7 @@ export const REQUIRE_API_KEY = 'require_api_key';
 export function RequireApiKey(scopes?: string[]): MethodDecorator & ClassDecorator {
   return function (
     target: any,
-    propertyKey?: string,
+    propertyKey?: string | symbol,
     descriptor?: PropertyDescriptor
   ) {
     if (descriptor) {
@@ -370,7 +370,7 @@ export class ApiKeyGuard implements CanActivate {
     // In production, use Redis or similar for distributed rate limiting
     // For now, we'll use a simple in-memory implementation
 
-    const cacheKey = `api_key_rate_limit:${apiKey}`;
+    const _cacheKey = `api_key_rate_limit:${apiKey}`;
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
 

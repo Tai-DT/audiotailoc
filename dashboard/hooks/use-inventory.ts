@@ -146,7 +146,7 @@ export function useInventory() {
         totalValue: mapped.reduce((sum, i) => sum + (i.stock * (i.price || 0)), 0)
       }
       setStats(newStats)
-    } catch (error) {
+    } catch {
       toast.error('Không thể tải dữ liệu tồn kho')
     } finally {
       setLoading(false)
@@ -182,7 +182,7 @@ export function useInventory() {
       })
 
       setMovements(mappedMovements)
-    } catch (error) {
+    } catch {
       toast.error('Không thể tải dữ liệu biến động kho')
     }
   }, [])
@@ -213,7 +213,7 @@ export function useInventory() {
       })
 
       setAlerts(mappedAlerts)
-    } catch (error) {
+    } catch {
       toast.error('Không thể tải dữ liệu cảnh báo')
     }
   }, [])
@@ -251,7 +251,7 @@ export function useInventory() {
       // Refresh inventory to reflect backend changes
       await fetchInventory()
       toast.success('Đã cập nhật tồn kho thành công')
-    } catch (_error) {
+    } catch {
       throw new Error('Không thể cập nhật tồn kho')
     }
   }, [inventory, fetchInventory])

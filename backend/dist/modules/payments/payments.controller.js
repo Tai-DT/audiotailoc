@@ -1,43 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -48,10 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
+const payos_service_1 = require("./payos.service");
 const jwt_guard_1 = require("../auth/jwt.guard");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const class_validator_1 = require("class-validator");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const payos_webhook_dto_1 = require("./dto/payos-webhook.dto");
 class CreateIntentDto {
 }
 __decorate([
@@ -90,8 +59,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateRefundDto.prototype, "reason", void 0);
 let PaymentsController = class PaymentsController {
-    constructor(payments, prisma) {
+    constructor(payments, payosService, prisma) {
         this.payments = payments;
+        this.payosService = payosService;
         this.prisma = prisma;
     }
     getPaymentMethods() {
@@ -266,6 +236,35 @@ let PaymentsController = class PaymentsController {
         await this.payments.markPaid('PAYOS', id);
         return { ok: true };
     }
+    async createPayOSPayment(createPaymentDto, req) {
+        const userId = req.user?.sub;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+        const user = await this.prisma.users.findUnique({
+            where: { id: userId },
+            select: { name: true, email: true, phone: true }
+        });
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return this.payosService.createPaymentLink({
+            orderCode: createPaymentDto.orderCode,
+            amount: createPaymentDto.amount,
+            description: createPaymentDto.description,
+            buyerName: user.name || 'Unknown',
+            buyerEmail: user.email,
+            buyerPhone: user.phone || undefined,
+            returnUrl: createPaymentDto.returnUrl,
+            cancelUrl: createPaymentDto.cancelUrl
+        });
+    }
+    async getPayOSPaymentStatus(orderCode) {
+        return this.payosService.checkPaymentStatus(orderCode);
+    }
+    async createPayOSRefund(refundDto) {
+        return this.payosService.processRefund(refundDto);
+    }
     async vnpayWebhook(body) {
         return this.payments.handleWebhook('VNPAY', body);
     }
@@ -274,18 +273,14 @@ let PaymentsController = class PaymentsController {
     }
     async payosWebhook(req, body, xsig) {
         try {
-            const checksum = process.env.PAYOS_CHECKSUM_KEY || '';
-            const hmac = await Promise.resolve().then(() => __importStar(require('crypto'))).then((m) => m.createHmac('sha256', checksum));
-            const target = body?.data ? JSON.stringify(body.data) : JSON.stringify(body);
-            const sig = hmac.update(target).digest('hex');
-            const expected = body?.signature || xsig || '';
-            if (expected && expected !== sig) {
-                return { ok: false };
+            const isValid = this.payosService.verifyWebhookSignature(body);
+            if (!isValid) {
+                return { ok: false, message: 'Invalid signature' };
             }
-            return this.payments.handleWebhook('PAYOS', body);
+            return this.payosService.handleWebhook(body);
         }
-        catch {
-            return { ok: false };
+        catch (error) {
+            return { ok: false, message: 'Webhook processing failed' };
         }
     }
 };
@@ -364,6 +359,31 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "payosCallback", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Post)('payos/create-payment'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [payos_webhook_dto_1.PayOSCreatePaymentDto, Object]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "createPayOSPayment", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('payos/payment-status/:orderCode'),
+    __param(0, (0, common_1.Param)('orderCode')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "getPayOSPaymentStatus", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Post)('payos/refund'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [payos_webhook_dto_1.PayOSRefundDto]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "createPayOSRefund", null);
+__decorate([
     (0, common_1.Post)('vnpay/webhook'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -389,6 +409,7 @@ __decorate([
 exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService,
+        payos_service_1.PayOSService,
         prisma_service_1.PrismaService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

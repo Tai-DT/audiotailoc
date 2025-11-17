@@ -33,9 +33,9 @@ export declare class ServicesController {
         viewCount: number;
         duration: number;
         price: number;
+        metadata: string | null;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
         basePriceCents: number;
         priceType: string;
         typeId: string | null;
@@ -198,9 +198,9 @@ export declare class ServicesController {
         isActive: boolean;
         viewCount: number;
         duration: number;
+        metadata: string | null;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
         basePriceCents: number;
         priceType: string;
         typeId: string | null;
@@ -225,9 +225,9 @@ export declare class ServicesController {
         viewCount: number;
         duration: number;
         price: number;
+        metadata: string | null;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
         basePriceCents: number;
         priceType: string;
         typeId: string | null;
@@ -286,9 +286,9 @@ export declare class ServicesController {
         isActive: boolean;
         viewCount: number;
         duration: number;
+        metadata: string | null;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
         basePriceCents: number;
         priceType: string;
         typeId: string | null;

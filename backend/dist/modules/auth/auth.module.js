@@ -14,12 +14,13 @@ const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
 const admin_guard_1 = require("./admin.guard");
 const admin_or_key_guard_1 = require("./admin-or-key.guard");
+const jwt_1 = require("@nestjs/jwt");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [users_module_1.UsersModule, security_module_1.SecurityModule],
+        imports: [users_module_1.UsersModule, security_module_1.SecurityModule, jwt_1.JwtModule],
         providers: [auth_service_1.AuthService, admin_guard_1.AdminGuard, admin_or_key_guard_1.AdminOrKeyGuard],
         controllers: [auth_controller_1.AuthController],
         exports: [auth_service_1.AuthService],

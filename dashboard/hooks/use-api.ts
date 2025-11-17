@@ -30,11 +30,11 @@ export function useApi<T>(
     try {
       const response = await apiCallRef.current();
       setState({ data: response.data, loading: false, error: null });
-    } catch (error) {
+    } catch (err) {
       setState({
         data: null,
         loading: false,
-        error: error as ApiError
+        error: err as ApiError
       });
     }
   }, []);

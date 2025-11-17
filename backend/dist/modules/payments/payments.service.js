@@ -54,10 +54,18 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                     metadata: JSON.stringify({ paymentMethod: 'COD' })
                 }
             });
-            return { intentId: intent.id, redirectUrl: null, paymentMethod: 'COD' };
+            return {
+                intentId: intent.id,
+                redirectUrl: null,
+                paymentMethod: 'COD'
+            };
         }
         const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider }, order);
-        return { intentId: intent.id, redirectUrl };
+        return {
+            intentId: intent.id,
+            redirectUrl,
+            paymentMethod: params.provider
+        };
     }
     async buildRedirectUrl(intent, order) {
         const baseReturn = intent.returnUrl || this.config.get('PAYMENT_RETURN_URL') || 'http://localhost:3000/return';

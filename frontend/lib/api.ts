@@ -58,13 +58,47 @@ apiClient.interceptors.response.use(
   (error) => {
     // Debug: Log API errors
     if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      console.error('[API Client] Error:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        fullResponse: error.response?.data,
-      });
+      try {
+        // Check if error exists and is an object
+        if (!error || typeof error !== 'object') {
+          console.error('[API Client] Error: Invalid error object', error);
+          return Promise.reject(error);
+        }
+        
+        // Safely extract error properties
+        const errorInfo = {
+          url: (error.config && typeof error.config === 'object') ? error.config.url : 'unknown',
+          method: (error.config && typeof error.config === 'object') ? error.config.method : 'unknown',
+          status: (error.response && typeof error.response === 'object') ? error.response.status : 'unknown',
+          message: 'Unknown error',
+          fullResponse: null,
+          errorName: 'Unknown',
+          errorCode: 'Unknown',
+        };
+        
+        // Safely extract message
+        if (error.response && typeof error.response === 'object' && error.response.data && typeof error.response.data === 'object') {
+          errorInfo.message = error.response.data.message || 'Unknown error';
+          errorInfo.fullResponse = error.response.data;
+        } else if (error.message && typeof error.message === 'string') {
+          errorInfo.message = error.message;
+        }
+        
+        // Safely extract error name and code
+        if (error.name && typeof error.name === 'string') {
+          errorInfo.errorName = error.name;
+        }
+        
+        if (error.code && typeof error.code === 'string') {
+          errorInfo.errorCode = error.code;
+        }
+        
+        console.error('[API Client] Error:', errorInfo);
+      } catch (logError) {
+        // Fallback logging if serialization fails
+        console.error('[API Client] Error (fallback):',
+          (error && typeof error === 'object' && error.message) ? error.message : 'Unknown error');
+      }
     }
     
     const status = error.response?.status;
@@ -92,7 +126,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
+    PROFILE: '/users/profile',
   },
   
   // Products

@@ -216,7 +216,7 @@ export interface SecurityHeaderOptions {
  * Factory function to create a configured instance of the middleware
  */
 export function createSecurityHeadersMiddleware(
-  options: SecurityHeaderOptions = {}
+  _options: SecurityHeaderOptions = {}
 ): SecurityHeadersMiddleware {
   // Could extend the middleware class to accept options
   return new SecurityHeadersMiddleware();

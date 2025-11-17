@@ -3,7 +3,7 @@
  * Provides comprehensive TypeScript interfaces and types for security features
  */
 
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
 // ============================================================================
 // Request/Response Types

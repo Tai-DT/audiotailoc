@@ -294,7 +294,7 @@ export function useCampaigns() {
       })
       
       setCampaigns(transformedCampaigns)
-    } catch (error) {
+    } catch {
       // Fall back to mock data
       setCampaigns(mockCampaigns)
       toast.error("Đang sử dụng dữ liệu mẫu")

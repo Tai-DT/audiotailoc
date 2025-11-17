@@ -12,58 +12,58 @@ export declare class CheckoutService {
         promotionCode?: string;
         shippingAddress?: any;
     }): Promise<{
-        status: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         orderNo: string;
-        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
+        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
     }>;
     getOrderForUserByNo(userId: string, orderNo: string): Promise<{
         order_items: {
             id: string;
-            name: string | null;
             createdAt: Date;
             updatedAt: Date;
+            name: string | null;
             imageUrl: string | null;
-            price: bigint;
-            orderId: string;
             productId: string;
             quantity: number;
+            price: bigint;
+            orderId: string;
             unitPrice: bigint | null;
         }[];
         payments: {
-            status: string;
             id: string;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
-            transactionId: string | null;
-            provider: string;
-            amountCents: number;
-            metadata: string | null;
             orderId: string;
             intentId: string | null;
+            provider: string;
+            amountCents: number;
+            transactionId: string | null;
+            metadata: string | null;
         }[];
     } & {
-        status: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         orderNo: string;
-        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
+        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
     }>;
 }

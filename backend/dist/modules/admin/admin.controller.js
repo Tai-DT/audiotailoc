@@ -34,6 +34,15 @@ let AdminController = class AdminController {
     async getDashboard(query) {
         const startDate = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         const endDate = query.endDate ? new Date(query.endDate) : new Date();
+        if (query.startDate && isNaN(startDate.getTime())) {
+            throw new common_1.UnprocessableEntityException('Invalid startDate');
+        }
+        if (query.endDate && isNaN(endDate.getTime())) {
+            throw new common_1.UnprocessableEntityException('Invalid endDate');
+        }
+        if (startDate > endDate) {
+            throw new common_1.UnprocessableEntityException('startDate must be before endDate');
+        }
         const [totalUsers, totalProducts, totalOrders, totalRevenue, newUsers, newOrders, pendingOrders, lowStockProducts] = await Promise.all([
             this.prisma.users.count(),
             this.prisma.products.count(),
@@ -92,7 +101,9 @@ let AdminController = class AdminController {
         };
     }
     async getUserStats(days = '30') {
-        const daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+        const parsedDays = parseInt(days, 10);
+        const safeDays = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 30;
+        const daysAgo = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
         const [totalUsers, activeUsers, newUsers, usersByRole] = await Promise.all([
             this.prisma.users.count(),
             this.prisma.users.count({
@@ -120,7 +131,9 @@ let AdminController = class AdminController {
         };
     }
     async getOrderStats(days = '30') {
-        const _daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+        const parsedDays = parseInt(days, 10);
+        const safeDays = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 30;
+        const _daysAgo = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
         const [totalOrders, completedOrders, pendingOrders, cancelledOrders, totalRevenue, ordersByStatus] = await Promise.all([
             this.prisma.orders.count(),
             this.prisma.orders.count({

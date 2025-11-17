@@ -100,7 +100,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
         return { message: 'Campaign sent successfully', recipientCount: recipients.length };
     }
     async getCampaignStats(id) {
-        const campaign = await this.getCampaign(id);
+        const _campaign = await this.getCampaign(id);
         const stats = {
             totalRecipients: 0,
             totalOpens: 0,

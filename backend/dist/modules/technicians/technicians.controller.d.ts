@@ -111,9 +111,9 @@ export declare class TechniciansController {
                 viewCount: number;
                 duration: number;
                 price: number;
+                metadata: string | null;
                 minPrice: number | null;
                 maxPrice: number | null;
-                metadata: string | null;
                 basePriceCents: number;
                 priceType: string;
                 typeId: string | null;

@@ -59,13 +59,13 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     // Initialize backup schedules (will work without cron for manual backups)
     await this.initializeDefaultSchedules();
 
-    // If cron is available, start schedules. In test environment we don't
-    // want to log warnings about missing optional packages, so guard logs
-    // when NODE_ENV === 'test'.
-    if (isCronAvailable) {
+    // Avoid starting cron jobs during tests to prevent Jest open-handle issues.
+    // Only start schedules when cron is available and we are not running tests.
+    if (isCronAvailable && process.env.NODE_ENV !== 'test') {
       this.startAllSchedules();
     } else {
-      if (process.env.NODE_ENV !== 'test') {
+      // Only warn about missing cron package in non-test environments.
+      if (process.env.NODE_ENV !== 'test' && !isCronAvailable) {
         this.logger.warn(
           'Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.',
         );
@@ -149,9 +149,15 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
     this.schedules.set(schedule.id, schedule);
 
-    // Create cron job if enabled
+    // Create cron job if enabled (skip starting cron jobs during tests)
     if (schedule.enabled) {
-      this.createCronJob(schedule);
+      if (process.env.NODE_ENV !== 'test') {
+        this.createCronJob(schedule);
+      } else {
+        // In test environment, do not start cron jobs to avoid open handles.
+        schedule.status = 'inactive';
+        schedule.errorMessage = 'cron skipped in test';
+      }
     }
 
     this.loggingService.logBusinessEvent("backup_schedule_created", {

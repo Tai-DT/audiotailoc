@@ -130,7 +130,7 @@ export class MarketingService {
   }
 
   async getCampaignStats(id: string) {
-    const campaign = await this.getCampaign(id);
+    const _campaign = await this.getCampaign(id);
     
     const stats = {
       totalRecipients: 0,

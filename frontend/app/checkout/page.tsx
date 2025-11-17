@@ -221,74 +221,55 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      const orderData = {
-        customerName: shippingInfo.fullName,
-        customerPhone: shippingInfo.phone,
-        customerEmail: shippingInfo.email,
-        shippingAddress: shippingInfo.address,
-        notes: shippingInfo.notes,
-        paymentMethod,
-        items: items.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          name: item.name,
-        })),
-        shippingCoordinates: shippingCoordinates ?? undefined,
-        goongPlaceId: selectedPlace?.place_id || selectedPlace?.placeId,
-        finalTotal,
-      };
+      const token = localStorage.getItem('token');
 
-      // Process payment based on method
-      if (paymentMethod === 'payos') {
-        const response = await fetch('/api/payment/process', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderData,
-            paymentMethod: 'payos'
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success && result.paymentUrl) {
-          toast.success('Đang chuyển hướng đến PayOS...');
-          // Redirect to PayOS payment page in the same window
-          window.location.href = result.paymentUrl;
-          return;
-        } else {
-          throw new Error(result.error || 'PayOS payment failed');
+      // Bước 1: Tạo order từ cart
+      const orderResponse = await apiClient.post('/checkout', {
+        promotionCode: undefined,
+        shippingAddress: {
+          fullName: shippingInfo.fullName,
+          phone: shippingInfo.phone,
+          email: shippingInfo.email,
+          address: shippingInfo.address,
+          notes: shippingInfo.notes,
+          coordinates: shippingCoordinates,
+          goongPlaceId: selectedPlace?.place_id || selectedPlace?.placeId,
         }
+      }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      });
+
+      const { id: orderId, orderNo } = orderResponse.data;
+
+      // Bước 2: Tạo payment intent dựa trên phương thức thanh toán
+      const intentResponse = await apiClient.post('/payments/intents', {
+        orderId,
+        provider: paymentMethod === 'payos' ? 'PAYOS' : 'COD',
+        idempotencyKey: `${orderId}-${Date.now()}`,
+        returnUrl: `${window.location.origin}/order-success?orderId=${orderNo}`
+      }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      });
+
+      const { redirectUrl } = intentResponse.data;
+
+      // Bước 3: Xử lý response dựa trên phương thức thanh toán
+      if (paymentMethod === 'payos' && redirectUrl) {
+        // PayOS: Redirect đến checkout URL (sẽ hiển thị QR code)
+        clearCart();
+        window.location.href = redirectUrl;
+        return;
       }
 
       if (paymentMethod === 'cod') {
-        const response = await fetch('/api/payment/process', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderData,
-            paymentMethod: 'cod'
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          toast.success('Đặt hàng COD thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
-          clearCart();
-          router.push(`/order-success?orderId=${result.orderId}&method=cos`);
-          return;
-        } else {
-          throw new Error(result.error || 'COD order failed');
-        }
+        // COD: Đơn hàng đã được xác nhận, redirect đến order success
+        toast.success('Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
+        clearCart();
+        router.push(`/order-success?orderId=${orderNo}&method=cod`);
+        return;
       }
 
-      throw new Error('Invalid payment method');
+      throw new Error('Phương thức thanh toán không hợp lệ');
 
     } catch (error) {
       console.error('Order creation error:', error);

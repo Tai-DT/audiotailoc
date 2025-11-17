@@ -16,7 +16,7 @@ export declare class PaymentsService {
     } | {
         intentId: string;
         redirectUrl: string;
-        paymentMethod?: undefined;
+        paymentMethod: "PAYOS";
     }>;
     private buildRedirectUrl;
     private createMomoPayment;

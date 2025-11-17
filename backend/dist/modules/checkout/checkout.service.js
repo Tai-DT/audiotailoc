@@ -32,6 +32,17 @@ let CheckoutService = class CheckoutService {
         const shipping = Number(process.env.SHIPPING_FLAT_CENTS ?? '30000');
         const total = Math.max(0, subtotalCents - discount) + shipping;
         const orderNo = 'ATL' + Date.now();
+        const shippingAddressData = params.shippingAddress
+            ? JSON.stringify({
+                fullName: params.shippingAddress.fullName,
+                phone: params.shippingAddress.phone,
+                email: params.shippingAddress.email,
+                address: params.shippingAddress.address,
+                notes: params.shippingAddress.notes || null,
+                coordinates: params.shippingAddress.coordinates,
+                goongPlaceId: params.shippingAddress.goongPlaceId,
+            })
+            : null;
         const result = await this.prisma.$transaction(async (tx) => {
             const order = await tx.orders.create({
                 data: {
@@ -44,7 +55,7 @@ let CheckoutService = class CheckoutService {
                     shippingCents: shipping,
                     totalCents: total,
                     promotionCode: promo?.code ?? null,
-                    shippingAddress: params.shippingAddress ?? null,
+                    shippingAddress: shippingAddressData,
                     updatedAt: new Date()
                 },
             });
@@ -75,22 +86,24 @@ let CheckoutService = class CheckoutService {
             return order;
         });
         try {
-            if (result.userId) {
+            let userEmail = params.shippingAddress?.email;
+            if (!userEmail && result.userId) {
                 const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
-                if (user?.email) {
-                    const orderData = {
-                        orderNo: result.orderNo,
-                        customerName: user.name || user.email,
-                        totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
-                        items: items.map((item) => ({
-                            name: item.products.name || 'Sản phẩm',
-                            quantity: item.quantity,
-                            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
-                        })),
-                        status: result.status
-                    };
-                    await this.mail.sendOrderConfirmation(user.email, orderData);
-                }
+                userEmail = user?.email;
+            }
+            if (userEmail) {
+                const orderData = {
+                    orderNo: result.orderNo,
+                    customerName: params.shippingAddress?.fullName || 'Khách hàng',
+                    totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
+                    items: items.map((item) => ({
+                        name: item.products.name || 'Sản phẩm',
+                        quantity: item.quantity,
+                        price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+                    })),
+                    status: result.status
+                };
+                await this.mail.sendOrderConfirmation(userEmail, orderData);
             }
         }
         catch (_error) {

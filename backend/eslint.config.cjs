@@ -2,7 +2,7 @@ const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
-  { ignores: ['dist/**', 'src/**/*.spec.ts', 'src/**/*.test.ts', 'src/test/**', 'src/modules/backup/**'] },
+  { ignores: ['dist/**', 'src/**/*.spec.ts', 'src/**/*.test.ts', 'src/test/**', 'src/modules/backup/**', 'src/common/INTEGRATION_EXAMPLES.ts'] },
   {
     files: ['**/*.ts'],
     languageOptions: {

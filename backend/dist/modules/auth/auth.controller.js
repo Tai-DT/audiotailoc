@@ -109,6 +109,9 @@ let AuthController = class AuthController {
         };
     }
     async login(dto) {
+        if (!dto?.email || !dto?.password) {
+            throw new common_1.HttpException('Missing required fields', common_1.HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         const tokens = await this.auth.login(dto).catch(() => {
             throw new common_1.HttpException('Invalid credentials', common_1.HttpStatus.UNAUTHORIZED);
         });
@@ -143,7 +146,7 @@ let AuthController = class AuthController {
         return { message: 'Password has been reset successfully' };
     }
     async changePassword(req, dto) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId)
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
         const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
@@ -152,7 +155,7 @@ let AuthController = class AuthController {
         return { message: 'Password has been changed successfully' };
     }
     async me(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId)
             return { userId: null };
         const u = await this.users.findById(userId);

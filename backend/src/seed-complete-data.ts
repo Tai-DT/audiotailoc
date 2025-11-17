@@ -141,6 +141,11 @@ async function seedData() {
       const technician = techniciansList[Math.floor(Math.random() * techniciansList.length)];
       const status = bookingStatuses[Math.floor(Math.random() * bookingStatuses.length)];
       
+      if (!user || !service || !technician) {
+        console.log('⚠️ Skipping booking due to missing data');
+        continue;
+      }
+      
       const booking = await prisma.service_bookings.create({
         data: {
           id: randomUUID(),
@@ -580,7 +585,7 @@ async function seedData() {
       const selectedProducts = products.sort(() => 0.5 - Math.random()).slice(0, numItems);
       
       let subtotal = 0;
-      const orderItems = selectedProducts.map(product => {
+      const _orderItems = selectedProducts.map(product => {
         const quantity = Math.floor(Math.random() * 3) + 1;
         const price = Number(product.priceCents); // Convert BigInt to Number
         subtotal += price * quantity;

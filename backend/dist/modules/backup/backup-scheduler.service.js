@@ -38,11 +38,11 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
     }
     async onModuleInit() {
         await this.initializeDefaultSchedules();
-        if (isCronAvailable) {
+        if (isCronAvailable && process.env.NODE_ENV !== 'test') {
             this.startAllSchedules();
         }
         else {
-            if (process.env.NODE_ENV !== 'test') {
+            if (process.env.NODE_ENV !== 'test' && !isCronAvailable) {
                 this.logger.warn('Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.');
             }
         }
@@ -109,7 +109,13 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
         this.schedules.set(schedule.id, schedule);
         if (schedule.enabled) {
-            this.createCronJob(schedule);
+            if (process.env.NODE_ENV !== 'test') {
+                this.createCronJob(schedule);
+            }
+            else {
+                schedule.status = 'inactive';
+                schedule.errorMessage = 'cron skipped in test';
+            }
         }
         this.loggingService.logBusinessEvent("backup_schedule_created", {
             scheduleId: schedule.id,

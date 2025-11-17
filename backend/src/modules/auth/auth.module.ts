@@ -5,9 +5,10 @@
  import { AuthController } from './auth.controller';
  import { AdminGuard } from './admin.guard';
  import { AdminOrKeyGuard } from './admin-or-key.guard';
-
+ import { JwtModule } from '@nestjs/jwt';
+ 
  @Module({
-   imports: [UsersModule, SecurityModule],
+   imports: [UsersModule, SecurityModule, JwtModule],
    providers: [AuthService, AdminGuard, AdminOrKeyGuard],
    controllers: [AuthController],
    exports: [AuthService],

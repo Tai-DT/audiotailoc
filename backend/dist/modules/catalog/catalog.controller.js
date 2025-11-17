@@ -22,7 +22,6 @@ const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const create_product_dto_1 = require("./dto/create-product.dto");
 const update_product_dto_1 = require("./dto/update-product.dto");
 const create_category_dto_1 = require("./dto/create-category.dto");
-const update_category_dto_1 = require("./dto/update-category.dto");
 class DeleteManyDto {
 }
 __decorate([
@@ -33,46 +32,63 @@ let CatalogController = class CatalogController {
     constructor(catalog) {
         this.catalog = catalog;
     }
-    list(query) {
-        const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search } = query;
-        return this.catalog.listProducts({
-            page: parseInt(page) || 1,
-            pageSize: parseInt(pageSize) || 20,
-            q: search || q,
-            minPrice: minPrice ? parseInt(minPrice) : undefined,
-            maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
-            sortBy: sortBy || 'createdAt',
-            sortOrder: sortOrder || 'desc',
-            featured: featured === 'true' ? true : undefined
-        });
+    async list(query) {
+        try {
+            const page = parseInt(query.page) || 1;
+            const pageSize = parseInt(query.pageSize) || 20;
+            const q = query.search || query.q;
+            const minPrice = query.minPrice ? parseInt(query.minPrice) : undefined;
+            const maxPrice = query.maxPrice ? parseInt(query.maxPrice) : undefined;
+            const sortBy = query.sortBy || 'createdAt';
+            const sortOrder = query.sortOrder || 'desc';
+            const featured = query.featured === 'true' ? true : undefined;
+            const res = await this.catalog.listProducts({
+                page,
+                pageSize,
+                q,
+                minPrice,
+                maxPrice,
+                sortBy,
+                sortOrder,
+                featured,
+            });
+            return {
+                data: res.items,
+                pagination: {
+                    total: res.total,
+                    page: res.page,
+                    pageSize: res.pageSize,
+                },
+            };
+        }
+        catch (err) {
+            console.error('CatalogController.list error:', err);
+            return { data: [], pagination: { total: 0, page: 1, pageSize: 20 } };
+        }
     }
-    listCategories() {
-        return this.catalog.listCategories();
-    }
-    getCategoryBySlug(slug) {
-        return this.catalog.getCategoryBySlug(slug);
-    }
-    getProductsByCategory(slug, page, limit) {
-        return this.catalog.getProductsByCategory(slug, { page, limit });
-    }
-    createCategory(dto) {
-        return this.catalog.createCategory(dto);
-    }
-    updateCategory(id, dto) {
-        return this.catalog.updateCategory(id, dto);
-    }
-    deleteCategory(id) {
-        return this.catalog.deleteCategory(id);
-    }
-    searchProducts(q, limit) {
-        const limitNum = Math.min(parseInt(limit?.toString() || '20'), 50);
-        return this.catalog.listProducts({
-            page: 1,
-            pageSize: limitNum,
-            q: q || '',
-            sortBy: 'createdAt',
-            sortOrder: 'desc'
-        });
+    async searchProducts(q, limit) {
+        try {
+            const pageSize = Math.min(parseInt(String(limit ?? '20')), 50);
+            const res = await this.catalog.listProducts({
+                page: 1,
+                pageSize,
+                q: q || '',
+                sortBy: 'createdAt',
+                sortOrder: 'desc',
+            });
+            return {
+                data: res.items,
+                pagination: {
+                    total: res.total,
+                    page: res.page,
+                    pageSize: res.pageSize,
+                },
+            };
+        }
+        catch (err) {
+            console.error('CatalogController.searchProducts error:', err);
+            return { data: [], pagination: { total: 0, page: 1, pageSize: Math.min(parseInt(String(limit ?? '20')), 50) } };
+        }
     }
     get(id) {
         return this.catalog.getById(id);
@@ -85,6 +101,22 @@ let CatalogController = class CatalogController {
     }
     async generateUniqueSku(baseName) {
         return this.catalog.generateUniqueSku(baseName);
+    }
+    createCategory(dto) {
+        return this.catalog.createCategory(dto);
+    }
+    async listCategories() {
+        const items = await this.catalog.listCategories();
+        return { data: items };
+    }
+    getCategoryAlias(slug) {
+        return this.catalog.getCategoryBySlug(slug);
+    }
+    getCategoryBySlug(slug) {
+        return this.catalog.getCategoryBySlug(slug);
+    }
+    getProductsByCategory(slug, page, limit) {
+        return this.catalog.getProductsByCategory(slug, { page, limit });
     }
     create(dto) {
         return this.catalog.create(dto);
@@ -99,22 +131,24 @@ let CatalogController = class CatalogController {
         return this.catalog.removeMany(body?.ids ?? []);
     }
     async getTopViewedProducts(limit) {
-        const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50);
-        return this.catalog.listProducts({
+        const pageSize = Math.min(parseInt(String(limit ?? '10')), 50);
+        const res = await this.catalog.listProducts({
             page: 1,
-            pageSize: limitNum,
+            pageSize,
             sortBy: 'viewCount',
-            sortOrder: 'desc'
+            sortOrder: 'desc',
         });
+        return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
     }
     async getRecentProducts(limit) {
-        const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50);
-        return this.catalog.listProducts({
+        const pageSize = Math.min(parseInt(String(limit ?? '10')), 50);
+        const res = await this.catalog.listProducts({
             page: 1,
-            pageSize: limitNum,
+            pageSize,
             sortBy: 'createdAt',
-            sortOrder: 'desc'
+            sortOrder: 'desc',
         });
+        return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
     }
 };
 exports.CatalogController = CatalogController;
@@ -124,90 +158,8 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], CatalogController.prototype, "list", null);
-__decorate([
-    (0, common_1.Get)('categories'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "listCategories", null);
-__decorate([
-    (0, common_1.Get)('categories/slug/:slug'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Get category by slug',
-        description: 'Get detailed category information by slug',
-    }),
-    (0, swagger_1.ApiParam)({
-        name: 'slug',
-        description: 'Category slug',
-        type: String,
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Category retrieved successfully',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.NOT_FOUND,
-        description: 'Category not found',
-    }),
-    __param(0, (0, common_1.Param)('slug')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "getCategoryBySlug", null);
-__decorate([
-    (0, common_1.Get)('categories/slug/:slug/products'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Get products by category slug',
-        description: 'Get paginated products for a specific category',
-    }),
-    (0, swagger_1.ApiParam)({
-        name: 'slug',
-        description: 'Category slug',
-        type: String,
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Products retrieved successfully',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.NOT_FOUND,
-        description: 'Category not found',
-    }),
-    __param(0, (0, common_1.Param)('slug')),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('limit')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number, Number]),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "getProductsByCategory", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
-    (0, common_1.Post)('categories'),
-    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_category_dto_1.CreateCategoryDto]),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "createCategory", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
-    (0, common_1.Patch)('categories/:id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_category_dto_1.UpdateCategoryDto]),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "updateCategory", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
-    (0, common_1.Delete)('categories/:id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], CatalogController.prototype, "deleteCategory", null);
 __decorate([
     (0, common_1.Get)('products/search'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
@@ -215,7 +167,7 @@ __decorate([
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], CatalogController.prototype, "searchProducts", null);
 __decorate([
     (0, common_1.Get)('products/:id'),
@@ -252,6 +204,61 @@ __decorate([
 ], CatalogController.prototype, "generateUniqueSku", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Post)('categories'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_category_dto_1.CreateCategoryDto]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "createCategory", null);
+__decorate([
+    (0, common_1.Get)('categories'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CatalogController.prototype, "listCategories", null);
+__decorate([
+    (0, common_1.Get)('categories/:slug'),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "getCategoryAlias", null);
+__decorate([
+    (0, common_1.Get)('categories/slug/:slug'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get category by slug',
+        description: 'Get detailed category information by slug',
+    }),
+    (0, swagger_1.ApiParam)({
+        name: 'slug',
+        description: 'Category slug',
+        type: String,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Category retrieved successfully',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    }),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "getCategoryBySlug", null);
+__decorate([
+    (0, common_1.Get)('categories/slug/:slug/products'),
+    __param(0, (0, common_1.Param)('slug')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, Number]),
+    __metadata("design:returntype", void 0)
+], CatalogController.prototype, "getProductsByCategory", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Post)('products'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
@@ -260,7 +267,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "create", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Patch)('products/:id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -269,7 +276,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "update", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Delete)('products/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -277,7 +284,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "remove", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Delete)('products'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -303,7 +310,7 @@ __decorate([
 exports.CatalogController = CatalogController = __decorate([
     (0, swagger_1.ApiTags)('Products'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.Controller)('catalog'),
+    (0, common_1.Controller)(['catalog', 'api/v1/catalog']),
     __metadata("design:paramtypes", [catalog_service_1.CatalogService])
 ], CatalogController);
 //# sourceMappingURL=catalog.controller.js.map
