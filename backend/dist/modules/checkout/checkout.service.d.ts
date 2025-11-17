@@ -12,58 +12,58 @@ export declare class CheckoutService {
         promotionCode?: string;
         shippingAddress?: any;
     }): Promise<{
+        status: string;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         orderNo: string;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
-        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
     }>;
     getOrderForUserByNo(userId: string, orderNo: string): Promise<{
         order_items: {
             id: string;
+            name: string | null;
             createdAt: Date;
             updatedAt: Date;
-            name: string | null;
             imageUrl: string | null;
-            productId: string;
-            quantity: number;
             price: bigint;
             orderId: string;
+            productId: string;
+            quantity: number;
             unitPrice: bigint | null;
         }[];
         payments: {
-            id: string;
             status: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            orderId: string;
-            intentId: string | null;
+            transactionId: string | null;
             provider: string;
             amountCents: number;
-            transactionId: string | null;
             metadata: string | null;
+            orderId: string;
+            intentId: string | null;
         }[];
     } & {
+        status: string;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         orderNo: string;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
-        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
     }>;
 }

@@ -32,11 +32,11 @@ export declare class InventoryMovementController {
         reason: string | null;
         productId: string;
         quantity: number;
+        notes: string | null;
         previousStock: number;
         newStock: number;
         referenceId: string | null;
         referenceType: string | null;
-        notes: string | null;
     }>;
     findAll(page?: string, pageSize?: string, productId?: string, type?: string, userId?: string, startDate?: string, endDate?: string): Promise<{
         total: number;
@@ -65,11 +65,11 @@ export declare class InventoryMovementController {
             reason: string | null;
             productId: string;
             quantity: number;
+            notes: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;
             referenceType: string | null;
-            notes: string | null;
         })[];
     }>;
     findByProduct(productId: string, page?: string, pageSize?: string): Promise<{
@@ -95,11 +95,11 @@ export declare class InventoryMovementController {
             reason: string | null;
             productId: string;
             quantity: number;
+            notes: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;
             referenceType: string | null;
-            notes: string | null;
         })[];
     }>;
     getSummary(productId?: string, startDate?: string, endDate?: string): Promise<{
