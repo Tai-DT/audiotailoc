@@ -162,6 +162,21 @@ export const API_ENDPOINTS = {
     CLEAR: '/cart/clear',
   },
   
+  // Checkout
+  CHECKOUT: {
+    CREATE: '/checkout',
+    CREATE_ORDER: '/checkout/create-order',
+  },
+
+  // Payments
+  PAYMENTS: {
+    METHODS: '/payments/methods',
+    STATUS: '/payments/status',
+    INTENTS: '/payments/intents',
+    CREATE_PAYOS: '/payments/payos/create-payment',
+    PAYOS_STATUS: (orderCode: string) => `/payments/payos/payment-status/${orderCode}`,
+  },
+
   // Orders
   ORDERS: {
     LIST: '/orders',

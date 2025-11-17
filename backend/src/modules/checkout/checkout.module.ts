@@ -4,9 +4,10 @@ import { CheckoutController } from './checkout.controller';
 import { CartModule } from '../cart/cart.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { MailService } from '../notifications/mail.service';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [CartModule, PromotionsModule],
+  imports: [CartModule, PromotionsModule, PrismaModule],
   providers: [CheckoutService, MailService],
   controllers: [CheckoutController],
 })

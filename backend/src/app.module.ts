@@ -8,6 +8,8 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './modules/caching/cache.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     CatalogModule,
     AuthModule,
     AnalyticsModule,
+    CheckoutModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [
