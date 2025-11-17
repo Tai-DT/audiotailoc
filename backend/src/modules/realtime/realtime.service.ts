@@ -210,7 +210,7 @@ export class RealtimeService {
   /**
    * Notify payment received
    */
-  async notifyPaymentReceived(orderId: string, amount: number, userId: string) {
+  async notifyPaymentReceived(orderId: string, amount: number, _userId: string) {
     try {
       const order = await this.prisma.orders.findUnique({
         where: { id: orderId },

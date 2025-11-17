@@ -81,7 +81,7 @@ export function useAnalytics() {
       if (response.data) {
         setOverview(response.data as AnalyticsOverview)
       }
-    } catch (err) {
+    } catch {
       const errorMessage = 'Không thể tải dữ liệu tổng quan'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -98,7 +98,7 @@ export function useAnalytics() {
       if (response.data) {
         setTrends(response.data as AnalyticsTrend[])
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải dữ liệu xu hướng')
     }
   }, [])
@@ -111,7 +111,7 @@ export function useAnalytics() {
       if (response.data) {
         setTopServices(response.data as TopService[])
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải dữ liệu dịch vụ')
     }
   }, [])
@@ -124,7 +124,7 @@ export function useAnalytics() {
       if (response.data) {
         setTopProducts(response.data as TopProduct[])
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải dữ liệu sản phẩm')
     }
   }, [])
@@ -137,7 +137,7 @@ export function useAnalytics() {
       if (response.data) {
         setUserActivity(response.data as UserActivity)
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải dữ liệu hoạt động người dùng')
     }
   }, [])

@@ -37,7 +37,7 @@ export function useBackups() {
       const response = await apiClient.get('/api/v1/backup/list')
       const responseData = response.data as { backups?: Backup[] }
       setBackups(responseData?.backups || [])
-    } catch (err) {
+    } catch {
       const errorMessage = 'Không thể tải danh sách backup'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -52,7 +52,7 @@ export function useBackups() {
       const response = await apiClient.get('/api/v1/backup/status')
       const responseData = response.data as { status?: BackupStatus }
       setStatus(responseData?.status || null)
-    } catch (err) {
+    } catch {
       // Silent error
     }
   }, [])
@@ -81,9 +81,8 @@ export function useBackups() {
       // Refresh data
       await fetchBackups()
       await fetchStatus()
-    } catch (err) {
+    } catch {
       toast.error('Không thể tạo backup')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -98,9 +97,8 @@ export function useBackups() {
       
       // Refresh status
       await fetchStatus()
-    } catch (err) {
+    } catch {
       toast.error('Không thể khôi phục backup')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -116,9 +114,8 @@ export function useBackups() {
       // Refresh data
       await fetchBackups()
       await fetchStatus()
-    } catch (err) {
+    } catch {
       toast.error('Không thể xóa backup')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -142,9 +139,8 @@ export function useBackups() {
         
         toast.success('Đã bắt đầu tải xuống backup')
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải xuống backup')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -158,9 +154,8 @@ export function useBackups() {
       toast.success('Đã bắt đầu khôi phục theo thời điểm')
       
       await fetchStatus()
-    } catch (err) {
+    } catch {
       toast.error('Không thể khôi phục theo thời điểm')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -178,9 +173,8 @@ export function useBackups() {
       
       await fetchBackups()
       await fetchStatus()
-    } catch (err) {
+    } catch {
       toast.error('Không thể dọc dẹp backup cũ')
-      throw err
     } finally {
       setLoading(false)
     }

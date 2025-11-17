@@ -43,7 +43,7 @@ export function useReports() {
       ]
       
       setReports(mockReports)
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải danh sách báo cáo')
     } finally {
       setLoading(false)
@@ -65,7 +65,7 @@ export function useReports() {
       document.body.removeChild(link)
       
       toast.success('Đã bắt đầu tải xuống báo cáo')
-    } catch (err) {
+    } catch {
       toast.error('Không thể tải xuống báo cáo')
     }
   }, [reports])
@@ -96,7 +96,7 @@ export function useReports() {
       setTimeout(() => {
         downloadReport(newReport.id)
       }, 1000)
-    } catch (err) {
+    } catch {
       toast.error('Không thể tạo báo cáo')
     } finally {
       setLoading(false)
@@ -113,7 +113,7 @@ export function useReports() {
     try {
       // Mock API call
       toast.success('Đã thiết lập báo cáo định kỳ')
-    } catch (err) {
+    } catch {
       toast.error('Không thể thiết lập báo cáo định kỳ')
     }
   }, [])

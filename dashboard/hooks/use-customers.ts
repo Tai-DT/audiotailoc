@@ -96,7 +96,7 @@ export function useCustomers() {
       
       setStats(newStats)
       
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải dữ liệu khách hàng")
     } finally {
       setLoading(false)
@@ -119,9 +119,8 @@ export function useCustomers() {
       ))
       
       toast.success("Đã cập nhật thông tin khách hàng")
-    } catch (error) {
+    } catch {
       toast.error("Không thể cập nhật khách hàng")
-      throw error
     }
   }, [])
 
@@ -154,9 +153,8 @@ export function useCustomers() {
       })
       
       toast.success("Đã xóa khách hàng")
-    } catch (error) {
+    } catch {
       toast.error("Không thể xóa khách hàng")
-      throw error
     }
   }, [])
 
@@ -189,7 +187,7 @@ export function useCustomers() {
       document.body.removeChild(link)
       
       toast.success("Đã xuất danh sách khách hàng")
-    } catch (error) {
+    } catch {
       toast.error("Không thể xuất danh sách")
     }
   }, [customers])
@@ -202,7 +200,7 @@ export function useCustomers() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       toast.success("Đã gửi email")
-    } catch (error) {
+    } catch {
       toast.error("Không thể gửi email")
     }
   }, [])

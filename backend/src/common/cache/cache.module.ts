@@ -1,4 +1,4 @@
-import { Module, Global, DynamicModule, ModuleMetadata } from '@nestjs/common';
+import { Module, Global, DynamicModule } from '@nestjs/common';
 import { CacheModule as NestCacheModule, CacheModuleOptions as NestCacheModuleOptions } from '@nestjs/cache-manager';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';

@@ -10,6 +10,7 @@ import {
   UploadedFile,
   UploadedFiles,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
@@ -143,7 +144,7 @@ export class FilesController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new BadRequestException('No avatar uploaded');
+      throw new NotFoundException('No avatar uploaded');
     }
 
     // Get user ID from JWT token (you'll need to implement this)
@@ -157,7 +158,7 @@ export class FilesController {
   async getFileInfo(@Param('fileId') fileId: string) {
     const file = await this.filesService.getFileInfo(fileId);
     if (!file) {
-      throw new BadRequestException('File not found');
+      throw new NotFoundException('File not found');
     }
     return file;
   }

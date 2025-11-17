@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Headers, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { PayOSService } from './payos.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsIn, IsOptional, IsString, MinLength, IsNumber, Min } from 'class-validator';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PayOSWebhookDto, PayOSCreatePaymentDto, PayOSRefundDto } from './dto/payos-webhook.dto';
 
 class CreateIntentDto {
   @IsString()
@@ -34,6 +36,7 @@ class CreateRefundDto {
 export class PaymentsController {
   constructor(
     private readonly payments: PaymentsService,
+    private readonly payosService: PayOSService,
     private readonly prisma: PrismaService
   ) {}
 
@@ -253,6 +256,49 @@ export class PaymentsController {
     return { ok: true };
   }
 
+  // PayOS specific endpoints
+  @UseGuards(JwtGuard)
+  @Post('payos/create-payment')
+  async createPayOSPayment(@Body() createPaymentDto: PayOSCreatePaymentDto, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Lấy thông tin user từ database để điền vào buyer info
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true, phone: true }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    return this.payosService.createPaymentLink({
+      orderCode: createPaymentDto.orderCode,
+      amount: createPaymentDto.amount,
+      description: createPaymentDto.description,
+      buyerName: user.name || 'Unknown',
+      buyerEmail: user.email,
+      buyerPhone: user.phone || undefined,
+      returnUrl: createPaymentDto.returnUrl,
+      cancelUrl: createPaymentDto.cancelUrl
+    });
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('payos/payment-status/:orderCode')
+  async getPayOSPaymentStatus(@Param('orderCode') orderCode: string) {
+    return this.payosService.checkPaymentStatus(orderCode);
+  }
+
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Post('payos/refund')
+  async createPayOSRefund(@Body() refundDto: PayOSRefundDto) {
+    return this.payosService.processRefund(refundDto);
+  }
+
   // Webhook endpoints
   @Post('vnpay/webhook')
   async vnpayWebhook(@Body() body: any) {
@@ -267,17 +313,15 @@ export class PaymentsController {
   @Post('payos/webhook')
   async payosWebhook(@Req() req: any, @Body() body: any, @Headers('x-signature') xsig?: string) {
     try {
-      const checksum = (process.env.PAYOS_CHECKSUM_KEY as string) || '';
-      const hmac = await import('crypto').then((m) => m.createHmac('sha256', checksum));
-      const target = body?.data ? JSON.stringify(body.data) : JSON.stringify(body);
-      const sig = hmac.update(target).digest('hex');
-      const expected = body?.signature || xsig || '';
-      if (expected && expected !== sig) {
-        return { ok: false };
+      // Sử dụng PayOSService để verify và xử lý webhook
+      const isValid = this.payosService.verifyWebhookSignature(body);
+      if (!isValid) {
+        return { ok: false, message: 'Invalid signature' };
       }
-      return this.payments.handleWebhook('PAYOS', body);
-    } catch {
-      return { ok: false };
+      
+      return this.payosService.handleWebhook(body);
+    } catch (error) {
+      return { ok: false, message: 'Webhook processing failed' };
     }
   }
 }

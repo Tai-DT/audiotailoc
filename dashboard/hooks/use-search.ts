@@ -51,7 +51,7 @@ export function useSearch() {
   const trackSearch = useCallback(async (query: string, resultCount: number) => {
     try {
       await apiClient.post('/search/analytics', { query, resultCount })
-    } catch (err) {
+    } catch {
       // Silent error
     }
   }, [])
@@ -62,17 +62,17 @@ export function useSearch() {
       setError(null)
       
       // Call backend search API
-      const response = await apiClient.request(`/api/v1/search?q=${encodeURIComponent(query)}&type=${type}`)
-      const results = response.data?.results || []
+      const response = await apiClient.get<Array<Record<string, unknown>>>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
+      const results = (response.data as Array<Record<string, unknown>>) || []
       
       // Transform backend results to match SearchResult interface
-      const filtered: SearchResult[] = results.map((item: any) => ({
-        id: item.id,
-        type: item.type,
-        title: item.name || item.title,
-        description: item.description || '',
-        price: item.price,
-        score: item.score,
+      const filtered: SearchResult[] = results.map((item) => ({
+        id: String(item.id || ''),
+        type: (item.type as 'product' | 'service' | 'order' | 'user') || 'product',
+        title: String(item.name || item.title || ''),
+        description: String(item.description || ''),
+        price: typeof item.price === 'number' ? item.price : undefined,
+        score: typeof item.score === 'number' ? item.score : undefined,
         metadata: item
       }))
 
@@ -96,7 +96,7 @@ export function useSearch() {
       // Track search analytics (moved outside useCallback to avoid dependency)
       setTimeout(() => trackSearch(query, filtered.length), 0)
       
-    } catch (err) {
+    } catch {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -111,7 +111,7 @@ export function useSearch() {
       // TODO: Backend API for search history not implemented yet
       // Keep search history in local state only for now
       setSearchHistory([])
-    } catch (err) {
+    } catch {
       // Silent error handling
     }
   }, [])
@@ -120,18 +120,18 @@ export function useSearch() {
   const fetchPopular = useCallback(async () => {
     try {
       // Call backend API for popular searches
-      const response = await apiClient.request('/api/v1/search/popular?limit=10')
-      const popular = response.data || []
+      const response = await apiClient.get<Array<Record<string, unknown>>>('/search/popular?limit=10')
+      const popular = (response.data as Array<Record<string, unknown>>) || []
       
       // Transform to match PopularSearch interface
-      const transformed: PopularSearch[] = popular.map((item: any, index: number) => ({
-        id: item.id || index.toString(),
-        query: item.query,
-        count: item.count || 0
+      const transformed: PopularSearch[] = popular.map((item, index) => ({
+        id: String(item.id || index),
+        query: String(item.query || ''),
+        count: typeof item.count === 'number' ? item.count : 0
       }))
       
       setPopularSearches(transformed)
-    } catch (err) {
+    } catch {
       // Silent error - fallback to empty array
       setPopularSearches([])
     }
@@ -151,12 +151,12 @@ export function useSearch() {
       }
       
       // Call backend API for search suggestions
-      const response = await apiClient.request(`/api/v1/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
-      const suggestions = response.data || []
+      const response = await apiClient.get<Array<Record<string, unknown>>>(`/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+      const suggestions = (response.data as Array<Record<string, unknown>>) || []
       
       // Return array of suggestion strings
-      return suggestions.map((item: any) => item.query || item)
-    } catch (err) {
+      return suggestions.map((item) => String(item.query || item))
+    } catch {
       return []
     }
   }, [])
@@ -188,7 +188,7 @@ export function useSearch() {
       // Track search
       await trackSearch(query, results.length)
       
-    } catch (err) {
+    } catch {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
       setError(errorMessage)
       toast.error(errorMessage)

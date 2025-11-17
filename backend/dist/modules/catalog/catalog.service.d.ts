@@ -39,6 +39,8 @@ export type ProductDto = {
 export declare class CatalogService {
     private readonly prisma;
     private readonly cache;
+    private readonly inMemoryCache;
+    private readonly inFlightRequests;
     constructor(prisma: PrismaService, cache: CacheService);
     listProducts(params?: {
         page?: number;
@@ -49,12 +51,8 @@ export declare class CatalogService {
         sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount';
         sortOrder?: 'asc' | 'desc';
         featured?: boolean;
-    }): Promise<{
-        items: ProductDto[];
-        total: number;
-        page: number;
-        pageSize: number;
-    }>;
+        isActive?: boolean;
+    }): Promise<any>;
     getById(id: string): Promise<ProductDto>;
     getBySlug(slug: string): Promise<ProductDto>;
     checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;

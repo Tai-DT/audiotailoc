@@ -370,7 +370,7 @@ export function Transactional(options: TransactionOptions = {}) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: any[]) {
       const txManager = this.transactionManager as TransactionManager;
       if (!txManager) {
         this.logger.warn('TransactionManager not injected, executing without transaction');

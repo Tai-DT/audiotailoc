@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.42",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "@rekog/mcp-nest": "^1.8.4",
+    "zod": "^3.25.76"
+  }
+}

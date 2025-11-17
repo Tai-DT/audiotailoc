@@ -65,7 +65,23 @@ let AuthService = class AuthService {
                 errors: passwordValidation.errors
             });
         }
-        return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+        try {
+            return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+        }
+        catch (error) {
+            console.log('AuthService.register error:', error);
+            console.log('Error type:', typeof error);
+            console.log('Error instanceof BadRequestException:', error instanceof common_1.BadRequestException);
+            if (error instanceof common_1.BadRequestException) {
+                const errorMessage = error.message || error.toString();
+                console.log('Error message:', errorMessage);
+                if (errorMessage.includes('Email already exists')) {
+                    console.log('Throwing BadRequestException for duplicate email');
+                    throw new common_1.BadRequestException('Email already exists');
+                }
+            }
+            throw error;
+        }
     }
     async login(dto) {
         if (this.securityService.isAccountLocked(dto.email)) {

@@ -1,0 +1,54 @@
+config:
+  target: 'http://localhost:3010'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Load test"
+    - duration: 60
+      arrivalRate: 20
+      name: "Stress test"
+  
+scenarios:
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/health"
+          
+  - name: "Authentication"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "perftest@example.com"
+            password: "TestPass123!"
+            
+  - name: "Product Catalog"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/v1/catalog/products"
+          
+  - name: "File Upload"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/files/upload"
+          formData:
+            - name: "file"
+              type: "file"
+              fileName: "test-image.png"
+              
+  - name: "User Registration"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            email: "newuser{{ $randomString() }}@example.com"
+            password: "StrongPass123!"
+            name: "Performance Test User"

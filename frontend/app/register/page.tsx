@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { data: user } = useAuth();
   const registerMutation = useRegister();
@@ -43,6 +44,10 @@ export default function RegisterPage() {
       ...prev,
       [name]: value
     }));
+    // Clear validation error when user starts typing
+    if (validationError) {
+      setValidationError(null);
+    }
   };
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -77,11 +82,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationError = validateForm();
-    if (validationError) {
+    const error = validateForm();
+    if (error) {
+      setValidationError(error);
       return;
     }
 
+    setValidationError(null);
     setIsLoading(true);
 
     try {
@@ -112,6 +119,11 @@ export default function RegisterPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {validationError && (
+                <div className="p-3 bg-destructive/15 border border-destructive/50 rounded-md">
+                  <p className="text-sm text-destructive">{validationError}</p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Họ và tên *</Label>

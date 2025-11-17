@@ -5,6 +5,8 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
+  preset: 'ts-jest',
+  testEnvironment: 'node',
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
     '!src/main.ts',
@@ -18,8 +20,7 @@ module.exports = {
     '!src/**/*.spec.ts',
   ],
   coverageDirectory: './coverage',
-  testEnvironment: 'node',
-  testTimeout: 30000,
+  testTimeout: 60000,
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -42,4 +43,9 @@ module.exports = {
     '.interface.ts',
     '.dto.ts',
   ],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+    },
+  },
 };

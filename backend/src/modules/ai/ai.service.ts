@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 /**
  * AI Service

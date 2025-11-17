@@ -122,7 +122,7 @@ export class QueryOptimizer {
   /**
    * Optimize select query - add only needed fields
    */
-  static optimizeSelect<T>(
+  static optimizeSelect<_T>(
     baseSelect: Record<string, boolean | object>,
     includeRelations: boolean = false,
   ): Record<string, boolean | object> {
@@ -183,7 +183,7 @@ export class QueryOptimizer {
   /**
    * Add common fields selection
    */
-  static getDefaultSelect<T extends Record<string, any>>(
+  static getDefaultSelect<_T extends Record<string, any>>(
     excludeFields: string[] = ['password', 'refreshToken'],
   ): Record<string, boolean> {
     const defaultSelect: Record<string, boolean> = {};
@@ -213,13 +213,13 @@ export class QueryOptimizer {
    * Batch queries to reduce N+1 problems
    */
   static async executeBatchQueries<T>(
-    queries: Array<() => Promise<T>>,
+    _queries: Array<() => Promise<T>>,
     batchSize: number = 10,
   ): Promise<T[]> {
     const results: T[] = [];
 
-    for (let i = 0; i < queries.length; i += batchSize) {
-      const batch = queries.slice(i, i + batchSize);
+    for (let i = 0; i < _queries.length; i += batchSize) {
+      const batch = _queries.slice(i, i + batchSize);
       const batchResults = await Promise.all(batch.map(q => q()));
       results.push(...batchResults);
     }
@@ -463,7 +463,7 @@ export class IndexOptimizer {
   /**
    * Suggest indexes based on query patterns
    */
-  static suggestIndexes(queries: QueryMetrics[]): Array<{
+  static suggestIndexes(_queries: QueryMetrics[]): Array<{
     model: string;
     field: string;
     reason: string;

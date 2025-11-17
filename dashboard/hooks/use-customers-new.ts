@@ -180,7 +180,7 @@ export function useCustomers() {
       } else {
         setCustomers(mockCustomers)
       }
-    } catch (error) {
+    } catch {
       setCustomers(mockCustomers)
       toast.error("Đang sử dụng dữ liệu mẫu")
     } finally {

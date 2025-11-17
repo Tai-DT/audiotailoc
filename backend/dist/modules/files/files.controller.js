@@ -54,7 +54,7 @@ let FilesController = class FilesController {
     }
     async uploadUserAvatar(file) {
         if (!file) {
-            throw new common_1.BadRequestException('No avatar uploaded');
+            throw new common_1.NotFoundException('No avatar uploaded');
         }
         const userId = 'user123';
         return this.filesService.uploadUserAvatar(file, userId);
@@ -62,7 +62,7 @@ let FilesController = class FilesController {
     async getFileInfo(fileId) {
         const file = await this.filesService.getFileInfo(fileId);
         if (!file) {
-            throw new common_1.BadRequestException('File not found');
+            throw new common_1.NotFoundException('File not found');
         }
         return file;
     }

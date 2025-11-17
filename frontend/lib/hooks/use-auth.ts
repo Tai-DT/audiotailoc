@@ -123,8 +123,22 @@ export function useLogin() {
       toast.success(`Chào mừng ${data.user.name}!`);
     },
     onError: (error: unknown) => {
-      const { message } = handleApiError(error as { message?: string });
-      toast.error(message || 'Đăng nhập thất bại');
+      console.error('Login error details:', error);
+      const { message, status } = handleApiError(error as { response?: { status?: number }; message?: string });
+      
+      let errorMessage = 'Đăng nhập thất bại';
+      
+      if (status === 401) {
+        errorMessage = 'Email hoặc mật khẩu không chính xác';
+      } else if (status === 422) {
+        errorMessage = 'Vui lòng điền đầy đủ thông tin đăng nhập';
+      } else if (status === 429) {
+        errorMessage = 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau';
+      } else if (message && message !== 'Unknown error') {
+        errorMessage = message;
+      }
+      
+      toast.error(errorMessage);
     },
   });
 }
@@ -161,8 +175,22 @@ export function useRegister() {
       toast.success(`Đăng ký thành công! Chào mừng ${data.user.name}!`);
     },
     onError: (error: unknown) => {
-      const { message } = handleApiError(error as { message?: string });
-      toast.error(message || 'Đăng ký thất bại');
+      console.error('Register error details:', error);
+      const { message, status } = handleApiError(error as { response?: { status?: number }; message?: string });
+      
+      let errorMessage = 'Đăng ký thất bại';
+      
+      if (status === 409) {
+        errorMessage = 'Email này đã được sử dụng. Vui lòng chọn email khác';
+      } else if (status === 422) {
+        errorMessage = 'Vui lòng điền đầy đủ thông tin đăng ký';
+      } else if (status === 429) {
+        errorMessage = 'Quá nhiều lần thử đăng ký. Vui lòng thử lại sau';
+      } else if (message && message !== 'Unknown error') {
+        errorMessage = message;
+      }
+      
+      toast.error(errorMessage);
     },
   });
 }
