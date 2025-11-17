@@ -13,12 +13,13 @@ const checkout_controller_1 = require("./checkout.controller");
 const cart_module_1 = require("../cart/cart.module");
 const promotions_module_1 = require("../promotions/promotions.module");
 const mail_service_1 = require("../notifications/mail.service");
+const prisma_module_1 = require("../../prisma/prisma.module");
 let CheckoutModule = class CheckoutModule {
 };
 exports.CheckoutModule = CheckoutModule;
 exports.CheckoutModule = CheckoutModule = __decorate([
     (0, common_1.Module)({
-        imports: [cart_module_1.CartModule, promotions_module_1.PromotionsModule],
+        imports: [cart_module_1.CartModule, promotions_module_1.PromotionsModule, prisma_module_1.PrismaModule],
         providers: [checkout_service_1.CheckoutService, mail_service_1.MailService],
         controllers: [checkout_controller_1.CheckoutController],
     })
