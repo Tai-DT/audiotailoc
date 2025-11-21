@@ -210,6 +210,29 @@ try {
 - Export functions sẽ được implement trong version tương lai
 - Activity logs hiện tại chưa được implement đầy đủ
 
+## 🛡️ Create / Update Admin User (Local & Dev)
+
+If you need to create an admin user for development or testing, you can run the provided script. It will create an admin if one doesn't exist, and optionally update an existing admin's password and name when using the `--overwrite` flag.
+
+From the `backend` folder, run:
+
+```bash
+# Example: Create or update admin
+npx ts-node ./scripts/create-admin.ts --email=admin@audiotailoc.com --password=StrongPassword! --name="Administrator" --overwrite
+```
+
+Options:
+
+- `--email` - Admin email (default: `admin@audiotailoc.com`)
+- `--password` - Admin password (default: `admin123`)
+- `--name` - Admin display name (default: `Admin User`)
+- `--overwrite` - Update existing admin with provided password and name
+- `--dry-run` - Print what would be done without modifying the database
+- `--force-production` - Allow running the script in production (use with caution)
+
+Note: Make sure `DATABASE_URL` is available in your environment, e.g., via a `.env` file or exported variable.
+
+
 ## 🔄 Updates
 
 - **v1.0.0** - Initial release với complete API documentation
