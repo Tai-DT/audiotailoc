@@ -19,6 +19,7 @@
     "postbuild": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "ts-node src/seed.ts",
+    "create-admin": "npx ts-node ./scripts/create-admin.ts",
     "seed:simple": "node scripts/seed-simple.js",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
@@ -34,9 +35,7 @@
     "test:performance": "jest --testPathPattern=performance",
     "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
     "test:setup": "node scripts/setup-test-db.js",
-    "test:cleanup": "node scripts/cleanup-test-data.js",
-    "prepare": "husky install",
-    "pre-commit": "lint-staged"
+    "test:cleanup": "node scripts/cleanup-test-data.js"
   },
   "dependencies": {
     "@nestjs/axios": "^3.0.0",
