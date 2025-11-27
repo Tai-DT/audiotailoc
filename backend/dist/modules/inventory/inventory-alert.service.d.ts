@@ -1,7 +1,10 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { TelegramService } from '../notifications/telegram.service';
 export declare class InventoryAlertService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly telegram;
+    private readonly logger;
+    constructor(prisma: PrismaService, telegram: TelegramService);
     create(data: {
         productId: string;
         type: string;

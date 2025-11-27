@@ -53,10 +53,7 @@ export function Cache(ttl?: number, keyPrefix?: string, tags?: string[]) {
  * @param keyGenerator - Function to generate cache key from arguments
  * @param options - Cache options
  */
-export function CacheWithKey(
-  keyGenerator: (...args: any[]) => string,
-  options?: CacheOptions
-) {
+export function CacheWithKey(keyGenerator: (...args: any[]) => string, options?: CacheOptions) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
@@ -95,7 +92,7 @@ export function CacheWithKey(
  */
 export function CacheWithDynamicTTL(
   ttlExtractor: (result: any) => number,
-  options?: Omit<CacheOptions, 'ttl'>
+  options?: Omit<CacheOptions, 'ttl'>,
 ) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
@@ -146,10 +143,7 @@ export function CacheWithDynamicTTL(
  * @param keyGenerator - Function to generate cache key to invalidate
  * @param prefix - Cache key prefix
  */
-export function InvalidateCache(
-  keyGenerator: (...args: any[]) => string,
-  prefix?: string
-) {
+export function InvalidateCache(keyGenerator: (...args: any[]) => string, prefix?: string) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
@@ -214,10 +208,7 @@ export function InvalidateCacheByTags(tagGenerator: (...args: any[]) => string[]
  * @param condition - Function that determines if result should be cached
  * @param options - Cache options
  */
-export function ConditionalCache(
-  condition: (result: any) => boolean,
-  options?: CacheOptions
-) {
+export function ConditionalCache(condition: (result: any) => boolean, options?: CacheOptions) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
@@ -265,7 +256,7 @@ export function ConditionalCache(
  */
 export function CacheWithFallback(
   fallback: any | ((...args: any[]) => any),
-  options?: CacheOptions
+  options?: CacheOptions,
 ) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;

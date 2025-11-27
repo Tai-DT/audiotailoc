@@ -57,7 +57,8 @@ export class TestimonialsService {
         name: 'Nguyễn Văn A',
         position: 'Giám đốc kỹ thuật',
         company: 'Công ty ABC',
-        content: 'Dịch vụ âm thanh của Audio Tài Lộc rất chuyên nghiệp. Đội ngũ kỹ thuật giàu kinh nghiệm, thiết bị hiện đại, giá cả hợp lý. Rất hài lòng với chất lượng phục vụ.',
+        content:
+          'Dịch vụ âm thanh của Audio Tài Lộc rất chuyên nghiệp. Đội ngũ kỹ thuật giàu kinh nghiệm, thiết bị hiện đại, giá cả hợp lý. Rất hài lòng với chất lượng phục vụ.',
         avatarUrl: undefined,
         rating: 5,
         isActive: true,
@@ -70,7 +71,8 @@ export class TestimonialsService {
         name: 'Trần Thị B',
         position: 'Chủ quán karaoke',
         company: 'Quán Karaoke XYZ',
-        content: 'Đã sử dụng dịch vụ setup hệ thống âm thanh cho quán karaoke. Âm thanh chất lượng cao, cân bằng tốt. Khách hàng rất thích, doanh thu tăng đáng kể.',
+        content:
+          'Đã sử dụng dịch vụ setup hệ thống âm thanh cho quán karaoke. Âm thanh chất lượng cao, cân bằng tốt. Khách hàng rất thích, doanh thu tăng đáng kể.',
         avatarUrl: undefined,
         rating: 5,
         isActive: true,
@@ -83,7 +85,8 @@ export class TestimonialsService {
         name: 'Lê Văn C',
         position: 'Nhà sản xuất sự kiện',
         company: 'Sự kiện 123',
-        content: 'Hợp tác với Audio Tài Lộc cho nhiều sự kiện lớn. Luôn đảm bảo chất lượng âm thanh, setup nhanh chóng, hỗ trợ tận tình. Đối tác đáng tin cậy.',
+        content:
+          'Hợp tác với Audio Tài Lộc cho nhiều sự kiện lớn. Luôn đảm bảo chất lượng âm thanh, setup nhanh chóng, hỗ trợ tận tình. Đối tác đáng tin cậy.',
         avatarUrl: undefined,
         rating: 5,
         isActive: true,

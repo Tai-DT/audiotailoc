@@ -10,7 +10,7 @@ export class MarketingService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
   ) {}
 
   // Campaign Management
@@ -19,7 +19,7 @@ export class MarketingService {
     const where: any = status ? { status } : {};
     const campaigns = await this.prisma.campaigns.findMany({
       where,
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     return campaigns;
@@ -27,7 +27,7 @@ export class MarketingService {
 
   async getCampaign(id: string) {
     const campaign = await this.prisma.campaigns.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!campaign) {
@@ -59,32 +59,35 @@ export class MarketingService {
         startDate: data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate ? new Date(data.endDate) : null,
         status: CampaignStatus.DRAFT,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     this.logger.log(`Campaign created: ${campaign.id}`);
     return campaign;
   }
 
-  async updateCampaign(id: string, data: Partial<{
-    name: string;
-    description: string;
-    type: CampaignType;
-    targetAudience: string;
-    discountPercent: number;
-    discountAmount: number;
-    startDate: string;
-    endDate: string;
-    status: CampaignStatus;
-  }>) {
+  async updateCampaign(
+    id: string,
+    data: Partial<{
+      name: string;
+      description: string;
+      type: CampaignType;
+      targetAudience: string;
+      discountPercent: number;
+      discountAmount: number;
+      startDate: string;
+      endDate: string;
+      status: CampaignStatus;
+    }>,
+  ) {
     const campaign = await this.prisma.campaigns.update({
       where: { id },
       data: {
         ...data,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
-      }
+      },
     });
 
     this.logger.log(`Campaign updated: ${id}`);
@@ -99,10 +102,10 @@ export class MarketingService {
 
   async sendCampaign(id: string) {
     const campaign = await this.getCampaign(id);
-    
+
     // Get target audience
     const recipients = await this.getTargetAudience(campaign.targetAudience);
-    
+
     // Send campaign based on type
     switch (campaign.type) {
       case 'EMAIL':
@@ -122,7 +125,7 @@ export class MarketingService {
     // Update campaign status
     await this.prisma.campaigns.update({
       where: { id },
-      data: { status: CampaignStatus.SENT, sentAt: new Date() }
+      data: { status: CampaignStatus.SENT, sentAt: new Date() },
     });
 
     this.logger.log(`Campaign sent: ${id} to ${recipients.length} recipients`);
@@ -131,14 +134,14 @@ export class MarketingService {
 
   async getCampaignStats(id: string) {
     const _campaign = await this.getCampaign(id);
-    
+
     const stats = {
       totalRecipients: 0,
       totalOpens: 0,
       totalClicks: 0,
       openRate: 0,
       clickRate: 0,
-      conversionRate: 0
+      conversionRate: 0,
     };
 
     return stats;
@@ -152,15 +155,15 @@ export class MarketingService {
     templateId?: string;
   }) {
     const results = [];
-    
+
     for (const recipient of data.recipients) {
       try {
         await this.mailService.sendEmail({
           to: recipient,
           subject: data.subject,
-          html: data.content
+          html: data.content,
         });
-        
+
         results.push({ email: recipient, status: 'sent' });
       } catch (error) {
         this.logger.error(`Failed to send email to ${recipient}:`, error as any);
@@ -172,7 +175,7 @@ export class MarketingService {
       total: data.recipients.length,
       sent: results.filter(r => r.status === 'sent').length,
       failed: results.filter(r => r.status === 'failed').length,
-      results
+      results,
     };
   }
 
@@ -182,20 +185,20 @@ export class MarketingService {
         id: 'welcome',
         name: 'Welcome Email',
         subject: 'Welcome to Audio Tài Lộc!',
-        content: '<h1>Welcome!</h1><p>Thank you for joining us.</p>'
+        content: '<h1>Welcome!</h1><p>Thank you for joining us.</p>',
       },
       {
         id: 'promotion',
         name: 'Promotion Email',
         subject: 'Special Offer Just for You!',
-        content: '<h1>Special Offer</h1><p>Get 20% off your next purchase!</p>'
+        content: '<h1>Special Offer</h1><p>Get 20% off your next purchase!</p>',
       },
       {
         id: 'order-confirmation',
         name: 'Order Confirmation',
         subject: 'Your Order Confirmation',
-        content: '<h1>Order Confirmed</h1><p>Thank you for your order.</p>'
-      }
+        content: '<h1>Order Confirmed</h1><p>Thank you for your order.</p>',
+      },
     ];
   }
 
@@ -210,51 +213,98 @@ export class MarketingService {
     const [totalEmails, sentEmails, failedEmails] = await Promise.all([
       this.prisma.email_logs.count({ where }),
       this.prisma.email_logs.count({ where: { ...where, status: 'SENT' } }),
-      this.prisma.email_logs.count({ where: { ...where, status: 'FAILED' } })
+      this.prisma.email_logs.count({ where: { ...where, status: 'FAILED' } }),
     ]);
 
     return {
       totalEmails,
       sentEmails,
       failedEmails,
-      successRate: totalEmails > 0 ? (sentEmails / totalEmails * 100).toFixed(2) : 0
+      successRate: totalEmails > 0 ? ((sentEmails / totalEmails) * 100).toFixed(2) : 0,
     };
   }
 
   // Audience Management
   async getAudienceSegments() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const [newCustomers, returningCustomers, highValueCustomers, inactiveCustomers] =
+      await Promise.all([
+        // New Customers: Registered in last 30 days
+        this.prisma.users.count({
+          where: {
+            role: 'USER',
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        }),
+        // Returning Customers: More than 1 order
+        this.prisma.users.count({
+          where: {
+            role: 'USER',
+            orders: {
+              some: {}, // Has at least one order
+            },
+          },
+        }),
+        // High Value: Spent > 5M (approximate query, ideally needs aggregation)
+        this.prisma.orders
+          .groupBy({
+            by: ['userId'],
+            _sum: { totalCents: true },
+            having: {
+              totalCents: { _sum: { gt: 500000000 } }, // 5M VND in cents
+            },
+          })
+          .then(res => res.length),
+        // Inactive: No orders in last 90 days
+        this.prisma.users.count({
+          where: {
+            role: 'USER',
+            orders: {
+              none: {
+                createdAt: { gte: ninetyDaysAgo },
+              },
+            },
+          },
+        }),
+      ]);
+
     return [
       {
         id: 'new-customers',
-        name: 'New Customers',
-        description: 'Customers who registered in the last 30 days',
-        count: 150
+        name: 'Khách hàng mới',
+        description: 'Khách hàng đăng ký trong 30 ngày qua',
+        count: newCustomers,
       },
       {
         id: 'returning-customers',
-        name: 'Returning Customers',
-        description: 'Customers with more than 1 order',
-        count: 320
+        name: 'Khách hàng quay lại',
+        description: 'Khách hàng đã có ít nhất 1 đơn hàng',
+        count: returningCustomers,
       },
       {
         id: 'high-value',
-        name: 'High Value Customers',
-        description: 'Customers who spent more than 5M VND',
-        count: 85
+        name: 'Khách hàng VIP',
+        description: 'Chi tiêu trên 5.000.000 VNĐ',
+        count: highValueCustomers,
       },
       {
         id: 'inactive',
-        name: 'Inactive Customers',
-        description: 'Customers with no activity in 90 days',
-        count: 200
-      }
+        name: 'Khách hàng không hoạt động',
+        description: 'Không mua hàng trong 90 ngày qua',
+        count: inactiveCustomers,
+      },
     ];
   }
 
   async getAudienceSegment(id: string) {
     const segments = await this.getAudienceSegments();
     const segment = segments.find(s => s.id === id);
-    
+
     if (!segment) {
       throw new NotFoundException('Audience segment not found');
     }
@@ -269,7 +319,7 @@ export class MarketingService {
       name: data.name,
       criteria: data.criteria,
       count: 0,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.logger.log(`Audience segment created: ${segment.id}`);
@@ -285,15 +335,46 @@ export class MarketingService {
       if (endDate) where['createdAt']['lte'] = new Date(endDate);
     }
 
-    // Mock ROI data
+    // Calculate real ROI based on campaigns and orders
+    const campaignsCount = await this.prisma.campaigns.count({ where });
+
+    // Calculate total revenue from orders with promotion codes (assuming campaigns use promo codes)
+    // This is an approximation
+    const ordersWithPromo = await this.prisma.orders.aggregate({
+      _sum: {
+        totalCents: true,
+        discountCents: true,
+      },
+      where: {
+        promotionCode: { not: null },
+        status: 'COMPLETED', // Only count completed orders
+        ...(startDate || endDate
+          ? {
+              createdAt: {
+                ...(startDate ? { gte: new Date(startDate) } : {}),
+                ...(endDate ? { lte: new Date(endDate) } : {}),
+              },
+            }
+          : {}),
+      },
+    });
+
+    const totalRevenue = Number(ordersWithPromo._sum.totalCents || 0);
+    const totalDiscount = Number(ordersWithPromo._sum.discountCents || 0);
+
+    // Estimate spent as total discount given (cost of campaign)
+    const totalSpent = totalDiscount > 0 ? totalDiscount : 1000000; // Fallback to 1M if no discounts
+
+    const roi = totalSpent > 0 ? ((totalRevenue - totalSpent) / totalSpent) * 100 : 0;
+
     return {
-      totalSpent: 5000000, // 5M VND
-      totalRevenue: 25000000, // 25M VND
-      roi: 400, // 400% ROI
-      campaigns: 12,
-      averageROI: 350,
-      topPerformingCampaign: 'Summer Sale 2024',
-      topPerformingChannel: 'Email Marketing'
+      totalSpent,
+      totalRevenue,
+      roi: Math.round(roi),
+      campaigns: campaignsCount,
+      averageROI: Math.round(roi / (campaignsCount || 1)),
+      topPerformingCampaign: 'N/A', // Would need more complex tracking
+      topPerformingChannel: 'Email', // Default
     };
   }
 
@@ -308,8 +389,8 @@ export class MarketingService {
         visitorToLead: 15,
         leadToProspect: 50,
         prospectToCustomer: 40,
-        overall: 3
-      }
+        overall: 3,
+      },
     };
   }
 
@@ -319,7 +400,7 @@ export class MarketingService {
       // Return all customers
       return this.prisma.users.findMany({
         where: { role: 'USER' },
-        select: { email: true, name: true }
+        select: { email: true, name: true },
       });
     }
 
@@ -330,23 +411,23 @@ export class MarketingService {
           where: {
             role: 'USER',
             createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-            }
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
           },
-          select: { email: true, name: true }
+          select: { email: true, name: true },
         });
-      
+
       case 'returning-customers':
         return this.prisma.users.findMany({
           where: {
             role: 'USER',
             orders: {
-              some: {}
-            }
+              some: {},
+            },
           },
-          select: { email: true, name: true }
+          select: { email: true, name: true },
         });
-      
+
       default:
         return [];
     }
@@ -358,7 +439,7 @@ export class MarketingService {
         await this.mailService.sendEmail({
           to: recipient.email,
           subject: campaign.name,
-          html: campaign.description
+          html: campaign.description,
         });
 
         // Log email sent
@@ -369,12 +450,12 @@ export class MarketingService {
             recipientEmail: recipient.email,
             subject: campaign.name,
             status: 'SENT',
-            sentAt: new Date()
-          }
+            sentAt: new Date(),
+          },
         });
       } catch (error) {
         this.logger.error(`Failed to send campaign email to ${recipient.email}:`, error as any);
-        
+
         await this.prisma.email_logs.create({
           data: {
             id: randomUUID(),
@@ -382,8 +463,8 @@ export class MarketingService {
             recipientEmail: recipient.email,
             subject: campaign.name,
             status: 'FAILED',
-            error: (error as any).message
-          }
+            error: (error as any).message,
+          },
         });
       }
     }

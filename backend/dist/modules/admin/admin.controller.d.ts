@@ -1,7 +1,7 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { LoggingService } from '../monitoring/logging.service';
-import { ActivityLogService } from '../../services/activity-log.service';
+import { ActivityLogService } from '../logging/activity-log.service';
 declare class AdminDashboardDto {
     startDate?: string;
     endDate?: string;
@@ -42,7 +42,7 @@ export declare class AdminController {
                     createdAt: Date;
                     updatedAt: Date;
                     orderNo: string;
-                    userId: string;
+                    userId: string | null;
                     subtotalCents: number;
                     discountCents: number;
                     shippingCents: number;
@@ -50,6 +50,8 @@ export declare class AdminController {
                     shippingAddress: string | null;
                     shippingCoordinates: string | null;
                     promotionCode: string | null;
+                    isDeleted: boolean;
+                    deletedAt: Date | null;
                 })[];
                 users: {
                     id: string;
@@ -126,17 +128,17 @@ export declare class AdminController {
                 id: string;
                 createdAt: Date;
                 userId: string | null;
-                userAgent: string | null;
-                method: string | null;
-                url: string | null;
-                statusCode: number | null;
                 duration: number | null;
-                severity: string;
-                category: string;
                 action: string;
                 resource: string | null;
                 resourceId: string | null;
                 ipAddress: string | null;
+                userAgent: string | null;
+                method: string | null;
+                url: string | null;
+                statusCode: number | null;
+                category: string;
+                severity: string;
             }[];
             total: number;
             limit: number;

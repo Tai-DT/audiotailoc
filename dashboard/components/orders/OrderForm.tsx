@@ -12,6 +12,10 @@ type Product = {
   name: string;
   price: number;
   stock: number;
+  inventory?: {
+    stock: number;
+  };
+  stockQuantity?: number;
 };
 
 type OrderItem = {
@@ -29,22 +33,38 @@ export function OrderForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch products (you'll need to implement this)
+  // Fetch products
   useEffect(() => {
-    // TODO: Replace with actual API call
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        // const response = await fetch('/api/products');
-        // const data = await response.json();
-        // setProducts(data);
+        const response = await fetch('/api/products?limit=100');
+        if (!response.ok) throw new Error('Failed to fetch products');
+
+        interface ProductsApiResponse {
+          products: Array<{
+            id: string;
+            name: string;
+            price: number;
+            stockQuantity?: number;
+            inventory?: {
+              stock: number;
+            };
+          }>;
+        }
+
+        const data: ProductsApiResponse = await response.json();
+        // Map API response to component state
+        const mappedProducts: Product[] = data.products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          stock: p.inventory?.stock ?? p.stockQuantity ?? 0,
+          inventory: p.inventory,
+          stockQuantity: p.stockQuantity
+        }));
         
-        // Mock data for demonstration
-        setProducts([
-          { id: '1', name: 'Sản phẩm A', price: 150000, stock: 10 },
-          { id: '2', name: 'Sản phẩm B', price: 250000, stock: 5 },
-          { id: '3', name: 'Sản phẩm C', price: 350000, stock: 8 },
-        ]);
+        setProducts(mappedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast({
@@ -120,17 +140,23 @@ export function OrderForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement order submission
-    console.log('Submitting order:', orderItems);
     
     try {
-      // const response = await fetch('/api/orders', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ items: orderItems }),
-      // });
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: orderItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+          }))
+        }),
+      });
       
-      // if (!response.ok) throw new Error('Failed to create order');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create order');
+      }
       
       toast({
         title: 'Thành công',
@@ -143,7 +169,7 @@ export function OrderForm() {
       console.error('Error creating order:', error);
       toast({
         title: 'Lỗi',
-        description: 'Không thể tạo đơn hàng',
+        description: error instanceof Error ? error.message : 'Không thể tạo đơn hàng',
         variant: 'destructive',
       });
     }

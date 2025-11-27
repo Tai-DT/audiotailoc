@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 
 @Injectable()
@@ -19,6 +13,14 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const startTime = Date.now();
 
+    const safeStringify = (obj: any) => {
+      try {
+        return JSON.stringify(obj, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
+      } catch {
+        return '';
+      }
+    };
+
     // Log incoming request
     this.logger.log(
       `[${method}] ${url} - IP: ${ip} - User: ${user?.id || 'anonymous'} - UA: ${userAgent}`,
@@ -26,16 +28,16 @@ export class LoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: (data) => {
+        next: data => {
           const duration = Date.now() - startTime;
           const statusCode = response.statusCode;
 
           // Log successful response
           this.logger.log(
-            `[${method}] ${url} - ${statusCode} - ${duration}ms - Size: ${JSON.stringify(data).length}`,
+            `[${method}] ${url} - ${statusCode} - ${duration}ms - Size: ${safeStringify(data).length}`,
           );
         },
-        error: (error) => {
+        error: error => {
           const duration = Date.now() - startTime;
 
           // Log error response
@@ -48,4 +50,3 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 }
-

@@ -20,7 +20,6 @@ export declare class CreateProductDto {
     shortDescription?: string;
     priceCents: number;
     originalPriceCents?: number;
-    stockQuantity?: number;
     sku?: string;
     warranty?: string;
     features?: string;
@@ -48,7 +47,6 @@ export declare class UpdateProductDto {
     shortDescription?: string;
     priceCents?: number;
     originalPriceCents?: number;
-    stockQuantity?: number;
     sku?: string;
     warranty?: string;
     features?: string;
@@ -89,7 +87,6 @@ export declare class ProductResponseDto {
     shortDescription?: string;
     priceCents: number;
     originalPriceCents?: number;
-    stockQuantity: number;
     sku?: string;
     warranty?: string;
     features?: string;

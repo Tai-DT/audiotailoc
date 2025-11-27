@@ -3,6 +3,8 @@ import { OrdersService } from './orders.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
+import { TelegramService } from '../notifications/telegram.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('OrdersService', () => {
@@ -50,13 +52,34 @@ describe('OrdersService', () => {
     del: jest.fn(),
   };
 
+  const mockTelegramService = {
+    sendOrderStatusUpdate: jest.fn(),
+    sendOrderNotification: jest.fn(),
+    sendLowStockAlert: jest.fn(),
+  };
+
+  const mockPromotionsService = {
+    findValidPromotionsForOrder: jest.fn().mockResolvedValue([]),
+    applyPromotionsToOrder: jest.fn(),
+    calculateDiscount: jest.fn().mockResolvedValue(0),
+  };
+
   beforeEach(async () => {
+    // Ensure $transaction executes the callback with the mocked client and returns its result
+    mockPrismaService.$transaction.mockImplementation(async (cb: any) => {
+      return cb(mockPrismaService);
+    });
+    // Default product update to resolve to a noop so .catch chain works
+    mockPrismaService.products.update.mockResolvedValue({});
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: MailService, useValue: mockMailService },
+        { provide: TelegramService, useValue: mockTelegramService },
         { provide: CacheService, useValue: mockCacheService },
+        { provide: PromotionsService, useValue: mockPromotionsService },
       ],
     }).compile();
 
@@ -72,9 +95,7 @@ describe('OrdersService', () => {
     it('should create a new order successfully', async () => {
       const createOrderDto = {
         userId: 'user-1',
-        order_items: [
-          { productId: 'product-1', quantity: 2 },
-        ],
+        order_items: [{ productId: 'product-1', quantity: 2 }],
         shippingAddress: 'Test Address',
       };
 
@@ -129,7 +150,7 @@ describe('OrdersService', () => {
       expect(result.order_items.length).toBe(1);
       expect(mockPrismaService.orders.create).toHaveBeenCalled();
       expect(mockPrismaService.products.findUnique).toHaveBeenCalledWith({
-        where: { id: 'product-1' }
+        where: { id: 'product-1' },
       });
     });
   });
@@ -172,7 +193,7 @@ describe('OrdersService', () => {
         where: { id: 'order-1' },
         include: {
           order_items: true,
-          payments: true
+          payments: true,
         },
       });
     });

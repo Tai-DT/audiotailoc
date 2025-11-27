@@ -78,12 +78,12 @@ export declare class TechniciansService {
                 features: string | null;
                 isActive: boolean;
                 viewCount: number;
+                metadata: string | null;
                 duration: number;
                 price: number;
-                metadata: string | null;
+                basePriceCents: number;
                 minPrice: number | null;
                 maxPrice: number | null;
-                basePriceCents: number;
                 priceType: string;
                 typeId: string | null;
                 isFeatured: boolean;
@@ -98,13 +98,16 @@ export declare class TechniciansService {
             updatedAt: Date;
             userId: string | null;
             scheduledAt: Date | null;
-            notes: string | null;
             serviceId: string;
             technicianId: string | null;
             scheduledTime: string | null;
             completedAt: Date | null;
+            notes: string | null;
             estimatedCosts: number | null;
             actualCosts: number | null;
+            address: string | null;
+            coordinates: string | null;
+            goongPlaceId: string | null;
         })[];
         technician_schedules: {
             id: string;

@@ -10,13 +10,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
 @Module({
   imports: [ConfigModule, LoggingModule, PrismaModule],
   controllers: [BackupController],
-  providers: [
-    BackupService,
-    BackupSchedulerService,
-  ],
-  exports: [
-    BackupService,
-    BackupSchedulerService,
-  ],
+  providers: [BackupService, BackupSchedulerService],
+  exports: [BackupService, BackupSchedulerService],
 })
 export class BackupModule {}

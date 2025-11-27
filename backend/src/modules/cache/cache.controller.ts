@@ -2,7 +2,6 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller('cache')
 export class CacheController {
-  
   @Get()
   async findAll() {
     return {
@@ -10,9 +9,9 @@ export class CacheController {
       data: {
         message: 'cache module is working',
         status: 'active',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      message: 'cache data retrieved successfully'
+      message: 'cache data retrieved successfully',
     };
   }
 

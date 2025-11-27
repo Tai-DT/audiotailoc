@@ -10,7 +10,7 @@ export class AdminGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     // Fix: should be request.user (singular) not request.users (plural)
-    const user = request.user || request.users;
+    const user = request.user;
 
     this.logger.debug(`AdminGuard: Checking user=${user?.email}, role=${user?.role}`);
 
@@ -31,7 +31,9 @@ export class AdminGuard implements CanActivate {
     if (adminEmails && user.email) {
       const allowedEmails = adminEmails.split(',').map(email => email.trim().toLowerCase());
       const isAllowed = allowedEmails.includes(user.email.toLowerCase());
-      this.logger.debug(`AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`);
+      this.logger.debug(
+        `AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`,
+      );
       return isAllowed;
     }
 

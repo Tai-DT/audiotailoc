@@ -31,7 +31,12 @@ export class CloudinaryService {
     return this.enabled;
   }
 
-  async uploadImage(buffer: Buffer, filename: string, folder = 'uploads', options: UploadApiOptions = {}): Promise<UploadApiResponse> {
+  async uploadImage(
+    buffer: Buffer,
+    filename: string,
+    folder = 'uploads',
+    options: UploadApiOptions = {},
+  ): Promise<UploadApiResponse> {
     if (!this.enabled) {
       throw new Error('Cloudinary is not enabled. Configure CLOUDINARY_* envs.');
     }

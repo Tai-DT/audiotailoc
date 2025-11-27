@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import { ZaloChatWidget } from "@/components/ui/zalo-chat-widget";
 import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
+import { ChatLauncher } from "@/components/ui/chat-launcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,20 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: CANONICAL_BASE,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google-site-verification-code', // Cần cập nhật mã thực tế
   },
 };
 
@@ -82,6 +97,7 @@ export default function RootLayout({
                 }}
               />
               <ZaloChatWidget phoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
+              <ChatLauncher />
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>

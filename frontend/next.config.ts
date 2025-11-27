@@ -1,21 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Turbopack configuration removed - not compatible with outputFileTracingRoot
+  // Turbopack disabled - using webpack instead due to compatibility issues
   
-  // Enable Turbopack for faster builds
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
-  
-  // Temporarily disable TypeScript checking to focus on connectivity
+  // Enable TypeScript strict checking for type safety
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   
   // Performance optimizations
@@ -50,19 +40,19 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Optimize bundle size in production
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        usedExports: true,
-        sideEffects: false,
-      };
-    }
-    
-    return config;
-  },
+  // Webpack optimizations removed to avoid Turbopack conflicts
+  // webpack: (config, { dev, isServer }) => {
+  //   // Optimize bundle size in production
+  //   if (!dev && !isServer) {
+  //     config.optimization = {
+  //       ...config.optimization,
+  //       usedExports: true,
+  //       sideEffects: false,
+  //     };
+  //   }
+  //   
+  //   return config;
+  // },
   
   // Custom domain configuration
   async headers() {

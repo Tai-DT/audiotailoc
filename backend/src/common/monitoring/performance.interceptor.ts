@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { MetricsService } from './metrics.service';
 
@@ -41,13 +35,11 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
     this.trackActiveRequest(requestId, 1);
 
     // Log incoming request (debug level)
-    this.logger.debug(
-      `[${requestId}] Incoming request: ${method} ${cleanPath} - IP: ${ip}`,
-    );
+    this.logger.debug(`[${requestId}] Incoming request: ${method} ${cleanPath} - IP: ${ip}`);
 
     return next.handle().pipe(
       tap(
-        (data) => {
+        data => {
           this.onSuccess(
             requestId,
             data,
@@ -59,15 +51,8 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
             startMemory,
           );
         },
-        (error) => {
-          this.onError(
-            requestId,
-            error,
-            method,
-            route,
-            cleanPath,
-            startTime,
-          );
+        error => {
+          this.onError(requestId, error, method, route, cleanPath, startTime);
         },
       ),
       // Ensure cleanup happens even with errors
@@ -151,12 +136,7 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
     const statusCode = error.status || error.statusCode || 500;
 
     // Record error metrics
-    this.metricsService.recordHttpRequest(
-      method,
-      route,
-      statusCode,
-      duration,
-    );
+    this.metricsService.recordHttpRequest(method, route, statusCode, duration);
 
     // Log error
     this.logger.error(
@@ -179,7 +159,7 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
    * Normalize route by replacing IDs with placeholders
    */
   private normalizeRoute(method: string, path: string): string {
-    let normalized = path
+    const normalized = path
       // Replace UUID patterns
       .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id')
       // Replace numeric IDs
@@ -237,7 +217,8 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
       const currentMemory = process.memoryUsage().heapUsed;
       const delta = currentMemory - lastMemory;
 
-      if (delta > 10 * 1024 * 1024) { // More than 10MB increase
+      if (delta > 10 * 1024 * 1024) {
+        // More than 10MB increase
         this.logger.warn(
           `Potential memory leak detected: ${(delta / 1024 / 1024).toFixed(2)}MB increase`,
         );

@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Patch, Delete, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+  Patch,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsOptional } from 'class-validator';
@@ -7,6 +19,7 @@ import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 class DeleteManyDto {
   @IsOptional()
@@ -20,7 +33,6 @@ export class CatalogController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get('products')
-  @UseGuards(JwtGuard)
   async list(@Query() query: any) {
     try {
       const page = parseInt(query.page) || 1;
@@ -44,7 +56,7 @@ export class CatalogController {
       });
 
       return {
-        data: res.items,
+        items: res.items,
         pagination: {
           total: res.total,
           page: res.page,
@@ -81,7 +93,10 @@ export class CatalogController {
       };
     } catch (err) {
       console.error('CatalogController.searchProducts error:', err);
-      return { data: [], pagination: { total: 0, page: 1, pageSize: Math.min(parseInt(String(limit ?? '20')), 50) } };
+      return {
+        data: [],
+        pagination: { total: 0, page: 1, pageSize: Math.min(parseInt(String(limit ?? '20')), 50) },
+      };
     }
   }
 
@@ -118,8 +133,7 @@ export class CatalogController {
 
   @Get('categories')
   async listCategories() {
-    const items = await this.catalog.listCategories();
-    return { data: items };
+    return this.catalog.listCategories();
   }
 
   // Support tests that call /categories/:slug
@@ -151,8 +165,42 @@ export class CatalogController {
   }
 
   @Get('categories/slug/:slug/products')
-  getProductsByCategory(@Param('slug') slug: string, @Query('page') page?: number, @Query('limit') limit?: number) {
+  getProductsByCategory(
+    @Param('slug') slug: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
     return this.catalog.getProductsByCategory(slug, { page, limit });
+  }
+
+  @Get('categories/:id')
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @ApiOperation({ summary: 'Get category by ID' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Category retrieved successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Category not found' })
+  async getCategoryById(@Param('id') id: string) {
+    return this.catalog.getCategoryById(id);
+  }
+
+  @Patch('categories/:id')
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @ApiOperation({ summary: 'Update category' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Category updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Category not found' })
+  async updateCategoryById(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.catalog.updateCategory(id, dto);
+  }
+
+  @Delete('categories/:id')
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @ApiOperation({ summary: 'Delete category' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Category deleted successfully' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot delete category with products or subcategories',
+  })
+  async deleteCategoryById(@Param('id') id: string) {
+    return this.catalog.deleteCategory(id);
   }
 
   @UseGuards(JwtGuard)
@@ -191,7 +239,10 @@ export class CatalogController {
       sortBy: 'viewCount',
       sortOrder: 'desc',
     });
-    return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
+    return {
+      data: res.items,
+      pagination: { total: res.total, page: res.page, pageSize: res.pageSize },
+    };
   }
 
   @Get('products/analytics/recent')
@@ -204,6 +255,9 @@ export class CatalogController {
       sortBy: 'createdAt',
       sortOrder: 'desc',
     });
-    return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
+    return {
+      data: res.items,
+      pagination: { total: res.total, page: res.page, pageSize: res.pageSize },
+    };
   }
 }

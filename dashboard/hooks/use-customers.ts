@@ -3,6 +3,7 @@ import { toast } from "sonner"
 import { useAuth } from "@/hooks/use-auth"
 import { apiClient } from "@/lib/api-client"
 import { Customer, CustomerStats } from "@/types/customer"
+import { UserResponse } from "@/types/user"
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -30,59 +31,48 @@ export function useCustomers() {
         role: 'USER',
         limit: 100
       })
-      
+
       // Transform backend user data to customer format
-      const responseData = response.data as { items?: unknown[] }
-      const customers: Customer[] = responseData?.items?.map((user: unknown) => {
-        const userData = user as {
-          id: string;
-          name?: string;
-          email: string;
-          phone?: string;
-          role?: string;
-          createdAt?: string;
-          updatedAt?: string;
-          orders?: { totalCents?: number }[];
-          loyaltyAccount?: { points?: number };
-        };
+      const responseData = response.data as { items?: UserResponse[] }
+      const customers: Customer[] = responseData?.items?.map((user: UserResponse) => {
         return {
-          id: userData.id,
-          name: userData.name || 'Chưa có tên',
-          email: userData.email,
-          phone: userData.phone || '',
-          role: userData.role || 'USER',
-          createdAt: userData.createdAt,
-          updatedAt: userData.updatedAt,
-          totalOrders: userData.orders?.length || 0,
-          totalSpent: (userData.orders?.reduce((sum: number, order: { totalCents?: number }) => sum + (order.totalCents || 0), 0) ?? 0) / 100 || 0,
-          loyaltyPoints: userData.loyaltyAccount?.points || 0
+          id: user.id,
+          name: user.name || 'Chưa có tên',
+          email: user.email,
+          phone: user.phone || '',
+          role: user.role || 'USER',
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          totalOrders: user.orders?.length || 0,
+          totalSpent: (user.orders?.reduce((sum: number, order: { totalCents?: number }) => sum + (order.totalCents || 0), 0) ?? 0) / 100 || 0,
+          loyaltyPoints: user.loyaltyAccount?.points || 0
         };
       }) || []
-      
+
       setCustomers(customers)
-      
+
       // Calculate stats based on real data
       const now = new Date()
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      
+
       const newCustomersCount = customers.filter(c => {
         const createdDate = c.createdAt ? new Date(c.createdAt) : new Date()
         return createdDate >= thirtyDaysAgo
       }).length
-      
+
       const adminCount = customers.filter(c => c.role === 'ADMIN').length
       const activeCount = customers.filter(c => {
         const updatedDate = c.updatedAt ? new Date(c.updatedAt) : new Date()
         return updatedDate >= thirtyDaysAgo
       }).length
-      
+
       const totalRevenue = customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0)
       const totalOrders = customers.reduce((sum, c) => sum + (c.totalOrders || 0), 0)
       const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-      
+
       const retentionRate = customers.length > 0 ? Math.round((activeCount / customers.length) * 100) : 0
       const churnRate = 100 - retentionRate
-      
+
       const newStats: CustomerStats = {
         totalCustomers: customers.length,
         newCustomers: newCustomersCount,
@@ -93,9 +83,9 @@ export function useCustomers() {
         retentionRate,
         churnRate
       }
-      
+
       setStats(newStats)
-      
+
     } catch {
       toast.error("Không thể tải dữ liệu khách hàng")
     } finally {
@@ -112,12 +102,12 @@ export function useCustomers() {
         phone: updates.phone,
         role: updates.role
       })
-      
+
       // Update local state
-      setCustomers(prev => prev.map(customer => 
+      setCustomers(prev => prev.map(customer =>
         customer.id === id ? { ...customer, ...updates } : customer
       ))
-      
+
       toast.success("Đã cập nhật thông tin khách hàng")
     } catch {
       toast.error("Không thể cập nhật khách hàng")
@@ -129,11 +119,11 @@ export function useCustomers() {
     try {
       // Call real API to delete user
       await apiClient.deleteUser(id)
-      
+
       // Update local state
       setCustomers(prev => {
         const updated = prev.filter(customer => customer.id !== id)
-        
+
         // Update stats
         const now = new Date()
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
@@ -141,17 +131,17 @@ export function useCustomers() {
           const updatedDate = c.updatedAt ? new Date(c.updatedAt) : new Date()
           return updatedDate >= thirtyDaysAgo
         }).length
-        
+
         setStats(prevStats => ({
           ...prevStats,
           totalCustomers: updated.length,
           activeCustomers: activeCount,
           retentionRate: updated.length > 0 ? Math.round((activeCount / updated.length) * 100) : 0
         }))
-        
+
         return updated
       })
-      
+
       toast.success("Đã xóa khách hàng")
     } catch {
       toast.error("Không thể xóa khách hàng")
@@ -174,7 +164,7 @@ export function useCustomers() {
           new Date(c.updatedAt || new Date()).toLocaleDateString('vi-VN')
         ].join(','))
       ].join('\n')
-      
+
       // Create and download file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
@@ -185,7 +175,7 @@ export function useCustomers() {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       toast.success("Đã xuất danh sách khách hàng")
     } catch {
       toast.error("Không thể xuất danh sách")
@@ -198,7 +188,7 @@ export function useCustomers() {
       // In real implementation, this would call an email API endpoint
       console.log('Sending email to customer:', customerId, 'Subject:', subject, 'Message:', message)
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       toast.success("Đã gửi email")
     } catch {
       toast.error("Không thể gửi email")
@@ -212,15 +202,15 @@ export function useCustomers() {
 
   // Filter customers based on search and segment
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = searchQuery === "" || 
+    const matchesSearch = searchQuery === "" ||
       customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone?.includes(searchQuery)
-    
-    const matchesSegment = selectedSegment === "all" || 
+
+    const matchesSegment = selectedSegment === "all" ||
       (selectedSegment === "admin" && customer.role === "ADMIN") ||
       (selectedSegment === "user" && customer.role === "USER")
-    
+
     return matchesSearch && matchesSegment
   })
 

@@ -5,7 +5,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class PromotionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async validate(code?: string): Promise<{ code: string; type: 'PERCENT' | 'FIXED'; value: number } | null> {
+  async validate(
+    code?: string,
+  ): Promise<{ code: string; type: 'PERCENT' | 'FIXED'; value: number } | null> {
     if (!code) return null;
     const now = new Date();
     const promo = await this.prisma.promotions.findUnique({ where: { code } });
@@ -16,7 +18,10 @@ export class PromotionService {
     return { code: promo.code, type: promo.type as any, value: promo.value };
   }
 
-  computeDiscount(promo: { type: 'PERCENT' | 'FIXED'; value: number } | null, subtotal: number): number {
+  computeDiscount(
+    promo: { type: 'PERCENT' | 'FIXED'; value: number } | null,
+    subtotal: number,
+  ): number {
     if (!promo) return 0;
     if (promo.type === 'FIXED') return Math.min(subtotal, promo.value);
     const pct = Math.max(0, Math.min(100, promo.value));

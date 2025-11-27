@@ -10,15 +10,15 @@ function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
+
   if (typeof obj === 'bigint') {
     return Number(obj);
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(serializeBigInt);
   }
-  
+
   if (typeof obj === 'object') {
     const result: any = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -26,7 +26,7 @@ function serializeBigInt(obj: any): any {
     }
     return result;
   }
-  
+
   return obj;
 }
 
@@ -106,7 +106,7 @@ export class HealthService {
     try {
       // Quick database check
       await this.prisma.$queryRaw`SELECT 1`;
-      
+
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -123,7 +123,7 @@ export class HealthService {
   // Detailed health check
   async checkDetailedHealth(): Promise<HealthCheckResult> {
     const _startTime = Date.now();
-    
+
     try {
       const [dbCheck, memoryCheck, diskCheck, dependenciesCheck] = await Promise.all([
         this.checkDatabaseHealth(),
@@ -171,11 +171,11 @@ export class HealthService {
   // Database health check
   async checkDatabaseHealth(): Promise<HealthCheck> {
     const _startTime = Date.now();
-    
+
     try {
       // Test database connection
       await this.prisma.$queryRaw`SELECT 1`;
-      
+
       // Get database statistics
       const stats = await this.prisma.$queryRaw`
         SELECT 
@@ -185,10 +185,10 @@ export class HealthService {
       `;
 
       const responseTime = Date.now() - _startTime;
-      
+
       // Use BigInt serializer to handle all BigInt values
       const details = serializeBigInt((stats as any)[0]);
-      
+
       return {
         status: 'healthy',
         message: 'Database is healthy',
@@ -269,7 +269,7 @@ export class HealthService {
     try {
       const diskPath = this.config.get<string>('BACKUP_DIR', './backups');
       const _stats = fs.statSync(diskPath);
-      
+
       // This is a simplified check - in production you'd want to check actual disk space
       return {
         status: 'healthy',
@@ -436,7 +436,7 @@ export class HealthService {
   // Version information
   getVersion() {
     const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'),
     );
 
     return {
@@ -471,8 +471,8 @@ export class HealthService {
       if (fs.existsSync(logFile)) {
         const content = fs.readFileSync(logFile, 'utf8');
         const logLines = content.split('\n').filter(line => line.trim());
-        const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
-        
+        const cutoffTime = Date.now() - hours * 60 * 60 * 1000;
+
         return logLines
           .map(line => {
             try {
@@ -730,7 +730,7 @@ export class HealthService {
   // Private helper methods
   private determineOverallStatus(checks: any): 'healthy' | 'unhealthy' | 'degraded' {
     const statuses = Object.values(checks).map((check: any) => check.status);
-    
+
     if (statuses.every(status => status === 'healthy')) {
       return 'healthy';
     } else if (statuses.some(status => status === 'unhealthy')) {

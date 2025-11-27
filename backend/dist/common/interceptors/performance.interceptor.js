@@ -29,7 +29,7 @@ let PerformanceInterceptor = PerformanceInterceptor_1 = class PerformanceInterce
             next: () => {
                 this.recordMetrics(startTime, method, url, response.statusCode, ip, userAgent);
             },
-            error: (error) => {
+            error: error => {
                 const statusCode = error.status || 500;
                 this.recordMetrics(startTime, method, url, statusCode, ip, userAgent);
             },

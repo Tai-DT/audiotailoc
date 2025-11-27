@@ -23,10 +23,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     // Strict Transport Security (HSTS)
     // Forces HTTPS connections. Disabled in development to allow local HTTP testing
     if (!this.isDevelopment) {
-      res.setHeader(
-        'Strict-Transport-Security',
-        'max-age=31536000; includeSubDomains; preload'
-      );
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     }
 
     // Prevent MIME type sniffing
@@ -70,7 +67,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
         'usb=()',
         'vr=()',
         'xr-spatial-tracking=()',
-      ].join('; ')
+      ].join('; '),
     );
 
     // Content Security Policy (CSP)
@@ -216,7 +213,7 @@ export interface SecurityHeaderOptions {
  * Factory function to create a configured instance of the middleware
  */
 export function createSecurityHeadersMiddleware(
-  _options: SecurityHeaderOptions = {}
+  _options: SecurityHeaderOptions = {},
 ): SecurityHeadersMiddleware {
   // Could extend the middleware class to accept options
   return new SecurityHeadersMiddleware();

@@ -19,7 +19,7 @@ let CompleteProductService = class CompleteProductService {
         this.prisma = prisma;
     }
     async createProduct(createProductDto) {
-        const { name, slug, description, shortDescription, priceCents, originalPriceCents, stockQuantity = 0, sku, warranty, features, minOrderQuantity = 1, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive = true, featured = false, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = createProductDto;
+        const { name, slug, description, shortDescription, priceCents, originalPriceCents, sku, warranty, features, minOrderQuantity = 1, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive = true, featured = false, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = createProductDto;
         const finalSlug = slug || this.generateSlug(name);
         const existingProduct = await this.prisma.products.findUnique({
             where: { slug: finalSlug },
@@ -44,7 +44,6 @@ let CompleteProductService = class CompleteProductService {
                 shortDescription,
                 priceCents,
                 originalPriceCents,
-                stockQuantity,
                 sku,
                 warranty,
                 features,
@@ -65,6 +64,15 @@ let CompleteProductService = class CompleteProductService {
                 metaKeywords,
                 canonicalUrl,
                 updatedAt: new Date(),
+                inventory: {
+                    create: {
+                        id: (0, crypto_1.randomUUID)(),
+                        stock: 0,
+                        reserved: 0,
+                        lowStockThreshold: 10,
+                        updatedAt: new Date(),
+                    },
+                },
             },
             include: {
                 categories: {
@@ -74,6 +82,7 @@ let CompleteProductService = class CompleteProductService {
                         slug: true,
                     },
                 },
+                inventory: true,
             },
         });
         return this.mapToProductResponse(product);
@@ -121,6 +130,7 @@ let CompleteProductService = class CompleteProductService {
                             slug: true,
                         },
                     },
+                    inventory: true,
                 },
                 orderBy,
                 skip,
@@ -141,7 +151,8 @@ let CompleteProductService = class CompleteProductService {
     }
     async searchProducts(query, limit = 20) {
         return {
-            items: [{
+            items: [
+                {
                     id: 'test-id',
                     slug: 'test-product',
                     name: 'Test Product',
@@ -157,7 +168,6 @@ let CompleteProductService = class CompleteProductService {
                     specifications: undefined,
                     features: 'Test features',
                     warranty: '1 year',
-                    stockQuantity: 10,
                     minOrderQuantity: 1,
                     maxOrderQuantity: 5,
                     tags: 'test,tag',
@@ -170,7 +180,8 @@ let CompleteProductService = class CompleteProductService {
                     viewCount: 0,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                }],
+                },
+            ],
             total: 1,
             page: 1,
             pageSize: limit,
@@ -228,6 +239,7 @@ let CompleteProductService = class CompleteProductService {
                         slug: true,
                     },
                 },
+                inventory: true,
             },
         });
         if (!product) {
@@ -246,6 +258,7 @@ let CompleteProductService = class CompleteProductService {
                         slug: true,
                     },
                 },
+                inventory: true,
             },
         });
         if (!product) {
@@ -264,7 +277,7 @@ let CompleteProductService = class CompleteProductService {
         if (!product) {
             throw new common_1.NotFoundException(`Product with ID '${id}' not found`);
         }
-        const { name, slug, description, shortDescription, priceCents, originalPriceCents, stockQuantity, sku, warranty, features, minOrderQuantity, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive, featured, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = updateProductDto;
+        const { name, slug, description, shortDescription, priceCents, originalPriceCents, sku, warranty, features, minOrderQuantity, maxOrderQuantity, tags, categoryId, brand, model, weight, dimensions, specifications, images, isActive, featured, metaTitle, metaDescription, metaKeywords, canonicalUrl, } = updateProductDto;
         if (slug && slug !== product.slug) {
             const existingProduct = await this.prisma.products.findUnique({
                 where: { slug },
@@ -290,7 +303,6 @@ let CompleteProductService = class CompleteProductService {
                 ...(shortDescription !== undefined && { shortDescription }),
                 ...(priceCents && { priceCents }),
                 ...(originalPriceCents !== undefined && { originalPriceCents }),
-                ...(stockQuantity !== undefined && { stockQuantity }),
                 ...(sku !== undefined && { sku }),
                 ...(warranty !== undefined && { warranty }),
                 ...(features !== undefined && { features }),
@@ -319,6 +331,7 @@ let CompleteProductService = class CompleteProductService {
                         slug: true,
                     },
                 },
+                inventory: true,
             },
         });
         return this.mapToProductResponse(updatedProduct);
@@ -331,9 +344,9 @@ let CompleteProductService = class CompleteProductService {
                     id: true,
                     name: true,
                     _count: {
-                        select: { order_items: true }
-                    }
-                }
+                        select: { order_items: true },
+                    },
+                },
             });
             if (!product) {
                 return { deleted: false, message: 'Product not found' };
@@ -341,7 +354,7 @@ let CompleteProductService = class CompleteProductService {
             if (product._count.order_items > 0) {
                 return {
                     deleted: false,
-                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
+                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
                 };
             }
             await this.prisma.products.update({
@@ -458,7 +471,6 @@ let CompleteProductService = class CompleteProductService {
                 shortDescription: product.shortDescription,
                 priceCents: product.priceCents,
                 originalPriceCents: product.originalPriceCents,
-                stockQuantity: product.stockQuantity,
                 sku: product.sku ? `${product.sku}-COPY` : null,
                 warranty: product.warranty,
                 features: product.features,
@@ -470,7 +482,9 @@ let CompleteProductService = class CompleteProductService {
                 model: product.model,
                 weight: product.weight,
                 dimensions: product.dimensions,
-                specifications: product.specifications ? JSON.parse(JSON.stringify(product.specifications)) : null,
+                specifications: product.specifications
+                    ? JSON.parse(JSON.stringify(product.specifications))
+                    : null,
                 images: product.images ? JSON.parse(JSON.stringify(product.images)) : null,
                 isActive: false,
                 featured: false,
@@ -509,7 +523,7 @@ let CompleteProductService = class CompleteProductService {
             this.prisma.products.count({ where: { isDeleted: false } }),
             this.prisma.products.count({ where: { isDeleted: false, isActive: true } }),
             this.prisma.products.count({ where: { isDeleted: false, featured: true } }),
-            this.prisma.products.count({ where: { isDeleted: false, stockQuantity: { lte: 0 } } }),
+            this.prisma.inventory.count({ where: { stock: { lte: 0 }, products: { isDeleted: false } } }),
             this.prisma.products.aggregate({
                 where: { isDeleted: false },
                 _sum: { viewCount: true },
@@ -602,6 +616,7 @@ let CompleteProductService = class CompleteProductService {
                 categories: {
                     select: { name: true },
                 },
+                inventory: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -612,7 +627,7 @@ let CompleteProductService = class CompleteProductService {
             'Description',
             'Price (VND)',
             'Original Price (VND)',
-            'Stock Quantity',
+            'Stock',
             'SKU',
             'Category',
             'Brand',
@@ -628,7 +643,7 @@ let CompleteProductService = class CompleteProductService {
             product.description || '',
             product.priceCents,
             product.originalPriceCents || '',
-            product.stockQuantity,
+            product.inventory?.stock ?? 0,
             product.sku || '',
             product.categories?.name || '',
             product.brand || '',
@@ -673,9 +688,6 @@ let CompleteProductService = class CompleteProductService {
                         case 'original price (vnd)':
                         case 'original price':
                             productData.originalPriceCents = value ? parseInt(value) : undefined;
-                            break;
-                        case 'stock quantity':
-                            productData.stockQuantity = parseInt(value) || 0;
                             break;
                         case 'sku':
                             productData.sku = value || undefined;
@@ -770,7 +782,6 @@ let CompleteProductService = class CompleteProductService {
             specifications: product.specifications,
             features: product.features,
             warranty: product.warranty,
-            stockQuantity: product.stockQuantity,
             minOrderQuantity: product.minOrderQuantity,
             maxOrderQuantity: product.maxOrderQuantity,
             tags: product.tags,
@@ -793,9 +804,9 @@ let CompleteProductService = class CompleteProductService {
                     id: true,
                     name: true,
                     _count: {
-                        select: { order_items: true }
-                    }
-                }
+                        select: { order_items: true },
+                    },
+                },
             });
             if (!product) {
                 return { canDelete: false, message: 'Product not found', associatedOrdersCount: 0 };
@@ -805,18 +816,22 @@ let CompleteProductService = class CompleteProductService {
                 return {
                     canDelete: false,
                     message: `Cannot delete product "${product.name}" because it has ${associatedOrdersCount} associated order(s). Please remove or update the orders first.`,
-                    associatedOrdersCount
+                    associatedOrdersCount,
                 };
             }
             return {
                 canDelete: true,
                 message: 'Product can be safely deleted',
-                associatedOrdersCount: 0
+                associatedOrdersCount: 0,
             };
         }
         catch (error) {
             console.error('Error checking product deletable status:', error);
-            return { canDelete: false, message: 'An error occurred while checking deletion status', associatedOrdersCount: 0 };
+            return {
+                canDelete: false,
+                message: 'An error occurred while checking deletion status',
+                associatedOrdersCount: 0,
+            };
         }
     }
 };

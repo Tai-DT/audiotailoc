@@ -1,102 +1,50 @@
 import { PrismaService } from '../../prisma/prisma.service';
-import { InventoryMovementService } from './inventory-movement.service';
-import { InventoryAlertService } from './inventory-alert.service';
+import { CreateInventoryMovementDto } from './dto/create-inventory-movement.dto';
+import { UpdateInventoryDto } from './dto/update-inventory.dto';
+import { inventory, inventory_movements } from '@prisma/client';
 export declare class InventoryService {
-    private readonly prisma;
-    private readonly inventoryMovementService;
-    private readonly inventoryAlertService;
-    constructor(prisma: PrismaService, inventoryMovementService: InventoryMovementService, inventoryAlertService: InventoryAlertService);
+    private prisma;
+    private readonly logger;
+    constructor(prisma: PrismaService);
     list(params: {
         page?: number;
         pageSize?: number;
         lowStockOnly?: boolean;
     }): Promise<{
-        total: number;
-        page: number;
-        pageSize: number;
-        items: {
-            product: {
-                priceCents: number;
-                categories: {
-                    id: string;
-                    name: string;
-                    slug: string;
-                };
-                id: string;
-                name: string;
-                slug: string;
-                imageUrl: string;
-                categoryId: string;
-                sku: string;
-                isActive: boolean;
-                isDeleted: boolean;
-            };
+        items: ({
             products: {
-                categories: {
-                    id: string;
-                    name: string;
-                    slug: string;
-                };
+                model: string | null;
+                tags: string | null;
+                description: string | null;
                 id: string;
                 name: string;
+                createdAt: Date;
+                updatedAt: Date;
+                isDeleted: boolean;
                 slug: string;
+                shortDescription: string | null;
                 priceCents: bigint;
-                imageUrl: string;
-                categoryId: string;
-                sku: string;
+                originalPriceCents: bigint | null;
+                imageUrl: string | null;
+                images: string | null;
+                categoryId: string | null;
+                brand: string | null;
+                sku: string | null;
+                specifications: string | null;
+                features: string | null;
+                warranty: string | null;
+                weight: number | null;
+                dimensions: string | null;
+                minOrderQuantity: number;
+                maxOrderQuantity: number | null;
+                maxStock: number | null;
+                metaTitle: string | null;
+                metaDescription: string | null;
+                metaKeywords: string | null;
+                canonicalUrl: string | null;
+                featured: boolean;
                 isActive: boolean;
-                isDeleted: boolean;
-            };
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            productId: string;
-            stock: number;
-            reserved: number;
-            lowStockThreshold: number;
-        }[];
-    }>;
-    adjust(productId: string, delta: {
-        stockDelta?: number;
-        reservedDelta?: number;
-        lowStockThreshold?: number;
-        stock?: number;
-        reserved?: number;
-        reason?: string;
-        referenceId?: string;
-        referenceType?: string;
-        userId?: string;
-        notes?: string;
-    }): Promise<{
-        products: {
-            name: string;
-            sku: string;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        productId: string;
-        stock: number;
-        reserved: number;
-        lowStockThreshold: number;
-    }>;
-    delete(productId: string): Promise<{
-        message: string;
-        productId: string;
-        productName: string;
-        sku: string;
-    }>;
-    syncWithProducts(): Promise<{
-        syncedProducts: number;
-        orphanedInventoriesCount: number;
-        createdInventories: any[];
-        orphanedInventoriesList: ({
-            products: {
-                name: string;
-                sku: string;
-                isActive: boolean;
-                isDeleted: boolean;
+                viewCount: number;
             };
         } & {
             id: string;
@@ -107,5 +55,33 @@ export declare class InventoryService {
             reserved: number;
             lowStockThreshold: number;
         })[];
+        meta: {
+            total: number;
+            page: number;
+            pageSize: number;
+            totalPages: number;
+        };
     }>;
+    getInventoryStatus(productId: string): Promise<inventory | null>;
+    adjust(productId: string, dto: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        productId: string;
+        stock: number;
+        reserved: number;
+        lowStockThreshold: number;
+    }>;
+    delete(productId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        productId: string;
+        stock: number;
+        reserved: number;
+        lowStockThreshold: number;
+    }>;
+    updateInventory(productId: string, updateDto: UpdateInventoryDto): Promise<inventory>;
+    recordMovement(dto: CreateInventoryMovementDto): Promise<inventory_movements>;
+    checkLowStock(): Promise<inventory[]>;
 }

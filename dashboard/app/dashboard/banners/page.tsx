@@ -38,7 +38,7 @@ export default function BannersPage() {
 
   useEffect(() => {
     fetchBanners()
-  })
+  }, []) // Only fetch on mount
 
   const handleCreate = () => {
     setEditingBanner(null)
@@ -78,7 +78,7 @@ export default function BannersPage() {
       } else {
         await apiClient.createBanner(data as CreateBannerDto)
         toast({
-          title: "Thành công", 
+          title: "Thành công",
           description: "Đã tạo banner mới"
         })
       }
@@ -95,104 +95,104 @@ export default function BannersPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Quản lý Banner</h2>
-            <p className="text-muted-foreground">
-              Quản lý banner hiển thị trên website
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchBanners}
-              disabled={loading}
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Làm mới
-            </Button>
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm banner
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Quản lý Banner</h2>
+          <p className="text-muted-foreground">
+            Quản lý banner hiển thị trên website
+          </p>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Tổng số banner
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Banner hoạt động
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {banners.filter(b => b.isActive).length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Trang chủ
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {banners.filter(b => b.page === 'home').length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Trang khác
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {banners.filter(b => b.page !== 'home').length}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchBanners}
+            disabled={loading}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Làm mới
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm banner
+          </Button>
         </div>
+      </div>
 
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Danh sách Banner</CardTitle>
-            <CardDescription>
-              Quản lý tất cả banner trên website
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Tổng số banner
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <BannerList
-              banners={banners}
-              loading={loading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <div className="text-2xl font-bold">{total}</div>
           </CardContent>
         </Card>
-
-        {isFormOpen && (
-          <BannerForm
-            banner={editingBanner}
-            open={isFormOpen}
-            onClose={() => setIsFormOpen(false)}
-            onSubmit={handleFormSubmit}
-          />
-        )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Banner hoạt động
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {banners.filter(b => b.isActive).length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Trang chủ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {banners.filter(b => b.page === 'home').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Trang khác
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {banners.filter(b => b.page !== 'home').length}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách Banner</CardTitle>
+          <CardDescription>
+            Quản lý tất cả banner trên website
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BannerList
+            banners={banners}
+            loading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </CardContent>
+      </Card>
+
+      {isFormOpen && (
+        <BannerForm
+          banner={editingBanner}
+          open={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          onSubmit={handleFormSubmit}
+        />
+      )}
+    </div>
   )
 }

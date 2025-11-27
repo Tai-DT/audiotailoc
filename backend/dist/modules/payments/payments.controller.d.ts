@@ -17,6 +17,7 @@ export declare class PaymentsController {
     private readonly payments;
     private readonly payosService;
     private readonly prisma;
+    private readonly logger;
     constructor(payments: PaymentsService, payosService: PayOSService, prisma: PrismaService);
     getPaymentMethods(): {
         methods: {
@@ -100,6 +101,13 @@ export declare class PaymentsController {
         checkoutUrl: any;
         paymentRequestId: any;
         orderCode: any;
+        message?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        orderCode: number;
+        checkoutUrl?: undefined;
+        paymentRequestId?: undefined;
     }>;
     getPayOSPaymentStatus(orderCode: string): Promise<{
         success: boolean;
@@ -130,11 +138,8 @@ export declare class PaymentsController {
         error: number;
         message: string;
     }>;
-    payosWebhook(req: any, body: any, xsig?: string): Promise<{
+    payosWebhook(req: any, body: any): Promise<{
         error: number;
-        message: string;
-    } | {
-        ok: boolean;
         message: string;
     }>;
 }

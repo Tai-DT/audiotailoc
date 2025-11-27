@@ -79,7 +79,7 @@ let UsersController = class UsersController {
             startDate,
             endDate,
             sortBy,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
         });
     }
     async getProfile(req) {

@@ -21,7 +21,6 @@ export type ProductDto = {
     warranty?: string | null;
     weight?: number | null;
     dimensions?: string | null;
-    stockQuantity?: number;
     minOrderQuantity?: number;
     maxOrderQuantity?: number | null;
     tags?: string | null;
@@ -63,16 +62,20 @@ export declare class CatalogService {
         deleted: boolean;
         message?: string;
     }>;
-    listCategories(): Promise<{
-        id: string;
-        slug: string;
-        name: string;
-        parentId: string | null;
-    }[]>;
+    listCategories(): Promise<any[]>;
     getCategoryBySlug(slug: string): Promise<{
         id: string;
         slug: string;
         name: string;
+        parentId: string | null;
+        isActive: boolean;
+    }>;
+    getCategoryById(id: string): Promise<{
+        id: string;
+        slug: string;
+        name: string;
+        description?: string | null;
+        imageUrl?: string | null;
         parentId: string | null;
         isActive: boolean;
     }>;
@@ -89,23 +92,31 @@ export declare class CatalogService {
     createCategory(data: {
         name: string;
         slug: string;
+        description?: string;
+        imageUrl?: string;
         parentId?: string;
         isActive?: boolean;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
+        description?: string | null;
+        imageUrl?: string | null;
         parentId: string | null;
     }>;
     updateCategory(id: string, data: {
         name?: string;
         slug?: string;
+        description?: string;
+        imageUrl?: string;
         parentId?: string;
         isActive?: boolean;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
+        description?: string | null;
+        imageUrl?: string | null;
         parentId: string | null;
     }>;
     deleteCategory(id: string): Promise<{

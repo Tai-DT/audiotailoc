@@ -15,5 +15,8 @@ export class CreatePaymentDto {
   @IsOptional()
   @IsString()
   transactionId?: string;
-}
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+}

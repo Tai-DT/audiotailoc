@@ -11,6 +11,7 @@ import {
   Settings,
   FileText,
   MessageSquare,
+  MessageCircle,
   CreditCard,
   Archive,
   Bell,
@@ -22,11 +23,15 @@ import {
   Target,
   FolderOpen,
   Settings2,
-  Calendar
+  Calendar,
+  Folders,
+  LifeBuoy,
+  Mail
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
+import { useAuth } from "@/lib/auth-context"
 
 const sidebarGroups = [
   {
@@ -66,6 +71,12 @@ const sidebarGroups = [
         title: "Sản phẩm",
         href: "/dashboard/products",
         icon: Package,
+        badge: null,
+      },
+      {
+        title: "Loại sản phẩm",
+        href: "/dashboard/categories",
+        icon: Folders,
         badge: null,
       },
       {
@@ -138,6 +149,12 @@ const sidebarGroups = [
     title: "Giao tiếp",
     items: [
       {
+        title: "Tin nhắn",
+        href: "/dashboard/messages",
+        icon: MessageCircle,
+        badge: null,
+      },
+      {
         title: "Đánh giá",
         href: "/dashboard/reviews",
         icon: MessageSquare,
@@ -147,6 +164,18 @@ const sidebarGroups = [
         title: "Thông báo",
         href: "/dashboard/notifications",
         icon: Bell,
+        badge: null,
+      },
+      {
+        title: "Mẫu Email",
+        href: "/dashboard/email-templates",
+        icon: Mail,
+        badge: null,
+      },
+      {
+        title: "Hỗ trợ",
+        href: "/dashboard/support",
+        icon: LifeBuoy,
         badge: null,
       },
     ]
@@ -194,6 +223,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const { user } = useAuth()
 
   return (
     <div className={cn("flex flex-col h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-r border-gray-200/50 dark:border-gray-700/50", className)} suppressHydrationWarning>
@@ -235,7 +265,11 @@ export function Sidebar({ className }: SidebarProps) {
               )}
               <div className="space-y-1">
                 {group.items.map((item) => {
-                  const isActive = pathname === item.href
+                  // Check if current path starts with item href, but handle exact match for root dashboard
+                  const isActive = item.href === '/dashboard'
+                    ? pathname === '/dashboard'
+                    : pathname?.startsWith(item.href)
+
                   return (
                     <Link key={item.href} href={item.href}>
                       <Button
@@ -258,8 +292,8 @@ export function Sidebar({ className }: SidebarProps) {
                             {item.badge && (
                               <span className={cn(
                                 "ml-auto text-xs px-2.5 py-1 rounded-full font-medium",
-                                isActive 
-                                  ? "bg-white/20 text-white" 
+                                isActive
+                                  ? "bg-white/20 text-white"
                                   : "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-sm"
                               )}>
                                 {item.badge}
@@ -289,10 +323,10 @@ export function Sidebar({ className }: SidebarProps) {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
-                Admin User
+                {user?.name || 'Admin User'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                admin@audiotailoc.com
+                {user?.email || 'admin@audiotailoc.com'}
               </p>
             </div>
           )}

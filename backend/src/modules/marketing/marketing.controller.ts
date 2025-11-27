@@ -59,7 +59,7 @@ class SendEmailDto {
 export class MarketingController {
   constructor(private readonly marketingService: MarketingService) {}
 
-  @Get()
+  @Get('campaigns')
   async getCampaigns(@Query('status') status?: string) {
     return this.marketingService.getCampaigns(status as any);
   }
@@ -75,7 +75,10 @@ export class MarketingController {
   }
 
   @Put('campaigns/:id')
-  async updateCampaign(@Param('id') id: string, @Body() updateCampaignDto: Partial<CreateCampaignDto>) {
+  async updateCampaign(
+    @Param('id') id: string,
+    @Body() updateCampaignDto: Partial<CreateCampaignDto>,
+  ) {
     return this.marketingService.updateCampaign(id, updateCampaignDto);
   }
 
@@ -130,7 +133,10 @@ export class MarketingController {
   }
 
   @Get('conversion/funnel')
-  async getConversionFunnel(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+  async getConversionFunnel(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
     return this.marketingService.getConversionFunnel(startDate, endDate);
   }
 }

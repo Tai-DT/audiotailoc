@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Button } from './button';
 
 interface ZaloChatProps {
@@ -16,8 +16,6 @@ export function ZaloChat({
   size = 'medium',
   className = ''
 }: ZaloChatProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
   useEffect(() => {
     // Load Zalo SDK if not already loaded
     if (!window.zaloSDK) {
@@ -25,7 +23,6 @@ export function ZaloChat({
       script.src = 'https://sp.zalo.me/plugins/sdk.js';
       script.async = true;
       script.onload = () => {
-        setIsLoaded(true);
         // Initialize Zalo Chat
         if (window.zaloSDK) {
           window.zaloSDK.init({
@@ -35,8 +32,6 @@ export function ZaloChat({
         }
       };
       document.head.appendChild(script);
-    } else {
-      setIsLoaded(true);
     }
   }, [phoneNumber]);
 

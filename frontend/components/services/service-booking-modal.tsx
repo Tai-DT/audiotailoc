@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,67 +25,56 @@ const timeSlots = [
   '08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'
 ];
 
-export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBookingModalProps) {
-  const [formData, setFormData] = useState({
-    customerName: '',
-    phone: '',
-    email: '',
-    address: '',
-    preferredDate: '',
-    preferredTime: '',
-    notes: ''
-  });
+const bookingSchema = z.object({
+  customerName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
+  phone: z.string().regex(/^(\+84|84|0)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ'),
+  email: z.string().email('Email không hợp lệ'),
+  address: z.string().optional(),
+  preferredDate: z.string().min(1, 'Vui lòng chọn ngày'),
+  preferredTime: z.string().min(1, 'Vui lòng chọn giờ'),
+  notes: z.string().optional()
+});
 
+type BookingFormValues = z.infer<typeof bookingSchema>;
+
+export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBookingModalProps) {
   const createBooking = useCreateServiceBooking();
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.customerName || !formData.phone || !formData.email || !formData.preferredDate || !formData.preferredTime) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
-      return;
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors }
+  } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      customerName: '',
+      phone: '',
+      email: '',
+      address: '',
+      preferredDate: '',
+      preferredTime: '',
+      notes: ''
     }
+  });
 
-    if (!/^(\+84|84|0)[3|5|7|8|9][0-9]{8}$/.test(formData.phone)) {
-      toast.error('Số điện thoại không hợp lệ');
-      return;
-    }
-
-    if (!formData.email.includes('@')) {
-      toast.error('Email không hợp lệ');
-      return;
-    }
-
+  const onSubmit = async (data: BookingFormValues) => {
     try {
       await createBooking.mutateAsync({
         serviceId: service.id,
-        customerName: formData.customerName,
-        customerPhone: formData.phone,
-        customerEmail: formData.email,
-        customerAddress: formData.address || '',
-        scheduledDate: formData.preferredDate,
-        scheduledTime: formData.preferredTime,
-        notes: formData.notes
+        customerName: data.customerName,
+        customerPhone: data.phone,
+        customerEmail: data.email,
+        customerAddress: data.address || '',
+        scheduledDate: data.preferredDate,
+        scheduledTime: data.preferredTime,
+        notes: data.notes
       });
 
       toast.success('Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
       onClose();
-
-      // Reset form
-      setFormData({
-        customerName: '',
-        phone: '',
-        email: '',
-        address: '',
-        preferredDate: '',
-        preferredTime: '',
-        notes: ''
-      });
+      reset();
     } catch (error) {
       console.error('Booking error:', error);
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
@@ -102,7 +94,7 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Service Info */}
           <div className="bg-muted/50 p-4 rounded-lg">
             <h3 className="font-semibold mb-2">{service.name}</h3>
@@ -132,11 +124,12 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
                 <Label htmlFor="customerName">Họ và tên *</Label>
                 <Input
                   id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => handleInputChange('customerName', e.target.value)}
+                  {...register('customerName')}
                   placeholder="Nhập họ và tên"
-                  required
                 />
+                {errors.customerName && (
+                  <p className="text-sm text-destructive">{errors.customerName.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -144,11 +137,12 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
                 <Input
                   id="phone"
                   type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  {...register('phone')}
                   placeholder="Nhập số điện thoại"
-                  required
                 />
+                {errors.phone && (
+                  <p className="text-sm text-destructive">{errors.phone.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -156,21 +150,24 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  {...register('email')}
                   placeholder="Nhập địa chỉ email"
-                  required
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="address">Địa chỉ</Label>
                 <Input
                   id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  {...register('address')}
                   placeholder="Nhập địa chỉ thực hiện dịch vụ"
                 />
+                {errors.address && (
+                  <p className="text-sm text-destructive">{errors.address.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -185,27 +182,37 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
                 <Input
                   id="preferredDate"
                   type="date"
-                  value={formData.preferredDate}
-                  onChange={(e) => handleInputChange('preferredDate', e.target.value)}
+                  {...register('preferredDate')}
                   min={new Date().toISOString().split('T')[0]}
-                  required
                 />
+                {errors.preferredDate && (
+                  <p className="text-sm text-destructive">{errors.preferredDate.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Giờ thực hiện *</Label>
-                <Select value={formData.preferredTime} onValueChange={(value) => handleInputChange('preferredTime', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn giờ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="preferredTime"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn giờ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.preferredTime && (
+                  <p className="text-sm text-destructive">{errors.preferredTime.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -215,8 +222,7 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
             <Label htmlFor="notes">Ghi chú thêm</Label>
             <Textarea
               id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
+              {...register('notes')}
               placeholder="Mô tả chi tiết về vấn đề cần sửa chữa hoặc yêu cầu đặc biệt..."
               rows={3}
             />

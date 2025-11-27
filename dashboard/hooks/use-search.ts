@@ -27,6 +27,35 @@ export interface PopularSearch {
   count: number
 }
 
+interface SearchApiItem {
+  id?: string
+  type?: 'product' | 'service' | 'order' | 'user'
+  title?: string
+  name?: string
+  description?: string
+  price?: number
+  relevanceScore?: number
+  metadata?: Record<string, unknown>
+}
+
+interface SearchApiResponse {
+  results?: SearchApiItem[]
+  total?: number
+}
+
+interface PopularApiItem {
+  query?: string
+  count?: number
+}
+
+interface PopularSearchApiResponse {
+  data?: PopularApiItem[]
+}
+
+interface SuggestionsApiResponse {
+  data?: string[]
+}
+
 export function useSearch() {
   const [searchResults, setSearchResults] = useState<{
     all: SearchResult[]
@@ -60,20 +89,21 @@ export function useSearch() {
     try {
       setLoading(true)
       setError(null)
-      
+
       // Call backend search API
-      const response = await apiClient.get<Array<Record<string, unknown>>>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
-      const results = (response.data as Array<Record<string, unknown>>) || []
-      
+      const response = await apiClient.get<SearchApiResponse>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
+      const data = response.data
+      const results = data.results || []
+
       // Transform backend results to match SearchResult interface
       const filtered: SearchResult[] = results.map((item) => ({
         id: String(item.id || ''),
-        type: (item.type as 'product' | 'service' | 'order' | 'user') || 'product',
-        title: String(item.name || item.title || ''),
+        type: item.type || 'product',
+        title: String(item.title || item.name || ''),
         description: String(item.description || ''),
         price: typeof item.price === 'number' ? item.price : undefined,
-        score: typeof item.score === 'number' ? item.score : undefined,
-        metadata: item
+        score: typeof item.relevanceScore === 'number' ? item.relevanceScore : undefined,
+        metadata: item.metadata
       }))
 
       setSearchResults({
@@ -93,17 +123,17 @@ export function useSearch() {
       }
       setSearchHistory(prev => [historyItem, ...prev.slice(0, 9)])
 
-      // Track search analytics (moved outside useCallback to avoid dependency)
-      setTimeout(() => trackSearch(query, filtered.length), 0)
-      
-    } catch {
+      // Tracking is handled by backend now
+
+    } catch (err) {
       const errorMessage = 'Không thể thực hiện tìm kiếm'
       setError(errorMessage)
       toast.error(errorMessage)
+      console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [trackSearch])
+  }, [])
 
   // Fetch search history
   const fetchHistory = useCallback(async () => {
@@ -120,16 +150,16 @@ export function useSearch() {
   const fetchPopular = useCallback(async () => {
     try {
       // Call backend API for popular searches
-      const response = await apiClient.get<Array<Record<string, unknown>>>('/search/popular?limit=10')
-      const popular = (response.data as Array<Record<string, unknown>>) || []
-      
+      const response = await apiClient.get<PopularSearchApiResponse>('/search/popular?limit=10')
+      const popular = response.data?.data || []
+
       // Transform to match PopularSearch interface
-      const transformed: PopularSearch[] = popular.map((item, index) => ({
-        id: String(item.id || index),
+      const transformed: PopularSearch[] = popular.map((item, index: number) => ({
+        id: String(index),
         query: String(item.query || ''),
         count: typeof item.count === 'number' ? item.count : 0
       }))
-      
+
       setPopularSearches(transformed)
     } catch {
       // Silent error - fallback to empty array
@@ -149,54 +179,19 @@ export function useSearch() {
       if (!query || query.trim().length < 2) {
         return []
       }
-      
+
       // Call backend API for search suggestions
-      const response = await apiClient.get<Array<Record<string, unknown>>>(`/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
-      const suggestions = (response.data as Array<Record<string, unknown>>) || []
-      
+      const response = await apiClient.get<SuggestionsApiResponse>(`/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+      const suggestions = response.data?.data || []
+
       // Return array of suggestion strings
-      return suggestions.map((item) => String(item.query || item))
+      return suggestions
     } catch {
       return []
     }
   }, [])
 
-  // Real API implementation (uncomment when backend is ready)
-  /*
-  const search = useCallback(async (query: string, type: string = 'all', filters?: any) => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const params = new URLSearchParams({
-        q: query,
-        type,
-        ...filters
-      })
-      
-      const response = await apiClient.get(`/search/global?${params}`)
-      const results = response.data || []
-      
-      setSearchResults({
-        all: results,
-        products: results.filter((r: SearchResult) => r.type === 'product'),
-        services: results.filter((r: SearchResult) => r.type === 'service'),
-        orders: results.filter((r: SearchResult) => r.type === 'order'),
-        users: results.filter((r: SearchResult) => r.type === 'user')
-      })
-      
-      // Track search
-      await trackSearch(query, results.length)
-      
-    } catch {
-      const errorMessage = 'Không thể thực hiện tìm kiếm'
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }, [trackSearch])
-  */
+
 
   return {
     // State

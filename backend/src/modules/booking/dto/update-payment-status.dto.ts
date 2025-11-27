@@ -9,4 +9,3 @@ export class UpdatePaymentStatusDto {
   @IsString()
   transactionId?: string;
 }
-

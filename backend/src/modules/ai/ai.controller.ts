@@ -27,7 +27,7 @@ import { AdminGuard } from '../auth/admin.guard';
  */
 
 @ApiTags('AI')
-@Controller('api/v1/ai')
+@Controller('ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
@@ -46,7 +46,13 @@ export class AiController {
   @ApiQuery({ name: 'minBudget', description: 'Minimum budget', type: Number, required: false })
   @ApiQuery({ name: 'maxBudget', description: 'Maximum budget', type: Number, required: false })
   @ApiQuery({ name: 'brand', description: 'Brand filter', type: String, required: false })
-  @ApiQuery({ name: 'limit', description: 'Number of recommendations', type: Number, required: false, example: 5 })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of recommendations',
+    type: Number,
+    required: false,
+    example: 5,
+  })
   @ApiResponse({ status: 200, description: 'Product recommendations' })
   async getRecommendations(
     @Query('category') category?: string,
@@ -95,7 +101,13 @@ export class AiController {
     description: 'Get autocomplete search suggestions based on partial query',
   })
   @ApiQuery({ name: 'q', description: 'Search query', type: String, required: true })
-  @ApiQuery({ name: 'limit', description: 'Number of suggestions', type: Number, required: false, example: 5 })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of suggestions',
+    type: Number,
+    required: false,
+    example: 5,
+  })
   @ApiResponse({ status: 200, description: 'Search suggestions' })
   async getSearchSuggestions(
     @Query('q') query: string,
@@ -179,11 +191,7 @@ export class AiController {
       }
 
       const userId = req?.users?.sub || undefined;
-      const response = await this.aiService.chatbot(
-        body.message,
-        body.conversationHistory,
-        userId,
-      );
+      const response = await this.aiService.chatbot(body.message, body.conversationHistory, userId);
 
       return { success: true, data: response };
     } catch (error) {
@@ -217,9 +225,7 @@ export class AiController {
     },
   })
   @ApiResponse({ status: 200, description: 'Analysis results' })
-  async analyzeMessage(
-    @Body() body: { message: string },
-  ) {
+  async analyzeMessage(@Body() body: { message: string }) {
     try {
       if (!body.message) {
         throw new HttpException('Message is required', HttpStatus.BAD_REQUEST);
@@ -317,10 +323,7 @@ export class AiController {
       return { success: true, data: recommendations };
     } catch (error) {
       this.logger.error('Error getting advanced recommendations:', error);
-      throw new HttpException(
-        'Failed to get recommendations',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to get recommendations', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -367,11 +370,7 @@ export class AiController {
     try {
       const userId = req?.users?.sub || undefined;
 
-      const response = await this.aiService.chatbot(
-        body.message,
-        body.history,
-        userId,
-      );
+      const response = await this.aiService.chatbot(body.message, body.history, userId);
 
       return {
         success: true,

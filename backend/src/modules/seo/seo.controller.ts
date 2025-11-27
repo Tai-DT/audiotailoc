@@ -21,34 +21,22 @@ export class SeoController {
   }
 
   @Get('product/:id')
-  async getProductSeo(
-    @Param('id') id: string,
-    @Query('lang') lang: string = 'vi'
-  ) {
+  async getProductSeo(@Param('id') id: string, @Query('lang') lang: string = 'vi') {
     return this.seoService.getProductSeo(id, lang as 'vi' | 'en');
   }
 
   @Get('category/:id')
-  async getCategorySeo(
-    @Param('id') id: string,
-    @Query('lang') lang: string = 'vi'
-  ) {
+  async getCategorySeo(@Param('id') id: string, @Query('lang') lang: string = 'vi') {
     return this.seoService.getCategorySeo(id, lang as 'vi' | 'en');
   }
 
   @Get('page/:slug')
-  async getPageSeo(
-    @Param('slug') slug: string,
-    @Query('lang') lang: string = 'vi'
-  ) {
+  async getPageSeo(@Param('slug') slug: string, @Query('lang') lang: string = 'vi') {
     return this.seoService.getPageSeo(slug, lang as 'vi' | 'en');
   }
 
   @Get('project/:id')
-  async getProjectSeo(
-    @Param('id') id: string,
-    @Query('lang') lang: string = 'vi'
-  ) {
+  async getProjectSeo(@Param('id') id: string, @Query('lang') lang: string = 'vi') {
     return this.seoService.getProjectSeo(id, lang as 'vi' | 'en');
   }
 

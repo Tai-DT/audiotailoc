@@ -12,7 +12,7 @@ const admin_controller_1 = require("./admin.controller");
 const config_1 = require("@nestjs/config");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const guards_module_1 = require("../auth/guards.module");
-const activity_log_service_1 = require("../../services/activity-log.service");
+const activity_log_service_1 = require("../logging/activity-log.service");
 const monitoring_module_1 = require("../monitoring/monitoring.module");
 let AdminModule = class AdminModule {
 };

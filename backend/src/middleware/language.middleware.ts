@@ -26,11 +26,10 @@ export class LanguageMiddleware implements NestMiddleware {
 
     // Set language in request object for use in controllers
     (req as any).language = language;
-    
+
     // Set language in response headers
     res.setHeader('Content-Language', language);
-    
+
     next();
   }
 }
-

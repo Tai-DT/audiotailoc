@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { PageBanner } from '@/components/ui/page-banner';
 import { usePromotions } from '@/lib/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +12,7 @@ import Link from 'next/link';
 import { Promotion } from '@/lib/types';
 
 export default function PromotionsPage() {
-  const { data, isLoading, error } = usePromotions({ active: true });
+  const { data: promotions, isLoading, error } = usePromotions();
 
   const handleCopyCode = async (code: string) => {
     try {
@@ -146,9 +145,9 @@ export default function PromotionsPage() {
                   </Card>
                 ))}
               </div>
-            ) : data?.items && data.items.length > 0 ? (
+            ) : promotions && promotions.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data.items.map((promotion: Promotion) => (
+                {promotions.map((promotion: Promotion) => (
                   <Card key={promotion.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex items-center justify-between mb-2">

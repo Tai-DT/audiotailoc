@@ -26,7 +26,7 @@ export class CacheInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const cacheConfig = this.reflector.get<CacheConfig>(CACHE_KEY, context.getHandler());
-    
+
     if (!cacheConfig) {
       return next.handle();
     }
@@ -45,7 +45,7 @@ export class CacheInterceptor implements NestInterceptor {
 
     // Execute the method and cache the result
     return next.handle().pipe(
-      tap(async (result) => {
+      tap(async result => {
         await this.cacheService.set(cacheKey, result, {
           ttl: cacheConfig.ttl,
           prefix: cacheConfig.prefix,
@@ -54,11 +54,7 @@ export class CacheInterceptor implements NestInterceptor {
     );
   }
 
-  private generateCacheKey(
-    context: ExecutionContext,
-    config: CacheConfig,
-    request: any,
-  ): string {
+  private generateCacheKey(context: ExecutionContext, config: CacheConfig, request: any): string {
     if (config.keyGenerator) {
       const args = context.getArgs();
       return config.keyGenerator(...args);

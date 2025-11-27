@@ -63,10 +63,7 @@ export class ProjectsUploadController {
       },
     }),
   )
-  async uploadThumbnail(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadThumbnail(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -74,7 +71,7 @@ export class ProjectsUploadController {
     try {
       // Read file buffer
       const buffer = await fs.readFile(file.path);
-      
+
       // Upload to Cloudinary
       const result = await this.cloudinaryService.uploadImage(
         buffer,
@@ -105,7 +102,9 @@ export class ProjectsUploadController {
     } catch (error) {
       // Clean up temp file on error
       await fs.unlink(file.path).catch(() => {});
-      throw new BadRequestException(`Failed to upload thumbnail: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to upload thumbnail: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -143,10 +142,7 @@ export class ProjectsUploadController {
       },
     }),
   )
-  async uploadCover(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadCover(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -154,7 +150,7 @@ export class ProjectsUploadController {
     try {
       // Read file buffer
       const buffer = await fs.readFile(file.path);
-      
+
       // Upload to Cloudinary
       const result = await this.cloudinaryService.uploadImage(
         buffer,
@@ -185,7 +181,9 @@ export class ProjectsUploadController {
     } catch (error) {
       // Clean up temp file on error
       await fs.unlink(file.path).catch(() => {});
-      throw new BadRequestException(`Failed to upload cover: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to upload cover: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -226,10 +224,7 @@ export class ProjectsUploadController {
       },
     }),
   )
-  async uploadGallery(
-    @Param('id') id: string,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  async uploadGallery(@Param('id') id: string, @UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -242,7 +237,7 @@ export class ProjectsUploadController {
       // Upload all files to Cloudinary
       for (const file of files) {
         const buffer = await fs.readFile(file.path);
-        
+
         const result = await this.cloudinaryService.uploadImage(
           buffer,
           `project-gallery-${id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -262,7 +257,7 @@ export class ProjectsUploadController {
       // Get existing gallery images
       const project = await this.projectsService.findById(id);
       let existingImages: string[] = [];
-      
+
       if (project.galleryImages) {
         try {
           existingImages = JSON.parse(project.galleryImages as string);
@@ -296,7 +291,9 @@ export class ProjectsUploadController {
       for (const tempFile of tempFiles) {
         await fs.unlink(tempFile).catch(() => {});
       }
-      throw new BadRequestException(`Failed to upload gallery images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to upload gallery images: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -337,10 +334,7 @@ export class ProjectsUploadController {
       },
     }),
   )
-  async replaceGallery(
-    @Param('id') id: string,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  async replaceGallery(@Param('id') id: string, @UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -353,7 +347,7 @@ export class ProjectsUploadController {
       // Upload all files to Cloudinary
       for (const file of files) {
         const buffer = await fs.readFile(file.path);
-        
+
         const result = await this.cloudinaryService.uploadImage(
           buffer,
           `project-gallery-${id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -392,7 +386,9 @@ export class ProjectsUploadController {
       for (const tempFile of tempFiles) {
         await fs.unlink(tempFile).catch(() => {});
       }
-      throw new BadRequestException(`Failed to replace gallery images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to replace gallery images: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -404,17 +400,18 @@ export class ProjectsUploadController {
       properties: {
         thumbnailUrl: { type: 'string', description: 'URL of thumbnail image' },
         coverUrl: { type: 'string', description: 'URL of cover image' },
-        galleryUrls: { 
+        galleryUrls: {
           type: 'array',
           items: { type: 'string' },
-          description: 'URLs of gallery images' 
+          description: 'URLs of gallery images',
         },
       },
     },
   })
   async uploadFromUrls(
     @Param('id') id: string,
-    @Body() body: {
+    @Body()
+    body: {
       thumbnailUrl?: string;
       coverUrl?: string;
       galleryUrls?: string[];
@@ -428,7 +425,7 @@ export class ProjectsUploadController {
       if (body.thumbnailUrl) {
         const response = await fetch(body.thumbnailUrl);
         const buffer = Buffer.from(await response.arrayBuffer());
-        
+
         const result = await this.cloudinaryService.uploadImage(
           buffer,
           `project-thumbnail-${id}-${Date.now()}`,
@@ -440,7 +437,7 @@ export class ProjectsUploadController {
             ],
           },
         );
-        
+
         updates.thumbnailImage = result.secure_url;
         results.thumbnail = result.secure_url;
       }
@@ -449,7 +446,7 @@ export class ProjectsUploadController {
       if (body.coverUrl) {
         const response = await fetch(body.coverUrl);
         const buffer = Buffer.from(await response.arrayBuffer());
-        
+
         const result = await this.cloudinaryService.uploadImage(
           buffer,
           `project-cover-${id}-${Date.now()}`,
@@ -461,7 +458,7 @@ export class ProjectsUploadController {
             ],
           },
         );
-        
+
         updates.coverImage = result.secure_url;
         results.cover = result.secure_url;
       }
@@ -469,11 +466,11 @@ export class ProjectsUploadController {
       // Upload gallery from URLs
       if (body.galleryUrls && body.galleryUrls.length > 0) {
         const uploadedGalleryUrls: string[] = [];
-        
+
         for (const url of body.galleryUrls) {
           const response = await fetch(url);
           const buffer = Buffer.from(await response.arrayBuffer());
-          
+
           const result = await this.cloudinaryService.uploadImage(
             buffer,
             `project-gallery-${id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -485,10 +482,10 @@ export class ProjectsUploadController {
               ],
             },
           );
-          
+
           uploadedGalleryUrls.push(result.secure_url);
         }
-        
+
         updates.galleryImages = JSON.stringify(uploadedGalleryUrls);
         results.gallery = uploadedGalleryUrls;
       }
@@ -502,7 +499,9 @@ export class ProjectsUploadController {
         project: updated,
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to upload images from URLs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to upload images from URLs: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 }

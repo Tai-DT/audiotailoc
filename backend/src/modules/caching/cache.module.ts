@@ -14,7 +14,7 @@ export interface CacheModuleOptions {
 @Module({})
 export class CacheModule {
   static forRoot(options: CacheModuleOptions = {}): DynamicModule {
-  const { isGlobal = true, ttl: _ttl = 3600 } = options;
+    const { isGlobal = true, ttl: _ttl = 3600 } = options;
 
     return {
       module: CacheModule,
@@ -27,7 +27,9 @@ export class CacheModule {
             const backend = String(config.get('CACHE_BACKEND') || '').toLowerCase();
             const restUrl = config.get<string>('UPSTASH_REDIS_REST_URL', '');
             const restToken = config.get<string>('UPSTASH_REDIS_REST_TOKEN', '');
-            const enableUpstash = backend === 'upstash' || String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
+            const enableUpstash =
+              backend === 'upstash' ||
+              String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
             if (enableUpstash && restUrl && restToken) {
               return new UpstashCacheService(config);
             }
@@ -64,7 +66,9 @@ export class CacheModule {
             const backend = String(config.get('CACHE_BACKEND') || '').toLowerCase();
             const restUrl = config.get<string>('UPSTASH_REDIS_REST_URL', '');
             const restToken = config.get<string>('UPSTASH_REDIS_REST_TOKEN', '');
-            const enableUpstash = backend === 'upstash' || String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
+            const enableUpstash =
+              backend === 'upstash' ||
+              String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
             if (enableUpstash && restUrl && restToken) {
               return new UpstashCacheService(config);
             }

@@ -97,7 +97,7 @@ export class AnalyticsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cacheService: CacheService
+    private readonly cacheService: CacheService,
   ) {}
 
   // Dashboard Overview
@@ -109,41 +109,41 @@ export class AnalyticsService {
     const [orders, users, revenue] = await Promise.all([
       this.prisma.orders.findMany({
         where: { createdAt: { gte: startDate, lte: endDate } },
-        include: { order_items: true }
+        include: { order_items: true },
       }),
       this.prisma.users.count({
-        where: { 
+        where: {
           role: 'USER',
-          createdAt: { gte: startDate, lte: endDate }
-        }
+          createdAt: { gte: startDate, lte: endDate },
+        },
       }),
       this.prisma.orders.aggregate({
-        where: { 
+        where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { in: ['DELIVERED', 'COMPLETED'] }
+          status: { in: ['DELIVERED', 'COMPLETED'] },
         },
-        _sum: { totalCents: true }
-      })
+        _sum: { totalCents: true },
+      }),
     ]);
 
     // Previous period stats for growth calculation
     const [prevOrders, prevUsers, prevRevenue] = await Promise.all([
       this.prisma.orders.count({
-        where: { createdAt: { gte: previousPeriod.start, lte: previousPeriod.end } }
+        where: { createdAt: { gte: previousPeriod.start, lte: previousPeriod.end } },
       }),
       this.prisma.users.count({
-        where: { 
+        where: {
           role: 'USER',
-          createdAt: { gte: previousPeriod.start, lte: previousPeriod.end }
-        }
+          createdAt: { gte: previousPeriod.start, lte: previousPeriod.end },
+        },
       }),
       this.prisma.orders.aggregate({
-        where: { 
+        where: {
           createdAt: { gte: previousPeriod.start, lte: previousPeriod.end },
-          status: { in: ['DELIVERED', 'COMPLETED'] }
+          status: { in: ['DELIVERED', 'COMPLETED'] },
         },
-        _sum: { totalCents: true }
-      })
+        _sum: { totalCents: true },
+      }),
     ]);
 
     const totalRevenue = (revenue._sum.totalCents || 0) / 100;
@@ -159,7 +159,7 @@ export class AnalyticsService {
       conversionRate,
       revenueGrowth: this.calculateGrowthRate(totalRevenue, prevTotalRevenue),
       ordersGrowth: this.calculateGrowthRate(totalOrders, prevOrders),
-      customersGrowth: this.calculateGrowthRate(users, prevUsers)
+      customersGrowth: this.calculateGrowthRate(users, prevUsers),
     };
   }
 
@@ -167,7 +167,7 @@ export class AnalyticsService {
   async getTrends(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     const trends = [];
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
@@ -179,26 +179,26 @@ export class AnalyticsService {
         this.prisma.orders.aggregate({
           where: {
             createdAt: { gte: date, lt: nextDate },
-            status: { in: ['DELIVERED', 'COMPLETED'] }
+            status: { in: ['DELIVERED', 'COMPLETED'] },
           },
-          _sum: { totalCents: true }
+          _sum: { totalCents: true },
         }),
         this.prisma.orders.count({
-          where: { createdAt: { gte: date, lt: nextDate } }
+          where: { createdAt: { gte: date, lt: nextDate } },
         }),
         this.prisma.users.count({
           where: {
             role: 'USER',
-            createdAt: { gte: date, lt: nextDate }
-          }
-        })
+            createdAt: { gte: date, lt: nextDate },
+          },
+        }),
       ]);
 
       trends.push({
         date: date.toISOString().split('T')[0],
         revenue: (revenue._sum.totalCents || 0) / 100,
         orders,
-        customers
+        customers,
       });
     }
 
@@ -211,21 +211,21 @@ export class AnalyticsService {
       by: ['productId'],
       _sum: {
         quantity: true,
-        price: true
+        price: true,
       },
       _count: true,
       orderBy: {
         _sum: {
-          price: 'desc'
-        }
+          price: 'desc',
+        },
       },
-      take: limit
+      take: limit,
     });
 
     const products = await this.prisma.products.findMany({
       where: {
-        id: { in: topProducts.map(p => p.productId) }
-      }
+        id: { in: topProducts.map(p => p.productId) },
+      },
     });
 
     return topProducts.map(tp => {
@@ -234,7 +234,7 @@ export class AnalyticsService {
         id: tp.productId,
         name: product?.name || 'Unknown',
         sold: tp._sum.quantity || 0,
-        revenue: Number(tp._sum.price || 0) / 100
+        revenue: Number(tp._sum.price || 0) / 100,
       };
     });
   }
@@ -245,20 +245,20 @@ export class AnalyticsService {
       by: ['serviceId'],
       _count: true,
       _sum: {
-        estimatedCosts: true
+        estimatedCosts: true,
       },
       orderBy: {
         _count: {
-          serviceId: 'desc'
-        }
+          serviceId: 'desc',
+        },
       },
-      take: limit
+      take: limit,
     });
 
     const services = await this.prisma.services.findMany({
       where: {
-        id: { in: bookings.map(b => b.serviceId) }
-      }
+        id: { in: bookings.map(b => b.serviceId) },
+      },
     });
 
     return bookings.map(booking => {
@@ -267,7 +267,7 @@ export class AnalyticsService {
         id: booking.serviceId,
         name: service?.name || 'Unknown',
         bookings: booking._count,
-        revenue: (booking._sum.estimatedCosts || 0) / 100
+        revenue: (booking._sum.estimatedCosts || 0) / 100,
       };
     });
   }
@@ -275,133 +275,175 @@ export class AnalyticsService {
   // Get user activity
   async getUserActivity(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
-    
+
     const [pageViews] = await Promise.all([
       this.prisma.product_views.count({
-        where: { timestamp: { gte: startDate, lte: endDate } }
+        where: { timestamp: { gte: startDate, lte: endDate } },
       }),
     ]);
 
     const sessions = await this.prisma.activity_logs.groupBy({
       by: ['userId'],
-      where: { 
+      where: {
         createdAt: { gte: startDate, lte: endDate },
-        action: 'LOGIN'
+        action: 'LOGIN',
       },
-      _count: true
+      _count: true,
     });
 
     // Get actual activity logs for duration calculation
     const activityLogRecords = await this.prisma.activity_logs.findMany({
       where: { createdAt: { gte: startDate, lte: endDate } },
-      select: { duration: true }
+      select: { duration: true },
     });
 
-    const avgSessionDuration = activityLogRecords.length > 0
-      ? activityLogRecords.reduce((sum: number, log: any) => sum + (log.duration || 0), 0) / activityLogRecords.length
-      : 0;
+    const avgSessionDuration =
+      activityLogRecords.length > 0
+        ? activityLogRecords.reduce((sum: number, log: any) => sum + (log.duration || 0), 0) /
+          activityLogRecords.length
+        : 0;
 
     return {
       pageViews,
       sessions: sessions.length,
       avgSessionDuration: avgSessionDuration / 1000, // Convert to seconds
-      bounceRate: 0.32 // Mock for now, calculate based on actual behavior
+      bounceRate: 0.32, // Mock for now, calculate based on actual behavior
     };
   }
 
   // Get revenue by category
   async getRevenueByCategory(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
-    
+
     const orderItems = await this.prisma.order_items.findMany({
       where: {
         orders: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { in: ['DELIVERED', 'COMPLETED'] }
-        }
+          status: { in: ['DELIVERED', 'COMPLETED'] },
+        },
       },
       include: {
         products: {
           include: {
-            categories: true
-          }
-        }
-      }
+            categories: true,
+          },
+        },
+      },
     });
 
     const categoryRevenue = new Map<string, number>();
-    
+
     orderItems.forEach(item => {
       const categoryName = item.products?.categories?.name || 'Khác';
       const revenue = (Number(item.price) * item.quantity) / 100;
-      categoryRevenue.set(
-        categoryName,
-        (categoryRevenue.get(categoryName) || 0) + revenue
-      );
+      categoryRevenue.set(categoryName, (categoryRevenue.get(categoryName) || 0) + revenue);
     });
 
     return Array.from(categoryRevenue.entries()).map(([category, revenue]) => ({
       category,
-      revenue
+      revenue,
     }));
   }
 
   // Get customer insights
   async getCustomerInsights(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
-    
-    const [totalCustomers, newCustomers, orders] = await Promise.all([
+
+    const [totalCustomers, newCustomers, orders, topSpendersAgg, users] = await Promise.all([
       this.prisma.users.count({ where: { role: 'USER' } }),
       this.prisma.users.count({
         where: {
           role: 'USER',
-          createdAt: { gte: startDate, lte: endDate }
-        }
+          createdAt: { gte: startDate, lte: endDate },
+        },
       }),
       this.prisma.orders.findMany({
         where: { createdAt: { gte: startDate, lte: endDate } },
-        include: { users: true }
-      })
+        include: { users: true },
+      }),
+      this.prisma.orders.groupBy({
+        by: ['userId'],
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] },
+          userId: { not: null },
+        },
+        _sum: { totalCents: true },
+        orderBy: { _sum: { totalCents: 'desc' } },
+        take: 5,
+      }),
+      this.prisma.users.findMany({
+        where: { role: 'USER' },
+        select: { id: true, email: true, name: true },
+      }),
     ]);
 
     const returningCustomers = new Set(orders.map(o => o.userId)).size;
-    const avgOrderValue = orders.length > 0
-      ? orders.reduce((sum, o) => sum + (o.totalCents || 0), 0) / orders.length / 100
-      : 0;
+    const avgOrderValue =
+      orders.length > 0
+        ? orders.reduce((sum, o) => sum + (o.totalCents || 0), 0) / orders.length / 100
+        : 0;
+
+    const topSpenders = topSpendersAgg.map(spender => {
+      const user = users.find(u => u.id === spender.userId);
+      return {
+        id: spender.userId,
+        email: user?.email || 'unknown',
+        name: user?.name || user?.email || 'Khách hàng',
+        totalSpent: Number(spender._sum.totalCents || 0) / 100,
+      };
+    });
 
     return {
       totalCustomers,
       newCustomers,
       returningCustomers,
       avgOrderValue,
-      topSpenders: [] // TODO: Calculate top spenders
+      topSpenders,
     };
   }
 
   // Get performance metrics
   async getPerformanceMetrics(range: string = '7days') {
     const { startDate, endDate } = this.parseDateRange(range);
-    
-    const [orders, completedOrders, cancelledOrders] = await Promise.all([
+
+    const [orders, completedOrders, cancelledOrders, completedOrderList] = await Promise.all([
       this.prisma.orders.count({
-        where: { createdAt: { gte: startDate, lte: endDate } }
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
       this.prisma.orders.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { in: ['DELIVERED', 'COMPLETED'] }
-        }
+          status: { in: ['DELIVERED', 'COMPLETED'] },
+        },
       }),
       this.prisma.orders.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: 'CANCELLED'
-        }
-      })
+          status: 'CANCELLED',
+        },
+      }),
+      this.prisma.orders.findMany({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: { in: ['DELIVERED', 'COMPLETED'] },
+        },
+        select: { createdAt: true, updatedAt: true },
+      }),
     ]);
 
     const fulfillmentRate = orders > 0 ? (completedOrders / orders) * 100 : 0;
     const cancellationRate = orders > 0 ? (cancelledOrders / orders) * 100 : 0;
+    const avgProcessingTime = completedOrderList.length
+      ? completedOrderList.reduce((sum, o) => {
+          const start = new Date(o.createdAt).getTime();
+          const end = new Date(o.updatedAt).getTime();
+          if (!start || !end || end < start) return sum;
+          return sum + (end - start);
+        }, 0) /
+        completedOrderList.length /
+        (1000 * 60 * 60 * 24) // days
+      : 0;
 
     return {
       totalOrders: orders,
@@ -409,7 +451,7 @@ export class AnalyticsService {
       cancelledOrders,
       fulfillmentRate,
       cancellationRate,
-      avgProcessingTime: 2.5 // Mock in days
+      avgProcessingTime,
     };
   }
 
@@ -417,7 +459,7 @@ export class AnalyticsService {
   private parseDateRange(range: string) {
     const endDate = new Date();
     const startDate = new Date();
-    
+
     switch (range) {
       case '7days':
         startDate.setDate(startDate.getDate() - 7);
@@ -434,7 +476,7 @@ export class AnalyticsService {
       default:
         startDate.setDate(startDate.getDate() - 7);
     }
-    
+
     return { startDate, endDate };
   }
 
@@ -450,22 +492,22 @@ export class AnalyticsService {
 
       // Current period metrics
       const currentMetrics = await this.calculateSalesMetrics(startDate, endDate, filters);
-      
+
       // Previous period metrics for growth calculation
       const previousMetrics = await this.calculateSalesMetrics(
-        previousPeriod.start, 
-        previousPeriod.end, 
-        filters
+        previousPeriod.start,
+        previousPeriod.end,
+        filters,
       );
 
       // Calculate growth rates
       const revenueGrowth = this.calculateGrowthRate(
-        currentMetrics.totalRevenue, 
-        previousMetrics.totalRevenue
+        currentMetrics.totalRevenue,
+        previousMetrics.totalRevenue,
       );
       const orderGrowth = this.calculateGrowthRate(
-        currentMetrics.totalOrders, 
-        previousMetrics.totalOrders
+        currentMetrics.totalOrders,
+        previousMetrics.totalOrders,
       );
 
       // Get top products
@@ -484,7 +526,6 @@ export class AnalyticsService {
 
       await this.cacheService.set(cacheKey, result, { ttl: 300 }); // 5 minutes cache
       return result;
-
     } catch (error) {
       this.logger.error('Failed to get sales metrics', error);
       throw error;
@@ -528,13 +569,12 @@ export class AnalyticsService {
       });
 
       const returningCustomers = returningCustomersData.filter(
-        customer => customer._count.orders > 1
+        customer => customer._count.orders > 1,
       ).length;
 
       // Customer retention rate
-      const customerRetentionRate = totalCustomers > 0 
-        ? (returningCustomers / totalCustomers) * 100 
-        : 0;
+      const customerRetentionRate =
+        totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
 
       // Customer lifetime value
       const customerLifetimeValue = await this.calculateCustomerLifetimeValue(filters);
@@ -547,9 +587,7 @@ export class AnalyticsService {
         },
       });
 
-      const averageOrdersPerCustomer = totalCustomers > 0 
-        ? totalOrders / totalCustomers 
-        : 0;
+      const averageOrdersPerCustomer = totalCustomers > 0 ? totalOrders / totalCustomers : 0;
 
       // Customer segments
       const customerSegments = await this.getCustomerSegments(startDate, endDate);
@@ -570,7 +608,6 @@ export class AnalyticsService {
 
       await this.cacheService.set(cacheKey, result, { ttl: 300 });
       return result;
-
     } catch (error) {
       this.logger.error('Failed to get customer metrics', error);
       throw error;
@@ -593,9 +630,16 @@ export class AnalyticsService {
       });
 
       // Out of stock products
-      const outOfStockProducts = await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
-      const inventoryRows = await this.prisma.inventory.findMany({ include: { products: { select: { priceCents: true } } } });
-      const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock, 0);
+      const outOfStockProducts = await this.prisma.inventory.count({
+        where: { stock: { lte: 0 } },
+      });
+      const inventoryRows = await this.prisma.inventory.findMany({
+        include: { products: { select: { priceCents: true } } },
+      });
+      const totalInventoryValue = inventoryRows.reduce(
+        (sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock,
+        0,
+      );
 
       // Average inventory turnover (simplified calculation)
       const averageInventoryTurnover = await this.calculateInventoryTurnover(filters);
@@ -618,7 +662,6 @@ export class AnalyticsService {
 
       await this.cacheService.set(cacheKey, result, { ttl: 600 }); // 10 minutes cache
       return result;
-
     } catch (error) {
       this.logger.error('Failed to get inventory metrics', error);
       throw error;
@@ -679,7 +722,6 @@ export class AnalyticsService {
 
       await this.cacheService.set(cacheKey, result, { ttl: 600 });
       return result;
-
     } catch (error) {
       this.logger.error('Failed to get business KPIs', error);
       throw error;
@@ -716,7 +758,6 @@ export class AnalyticsService {
         kpis,
         recentActivity,
       };
-
     } catch (error) {
       this.logger.error('Failed to get dashboard data', error);
       throw error;
@@ -727,7 +768,7 @@ export class AnalyticsService {
   async exportAnalytics(
     type: 'sales' | 'customers' | 'inventory' | 'all',
     format: 'csv' | 'excel' | 'pdf',
-    filters: AnalyticsFilters = {}
+    filters: AnalyticsFilters = {},
   ): Promise<string> {
     try {
       let _data: any;
@@ -749,10 +790,9 @@ export class AnalyticsService {
 
       // Generate export file (implementation would depend on format)
       const filename = `analytics_${type}_${Date.now()}.${format}`;
-      
+
       this.logger.log(`Analytics export generated: ${filename}`);
       return filename;
-
     } catch (error) {
       this.logger.error('Failed to export analytics', error);
       throw error;
@@ -763,7 +803,7 @@ export class AnalyticsService {
   private getDateRange(filters: AnalyticsFilters): { startDate: Date; endDate: Date } {
     const endDate = filters.endDate || new Date();
     const startDate = filters.startDate || new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
-    
+
     return { startDate, endDate };
   }
 
@@ -781,10 +821,12 @@ export class AnalyticsService {
   }
 
   private async calculateSalesMetrics(
-    startDate: Date, 
-    endDate: Date, 
-    _filters: AnalyticsFilters
-  ): Promise<Omit<SalesMetrics, 'revenueGrowth' | 'orderGrowth' | 'topProducts' | 'salesByPeriod'>> {
+    startDate: Date,
+    endDate: Date,
+    _filters: AnalyticsFilters,
+  ): Promise<
+    Omit<SalesMetrics, 'revenueGrowth' | 'orderGrowth' | 'topProducts' | 'salesByPeriod'>
+  > {
     // Get orders in the period
     const orders = await this.prisma.orders.findMany({
       where: {
@@ -812,118 +854,444 @@ export class AnalyticsService {
   }
 
   private async getTopProductsMetrics(
-    _startDate: Date, 
-    _endDate: Date, 
-    _filters: AnalyticsFilters
+    startDate: Date,
+    endDate: Date,
+    _filters: AnalyticsFilters,
   ): Promise<SalesMetrics['topProducts']> {
-    // This would aggregate order items by product
-    // For now, return mock data
-    return [
-      {
-        id: '1',
-        name: 'Tai nghe Sony WH-1000XM4',
-        revenue: 50000000,
-        quantity: 100,
-        growth: 15.5,
+    // Aggregate order items by product within the range
+    const currentTop = await this.prisma.order_items.groupBy({
+      by: ['productId'],
+      where: {
+        orders: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] },
+        },
       },
-    ];
+      _sum: { quantity: true, price: true },
+      orderBy: { _sum: { price: 'desc' } },
+      take: 5,
+    });
+
+    // Previous period for growth comparison
+    const prevPeriod = this.getPreviousPeriod(startDate, endDate);
+    const prevTop = await this.prisma.order_items.groupBy({
+      by: ['productId'],
+      where: {
+        orders: {
+          createdAt: { gte: prevPeriod.start, lte: prevPeriod.end },
+          status: { in: ['COMPLETED', 'DELIVERED'] },
+        },
+      },
+      _sum: { quantity: true, price: true },
+    });
+
+    const prevRevenueMap = new Map<string, number>();
+    prevTop.forEach(p => {
+      prevRevenueMap.set(p.productId, Number(p._sum.price || 0));
+    });
+
+    const products = await this.prisma.products.findMany({
+      where: { id: { in: currentTop.map(p => p.productId).filter(Boolean) } },
+      select: { id: true, name: true },
+    });
+
+    return currentTop.map(p => {
+      const product = products.find(prod => prod.id === p.productId);
+      const revenue = Number(p._sum.price || 0);
+      const prevRevenue = prevRevenueMap.get(p.productId) || 0;
+      return {
+        id: p.productId,
+        name: product?.name || 'Unknown',
+        revenue: revenue / 100,
+        quantity: p._sum.quantity || 0,
+        growth: this.calculateGrowthRate(revenue, prevRevenue),
+      };
+    });
   }
 
   private async getSalesByPeriod(
-    _startDate: Date, 
-    _endDate: Date, 
-    _filters: AnalyticsFilters
+    startDate: Date,
+    endDate: Date,
+    _filters: AnalyticsFilters,
   ): Promise<SalesMetrics['salesByPeriod']> {
-    // This would group sales by day/week/month
-    // For now, return mock data
-    return [
-      {
-        period: '2024-01-01',
-        revenue: 10000000,
-        orders: 25,
-        customers: 20,
+    // Fetch all relevant orders in a single query
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
       },
-    ];
+      select: {
+        createdAt: true,
+        totalCents: true,
+        userId: true,
+      },
+    });
+
+    const periodMap = new Map<
+      string,
+      { revenue: number; orders: number; customerSet: Set<string> }
+    >();
+
+    // Initialize map with all days in range if range is small enough (e.g. < 90 days)
+    // Otherwise just let the data drive the keys to avoid creating thousands of empty entries
+    const dayMs = 24 * 60 * 60 * 1000;
+    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / dayMs);
+    const shouldFillGaps = totalDays <= 90;
+
+    if (shouldFillGaps) {
+      for (let i = 0; i < totalDays; i++) {
+        const date = new Date(startDate.getTime() + i * dayMs);
+        const key = date.toISOString().split('T')[0];
+        periodMap.set(key, { revenue: 0, orders: 0, customerSet: new Set() });
+      }
+    }
+
+    // Aggregate data
+    for (const order of orders) {
+      const dateKey = order.createdAt.toISOString().split('T')[0];
+
+      if (!periodMap.has(dateKey)) {
+        // If we didn't pre-fill (large range), or date falls outside (shouldn't happen with where clause)
+        if (!shouldFillGaps) {
+          periodMap.set(dateKey, { revenue: 0, orders: 0, customerSet: new Set() });
+        } else {
+          continue;
+        }
+      }
+
+      const entry = periodMap.get(dateKey);
+      if (entry) {
+        entry.revenue += order.totalCents;
+        entry.orders += 1;
+        if (order.userId) {
+          entry.customerSet.add(order.userId);
+        }
+      }
+    }
+
+    // Convert map to array and sort
+    const results = Array.from(periodMap.entries()).map(([period, data]) => ({
+      period,
+      revenue: data.revenue / 100,
+      orders: data.orders,
+      customers: data.customerSet.size,
+    }));
+
+    return results.sort((a, b) => a.period.localeCompare(b.period));
   }
 
   private async calculateCustomerLifetimeValue(_filters: AnalyticsFilters): Promise<number> {
-    // Simplified CLV calculation
-    // CLV = Average Order Value × Purchase Frequency × Customer Lifespan
-    return 5000000; // Placeholder
+    const [revenueAgg, totalOrders, uniqueCustomers] = await Promise.all([
+      this.prisma.orders.aggregate({
+        _sum: { totalCents: true },
+        where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
+      }),
+      this.prisma.orders.count({
+        where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
+      }),
+      this.prisma.orders.findMany({
+        where: { status: { in: ['COMPLETED', 'DELIVERED'] }, userId: { not: null } },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+    ]);
+
+    const totalRevenue = (revenueAgg._sum.totalCents || 0) / 100;
+    const customers = uniqueCustomers.length || 1;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const purchaseFrequency = totalOrders > 0 ? totalOrders / customers : 0;
+
+    return averageOrderValue * purchaseFrequency;
   }
 
   private async getCustomerSegments(
-    _startDate: Date, 
-    _endDate: Date
+    startDate: Date,
+    endDate: Date,
   ): Promise<CustomerMetrics['customerSegments']> {
-    // This would segment customers by spending, frequency, etc.
-    return [
-      { segment: 'High Value', count: 50, revenue: 100000000, percentage: 25 },
-      { segment: 'Medium Value', count: 150, revenue: 150000000, percentage: 50 },
-      { segment: 'Low Value', count: 100, revenue: 50000000, percentage: 25 },
-    ];
+    // Segment customers by total spend within the window
+    const customerSpend = await this.prisma.orders.groupBy({
+      by: ['userId'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+        userId: { not: null },
+      },
+      _sum: { totalCents: true },
+    });
+
+    const segments = {
+      'High Value': { count: 0, revenue: 0 },
+      'Medium Value': { count: 0, revenue: 0 },
+      'Low Value': { count: 0, revenue: 0 },
+    };
+
+    customerSpend.forEach(c => {
+      const spent = Number(c._sum.totalCents || 0);
+      if (spent >= 10_000_000) {
+        segments['High Value'].count += 1;
+        segments['High Value'].revenue += spent;
+      } else if (spent >= 2_000_000) {
+        segments['Medium Value'].count += 1;
+        segments['Medium Value'].revenue += spent;
+      } else {
+        segments['Low Value'].count += 1;
+        segments['Low Value'].revenue += spent;
+      }
+    });
+
+    const totalRevenue = Object.values(segments).reduce((sum, seg) => sum + seg.revenue, 0) || 1;
+
+    return Object.entries(segments).map(([segment, data]) => ({
+      segment,
+      count: data.count,
+      revenue: data.revenue / 100,
+      percentage: (data.revenue / totalRevenue) * 100,
+    }));
   }
 
   private async getTopCustomers(
-    _startDate: Date, 
-    _endDate: Date, 
-    _filters: AnalyticsFilters
+    startDate: Date,
+    endDate: Date,
+    _filters: AnalyticsFilters,
   ): Promise<CustomerMetrics['topCustomers']> {
-    // This would find customers with highest spending
-    return [];
+    const top = await this.prisma.orders.groupBy({
+      by: ['userId'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+        userId: { not: null },
+      },
+      _sum: { totalCents: true },
+      _count: { _all: true },
+      orderBy: { _sum: { totalCents: 'desc' } },
+      take: 5,
+    });
+
+    const users = await this.prisma.users.findMany({
+      where: { id: { in: top.map(t => t.userId).filter(Boolean) } },
+      select: { id: true, email: true, name: true, createdAt: true },
+    });
+
+    return top.map(t => {
+      const user = users.find(u => u.id === t.userId);
+      return {
+        id: t.userId,
+        email: user?.email || 'unknown',
+        totalSpent: Number(t._sum.totalCents || 0) / 100,
+        orderCount: t._count._all || 0,
+        lastOrderDate: user?.createdAt || new Date(),
+      };
+    });
   }
 
   private async calculateInventoryTurnover(_filters: AnalyticsFilters): Promise<number> {
-    // Inventory Turnover = Cost of Goods Sold / Average Inventory Value
-    return 4.5; // Placeholder
+    const inventoryRows = await this.prisma.inventory.findMany({
+      include: { products: { select: { priceCents: true } } },
+    });
+    const inventoryValue = inventoryRows.reduce(
+      (sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock,
+      0,
+    );
+
+    const salesAgg = await this.prisma.orders.aggregate({
+      _sum: { totalCents: true },
+      where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
+    });
+
+    const cogs = Number(salesAgg._sum.totalCents || 0);
+    if (!inventoryValue) return 0;
+    return cogs / inventoryValue;
   }
 
-  private async getTopSellingProducts(_filters: AnalyticsFilters): Promise<InventoryMetrics['topSellingProducts']> {
-    return [];
+  private async getTopSellingProducts(
+    _filters: AnalyticsFilters,
+  ): Promise<InventoryMetrics['topSellingProducts']> {
+    const topProducts = await this.prisma.order_items.groupBy({
+      by: ['productId'],
+      _sum: { quantity: true, price: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 5,
+    });
+
+    const products = await this.prisma.products.findMany({
+      where: { id: { in: topProducts.map(p => p.productId).filter(Boolean) } },
+      include: { inventory: { select: { stock: true } } },
+    });
+
+    return topProducts.map(tp => {
+      const product = products.find(p => p.id === tp.productId);
+      return {
+        id: tp.productId,
+        name: product?.name || 'Unknown Product',
+        quantitySold: tp._sum.quantity || 0,
+        revenue: Number(tp._sum.price || 0) / 100,
+        stockLevel: product?.inventory?.stock || 0,
+      };
+    });
   }
 
-  private async getSlowMovingProducts(_filters: AnalyticsFilters): Promise<InventoryMetrics['slowMovingProducts']> {
-    return [];
+  private async getSlowMovingProducts(
+    _filters: AnalyticsFilters,
+  ): Promise<InventoryMetrics['slowMovingProducts']> {
+    // Products that still have stock but have not been sold recently
+    const productsWithStock = await this.prisma.products.findMany({
+      where: { inventory: { stock: { gt: 0 } } },
+      select: {
+        id: true,
+        name: true,
+        inventory: { select: { stock: true } },
+      },
+    });
+
+    const latestSales = await this.prisma.order_items.groupBy({
+      by: ['productId'],
+      _max: { createdAt: true },
+    });
+    const latestSaleMap = new Map<string, Date>();
+    latestSales.forEach(row => {
+      if (row._max.createdAt) latestSaleMap.set(row.productId, row._max.createdAt);
+    });
+
+    const now = Date.now();
+
+    return productsWithStock
+      .map(p => {
+        const lastSale = latestSaleMap.get(p.id);
+        const daysSinceLastSale = lastSale
+          ? Math.floor((now - lastSale.getTime()) / (1000 * 60 * 60 * 24))
+          : 999;
+        return {
+          id: p.id,
+          name: p.name,
+          daysSinceLastSale,
+          stockLevel: p.inventory?.stock ?? 0,
+          value: 0,
+        };
+      })
+      .sort((a, b) => b.daysSinceLastSale - a.daysSinceLastSale)
+      .slice(0, 5);
   }
 
   private async calculateMRR(_startDate: Date, _endDate: Date): Promise<number> {
-    return 0; // Placeholder
+    // Approximate MRR using revenue of last 30 days divided by 1 month
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    const revenue = await this.prisma.orders.aggregate({
+      _sum: { totalCents: true },
+      where: { createdAt: { gte: start }, status: { in: ['COMPLETED', 'DELIVERED'] } },
+    });
+    return (revenue._sum.totalCents || 0) / 100;
   }
 
   private async calculateCAC(_startDate: Date, _endDate: Date): Promise<number> {
-    return 0; // Placeholder
+    // Rough CAC: total revenue / new customers (as proxy without marketing spend data)
+    const customers = await this.prisma.users.count({
+      where: { role: 'USER', createdAt: { gte: _startDate, lte: _endDate } },
+    });
+    const revenue = await this.prisma.orders.aggregate({
+      _sum: { totalCents: true },
+      where: {
+        createdAt: { gte: _startDate, lte: _endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+      },
+    });
+    if (!customers) return 0;
+    return (revenue._sum.totalCents || 0) / 100 / customers;
   }
 
   private async calculateChurnRate(_startDate: Date, _endDate: Date): Promise<number> {
-    return 0; // Placeholder
+    // Simplified churn: users with no orders in period / total active users
+    const activeUsers = await this.prisma.users.count({ where: { role: 'USER' } });
+    if (!activeUsers) return 0;
+
+    const usersWithOrders = await this.prisma.orders.findMany({
+      where: { createdAt: { gte: _startDate, lte: _endDate }, userId: { not: null } },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+    const retained = usersWithOrders.length;
+    const churned = Math.max(activeUsers - retained, 0);
+    return (churned / activeUsers) * 100;
   }
 
   private async calculateAverageResponseTime(_startDate: Date, _endDate: Date): Promise<number> {
-    return 0; // Placeholder
+    const logs = await this.prisma.activity_logs.findMany({
+      where: { createdAt: { gte: _startDate, lte: _endDate }, duration: { not: null } },
+      select: { duration: true },
+    });
+    if (!logs.length) return 0;
+    const total = logs.reduce((sum, log) => sum + (log.duration || 0), 0);
+    return total / logs.length;
   }
 
   private async calculateOrderFulfillmentRate(_startDate: Date, _endDate: Date): Promise<number> {
-    return 95; // Placeholder
+    const [total, fulfilled] = await Promise.all([
+      this.prisma.orders.count({
+        where: { createdAt: { gte: _startDate, lte: _endDate } },
+      }),
+      this.prisma.orders.count({
+        where: {
+          createdAt: { gte: _startDate, lte: _endDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] },
+        },
+      }),
+    ]);
+    if (!total) return 0;
+    return (fulfilled / total) * 100;
   }
 
   private async calculateReturnRate(_startDate: Date, _endDate: Date): Promise<number> {
-    return 2.5; // Placeholder
+    // If returns are tracked as CANCELLED after completion, approximate using cancelled / total
+    const [cancelled, total] = await Promise.all([
+      this.prisma.orders.count({
+        where: { createdAt: { gte: _startDate, lte: _endDate }, status: 'CANCELLED' },
+      }),
+      this.prisma.orders.count({
+        where: { createdAt: { gte: _startDate, lte: _endDate } },
+      }),
+    ]);
+    if (!total) return 0;
+    return (cancelled / total) * 100;
   }
 
   private async calculateProfitMargin(_startDate: Date, _endDate: Date): Promise<number> {
-    return 25; // Placeholder
+    const revenue = await this.prisma.orders.aggregate({
+      _sum: { totalCents: true },
+      where: {
+        createdAt: { gte: _startDate, lte: _endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+      },
+    });
+    // Without cost data, assume 20% cost of goods as a basic heuristic
+    const revenueValue = (revenue._sum.totalCents || 0) / 100;
+    const estimatedCost = revenueValue * 0.8;
+    if (!revenueValue) return 0;
+    return ((revenueValue - estimatedCost) / revenueValue) * 100;
   }
 
   private async calculateMarketingROI(_startDate: Date, _endDate: Date): Promise<number> {
-    return 300; // Placeholder
+    // Simplified ROI: revenue / assumed spend (5% of revenue)
+    const revenue = await this.prisma.orders.aggregate({
+      _sum: { totalCents: true },
+      where: {
+        createdAt: { gte: _startDate, lte: _endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+      },
+    });
+    const revenueValue = (revenue._sum.totalCents || 0) / 100;
+    if (!revenueValue) return 0;
+    const spend = revenueValue * 0.05 || 1;
+    return ((revenueValue - spend) / spend) * 100;
   }
 
-  private async getRecentActivity(): Promise<Array<{
-    type: string;
-    description: string;
-    timestamp: Date;
-    value?: number;
-  }>> {
+  private async getRecentActivity(): Promise<
+    Array<{
+      type: string;
+      description: string;
+      timestamp: Date;
+      value?: number;
+    }>
+  > {
     return [
       {
         type: 'order',
@@ -937,25 +1305,48 @@ export class AnalyticsService {
   // NEW METHODS FOR DASHBOARD //
 
   async getRevenueChartData(days: number = 7) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days + 1); // Go back 'days' days, including today
+    startDate.setHours(0, 0, 0, 0); // Start of the first day
+
+    // Fetch all relevant orders in a single query
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] },
+      },
+      select: {
+        createdAt: true,
+        totalCents: true,
+      },
+    });
+
+    const revenueMap = new Map<string, number>();
+
+    // Initialize map with all days
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const key = date.toISOString().split('T')[0];
+      revenueMap.set(key, 0);
+    }
+
+    // Aggregate revenue
+    for (const order of orders) {
+      const dateKey = order.createdAt.toISOString().split('T')[0];
+      if (revenueMap.has(dateKey)) {
+        revenueMap.set(dateKey, (revenueMap.get(dateKey) || 0) + order.totalCents);
+      }
+    }
+
     const dates: string[] = [];
     const values: number[] = [];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      const dayRevenue = await this.prisma.orders.aggregate({
-        where: {
-          createdAt: { gte: date, lt: nextDate },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        },
-        _sum: { totalCents: true }
-      });
-
-      dates.push(date.toISOString().split('T')[0]);
-      values.push((dayRevenue._sum.totalCents || 0) / 100);
+    // Convert map to arrays (map iterates in insertion order, which is chronological here)
+    for (const [date, cents] of revenueMap.entries()) {
+      dates.push(date);
+      values.push(cents / 100);
     }
 
     return { dates, values };
@@ -966,25 +1357,25 @@ export class AnalyticsService {
       by: ['productId'],
       _sum: {
         quantity: true,
-        price: true
+        price: true,
       },
       orderBy: {
         _sum: {
-          quantity: 'desc'
-        }
+          quantity: 'desc',
+        },
       },
-      take: limit
+      take: limit,
     });
 
     const products = await this.prisma.products.findMany({
       where: {
-        id: { in: topProducts.map(p => p.productId).filter(Boolean) }
+        id: { in: topProducts.map(p => p.productId).filter(Boolean) },
       },
       include: {
         inventory: {
-          select: { stock: true }
-        }
-      }
+          select: { stock: true },
+        },
+      },
     });
 
     return topProducts.map(tp => {
@@ -994,7 +1385,7 @@ export class AnalyticsService {
         name: product?.name || 'Unknown Product',
         salesCount: tp._sum.quantity || 0,
         revenue: Number(tp._sum.price || 0) / 100,
-        stock: product?.inventory?.stock || 0
+        stock: product?.inventory?.stock || 0,
       };
     });
   }
@@ -1009,32 +1400,32 @@ export class AnalyticsService {
     // Current period (last 7 days)
     const [currentOrders, currentCustomers] = await Promise.all([
       this.prisma.orders.count({
-        where: { createdAt: { gte: sevenDaysAgo, lte: today } }
+        where: { createdAt: { gte: sevenDaysAgo, lte: today } },
       }),
       this.prisma.users.count({
         where: {
           role: 'USER',
-          createdAt: { gte: sevenDaysAgo, lte: today }
-        }
-      })
+          createdAt: { gte: sevenDaysAgo, lte: today },
+        },
+      }),
     ]);
 
     // Previous period (14-7 days ago)
     const [previousOrders, previousCustomers] = await Promise.all([
       this.prisma.orders.count({
-        where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } }
+        where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
       }),
       this.prisma.users.count({
         where: {
           role: 'USER',
-          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo }
-        }
-      })
+          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
+        },
+      }),
     ]);
 
     return {
       ordersGrowth: this.calculateGrowthRate(currentOrders, previousOrders),
-      customersGrowth: this.calculateGrowthRate(currentCustomers, previousCustomers)
+      customersGrowth: this.calculateGrowthRate(currentCustomers, previousCustomers),
     };
   }
 
@@ -1046,8 +1437,8 @@ export class AnalyticsService {
 
     const bookingsToday = await this.prisma.service_bookings.count({
       where: {
-        createdAt: { gte: today, lt: tomorrow }
-      }
+        createdAt: { gte: today, lt: tomorrow },
+      },
     });
 
     return { bookingsToday };

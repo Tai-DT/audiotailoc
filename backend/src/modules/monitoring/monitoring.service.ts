@@ -61,7 +61,10 @@ export class MonitoringService {
 
   recordRequest(method: string, route: string, statusCode: number, duration: number) {
     this.requestCounter.inc({ method, route, status_code: statusCode.toString() });
-    this.responseTimeHistogram.observe({ method, route, status_code: statusCode.toString() }, duration / 1000);
+    this.responseTimeHistogram.observe(
+      { method, route, status_code: statusCode.toString() },
+      duration / 1000,
+    );
   }
 
   updateActiveConnections(type: string, count: number) {

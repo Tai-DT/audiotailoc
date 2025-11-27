@@ -42,7 +42,7 @@ export class UpdateServiceDto {
   basePriceCents?: number;
 
   @IsOptional()
-  @Transform(({ value }) => value !== undefined ? Number(value) : undefined)
+  @Transform(({ value }) => (value !== undefined ? Number(value) : undefined))
   price?: number;
 
   @IsOptional()

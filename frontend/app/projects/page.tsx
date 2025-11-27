@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { PageBanner } from '@/components/ui/page-banner';
 import { useProjects } from '@/lib/hooks/use-projects';
 import { ProjectGrid } from '@/components/projects/project-grid';
 import { ProjectFilters } from '@/components/projects/project-filters';

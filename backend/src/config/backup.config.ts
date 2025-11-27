@@ -5,7 +5,7 @@ export default registerAs('backup', () => ({
   enabled: process.env.BACKUP_ENABLED === 'true' || true,
   directory: process.env.BACKUP_DIR || './backups',
   retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS || '30', 10),
-  
+
   // Compression settings
   compression: {
     enabled: process.env.BACKUP_COMPRESSION === 'true' || true,
@@ -34,7 +34,7 @@ export default registerAs('backup', () => ({
   remoteStorage: {
     enabled: process.env.BACKUP_REMOTE_ENABLED === 'true' || false,
     provider: process.env.BACKUP_REMOTE_PROVIDER || 'aws', // aws, gcp, azure
-    
+
     // AWS S3 settings
     aws: {
       region: process.env.AWS_REGION || 'us-east-1',
@@ -50,7 +50,9 @@ export default registerAs('backup', () => ({
       projectId: process.env.GCP_PROJECT_ID || '',
       bucket: process.env.BACKUP_GCS_BUCKET || '',
       keyFilename: process.env.GCP_KEY_FILENAME || '',
-      credentials: process.env.GCP_CREDENTIALS ? JSON.parse(process.env.GCP_CREDENTIALS) : undefined,
+      credentials: process.env.GCP_CREDENTIALS
+        ? JSON.parse(process.env.GCP_CREDENTIALS)
+        : undefined,
     },
 
     // Azure Blob Storage settings
@@ -69,14 +71,14 @@ export default registerAs('backup', () => ({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'audiotailoc',
-    
+
     // Backup-specific settings
     maxConnections: parseInt(process.env.BACKUP_DB_MAX_CONNECTIONS || '5', 10),
     timeout: parseInt(process.env.BACKUP_DB_TIMEOUT || '300000', 10), // 5 minutes
-    
+
     // Tables to exclude from backup
     excludeTables: (process.env.BACKUP_EXCLUDE_TABLES || '').split(',').filter(Boolean),
-    
+
     // Tables to include in backup (if specified, only these will be backed up)
     includeTables: (process.env.BACKUP_INCLUDE_TABLES || '').split(',').filter(Boolean),
   },
@@ -84,7 +86,7 @@ export default registerAs('backup', () => ({
   // Notification settings
   notifications: {
     enabled: process.env.BACKUP_NOTIFICATIONS_ENABLED === 'true' || true,
-    
+
     // Email notifications
     email: {
       enabled: process.env.BACKUP_EMAIL_NOTIFICATIONS === 'true' || false,
@@ -119,7 +121,7 @@ export default registerAs('backup', () => ({
     maxConcurrentBackups: parseInt(process.env.BACKUP_MAX_CONCURRENT || '1', 10),
     chunkSize: parseInt(process.env.BACKUP_CHUNK_SIZE || '1048576', 10), // 1MB
     bufferSize: parseInt(process.env.BACKUP_BUFFER_SIZE || '65536', 10), // 64KB
-    
+
     // Rate limiting for remote uploads
     uploadRateLimit: {
       enabled: process.env.BACKUP_UPLOAD_RATE_LIMIT === 'true' || false,
@@ -130,7 +132,7 @@ export default registerAs('backup', () => ({
   // Monitoring settings
   monitoring: {
     enabled: process.env.BACKUP_MONITORING_ENABLED === 'true' || true,
-    
+
     // Health check settings
     healthCheck: {
       maxBackupAge: parseInt(process.env.BACKUP_MAX_AGE_HOURS || '25', 10), // 25 hours

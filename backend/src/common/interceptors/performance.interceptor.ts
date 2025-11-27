@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PerformanceService } from '../../modules/monitoring/performance.service';
@@ -28,7 +22,7 @@ export class PerformanceInterceptor implements NestInterceptor {
         next: () => {
           this.recordMetrics(startTime, method, url, response.statusCode, ip, userAgent);
         },
-        error: (error) => {
+        error: error => {
           const statusCode = error.status || 500;
           this.recordMetrics(startTime, method, url, statusCode, ip, userAgent);
         },
@@ -81,7 +75,7 @@ export class PerformanceInterceptor implements NestInterceptor {
   private cleanPath(path: string): string {
     // Remove query parameters
     const pathWithoutQuery = path.split('?')[0];
-    
+
     // Replace UUIDs and numeric IDs with placeholders
     return pathWithoutQuery
       .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id')

@@ -42,32 +42,38 @@ export class CachingInterceptor implements NestInterceptor {
 
     // Try to get from Redis first (if available)
     if (this.redisClient) {
-      return new Observable((subscriber) => {
-        this.redisClient.get(fullCacheKey).then((cached: string | null) => {
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            subscriber.next(parsed);
-            subscriber.complete();
-          } else {
-            // Execute the handler and cache the result
-            next.handle().pipe(
-              tap((data) => {
-                this.redisClient.setex(fullCacheKey, cacheTtl || 300, JSON.stringify(data));
-              }),
-            ).subscribe({
-              next: (data) => subscriber.next(data),
-              error: (err) => subscriber.error(err),
+      return new Observable(subscriber => {
+        this.redisClient
+          .get(fullCacheKey)
+          .then((cached: string | null) => {
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              subscriber.next(parsed);
+              subscriber.complete();
+            } else {
+              // Execute the handler and cache the result
+              next
+                .handle()
+                .pipe(
+                  tap(data => {
+                    this.redisClient.setex(fullCacheKey, cacheTtl || 300, JSON.stringify(data));
+                  }),
+                )
+                .subscribe({
+                  next: data => subscriber.next(data),
+                  error: err => subscriber.error(err),
+                  complete: () => subscriber.complete(),
+                });
+            }
+          })
+          .catch(() => {
+            // Fall back to in-memory cache if Redis fails
+            this.handleInMemoryCache(fullCacheKey, cacheTtl || 300, next).subscribe({
+              next: data => subscriber.next(data),
+              error: err => subscriber.error(err),
               complete: () => subscriber.complete(),
             });
-          }
-        }).catch(() => {
-          // Fall back to in-memory cache if Redis fails
-          this.handleInMemoryCache(fullCacheKey, cacheTtl || 300, next).subscribe({
-            next: (data) => subscriber.next(data),
-            error: (err) => subscriber.error(err),
-            complete: () => subscriber.complete(),
           });
-        });
       });
     }
 
@@ -75,11 +81,7 @@ export class CachingInterceptor implements NestInterceptor {
     return this.handleInMemoryCache(fullCacheKey, cacheTtl || 300, next);
   }
 
-  private handleInMemoryCache(
-    cacheKey: string,
-    ttl: number,
-    next: CallHandler,
-  ): Observable<any> {
+  private handleInMemoryCache(cacheKey: string, ttl: number, next: CallHandler): Observable<any> {
     const cached = this.cache.get(cacheKey);
 
     if (cached && this.isValid(cached)) {
@@ -87,7 +89,7 @@ export class CachingInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      tap((data) => {
+      tap(data => {
         this.cache.set(cacheKey, {
           value: data,
           timestamp: Date.now(),
@@ -102,7 +104,7 @@ export class CachingInterceptor implements NestInterceptor {
 
     const argsString = args
       .filter(arg => arg !== undefined && arg !== null)
-      .map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg))
+      .map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
       .join(':');
 
     return `${baseKey}:${argsString}`;
@@ -140,4 +142,3 @@ export class CachingInterceptor implements NestInterceptor {
     };
   }
 }
-

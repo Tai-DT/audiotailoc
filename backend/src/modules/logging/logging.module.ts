@@ -4,21 +4,20 @@ import { LoggingService } from './logging.service';
 import { LoggingInterceptor } from './logging.interceptor';
 import { LoggingMiddleware } from './logging.middleware';
 import { CorrelationService } from './correlation.service';
+import { ActivityLogService } from './activity-log.service';
 
 @Global()
 @Module({
   providers: [
     LoggingService,
     CorrelationService,
+    ActivityLogService,
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
   ],
-  exports: [
-    LoggingService,
-    CorrelationService,
-  ],
+  exports: [LoggingService, CorrelationService, ActivityLogService],
 })
 export class LoggingModule implements NestModule {
   constructor(private readonly loggingService: LoggingService) {}

@@ -168,11 +168,23 @@ export function SystemStatus() {
 
   const lastUpdated = new Date(dataUpdatedAt);
   const systemMemory = healthData.systemInfo;
+
+  type MemoryDetails = { percentage?: number };
+
+  const memoryDetails = healthData.checks?.memory
+    ? (healthData.checks.memory.details as MemoryDetails | undefined)
+    : undefined;
+
+  const diskDetails = healthData.checks?.disk
+    ? (healthData.checks.disk.details as MemoryDetails | undefined)
+    : undefined;
+
   const memoryPercentage = systemMemory
     ? ((systemMemory.totalMemory - systemMemory.freeMemory) / systemMemory.totalMemory) * 100
-    : healthData.checks.memory.details?.percentage || 0;
-  const cpuUsage = healthData.performance?.cpu.usage || 0;
-  const diskUsage = healthData.checks.disk.details?.percentage || 0;
+    : memoryDetails?.percentage || 0;
+
+  const cpuUsage = healthData.performance?.cpu?.usage || 0;
+  const diskUsage = diskDetails?.percentage || 0;
 
   return (
     <Card>

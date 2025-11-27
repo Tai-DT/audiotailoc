@@ -1,262 +1,169 @@
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { apiClient, handleApiResponse } from '../api';
+import { Product, ProductFilters, PaginatedResponse, ProductForm } from '../types';
 
-// Types
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  shortDescription?: string;
-  priceCents: number;
-  originalPriceCents?: number;
-  imageUrl?: string;
-  images?: string[];
-  categoryId?: string;
-  category?: {
-    id: string;
-    name: string;
-  };
-  brand?: string;
-  model?: string;
-  sku?: string;
-  specifications?: Record<string, string>;
-  features?: string;
-  warranty?: string;
-  weight?: number;
-  dimensions?: string;
-  stockQuantity: number;
-  minOrderQuantity?: number;
-  maxOrderQuantity?: number;
-  maxStock?: number;
-  tags?: string[];
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string[];
-  canonicalUrl?: string;
-  featured?: boolean;
-  isActive: boolean;
-  isDeleted?: boolean;
-  viewCount?: number;
-  createdAt: string;
-  updatedAt: string;
+// Product Analytics Interface
+export interface ProductAnalytics {
+  totalProducts: number;
+  totalValue: number;
+  lowStock: number;
+  topCategories: Array<{ name: string; count: number }>;
 }
 
-export interface ProductFilters {
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  search?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: 'name' | 'price' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
-}
+export const productQueryKeys = {
+  all: ['products'] as const,
+  lists: () => [...productQueryKeys.all, 'list'] as const,
+  list: (filters: ProductFilters) => [...productQueryKeys.lists(), filters] as const,
+  details: () => [...productQueryKeys.all, 'detail'] as const,
+  detail: (id: string) => [...productQueryKeys.details(), id] as const,
+  analytics: ['products', 'analytics'] as const,
+  topViewed: ['products', 'top-viewed'] as const,
+  recent: ['products', 'recent'] as const,
+};
 
-interface ApiError {
-  message: string;
-  status?: number;
-}
-
-// Hooks
-export function useProducts(filters?: ProductFilters) {
+export const useProducts = (filters: ProductFilters = {}) => {
   return useQuery({
-    queryKey: ['products', filters],
+    queryKey: productQueryKeys.list(filters),
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.LIST, {
-        params: filters,
-      });
-      const apiResponse = handleApiResponse<{
-        products: Product[];
-        total: number;
-        page: number;
-        totalPages: number;
+      const response = await apiClient.get('/catalog/products', { params: filters });
+      const result = handleApiResponse<{
+        data: Product[];
+        pagination: { total: number; page: number; pageSize: number };
       }>(response);
 
-      // API always returns object with products array
-      return apiResponse;
+      // Transform backend response to match PaginatedResponse interface
+      return {
+        items: result.data || [],
+        total: result.pagination?.total || 0,
+        page: result.pagination?.page || 1,
+        pageSize: result.pagination?.pageSize || 20,
+        totalPages: Math.ceil((result.pagination?.total || 0) / (result.pagination?.pageSize || 20)),
+        hasNext: (result.pagination?.page || 1) < Math.ceil((result.pagination?.total || 0) / (result.pagination?.pageSize || 20)),
+        hasPrev: (result.pagination?.page || 1) > 1,
+      } as PaginatedResponse<Product>;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
+};
 
-export function useProduct(idOrSlug: string) {
+export const useProduct = (id: string) => {
   return useQuery({
-    queryKey: ['product', idOrSlug],
+    queryKey: productQueryKeys.detail(id),
     queryFn: async () => {
-      if (!idOrSlug) throw new Error('Missing product identifier');
-
-      // Patterns
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-      // CUID / CUID2 style (simple heuristic: starts with c, length 25-32, alnum)
-      const isCUID = /^c[a-z0-9]{15,}$/i.test(idOrSlug);
-
-      // Allow slug forms like: some-product-name-cmg4t1xtc006vitfly0sjzja1
-      let baseIdOrSlug = idOrSlug;
-      const trailingIdMatch = idOrSlug.match(/(c[a-z0-9]{15,})$/i);
-      if (!isUUID && !isCUID && trailingIdMatch) {
-        baseIdOrSlug = trailingIdMatch[1];
-      }
-
-      const tryDetail = async (val: string) => {
-        const res = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL(val));
-        return handleApiResponse<Product>(res);
-      };
-      const trySlug = async (val: string) => {
-        const res = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL_BY_SLUG(val));
-        return handleApiResponse<Product>(res);
-      };
-
-      // Resolution strategy:
-      // 1. If UUID or CUID -> attempt direct detail
-      // 2. Else attempt slug; if 404 and trailing ID pattern -> fallback to detail
-      // 3. If slug attempt first and fails non-404 -> throw
-
-      try {
-        if (isUUID || isCUID) {
-          return await tryDetail(baseIdOrSlug);
-        }
-
-        // Try as slug first
-        try {
-          return await trySlug(baseIdOrSlug);
-        } catch (err: unknown) {
-          const status = typeof err === 'object' && err !== null && 'response' in err
-            ? (err as { response?: { status?: number } }).response?.status
-            : undefined;
-          if (status === 404 && trailingIdMatch) {
-            // Fallback to detail with extracted ID
-            return await tryDetail(trailingIdMatch[1]);
-          }
-          throw err;
-        }
-      } catch (error) {
-        // Final fallback: if raw looked like ID but failed slug earlier
-        if (!isUUID && !isCUID && trailingIdMatch) {
-          try {
-            return await tryDetail(trailingIdMatch[1]);
-          } catch {
-            throw error;
-          }
-        }
-        throw error;
-      }
+      const response = await apiClient.get(`/catalog/products/${id}`);
+      return handleApiResponse<Product>(response);
     },
-    enabled: !!idOrSlug,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!id,
   });
-}
+};
 
-export function useProductSearch(query: string) {
+export const useProductBySlug = (slug: string) => {
   return useQuery({
-    queryKey: ['products', 'search', query],
+    queryKey: ['products', 'slug', slug],
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.SEARCH, {
-        params: { q: query },
+      const response = await apiClient.get(`/catalog/products/slug/${slug}`);
+      return handleApiResponse<Product>(response);
+    },
+    enabled: !!slug,
+  });
+};
+
+export const useProductSearch = (query: string, limit = 10) => {
+  return useQuery({
+    queryKey: ['products', 'search', query, limit],
+    queryFn: async () => {
+      const response = await apiClient.get('/catalog/products/search', {
+        params: { q: query, limit },
       });
-      return handleApiResponse<Product[]>(response);
+      const result = handleApiResponse<{ data: Product[]; pagination?: { total?: number; page?: number; pageSize?: number } }>(response);
+      return result.data || [];
     },
-    enabled: query.length > 2,
+    enabled: !!query && query.length > 2,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
-}
+};
 
-type FeaturedProductsResponse = Product[] | { items?: Product[] } | { products?: Product[] };
-
-export function useFeaturedProducts() {
+export const useProductAnalytics = () => {
   return useQuery({
-    queryKey: ['products', 'featured'],
+    queryKey: productQueryKeys.analytics,
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.LIST, {
-        params: { featured: true, limit: 8 },
+      const response = await apiClient.get('/catalog/products/analytics/overview');
+      return handleApiResponse<ProductAnalytics>(response);
+    },
+    staleTime: 15 * 60 * 1000, // 15 minutes
+  });
+};
+
+export const useTopViewedProducts = (limit = 10) => {
+  return useQuery({
+    queryKey: [...productQueryKeys.topViewed, limit],
+    queryFn: async () => {
+      const response = await apiClient.get('/catalog/products/analytics/top-viewed', {
+        params: { limit },
       });
-      const apiResponse = handleApiResponse<FeaturedProductsResponse>(response);
-
-      if (Array.isArray(apiResponse)) {
-        return apiResponse;
-      }
-
-      if (apiResponse && 'items' in apiResponse) {
-        return apiResponse.items ?? [];
-      }
-
-      if (apiResponse && 'products' in apiResponse) {
-        return apiResponse.products ?? [];
-      }
-
-      return [];
+      const result = handleApiResponse<{ data: Product[]; pagination?: { total?: number; page?: number; pageSize?: number } }>(response);
+      return result.data || [];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
-}
+};
 
-export function useProductAnalytics() {
+export const useRecentProducts = (limit = 10) => {
   return useQuery({
-    queryKey: ['products', 'analytics'],
+    queryKey: [...productQueryKeys.recent, limit],
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.ANALYTICS);
-      return handleApiResponse<{
-        totalProducts: number;
-        totalValue: number;
-        lowStock: number;
-        topCategories: Array<{ name: string; count: number }>;
-      }>(response);
+      const response = await apiClient.get('/catalog/products/analytics/recent', {
+        params: { limit },
+      });
+      const result = handleApiResponse<{ data: Product[]; pagination?: { total?: number; page?: number; pageSize?: number } }>(response);
+      return result.data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
+};
 
-// Mutations
-export function useCreateProduct() {
+export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (product: Partial<Product>) => {
-      const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.CREATE, product);
+    mutationFn: async (data: ProductForm) => {
+      const response = await apiClient.post('/catalog/products', data);
       return handleApiResponse<Product>(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Sản phẩm đã được tạo thành công!');
-    },
-    onError: (error: ApiError) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi tạo sản phẩm');
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.analytics });
     },
   });
-}
+};
 
-export function useUpdateProduct() {
+export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...product }: Partial<Product> & { id: string }) => {
-      const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.UPDATE(id), product);
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductForm> }) => {
+      const response = await apiClient.put(`/catalog/products/${id}`, data);
       return handleApiResponse<Product>(response);
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['product', data.id] });
-      toast.success('Sản phẩm đã được cập nhật thành công!');
-    },
-    onError: (error: ApiError) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm');
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.analytics });
     },
   });
-}
+};
 
-export function useDeleteProduct() {
+export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));
-      return handleApiResponse<void>(response);
+      const response = await apiClient.delete(`/catalog/products/${id}`);
+      return handleApiResponse(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Sản phẩm đã được xóa thành công!');
-    },
-    onError: (error: ApiError) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa sản phẩm');
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.analytics });
     },
   });
-}
+};

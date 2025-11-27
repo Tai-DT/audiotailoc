@@ -1,17 +1,24 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   private readonly logger = new Logger(JwtGuard.name);
-  
+
   constructor(private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
     // Derive the full request path (prefer originalUrl if available)
-    const fullPath = req.originalUrl || `${req.baseUrl || ''}${req.path || ''}` || req.route?.path || req.path;
+    const fullPath =
+      req.originalUrl || `${req.baseUrl || ''}${req.path || ''}` || req.route?.path || req.path;
     const path = typeof fullPath === 'string' ? fullPath : String(fullPath);
 
     // Allow public auth routes without authentication
@@ -26,7 +33,7 @@ export class JwtGuard implements CanActivate {
       '/catalog/categories',
       '/services',
       '/services/types',
-      '/health'
+      '/health',
     ];
 
     // Allow both plain and API-prefixed public routes (tests may use global prefix /api/v1)
@@ -40,7 +47,7 @@ export class JwtGuard implements CanActivate {
       throw new UnauthorizedException('Missing bearer token');
     }
     const token = header.slice(7);
-    
+
     try {
       const secret = this.config.get<string>('JWT_ACCESS_SECRET');
       if (!secret) {
@@ -58,7 +65,10 @@ export class JwtGuard implements CanActivate {
         this.logger.warn(`Invalid token for ${path}: ${(error as any).message}`);
         throw new UnauthorizedException('Invalid token');
       }
-      this.logger.error(`Token verification failed for ${path}: ${(error as any)?.message || String(error)}`, error as any);
+      this.logger.error(
+        `Token verification failed for ${path}: ${(error as any)?.message || String(error)}`,
+        error as any,
+      );
       throw new UnauthorizedException('Token verification failed');
     }
   }

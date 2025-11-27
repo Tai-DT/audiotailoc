@@ -108,7 +108,9 @@ let SecurityMiddleware = class SecurityMiddleware {
             req.socket.remoteAddress ||
             req.headers['x-forwarded-for'] ||
             req.headers['x-real-ip'] ||
-            'unknown').split(',')[0].trim();
+            'unknown')
+            .split(',')[0]
+            .trim();
     }
     isSuspiciousRequest(req) {
         const userAgent = req.get('User-Agent') || '';

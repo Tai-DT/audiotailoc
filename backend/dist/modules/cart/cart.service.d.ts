@@ -18,10 +18,10 @@ export declare class CartService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
     } & {
         status: string;
@@ -46,7 +46,7 @@ export declare class CartService {
     clearUserCart(userId: string): Promise<any>;
     private calculateCartTotals;
     cleanupExpiredGuestCarts(): Promise<void>;
-    getCartWithTotals(userId: string): Promise<{
+    getCartWithTotals(userId: string | undefined): Promise<{
         cart: any;
         items: any[];
         subtotalCents: number;
@@ -69,6 +69,7 @@ export declare class CartService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                isDeleted: boolean;
                 slug: string;
                 shortDescription: string | null;
                 priceCents: bigint;
@@ -83,7 +84,6 @@ export declare class CartService {
                 warranty: string | null;
                 weight: number | null;
                 dimensions: string | null;
-                stockQuantity: number;
                 minOrderQuantity: number;
                 maxOrderQuantity: number | null;
                 maxStock: number | null;
@@ -93,17 +93,16 @@ export declare class CartService {
                 canonicalUrl: string | null;
                 featured: boolean;
                 isActive: boolean;
-                isDeleted: boolean;
                 viewCount: number;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
         subtotalCents: number;
     }>;

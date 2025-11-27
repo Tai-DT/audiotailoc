@@ -30,7 +30,7 @@ export class MonitoringInterceptor implements NestInterceptor {
 
         this.monitoringService.recordRequest(method, route, statusCode, duration);
       }),
-      catchError((error) => {
+      catchError(error => {
         const duration = Date.now() - start;
         const method = request.method;
         const route = this.getRoutePattern(context);
@@ -77,17 +77,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const route = request.path || '/';
 
     // Record error
-    this.monitoringService.recordError(
-      exception.constructor.name || 'UnknownError',
-      route
-    );
+    this.monitoringService.recordError(exception.constructor.name || 'UnknownError', route);
 
     // Record failed request
     this.monitoringService.recordRequest(
       request.method,
       route,
       status,
-      0 // We don't have duration here
+      0, // We don't have duration here
     );
 
     // Continue with default error handling

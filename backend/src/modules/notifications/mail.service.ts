@@ -1,20 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { emailTemplates, OrderEmailData } from './templates/email.templates';
+import { invoiceTemplates, InvoiceData } from './templates/invoice.templates';
 
 interface EmailTemplate {
   subject: string;
   html: string;
   text: string;
-}
-
-interface OrderEmailData {
-  orderNo: string;
-  customerName: string;
-  totalAmount: string;
-  items: Array<{ name: string; quantity: number; price: string }>;
-  status: string;
-  trackingUrl?: string;
 }
 
 @Injectable()
@@ -25,7 +18,7 @@ export class MailService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {
     try {
       // Lazy require nodemailer so missing dep won't crash module load
@@ -61,6 +54,16 @@ export class MailService {
     this.from = this.config.get('SMTP_FROM') || 'no-reply@audiotailoc.local';
   }
 
+  private escapeHtml(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   async send(to: string, subject: string, text: string, html?: string) {
     if (!this.transporter?.sendMail) {
       this.logger.warn('Email transporter not available');
@@ -73,7 +76,7 @@ export class MailService {
         to,
         subject,
         text,
-        html: html || text
+        html: html || text,
       };
 
       const result = await this.transporter.sendMail(mailOptions);
@@ -91,61 +94,7 @@ export class MailService {
   }
   // Email Templates
   private generateOrderConfirmationTemplate(data: OrderEmailData): EmailTemplate {
-    const itemsHtml = data.items.map(item => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.price}</td>
-      </tr>
-    `).join('');
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Xác nhận đơn hàng</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb;">🎵 Audio Tài Lộc</h1>
-          </div>
-
-          <h2 style="color: #1f2937;">Xác nhận đơn hàng #${data.orderNo}</h2>
-
-          <p>Xin chào ${data.customerName},</p>
-          <p>Cảm ơn bạn đã đặt hàng tại Audio Tài Lộc. Đơn hàng của bạn đã được xác nhận và đang được xử lý.</p>
-
-          <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">Chi tiết đơn hàng:</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: #e5e7eb;">
-                  <th style="padding: 12px; text-align: left;">Sản phẩm</th>
-                  <th style="padding: 12px; text-align: center;">Số lượng</th>
-                  <th style="padding: 12px; text-align: right;">Giá</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
-            <div style="text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold;">
-              Tổng cộng: ${data.totalAmount}
-            </div>
-          </div>
-
-          <p>Chúng tôi sẽ thông báo cho bạn khi đơn hàng được giao cho đơn vị vận chuyển.</p>
-
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280;">
-            <p>Cảm ơn bạn đã tin tưởng Audio Tài Lộc!</p>
-            <p>Hotline: 1900-xxxx | Email: support@audiotailoc.com</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const html = emailTemplates.orderConfirmation(data);
 
     const text = `
 Xác nhận đơn hàng #${data.orderNo}
@@ -168,7 +117,7 @@ Hotline: 1900-xxxx | Email: support@audiotailoc.com
     return {
       subject: `Xác nhận đơn hàng #${data.orderNo} - Audio Tài Lộc`,
       html,
-      text
+      text,
     };
   }
 
@@ -178,10 +127,12 @@ Hotline: 1900-xxxx | Email: support@audiotailoc.com
       SHIPPED: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
       DELIVERED: 'Đơn hàng đã được giao thành công',
       CANCELLED: 'Đơn hàng đã bị hủy',
-      REFUNDED: 'Đơn hàng đã được hoàn tiền'
+      REFUNDED: 'Đơn hàng đã được hoàn tiền',
     };
 
-    const statusMessage = statusMessages[data.status as keyof typeof statusMessages] || `Trạng thái đơn hàng: ${data.status}`;
+    const statusMessage =
+      statusMessages[data.status as keyof typeof statusMessages] ||
+      `Trạng thái đơn hàng: ${data.status}`;
 
     const html = `
       <!DOCTYPE html>
@@ -198,7 +149,7 @@ Hotline: 1900-xxxx | Email: support@audiotailoc.com
 
           <h2 style="color: #1f2937;">Cập nhật đơn hàng #${data.orderNo}</h2>
 
-          <p>Xin chào ${data.customerName},</p>
+          <p>Xin chào ${this.escapeHtml(data.customerName)},</p>
 
           <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #2563eb;">${statusMessage}</h3>
@@ -234,7 +185,7 @@ Hotline: 1900-xxxx | Email: support@audiotailoc.com
     return {
       subject: `Cập nhật đơn hàng #${data.orderNo} - ${statusMessage}`,
       html,
-      text
+      text,
     };
   }
 
@@ -256,47 +207,7 @@ Hotline: 1900-xxxx | Email: support@audiotailoc.com
 
   async sendWelcomeEmail(to: string, customerName: string) {
     const subject = 'Chào mừng đến với Audio Tài Lộc!';
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Chào mừng</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb;">🎵 Audio Tài Lộc</h1>
-          </div>
-
-          <h2>Chào mừng ${customerName}!</h2>
-
-          <p>Cảm ơn bạn đã đăng ký tài khoản tại Audio Tài Lộc. Chúng tôi rất vui được phục vụ bạn!</p>
-
-          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Khám phá ngay:</h3>
-            <ul>
-              <li>Tai nghe cao cấp từ các thương hiệu nổi tiếng</li>
-              <li>Loa bluetooth chất lượng cao</li>
-              <li>Ampli và thiết bị âm thanh chuyên nghiệp</li>
-              <li>Phụ kiện âm thanh đa dạng</li>
-            </ul>
-          </div>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${this.config.get('FRONTEND_URL') || 'http://localhost:3000'}"
-               style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              Khám phá sản phẩm
-            </a>
-          </div>
-
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280;">
-            <p>Hotline: 1900-xxxx | Email: support@audiotailoc.com</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const html = emailTemplates.welcome(customerName);
 
     const text = `
 Chào mừng ${customerName}!
@@ -312,6 +223,30 @@ Khám phá ngay:
 Truy cập: ${this.config.get('FRONTEND_URL') || 'http://localhost:3000'}
 
 Hotline: 1900-xxxx | Email: support@audiotailoc.com
+    `;
+
+    return this.send(to, subject, text, html);
+  }
+
+  async sendInvoice(to: string, invoiceData: InvoiceData) {
+    const html = invoiceTemplates.standard(invoiceData);
+    const subject = `Hóa đơn #${invoiceData.invoiceNo} - Audio Tài Lộc`;
+
+    const text = `
+Hóa đơn #${invoiceData.invoiceNo}
+Ngày: ${invoiceData.invoiceDate}
+
+Kính gửi ${invoiceData.customerName},
+
+Dưới đây là chi tiết hóa đơn của bạn:
+
+${invoiceData.items.map(item => `- ${item.name} x${item.quantity}: ${item.price}`).join('\n')}
+
+Tạm tính: ${invoiceData.subTotal}
+Thuế: ${invoiceData.taxAmount}
+Tổng cộng: ${invoiceData.totalAmount}
+
+Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
     `;
 
     return this.send(to, subject, text, html);

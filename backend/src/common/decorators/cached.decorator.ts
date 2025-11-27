@@ -24,4 +24,3 @@ export function CacheKey(key: string) {
 export function CacheTTL(ttl: number) {
   return SetMetadata(CACHE_TTL, ttl);
 }
-

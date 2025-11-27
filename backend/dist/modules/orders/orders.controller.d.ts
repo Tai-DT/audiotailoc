@@ -1,4 +1,6 @@
 import { OrdersService } from './orders.service';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 export declare class OrdersController {
     private readonly orders;
     constructor(orders: OrdersService);
@@ -21,78 +23,25 @@ export declare class OrdersController {
                 productSlug: any;
                 productName: string;
                 quantity: number;
-                price: number | bigint;
+                price: number;
                 total: number;
             }[];
         }[];
     }>;
-    create(createOrderDto: {
-        items: Array<{
-            productId: string;
-            quantity: number;
-        }>;
-        shippingAddress: string;
-        shippingCoordinates?: {
-            lat: number;
-            lng: number;
-        };
-        customerName?: string;
-        customerPhone?: string;
-        customerEmail?: string;
-        notes?: string;
-    }): Promise<any>;
+    create(createOrderDto: CreateOrderDto): Promise<any>;
     getStats(): Promise<{
         totalOrders: number;
         pendingOrders: number;
         completedOrders: number;
     }>;
-    get(id: string): Promise<{
-        order_items: {
-            id: string;
-            name: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            imageUrl: string | null;
-            price: bigint;
-            orderId: string;
-            productId: string;
-            quantity: number;
-            unitPrice: bigint | null;
-        }[];
-        payments: {
-            status: string;
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            transactionId: string | null;
-            provider: string;
-            amountCents: number;
-            metadata: string | null;
-            orderId: string;
-            intentId: string | null;
-        }[];
-    } & {
-        status: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        orderNo: string;
-        userId: string;
-        subtotalCents: number;
-        discountCents: number;
-        shippingCents: number;
-        totalCents: number;
-        shippingAddress: string | null;
-        shippingCoordinates: string | null;
-        promotionCode: string | null;
-    }>;
+    get(id: string): Promise<any>;
     updateStatus(id: string, status: string): Promise<{
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -100,25 +49,16 @@ export declare class OrdersController {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        isDeleted: boolean;
+        deletedAt: Date | null;
     }>;
-    update(id: string, updateOrderDto: {
-        customerName?: string;
-        customerPhone?: string;
-        customerEmail?: string;
-        shippingAddress?: string;
-        shippingCoordinates?: {
-            lat: number;
-            lng: number;
-        };
-        notes?: string;
-        items?: Array<{
-            productId: string;
-            quantity: number;
-            unitPrice?: number;
-            name?: string;
-        }>;
-    }): Promise<any>;
+    update(id: string, updateOrderDto: UpdateOrderDto): Promise<any>;
     delete(id: string): Promise<{
+        message: string;
+        id: string;
+    }>;
+    sendInvoice(id: string): Promise<{
+        success: boolean;
         message: string;
     }>;
 }

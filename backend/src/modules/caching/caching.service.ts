@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CachingService {
-  
   async findAll() {
     return {
       message: 'caching service is working',
-      status: 'active'
+      status: 'active',
     };
   }
 
@@ -14,7 +13,7 @@ export class CachingService {
     return {
       module: 'caching',
       status: 'operational',
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 }

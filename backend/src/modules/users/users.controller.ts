@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
@@ -57,7 +69,7 @@ export class UsersController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('sortBy') sortBy = 'createdAt',
-    @Query('sortOrder') sortOrder = 'desc'
+    @Query('sortOrder') sortOrder = 'desc',
   ) {
     return this.usersService.findAll({
       page: parseInt(page),
@@ -68,7 +80,7 @@ export class UsersController {
       startDate,
       endDate,
       sortBy,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: sortOrder as 'asc' | 'desc',
     });
   }
 

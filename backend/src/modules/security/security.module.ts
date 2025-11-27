@@ -8,8 +8,6 @@ import { SecurityMiddleware } from './security.middleware';
 })
 export class SecurityModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(SecurityMiddleware)
-      .forRoutes('*'); // Apply to all routes
+    consumer.apply(SecurityMiddleware).forRoutes('*'); // Apply to all routes
   }
 }

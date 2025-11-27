@@ -13,4 +13,3 @@ export class UpdateBookingStatusDto {
   @IsString()
   changedBy?: string;
 }
-

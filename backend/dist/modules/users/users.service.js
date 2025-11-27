@@ -61,22 +61,33 @@ let UsersService = UsersService_1 = class UsersService {
     async findById(id) {
         const user = await this.prisma.users.findUnique({
             where: { id },
-            include: {
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                phone: true,
+                role: true,
+                avatarUrl: true,
+                createdAt: true,
+                updatedAt: true,
                 orders: {
                     take: 5,
-                    orderBy: { createdAt: 'desc' }
+                    orderBy: { createdAt: 'desc' },
                 },
                 _count: {
                     select: {
                         orders: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
         return user;
+    }
+    async findByIdForAuth(id) {
+        return this.prisma.users.findUnique({ where: { id } });
     }
     async findAll(params) {
         const skip = (params.page - 1) * params.limit;
@@ -85,7 +96,7 @@ let UsersService = UsersService_1 = class UsersService {
             where.OR = [
                 { email: { contains: params.search, mode: 'insensitive' } },
                 { name: { contains: params.search, mode: 'insensitive' } },
-                { phone: { contains: params.search } }
+                { phone: { contains: params.search } },
             ];
         }
         if (params.role) {
@@ -128,30 +139,29 @@ let UsersService = UsersService_1 = class UsersService {
                     name: true,
                     phone: true,
                     role: true,
+                    avatarUrl: true,
                     createdAt: true,
                     orders: {
                         select: {
-                            totalCents: true
-                        }
+                            totalCents: true,
+                        },
                     },
                     _count: {
                         select: {
-                            orders: true
-                        }
-                    }
+                            orders: true,
+                        },
+                    },
                 },
-                orderBy
+                orderBy,
             }),
-            this.prisma.users.count({ where })
+            this.prisma.users.count({ where }),
         ]);
         return {
-            users,
-            pagination: {
-                page: params.page,
-                limit: params.limit,
-                total,
-                pages: Math.ceil(total / params.limit)
-            }
+            items: users,
+            total,
+            page: params.page,
+            limit: params.limit,
+            pages: Math.ceil(total / params.limit),
         };
     }
     async create(createUserDto) {
@@ -177,7 +187,7 @@ let UsersService = UsersService_1 = class UsersService {
                 name: createUserDto.name,
                 phone: createUserDto.phone,
                 role: createUserDto.role || 'USER',
-                updatedAt: new Date()
+                updatedAt: new Date(),
             },
             select: {
                 id: true,
@@ -185,8 +195,8 @@ let UsersService = UsersService_1 = class UsersService {
                 name: true,
                 phone: true,
                 role: true,
-                createdAt: true
-            }
+                createdAt: true,
+            },
         });
         if (generatedPassword) {
             try {
@@ -210,8 +220,8 @@ let UsersService = UsersService_1 = class UsersService {
                 email: params.email,
                 password: hashedPassword,
                 name: params.name ?? '',
-                updatedAt: new Date()
-            }
+                updatedAt: new Date(),
+            },
         });
     }
     async update(id, updateUserDto) {
@@ -228,8 +238,8 @@ let UsersService = UsersService_1 = class UsersService {
                 name: true,
                 phone: true,
                 role: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
     }
     async remove(id, currentUser) {
@@ -246,15 +256,15 @@ let UsersService = UsersService_1 = class UsersService {
         try {
             const orders = await this.prisma.orders.findMany({
                 where: { userId: id },
-                select: { id: true }
+                select: { id: true },
             });
             for (const order of orders) {
                 await this.prisma.order_items.deleteMany({
-                    where: { orderId: order.id }
+                    where: { orderId: order.id },
                 });
             }
             await this.prisma.orders.deleteMany({
-                where: { userId: id }
+                where: { userId: id },
             });
         }
         catch (_error) {
@@ -262,14 +272,14 @@ let UsersService = UsersService_1 = class UsersService {
         }
         try {
             const cart = await this.prisma.carts.findFirst({
-                where: { userId: id }
+                where: { userId: id },
             });
             if (cart) {
                 await this.prisma.cart_items.deleteMany({
-                    where: { cartId: cart.id }
+                    where: { cartId: cart.id },
                 });
                 await this.prisma.carts.delete({
-                    where: { id: cart.id }
+                    where: { id: cart.id },
                 });
             }
         }
@@ -278,7 +288,7 @@ let UsersService = UsersService_1 = class UsersService {
         }
         await this.prisma.$transaction(async (tx) => {
             await tx.users.delete({
-                where: { id }
+                where: { id },
             });
         });
         return { message: 'User deleted successfully' };
@@ -289,27 +299,27 @@ let UsersService = UsersService_1 = class UsersService {
             this.prisma.users.count({
                 where: {
                     createdAt: {
-                        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-                    }
-                }
+                        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                    },
+                },
             }),
             this.prisma.users.count({
                 where: {
                     orders: {
                         some: {
                             createdAt: {
-                                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-                            }
-                        }
-                    }
-                }
-            })
+                                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            },
+                        },
+                    },
+                },
+            }),
         ]);
         return {
             totalUsers,
             newUsersThisMonth,
             activeUsers,
-            conversionRate: totalUsers > 0 ? (activeUsers / totalUsers * 100).toFixed(2) : 0
+            conversionRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0,
         };
     }
     async getActivityStats(days) {
@@ -318,16 +328,16 @@ let UsersService = UsersService_1 = class UsersService {
             by: ['createdAt'],
             where: {
                 createdAt: {
-                    gte: startDate
-                }
+                    gte: startDate,
+                },
             },
             _count: {
-                id: true
-            }
+                id: true,
+            },
         });
         return dailyStats.map(stat => ({
             date: stat.createdAt.toISOString().split('T')[0],
-            newUsers: stat._count.id
+            newUsers: stat._count.id,
         }));
     }
     async updatePassword(userId, hashedPassword) {
@@ -342,8 +352,35 @@ let UsersService = UsersService_1 = class UsersService {
                 id: true,
                 email: true,
                 name: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
+        });
+    }
+    async setResetToken(userId, hashedToken, expiresAt) {
+        await this.prisma.users.update({
+            where: { id: userId },
+            data: {
+                resetToken: hashedToken,
+                resetExpires: expiresAt,
+            },
+        });
+    }
+    async findByResetToken(hashedToken) {
+        return this.prisma.users.findFirst({
+            where: {
+                resetToken: hashedToken,
+                resetExpires: { gt: new Date() },
+            },
+        });
+    }
+    async completePasswordReset(userId, hashedPassword) {
+        return this.prisma.users.update({
+            where: { id: userId },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetExpires: null,
+            },
         });
     }
     generateRandomPassword() {
@@ -365,12 +402,12 @@ let UsersService = UsersService_1 = class UsersService {
                                 products: {
                                     select: {
                                         name: true,
-                                        slug: true
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        slug: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 carts: {
                     include: {
@@ -379,14 +416,14 @@ let UsersService = UsersService_1 = class UsersService {
                                 products: {
                                     select: {
                                         name: true,
-                                        slug: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                        slug: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!user) {
             throw new common_1.NotFoundException('User not found');
@@ -401,7 +438,7 @@ let UsersService = UsersService_1 = class UsersService {
                 phone: userData.phone,
                 role: userData.role,
                 createdAt: userData.createdAt,
-                updatedAt: userData.updatedAt
+                updatedAt: userData.updatedAt,
             },
             orders: userData.orders.map((order) => ({
                 id: order.id,
@@ -411,20 +448,22 @@ let UsersService = UsersService_1 = class UsersService {
                 items: order.order_items.map((item) => ({
                     productName: item.products?.name,
                     quantity: item.quantity,
-                    priceCents: item.price
-                }))
+                    priceCents: item.price,
+                })),
             })),
-            cart: userData.carts.length > 0 ? {
-                items: userData.carts[0].cart_items.map((item) => ({
-                    productName: item.products?.name,
-                    quantity: item.quantity,
-                    addedAt: item.createdAt
-                }))
-            } : null,
+            cart: userData.carts.length > 0
+                ? {
+                    items: userData.carts[0].cart_items.map((item) => ({
+                        productName: item.products?.name,
+                        quantity: item.quantity,
+                        addedAt: item.createdAt,
+                    })),
+                }
+                : null,
             statistics: {
                 totalOrders: userData.orders.length,
-                totalSpent: userData.orders.reduce((sum, order) => sum + (order.totalCents || 0), 0) / 100
-            }
+                totalSpent: userData.orders.reduce((sum, order) => sum + (order.totalCents || 0), 0) / 100,
+            },
         };
     }
     async sendWelcomeEmail(email, name, password) {

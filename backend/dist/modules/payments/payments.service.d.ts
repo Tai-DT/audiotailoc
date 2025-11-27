@@ -1,10 +1,14 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { PayOSService } from './payos.service';
+import { TelegramService } from '../notifications/telegram.service';
 export declare class PaymentsService {
     private readonly prisma;
     private readonly config;
+    private readonly payosService;
+    private readonly telegram;
     private readonly logger;
-    constructor(prisma: PrismaService, config: ConfigService);
+    constructor(prisma: PrismaService, config: ConfigService, payosService: PayOSService, telegram: TelegramService);
     createIntent(params: {
         orderId: string;
         provider: 'PAYOS' | 'COD';

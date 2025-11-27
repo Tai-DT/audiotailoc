@@ -10,7 +10,7 @@ export interface Backup {
   type: 'full' | 'incremental' | 'files'
   size: number
   status: 'completed' | 'failed' | 'in_progress'
-  createdAt: string
+  timestamp: string
   completedAt?: string
   errorMessage?: string
 }
@@ -34,7 +34,7 @@ export function useBackups() {
     try {
       setLoading(true)
       setError(null)
-      const response = await apiClient.get('/api/v1/backup/list')
+      const response = await apiClient.get('/backup/list')
       const responseData = response.data as { backups?: Backup[] }
       setBackups(responseData?.backups || [])
     } catch {
@@ -49,7 +49,7 @@ export function useBackups() {
   // Fetch backup status
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await apiClient.get('/api/v1/backup/status')
+      const response = await apiClient.get('/backup/status')
       const responseData = response.data as { status?: BackupStatus }
       setStatus(responseData?.status || null)
     } catch {
@@ -62,22 +62,22 @@ export function useBackups() {
     try {
       setLoading(true)
       let endpoint = ''
-      
+
       switch (type) {
         case 'full':
-          endpoint = '/api/v1/backup/full'
+          endpoint = '/backup/full'
           break
         case 'incremental':
-          endpoint = '/api/v1/backup/incremental'
+          endpoint = '/backup/incremental'
           break
         case 'files':
-          endpoint = '/api/v1/backup/files'
+          endpoint = '/backup/files'
           break
       }
 
       await apiClient.post(endpoint)
       toast.success(`Đã bắt đầu backup ${type === 'full' ? 'toàn bộ' : type === 'incremental' ? 'tăng dần' : 'files'}`)
-      
+
       // Refresh data
       await fetchBackups()
       await fetchStatus()
@@ -92,9 +92,9 @@ export function useBackups() {
   const restoreBackup = useCallback(async (backupId: string) => {
     try {
       setLoading(true)
-      await apiClient.post(`/api/v1/backup/restore/${backupId}`)
+      await apiClient.post(`/backup/restore/${backupId}`)
       toast.success('Đã bắt đầu quá trình khôi phục backup')
-      
+
       // Refresh status
       await fetchStatus()
     } catch {
@@ -108,9 +108,9 @@ export function useBackups() {
   const deleteBackup = useCallback(async (backupId: string) => {
     try {
       setLoading(true)
-      await apiClient.delete(`/api/v1/backup/${backupId}`)
+      await apiClient.delete(`/backup/${backupId}`)
       toast.success('Đã xóa backup thành công')
-      
+
       // Refresh data
       await fetchBackups()
       await fetchStatus()
@@ -125,9 +125,9 @@ export function useBackups() {
   const downloadBackup = useCallback(async (backupId: string) => {
     try {
       setLoading(true)
-      const response = await apiClient.get(`/api/v1/backup/${backupId}/download`)
+      const response = await apiClient.get(`/backup/${backupId}/download`)
       const responseData = response.data as { downloadUrl?: string }
-      
+
       // Create download link
       if (responseData?.downloadUrl) {
         const link = document.createElement('a')
@@ -136,7 +136,7 @@ export function useBackups() {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         toast.success('Đã bắt đầu tải xuống backup')
       }
     } catch {
@@ -150,9 +150,9 @@ export function useBackups() {
   const restorePointInTime = useCallback(async (timestamp: string) => {
     try {
       setLoading(true)
-      await apiClient.post('/api/v1/backup/restore/point-in-time', { timestamp })
+      await apiClient.post('/backup/restore/point-in-time', { timestamp })
       toast.success('Đã bắt đầu khôi phục theo thời điểm')
-      
+
       await fetchStatus()
     } catch {
       toast.error('Không thể khôi phục theo thời điểm')
@@ -168,9 +168,9 @@ export function useBackups() {
   }) => {
     try {
       setLoading(true)
-      await apiClient.post('/api/v1/backup/cleanup', options)
+      await apiClient.post('/backup/cleanup', options)
       toast.success('Đã dọn dẹp backup cũ thành công')
-      
+
       await fetchBackups()
       await fetchStatus()
     } catch {

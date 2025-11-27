@@ -12,12 +12,13 @@ const payments_service_1 = require("./payments.service");
 const payos_service_1 = require("./payos.service");
 const payments_controller_1 = require("./payments.controller");
 const auth_module_1 = require("../auth/auth.module");
+const notifications_module_1 = require("../notifications/notifications.module");
 let PaymentsModule = class PaymentsModule {
 };
 exports.PaymentsModule = PaymentsModule;
 exports.PaymentsModule = PaymentsModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule],
+        imports: [auth_module_1.AuthModule, notifications_module_1.NotificationsModule],
         providers: [payments_service_1.PaymentsService, payos_service_1.PayOSService],
         controllers: [payments_controller_1.PaymentsController],
         exports: [payments_service_1.PaymentsService, payos_service_1.PayOSService],

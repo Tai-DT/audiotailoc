@@ -1,0 +1,21 @@
+{
+  "id": "scheduled_files_1763866800039",
+  "type": "files",
+  "timestamp": "2025-11-23T03:00:00.195Z",
+  "size": 6948,
+  "duration": 156,
+  "status": "completed",
+  "path": "backups/files/scheduled_files_1763866800039_files.tar.gz",
+  "checksum": "2b616a922e8955a76de99592307a62046a5cdd5420aa3e79b0018ca8951f6035",
+  "compressed": true,
+  "directories": [
+    "./uploads",
+    "./logs",
+    "./backups/metadata",
+    "./public"
+  ],
+  "excludePatterns": [
+    "*.tmp",
+    "*.log"
+  ]
+}

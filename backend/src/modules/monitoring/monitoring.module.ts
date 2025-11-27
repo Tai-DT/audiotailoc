@@ -20,8 +20,6 @@ import { LoggingService } from './logging.service';
 })
 export class MonitoringModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(MonitoringMiddleware)
-      .forRoutes('*'); // Apply to all routes
+    consumer.apply(MonitoringMiddleware).forRoutes('*'); // Apply to all routes
   }
 }

@@ -13,5 +13,3 @@ export class ZaloWebhookController {
     return { ok: true };
   }
 }
-
-

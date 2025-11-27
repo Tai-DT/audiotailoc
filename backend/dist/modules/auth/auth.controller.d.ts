@@ -50,6 +50,7 @@ export declare class AuthController {
             email: string;
             name: string;
             role: any;
+            avatarUrl: any;
         };
     }>;
     refresh(dto: RefreshTokenDto): Promise<{
@@ -69,10 +70,14 @@ export declare class AuthController {
         userId: any;
         email?: undefined;
         role?: undefined;
+        avatarUrl?: undefined;
+        name?: undefined;
     } | {
         userId: string;
         email: string;
         role: any;
+        avatarUrl: any;
+        name: string;
     }>;
 }
 export {};

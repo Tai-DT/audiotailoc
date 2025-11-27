@@ -37,11 +37,7 @@ export const REQUIRE_API_KEY = 'require_api_key';
  * Custom decorator for API key requirement
  */
 export function RequireApiKey(scopes?: string[]): MethodDecorator & ClassDecorator {
-  return function (
-    target: any,
-    propertyKey?: string | symbol,
-    descriptor?: PropertyDescriptor
-  ) {
+  return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     if (descriptor) {
       // Method decorator
       Reflect.defineMetadata(REQUIRE_API_KEY, { scopes: scopes || [] }, descriptor.value);
@@ -76,7 +72,7 @@ export class ApiKeyGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.initializeApiKeys();
   }
@@ -102,7 +98,7 @@ export class ApiKeyGuard implements CanActivate {
 
       if (!apiKey) {
         throw new UnauthorizedException(
-          'API key is required. Provide it via X-API-Key header or api_key query parameter.'
+          'API key is required. Provide it via X-API-Key header or api_key query parameter.',
         );
       }
 
@@ -145,7 +141,7 @@ export class ApiKeyGuard implements CanActivate {
         if (!keyMetadata.allowedMethods.includes(request.method)) {
           this.logSecurityEvent('HTTP method not allowed for API key', request, apiKey);
           throw new ForbiddenException(
-            `HTTP method ${request.method} is not allowed for this API key`
+            `HTTP method ${request.method} is not allowed for this API key`,
           );
         }
       }
@@ -160,14 +156,12 @@ export class ApiKeyGuard implements CanActivate {
 
       // Check scopes if required
       if (requiresApiKey && requiresApiKey.scopes && requiresApiKey.scopes.length > 0) {
-        const hasScopes = requiresApiKey.scopes.every((scope) =>
-          keyMetadata.scopes.includes(scope)
-        );
+        const hasScopes = requiresApiKey.scopes.every(scope => keyMetadata.scopes.includes(scope));
 
         if (!hasScopes) {
           this.logSecurityEvent('Insufficient scopes for API key', request, apiKey);
           throw new ForbiddenException(
-            `API key does not have required scopes: ${requiresApiKey.scopes.join(', ')}`
+            `API key does not have required scopes: ${requiresApiKey.scopes.join(', ')}`,
           );
         }
       }
@@ -197,7 +191,9 @@ export class ApiKeyGuard implements CanActivate {
         throw error;
       }
 
-      this.logger.error(`API key validation error: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.error(
+        `API key validation error: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
       throw new UnauthorizedException('API key validation failed');
     }
   }
@@ -212,9 +208,7 @@ export class ApiKeyGuard implements CanActivate {
 
     if (apiKeysConfig) {
       try {
-        const keys = typeof apiKeysConfig === 'string'
-          ? JSON.parse(apiKeysConfig)
-          : apiKeysConfig;
+        const keys = typeof apiKeysConfig === 'string' ? JSON.parse(apiKeysConfig) : apiKeysConfig;
 
         Object.entries(keys).forEach(([key, config]: [string, any]) => {
           this.apiKeys.set(key, {
@@ -233,7 +227,9 @@ export class ApiKeyGuard implements CanActivate {
 
         this.logger.log(`Loaded ${this.apiKeys.size} API keys`);
       } catch (error) {
-        this.logger.error(`Failed to load API keys: ${error instanceof Error ? error.message : 'unknown'}`);
+        this.logger.error(
+          `Failed to load API keys: ${error instanceof Error ? error.message : 'unknown'}`,
+        );
       }
     }
 
@@ -288,7 +284,7 @@ export class ApiKeyGuard implements CanActivate {
    * Supports CIDR notation and exact IP matches
    */
   private isIpAllowed(clientIp: string, allowedHosts: string[]): boolean {
-    return allowedHosts.some((host) => {
+    return allowedHosts.some(host => {
       // Exact match
       if (host === clientIp) {
         return true;
@@ -338,17 +334,14 @@ export class ApiKeyGuard implements CanActivate {
    * Supports wildcard patterns
    */
   private isPathAllowed(requestPath: string, allowedPaths: string[]): boolean {
-    return allowedPaths.some((pattern) => {
+    return allowedPaths.some(pattern => {
       // Exact match
       if (pattern === requestPath) {
         return true;
       }
 
       // Wildcard patterns (e.g., /api/users/*)
-      const regexPattern = pattern
-        .replace(/\//g, '\\/')
-        .replace(/\*/g, '.*')
-        .replace(/\?/g, '.');
+      const regexPattern = pattern.replace(/\//g, '\\/').replace(/\*/g, '.*').replace(/\?/g, '.');
 
       const regex = new RegExp(`^${regexPattern}$`);
       return regex.test(requestPath);
@@ -361,7 +354,7 @@ export class ApiKeyGuard implements CanActivate {
   private async checkRateLimit(
     apiKey: string,
     metadata: ApiKeyMetadata,
-    response: Response
+    response: Response,
   ): Promise<boolean> {
     if (!metadata.rateLimit) {
       return true; // No rate limit
@@ -392,13 +385,13 @@ export class ApiKeyGuard implements CanActivate {
     event: string,
     request: Request,
     apiKey: string,
-    additionalInfo?: string
+    additionalInfo?: string,
   ): void {
     const clientIp = this.getClientIp(request);
     const userAgent = request.headers['user-agent'];
 
     this.logger.warn(
-      `Security Event: ${event} | IP: ${clientIp} | API Key: ${apiKey.substring(0, 10)}... | ${additionalInfo || ''} | User-Agent: ${userAgent}`
+      `Security Event: ${event} | IP: ${clientIp} | API Key: ${apiKey.substring(0, 10)}... | ${additionalInfo || ''} | User-Agent: ${userAgent}`,
     );
 
     // In production, send to centralized security monitoring/logging service

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -87,6 +88,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
           phone: formData.phone || undefined,
           role: formData.role
         })
+        toast.success('Cập nhật người dùng thành công')
       } else {
         // Create user
         if (generatePassword) {
@@ -106,12 +108,14 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
             role: formData.role
           })
         }
+        toast.success('Tạo người dùng mới thành công')
       }
 
       onSuccess()
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to save user:', error)
+      toast.error('Có lỗi xảy ra khi lưu người dùng')
     } finally {
       setLoading(false)
     }
@@ -139,6 +143,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
               </Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
@@ -173,6 +178,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
                   </Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
@@ -190,6 +196,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
               </Label>
               <Input
                 id="name"
+                name="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="col-span-3"
@@ -202,6 +209,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
               </Label>
               <Input
                 id="phone"
+                name="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 className="col-span-3"

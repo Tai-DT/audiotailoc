@@ -72,10 +72,7 @@ export class ProductSchema {
   @ApiPropertyOptional({
     description: 'Product image gallery',
     type: [String],
-    example: [
-      'https://example.com/images/product1.jpg',
-      'https://example.com/images/product2.jpg',
-    ],
+    example: ['https://example.com/images/product1.jpg', 'https://example.com/images/product2.jpg'],
   })
   images?: string[];
 

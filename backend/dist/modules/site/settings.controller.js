@@ -16,6 +16,7 @@ exports.SettingsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const settings_service_1 = require("./settings.service");
+const settings_update_dto_1 = require("./dto/settings-update.dto");
 let SettingsController = class SettingsController {
     constructor(settingsService) {
         this.settingsService = settingsService;
@@ -25,6 +26,12 @@ let SettingsController = class SettingsController {
     }
     async getSection(section) {
         return this.settingsService.getSection(section);
+    }
+    async updateSettings(data) {
+        return this.settingsService.updateSettings(data);
+    }
+    async sendTestEmail(body) {
+        return this.settingsService.sendTestEmail(body.email, body.config);
     }
 };
 exports.SettingsController = SettingsController;
@@ -43,6 +50,22 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getSection", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update site settings' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [settings_update_dto_1.UpdateSettingsDto]),
+    __metadata("design:returntype", Promise)
+], SettingsController.prototype, "updateSettings", null);
+__decorate([
+    (0, common_1.Post)('test-email'),
+    (0, swagger_1.ApiOperation)({ summary: 'Send a test email' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SettingsController.prototype, "sendTestEmail", null);
 exports.SettingsController = SettingsController = __decorate([
     (0, swagger_1.ApiTags)('Content - Settings'),
     (0, common_1.Controller)('content/settings'),

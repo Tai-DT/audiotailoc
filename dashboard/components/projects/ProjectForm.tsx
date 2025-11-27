@@ -35,7 +35,7 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   // Basic Information
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -45,41 +45,41 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
   const [clientLogo, setClientLogo] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'>('DRAFT');
-  
+
   // Media
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
-  
+
   // Links
   const [liveUrl, setLiveUrl] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
-  
+
   // Project Details
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [duration, setDuration] = useState('');
   const [teamSize, setTeamSize] = useState<number | ''>('');
   const [budget, setBudget] = useState('');
-  
+
   // Technologies & Features
   const [technologies, setTechnologies] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
-  
+
   // Case Study
   const [testimonial, setTestimonial] = useState('');
   const [results, setResults] = useState('');
   const [challenges, setChallenges] = useState('');
   const [solutions, setSolutions] = useState('');
-  
+
   // Settings
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [displayOrder, setDisplayOrder] = useState<number | ''>(0);
-  
+
   // Input fields for arrays
   const [techInput, setTechInput] = useState('');
   const [featureInput, setFeatureInput] = useState('');
@@ -95,31 +95,48 @@ export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFor
       setClientLogo(project.clientLogo || '');
       setCategory(project.category || '');
       setStatus(project.status || 'DRAFT');
-      
+
       setThumbnailImage(project.thumbnailImage || '');
       setCoverImage(project.coverImage || '');
       setImages(Array.isArray(project.images) ? project.images : (project.images ? JSON.parse(project.images) : []));
       setYoutubeVideoUrl(project.youtubeVideoUrl || '');
-      
+
       setLiveUrl(project.liveUrl || '');
       setDemoUrl(project.demoUrl || '');
       setGithubUrl(project.githubUrl || '');
-      
+
       setStartDate(project.startDate ? format(new Date(project.startDate), 'yyyy-MM-dd') : '');
       setEndDate(project.endDate ? format(new Date(project.endDate), 'yyyy-MM-dd') : '');
       setDuration(project.duration || '');
       setTeamSize(project.teamSize || '');
       setBudget(project.budget || '');
-      
-      setTechnologies(project.technologies ? JSON.parse(project.technologies) : []);
-      setFeatures(project.features ? JSON.parse(project.features) : []);
-      setTags(project.tags ? JSON.parse(project.tags) : []);
-      
+
+      // Safe JSON parsing with fallback for comma-separated strings
+      const parseSafeArray = (data: string | string[] | null | undefined): string[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+
+        // Try JSON parse first
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+          // If JSON parse fails, treat as comma-separated string
+        }
+
+        // Fallback: split by comma and trim
+        return data.split(',').map(item => item.trim()).filter(Boolean);
+      };
+
+      setTechnologies(parseSafeArray(project.technologies as string));
+      setFeatures(parseSafeArray(project.features as string));
+      setTags(parseSafeArray(project.tags as string));
+
       setTestimonial(project.testimonial || '');
       setResults(project.results || '');
       setChallenges(project.challenges || '');
       setSolutions(project.solutions || '');
-      
+
       setIsActive(project.isActive ?? true);
       setIsFeatured(project.isFeatured ?? false);
       setDisplayOrder(project.displayOrder ?? 0);

@@ -118,10 +118,12 @@ export class SecurityMiddleware implements NestMiddleware {
       req.ip ||
       req.connection.remoteAddress ||
       req.socket.remoteAddress ||
-      req.headers['x-forwarded-for'] as string ||
-      req.headers['x-real-ip'] as string ||
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.headers['x-real-ip'] as string) ||
       'unknown'
-    ).split(',')[0].trim();
+    )
+      .split(',')[0]
+      .trim();
   }
 
   private isSuspiciousRequest(req: Request): boolean {
@@ -137,11 +139,12 @@ export class SecurityMiddleware implements NestMiddleware {
       /onerror=/i,
     ];
 
-    return suspiciousPatterns.some(pattern =>
-      pattern.test(path) ||
-      pattern.test(userAgent) ||
-      pattern.test(JSON.stringify(req.query)) ||
-      pattern.test(JSON.stringify(req.body))
+    return suspiciousPatterns.some(
+      pattern =>
+        pattern.test(path) ||
+        pattern.test(userAgent) ||
+        pattern.test(JSON.stringify(req.query)) ||
+        pattern.test(JSON.stringify(req.body)),
     );
   }
 
@@ -242,18 +245,19 @@ export class SecurityMiddleware implements NestMiddleware {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
     // Content Security Policy
-    res.setHeader('Content-Security-Policy',
+    res.setHeader(
+      'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self'; " +
-      "connect-src 'self'; " +
-      "media-src 'self'; " +
-      "object-src 'none'; " +
-      "child-src 'none'; " +
-      "worker-src 'none'; " +
-      "frame-ancestors 'none';"
+        "script-src 'self'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: https:; " +
+        "font-src 'self'; " +
+        "connect-src 'self'; " +
+        "media-src 'self'; " +
+        "object-src 'none'; " +
+        "child-src 'none'; " +
+        "worker-src 'none'; " +
+        "frame-ancestors 'none';",
     );
 
     // Strict Transport Security (for HTTPS)
@@ -262,8 +266,6 @@ export class SecurityMiddleware implements NestMiddleware {
     }
 
     // Feature Policy
-    res.setHeader('Permissions-Policy',
-      'camera=(), microphone=(), geolocation=(), payment=()'
-    );
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
   }
 }

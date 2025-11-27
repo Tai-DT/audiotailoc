@@ -1,25 +1,88 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TelegramService } from '../notifications/telegram.service';
+import { TechniciansService } from '../technicians/technicians.service';
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly telegram: TelegramService,
+    private readonly techniciansService: TechniciansService,
+  ) {}
 
-  async findAll() {
-    return this.prisma.service_bookings.findMany({
-      include: {
-        services: true,
-        technicians: true,
-        users: true,
-        service_booking_items: {
-          include: {
-            service_items: true,
+  /**
+   * Validate status transition based on allowed workflow
+   */
+  private validateStatusTransition(oldStatus: string, newStatus: string): void {
+    const allowedTransitions: Record<string, string[]> = {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['ASSIGNED', 'CANCELLED'],
+      ASSIGNED: ['IN_PROGRESS', 'CANCELLED'],
+      IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [], // No transitions allowed from COMPLETED
+      CANCELLED: [], // No transitions allowed from CANCELLED
+      RESCHEDULED: ['PENDING', 'CONFIRMED', 'CANCELLED'],
+    };
+
+    const allowed = allowedTransitions[oldStatus] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Invalid status transition from ${oldStatus} to ${newStatus}. Allowed transitions: ${allowed.join(', ') || 'none'}`,
+      );
+    }
+  }
+
+  async findAll(query: any = {}) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const status = query.status;
+    const search = query.search;
+
+    const where: any = {};
+    if (status && status !== 'all') {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { users: { name: { contains: search, mode: 'insensitive' } } },
+        { users: { email: { contains: search, mode: 'insensitive' } } },
+        { users: { phone: { contains: search, mode: 'insensitive' } } },
+        { services: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [bookings, total] = await Promise.all([
+      this.prisma.service_bookings.findMany({
+        where,
+        include: {
+          services: true,
+          technicians: true,
+          users: true,
+          service_booking_items: {
+            include: {
+              service_items: true,
+            },
           },
+          service_payments: true,
         },
-        service_payments: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.service_bookings.count({ where }),
+    ]);
+
+    return {
+      bookings,
+      total,
+      page,
+      pageSize: limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string) {
@@ -54,21 +117,21 @@ export class BookingService {
             id: true,
             name: true,
             slug: true,
-          }
+          },
         },
         technicians: {
           select: {
             id: true,
             name: true,
             phone: true,
-          }
+          },
         },
         service_booking_items: {
           include: {
             service_items: {
               select: {
                 name: true,
-              }
+              },
             },
           },
         },
@@ -77,7 +140,7 @@ export class BookingService {
             id: true,
             status: true,
             createdAt: true,
-          }
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -94,7 +157,7 @@ export class BookingService {
 
     // Verify service exists
     const service = await this.prisma.services.findUnique({
-      where: { id: bookingData.serviceId }
+      where: { id: bookingData.serviceId },
     });
     if (!service) {
       throw new NotFoundException('Service not found');
@@ -109,7 +172,7 @@ export class BookingService {
     if (items?.length) {
       for (const item of items) {
         const serviceItem = await this.prisma.service_items.findUnique({
-          where: { id: item.itemId }
+          where: { id: item.itemId },
         });
         if (!serviceItem) {
           throw new NotFoundException(`Service item not found: ${item.itemId}`);
@@ -123,11 +186,11 @@ export class BookingService {
       // Find the first available user (prefer non-admin users)
       const availableUser = await this.prisma.users.findFirst({
         where: {
-          role: 'USER'
+          role: 'USER',
         },
         orderBy: {
-          createdAt: 'asc'
-        }
+          createdAt: 'asc',
+        },
       });
 
       if (availableUser) {
@@ -136,10 +199,10 @@ export class BookingService {
         // If no regular user found, use admin user as fallback
         const adminUser = await this.prisma.users.findFirst({
           where: {
-            role: 'ADMIN'
-          }
+            role: 'ADMIN',
+          },
         });
-        
+
         if (!adminUser) {
           throw new NotFoundException('No user available for booking');
         }
@@ -147,13 +210,23 @@ export class BookingService {
       }
     }
 
-    // Verify technician exists if provided
+    // Verify technician exists and is available if provided
     if (bookingData.technicianId) {
-      const technician = await this.prisma.technicians.findUnique({
-        where: { id: bookingData.technicianId }
-      });
-      if (!technician) {
-        throw new NotFoundException('Technician not found');
+      const technician = await this.techniciansService.getTechnician(bookingData.technicianId);
+      if (!technician.isActive) {
+        throw new BadRequestException('Technician is not active');
+      }
+
+      // Check availability
+      if (bookingData.scheduledAt && bookingData.scheduledTime) {
+        const isAvailable = await this.checkTechnicianAvailability(
+          bookingData.technicianId,
+          new Date(bookingData.scheduledAt),
+          bookingData.scheduledTime,
+        );
+        if (!isAvailable) {
+          throw new BadRequestException('Technician is not available at this time');
+        }
       }
     }
 
@@ -169,16 +242,21 @@ export class BookingService {
         scheduledTime: bookingData.scheduledTime,
         notes: bookingData.notes || null,
         estimatedCosts: bookingData.estimatedCosts || 0,
+        address: bookingData.address || null,
+        coordinates: bookingData.coordinates || null,
+        goongPlaceId: bookingData.goongPlaceId || null,
         updatedAt: new Date(),
-        service_booking_items: items?.length ? {
-          create: items.map((item: any) => ({
-            id: require('crypto').randomUUID(),
-            serviceItemId: item.itemId,
-            quantity: item.quantity,
-            price: item.price || 0,
-            updatedAt: new Date(),
-          })),
-        } : undefined,
+        service_booking_items: items?.length
+          ? {
+              create: items.map((item: any) => ({
+                id: require('crypto').randomUUID(),
+                serviceItemId: item.itemId,
+                quantity: item.quantity,
+                price: item.price || 0,
+                updatedAt: new Date(),
+              })),
+            }
+          : undefined,
       },
       include: {
         services: true,
@@ -191,6 +269,23 @@ export class BookingService {
         },
       },
     });
+
+    // Send Telegram notification
+    try {
+      await this.telegram.sendBookingNotification({
+        id: booking.id,
+        customerName: booking.users?.name || 'N/A',
+        customerEmail: booking.users?.email || 'N/A',
+        customerPhone: booking.users?.phone,
+        serviceName: booking.services?.name || 'N/A',
+        scheduledTime: booking.scheduledAt || booking.scheduledTime,
+        technicianName: booking.technicians?.name,
+        estimatedCost: booking.estimatedCosts,
+        status: booking.status,
+      });
+    } catch (error) {
+      console.error('Failed to send booking notification:', error);
+    }
 
     return booking;
   }
@@ -214,8 +309,12 @@ export class BookingService {
     if (bookingData.scheduledAt) updateData.scheduledAt = new Date(bookingData.scheduledAt);
     if (bookingData.scheduledTime) updateData.scheduledTime = bookingData.scheduledTime;
     if (bookingData.notes !== undefined) updateData.notes = bookingData.notes;
-    if (bookingData.estimatedCosts !== undefined) updateData.estimatedCosts = bookingData.estimatedCosts;
+    if (bookingData.estimatedCosts !== undefined)
+      updateData.estimatedCosts = bookingData.estimatedCosts;
     if (bookingData.actualCosts !== undefined) updateData.actualCosts = bookingData.actualCosts;
+    if (bookingData.address !== undefined) updateData.address = bookingData.address;
+    if (bookingData.coordinates !== undefined) updateData.coordinates = bookingData.coordinates;
+    if (bookingData.goongPlaceId !== undefined) updateData.goongPlaceId = bookingData.goongPlaceId;
     updateData.updatedAt = new Date();
 
     // Update booking
@@ -262,14 +361,17 @@ export class BookingService {
     return { success: true, message: 'Booking deleted successfully' };
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: string, changedBy?: string) {
     // Verify booking exists
     const booking = await this.findOne(id);
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
 
-    return this.prisma.service_bookings.update({
+    // Validate status transition
+    this.validateStatusTransition(booking.status, status);
+
+    const updated = await this.prisma.service_bookings.update({
       where: { id },
       data: { status, updatedAt: new Date() },
       include: {
@@ -278,6 +380,79 @@ export class BookingService {
         users: true,
       },
     });
+
+    // Send status update notification
+    try {
+      await this.telegram.sendBookingStatusUpdate(
+        {
+          id: updated.id,
+          customerName: updated.users?.name || 'N/A',
+          serviceName: updated.services?.name || 'N/A',
+        },
+        booking.status, // old status
+        status, // new status
+      );
+    } catch (error) {
+      console.error('Failed to send booking status update:', error);
+    }
+
+    return updated;
+  }
+
+  async cancelBooking(id: string, reason: string, cancelledBy?: string) {
+    // Verify booking exists
+    const booking = await this.findOne(id);
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // Check if booking can be cancelled
+    if (booking.status === 'COMPLETED') {
+      throw new BadRequestException('Cannot cancel a completed booking');
+    }
+
+    if (booking.status === 'CANCELLED') {
+      throw new BadRequestException('Booking is already cancelled');
+    }
+
+    // Update booking to cancelled status with reason
+    const updated = await this.prisma.service_bookings.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED',
+        notes: booking.notes
+          ? `${booking.notes}\n\n[CANCELLED] ${reason}`
+          : `[CANCELLED] ${reason}`,
+        updatedAt: new Date(),
+      },
+      include: {
+        services: true,
+        technicians: true,
+        users: true,
+        service_booking_items: {
+          include: {
+            service_items: true,
+          },
+        },
+      },
+    });
+
+    // Send cancellation notification
+    try {
+      await this.telegram.sendBookingStatusUpdate(
+        {
+          id: updated.id,
+          customerName: updated.users?.name || 'N/A',
+          serviceName: updated.services?.name || 'N/A',
+        },
+        booking.status,
+        'CANCELLED',
+      );
+    } catch (error) {
+      console.error('Failed to send booking cancellation notification:', error);
+    }
+
+    return updated;
   }
 
   async assignTechnician(id: string, technicianId: string) {
@@ -334,5 +509,34 @@ export class BookingService {
       where: { id },
       data: { status },
     });
+  }
+
+  private async checkTechnicianAvailability(
+    technicianId: string,
+    date: Date,
+    time: string,
+  ): Promise<boolean> {
+    const availability = await this.techniciansService.getTechnicianAvailability(
+      technicianId,
+      date,
+    );
+
+    if (!availability.isAvailable) {
+      return false;
+    }
+
+    // Check if time slot is within schedule
+    if (availability.schedule) {
+      if (time < availability.schedule.startTime || time > availability.schedule.endTime) {
+        return false;
+      }
+    }
+
+    // Check for overlapping bookings
+    // Assuming 1 hour duration for now, or we should check duration from service
+    // For simplicity, check if any booking starts at the same time
+    const conflict = availability.bookings.some(booking => booking.scheduledTime === time);
+
+    return !conflict;
   }
 }

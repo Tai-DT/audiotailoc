@@ -6,7 +6,7 @@ export enum ServiceBookingStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
-  RESCHEDULED = 'RESCHEDULED'
+  RESCHEDULED = 'RESCHEDULED',
 }
 
 export enum PaymentStatus {
@@ -14,14 +14,14 @@ export enum PaymentStatus {
   COMPLETED = 'COMPLETED',
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED'
+  REFUNDED = 'REFUNDED',
 }
 
 export enum PaymentProvider {
   PAYOS = 'PAYOS',
   VNPAY = 'VNPAY',
   MOMO = 'MOMO',
-  CASH = 'CASH'
+  CASH = 'CASH',
 }
 
 export enum ServiceCategory {
@@ -32,7 +32,7 @@ export enum ServiceCategory {
   RENTAL = 'RENTAL',
   CONSULTATION = 'CONSULTATION',
   DELIVERY = 'DELIVERY',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 export enum ServiceType {
@@ -42,5 +42,5 @@ export enum ServiceType {
   LIGHTING = 'LIGHTING',
   CONSULTATION = 'CONSULTATION',
   MAINTENANCE = 'MAINTENANCE',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }

@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -11,17 +10,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  MessageSquare,
-  Search,
-  Filter,
-  Eye,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle,
-  RefreshCw
+  RefreshCw,
+  MoreHorizontal,
+  Search
 } from "lucide-react"
 import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
 
 interface SupportTicket {
   id: string
@@ -38,66 +43,51 @@ interface SupportTicket {
 export default function SupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [priorityFilter, setPriorityFilter] = useState<string>("all")
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
   const [showTicketDialog, setShowTicketDialog] = useState(false)
 
-  useEffect(() => {
-    fetchTickets()
-  }, [])
-
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true)
-      // Mock data - replace with actual API call
-      const mockTickets: SupportTicket[] = [
-        {
-          id: "1",
-          subject: "Hỏi về sản phẩm loa",
-          description: "Tôi muốn hỏi về thông số kỹ thuật của loa JBL Go 3",
-          email: "customer@example.com",
-          name: "Nguyễn Văn A",
-          status: "OPEN",
-          priority: "MEDIUM",
-          createdAt: "2024-01-15T10:30:00Z",
-          updatedAt: "2024-01-15T10:30:00Z"
-        },
-        {
-          id: "2",
-          subject: "Khiếu nại về đơn hàng",
-          description: "Đơn hàng của tôi bị giao sai sản phẩm",
-          email: "customer2@example.com",
-          name: "Trần Thị B",
-          status: "IN_PROGRESS",
-          priority: "HIGH",
-          createdAt: "2024-01-14T15:20:00Z",
-          updatedAt: "2024-01-15T09:15:00Z"
-        }
-      ]
-      setTickets(mockTickets)
-    } catch {
-      toast.error("Không thể tải danh sách ticket")
+      const response = await apiClient.getTickets({
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        priority: priorityFilter !== "all" ? priorityFilter : undefined,
+      })
+      const data = response.data as { items: SupportTicket[] } | SupportTicket[]
+      if (data && 'items' in data && Array.isArray(data.items)) {
+        setTickets(data.items)
+      } else if (Array.isArray(data)) {
+        setTickets(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch tickets:", error)
+      toast.error("Failed to load support tickets")
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, priorityFilter])
 
-  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
+  useEffect(() => {
+    fetchTickets()
+  }, [fetchTickets])
+
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await apiClient.updateTicketStatus(ticketId, newStatus)
 
       setTickets(prev => prev.map(ticket =>
         ticket.id === ticketId
-          ? { ...ticket, status: newStatus as SupportTicket['status'], updatedAt: new Date().toISOString() }
+          ? { ...ticket, status: newStatus as any }
           : ticket
       ))
 
-      toast.success("Đã cập nhật trạng thái ticket")
-    } catch {
-      toast.error("Không thể cập nhật trạng thái")
+      toast.success("Ticket status updated successfully")
+    } catch (error) {
+      console.error("Failed to update ticket status:", error)
+      toast.error("Failed to update ticket status")
     }
   }
 
@@ -136,9 +126,9 @@ export default function SupportPage() {
   }
 
   const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.name.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
     const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter
@@ -146,209 +136,158 @@ export default function SupportPage() {
     return matchesSearch && matchesStatus && matchesPriority
   })
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "OPEN": return "bg-blue-100 text-blue-800"
+      case "IN_PROGRESS": return "bg-yellow-100 text-yellow-800"
+      case "RESOLVED": return "bg-green-100 text-green-800"
+      case "CLOSED": return "bg-gray-100 text-gray-800"
+      default: return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "URGENT": return "text-red-600 font-bold"
+      case "HIGH": return "text-orange-600 font-semibold"
+      case "MEDIUM": return "text-blue-600"
+      case "LOW": return "text-gray-600"
+      default: return "text-gray-600"
+    }
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Hỗ trợ khách hàng</h1>
-          <p className="text-muted-foreground">
-            Quản lý các yêu cầu hỗ trợ và ticket từ khách hàng
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">Support Tickets</h1>
+          <p className="text-muted-foreground">Manage customer support requests and issues.</p>
         </div>
-        <Button onClick={fetchTickets} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Làm mới
+        <Button onClick={() => fetchTickets()}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng ticket</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tickets.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang mở</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tickets.filter(t => t.status === 'OPEN').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang xử lý</CardTitle>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tickets.filter(t => t.status === 'IN_PROGRESS').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Khẩn cấp</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tickets.filter(t => t.priority === 'URGENT').length}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search tickets..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="RESOLVED">Resolved</SelectItem>
+            <SelectItem value="CLOSED">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            <SelectItem value="URGENT">Urgent</SelectItem>
+            <SelectItem value="HIGH">High</SelectItem>
+            <SelectItem value="MEDIUM">Medium</SelectItem>
+            <SelectItem value="LOW">Low</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
-            Bộ lọc
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 md:flex-row md:items-end">
-            <div className="flex-1">
-              <Label htmlFor="search">Tìm kiếm</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Tìm theo tiêu đề, email, tên..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="status">Trạng thái</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="OPEN">Mở</SelectItem>
-                  <SelectItem value="IN_PROGRESS">Đang xử lý</SelectItem>
-                  <SelectItem value="RESOLVED">Đã giải quyết</SelectItem>
-                  <SelectItem value="CLOSED">Đã đóng</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="priority">Ưu tiên</Label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="LOW">Thấp</SelectItem>
-                  <SelectItem value="MEDIUM">Trung bình</SelectItem>
-                  <SelectItem value="HIGH">Cao</SelectItem>
-                  <SelectItem value="URGENT">Khẩn cấp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tickets Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách ticket</CardTitle>
-          <CardDescription>
-            {filteredTickets.length} ticket được tìm thấy
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ticket ID</TableHead>
+              <TableHead>Subject</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Khách hàng</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ưu tiên</TableHead>
-                <TableHead>Thời gian</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableCell colSpan={7} className="text-center py-8">
+                  Loading tickets...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTickets.map((ticket) => (
+            ) : filteredTickets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  No tickets found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredTickets.map((ticket) => (
                 <TableRow key={ticket.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{ticket.name}</div>
-                      <div className="text-sm text-muted-foreground">{ticket.email}</div>
-                    </div>
-                  </TableCell>
+                  <TableCell className="font-medium">{ticket.id.substring(0, 8)}...</TableCell>
                   <TableCell>
                     <div className="font-medium">{ticket.subject}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">
+                    <div className="text-sm text-muted-foreground truncate max-w-[300px]">
                       {ticket.description}
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
                   <TableCell>
-                    <div className="text-sm">
-                      {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
-                    </div>
+                    <div className="font-medium">{ticket.name}</div>
+                    <div className="text-sm text-muted-foreground">{ticket.email}</div>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={getStatusColor(ticket.status)}>
+                      {ticket.status.replace("_", " ")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className={getPriorityColor(ticket.priority)}>
+                      {ticket.priority}
+                    </span>
+                  </TableCell>
+                  <TableCell>{new Date(ticket.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, "IN_PROGRESS")}>
+                          Mark In Progress
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, "RESOLVED")}>
+                          Mark Resolved
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, "CLOSED")}>
+                          Close Ticket
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
                           setSelectedTicket(ticket)
                           setShowTicketDialog(true)
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
-                      {ticket.status !== 'CLOSED' && (
-                        <Select
-                          value={ticket.status}
-                          onValueChange={(value) => updateTicketStatus(ticket.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OPEN">Mở</SelectItem>
-                            <SelectItem value="IN_PROGRESS">Đang xử lý</SelectItem>
-                            <SelectItem value="RESOLVED">Đã giải quyết</SelectItem>
-                            <SelectItem value="CLOSED">Đóng</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
+                        }}>View Details</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Ticket Detail Dialog */}
       <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>

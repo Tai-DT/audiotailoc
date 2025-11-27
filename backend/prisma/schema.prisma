@@ -178,6 +178,8 @@ model campaigns {
   campaign_clicks     campaign_clicks[]
   campaign_opens      campaign_opens[]
   campaign_recipients campaign_recipients[]
+  campaign_promotions campaign_promotions[]
+  campaign_metrics    campaign_metrics[]
   email_templates     email_templates?      @relation(fields: [templateId], references: [id])
   email_logs          email_logs[]
 }
@@ -209,12 +211,12 @@ model carts {
 }
 
 model categories {
-  id               String       @id
+  id               String                  @id
   name             String
-  slug             String       @unique
+  slug             String                  @unique
   parentId         String?
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
+  isActive         Boolean                 @default(true)
+  createdAt        DateTime                @default(now())
   updatedAt        DateTime
   canonicalUrl     String?
   description      String?
@@ -222,9 +224,10 @@ model categories {
   metaDescription  String?
   metaKeywords     String?
   metaTitle        String?
-  categories       categories?  @relation("categoriesTocategories", fields: [parentId], references: [id])
-  other_categories categories[] @relation("categoriesTocategories")
+  categories       categories?             @relation("categoriesTocategories", fields: [parentId], references: [id])
+  other_categories categories[]            @relation("categoriesTocategories")
   products         products[]
+  promotions       promotions_categories[]
 
   @@index([parentId])
 }
@@ -418,26 +421,37 @@ model order_items {
   updatedAt DateTime
   orders    orders   @relation(fields: [orderId], references: [id])
   products  products @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model orders {
-  id                  String            @id
-  orderNo             String            @unique
-  userId              String
-  subtotalCents       Int               @default(0)
-  discountCents       Int               @default(0)
-  shippingCents       Int               @default(0)
+  id                  String                @id
+  orderNo             String                @unique
+  userId              String?
+  subtotalCents       Int                   @default(0)
+  discountCents       Int                   @default(0)
+  shippingCents       Int                   @default(0)
   totalCents          Int
-  status              String            @default("PENDING")
+  status              String                @default("PENDING")
   shippingAddress     String?
   shippingCoordinates String?
   promotionCode       String?
-  createdAt           DateTime          @default(now())
+  createdAt           DateTime              @default(now())
   updatedAt           DateTime
+  isDeleted           Boolean               @default(false)
+  deletedAt           DateTime?
   order_items         order_items[]
-  users               users             @relation(fields: [userId], references: [id])
+  users               users?                @relation(fields: [userId], references: [id])
   payment_intents     payment_intents[]
   payments            payments[]
+  customerPromotions  customer_promotions[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isDeleted])
 }
 
 model pages {
@@ -578,7 +592,6 @@ model products {
   warranty               String?
   weight                 Float?
   dimensions             String?
-  stockQuantity          Int                      @default(0)
   minOrderQuantity       Int                      @default(1)
   maxOrderQuantity       Int?
   maxStock               Int?
@@ -603,6 +616,7 @@ model products {
   product_views          product_views[]
   categories             categories?              @relation(fields: [categoryId], references: [id])
   wishlist_items         wishlist_items[]
+  promotions             promotions_products[]
 
   @@index([categoryId])
   @@index([featured])
@@ -611,9 +625,9 @@ model products {
 }
 
 model projects {
-  id               String    @id
+  id               String                      @id
   name             String
-  slug             String    @unique
+  slug             String                      @unique
   description      String?
   shortDescription String?
   client           String?
@@ -634,11 +648,11 @@ model projects {
   duration         String?
   teamSize         Int?
   budget           String?
-  status           String    @default("DRAFT")
-  isActive         Boolean   @default(true)
-  isFeatured       Boolean   @default(false)
-  displayOrder     Int       @default(0)
-  viewCount        Int       @default(0)
+  status           String                      @default("DRAFT")
+  isActive         Boolean                     @default(true)
+  isFeatured       Boolean                     @default(false)
+  displayOrder     Int                         @default(0)
+  viewCount        Int                         @default(0)
   userId           String
   tags             String?
   testimonial      String?
@@ -658,11 +672,12 @@ model projects {
   clientLogoUrl    String?
   projectDate      DateTime?
   completionDate   DateTime?
-  featured         Boolean   @default(false)
-  isDeleted        Boolean   @default(false)
-  createdAt        DateTime  @default(now())
+  isDeleted        Boolean                     @default(false)
+  deletedAt        DateTime?
+  createdAt        DateTime                    @default(now())
   updatedAt        DateTime
-  users            users     @relation(fields: [userId], references: [id])
+  users            users                       @relation(fields: [userId], references: [id])
+  promotionReviews project_promotion_reviews[]
 
   @@index([isActive])
   @@index([isFeatured])
@@ -671,24 +686,159 @@ model projects {
 }
 
 model promotions {
-  id               String    @id
-  code             String    @unique
-  name             String
-  description      String?
-  type             String    @default("PERCENTAGE")
-  value            Int
-  isActive         Boolean   @default(true)
-  expiresAt        DateTime?
-  createdAt        DateTime  @default(now())
-  created_by       String?
-  max_discount     Int?
-  metadata         Json?
-  min_order_amount Int?
-  starts_at        DateTime?
-  updatedAt        DateTime
-  usage_count      Int       @default(0)
-  usage_limit      Int?
+  id                  String    @id
+  code                String    @unique
+  name                String
+  description         String?
+  type                String    @default("PERCENTAGE")
+  value               Int
+  isActive            Boolean   @default(true)
+  expiresAt           DateTime?
+  startsAt            DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime
+  createdBy           String?
+  maxDiscount         Int?
+  minOrderAmount      Int?
+  usageCount          Int       @default(0)
+  usageLimit          Int?
+  metadata            Json?
+  tierBased           Boolean   @default(false)
+  isFirstPurchaseOnly Boolean   @default(false)
+  customerSegment     String?
+  conditions          Json?
+  versionNumber       Int       @default(1)
+
+  // Relations
+  users          users?                      @relation("promotionsCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  products       promotions_products[]
+  categories     promotions_categories[]
+  customerUsage  customer_promotions[]
+  auditLogs      promotion_audit_logs[]
+  analytics      promotion_analytics[]
+  versions       promotion_versions[]
+  campaigns      campaign_promotions[]
+  projectReviews project_promotion_reviews[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([type])
+  @@index([startsAt])
+  @@index([expiresAt])
+  @@index([customerSegment])
 }
+
+model promotions_products {
+  id          String   @id
+  promotionId String
+  productId   String
+  createdAt   DateTime @default(now())
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  product   products   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, productId])
+  @@index([promotionId])
+  @@index([productId])
+}
+
+model promotions_categories {
+  id          String   @id
+  promotionId String
+  categoryId  String
+  createdAt   DateTime @default(now())
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  category  categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, categoryId])
+  @@index([promotionId])
+  @@index([categoryId])
+}
+
+model customer_promotions {
+  id              String   @id
+  promotionId     String
+  userId          String
+  orderId         String?
+  discountApplied Int?
+  usedAt          DateTime @default(now())
+  status          String   @default("APPLIED")
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  user      users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     orders?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([promotionId])
+  @@index([usedAt])
+  @@index([orderId])
+}
+
+model promotion_audit_logs {
+  id          String   @id
+  promotionId String
+  userId      String?
+  action      String
+  oldValues   Json?
+  newValues   Json?
+  reason      String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  user      users?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([promotionId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model promotion_analytics {
+  id             String   @id
+  promotionId    String
+  date           DateTime
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  conversions    Int      @default(0)
+  revenueImpact  Decimal  @default(0) @db.Decimal(10, 2)
+  discountGiven  Decimal  @default(0) @db.Decimal(10, 2)
+  usageCount     Int      @default(0)
+  avgOrderValue  Decimal? @db.Decimal(10, 2)
+  conversionRate Decimal? @db.Decimal(5, 2)
+  roi            Decimal? @db.Decimal(5, 2)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, date])
+  @@index([promotionId])
+  @@index([date])
+}
+
+model promotion_versions {
+  id            String   @id
+  promotionId   String
+  versionNumber Int
+  data          Json
+  createdBy     String?
+  createdAt     DateTime @default(now())
+
+  promotion promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  user      users?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@unique([promotionId, versionNumber])
+}
+
+// Update products model to include promotions relation (if not already present)
+// Update categories model to include promotions relation (if not already present)
+// Update users model to include promotions relations (if not already present)
 
 model redemption_history {
   id               String           @id
@@ -746,6 +896,9 @@ model service_bookings {
   notes                  String?
   estimatedCosts         Int?                     @default(0)
   actualCosts            Int?
+  address                String?
+  coordinates            String?
+  goongPlaceId           String?
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime
   service_booking_items  service_booking_items[]
@@ -806,6 +959,25 @@ model service_types {
 
   @@index([isActive])
   @@index([sortOrder])
+}
+
+model support_tickets {
+  id          String   @id
+  subject     String
+  description String
+  status      String   @default("OPEN")
+  priority    String   @default("MEDIUM")
+  userId      String?
+  email       String
+  name        String
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  users       users?   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
 }
 
 model service_views {
@@ -946,30 +1118,65 @@ model testimonials {
 }
 
 model users {
-  id                  String                @id
-  email               String                @unique
-  password            String
-  name                String?
-  phone               String?
-  role                String                @default("USER")
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime
-  activity_logs       activity_logs[]
-  blog_articles       blog_articles[]
-  blog_comments       blog_comments[]
-  carts               carts[]
-  customer_questions  customer_questions[]
-  inventory_movements inventory_movements[]
-  loyalty_accounts    loyalty_accounts?
-  orders              orders[]
-  product_reviews     product_reviews[]
-  product_views       product_views[]
-  projects            projects[]
-  search_queries      search_queries[]
-  service_bookings    service_bookings[]
-  service_views       service_views[]
-  wishlist_items      wishlist_items[]
-  notifications       notifications[]
+  id                      String                      @id
+  email                   String                      @unique
+  password                String
+  name                    String?
+  phone                   String?
+  role                    String                      @default("USER")
+  avatarUrl               String?
+  resetToken              String?
+  resetExpires            DateTime?
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime
+  activity_logs           activity_logs[]
+  blog_articles           blog_articles[]
+  blog_comments           blog_comments[]
+  carts                   carts[]
+  customer_questions      customer_questions[]
+  conversations           conversations[]
+  inventory_movements     inventory_movements[]
+  loyalty_accounts        loyalty_accounts?
+  messages                messages[]
+  orders                  orders[]
+  product_reviews         product_reviews[]
+  product_views           product_views[]
+  projects                projects[]
+  search_queries          search_queries[]
+  service_bookings        service_bookings[]
+  service_views           service_views[]
+  wishlist_items          wishlist_items[]
+  notifications           notifications[]
+  supportTickets          support_tickets[]
+  createdPromotions       promotions[]                @relation("promotionsCreatedBy")
+  customerPromotions      customer_promotions[]
+  promotionAuditLogs      promotion_audit_logs[]
+  promotionVersions       promotion_versions[]
+  projectPromotionReviews project_promotion_reviews[] @relation("projectPromotionReviews")
+}
+
+model conversations {
+  id         String     @id
+  userId     String?
+  guestId    String?
+  guestName  String?
+  guestPhone String?
+  status     String     @default("OPEN")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now())
+  messages   messages[]
+  users      users?     @relation(fields: [userId], references: [id])
+}
+
+model messages {
+  id             String        @id
+  conversationId String
+  senderId       String?
+  senderType     String        @default("USER")
+  content        String
+  createdAt      DateTime      @default(now())
+  conversations  conversations @relation(fields: [conversationId], references: [id])
+  users          users?        @relation(fields: [senderId], references: [id])
 }
 
 model webhooks {
@@ -998,6 +1205,9 @@ enum CampaignStatus {
   SCHEDULED
   SENT
   CANCELLED
+  ACTIVE
+  PAUSED
+  COMPLETED
 }
 
 enum CampaignType {
@@ -1010,6 +1220,70 @@ enum CampaignType {
   SMS
   PUSH
   SOCIAL
+  SEASONAL
+  FLASH_SALE
+  LOYALTY
+}
+
+model campaign_promotions {
+  id          String     @id
+  campaignId  String
+  promotionId String
+  orderIndex  Int        @default(0)
+  priority    Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  campaigns   campaigns  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  promotions  promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, promotionId])
+  @@index([campaignId])
+  @@index([promotionId])
+}
+
+model campaign_metrics {
+  id              String    @id
+  campaignId      String
+  date            DateTime
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  conversions     Int       @default(0)
+  revenueImpact   Decimal   @default(0) @db.Decimal(10, 2)
+  discountGiven   Decimal   @default(0) @db.Decimal(10, 2)
+  engagementRate  Decimal?  @db.Decimal(5, 2)
+  roi             Decimal?  @db.Decimal(5, 2)
+  audienceReached Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  campaigns       campaigns @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@index([campaignId])
+  @@index([date])
+}
+
+model project_promotion_reviews {
+  id           String     @id
+  projectId    String
+  promotionId  String
+  userId       String?
+  rating       Int        @default(5)
+  title        String?
+  comment      String?
+  status       String     @default("APPROVED")
+  isVerified   Boolean    @default(false)
+  helpfulCount Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  projects     projects   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  promotions   promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  users        users?     @relation("projectPromotionReviews", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([promotionId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 enum ReviewStatus {

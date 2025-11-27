@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    
+
     // Transform backend response to match dashboard expectations
     if (data.success && data.data) {
       return NextResponse.json({
@@ -99,11 +99,47 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    // Forward request to backend with correct API prefix
+    const backendUrl = `${BACKEND_URL}/api/v1/bookings`;
+    console.log('Creating booking via backend:', backendUrl, body);
+
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Backend response not ok:', response.status, response.statusText, errorData);
+      return NextResponse.json(
+        { error: 'Failed to create booking', details: errorData },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Booking ID is required' },
@@ -149,7 +185,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Booking ID is required' },

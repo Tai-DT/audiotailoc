@@ -32,7 +32,7 @@ export class ServicesService {
       price: number;
     }>;
 
-    let priceData: PriceData = {
+    const priceData: PriceData = {
       priceType: data.priceType || 'FIXED',
     };
 
@@ -88,7 +88,7 @@ export class ServicesService {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
 
-  const where: Prisma.servicesWhereInput = {};
+    const where: Prisma.servicesWhereInput = {};
     if (params.typeId) where.typeId = params.typeId;
     if (params.isActive !== undefined) where.isActive = params.isActive;
 
@@ -182,7 +182,7 @@ export class ServicesService {
       }
     }
 
-  const updateData: Prisma.servicesUncheckedUpdateInput = {};
+    const updateData: Prisma.servicesUncheckedUpdateInput = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.typeId !== undefined) updateData.typeId = data.typeId;
@@ -266,10 +266,13 @@ export class ServicesService {
   }
 
   // Service Items Management
-  async addServiceItem(serviceId: string, data: {
-    name: string;
-    priceCents: number;
-  }) {
+  async addServiceItem(
+    serviceId: string,
+    data: {
+      name: string;
+      priceCents: number;
+    },
+  ) {
     await this.getService(serviceId); // Ensure service exists
 
     return this.prisma.service_items.create({
@@ -284,10 +287,13 @@ export class ServicesService {
     });
   }
 
-  async updateServiceItem(itemId: string, data: Partial<{
-    name: string;
-    priceCents: number;
-  }>) {
+  async updateServiceItem(
+    itemId: string,
+    data: Partial<{
+      name: string;
+      priceCents: number;
+    }>,
+  ) {
     const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
@@ -296,7 +302,7 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy mục dịch vụ');
     }
 
-  const updateData: Prisma.service_itemsUncheckedUpdateInput = {};
+    const updateData: Prisma.service_itemsUncheckedUpdateInput = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.priceCents !== undefined) updateData.price = data.priceCents;
 
@@ -348,8 +354,8 @@ export class ServicesService {
     return name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-')      // Replace spaces with hyphens
-      .replace(/--+/g, '-')      // Replace multiple hyphens with single hyphen
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
       .trim();
   }
 

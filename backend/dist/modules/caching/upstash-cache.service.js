@@ -58,7 +58,7 @@ let UpstashCacheService = UpstashCacheService_1 = class UpstashCacheService {
     async makeRequest(method, path, body) {
         const url = `${this.restUrl}${path}`;
         const headers = {
-            'Authorization': `Bearer ${this.restToken}`,
+            Authorization: `Bearer ${this.restToken}`,
             'Content-Type': 'application/json',
         };
         const requestOptions = {
@@ -308,9 +308,7 @@ let UpstashCacheService = UpstashCacheService_1 = class UpstashCacheService {
         }
     }
     getStats() {
-        const hitRate = this.stats.totalRequests > 0
-            ? (this.stats.hits / this.stats.totalRequests) * 100
-            : 0;
+        const hitRate = this.stats.totalRequests > 0 ? (this.stats.hits / this.stats.totalRequests) * 100 : 0;
         return {
             hits: this.stats.hits,
             misses: this.stats.misses,
@@ -399,7 +397,9 @@ let UpstashCacheService = UpstashCacheService_1 = class UpstashCacheService {
             return obj;
         }
         const sorted = {};
-        Object.keys(obj).sort().forEach(key => {
+        Object.keys(obj)
+            .sort()
+            .forEach(key => {
             sorted[key] = this.sortObjectKeys(obj[key]);
         });
         return sorted;

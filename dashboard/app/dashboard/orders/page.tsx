@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiClient } from "@/lib/api-client"
+import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import {
   ShoppingCart,
@@ -24,7 +25,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Trash2
+  Trash2,
+  Mail
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -57,42 +59,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-interface Order {
-  id: string
-  orderNumber: string
-  customerName: string
-  customerEmail: string
-  customerPhone?: string
-  totalAmount: number
-  status: string
-  shippingAddress?: string
-  shippingCoordinates?: string
-  notes?: string
-  createdAt: string
-  updatedAt: string
-  items: OrderItem[]
-}
-
-interface OrderItem {
-  id: string
-  productName: string
-  productSlug?: string
-  productId?: string
-  quantity: number
-  price: number
-  total: number
-}
-
-interface OrdersResponse {
-  items: Order[]
-  total: number
-  page: number
-  pageSize: number
-}
+import { Order, OrderItem, OrdersResponse, Product, ProductsResponse } from "@/types/dashboard"
 
 export default function OrdersPage() {
   const { token } = useAuth()
+  const { toast } = useToast()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -161,14 +132,14 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true)
-      
+
       // Ensure we have a valid token
       if (!token) {
         console.warn('No auth token available, skipping orders fetch')
         setLoading(false)
         return
       }
-      
+
       const response = await apiClient.getOrders({
         page: currentPage,
         limit: pageSize,
@@ -192,45 +163,31 @@ export default function OrdersPage() {
     }
   }, [token, currentPage, pageSize, statusFilter])
 
-  // Product interface
-  interface Product {
-    id: string
-    name: string
-    slug: string
-    priceCents: number
-    stockQuantity: number
-  }
-
   const [products, setProducts] = useState<Product[]>([])
 
   // Fetch products for the create order form
   const fetchProducts = useCallback(async () => {
     try {
-      const response = await apiClient.getProducts()
-      // Backend returns raw object, not wrapped in { data }
-      const raw = response as unknown as Record<string, unknown>
-      const items = raw?.items || ((raw as Record<string, unknown>)?.data as Record<string, unknown>)?.items
-      if (items && Array.isArray(items)) {
-        setProducts(items.map((product: Record<string, unknown>) => ({
-          id: product.id as string,
-          name: product.name as string,
-          slug: product.slug as string,
-          priceCents: product.priceCents as number,
-          stockQuantity: (product.stockQuantity as number) ?? 0
-        })))
+      const response = await apiClient.getProducts({ limit: 1000 }) // Fetch enough products for selection
+      const data = response.data as unknown as ProductsResponse
+      const items = data?.items || []
+
+      if (Array.isArray(items)) {
+        setProducts(items)
       } else {
-        // Fallback to hardcoded products
-        setProducts([
-          { id: 'loa-tai-loc-classic', name: 'Loa Tài Lộc Classic', slug: 'loa-tai-loc-classic', priceCents: 15000000, stockQuantity: 10 },
-          { id: 'tai-nghe-tai-loc-pro', name: 'Tai nghe Tài Lộc Pro', slug: 'tai-nghe-tai-loc-pro', priceCents: 25000000, stockQuantity: 5 },
-          { id: 'soundbar-tai-loc-5-1', name: 'Soundbar Tài Lộc 5.1', slug: 'soundbar-tai-loc-5-1', priceCents: 35000000, stockQuantity: 8 }
-        ])
+        console.warn('Invalid products data structure', data)
+        setProducts([])
       }
     } catch (error) {
       console.error('Failed to fetch products:', error)
-      // Fallback to hardcoded products
+      toast({
+        title: "Cảnh báo",
+        description: "Không thể tải danh sách sản phẩm để tạo đơn hàng",
+        variant: "destructive",
+      })
+      setProducts([])
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     if (token) {
@@ -270,27 +227,15 @@ export default function OrdersPage() {
       try {
         if (req.type === 'id') {
           const resp = await apiClient.get(`/catalog/products/${req.value}`);
-          const pd = resp.data as Record<string, unknown>;
+          const pd = resp.data as unknown as Product;
           if (pd?.id) {
-            fetched.push({ 
-              id: pd.id as string, 
-              name: pd.name as string, 
-              slug: pd.slug as string, 
-              priceCents: pd.priceCents as number, 
-              stockQuantity: (pd.stockQuantity as number) ?? 0 
-            });
+            fetched.push(pd);
           }
         } else {
           const resp = await apiClient.get(`/catalog/products/slug/${req.value}`);
-          const pd = resp.data as Record<string, unknown>;
+          const pd = resp.data as unknown as Product;
           if (pd?.id) {
-            fetched.push({ 
-              id: pd.id as string, 
-              name: pd.name as string, 
-              slug: pd.slug as string, 
-              priceCents: pd.priceCents as number, 
-              stockQuantity: (pd.stockQuantity as number) ?? 0 
-            });
+            fetched.push(pd);
           }
         }
       } catch (e) {
@@ -345,6 +290,57 @@ export default function OrdersPage() {
     if (!selectedOrder) return
 
     try {
+      // Validate form
+      if (!editOrderForm.customerName || !editOrderForm.customerName.trim()) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập tên khách hàng",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!editOrderForm.customerEmail || !editOrderForm.customerEmail.trim()) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập email khách hàng",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(editOrderForm.customerEmail)) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập email hợp lệ",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Require shipping address
+      if (!editOrderForm.shippingAddress.trim()) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập địa chỉ giao hàng",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate items
+      const validItems = editOrderForm.items.filter(item => item.productId && item.quantity > 0)
+      if (validItems.length === 0) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn ít nhất một sản phẩm",
+          variant: "destructive",
+        })
+        return
+      }
+
       await apiClient.updateOrder(selectedOrder.id, {
         customerName: editOrderForm.customerName,
         customerEmail: editOrderForm.customerEmail,
@@ -352,7 +348,13 @@ export default function OrdersPage() {
         shippingAddress: editOrderForm.shippingAddress,
         shippingCoordinates: editOrderForm.shippingCoordinates || undefined,
         notes: editOrderForm.notes,
-        items: editOrderForm.items.filter(item => item.productId && item.quantity > 0)
+        items: validItems
+      })
+
+      toast({
+        title: "Thành công",
+        description: "Đơn hàng đã được cập nhật thành công",
+        variant: "default",
       })
 
       // Refresh orders list
@@ -361,8 +363,14 @@ export default function OrdersPage() {
       fetchProducts()
       setEditOrderDialog(false)
       setSelectedOrder(null)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update order:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể cập nhật đơn hàng. Vui lòng thử lại."
+      toast({
+        title: "Lỗi",
+        description: errorMessage,
+        variant: "destructive",
+      })
     }
   }
 
@@ -371,6 +379,25 @@ export default function OrdersPage() {
     const allowed = getAllowedNextStatuses(order.status)
     setSelectedStatus(allowed[0] ?? '')
     setUpdateStatusDialog(true)
+  }
+
+  const handleSendInvoice = async (order: Order) => {
+    try {
+      await apiClient.sendInvoice(order.id)
+      toast({
+        title: "Thành công",
+        description: `Đã gửi hóa đơn cho đơn hàng ${order.orderNumber} đến email ${order.customerEmail}`,
+        variant: "default",
+      })
+    } catch (error: any) {
+      console.error('Failed to send invoice:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể gửi hóa đơn. Vui lòng thử lại."
+      toast({
+        title: "Lỗi",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
   }
 
   const handleDeleteOrder = (order: Order) => {
@@ -385,10 +412,21 @@ export default function OrdersPage() {
       await apiClient.deleteOrder(selectedOrder.id)
       setDeleteOrderDialog(false)
       setSelectedOrder(null)
+      toast({
+        title: "Thành công",
+        description: "Đơn hàng đã được xóa thành công.",
+        variant: "default",
+      })
       fetchOrders() // Refresh the list
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete order:', error)
-      // TODO: Show error toast
+      const errorMessage = error?.message || "Không thể xóa đơn hàng. Vui lòng thử lại."
+      const errorDescription = error?.response?.data?.message || errorMessage
+      toast({
+        title: "Lỗi",
+        description: errorDescription,
+        variant: "destructive",
+      })
     }
   }
 
@@ -399,33 +437,76 @@ export default function OrdersPage() {
       await apiClient.updateOrderStatus(selectedOrder.id, newStatus)
       setUpdateStatusDialog(false)
       setSelectedOrder(null)
+      toast({
+        title: "Thành công",
+        description: "Trạng thái đơn hàng đã được cập nhật.",
+        variant: "default",
+      })
       fetchOrders() // Refresh the list
       // Also refresh products so stockQuantity reflects cancellations immediately
       fetchProducts()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update order status:', error)
-      // TODO: Show error toast
+      const errorMessage = error?.message || "Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại."
+      const errorDescription = error?.response?.data?.message || errorMessage
+      toast({
+        title: "Lỗi",
+        description: errorDescription,
+        variant: "destructive",
+      })
     }
   }
 
   const handleCreateOrder = async () => {
     try {
       // Validate form
-      if (!createOrderForm.customerName || !createOrderForm.customerEmail) {
-        alert('Vui lòng điền đầy đủ thông tin khách hàng')
+      if (!createOrderForm.customerName || !createOrderForm.customerName.trim()) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập tên khách hàng",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!createOrderForm.customerEmail || !createOrderForm.customerEmail.trim()) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập email khách hàng",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(createOrderForm.customerEmail)) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập email hợp lệ",
+          variant: "destructive",
+        })
         return
       }
 
       // Require shipping address (text-only input)
       if (!createOrderForm.shippingAddress.trim()) {
-        alert('Vui lòng nhập địa chỉ giao hàng')
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập địa chỉ giao hàng",
+          variant: "destructive",
+        })
         return
       }
 
       // Validate items
       const validItems = createOrderForm.items.filter(item => item.productId && item.quantity > 0)
       if (validItems.length === 0) {
-        alert('Vui lòng chọn ít nhất một sản phẩm')
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn ít nhất một sản phẩm",
+          variant: "destructive",
+        })
         return
       }
 
@@ -442,7 +523,7 @@ export default function OrdersPage() {
         notes: createOrderForm.notes
       }
 
-      await apiClient.createOrder(orderData)
+      const response = await apiClient.createOrder(orderData)
       setCreateOrderDialog(false)
       setCreateOrderForm({
         customerName: '',
@@ -453,11 +534,20 @@ export default function OrdersPage() {
         notes: '',
         items: [{ productId: '', quantity: 1 }]
       })
+      toast({
+        title: "Thành công",
+        description: "Đơn hàng đã được tạo thành công",
+        variant: "default",
+      })
       fetchOrders() // Refresh orders list
       fetchProducts() // Refresh products to update stockQuantity in UI
-    } catch (error) {
-      console.error('Failed to create order:', error)
-      // TODO: Show error toast
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tạo đơn hàng. Vui lòng kiểm tra thông tin và thử lại."
+      toast({
+        title: "Lỗi",
+        description: errorMessage,
+        variant: "destructive",
+      })
     }
   }
 
@@ -519,6 +609,9 @@ export default function OrdersPage() {
   }
 
   const totalPages = Math.ceil(totalOrders / pageSize)
+
+  // Helper to get stock quantity with backward compatibility
+  const getStock = (p: Product | undefined) => p?.inventory?.stock ?? p?.stockQuantity ?? 0
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -686,6 +779,10 @@ export default function OrdersPage() {
                             <DropdownMenuItem onClick={() => handleUpdateStatus(order)}>
                               <Truck className="mr-2 h-4 w-4" />
                               Cập nhật trạng thái
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendInvoice(order)}>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Gửi hóa đơn
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDeleteOrder(order)}>
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -955,11 +1052,10 @@ export default function OrdersPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Địa chỉ giao hàng</label>
-                <GoongMapAddressPicker
+                <Input
                   value={createOrderForm.shippingAddress}
-                  onChange={(address, coordinates) => setCreateOrderForm(prev => ({ ...prev, shippingAddress: address || '', shippingCoordinates: coordinates || null }))}
+                  onChange={(e) => setCreateOrderForm(prev => ({ ...prev, shippingAddress: e.target.value }))}
                   placeholder="Nhập địa chỉ giao hàng (số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố)"
-                  className="focus-visible:ring-primary/50"
                 />
               </div>
 
@@ -994,9 +1090,9 @@ export default function OrdersPage() {
                               <SelectItem key={product.id} value={product.id}>
                                 <div className="flex items-center gap-2">
                                   <span className="truncate max-w-[200px]">{product.name}</span>
-                                  {product.stockQuantity > 0 && (
+                                  {getStock(product) > 0 && (
                                     <span className="text-xs text-muted-foreground">
-                                      (Còn {product.stockQuantity})
+                                      (Còn {getStock(product)})
                                     </span>
                                   )}
                                 </div>
@@ -1025,10 +1121,11 @@ export default function OrdersPage() {
                           <Input
                             type="number"
                             min={1}
-                            max={products.find(p => p.id === item.productId)?.stockQuantity || 999}
+                            max={getStock(products.find(p => p.id === item.productId)) || 999}
                             value={item.quantity}
                             onChange={(e) => {
-                              const stock = products.find(p => p.id === item.productId)?.stockQuantity || 999;
+                              const p = products.find(p => p.id === item.productId);
+                              const stock = getStock(p) || 999;
                               let newQuantity = parseInt(e.target.value) || 1;
                               if (newQuantity < 1) newQuantity = 1;
                               if (newQuantity > stock) newQuantity = stock;
@@ -1042,11 +1139,12 @@ export default function OrdersPage() {
                             size="icon"
                             className="h-8 w-8 shrink-0"
                             onClick={() => {
-                              const stock = products.find(p => p.id === item.productId)?.stockQuantity || 999;
+                              const p = products.find(p => p.id === item.productId);
+                              const stock = getStock(p) || 999;
                               const newQuantity = Math.min(stock, item.quantity + 1);
                               updateProductInOrder(index, 'quantity', newQuantity);
                             }}
-                            disabled={item.quantity >= (products.find(p => p.id === item.productId)?.stockQuantity || 999)}
+                            disabled={item.quantity >= (getStock(products.find(p => p.id === item.productId)) || 999)}
                           >
                             <Plus className="h-3 w-3" />
                             <span className="sr-only">Tăng số lượng</span>
@@ -1054,7 +1152,11 @@ export default function OrdersPage() {
                         </div>
                         {item.productId && (
                           <div className="text-xs text-muted-foreground mt-1 pr-1">
-                            Tồn kho: {products.find(p => p.id === item.productId)?.stockQuantity ?? 'N/A'}
+                            Tồn kho: {(() => {
+                              const p = products.find(p => p.id === item.productId);
+                              const stock = getStock(p);
+                              return stock > 0 || p ? stock : 'N/A';
+                            })()}
                           </div>
                         )}
                       </div>

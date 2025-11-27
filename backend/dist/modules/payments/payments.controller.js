@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var PaymentsController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -58,11 +59,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateRefundDto.prototype, "reason", void 0);
-let PaymentsController = class PaymentsController {
+let PaymentsController = PaymentsController_1 = class PaymentsController {
     constructor(payments, payosService, prisma) {
         this.payments = payments;
         this.payosService = payosService;
         this.prisma = prisma;
+        this.logger = new common_1.Logger(PaymentsController_1.name);
     }
     getPaymentMethods() {
         return {
@@ -72,16 +74,16 @@ let PaymentsController = class PaymentsController {
                     name: 'Thanh toán khi nhận hàng',
                     description: 'Thanh toán bằng tiền mặt khi nhận hàng',
                     logo: '/images/payment/cod.png',
-                    enabled: true
+                    enabled: true,
                 },
                 {
                     id: 'PAYOS',
                     name: 'PayOS',
                     description: 'Thanh toán qua PayOS (Chuyển khoản, QR, Thẻ)',
                     logo: '/images/payment/payos.png',
-                    enabled: true
-                }
-            ]
+                    enabled: true,
+                },
+            ],
         };
     }
     getPaymentStatus() {
@@ -89,7 +91,7 @@ let PaymentsController = class PaymentsController {
             status: 'active',
             message: 'Payment system is operational',
             timestamp: new Date().toISOString(),
-            supportedProviders: ['COD', 'PAYOS']
+            supportedProviders: ['COD', 'PAYOS'],
         };
     }
     async getMyPayments(req) {
@@ -100,8 +102,8 @@ let PaymentsController = class PaymentsController {
         const payments = await this.prisma.payments.findMany({
             where: {
                 orders: {
-                    userId: userId
-                }
+                    userId: userId,
+                },
             },
             include: {
                 orders: {
@@ -110,11 +112,11 @@ let PaymentsController = class PaymentsController {
                         orderNo: true,
                         totalCents: true,
                         status: true,
-                        createdAt: true
-                    }
-                }
+                        createdAt: true,
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
         return payments.map((payment) => ({
             id: payment.id,
@@ -126,7 +128,7 @@ let PaymentsController = class PaymentsController {
             status: payment.status,
             transactionId: payment.id,
             createdAt: payment.createdAt,
-            updatedAt: payment.updatedAt
+            updatedAt: payment.updatedAt,
         }));
     }
     async getPayments(query) {
@@ -143,7 +145,7 @@ let PaymentsController = class PaymentsController {
         if (query.search) {
             where.OR = [
                 { orders: { orderNo: { contains: query.search, mode: 'insensitive' } } },
-                { id: { contains: query.search, mode: 'insensitive' } }
+                { id: { contains: query.search, mode: 'insensitive' } },
             ];
         }
         const [payments, total] = await Promise.all([
@@ -158,17 +160,17 @@ let PaymentsController = class PaymentsController {
                                 select: {
                                     id: true,
                                     name: true,
-                                    email: true
-                                }
-                            }
-                        }
-                    }
+                                    email: true,
+                                },
+                            },
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
-                take: limit
+                take: limit,
             }),
-            this.prisma.payments.count({ where })
+            this.prisma.payments.count({ where }),
         ]);
         return {
             payments: payments.map((payment) => ({
@@ -181,30 +183,30 @@ let PaymentsController = class PaymentsController {
                 createdAt: payment.createdAt,
                 updatedAt: payment.updatedAt,
                 paidAt: payment.status === 'PAID' ? payment.updatedAt : null,
-                user: payment.orders.user
+                user: payment.orders.user,
             })),
             pagination: {
                 page,
                 limit,
                 total,
-                totalPages: Math.ceil(total / limit)
-            }
+                totalPages: Math.ceil(total / limit),
+            },
         };
     }
     async getPaymentStats() {
-        const [totalPayments, totalRevenue, pendingPayments, failedPayments, refundedPayments, refundedAmount] = await Promise.all([
+        const [totalPayments, totalRevenue, pendingPayments, failedPayments, refundedPayments, refundedAmount,] = await Promise.all([
             this.prisma.payments.count(),
             this.prisma.payments.aggregate({
                 where: { status: 'PAID' },
-                _sum: { amountCents: true }
+                _sum: { amountCents: true },
             }),
             this.prisma.payments.count({ where: { status: 'PENDING' } }),
             this.prisma.payments.count({ where: { status: 'FAILED' } }),
             this.prisma.payments.count({ where: { status: 'REFUNDED' } }),
             this.prisma.payments.aggregate({
                 where: { status: 'REFUNDED' },
-                _sum: { amountCents: true }
-            })
+                _sum: { amountCents: true },
+            }),
         ]);
         return {
             totalPayments,
@@ -212,7 +214,7 @@ let PaymentsController = class PaymentsController {
             pendingPayments,
             failedPayments,
             refundedPayments,
-            refundedAmount: refundedAmount._sum.amountCents || 0
+            refundedAmount: refundedAmount._sum.amountCents || 0,
         };
     }
     createIntent(dto) {
@@ -238,25 +240,35 @@ let PaymentsController = class PaymentsController {
     }
     async createPayOSPayment(createPaymentDto, req) {
         const userId = req.user?.sub;
-        if (!userId) {
-            throw new Error('User not authenticated');
+        let buyerName = createPaymentDto.buyerName;
+        let buyerEmail = createPaymentDto.buyerEmail;
+        let buyerPhone = createPaymentDto.buyerPhone;
+        if (userId && (!buyerName || !buyerEmail)) {
+            const user = await this.prisma.users.findUnique({
+                where: { id: userId },
+                select: { name: true, email: true, phone: true },
+            });
+            if (user) {
+                buyerName = buyerName || user.name || 'Unknown';
+                buyerEmail = buyerEmail || user.email;
+                buyerPhone = buyerPhone || user.phone;
+            }
         }
-        const user = await this.prisma.users.findUnique({
-            where: { id: userId },
-            select: { name: true, email: true, phone: true }
-        });
-        if (!user) {
-            throw new Error('User not found');
+        if (!userId && !buyerName) {
+            buyerName = 'Guest User';
+        }
+        if (!userId && !buyerEmail) {
+            buyerEmail = `guest_${Date.now()}@example.com`;
         }
         return this.payosService.createPaymentLink({
             orderCode: createPaymentDto.orderCode,
             amount: createPaymentDto.amount,
             description: createPaymentDto.description,
-            buyerName: user.name || 'Unknown',
-            buyerEmail: user.email,
-            buyerPhone: user.phone || undefined,
+            buyerName: buyerName,
+            buyerEmail: buyerEmail,
+            buyerPhone: buyerPhone,
             returnUrl: createPaymentDto.returnUrl,
-            cancelUrl: createPaymentDto.cancelUrl
+            cancelUrl: createPaymentDto.cancelUrl,
         });
     }
     async getPayOSPaymentStatus(orderCode) {
@@ -271,16 +283,23 @@ let PaymentsController = class PaymentsController {
     async momoWebhook(body) {
         return this.payments.handleWebhook('MOMO', body);
     }
-    async payosWebhook(req, body, xsig) {
+    async payosWebhook(req, body) {
         try {
             const isValid = this.payosService.verifyWebhookSignature(body);
             if (!isValid) {
-                return { ok: false, message: 'Invalid signature' };
+                this.logger.error('Invalid PayOS webhook signature');
+                return { error: 1, message: 'Invalid signature' };
             }
-            return this.payosService.handleWebhook(body);
+            this.logger.log(`PayOS webhook verified, processing...`);
+            const result = await this.payosService.handleWebhook(body);
+            if (result.error === 0 && result.message === 'Payment successful') {
+                this.logger.log('Payment successful, cart should be cleared on frontend');
+            }
+            return result;
         }
         catch (error) {
-            return { ok: false, message: 'Webhook processing failed' };
+            this.logger.error(`PayOS webhook error: ${error.message}`);
+            return { error: 1, message: 'Webhook processing failed' };
         }
     }
 };
@@ -298,7 +317,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "getPaymentStatus", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)('my-payments'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -321,7 +339,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "getPaymentStats", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Post)('intents'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -359,7 +376,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "payosCallback", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Post)('payos/create-payment'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
@@ -368,7 +384,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "createPayOSPayment", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)('payos/payment-status/:orderCode'),
     __param(0, (0, common_1.Param)('orderCode')),
     __metadata("design:type", Function),
@@ -401,12 +416,11 @@ __decorate([
     (0, common_1.Post)('payos/webhook'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
-    __param(2, (0, common_1.Headers)('x-signature')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, String]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "payosWebhook", null);
-exports.PaymentsController = PaymentsController = __decorate([
+exports.PaymentsController = PaymentsController = PaymentsController_1 = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService,
         payos_service_1.PayOSService,

@@ -1,116 +1,74 @@
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { apiClient, handleApiResponse } from '../api';
+import { Cart } from '../types';
 
-// Types
-export interface CartItem {
-  id: string;
-  productId: string;
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-  };
-  quantity: number;
-  price: number;
-}
+export const cartQueryKeys = {
+  all: ['cart'] as const,
+  get: () => [...cartQueryKeys.all, 'get'] as const,
+};
 
-export interface Cart {
-  id: string;
-  items: CartItem[];
-  totalItems: number;
-  totalPrice: number;
-  updatedAt: string;
-}
-
-export interface AddToCartData {
-  productId: string;
-  quantity: number;
-}
-
-// Hooks
-export function useCart() {
+export const useCart = () => {
   return useQuery({
-    queryKey: ['cart'],
+    queryKey: cartQueryKeys.get(),
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.CART.GET);
+      const response = await apiClient.get('/cart');
       return handleApiResponse<Cart>(response);
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
   });
-}
+};
 
-// Mutations
-export function useAddToCart() {
+export const useAddToCart = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (data: AddToCartData) => {
-      const response = await apiClient.post(API_ENDPOINTS.CART.ADD_ITEM, data);
-      return handleApiResponse<CartItem>(response);
+    mutationFn: async (data: { productId: string; quantity: number }) => {
+      const response = await apiClient.post('/cart/items', data);
+      return handleApiResponse(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast.success('Đã thêm sản phẩm vào giỏ hàng!');
-    },
-    onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
     },
   });
-}
+};
 
-export function useUpdateCartItem() {
+export const useUpdateCartItem = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
-      const response = await apiClient.put(API_ENDPOINTS.CART.UPDATE_ITEM(id), { quantity });
-      return handleApiResponse<CartItem>(response);
+      const response = await apiClient.put(`/cart/items/${id}`, { quantity });
+      return handleApiResponse(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-    },
-    onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng');
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
     },
   });
-}
+};
 
-export function useRemoveFromCart() {
+export const useRemoveFromCart = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(API_ENDPOINTS.CART.REMOVE_ITEM(id));
-      return handleApiResponse<void>(response);
+      const response = await apiClient.delete(`/cart/items/${id}`);
+      return handleApiResponse(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast.success('Đã xóa sản phẩm khỏi giỏ hàng!');
-    },
-    onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa khỏi giỏ hàng');
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
     },
   });
-}
+};
 
-export function useClearCart() {
+export const useClearCart = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async () => {
-      const response = await apiClient.delete(API_ENDPOINTS.CART.CLEAR);
-      return handleApiResponse<void>(response);
+      const response = await apiClient.delete('/cart/clear');
+      return handleApiResponse(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast.success('Đã xóa toàn bộ giỏ hàng!');
-    },
-    onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa giỏ hàng');
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
     },
   });
-}
+};

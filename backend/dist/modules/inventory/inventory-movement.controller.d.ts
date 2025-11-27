@@ -29,10 +29,10 @@ export declare class InventoryMovementController {
         id: string;
         createdAt: Date;
         userId: string | null;
-        reason: string | null;
         productId: string;
         quantity: number;
         notes: string | null;
+        reason: string | null;
         previousStock: number;
         newStock: number;
         referenceId: string | null;
@@ -62,10 +62,10 @@ export declare class InventoryMovementController {
             id: string;
             createdAt: Date;
             userId: string | null;
-            reason: string | null;
             productId: string;
             quantity: number;
             notes: string | null;
+            reason: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;
@@ -92,10 +92,10 @@ export declare class InventoryMovementController {
             id: string;
             createdAt: Date;
             userId: string | null;
-            reason: string | null;
             productId: string;
             quantity: number;
             notes: string | null;
+            reason: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;

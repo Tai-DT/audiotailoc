@@ -18,18 +18,15 @@ const projects_service_1 = require("./projects.service");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const jwt_guard_1 = require("../auth/jwt.guard");
 const swagger_1 = require("@nestjs/swagger");
+const create_project_dto_1 = require("./dto/create-project.dto");
+const update_project_dto_1 = require("./dto/update-project.dto");
+const query_projects_dto_1 = require("./dto/query-projects.dto");
 let ProjectsController = class ProjectsController {
     constructor(projectsService) {
         this.projectsService = projectsService;
     }
-    async list(page, limit, status, featured, category) {
-        return this.projectsService.findAll({
-            page,
-            limit,
-            status,
-            featured: featured === 'true',
-            category,
-        });
+    async list(query) {
+        return this.projectsService.findAll(query);
     }
     async getFeatured() {
         return this.projectsService.findFeatured();
@@ -40,14 +37,17 @@ let ProjectsController = class ProjectsController {
     async getById(id) {
         return this.projectsService.findById(id);
     }
-    async create(data) {
+    async create(data, req) {
+        const userId = req?.user?.id || 'admin-id-placeholder';
+        data.userId = userId;
         return this.projectsService.create(data);
     }
     async update(id, data) {
         return this.projectsService.update(id, data);
     }
-    async remove(id) {
-        return this.projectsService.remove(id);
+    async remove(id, permanent) {
+        const isPermanent = permanent === 'true';
+        return this.projectsService.remove(id, isPermanent);
     }
     async toggleFeatured(id) {
         return this.projectsService.toggleFeatured(id);
@@ -58,18 +58,17 @@ let ProjectsController = class ProjectsController {
     async updateOrder(id, displayOrder) {
         return this.projectsService.updateDisplayOrder(id, displayOrder);
     }
+    async restore(id) {
+        return this.projectsService.restore(id);
+    }
 };
 exports.ProjectsController = ProjectsController;
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get all projects' }),
-    __param(0, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(10), common_1.ParseIntPipe)),
-    __param(2, (0, common_1.Query)('status')),
-    __param(3, (0, common_1.Query)('featured')),
-    __param(4, (0, common_1.Query)('category')),
+    __param(0, (0, common_1.Query)(common_1.ValidationPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, String, String, String]),
+    __metadata("design:paramtypes", [query_projects_dto_1.QueryProjectsDto]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "list", null);
 __decorate([
@@ -99,9 +98,10 @@ __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create new project' }),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Body)(common_1.ValidationPipe)),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_project_dto_1.CreateProjectDto, Object]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "create", null);
 __decorate([
@@ -109,18 +109,20 @@ __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update project' }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, common_1.Body)(common_1.ValidationPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, update_project_dto_1.UpdateProjectDto]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "update", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Delete)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete project' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete project' }),
+    (0, swagger_1.ApiQuery)({ name: 'permanent', required: false, type: Boolean }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('permanent')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "remove", null);
 __decorate([
@@ -151,6 +153,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "updateOrder", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, common_1.Post)(':id/restore'),
+    (0, swagger_1.ApiOperation)({ summary: 'Restore soft-deleted project' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "restore", null);
 exports.ProjectsController = ProjectsController = __decorate([
     (0, swagger_1.ApiTags)('projects'),
     (0, common_1.Controller)('projects'),

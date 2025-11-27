@@ -56,7 +56,7 @@ export class TransactionManager {
    */
   async execute<T>(
     callback: (tx: PrismaClient) => Promise<T>,
-    options: TransactionOptions = {}
+    options: TransactionOptions = {},
   ): Promise<TransactionResult<T>> {
     const {
       maxRetries = 3,
@@ -77,22 +77,25 @@ export class TransactionManager {
       try {
         const result = await this.executeWithTimeout(
           () =>
-            this.prisma.$transaction(async (tx) => {
-              return await callback(tx as PrismaClient);
-            }, {
-              maxWait: timeout,
-              timeout: timeout,
-              isolationLevel: isolationLevel as any,
-            }),
+            this.prisma.$transaction(
+              async tx => {
+                return await callback(tx as PrismaClient);
+              },
+              {
+                maxWait: timeout,
+                timeout: timeout,
+                isolationLevel: isolationLevel as any,
+              },
+            ),
           timeout,
-          transactionId
+          transactionId,
         );
 
         const duration = Date.now() - startTime;
         this.recordSuccess(duration);
 
         this.logger.debug(
-          `Transaction '${name}' completed successfully in ${duration}ms (attempt ${attempts})`
+          `Transaction '${name}' completed successfully in ${duration}ms (attempt ${attempts})`,
         );
 
         return {
@@ -109,26 +112,24 @@ export class TransactionManager {
         if (isDeadlock) {
           this.stats.deadlocksHandled++;
           this.logger.warn(
-            `Deadlock detected in transaction '${name}', attempt ${attempts}/${maxRetries}`
+            `Deadlock detected in transaction '${name}', attempt ${attempts}/${maxRetries}`,
           );
         }
 
         if (isTimeout) {
-          this.logger.warn(
-            `Transaction '${name}' timeout, attempt ${attempts}/${maxRetries}`
-          );
+          this.logger.warn(`Transaction '${name}' timeout, attempt ${attempts}/${maxRetries}`);
         }
 
         if (attempts < maxRetries && (isDeadlock || isTimeout)) {
           const delay = this.calculateBackoff(retryDelay, attempts);
           this.logger.debug(
-            `Retrying transaction '${name}' in ${delay}ms (attempt ${attempts + 1}/${maxRetries})`
+            `Retrying transaction '${name}' in ${delay}ms (attempt ${attempts + 1}/${maxRetries})`,
           );
           this.stats.retriedTransactions++;
           await this.sleep(delay);
         } else if (attempts === maxRetries) {
           this.logger.error(
-            `Transaction '${name}' failed after ${maxRetries} attempts: ${lastError.message}`
+            `Transaction '${name}' failed after ${maxRetries} attempts: ${lastError.message}`,
           );
         }
       } finally {
@@ -157,24 +158,21 @@ export class TransactionManager {
       name: string;
       execute: (tx: PrismaClient) => Promise<any>;
     }>,
-    options: TransactionOptions = {}
+    options: TransactionOptions = {},
   ): Promise<TransactionResult<T[]>> {
-    return this.execute(
-      async (tx) => {
-        const results = [];
-        for (const op of operations) {
-          try {
-            const result = await op.execute(tx);
-            results.push(result);
-          } catch (error) {
-            this.logger.error(`Operation '${op.name}' failed in transaction: ${error}`);
-            throw error;
-          }
+    return this.execute(async tx => {
+      const results = [];
+      for (const op of operations) {
+        try {
+          const result = await op.execute(tx);
+          results.push(result);
+        } catch (error) {
+          this.logger.error(`Operation '${op.name}' failed in transaction: ${error}`);
+          throw error;
         }
-        return results as T[];
-      },
-      options
-    );
+      }
+      return results as T[];
+    }, options);
   }
 
   /**
@@ -182,43 +180,29 @@ export class TransactionManager {
    */
   async executeBatch<T>(
     callbacks: Array<(tx: PrismaClient) => Promise<T>>,
-    options: TransactionOptions = {}
+    options: TransactionOptions = {},
   ): Promise<TransactionResult<T[]>> {
-    return this.execute(
-      async (tx) => {
-        return Promise.all(callbacks.map((cb) => cb(tx)));
-      },
-      options
-    );
+    return this.execute(async tx => {
+      return Promise.all(callbacks.map(cb => cb(tx)));
+    }, options);
   }
 
   /**
    * Detect if error is a deadlock error
    */
   private isDeadlockError(error: Error): boolean {
-    const deadlockPatterns = [
-      /deadlock/i,
-      /P1014/,
-      /detected/i,
-      /concurrent/i,
-      /lock/i,
-    ];
+    const deadlockPatterns = [/deadlock/i, /P1014/, /detected/i, /concurrent/i, /lock/i];
 
-    return deadlockPatterns.some((pattern) => pattern.test(error.message));
+    return deadlockPatterns.some(pattern => pattern.test(error.message));
   }
 
   /**
    * Detect if error is a timeout error
    */
   private isTimeoutError(error: Error): boolean {
-    const timeoutPatterns = [
-      /timeout/i,
-      /timed out/i,
-      /ETIMEDOUT/,
-      /ESOCKETTIMEDOUT/,
-    ];
+    const timeoutPatterns = [/timeout/i, /timed out/i, /ETIMEDOUT/, /ESOCKETTIMEDOUT/];
 
-    return timeoutPatterns.some((pattern) => pattern.test(error.message));
+    return timeoutPatterns.some(pattern => pattern.test(error.message));
   }
 
   /**
@@ -227,7 +211,7 @@ export class TransactionManager {
   private calculateBackoff(baseDelay: number, attempt: number): number {
     const exponentialDelay = Math.min(
       baseDelay * Math.pow(2, attempt - 1),
-      10000 // Max 10 seconds
+      10000, // Max 10 seconds
     );
     const jitter = Math.random() * exponentialDelay * 0.1; // 10% jitter
     return exponentialDelay + jitter;
@@ -237,7 +221,7 @@ export class TransactionManager {
    * Sleep for given milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
@@ -246,7 +230,7 @@ export class TransactionManager {
   private executeWithTimeout<T>(
     fn: () => Promise<T>,
     timeoutMs: number,
-    transactionId: string
+    transactionId: string,
   ): Promise<T> {
     return Promise.race([
       fn(),
@@ -330,7 +314,7 @@ export class TransactionManager {
     for (const tx of transactions) {
       if (tx.duration > maxDurationMs) {
         this.logger.warn(
-          `Cancelling long-running transaction ${tx.id} (duration: ${tx.duration}ms)`
+          `Cancelling long-running transaction ${tx.id} (duration: ${tx.duration}ms)`,
         );
         this.activeTransactions.delete(tx.id);
         cancelled++;
@@ -345,9 +329,10 @@ export class TransactionManager {
    */
   generateReport(): string {
     const stats = this.getStats();
-    const successRate = stats.totalTransactions > 0
-      ? ((stats.successfulTransactions / stats.totalTransactions) * 100).toFixed(2)
-      : '0';
+    const successRate =
+      stats.totalTransactions > 0
+        ? ((stats.successfulTransactions / stats.totalTransactions) * 100).toFixed(2)
+        : '0';
 
     return `
 Transaction Manager Report
@@ -378,11 +363,11 @@ export function Transactional(options: TransactionOptions = {}) {
       }
 
       const result = await txManager.execute(
-        async (tx) => {
+        async tx => {
           // Inject transaction into method arguments if needed
           return originalMethod.apply(this, [tx, ...args]);
         },
-        { ...options, name: `${target.name}.${propertyKey}` }
+        { ...options, name: `${target.name}.${propertyKey}` },
       );
 
       if (!result.success) {

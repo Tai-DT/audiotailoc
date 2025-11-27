@@ -399,7 +399,7 @@ let HealthService = HealthService_1 = class HealthService {
             if (fs.existsSync(logFile)) {
                 const content = fs.readFileSync(logFile, 'utf8');
                 const logLines = content.split('\n').filter(line => line.trim());
-                const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
+                const cutoffTime = Date.now() - hours * 60 * 60 * 1000;
                 return logLines
                     .map(line => {
                     try {

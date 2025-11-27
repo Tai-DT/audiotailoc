@@ -41,7 +41,7 @@ const statusConfig = {
 
 export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { id } = React.use(params);
-  const { data: user } = useAuth();
+  const { user } = useAuth();
   const { data: order, isLoading, error } = useOrder(id);
   const router = useRouter();
 
