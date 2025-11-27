@@ -56,4 +56,3 @@ export interface Apiv1user {
   createdAt: string;
   updatedAt: string;
 }
-

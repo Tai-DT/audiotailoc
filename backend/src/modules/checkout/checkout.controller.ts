@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
 import { CheckoutService } from './checkout.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { IsOptional, IsString, IsObject } from 'class-validator';
@@ -14,11 +23,15 @@ class ShippingAddressDto {
 }
 
 class CheckoutDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   promotionCode?: string;
 
   @IsObject()
   shippingAddress!: ShippingAddressDto;
+
+  @IsOptional()
+  items?: Array<{ productId: string; quantity: number }>;
 }
 
 @Controller('checkout')
@@ -36,7 +49,8 @@ export class CheckoutController {
 
     const order = await this.checkout.createOrder(userId, {
       promotionCode: dto.promotionCode,
-      shippingAddress: dto.shippingAddress
+      shippingAddress: dto.shippingAddress,
+      items: dto.items,
     });
 
     return {
@@ -44,7 +58,7 @@ export class CheckoutController {
       orderNo: order.orderNo,
       totalCents: order.totalCents,
       status: order.status,
-      shippingAddress: order.shippingAddress
+      shippingAddress: order.shippingAddress,
     };
   }
 
@@ -54,7 +68,7 @@ export class CheckoutController {
   async createLegacy(@Request() req: any, @Body() dto: CheckoutDto) {
     const order = await this.checkout.createOrder(req.users?.sub, {
       promotionCode: dto.promotionCode,
-      shippingAddress: dto.shippingAddress
+      shippingAddress: dto.shippingAddress,
     });
 
     return { order };

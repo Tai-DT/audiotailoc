@@ -18,11 +18,12 @@ import {
   Package
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useWishlist, useRemoveFromWishlist, WishlistItem } from '@/lib/hooks/use-wishlist';
+import { useWishlist, useRemoveFromWishlist } from '@/lib/hooks/use-wishlist';
+import { WishlistItem } from '@/lib/types';
 import { useAddToCart } from '@/lib/hooks/use-api';
 
 export default function WishlistPage() {
-  const { data: user } = useAuth();
+  const { user } = useAuth();
   const isAuthenticated = !!user;
   const router = useRouter();
 
@@ -188,15 +189,15 @@ export default function WishlistPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex flex-col">
                           <span className="text-lg font-bold text-green-600">
-                            {formatPrice(item.product?.priceCents / 100 || 0)}
+                            {formatPrice((item.product?.priceCents || 0) / 100)}
                           </span>
-                          {item.product?.originalPriceCents && item.product.originalPriceCents > item.product.priceCents && (
+                          {item.product?.originalPriceCents && item.product.priceCents && item.product.originalPriceCents > item.product.priceCents && (
                             <span className="text-sm text-muted-foreground line-through">
                               {formatPrice(item.product.originalPriceCents / 100)}
                             </span>
                           )}
                         </div>
-                        {item.product?.stockQuantity > 0 ? (
+                        {(item.product?.stockQuantity || 0) > 0 ? (
                           <Badge variant="secondary" className="text-green-600">
                             <Package className="w-3 h-3 mr-1" />
                             Còn hàng

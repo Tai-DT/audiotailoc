@@ -49,5 +49,3 @@ export class MapsController {
     return this.maps.placeDetail(q.placeId);
   }
 }
-
-

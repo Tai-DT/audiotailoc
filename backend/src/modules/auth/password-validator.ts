@@ -50,13 +50,23 @@ export class PasswordValidator {
 
     // Check for at least one special character
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)');
+      errors.push(
+        'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)',
+      );
     }
 
     // Check for common weak passwords
     const weakPasswords = [
-      'password', 'password123', '12345678', 'qwerty', 'abc123',
-      'password1', '123456789', 'letmein', 'welcome', 'admin123'
+      'password',
+      'password123',
+      '12345678',
+      'qwerty',
+      'abc123',
+      'password1',
+      '123456789',
+      'letmein',
+      'welcome',
+      'admin123',
     ];
     if (weakPasswords.includes(password.toLowerCase())) {
       errors.push('Password is too common. Please choose a stronger password');
@@ -64,7 +74,7 @@ export class PasswordValidator {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 

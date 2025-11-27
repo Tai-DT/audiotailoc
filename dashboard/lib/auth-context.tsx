@@ -8,6 +8,7 @@ interface User {
   email: string
   name: string
   role?: string
+  avatarUrl?: string | null
 }
 
 interface AuthTokens {
@@ -17,13 +18,14 @@ interface AuthTokens {
 
 interface AuthContextType {
   user: User | null
+  setUser: (user: User | null) => void
   token: string | null
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   refreshToken: () => Promise<void>
-  refreshUser: () => Promise<void>
+  refreshUser: () => Promise<boolean | undefined>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -75,12 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     clearStoredTokens()
     apiClient.clearToken()
-    
+
     // Redirect to login if we're in the browser
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       // Only redirect if we're on a protected route
       if (currentPath.startsWith('/dashboard')) {
+        // Use window.location.href to ensure full state reset on logout
         window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
       }
     }
@@ -113,19 +116,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const response = await apiClient.getCurrentUser()
-      const userData = response.data as { userId: string; email: string; role?: string }
-      
-      if (userData.userId && userData.email) {
+      const userData = response.data as { userId?: string; id?: string; email: string; role?: string; name?: string; avatarUrl?: string | null }
+
+      // Handle both userId and id fields
+      const userId = userData.userId || userData.id
+      if (userId && userData.email) {
         setUser({
-          id: userData.userId,
+          id: userId,
           email: userData.email,
-          name: userData.email.split('@')[0],
-          role: userData.role || 'user'
+          name: userData.name || userData.email.split('@')[0],
+          role: userData.role || 'user',
+          avatarUrl: userData.avatarUrl || null
         })
+        return true
+      } else {
+        console.warn('Incomplete user data from API:', userData)
+        throw new Error('Incomplete user data received')
       }
     } catch (error) {
-      console.error('Failed to fetch user data:', error)
-      throw error
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('Failed to fetch user data:', errorMessage)
+      
+      // If it's a 401 error, logout the user
+      if (error instanceof Error && (errorMessage.includes('session has expired') || errorMessage.includes('Unauthorized'))) {
+        logout()
+      }
+      
+      return false
     }
   }
 
@@ -143,7 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Format: { data: { data: { data: { token, user } } } }
       const respData = response?.data ?? response
       let accessToken: string | null = null
-      let userData: { id: string; email: string; name?: string; role?: string } | null = null
+      let refreshTokenValue: string | null = null
+      let userData: { id: string; email: string; name?: string; role?: string; avatarUrl?: string | null } | null = null
 
       // Extract token from nested structure
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,22 +169,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const inner = (respData as any).data.data.data
         accessToken = inner.token
+        refreshTokenValue = inner.refreshToken || null
         userData = inner.user
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((respData as any)?.data?.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const inner = (respData as any).data.data
         accessToken = inner.token
+        refreshTokenValue = inner.refreshToken || null
         userData = inner.user
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((respData as any)?.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         accessToken = (respData as any).data.token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        refreshTokenValue = (respData as any).data.refreshToken || null
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         userData = (respData as any).data.user
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         accessToken = (respData as any)?.token
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        refreshTokenValue = (respData as any)?.refreshToken || null
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         userData = (respData as any)?.user
       }
@@ -181,7 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store token
       try {
         localStorage.setItem('accessToken', accessToken)
-        localStorage.removeItem('refreshToken') // Backend doesn't return refresh token
+        if (refreshTokenValue) {
+          localStorage.setItem('refreshToken', refreshTokenValue)
+        } else {
+          localStorage.removeItem('refreshToken')
+        }
       } catch (e) {
         console.error('Failed to store tokens:', e)
       }
@@ -196,21 +224,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.id,
           email: userData.email,
           name: userData.name || userData.email.split('@')[0],
-          role: userData.role || 'user'
+          role: userData.role || 'user',
+          avatarUrl: userData.avatarUrl || null
         })
       } else {
         // Fallback: try to get user data from token or API
-        try {
-          await refreshUser()
-        } catch (error) {
-          console.warn('Could not fetch user data after login:', error)
-          // Set basic user info from email
-          setUser({
-            id: 'unknown',
-            email: email,
-            name: email.split('@')[0],
-            role: 'user'
-          })
+        const refreshed = await refreshUser()
+        if (!refreshed) {
+           throw new Error('Could not fetch user data after login');
         }
       }
     } catch (error) {
@@ -230,12 +251,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedTokens?.accessToken) {
           setToken(storedTokens.accessToken)
           apiClient.setToken(storedTokens.accessToken)
-          
-          try {
-            await refreshUser()
-          } catch (error) {
-            console.error('Failed to refresh user:', error)
+
+          const userRefreshed = await refreshUser()
+          if (!userRefreshed) {
+            // If user refresh failed, clear tokens
             clearStoredTokens()
+            setToken(null)
           }
         }
       } finally {
@@ -269,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user,
+    setUser,
     token,
     isLoading,
     isAuthenticated: !!user && !!token,

@@ -18,7 +18,7 @@ const logging_service_1 = require("../logging/logging.service");
 let CronJobCtor = null;
 let isCronAvailable = false;
 try {
-    const cronModule = require("cron");
+    const cronModule = require('cron');
     CronJobCtor = cronModule.CronJob;
     isCronAvailable = true;
 }
@@ -54,43 +54,43 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
     async initializeDefaultSchedules() {
         const defaultSchedules = [
             {
-                id: "full_backup_daily",
-                name: "Daily Full Backup",
-                type: "full",
-                cronExpression: "0 2 * * *",
+                id: 'full_backup_daily',
+                name: 'Daily Full Backup',
+                type: 'full',
+                cronExpression: '0 2 * * *',
                 enabled: true,
                 options: {
                     includeFiles: true,
                     compress: true,
                     encrypt: false,
                     retentionDays: 30,
-                    comment: "Automated daily full backup",
+                    comment: 'Automated daily full backup',
                 },
             },
             {
-                id: "incremental_backup_hourly",
-                name: "Hourly Incremental Backup",
-                type: "incremental",
-                cronExpression: "0 * * * *",
+                id: 'incremental_backup_hourly',
+                name: 'Hourly Incremental Backup',
+                type: 'incremental',
+                cronExpression: '0 * * * *',
                 enabled: true,
                 options: {
                     compress: true,
-                    comment: "Automated hourly incremental backup",
+                    comment: 'Automated hourly incremental backup',
                 },
             },
             {
-                id: "file_backup_weekly",
-                name: "Weekly File Backup",
-                type: "files",
-                cronExpression: "0 3 * * 0",
+                id: 'file_backup_weekly',
+                name: 'Weekly File Backup',
+                type: 'files',
+                cronExpression: '0 3 * * 0',
                 enabled: true,
                 options: {
                     compress: true,
-                    comment: "Automated weekly file backup",
+                    comment: 'Automated weekly file backup',
                 },
             },
         ];
-        const configuredSchedules = this.configService.get("BACKUP_SCHEDULES") || defaultSchedules;
+        const configuredSchedules = this.configService.get('BACKUP_SCHEDULES') || defaultSchedules;
         for (const schedule of configuredSchedules) {
             await this.createSchedule(schedule);
         }
@@ -99,12 +99,12 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
     async createSchedule(scheduleData) {
         const schedule = {
             id: scheduleData.id || `schedule_${Date.now()}`,
-            name: scheduleData.name || "Unnamed Schedule",
-            type: scheduleData.type || "full",
-            cronExpression: scheduleData.cronExpression || "0 2 * * *",
+            name: scheduleData.name || 'Unnamed Schedule',
+            type: scheduleData.type || 'full',
+            cronExpression: scheduleData.cronExpression || '0 2 * * *',
             enabled: scheduleData.enabled ?? true,
             options: scheduleData.options || {},
-            status: "inactive",
+            status: 'inactive',
         };
         schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
         this.schedules.set(schedule.id, schedule);
@@ -117,7 +117,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
                 schedule.errorMessage = 'cron skipped in test';
             }
         }
-        this.loggingService.logBusinessEvent("backup_schedule_created", {
+        this.loggingService.logBusinessEvent('backup_schedule_created', {
             scheduleId: schedule.id,
             scheduleName: schedule.name,
             type: schedule.type,
@@ -138,7 +138,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         if (schedule.enabled) {
             this.createCronJob(schedule);
         }
-        this.loggingService.logBusinessEvent("backup_schedule_updated", {
+        this.loggingService.logBusinessEvent('backup_schedule_updated', {
             scheduleId,
             updates,
         });
@@ -151,7 +151,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         }
         await this.stopSchedule(scheduleId);
         this.schedules.delete(scheduleId);
-        this.loggingService.logBusinessEvent("backup_schedule_deleted", {
+        this.loggingService.logBusinessEvent('backup_schedule_deleted', {
             scheduleId,
             scheduleName: schedule.name,
         });
@@ -163,9 +163,9 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             return false;
         }
         schedule.enabled = true;
-        schedule.status = "active";
+        schedule.status = 'active';
         this.createCronJob(schedule);
-        this.loggingService.logBusinessEvent("backup_schedule_enabled", {
+        this.loggingService.logBusinessEvent('backup_schedule_enabled', {
             scheduleId,
             scheduleName: schedule.name,
         });
@@ -178,7 +178,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         }
         schedule.enabled = false;
         await this.stopSchedule(scheduleId);
-        this.loggingService.logBusinessEvent("backup_schedule_disabled", {
+        this.loggingService.logBusinessEvent('backup_schedule_disabled', {
             scheduleId,
             scheduleName: schedule.name,
         });
@@ -196,13 +196,13 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
                 this.createCronJob(schedule);
             }
         }
-        this.logger.log("All backup schedules started");
+        this.logger.log('All backup schedules started');
     }
     async stopAllSchedules() {
         for (const scheduleId of this.schedules.keys()) {
             await this.stopSchedule(scheduleId);
         }
-        this.logger.log("All backup schedules stopped");
+        this.logger.log('All backup schedules stopped');
     }
     createCronJob(schedule) {
         try {
@@ -210,23 +210,23 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
                 if (process.env.NODE_ENV !== 'test') {
                     this.logger.warn(`Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`);
                 }
-                schedule.status = "inactive";
-                schedule.errorMessage = "cron package not available";
+                schedule.status = 'inactive';
+                schedule.errorMessage = 'cron package not available';
                 return;
             }
             const cronJob = new CronJobCtor(schedule.cronExpression, async () => {
                 if (this.isShuttingDown)
                     return;
                 await this.executeScheduledBackup(schedule);
-            }, null, false, "UTC");
+            }, null, false, 'UTC');
             this.cronJobs.set(schedule.id, cronJob);
             cronJob.start();
-            schedule.status = "active";
+            schedule.status = 'active';
             this.logger.log(`Created cron job for schedule: ${schedule.name} (${schedule.cronExpression})`);
         }
         catch (error) {
             this.logger.error(`Failed to create cron job for schedule: ${schedule.name}`, error);
-            schedule.status = "error";
+            schedule.status = 'error';
             schedule.errorMessage = error.message;
         }
     }
@@ -238,27 +238,27 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         }
         const schedule = this.schedules.get(scheduleId);
         if (schedule) {
-            schedule.status = "inactive";
+            schedule.status = 'inactive';
         }
     }
     async executeScheduledBackup(schedule) {
         const startTime = Date.now();
-        schedule.status = "running";
+        schedule.status = 'running';
         try {
-            this.loggingService.logBusinessEvent("scheduled_backup_started", {
+            this.loggingService.logBusinessEvent('scheduled_backup_started', {
                 scheduleId: schedule.id,
                 scheduleName: schedule.name,
                 type: schedule.type,
             });
             let result;
             switch (schedule.type) {
-                case "full":
+                case 'full':
                     result = await this.backupService.createFullBackup(schedule.options);
                     break;
-                case "incremental":
+                case 'incremental':
                     result = await this.backupService.createIncrementalBackup(schedule.options);
                     break;
-                case "files":
+                case 'files':
                     const backupId = `scheduled_files_${Date.now()}`;
                     result = await this.backupService.createFileBackup(backupId, schedule.options);
                     break;
@@ -267,9 +267,9 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             }
             schedule.lastRun = new Date();
             schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
-            schedule.status = "active";
+            schedule.status = 'active';
             schedule.errorMessage = undefined;
-            this.loggingService.logBusinessEvent("scheduled_backup_completed", {
+            this.loggingService.logBusinessEvent('scheduled_backup_completed', {
                 scheduleId: schedule.id,
                 scheduleName: schedule.name,
                 backupId: result.backupId,
@@ -279,18 +279,18 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             });
         }
         catch (error) {
-            schedule.status = "error";
+            schedule.status = 'error';
             schedule.errorMessage = error.message;
             schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
             this.loggingService.logError(error, {
                 metadata: {
-                    operation: "scheduled_backup",
+                    operation: 'scheduled_backup',
                     scheduleId: schedule.id,
                     scheduleName: schedule.name,
                     type: schedule.type,
                 },
             });
-            this.loggingService.logBusinessEvent("scheduled_backup_failed", {
+            this.loggingService.logBusinessEvent('scheduled_backup_failed', {
                 scheduleId: schedule.id,
                 scheduleName: schedule.name,
                 error: error.message,
@@ -303,7 +303,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             if (!isCronAvailable || !CronJobCtor) {
                 return new Date(Date.now() + 24 * 60 * 60 * 1000);
             }
-            const cronJob = new CronJobCtor(cronExpression, () => { }, null, false, "UTC");
+            const cronJob = new CronJobCtor(cronExpression, () => { }, null, false, 'UTC');
             return cronJob.nextDate().toJSDate();
         }
         catch (error) {
@@ -312,9 +312,9 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         }
     }
     getSchedulerStats() {
-        const activeSchedules = Array.from(this.schedules.values()).filter((s) => s.enabled);
-        const runningSchedules = Array.from(this.schedules.values()).filter((s) => s.status === "running");
-        const errorSchedules = Array.from(this.schedules.values()).filter((s) => s.status === "error");
+        const activeSchedules = Array.from(this.schedules.values()).filter(s => s.enabled);
+        const runningSchedules = Array.from(this.schedules.values()).filter(s => s.status === 'running');
+        const errorSchedules = Array.from(this.schedules.values()).filter(s => s.status === 'error');
         return {
             totalSchedules: this.schedules.size,
             activeSchedules: activeSchedules.length,
@@ -325,17 +325,17 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         };
     }
     getNextScheduledBackup() {
-        const activeSchedules = Array.from(this.schedules.values()).filter((s) => s.enabled);
+        const activeSchedules = Array.from(this.schedules.values()).filter(s => s.enabled);
         if (activeSchedules.length === 0) {
             return null;
         }
         const nextRuns = activeSchedules
-            .map((s) => s.nextRun)
-            .filter((date) => date !== undefined);
+            .map(s => s.nextRun)
+            .filter(date => date !== undefined);
         if (nextRuns.length === 0) {
             return null;
         }
-        return new Date(Math.min(...nextRuns.map((d) => d.getTime())));
+        return new Date(Math.min(...nextRuns.map(d => d.getTime())));
     }
     async forceRunSchedule(scheduleId) {
         const schedule = this.schedules.get(scheduleId);
@@ -345,7 +345,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
         setImmediate(() => {
             this.executeScheduledBackup(schedule);
         });
-        this.loggingService.logBusinessEvent("schedule_force_run", {
+        this.loggingService.logBusinessEvent('schedule_force_run', {
             scheduleId,
             scheduleName: schedule.name,
         });
@@ -385,7 +385,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
             }, {}),
             activeCronJobs: cronJobs.length,
             nextBackup: this.getNextScheduledBackup(),
-            schedules: schedules.map((s) => ({
+            schedules: schedules.map(s => ({
                 id: s.id,
                 name: s.name,
                 type: s.type,

@@ -56,48 +56,106 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Debug: Log API errors
+    // Debug: Log API errors (only in development)
     if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
       try {
-        // Check if error exists and is an object
-        if (!error || typeof error !== 'object') {
-          console.error('[API Client] Error: Invalid error object', error);
-          return Promise.reject(error);
-        }
-        
-        // Safely extract error properties
-        const errorInfo = {
-          url: (error.config && typeof error.config === 'object') ? error.config.url : 'unknown',
-          method: (error.config && typeof error.config === 'object') ? error.config.method : 'unknown',
-          status: (error.response && typeof error.response === 'object') ? error.response.status : 'unknown',
-          message: 'Unknown error',
-          fullResponse: null,
-          errorName: 'Unknown',
-          errorCode: 'Unknown',
+        // Always start with a minimal valid error object
+        const errorInfo: Record<string, unknown> = {
+          timestamp: new Date().toISOString(),
+          type: 'API_ERROR'
         };
         
-        // Safely extract message
-        if (error.response && typeof error.response === 'object' && error.response.data && typeof error.response.data === 'object') {
-          errorInfo.message = error.response.data.message || 'Unknown error';
-          errorInfo.fullResponse = error.response.data;
-        } else if (error.message && typeof error.message === 'string') {
+        // Extract error name and code first
+        if (error?.name) errorInfo.errorName = error.name;
+        if (error?.code) errorInfo.errorCode = error.code;
+        if (error?.message) errorInfo.errorMessage = error.message;
+        
+        // Extract request config information
+        if (error?.config) {
+          if (error.config.url) errorInfo.url = error.config.url;
+          if (error.config.method) errorInfo.method = error.config.method.toUpperCase();
+          if (error.config.baseURL) errorInfo.baseURL = error.config.baseURL;
+          // Build full URL for easier debugging
+          if (error.config.baseURL && error.config.url) {
+            errorInfo.fullUrl = `${error.config.baseURL}${error.config.url}`;
+          }
+          // Add request data for debugging (be careful with sensitive data)
+          if (error.config.data) {
+            try {
+              const requestData = typeof error.config.data === 'string' 
+                ? JSON.parse(error.config.data) 
+                : error.config.data;
+              // Don't log passwords or tokens
+              const sanitizedData = { ...requestData };
+              if (sanitizedData.password) sanitizedData.password = '***';
+              if (sanitizedData.token) sanitizedData.token = '***';
+              errorInfo.requestData = sanitizedData;
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+        
+        // Extract response information
+        if (error?.response) {
+          if (error.response.status) errorInfo.status = error.response.status;
+          if (error.response.statusText) errorInfo.statusText = error.response.statusText;
+          
+          // Extract response data and message
+          if (error.response.data) {
+            if (typeof error.response.data === 'object') {
+              if (error.response.data.message) {
+                errorInfo.message = error.response.data.message;
+              }
+              // Include full response data for debugging
+              errorInfo.responseData = error.response.data;
+            } else {
+              errorInfo.message = String(error.response.data);
+            }
+          }
+        }
+        
+        // Use error message as fallback if no response message
+        if (!errorInfo.message && error?.message) {
           errorInfo.message = error.message;
         }
         
-        // Safely extract error name and code
-        if (error.name && typeof error.name === 'string') {
-          errorInfo.errorName = error.name;
+        // Set default message if still empty
+        if (!errorInfo.message) {
+          errorInfo.message = 'Unknown API error';
         }
         
-        if (error.code && typeof error.code === 'string') {
-          errorInfo.errorCode = error.code;
-        }
+        // Log grouped error information with color coding based on status
+        const statusCode = errorInfo.status as number;
+        const logStyle = statusCode >= 500 ? 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;'
+                       : statusCode >= 400 ? 'background: #ff9800; color: white; padding: 2px 5px; border-radius: 3px;'
+                       : 'background: #2196f3; color: white; padding: 2px 5px; border-radius: 3px;';
         
-        console.error('[API Client] Error:', errorInfo);
+        console.groupCollapsed(
+          `%c${errorInfo.method || 'REQUEST'} ${errorInfo.url || 'API'} - ${statusCode || 'ERROR'}`,
+          logStyle
+        );
+        // Surface key fields first for quick debugging
+        console.error('API Error message:', errorInfo.errorMessage || errorInfo.message || 'Unknown error');
+        console.error('HTTP status:', statusCode);
+        if (errorInfo.fullUrl) console.error('Request URL:', errorInfo.fullUrl);
+        if (errorInfo.requestData) console.error('Request data:', errorInfo.requestData);
+        // Prefer to show the response body if available (most useful)
+        if (errorInfo.responseData) {
+          console.error('Response body:', errorInfo.responseData);
+        } else {
+          // Fallback: show the structured errorInfo object
+          console.error('Error Details:', errorInfo);
+        }
+        if (error && error.stack) {
+          console.debug('Stack Trace:', error.stack);
+        }
+        console.groupEnd();
+        
       } catch (logError) {
-        // Fallback logging if serialization fails
-        console.error('[API Client] Error (fallback):',
-          (error && typeof error === 'object' && error.message) ? error.message : 'Unknown error');
+        // Fallback: log the original error if structured logging fails
+        console.error('[API Client] Failed to process error:', logError);
+        console.error('[API Client] Original error:', error);
       }
     }
     
@@ -291,4 +349,3 @@ export const handleApiError = (error: { response?: { data?: { message?: string }
   const status = error.response?.status;
   return { message, status };
 };
-

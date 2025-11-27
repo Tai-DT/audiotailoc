@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Request, Response } from 'express';
@@ -51,7 +45,6 @@ export class CacheInterceptor implements NestInterceptor {
 
       this.logger.debug(`Cache miss for ${request.method} ${request.path}`);
       response.setHeader('X-Cache', 'MISS');
-
     } catch (error) {
       this.logger.error('Cache retrieval error', error);
       // Continue without cache on error
@@ -59,7 +52,7 @@ export class CacheInterceptor implements NestInterceptor {
 
     // Execute request and cache response
     return next.handle().pipe(
-      map(async (data) => {
+      map(async data => {
         try {
           // Get cache configuration from metadata
           const cacheOptions = this.getCacheOptions(context);
@@ -69,7 +62,6 @@ export class CacheInterceptor implements NestInterceptor {
 
           this.logger.debug(`Response cached for ${request.method} ${request.path}`);
           response.setHeader('X-Cache', 'MISS-STORED');
-
         } catch (error) {
           this.logger.error('Cache storage error', error);
           // Continue even if caching fails
@@ -143,9 +135,11 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     const sorted: any = {};
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = this.sortObjectKeys(obj[key]);
-    });
+    Object.keys(obj)
+      .sort()
+      .forEach(key => {
+        sorted[key] = this.sortObjectKeys(obj[key]);
+      });
 
     return sorted;
   }

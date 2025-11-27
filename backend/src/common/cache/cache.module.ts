@@ -1,5 +1,8 @@
 import { Module, Global, DynamicModule } from '@nestjs/common';
-import { CacheModule as NestCacheModule, CacheModuleOptions as NestCacheModuleOptions } from '@nestjs/cache-manager';
+import {
+  CacheModule as NestCacheModule,
+  CacheModuleOptions as NestCacheModuleOptions,
+} from '@nestjs/cache-manager';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
 import { Redis } from 'ioredis';
@@ -74,7 +77,7 @@ export class CacheModule {
               port: redisUrl.port,
               password: redisUrl.password,
               db: redisUrl.db,
-              retryStrategy: (times) => {
+              retryStrategy: times => {
                 const delay = Math.min(times * 50, 2000);
                 return delay;
               },
@@ -82,7 +85,7 @@ export class CacheModule {
               enableOfflineQueue: true,
             });
 
-            redis.on('error', (err) => {
+            redis.on('error', err => {
               console.error('Redis connection error:', err);
             });
 
@@ -136,9 +139,7 @@ export class CacheModule {
   /**
    * Register async (for dynamic configuration)
    */
-  static registerAsync(
-    options?: Partial<CacheModuleOptions>
-  ): DynamicModule {
+  static registerAsync(options?: Partial<CacheModuleOptions>): DynamicModule {
     return {
       module: CacheModule,
       imports: [
@@ -173,7 +174,7 @@ export class CacheModule {
                 port: redisUrl.port,
                 password: redisUrl.password,
                 db: redisUrl.db,
-                retryStrategy: (times) => {
+                retryStrategy: times => {
                   const delay = Math.min(times * 50, 2000);
                   return delay;
                 },
@@ -181,7 +182,7 @@ export class CacheModule {
                 enableOfflineQueue: true,
               });
 
-              redis.on('error', (err) => {
+              redis.on('error', err => {
                 console.error('Redis connection error:', err);
               });
 

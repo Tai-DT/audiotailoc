@@ -3,7 +3,7 @@ import { AdminController } from './admin.controller';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { GuardsModule } from '../auth/guards.module';
-import { ActivityLogService } from '../../services/activity-log.service';
+import { ActivityLogService } from '../logging/activity-log.service';
 import { MonitoringModule } from '../monitoring/monitoring.module';
 
 @Module({

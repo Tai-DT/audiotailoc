@@ -1,169 +1,83 @@
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, API_ENDPOINTS, handleApiResponse, handleApiError } from '@/lib/api';
-import { authStorage } from '@/lib/auth-storage';
-import toast from 'react-hot-toast';
+import { apiClient, handleApiResponse } from '../api';
+import { Wishlist, WishlistItem, CreateWishlistItemDto } from '../types';
 
-export interface WishlistItem {
-  id: string;
-  userId: string;
-  productId: string;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    priceCents: number;
-    originalPriceCents?: number;
-    imageUrl?: string;
-    images?: string[];
-    isActive: boolean;
-    stockQuantity: number;
-    category?: {
-      id: string;
-      name: string;
-      slug: string;
-    };
-  };
-  createdAt: string;
-}
+export const wishlistQueryKeys = {
+  all: ['wishlist'] as const,
+  details: () => [...wishlistQueryKeys.all, 'detail'] as const,
+};
 
-interface ApiError {
-  message: string;
-  status?: number;
-}
-
-interface WishlistResponse {
-  items: WishlistItem[];
-  total: number;
-}
-
-const hasSession = () =>
-  typeof window !== 'undefined' ? Boolean(authStorage.getAccessToken()) : false;
-
-// Hooks
-export function useWishlist(options?: { enabled?: boolean }) {
-  const enabled = (options?.enabled ?? true) && hasSession();
-
+export const useWishlist = () => {
   return useQuery({
-    queryKey: ['wishlist'],
+    queryKey: wishlistQueryKeys.details(),
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.WISHLIST.LIST);
-      return handleApiResponse<WishlistResponse>(response);
+      const response = await apiClient.get('/wishlist');
+      return handleApiResponse<Wishlist>(response);
     },
-    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
+};
 
-export function useWishlistCount(options?: { enabled?: boolean }) {
-  const enabled = (options?.enabled ?? true) && hasSession();
-
-  return useQuery({
-    queryKey: ['wishlist', 'count'],
-    queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.WISHLIST.COUNT);
-      return handleApiResponse<{ count: number }>(response);
-    },
-    enabled,
-  });
-}
-
-export function useIsInWishlist(productId: string) {
-  const enabled = !!productId && hasSession();
-
-  return useQuery({
-    queryKey: ['wishlist', 'check', productId],
-    queryFn: async () => {
-      try {
-        const response = await apiClient.get(API_ENDPOINTS.WISHLIST.CHECK(productId));
-        return handleApiResponse<{ isInWishlist: boolean }>(response);
-      } catch (error: unknown) {
-        const status = (error as ApiError)?.status ?? (error as { response?: { status?: number } }).response?.status;
-        if (status === 401 || status === 403) {
-          return { isInWishlist: false };
-        }
-        throw error;
-      }
-    },
-    enabled,
-  });
-}
-
-// Mutations
-export function useAddToWishlist() {
+export const useAddToWishlist = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (productId: string) => {
-      const response = await apiClient.post(API_ENDPOINTS.WISHLIST.ADD, { productId });
+      const data: CreateWishlistItemDto = { productId };
+      const response = await apiClient.post('/wishlist/items', data);
       return handleApiResponse<WishlistItem>(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      queryClient.invalidateQueries({ queryKey: ['wishlist', 'count'] });
-      toast.success('Đã thêm sản phẩm vào danh sách yêu thích!');
-    },
-    onError: (error: unknown) => {
-      const status = (error as ApiError)?.status ?? (error as { response?: { status?: number } }).response?.status;
-      if (status === 401 || status === 403) {
-        toast.error('Vui lòng đăng nhập để thêm vào danh sách yêu thích');
-        window.location.href = '/login';
-        return;
-      }
-      const { message } = handleApiError(error as ApiError);
-      toast.error(message);
+      queryClient.invalidateQueries({ queryKey: wishlistQueryKeys.all });
     },
   });
-}
+};
 
-export function useRemoveFromWishlist() {
+export const useRemoveFromWishlist = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (productId: string) => {
-      const response = await apiClient.delete(API_ENDPOINTS.WISHLIST.REMOVE(productId));
-      return handleApiResponse<void>(response);
+      const response = await apiClient.delete(`/wishlist/items/${productId}`);
+      return handleApiResponse<{ success: boolean }>(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      queryClient.invalidateQueries({ queryKey: ['wishlist', 'count'] });
-      toast.success('Đã xóa sản phẩm khỏi danh sách yêu thích!');
-    },
-    onError: (error: ApiError) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa khỏi danh sách yêu thích');
+      queryClient.invalidateQueries({ queryKey: wishlistQueryKeys.all });
     },
   });
-}
+};
 
-export function useToggleWishlist() {
-  const queryClient = useQueryClient();
-  const addMutation = useAddToWishlist();
-  const removeMutation = useRemoveFromWishlist();
+export const useCheckWishlist = (productId: string) => {
+  const { data: wishlist, isLoading } = useWishlist();
+  
+  const isInWishlist = wishlist?.items?.some(item => item.productId === productId) ?? false;
+  
+  return { isInWishlist, isLoading };
+};
 
-  const toggleWishlist = async (productId: string, isInWishlist: boolean) => {
-    // Optimistic update
-    queryClient.setQueryData(['wishlist', 'check', productId], { isInWishlist: !isInWishlist });
+export const useIsInWishlist = useCheckWishlist;
 
-    try {
+export const useWishlistCount = () => {
+  const { data: wishlist } = useWishlist();
+  return wishlist?.items?.length || 0;
+};
+
+export const useToggleWishlist = () => {
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+  const { data: wishlist } = useWishlist();
+
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const isInWishlist = wishlist?.items?.some(item => item.productId === productId);
       if (isInWishlist) {
-        await removeMutation.mutateAsync(productId);
+        return removeFromWishlist.mutateAsync(productId);
       } else {
-        await addMutation.mutateAsync(productId);
+        return addToWishlist.mutateAsync(productId);
       }
-
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      queryClient.invalidateQueries({ queryKey: ['wishlist', 'check', productId] });
-    } catch (error) {
-      // Revert optimistic update on error
-      queryClient.setQueryData(['wishlist', 'check', productId], { isInWishlist });
-      console.error('Toggle wishlist error:', error);
-      throw error;
-    }
-  };
-
-  return {
-    toggleWishlist,
-    isLoading: addMutation.isPending || removeMutation.isPending,
-  };
-}
+    },
+    onSuccess: () => {
+      // Invalidate queries handled by individual mutations
+    },
+  });
+};

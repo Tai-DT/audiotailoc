@@ -7,12 +7,12 @@ import { InventoryAlertService } from './inventory-alert.service';
 import { InventoryAlertController } from './inventory-alert.controller';
 import { GuardsModule } from '../auth/guards.module';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [GuardsModule, UsersModule],
+  imports: [GuardsModule, UsersModule, NotificationsModule],
   providers: [InventoryService, InventoryMovementService, InventoryAlertService],
   controllers: [InventoryController, InventoryMovementController, InventoryAlertController],
   exports: [InventoryService, InventoryMovementService, InventoryAlertService],
 })
 export class InventoryModule {}
-

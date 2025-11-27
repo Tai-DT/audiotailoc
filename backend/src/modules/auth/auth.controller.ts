@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -38,28 +48,32 @@ class ChangePasswordDto {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService, private readonly users: UsersService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly users: UsersService,
+  ) {}
 
   @Get('status')
   async status() {
     return {
       authenticated: false,
       message: 'Authentication status endpoint',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for registration
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    if (!dto.email || !dto.password) throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
+    if (!dto.email || !dto.password)
+      throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
     const user = await this.auth.register(dto);
     // Auto-login after successful registration
     const tokens = await this.auth.login({ email: dto.email, password: dto.password });
     return {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: { id: user.id, email: user.email, name: user.name }
+      user: { id: user.id, email: user.email, name: user.name },
     };
   }
 
@@ -82,8 +96,9 @@ export class AuthController {
         id: user?.id,
         email: user?.email,
         name: user?.name,
-        role: (user as any)?.role ?? 'USER'
-      }
+        role: (user as any)?.role ?? 'USER',
+        avatarUrl: (user as any)?.avatarUrl ?? null,
+      },
     };
   }
 
@@ -100,7 +115,10 @@ export class AuthController {
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     const _result = await this.auth.forgotPassword(dto.email).catch(() => {
-      throw new HttpException('Failed to process forgot password request', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Failed to process forgot password request',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     });
     return { message: 'If the email exists, a password reset link has been sent' };
   }
@@ -121,9 +139,11 @@ export class AuthController {
     const userId = (req as any).user?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
 
-    const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
-      throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
-    });
+    const _result = await this.auth
+      .changePassword(userId, dto.currentPassword, dto.newPassword)
+      .catch(() => {
+        throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
+      });
     return { message: 'Password has been changed successfully' };
   }
 
@@ -134,6 +154,12 @@ export class AuthController {
     const userId = (req as any).user?.sub as string | undefined;
     if (!userId) return { userId: null };
     const u = await this.users.findById(userId);
-    return { userId, email: u?.email ?? null, role: (u as any)?.role ?? null };
+    return {
+      userId,
+      email: u?.email ?? null,
+      role: (u as any)?.role ?? null,
+      avatarUrl: (u as any)?.avatarUrl ?? null,
+      name: u?.name ?? null,
+    };
   }
 }

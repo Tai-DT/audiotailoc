@@ -1,75 +1,67 @@
-'use client';
-
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
-import type { Project } from '@/lib/types';
+import { apiClient, handleApiResponse } from '../api';
+import { Project, PaginatedResponse } from '../types';
 
 export interface ProjectFilters {
-  page?: number;
-  limit?: number;
-  status?: string;
-  featured?: boolean;
+  q?: string;
   category?: string;
+  featured?: boolean;
+  status?: string;
+  isActive?: boolean;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
-export function useProjects(filters: ProjectFilters = {}) {
-  const { page = 1, limit = 12, status, featured, category } = filters;
+export const projectQueryKeys = {
+  all: ['projects'] as const,
+  lists: () => [...projectQueryKeys.all, 'list'] as const,
+  list: (filters: ProjectFilters) => [...projectQueryKeys.lists(), filters] as const,
+  details: () => [...projectQueryKeys.all, 'detail'] as const,
+  detail: (idOrSlug: string) => [...projectQueryKeys.details(), idOrSlug] as const,
+  featured: (limit: number) => [...projectQueryKeys.all, 'featured', limit] as const,
+};
 
+export const useProjects = (filters: ProjectFilters = {}) => {
   return useQuery({
-    queryKey: ['projects', { page, limit, status, featured, category }],
+    queryKey: projectQueryKeys.list(filters),
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PROJECTS.LIST, {
-        params: {
-          page,
-          limit,
-          status,
-          featured,
-          category,
-        },
-      });
-
-      const payload = handleApiResponse<{ data?: Project[]; meta?: { total?: number; page?: number; limit?: number } }>(response);
-
-      const projects = payload?.data ?? [];
-      const meta = payload?.meta ?? {};
-
-      return {
-        items: projects,
-        total: meta.total ?? projects.length,
-        page: meta.page ?? page,
-        pageSize: meta.limit ?? limit,
-      };
+      const response = await apiClient.get('/projects', { params: filters });
+      return handleApiResponse<PaginatedResponse<Project>>(response);
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
+};
 
-export function useFeaturedProjects(limit = 6) {
+export const useProject = (idOrSlug: string) => {
   return useQuery({
-    queryKey: ['projects', 'featured', limit],
+    queryKey: projectQueryKeys.detail(idOrSlug),
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PROJECTS.FEATURED, {
-        params: { limit },
-      });
-      return handleApiResponse<Project[]>(response);
-    },
-  });
-}
-
-export function useProject(idOrSlug: string) {
-  return useQuery({
-    queryKey: ['project', idOrSlug],
-    queryFn: async () => {
-      // Check if it's a UUID or slug
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-
-      const endpoint = isUUID
-        ? API_ENDPOINTS.PROJECTS.DETAIL(idOrSlug)
-        : API_ENDPOINTS.PROJECTS.DETAIL_BY_SLUG(idOrSlug);
-
-      const response = await apiClient.get(endpoint);
+      if (!idOrSlug) throw new Error('Project identifier is required');
+      const response = await apiClient.get(`/projects/${idOrSlug}`);
       return handleApiResponse<Project>(response);
     },
     enabled: !!idOrSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
-}
+};
+
+export const useFeaturedProjects = (limit = 3) => {
+  return useQuery({
+    queryKey: projectQueryKeys.featured(limit),
+    queryFn: async () => {
+      const response = await apiClient.get('/projects', {
+        params: {
+          featured: true,
+          isActive: true,
+          page: 1,
+          pageSize: limit,
+        },
+      });
+      const data = handleApiResponse<PaginatedResponse<Project>>(response);
+      return data.items;
+    },
+    staleTime: 15 * 60 * 1000,
+  });
+};

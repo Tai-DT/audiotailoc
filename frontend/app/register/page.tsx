@@ -25,7 +25,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const { data: user } = useAuth();
+  const { user } = useAuth();
   const registerMutation = useRegister();
   const router = useRouter();
 
@@ -95,6 +95,7 @@ export default function RegisterPage() {
       await registerMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
         name: formData.fullName,
         phone: formData.phone,
       });

@@ -32,7 +32,7 @@ export class LoggingService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {
     this.logger = this.createWinstonLogger();
   }
@@ -42,10 +42,7 @@ export class LoggingService {
     const logFormat = this.config.get<string>('LOG_FORMAT') || 'json';
     const environment = this.config.get<string>('NODE_ENV') || 'development';
 
-    const formats = [
-      winston.format.timestamp(),
-      winston.format.errors({ stack: true }),
-    ];
+    const formats = [winston.format.timestamp(), winston.format.errors({ stack: true })];
 
     if (logFormat === 'json') {
       formats.push(winston.format.json());
@@ -55,7 +52,7 @@ export class LoggingService {
           return `${timestamp} [${level.toUpperCase()}] ${message} ${
             Object.keys(meta).length ? JSON.stringify(meta) : ''
           }`;
-        })
+        }),
       );
     }
 
@@ -65,11 +62,8 @@ export class LoggingService {
     if (environment === 'development') {
       transports.push(
         new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple()
-          ),
-        })
+          format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+        }),
       );
     }
 
@@ -83,7 +77,7 @@ export class LoggingService {
           maxSize: '20m',
           maxFiles: '14d',
           level: logLevel,
-        })
+        }),
       );
 
       // Error logs
@@ -94,7 +88,7 @@ export class LoggingService {
           maxSize: '20m',
           maxFiles: '30d',
           level: 'error',
-        })
+        }),
       );
 
       // Security logs
@@ -105,7 +99,7 @@ export class LoggingService {
           maxSize: '20m',
           maxFiles: '90d',
           level: 'warn',
-        })
+        }),
       );
 
       // Audit logs
@@ -115,7 +109,7 @@ export class LoggingService {
           datePattern: 'YYYY-MM-DD',
           maxSize: '20m',
           maxFiles: '365d',
-        })
+        }),
       );
     }
 
@@ -143,7 +137,7 @@ export class LoggingService {
   error(message: string, context?: ErrorContext): void {
     const formattedContext = this.formatErrorContext(context);
     this.logger.error(message, formattedContext);
-    
+
     // Send to external error tracking service if configured
     this.sendToErrorTracking(message, formattedContext);
   }
@@ -152,7 +146,7 @@ export class LoggingService {
   logRequest(context: LogContext): void {
     const { method, url, statusCode, duration, userId: _userId, ip: _ip } = context;
     const message = `${method} ${url} ${statusCode} ${duration}ms`;
-    
+
     if (statusCode && statusCode >= 400) {
       this.warn(`Request failed: ${message}`, context);
     } else {
@@ -196,7 +190,8 @@ export class LoggingService {
 
   // Database operation logging
   logDatabaseQuery(query: string, duration: number, context?: LogContext): void {
-    if (duration > 1000) { // Log slow queries
+    if (duration > 1000) {
+      // Log slow queries
       this.warn(`Slow Query: ${duration}ms`, {
         ...context,
         query: this.sanitizeQuery(query),
@@ -214,9 +209,15 @@ export class LoggingService {
   }
 
   // External service logging
-  logExternalService(service: string, operation: string, duration: number, success: boolean, context?: LogContext): void {
+  logExternalService(
+    service: string,
+    operation: string,
+    duration: number,
+    success: boolean,
+    context?: LogContext,
+  ): void {
     const message = `External Service: ${service}.${operation} ${success ? 'SUCCESS' : 'FAILED'} ${duration}ms`;
-    
+
     if (!success || duration > 5000) {
       this.warn(message, {
         ...context,
@@ -262,9 +263,13 @@ export class LoggingService {
       statusCode: context?.statusCode,
       duration: context?.duration,
       category: 'user_activity',
-      severity: 'info'
+      severity: 'info',
     }).catch(error => {
-      this.error('Failed to save activity log to database', { error: error as Error, userId, action });
+      this.error('Failed to save activity log to database', {
+        error: error as Error,
+        userId,
+        action,
+      });
     });
   }
 
@@ -300,8 +305,8 @@ export class LoggingService {
           statusCode: data.statusCode || null,
           duration: data.duration || null,
           category: data.category,
-          severity: data.severity
-        }
+          severity: data.severity,
+        },
       });
     } catch (error) {
       this.error('Failed to save activity log', { error: error as Error, data });
@@ -322,9 +327,13 @@ export class LoggingService {
   }
 
   // System health logging
-  logSystemHealth(component: string, status: 'healthy' | 'degraded' | 'unhealthy', details?: any): void {
+  logSystemHealth(
+    component: string,
+    status: 'healthy' | 'degraded' | 'unhealthy',
+    details?: any,
+  ): void {
     const message = `System Health: ${component} is ${status}`;
-    
+
     if (status === 'unhealthy') {
       this.error(message, { component, status, details, category: 'system_health' });
     } else if (status === 'degraded') {
@@ -357,7 +366,7 @@ export class LoggingService {
 
   private formatContext(context?: LogContext): any {
     if (!context) return {};
-    
+
     return {
       ...context,
       timestamp: new Date().toISOString(),
@@ -368,9 +377,9 @@ export class LoggingService {
 
   private formatErrorContext(context?: ErrorContext): any {
     if (!context) return {};
-    
+
     const { error, ...rest } = context;
-    
+
     return {
       ...this.formatContext(rest),
       error: {
@@ -394,7 +403,7 @@ export class LoggingService {
   private sendToErrorTracking(_message: string, _context: any): void {
     // Integration with external error tracking services like Sentry
     const sentryDsn = this.config.get<string>('SENTRY_DSN');
-    
+
     if (sentryDsn) {
       try {
         // This would integrate with Sentry or similar service
@@ -416,7 +425,11 @@ export class LoggingService {
   }
 
   // Export logs for analysis
-  async exportLogs(startDate: Date, endDate: Date, format: 'json' | 'csv' = 'json'): Promise<string> {
+  async exportLogs(
+    startDate: Date,
+    endDate: Date,
+    format: 'json' | 'csv' = 'json',
+  ): Promise<string> {
     try {
       // This would export logs in the specified format
       this.info('Logs exported', { startDate, endDate, format });

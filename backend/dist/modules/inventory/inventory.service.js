@@ -8,224 +8,168 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var InventoryService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryService = void 0;
 const common_1 = require("@nestjs/common");
-const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
-const inventory_movement_service_1 = require("./inventory-movement.service");
-const inventory_alert_service_1 = require("./inventory-alert.service");
-let InventoryService = class InventoryService {
-    constructor(prisma, inventoryMovementService, inventoryAlertService) {
+const crypto_1 = require("crypto");
+let InventoryService = InventoryService_1 = class InventoryService {
+    constructor(prisma) {
         this.prisma = prisma;
-        this.inventoryMovementService = inventoryMovementService;
-        this.inventoryAlertService = inventoryAlertService;
+        this.logger = new common_1.Logger(InventoryService_1.name);
     }
     async list(params) {
-        const page = Math.max(1, Math.floor(params.page ?? 1));
-        const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
-        const baseWhere = params.lowStockOnly ? { lowStockThreshold: { gt: 0 } } : {};
-        const all = await this.prisma.inventory.findMany({
-            where: baseWhere,
-            include: {
-                products: {
-                    select: {
-                        id: true,
-                        name: true,
-                        sku: true,
-                        slug: true,
-                        priceCents: true,
-                        imageUrl: true,
-                        isActive: true,
-                        isDeleted: true,
-                        categoryId: true,
-                        categories: {
-                            select: {
-                                id: true,
-                                name: true,
-                                slug: true
-                            }
-                        }
-                    }
-                }
+        const { page = 1, pageSize = 20, lowStockOnly } = params;
+        const skip = (page - 1) * pageSize;
+        const where = {};
+        if (lowStockOnly) {
+            where.stock = {
+                lte: this.prisma.inventory.fields.lowStockThreshold,
+            };
+        }
+        const [items, total] = await Promise.all([
+            this.prisma.inventory.findMany({
+                where,
+                skip,
+                take: pageSize,
+                include: {
+                    products: true,
+                },
+                orderBy: {
+                    stock: 'asc',
+                },
+            }),
+            this.prisma.inventory.count({ where }),
+        ]);
+        return {
+            items,
+            meta: {
+                total,
+                page,
+                pageSize,
+                totalPages: Math.ceil(total / pageSize),
             },
-            orderBy: { updatedAt: 'desc' }
-        });
-        const filtered = params.lowStockOnly
-            ? all.filter((i) => i.lowStockThreshold > 0 && i.stock <= i.lowStockThreshold)
-            : all;
-        const total = filtered.length;
-        const start = (page - 1) * pageSize;
-        const items = filtered.slice(start, start + pageSize).map(item => ({
-            ...item,
-            product: item.products ? {
-                ...item.products,
-                priceCents: item.products.priceCents ? Number(item.products.priceCents) : null
-            } : null
-        }));
-        return { total, page, pageSize, items };
+        };
     }
-    async adjust(productId, delta) {
-        const product = await this.prisma.products.findUnique({
-            where: { id: productId },
-            select: { id: true, isActive: true, isDeleted: true, name: true }
-        });
-        if (!product) {
-            throw new Error(`Product with ID ${productId} not found`);
-        }
-        if (product.isDeleted || !product.isActive) {
-            throw new Error(`Product ${product.name} is not active or has been deleted`);
-        }
-        const currentInventory = await this.prisma.inventory.findUnique({
+    async getInventoryStatus(productId) {
+        return this.prisma.inventory.findUnique({
             where: { productId },
-            select: { stock: true, reserved: true, lowStockThreshold: true }
         });
-        const previousStock = currentInventory?.stock || 0;
-        const previousReserved = currentInventory?.reserved || 0;
-        const data = {};
-        if (typeof delta.stock === 'number') {
-            data.stock = delta.stock;
-        }
-        else if (typeof delta.stockDelta === 'number') {
-            data.stock = { increment: delta.stockDelta };
-        }
-        if (typeof delta.reserved === 'number') {
-            data.reserved = delta.reserved;
-        }
-        else if (typeof delta.reservedDelta === 'number') {
-            data.reserved = { increment: delta.reservedDelta };
-        }
-        if (typeof delta.lowStockThreshold === 'number') {
-            data.lowStockThreshold = delta.lowStockThreshold;
-        }
-        const inv = await this.prisma.inventory.upsert({
-            where: { productId },
-            update: data,
-            create: {
-                id: (0, crypto_1.randomUUID)(),
-                productId,
-                stock: typeof delta.stock === 'number' ? delta.stock : (typeof delta.stockDelta === 'number' ? delta.stockDelta : 0),
-                reserved: typeof delta.reserved === 'number' ? delta.reserved : (typeof delta.reservedDelta === 'number' ? delta.reservedDelta : 0),
-                lowStockThreshold: delta.lowStockThreshold || 0,
-                updatedAt: new Date()
-            },
-            include: { products: { select: { name: true, sku: true } } }
+    }
+    async adjust(productId, dto) {
+        return this.updateInventory(productId, {
+            quantity: dto.stock,
+            reserved: dto.reserved,
+            lowStockThreshold: dto.lowStockThreshold
         });
-        const newStock = inv.stock;
-        const newReserved = inv.reserved;
-        const stockDelta = newStock - previousStock;
-        const reservedDelta = newReserved - previousReserved;
-        if (stockDelta !== 0 || reservedDelta !== 0) {
-            if (stockDelta !== 0) {
-                await this.inventoryMovementService.create({
-                    productId,
-                    type: stockDelta > 0 ? 'IN' : 'OUT',
-                    quantity: Math.abs(stockDelta),
-                    previousStock,
-                    newStock,
-                    reason: delta.reason || 'Manual adjustment',
-                    referenceId: delta.referenceId,
-                    referenceType: delta.referenceType,
-                    userId: delta.userId,
-                    notes: delta.notes
-                });
-            }
-            if (reservedDelta !== 0) {
-                await this.inventoryMovementService.create({
-                    productId,
-                    type: reservedDelta > 0 ? 'RESERVED' : 'UNRESERVED',
-                    quantity: Math.abs(reservedDelta),
-                    previousStock: newStock,
-                    newStock,
-                    reason: delta.reason || 'Reservation adjustment',
-                    referenceId: delta.referenceId,
-                    referenceType: delta.referenceType,
-                    userId: delta.userId,
-                    notes: delta.notes
-                });
-            }
-        }
-        if (stockDelta !== 0) {
-            try {
-                await this.inventoryAlertService.checkAndCreateAlerts();
-            }
-            catch (error) {
-                console.error('Failed to check and create alerts:', error);
-            }
-        }
-        return inv;
     }
     async delete(productId) {
-        const inventory = await this.prisma.inventory.findUnique({
-            where: { productId },
-            include: { products: { select: { name: true, sku: true } } }
-        });
-        if (!inventory) {
-            throw new Error(`Inventory record for product ${productId} not found`);
-        }
-        await this.prisma.inventory.delete({
+        return this.prisma.inventory.delete({
             where: { productId }
         });
-        return {
-            message: 'Inventory deleted successfully',
-            productId,
-            productName: inventory.products.name,
-            sku: inventory.products.sku
-        };
     }
-    async syncWithProducts() {
-        const productsWithoutInventory = await this.prisma.products.findMany({
-            where: {
-                isDeleted: false,
-                isActive: true,
-                inventory: null
-            },
-            select: {
-                id: true,
-                name: true,
-                sku: true,
-                stockQuantity: true
+    async updateInventory(productId, updateDto) {
+        const { quantity, reserved, lowStockThreshold } = updateDto;
+        return this.prisma.$transaction(async (tx) => {
+            const product = await tx.products.findUnique({
+                where: { id: productId },
+            });
+            if (!product) {
+                throw new common_1.NotFoundException(`Product with ID ${productId} not found`);
             }
+            const currentInventory = await tx.inventory.findUnique({
+                where: { productId },
+            });
+            const oldQuantity = currentInventory?.stock || 0;
+            const inventory = await tx.inventory.upsert({
+                where: { productId },
+                update: {
+                    stock: quantity,
+                    reserved,
+                    lowStockThreshold,
+                    updatedAt: new Date(),
+                },
+                create: {
+                    id: (0, crypto_1.randomUUID)(),
+                    products: { connect: { id: productId } },
+                    stock: quantity || 0,
+                    reserved: reserved || 0,
+                    lowStockThreshold: lowStockThreshold || 5,
+                    updatedAt: new Date(),
+                },
+            });
+            if (quantity !== undefined) {
+                const diff = quantity - oldQuantity;
+                if (diff !== 0) {
+                    await tx.inventory_movements.create({
+                        data: {
+                            id: (0, crypto_1.randomUUID)(),
+                            products: { connect: { id: productId } },
+                            type: diff > 0 ? 'IN' : 'OUT',
+                            quantity: Math.abs(diff),
+                            previousStock: oldQuantity,
+                            newStock: quantity,
+                            reason: 'Manual Adjustment',
+                        },
+                    });
+                }
+            }
+            return inventory;
         });
-        const createdInventories = [];
-        for (const product of productsWithoutInventory) {
-            const inventory = await this.prisma.inventory.create({
+    }
+    async recordMovement(dto) {
+        return this.prisma.$transaction(async (tx) => {
+            const inventory = await tx.inventory.findUnique({
+                where: { id: dto.inventoryId },
+            });
+            if (!inventory) {
+                throw new common_1.NotFoundException(`Inventory record ${dto.inventoryId} not found`);
+            }
+            let newQuantity = inventory.stock;
+            if (dto.type === 'IN') {
+                newQuantity += dto.quantity;
+            }
+            else {
+                if (inventory.stock < dto.quantity) {
+                    throw new common_1.BadRequestException('Insufficient stock');
+                }
+                newQuantity -= dto.quantity;
+            }
+            await tx.inventory.update({
+                where: { id: dto.inventoryId },
+                data: { stock: newQuantity },
+            });
+            return tx.inventory_movements.create({
                 data: {
                     id: (0, crypto_1.randomUUID)(),
-                    productId: product.id,
-                    stock: product.stockQuantity || 0,
-                    reserved: 0,
-                    lowStockThreshold: 0,
-                    updatedAt: new Date()
+                    products: { connect: { id: inventory.productId } },
+                    type: dto.type,
+                    quantity: dto.quantity,
+                    previousStock: inventory.stock,
+                    newStock: newQuantity,
+                    reason: dto.reason,
+                    notes: dto.notes,
                 },
-                include: { products: { select: { name: true, sku: true } } }
             });
-            createdInventories.push(inventory);
-        }
-        const orphanedInventories = await this.prisma.inventory.findMany({
-            where: {
-                products: {
-                    OR: [
-                        { isDeleted: true },
-                        { isActive: false }
-                    ]
-                }
-            },
-            include: { products: { select: { name: true, sku: true, isDeleted: true, isActive: true } } }
         });
-        return {
-            syncedProducts: createdInventories.length,
-            orphanedInventoriesCount: orphanedInventories.length,
-            createdInventories,
-            orphanedInventoriesList: orphanedInventories
-        };
+    }
+    async checkLowStock() {
+        return this.prisma.inventory.findMany({
+            where: {
+                stock: {
+                    lte: this.prisma.inventory.fields.lowStockThreshold,
+                },
+            },
+            include: {
+                products: true,
+            },
+        });
     }
 };
 exports.InventoryService = InventoryService;
-exports.InventoryService = InventoryService = __decorate([
+exports.InventoryService = InventoryService = InventoryService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        inventory_movement_service_1.InventoryMovementService,
-        inventory_alert_service_1.InventoryAlertService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], InventoryService);
 //# sourceMappingURL=inventory.service.js.map

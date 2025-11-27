@@ -3,63 +3,13 @@
 import { useState, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
-
-export interface AnalyticsOverview {
-  totalRevenue: number
-  totalOrders: number
-  totalCustomers: number
-  newCustomers: number
-  conversionRate: number
-  revenueGrowth: number
-  ordersGrowth: number
-  customersGrowth: number
-}
-
-export interface AnalyticsTrend {
-  date: string
-  revenue: number
-  orders: number
-  customers: number
-}
-
-export interface TopService {
-  id: string
-  name: string
-  bookings: number
-  revenue: number
-}
-
-export interface TopProduct {
-  id: string
-  name: string
-  sold: number
-  revenue: number
-}
-
-export interface UserActivity {
-  pageViews: number
-  sessions: number
-  avgSessionDuration: number
-  bounceRate: number
-}
-
-export interface AnalyticsFilters {
-  dateRange: '7days' | '30days' | '90days' | '1year' | 'custom';
-  startDate?: string;
-  endDate?: string;
-  category?: string;
-  productId?: string;
-  serviceId?: string;
-  userId?: string;
-  status?: string;
-}
-
-export interface ExportOptions {
-  format: 'pdf' | 'excel' | 'csv';
-  includeCharts: boolean;
-  dateRange: string;
-  filters?: AnalyticsFilters;
-}
+import {
+  AnalyticsOverview,
+  AnalyticsTrend,
+  TopService,
+  TopProduct,
+  UserActivity
+} from '@/types/analytics'
 
 export function useAnalytics() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
@@ -75,13 +25,14 @@ export function useAnalytics() {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await apiClient.get(`/analytics/overview?range=${dateRange}`)
-      
+
       if (response.data) {
-        setOverview(response.data as AnalyticsOverview)
+        setOverview(response.data as unknown as AnalyticsOverview)
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching overview:', err)
       const errorMessage = 'Không thể tải dữ liệu tổng quan'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -94,12 +45,16 @@ export function useAnalytics() {
   const fetchTrends = useCallback(async (dateRange: string = '7days') => {
     try {
       const response = await apiClient.get(`/analytics/trends?range=${dateRange}`)
-      
-      if (response.data) {
-        setTrends(response.data as AnalyticsTrend[])
+
+      if (response.data && Array.isArray(response.data)) {
+        setTrends(response.data as unknown as AnalyticsTrend[])
+      } else {
+        setTrends([])
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching trends:', err)
       toast.error('Không thể tải dữ liệu xu hướng')
+      setTrends([])
     }
   }, [])
 
@@ -107,12 +62,16 @@ export function useAnalytics() {
   const fetchTopServices = useCallback(async () => {
     try {
       const response = await apiClient.get('/analytics/top-services?limit=5')
-      
-      if (response.data) {
-        setTopServices(response.data as TopService[])
+
+      if (response.data && Array.isArray(response.data)) {
+        setTopServices(response.data as unknown as TopService[])
+      } else {
+        setTopServices([])
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching top services:', err)
       toast.error('Không thể tải dữ liệu dịch vụ')
+      setTopServices([])
     }
   }, [])
 
@@ -120,12 +79,16 @@ export function useAnalytics() {
   const fetchTopProducts = useCallback(async () => {
     try {
       const response = await apiClient.get('/analytics/top-products?limit=5')
-      
-      if (response.data) {
-        setTopProducts(response.data as TopProduct[])
+
+      if (response.data && Array.isArray(response.data)) {
+        setTopProducts(response.data as unknown as TopProduct[])
+      } else {
+        setTopProducts([])
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching top products:', err)
       toast.error('Không thể tải dữ liệu sản phẩm')
+      setTopProducts([])
     }
   }, [])
 
@@ -133,11 +96,12 @@ export function useAnalytics() {
   const fetchUserActivity = useCallback(async (dateRange: string = '7days') => {
     try {
       const response = await apiClient.get(`/analytics/user-activity?range=${dateRange}`)
-      
+
       if (response.data) {
-        setUserActivity(response.data as UserActivity)
+        setUserActivity(response.data as unknown as UserActivity)
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching user activity:', err)
       toast.error('Không thể tải dữ liệu hoạt động người dùng')
     }
   }, [])

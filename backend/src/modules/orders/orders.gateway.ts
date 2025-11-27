@@ -3,4 +3,3 @@ export class OrdersGateway {
   server: any;
   emitUpdate(_payload: unknown) {}
 }
-

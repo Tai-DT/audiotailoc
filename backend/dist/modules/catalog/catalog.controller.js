@@ -22,6 +22,7 @@ const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const create_product_dto_1 = require("./dto/create-product.dto");
 const update_product_dto_1 = require("./dto/update-product.dto");
 const create_category_dto_1 = require("./dto/create-category.dto");
+const update_category_dto_1 = require("./dto/update-category.dto");
 class DeleteManyDto {
 }
 __decorate([
@@ -53,7 +54,7 @@ let CatalogController = class CatalogController {
                 featured,
             });
             return {
-                data: res.items,
+                items: res.items,
                 pagination: {
                     total: res.total,
                     page: res.page,
@@ -87,7 +88,10 @@ let CatalogController = class CatalogController {
         }
         catch (err) {
             console.error('CatalogController.searchProducts error:', err);
-            return { data: [], pagination: { total: 0, page: 1, pageSize: Math.min(parseInt(String(limit ?? '20')), 50) } };
+            return {
+                data: [],
+                pagination: { total: 0, page: 1, pageSize: Math.min(parseInt(String(limit ?? '20')), 50) },
+            };
         }
     }
     get(id) {
@@ -106,8 +110,7 @@ let CatalogController = class CatalogController {
         return this.catalog.createCategory(dto);
     }
     async listCategories() {
-        const items = await this.catalog.listCategories();
-        return { data: items };
+        return this.catalog.listCategories();
     }
     getCategoryAlias(slug) {
         return this.catalog.getCategoryBySlug(slug);
@@ -117,6 +120,15 @@ let CatalogController = class CatalogController {
     }
     getProductsByCategory(slug, page, limit) {
         return this.catalog.getProductsByCategory(slug, { page, limit });
+    }
+    async getCategoryById(id) {
+        return this.catalog.getCategoryById(id);
+    }
+    async updateCategoryById(id, dto) {
+        return this.catalog.updateCategory(id, dto);
+    }
+    async deleteCategoryById(id) {
+        return this.catalog.deleteCategory(id);
     }
     create(dto) {
         return this.catalog.create(dto);
@@ -138,7 +150,10 @@ let CatalogController = class CatalogController {
             sortBy: 'viewCount',
             sortOrder: 'desc',
         });
-        return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
+        return {
+            data: res.items,
+            pagination: { total: res.total, page: res.page, pageSize: res.pageSize },
+        };
     }
     async getRecentProducts(limit) {
         const pageSize = Math.min(parseInt(String(limit ?? '10')), 50);
@@ -148,13 +163,15 @@ let CatalogController = class CatalogController {
             sortBy: 'createdAt',
             sortOrder: 'desc',
         });
-        return { data: res.items, pagination: { total: res.total, page: res.page, pageSize: res.pageSize } };
+        return {
+            data: res.items,
+            pagination: { total: res.total, page: res.page, pageSize: res.pageSize },
+        };
     }
 };
 exports.CatalogController = CatalogController;
 __decorate([
     (0, common_1.Get)('products'),
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -257,6 +274,43 @@ __decorate([
     __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", void 0)
 ], CatalogController.prototype, "getProductsByCategory", null);
+__decorate([
+    (0, common_1.Get)('categories/:id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Get category by ID' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.OK, description: 'Category retrieved successfully' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NOT_FOUND, description: 'Category not found' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CatalogController.prototype, "getCategoryById", null);
+__decorate([
+    (0, common_1.Patch)('categories/:id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Update category' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.OK, description: 'Category updated successfully' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NOT_FOUND, description: 'Category not found' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_category_dto_1.UpdateCategoryDto]),
+    __metadata("design:returntype", Promise)
+], CatalogController.prototype, "updateCategoryById", null);
+__decorate([
+    (0, common_1.Delete)('categories/:id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete category' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.OK, description: 'Category deleted successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.BAD_REQUEST,
+        description: 'Cannot delete category with products or subcategories',
+    }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CatalogController.prototype, "deleteCategoryById", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Post)('products'),

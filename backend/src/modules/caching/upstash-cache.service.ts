@@ -79,7 +79,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
   private async makeRequest(method: string, path: string, body?: any): Promise<any> {
     const url = `${this.restUrl}${path}`;
     const headers = {
-      'Authorization': `Bearer ${this.restToken}`,
+      Authorization: `Bearer ${this.restToken}`,
       'Content-Type': 'application/json',
     };
 
@@ -155,11 +155,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Set cache entry
-  async set<T = any>(
-    key: string,
-    value: T,
-    options?: CacheOptions
-  ): Promise<boolean> {
+  async set<T = any>(key: string, value: T, options?: CacheOptions): Promise<boolean> {
     if (!this.isConnected) {
       return false;
     }
@@ -248,7 +244,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
     try {
       // Get all keys with pattern (this is a simplified approach)
       // Upstash doesn't support KEYS command directly, so we'll use a different approach
-  const _pattern = `${prefix}:*`;
+      const _pattern = `${prefix}:*`;
       this.logger.log(`Clearing cache entries with prefix ${prefix}`);
       // For now, return 0 as we need to implement key scanning
       return 0;
@@ -297,7 +293,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
   async getOrSet<T = any>(
     key: string,
     factory: () => Promise<T>,
-    options?: CacheOptions
+    options?: CacheOptions,
   ): Promise<T> {
     // Try to get from cache first
     const cached = await this.get<T>(key, { prefix: options?.keyPrefix });
@@ -332,7 +328,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
 
       // Upstash doesn't support MGET directly, so we'll make individual requests
       const results = await Promise.all(
-        cacheKeys.map(async (cacheKey) => {
+        cacheKeys.map(async cacheKey => {
           try {
             const response = await this.makeRequest('GET', `/get/${encodeURIComponent(cacheKey)}`);
             if (response.result) {
@@ -352,7 +348,7 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
             this.stats.misses++;
             return null;
           }
-        })
+        }),
       );
 
       return results;
@@ -363,7 +359,10 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Multi-set operation
-  async mset(keyValuePairs: { key: string; value: any }[], options?: CacheOptions): Promise<boolean> {
+  async mset(
+    keyValuePairs: { key: string; value: any }[],
+    options?: CacheOptions,
+  ): Promise<boolean> {
     if (!this.isConnected) {
       return false;
     }
@@ -403,9 +402,8 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
 
   // Get cache statistics
   getStats(): CacheStats {
-    const hitRate = this.stats.totalRequests > 0
-      ? (this.stats.hits / this.stats.totalRequests) * 100
-      : 0;
+    const hitRate =
+      this.stats.totalRequests > 0 ? (this.stats.hits / this.stats.totalRequests) * 100 : 0;
 
     return {
       hits: this.stats.hits,
@@ -516,9 +514,11 @@ export class UpstashCacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     const sorted: any = {};
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = this.sortObjectKeys(obj[key]);
-    });
+    Object.keys(obj)
+      .sort()
+      .forEach(key => {
+        sorted[key] = this.sortObjectKeys(obj[key]);
+      });
 
     return sorted;
   }

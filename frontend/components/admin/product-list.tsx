@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DataTable } from '@/components/ui/data-table';
-import { useProducts, Product } from '@/lib/hooks/use-products';
+import { useProducts } from '@/lib/hooks/use-products';
+import { Product } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -233,7 +234,7 @@ export function ProductList({
 
       <DataTable
         columns={columns}
-        data={productsData?.products || []}
+        data={productsData?.items || []}
         loading={isLoading}
         searchKey="name"
         searchPlaceholder="Tìm kiếm sản phẩm..."

@@ -54,7 +54,7 @@ let CacheService = CacheService_1 = class CacheService {
                 this.isConnected = true;
                 this.logger.log('Redis connected successfully');
             });
-            this.redis.on('error', (error) => {
+            this.redis.on('error', error => {
                 this.isConnected = false;
                 this.logger.error('Redis connection error', error);
             });
@@ -296,9 +296,7 @@ let CacheService = CacheService_1 = class CacheService {
         }
     }
     getStats() {
-        const hitRate = this.stats.totalRequests > 0
-            ? (this.stats.hits / this.stats.totalRequests) * 100
-            : 0;
+        const hitRate = this.stats.totalRequests > 0 ? (this.stats.hits / this.stats.totalRequests) * 100 : 0;
         return {
             hits: this.stats.hits,
             misses: this.stats.misses,
@@ -349,7 +347,9 @@ let CacheService = CacheService_1 = class CacheService {
             return obj;
         }
         const sorted = {};
-        Object.keys(obj).sort().forEach(key => {
+        Object.keys(obj)
+            .sort()
+            .forEach(key => {
             sorted[key] = this.sortObjectKeys(obj[key]);
         });
         return sorted;

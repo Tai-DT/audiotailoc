@@ -2,7 +2,6 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller('logging')
 export class LoggingController {
-  
   @Get()
   async findAll() {
     return {
@@ -10,9 +9,9 @@ export class LoggingController {
       data: {
         message: 'logging module is working',
         status: 'active',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      message: 'logging data retrieved successfully'
+      message: 'logging data retrieved successfully',
     };
   }
 
@@ -24,8 +23,8 @@ export class LoggingController {
         module: 'logging',
         status: 'operational',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
   }
 }

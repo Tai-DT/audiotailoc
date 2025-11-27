@@ -1,8 +1,23 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Query,
+  ValidationPipe,
+  Req,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { QueryProjectsDto } from './dto/query-projects.dto';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -12,20 +27,8 @@ export class ProjectsController {
   // Public endpoints
   @Get()
   @ApiOperation({ summary: 'Get all projects' })
-  async list(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('status') status?: string,
-    @Query('featured') featured?: string,
-    @Query('category') category?: string,
-  ) {
-    return this.projectsService.findAll({
-      page,
-      limit,
-      status,
-      featured: featured === 'true',
-      category,
-    });
+  async list(@Query(ValidationPipe) query: QueryProjectsDto) {
+    return this.projectsService.findAll(query);
   }
 
   @Get('featured')
@@ -50,22 +53,30 @@ export class ProjectsController {
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post()
   @ApiOperation({ summary: 'Create new project' })
-  async create(@Body() data: any) {
+  async create(@Body(ValidationPipe) data: CreateProjectDto, @Req() req: any) {
+    // Inject userId from request
+    // Note: In a real app, we'd get this from the JWT token in the request
+    // For now, we'll assume the guard attaches the user to the request
+    // or use a default admin ID if not available (for testing)
+    const userId = req?.user?.id || 'admin-id-placeholder';
+    data.userId = userId;
     return this.projectsService.create(data);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id')
   @ApiOperation({ summary: 'Update project' })
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body(ValidationPipe) data: UpdateProjectDto) {
     return this.projectsService.update(id, data);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete project' })
-  async remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
+  @ApiOperation({ summary: 'Soft delete project' })
+  @ApiQuery({ name: 'permanent', required: false, type: Boolean })
+  async remove(@Param('id') id: string, @Query('permanent') permanent?: string) {
+    const isPermanent = permanent === 'true';
+    return this.projectsService.remove(id, isPermanent);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
@@ -85,10 +96,14 @@ export class ProjectsController {
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id/reorder')
   @ApiOperation({ summary: 'Update project display order' })
-  async updateOrder(
-    @Param('id') id: string,
-    @Body('displayOrder') displayOrder: number,
-  ) {
+  async updateOrder(@Param('id') id: string, @Body('displayOrder') displayOrder: number) {
     return this.projectsService.updateDisplayOrder(id, displayOrder);
+  }
+
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore soft-deleted project' })
+  async restore(@Param('id') id: string) {
+    return this.projectsService.restore(id);
   }
 }

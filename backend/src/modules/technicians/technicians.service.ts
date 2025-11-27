@@ -51,7 +51,7 @@ export class TechniciansService {
   }) {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
-    
+
     const where: any = {};
     if (params.isActive !== undefined) where.isActive = params.isActive;
     if (params.specialty) {
@@ -111,19 +111,22 @@ export class TechniciansService {
   }
 
   // Update technician
-  async updateTechnician(id: string, data: Partial<{
-    name: string;
-    phone: string;
-    email: string;
-    specialties: ServiceCategory[];
-    isActive: boolean;
-  }>) {
+  async updateTechnician(
+    id: string,
+    data: Partial<{
+      name: string;
+      phone: string;
+      email: string;
+      specialties: ServiceCategory[];
+      isActive: boolean;
+    }>,
+  ) {
     const technician = await this.getTechnician(id);
 
     // Check if phone already exists (excluding current technician)
     if (data.phone && data.phone !== technician.phone) {
       const existingTechnician = await this.prisma.technicians.findFirst({
-        where: { 
+        where: {
           phone: data.phone,
           id: { not: id },
         },
@@ -138,7 +141,8 @@ export class TechniciansService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.email !== undefined) updateData.email = data.email;
-    if (data.specialties !== undefined) updateData.specialties = JSON.stringify(data.specialties || []);
+    if (data.specialties !== undefined)
+      updateData.specialties = JSON.stringify(data.specialties || []);
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     return this.prisma.technicians.update({
@@ -179,15 +183,18 @@ export class TechniciansService {
   }
 
   // Schedule Management
-  async setTechnicianSchedule(technicianId: string, technician_schedules: Array<{
-    date: Date;
-    startTime: string;
-    endTime: string;
-    isAvailable: boolean;
-  }>) {
+  async setTechnicianSchedule(
+    technicianId: string,
+    technician_schedules: Array<{
+      date: Date;
+      startTime: string;
+      endTime: string;
+      isAvailable: boolean;
+    }>,
+  ) {
     const _technician = await this.getTechnician(technicianId);
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async tx => {
       // Delete existing schedules
       await tx.technician_schedules.deleteMany({
         where: { technicianId },
@@ -205,8 +212,8 @@ export class TechniciansService {
               endTime: schedule.endTime,
               isAvailable: schedule.isAvailable,
             },
-          })
-        )
+          }),
+        ),
       );
 
       return createdSchedules;
@@ -224,7 +231,9 @@ export class TechniciansService {
     const [hours, minutes] = params.time.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
     const endMinutes = startMinutes + duration;
-    const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`;
+    const endTime = `${Math.floor(endMinutes / 60)
+      .toString()
+      .padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`;
 
     const where: any = {
       isActive: true,
@@ -232,7 +241,11 @@ export class TechniciansService {
         some: {
           date: {
             gte: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate()),
-            lt: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate() + 1),
+            lt: new Date(
+              params.date.getFullYear(),
+              params.date.getMonth(),
+              params.date.getDate() + 1,
+            ),
           },
           isAvailable: true,
           startTime: { lte: params.time },
@@ -251,8 +264,16 @@ export class TechniciansService {
         technician_schedules: {
           where: {
             date: {
-              gte: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate()),
-              lt: new Date(params.date.getFullYear(), params.date.getMonth(), params.date.getDate() + 1),
+              gte: new Date(
+                params.date.getFullYear(),
+                params.date.getMonth(),
+                params.date.getDate(),
+              ),
+              lt: new Date(
+                params.date.getFullYear(),
+                params.date.getMonth(),
+                params.date.getDate() + 1,
+              ),
             },
           },
         },
@@ -264,38 +285,38 @@ export class TechniciansService {
   }
 
   // Get technician workload
-  async getTechnicianWorkload(technicianId: string, params: {
-    fromDate?: Date;
-    toDate?: Date;
-  }) {
+  async getTechnicianWorkload(
+    technicianId: string,
+    params: {
+      fromDate?: Date;
+      toDate?: Date;
+    },
+  ) {
     const where: any = { technicianId };
-    
+
     if (params.fromDate || params.toDate) {
       where.scheduledAt = {};
       if (params.fromDate) where.scheduledAt.gte = params.fromDate;
       if (params.toDate) where.scheduledAt.lte = params.toDate;
     }
 
-    const [
-      totalBookings,
-      completedBookings,
-      pendingBookings,
-      totalRevenue,
-    ] = await Promise.all([
+    const [totalBookings, completedBookings, pendingBookings, totalRevenue] = await Promise.all([
       this.prisma.service_bookings.count({ where }),
-      this.prisma.service_bookings.count({ 
-        where: { ...where, status: ServiceBookingStatus.COMPLETED } 
+      this.prisma.service_bookings.count({
+        where: { ...where, status: ServiceBookingStatus.COMPLETED },
       }),
-      this.prisma.service_bookings.count({ 
-        where: { 
-          ...where, 
-          status: { in: [
-            ServiceBookingStatus.PENDING,
-            ServiceBookingStatus.CONFIRMED,
-            ServiceBookingStatus.ASSIGNED,
-            ServiceBookingStatus.IN_PROGRESS,
-          ] } 
-        } 
+      this.prisma.service_bookings.count({
+        where: {
+          ...where,
+          status: {
+            in: [
+              ServiceBookingStatus.PENDING,
+              ServiceBookingStatus.CONFIRMED,
+              ServiceBookingStatus.ASSIGNED,
+              ServiceBookingStatus.IN_PROGRESS,
+            ],
+          },
+        },
       }),
       this.prisma.service_booking_items.aggregate({
         where: {
@@ -368,17 +389,13 @@ export class TechniciansService {
 
   // Get technician statistics
   async getTechnicianStats() {
-    const [
-      totalTechnicians,
-      activeTechnicians,
-      totalBookings,
-      completedBookings,
-    ] = await Promise.all([
-      this.prisma.technicians.count(),
-      this.prisma.technicians.count({ where: { isActive: true } }),
-      this.prisma.service_bookings.count(),
-      this.prisma.service_bookings.count({ where: { status: 'COMPLETED' } }),
-    ]);
+    const [totalTechnicians, activeTechnicians, totalBookings, completedBookings] =
+      await Promise.all([
+        this.prisma.technicians.count(),
+        this.prisma.technicians.count({ where: { isActive: true } }),
+        this.prisma.service_bookings.count(),
+        this.prisma.service_bookings.count({ where: { status: 'COMPLETED' } }),
+      ]);
 
     // Get top performers
     const topPerformersRaw = await this.prisma.technicians.findMany({

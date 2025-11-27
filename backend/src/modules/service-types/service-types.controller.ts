@@ -9,8 +9,7 @@ import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 @ApiTags('Service Types')
 @Controller('service-types')
 export class ServiceTypesController {
-  constructor(private readonly serviceTypesService: ServiceTypesService) {
-  }
+  constructor(private readonly serviceTypesService: ServiceTypesService) {}
   @Post()
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
@@ -79,11 +78,11 @@ export class ServiceTypesController {
   @ApiResponse({ status: 404, description: 'Service type or category not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden. Admin access required.' })
-  update(
-    @Param('id') id: string,
-    @Body() updateServiceTypeDto: UpdateServiceTypeDto,
-  ) {
-    console.log(`[ServiceTypesController] PATCH /service-types/${id} - Data:`, updateServiceTypeDto);
+  update(@Param('id') id: string, @Body() updateServiceTypeDto: UpdateServiceTypeDto) {
+    console.log(
+      `[ServiceTypesController] PATCH /service-types/${id} - Data:`,
+      updateServiceTypeDto,
+    );
     return this.serviceTypesService.update(id, updateServiceTypeDto);
   }
 

@@ -51,35 +51,33 @@ const bcrypt = __importStar(require("bcryptjs"));
 const jwt = __importStar(require("jsonwebtoken"));
 const crypto = __importStar(require("crypto"));
 const config_1 = require("@nestjs/config");
+const mail_service_1 = require("../notifications/mail.service");
 let AuthService = class AuthService {
-    constructor(users, config, securityService) {
+    constructor(users, config, securityService, mailService) {
         this.users = users;
         this.config = config;
         this.securityService = securityService;
+        this.mailService = mailService;
     }
     async register(dto) {
         const passwordValidation = password_validator_1.PasswordValidator.validate(dto.password);
         if (!passwordValidation.isValid) {
             throw new common_1.BadRequestException({
                 message: 'Password does not meet security requirements',
-                errors: passwordValidation.errors
+                errors: passwordValidation.errors,
             });
         }
         try {
-            return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+            return await this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
         }
         catch (error) {
-            console.log('AuthService.register error:', error);
-            console.log('Error type:', typeof error);
-            console.log('Error instanceof BadRequestException:', error instanceof common_1.BadRequestException);
             if (error instanceof common_1.BadRequestException) {
                 const errorMessage = error.message || error.toString();
-                console.log('Error message:', errorMessage);
                 if (errorMessage.includes('Email already exists')) {
-                    console.log('Throwing BadRequestException for duplicate email');
                     throw new common_1.BadRequestException('Email already exists');
                 }
             }
+            console.error('AuthService.register failed:', error instanceof Error ? error.message : String(error));
             throw error;
         }
     }
@@ -105,12 +103,17 @@ let AuthService = class AuthService {
         }
         const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
         const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
-        const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
+        const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, {
+            expiresIn: refreshTokenExpiry,
+        });
         return { accessToken, refreshToken, userId: user.id };
     }
     async refresh(refreshToken) {
         try {
-            const refreshSecret = this.config.get('JWT_REFRESH_SECRET') || 'dev_refresh';
+            const refreshSecret = this.config.get('JWT_REFRESH_SECRET');
+            if (!refreshSecret) {
+                throw new Error('JWT_REFRESH_SECRET is not configured');
+            }
             const payload = jwt.verify(refreshToken, refreshSecret);
             const user = await this.users.findById(payload.sub);
             if (!user)
@@ -139,22 +142,42 @@ let AuthService = class AuthService {
             return { success: true };
         }
         const resetToken = crypto.randomBytes(32).toString('hex');
-        const _resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+        await this.users.setResetToken(user.id, hashedToken, resetTokenExpiry);
+        const resetLink = `${this.config.get('FRONTEND_URL') || 'http://localhost:3001'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+        if (this.config.get('SMTP_HOST')) {
+            const subject = 'Đặt lại mật khẩu Audio Tài Lộc';
+            const text = `Bạn vừa yêu cầu đặt lại mật khẩu.\nMã đặt lại: ${resetToken}\nLink: ${resetLink}\nMã này sẽ hết hạn sau 60 phút.`;
+            const html = `<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p><p><strong>Mã đặt lại:</strong> ${resetToken}</p><p>Hoặc click link: <a href="${resetLink}">${resetLink}</a></p><p>Mã hết hạn sau 60 phút.</p>`;
+            await this.mailService.send(email, subject, text, html);
+        }
         console.log(`Password reset token for ${email}: ${resetToken}`);
-        console.log(`Reset link: http://localhost:3000/reset-password?token=${resetToken}`);
+        console.log(`Reset link: ${resetLink}`);
         return { success: true };
     }
     async resetPassword(token, newPassword) {
         if (!token || token.length !== 64) {
             throw new Error('Invalid reset token');
         }
-        const mockUserId = 'demo-user-id';
-        const _hashedPassword = await bcrypt.hash(newPassword, 12);
-        console.log(`Password reset for user ${mockUserId} with token ${token}`);
+        const passwordValidation = password_validator_1.PasswordValidator.validate(newPassword);
+        if (!passwordValidation.isValid) {
+            throw new common_1.BadRequestException({
+                message: 'Password does not meet security requirements',
+                errors: passwordValidation.errors,
+            });
+        }
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        const user = await this.users.findByResetToken(hashedToken);
+        if (!user) {
+            throw new common_1.NotFoundException('Invalid or expired reset token');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        await this.users.completePasswordReset(user.id, hashedPassword);
         return { success: true };
     }
     async changePassword(userId, currentPassword, newPassword) {
-        const user = await this.users.findById(userId);
+        const user = await this.users.findByIdForAuth(userId);
         if (!user) {
             throw new Error('User not found');
         }
@@ -172,6 +195,7 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         config_1.ConfigService,
-        security_service_1.SecurityService])
+        security_service_1.SecurityService,
+        mail_service_1.MailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

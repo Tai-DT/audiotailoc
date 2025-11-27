@@ -41,11 +41,7 @@ async function bootstrap() {
   const port = Number(process.env.PORT || config.get('PORT') || 3010);
 
   // Validate required environment variables
-  const requiredEnvVars = [
-    'DATABASE_URL',
-    'JWT_ACCESS_SECRET',
-    'JWT_REFRESH_SECRET'
-  ];
+  const requiredEnvVars = ['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
 
   const missingVars = requiredEnvVars.filter(varName => !config.get(varName));
   if (missingVars.length > 0) {
@@ -54,91 +50,141 @@ async function bootstrap() {
   }
 
   // Performance middleware
-  app.use(compression({
-    level: 6, // Good balance between compression and performance
-    threshold: 1024, // Only compress responses larger than 1KB
-    // Use any to avoid conflicts between different @types/express packages (e.g., multer vs express)
-    filter: (req: any, res: any) => {
-      // Don't compress responses with this request header
-      if (req && req.headers && req.headers['x-no-compression']) {
-        return false;
-      }
-      // Use compression filter function - cast to any to avoid incompatible Request types
-      return (compression as any).filter(req, res);
-    },
-  }));
+  app.use(
+    compression({
+      level: 6, // Good balance between compression and performance
+      threshold: 1024, // Only compress responses larger than 1KB
+      // Use any to avoid conflicts between different @types/express packages (e.g., multer vs express)
+      filter: (req: any, res: any) => {
+        // Don't compress responses with this request header
+        if (req && req.headers && req.headers['x-no-compression']) {
+          return false;
+        }
+        // Use compression filter function - cast to any to avoid incompatible Request types
+        return (compression as any).filter(req, res);
+      },
+    }),
+  );
 
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-  }));
+    }),
+  );
 
   // Enhanced CORS configuration
-  const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
+  const corsOrigins = config.get(
+    'CORS_ORIGIN',
+    'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app,http://127.0.0.1:52312,http://127.0.0.1:50464',
+  );
   const allowedOrigins = corsOrigins.split(',').map((origin: string) => origin.trim());
 
+  // Enhanced CORS configuration with credentials support
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow health checks without origin header
-      // Allow requests with no origin (like mobile apps or curl requests)
-      // Only allow specific origins for production security
+      // Allow requests with no origin (like mobile apps, curl, or server-side requests)
       if (!origin) {
-        // In development, allow localhost without origin (like Postman)
+        // In development, allow requests without origin (like Postman or server-side requests)
         if (process.env.NODE_ENV === 'development') {
           return callback(null, true);
         }
-        // In production, allow health checks without origin
-        return callback(null, true);
+        // In production, only allow health checks without origin
+        return callback(null, false);
       }
 
       // Check exact match first
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
-      // Check wildcard patterns for Vercel domains
-      else if (allowedOrigins.some(allowedOrigin => {
-        if (allowedOrigin.includes('*')) {
-          const pattern = allowedOrigin.replace('*', '.*');
-          const regex = new RegExp(pattern);
-          return regex.test(origin);
-        }
-        return false;
-      })) {
-        callback(null, true);
-      } else {
-        logger.warn(`CORS blocked request from: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+
+      // Check wildcard patterns
+      if (
+        allowedOrigins.some(allowedOrigin => {
+          if (allowedOrigin.includes('*')) {
+            const pattern =
+              '^' + allowedOrigin.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$';
+            return new RegExp(pattern).test(origin);
+          }
+          return false;
+        })
+      ) {
+        return callback(null, true);
       }
+
+      logger.warn(`CORS blocked request from: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    // Include custom admin header to support dashboard admin requests from browser
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+    credentials: true, // Important for cookies, authorization headers with HTTPS
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Idempotency-Key',
+      'X-Admin-Key',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+      'X-Auth-Token',
+      'Access-Control-Allow-Origin',
+      'Access-Control-Allow-Headers',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers',
+    ],
+    exposedHeaders: [
+      'X-Total-Count',
+      'X-Page-Count',
+      'Content-Disposition',
+      'Content-Length',
+      'Content-Type',
+    ],
+    maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
+
+  // Handle preflight requests
+  app.use((req: any, res: any, next: () => void) => {
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.header(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Requested-With, X-Idempotency-Key',
+      );
+      res.header('Access-Control-Allow-Credentials', 'true');
+      return res.status(204).end();
+    }
+    next();
   });
 
   // Body parsing with optimized limits
-  app.use(json({
-    limit: '2mb',
-    verify: (req: any, res, buf) => {
-      // Verify request body size for security
-      if (buf.length > 2 * 1024 * 1024) {
-        throw new Error('Request body too large');
-      }
-    }
-  }));
-  app.use(urlencoded({
-    extended: true,
-    limit: '2mb',
-    parameterLimit: 10000 // Limit number of parameters
-  }));
+  app.use(
+    json({
+      limit: '2mb',
+      verify: (req: any, res, buf) => {
+        // Verify request body size for security
+        if (buf.length > 2 * 1024 * 1024) {
+          throw new Error('Request body too large');
+        }
+      },
+    }),
+  );
+  app.use(
+    urlencoded({
+      extended: true,
+      limit: '2mb',
+      parameterLimit: 10000, // Limit number of parameters
+    }),
+  );
 
   // Global pipes with enhanced validation
   app.useGlobalPipes(
@@ -150,25 +196,25 @@ async function bootstrap() {
         enableImplicitConversion: true,
       },
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-      exceptionFactory: (errors) => {
-        const messages = errors.map(error =>
-          `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`
+      exceptionFactory: errors => {
+        const messages = errors.map(
+          error => `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`,
         );
-        return new HttpException({
-          statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-          message: 'Validation failed',
-          errors: messages,
-        }, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new HttpException(
+          {
+            statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+            message: 'Validation failed',
+            errors: messages,
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       },
     }),
   );
 
   // Global filters and interceptors
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
-    new ResponseTransformInterceptor(),
-  );
+  app.useGlobalInterceptors(new LoggingInterceptor(), new ResponseTransformInterceptor());
 
   // Note: ApiVersioningInterceptor is registered in the ApiVersioningModule
 
@@ -290,7 +336,7 @@ async function bootstrap() {
   logger.log(`🎯 Current API Version: v1 (Unified Complete Edition)`);
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch(error => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });

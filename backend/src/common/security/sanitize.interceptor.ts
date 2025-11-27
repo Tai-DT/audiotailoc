@@ -38,21 +38,13 @@ export const SANITIZATION_PATTERNS = {
   ],
 
   // Path Traversal patterns
-  pathTraversal: [
-    /\.\.\//g,
-    /\.\.\\/g,
-    /%2e%2e/gi,
-  ],
+  pathTraversal: [/\.\.\//g, /\.\.\\/g, /%2e%2e/gi],
 
   // LDAP Injection patterns
-  ldapInjection: [
-    /[*()\\|&=]/g,
-  ],
+  ldapInjection: [/[*()\\|&=]/g],
 
   // NoSQL Injection patterns
-  noSqlInjection: [
-    /(\$where|\$regex|\$exists|\$gt|\$lt|\$ne|\$and|\$or|\$not)/gi,
-  ],
+  noSqlInjection: [/(\$where|\$regex|\$exists|\$gt|\$lt|\$ne|\$and|\$or|\$not)/gi],
 };
 
 /**
@@ -101,19 +93,19 @@ export class SanitizeInterceptor implements NestInterceptor {
     } catch (error) {
       this.logger.error(
         `Sanitization error: ${error instanceof Error ? error.message : 'unknown'}`,
-        error instanceof Error ? error.stack : ''
+        error instanceof Error ? error.stack : '',
       );
       throw new BadRequestException('Invalid or suspicious request detected');
     }
 
     return next.handle().pipe(
-      map((data) => {
+      map(data => {
         // Optionally sanitize response data if it contains user input
         return data;
       }),
-      catchError((error) => {
+      catchError(error => {
         return throwError(() => error);
-      })
+      }),
     );
   }
 
@@ -145,7 +137,7 @@ export class SanitizeInterceptor implements NestInterceptor {
       if (obj.length > 1000) {
         throw new BadRequestException('Array too large');
       }
-      return obj.map((item) => this.sanitizeObject(item, depth + 1));
+      return obj.map(item => this.sanitizeObject(item, depth + 1));
     }
 
     // Handle objects
@@ -252,9 +244,7 @@ export class SanitizeInterceptor implements NestInterceptor {
     ];
 
     const lowerKey = key.toLowerCase();
-    return dangerousKeys.some((dangerous) =>
-      lowerKey.includes(dangerous.toLowerCase())
-    );
+    return dangerousKeys.some(dangerous => lowerKey.includes(dangerous.toLowerCase()));
   }
 
   /**
@@ -346,7 +336,7 @@ export function escapeHtml(text: string): string {
     "'": '&#039;',
   };
 
-  return text.replace(/[&<>"']/g, (char) => map[char]);
+  return text.replace(/[&<>"']/g, char => map[char]);
 }
 
 /**

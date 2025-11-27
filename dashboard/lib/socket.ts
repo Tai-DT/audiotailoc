@@ -74,7 +74,9 @@ class SocketManager {
         extraHeaders: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
       });
 
-      this.socket = manager.socket('/');
+      this.socket = manager.socket('/', {
+        auth: authToken ? { token: authToken } : undefined,
+      });
 
       // Set up event handlers
       this.setupEventHandlers();

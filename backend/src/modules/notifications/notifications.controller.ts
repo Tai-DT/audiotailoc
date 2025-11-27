@@ -9,7 +9,9 @@ export class NotificationsController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @Get()
-  async getNotifications(@Query() query: { userId?: string; read?: string; page?: string; limit?: string }) {
+  async getNotifications(
+    @Query() query: { userId?: string; read?: string; page?: string; limit?: string },
+  ) {
     const userId = query.userId || '';
     const page = query.page ? parseInt(query.page) : 1;
     const limit = query.limit ? parseInt(query.limit) : 20;
@@ -32,40 +34,36 @@ export class NotificationsController {
     return {
       email: {
         enabled: true,
-        types: ['booking_confirmation', 'payment_success', 'system_updates']
+        types: ['booking_confirmation', 'payment_success', 'system_updates'],
       },
       sms: {
         enabled: false,
-        types: ['booking_reminder']
+        types: ['booking_reminder'],
       },
       push: {
         enabled: true,
-        types: ['booking_updates', 'promotions']
-      }
+        types: ['booking_updates', 'promotions'],
+      },
     };
   }
 
   @Post('subscribe')
-  async subscribeToNotifications(@Body() _data: {
-    userId: string;
-    type: string;
-    channel: 'email' | 'sms' | 'push';
-  }) {
+  async subscribeToNotifications(
+    @Body() _data: { userId: string; type: string; channel: 'email' | 'sms' | 'push' },
+  ) {
     return {
       success: true,
-      message: 'Successfully subscribed to notifications'
+      message: 'Successfully subscribed to notifications',
     };
   }
 
   @Post('unsubscribe')
-  async unsubscribeFromNotifications(@Body() _data: {
-    userId: string;
-    type: string;
-    channel: 'email' | 'sms' | 'push';
-  }) {
+  async unsubscribeFromNotifications(
+    @Body() _data: { userId: string; type: string; channel: 'email' | 'sms' | 'push' },
+  ) {
     return {
       success: true,
-      message: 'Successfully unsubscribed from notifications'
+      message: 'Successfully unsubscribed from notifications',
     };
   }
 

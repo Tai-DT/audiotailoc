@@ -11,10 +11,16 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { BackupService, BackupResult, RestoreResult, BackupStatus, BackupMetadata } from './backup.service';
+import {
+  BackupService,
+  BackupResult,
+  RestoreResult,
+  BackupStatus,
+  BackupMetadata,
+} from './backup.service';
 import { LoggingService } from '../logging/logging.service';
 
-@Controller('api/v1/backup')
+@Controller('backup')
 export class BackupController {
   constructor(
     private readonly backupService: BackupService,
@@ -83,7 +89,9 @@ export class BackupController {
         total,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'list_backups', type, status } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'list_backups', type, status },
+      });
 
       throw new HttpException(
         {
@@ -109,7 +117,11 @@ export class BackupController {
       throw new HttpException(
         {
           success: false,
-          error: { code: 'BACKUP_PREFLIGHT_ERROR', message: 'Failed to run backup preflight', details: (error as Error).message },
+          error: {
+            code: 'BACKUP_PREFLIGHT_ERROR',
+            message: 'Failed to run backup preflight',
+            details: (error as Error).message,
+          },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
@@ -152,7 +164,9 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error as any, { metadata: { operation: 'get_backup_details', backupId } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'get_backup_details', backupId },
+      });
 
       throw new HttpException(
         {
@@ -170,7 +184,8 @@ export class BackupController {
   // Create full backup
   @Post('full')
   async createFullBackup(
-    @Body() options: {
+    @Body()
+    options: {
       includeFiles?: boolean;
       compress?: boolean;
       encrypt?: boolean;
@@ -197,7 +212,9 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'create_full_backup', options } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'create_full_backup', options },
+      });
 
       throw new HttpException(
         {
@@ -216,7 +233,8 @@ export class BackupController {
   // Create incremental backup
   @Post('incremental')
   async createIncrementalBackup(
-    @Body() options: {
+    @Body()
+    options: {
       since?: string; // ISO date string
       tables?: string[];
       compress?: boolean;
@@ -248,7 +266,9 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'create_incremental_backup', options } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'create_incremental_backup', options },
+      });
 
       throw new HttpException(
         {
@@ -267,7 +287,8 @@ export class BackupController {
   // Create file backup
   @Post('files')
   async createFileBackup(
-    @Body() options: {
+    @Body()
+    options: {
       directories?: string[];
       excludePatterns?: string[];
       compress?: boolean;
@@ -295,7 +316,9 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'create_file_backup', options } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'create_file_backup', options },
+      });
 
       throw new HttpException(
         {
@@ -315,7 +338,8 @@ export class BackupController {
   @Post('restore/:backupId')
   async restoreFromBackup(
     @Param('backupId') backupId: string,
-    @Body() options: {
+    @Body()
+    options: {
       dropExisting?: boolean;
       verifyBeforeRestore?: boolean;
       dryRun?: boolean;
@@ -343,7 +367,9 @@ export class BackupController {
         result,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'restore_from_backup', backupId, options } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'restore_from_backup', backupId, options },
+      });
 
       throw new HttpException(
         {
@@ -362,7 +388,8 @@ export class BackupController {
   // Point-in-time recovery
   @Post('restore/point-in-time')
   async pointInTimeRecovery(
-    @Body() options: {
+    @Body()
+    options: {
       targetTime: string; // ISO date string
       dryRun?: boolean;
       verify?: boolean;
@@ -408,7 +435,9 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error as any, { metadata: { operation: 'point_in_time_recovery', options } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'point_in_time_recovery', options },
+      });
 
       throw new HttpException(
         {
@@ -485,7 +514,9 @@ export class BackupController {
       });
 
       readStream.on('error', (error: Error) => {
-        this.loggingService.logError(error as any, { metadata: { operation: 'download_backup', backupId } });
+        this.loggingService.logError(error as any, {
+          metadata: { operation: 'download_backup', backupId },
+        });
         response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           success: false,
           error: {
@@ -494,13 +525,14 @@ export class BackupController {
           },
         });
       });
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
 
-      this.loggingService.logError(error as any, { metadata: { operation: 'download_backup', backupId } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'download_backup', backupId },
+      });
 
       throw new HttpException(
         {
@@ -544,7 +576,9 @@ export class BackupController {
         await fs.unlink(backup.path);
       } catch (error) {
         // Log but don't fail if file deletion fails
-        this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup_file', backupId, path: backup.path } });
+        this.loggingService.logError(error as any, {
+          metadata: { operation: 'delete_backup_file', backupId, path: backup.path },
+        });
       }
 
       // Delete metadata (this would be handled by the service in a real implementation)
@@ -553,7 +587,9 @@ export class BackupController {
         await fs.unlink(metadataPath);
       } catch (error) {
         // Log but don't fail if metadata deletion fails
-        this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath } });
+        this.loggingService.logError(error as any, {
+          metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath },
+        });
       }
 
       this.loggingService.logBusinessEvent('backup_deleted', {
@@ -571,7 +607,9 @@ export class BackupController {
         throw error;
       }
 
-      this.loggingService.logError(error as any, { metadata: { operation: 'delete_backup', backupId } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'delete_backup', backupId },
+      });
 
       throw new HttpException(
         {
@@ -604,7 +642,9 @@ export class BackupController {
         deletedCount,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'cleanup_old_backups' } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'cleanup_old_backups' },
+      });
 
       throw new HttpException(
         {
@@ -640,15 +680,25 @@ export class BackupController {
           inProgress: backups.filter(b => b.status === 'in_progress').length,
         },
         totalSize: backups.reduce((sum, b) => sum + b.size, 0),
-        averageBackupSize: backups.length > 0 ? backups.reduce((sum, b) => sum + b.size, 0) / backups.length : 0,
+        averageBackupSize:
+          backups.length > 0 ? backups.reduce((sum, b) => sum + b.size, 0) / backups.length : 0,
         largestBackup: backups.length > 0 ? Math.max(...backups.map(b => b.size)) : 0,
-        oldestBackup: backups.length > 0 ? backups.reduce((oldest, current) =>
-          current.timestamp < oldest.timestamp ? current : oldest
-        ).timestamp : null,
-        newestBackup: backups.length > 0 ? backups.reduce((newest, current) =>
-          current.timestamp > newest.timestamp ? current : newest
-        ).timestamp : null,
-        successRate: backups.length > 0 ? (backups.filter(b => b.status === 'completed').length / backups.length) * 100 : 0,
+        oldestBackup:
+          backups.length > 0
+            ? backups.reduce((oldest, current) =>
+                current.timestamp < oldest.timestamp ? current : oldest,
+              ).timestamp
+            : null,
+        newestBackup:
+          backups.length > 0
+            ? backups.reduce((newest, current) =>
+                current.timestamp > newest.timestamp ? current : newest,
+              ).timestamp
+            : null,
+        successRate:
+          backups.length > 0
+            ? (backups.filter(b => b.status === 'completed').length / backups.length) * 100
+            : 0,
         status,
       };
 
@@ -662,7 +712,9 @@ export class BackupController {
         analytics,
       };
     } catch (error) {
-      this.loggingService.logError(error as any, { metadata: { operation: 'get_backup_analytics' } });
+      this.loggingService.logError(error as any, {
+        metadata: { operation: 'get_backup_analytics' },
+      });
 
       throw new HttpException(
         {

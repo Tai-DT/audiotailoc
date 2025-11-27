@@ -61,6 +61,10 @@ __decorate([
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", ShippingAddressDto)
 ], CheckoutDto.prototype, "shippingAddress", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CheckoutDto.prototype, "items", void 0);
 let CheckoutController = class CheckoutController {
     constructor(checkout) {
         this.checkout = checkout;
@@ -72,20 +76,21 @@ let CheckoutController = class CheckoutController {
         }
         const order = await this.checkout.createOrder(userId, {
             promotionCode: dto.promotionCode,
-            shippingAddress: dto.shippingAddress
+            shippingAddress: dto.shippingAddress,
+            items: dto.items,
         });
         return {
             id: order.id,
             orderNo: order.orderNo,
             totalCents: order.totalCents,
             status: order.status,
-            shippingAddress: order.shippingAddress
+            shippingAddress: order.shippingAddress,
         };
     }
     async createLegacy(req, dto) {
         const order = await this.checkout.createOrder(req.users?.sub, {
             promotionCode: dto.promotionCode,
-            shippingAddress: dto.shippingAddress
+            shippingAddress: dto.shippingAddress,
         });
         return { order };
     }

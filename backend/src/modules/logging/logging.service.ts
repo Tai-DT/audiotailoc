@@ -81,10 +81,7 @@ export class LoggingService implements LoggerService {
           datePattern: 'YYYY-MM-DD',
           maxSize: maxSize,
           maxFiles: maxFiles,
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
+          format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
         }),
 
         // Security logs
@@ -94,10 +91,7 @@ export class LoggingService implements LoggerService {
           level: 'warn',
           maxSize: maxSize,
           maxFiles: maxFiles,
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
+          format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
         }),
       );
     }
@@ -363,7 +357,12 @@ export class LoggingService implements LoggerService {
   }
 
   // Health check logging
-  logHealthCheck(component: string, status: 'healthy' | 'unhealthy', details?: any, context: LogContext = {}) {
+  logHealthCheck(
+    component: string,
+    status: 'healthy' | 'unhealthy',
+    details?: any,
+    context: LogContext = {},
+  ) {
     const level = status === 'healthy' ? 'info' : 'error';
     this.logWithContext(level, `Health Check: ${component} is ${status}`, {
       ...context,

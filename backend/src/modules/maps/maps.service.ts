@@ -54,5 +54,3 @@ export class MapsService {
     return data;
   }
 }
-
-

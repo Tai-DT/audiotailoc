@@ -326,14 +326,19 @@ export class OptimizedOrderService {
         for (const item of items) {
           const product = await tx.products.findUnique({
             where: { id: item.productId },
-            select: { id: true, priceCents: true, stockQuantity: true },
+            select: {
+              id: true,
+              priceCents: true,
+              inventory: { select: { stock: true } }
+            },
           });
 
           if (!product) {
             throw new Error(`Product ${item.productId} not found`);
           }
 
-          if (product.stockQuantity < item.quantity) {
+          const currentStock = product.inventory?.stock || 0;
+          if (currentStock < item.quantity) {
             throw new Error(`Insufficient stock for product ${item.productId}`);
           }
 

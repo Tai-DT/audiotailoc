@@ -57,7 +57,9 @@ export class SecurityService {
 
     // Length check
     if (password.length < this.securityConfig.passwordMinLength) {
-      errors.push(`Password must be at least ${this.securityConfig.passwordMinLength} characters long`);
+      errors.push(
+        `Password must be at least ${this.securityConfig.passwordMinLength} characters long`,
+      );
     } else {
       score += 1;
     }
@@ -84,7 +86,10 @@ export class SecurityService {
     }
 
     // Special character check
-    if (this.securityConfig.passwordRequireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    if (
+      this.securityConfig.passwordRequireSpecialChars &&
+      !/[!@#$%^&*(),.?":{}|<>]/.test(password)
+    ) {
       errors.push('Password must contain at least one special character');
     } else if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
       score += 1;
@@ -117,7 +122,9 @@ export class SecurityService {
     }
 
     // Check if lockout period has expired
-    const lockoutExpiry = new Date(attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000);
+    const lockoutExpiry = new Date(
+      attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000,
+    );
     if (now > lockoutExpiry) {
       this.loginAttempts.set(identifier, {
         count: success ? 0 : 1,
@@ -148,7 +155,9 @@ export class SecurityService {
     if (!attempt) return false;
 
     const now = new Date();
-    const lockoutExpiry = new Date(attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000);
+    const lockoutExpiry = new Date(
+      attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000,
+    );
 
     if (now > lockoutExpiry) {
       this.loginAttempts.delete(identifier);
@@ -163,7 +172,9 @@ export class SecurityService {
     if (!attempt) return 0;
 
     const now = new Date();
-    const lockoutExpiry = new Date(attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000);
+    const lockoutExpiry = new Date(
+      attempt.lastAttempt.getTime() + this.securityConfig.lockoutDuration * 60000,
+    );
 
     return Math.max(0, lockoutExpiry.getTime() - now.getTime());
   }
@@ -171,7 +182,7 @@ export class SecurityService {
   // Input sanitization
   sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
-    
+
     return input
       .trim()
       .replace(/[<>]/g, '') // Remove potential HTML tags
@@ -235,7 +246,8 @@ export class SecurityService {
 
     // Check request size
     const contentLength = parseInt(request.get('Content-Length') || '0');
-    if (contentLength > 10 * 1024 * 1024) { // 10MB
+    if (contentLength > 10 * 1024 * 1024) {
+      // 10MB
       reasons.push('Unusually large request');
       riskScore += 2;
     }
@@ -307,7 +319,12 @@ export class SecurityService {
 
   // Audit logging
   logSecurityEvent(event: {
-    type: 'login_attempt' | 'password_change' | 'account_locked' | 'suspicious_activity' | 'data_access';
+    type:
+      | 'login_attempt'
+      | 'password_change'
+      | 'account_locked'
+      | 'suspicious_activity'
+      | 'data_access';
     userId?: string;
     ip: string;
     userAgent: string;
@@ -321,19 +338,39 @@ export class SecurityService {
 
   private isCommonPassword(password: string): boolean {
     const commonPasswords = [
-      'password', '123456', '123456789', 'qwerty', 'abc123',
-      'password123', 'admin', 'letmein', 'welcome', 'monkey',
-      'dragon', 'master', 'shadow', 'football', 'baseball',
+      'password',
+      '123456',
+      '123456789',
+      'qwerty',
+      'abc123',
+      'password123',
+      'admin',
+      'letmein',
+      'welcome',
+      'monkey',
+      'dragon',
+      'master',
+      'shadow',
+      'football',
+      'baseball',
     ];
-    
+
     return commonPasswords.includes(password.toLowerCase());
   }
 
   private isSuspiciousUserAgent(userAgent: string): boolean {
     const suspiciousPatterns = [
-      /bot/i, /crawler/i, /spider/i, /scraper/i,
-      /curl/i, /wget/i, /python/i, /java/i,
-      /sqlmap/i, /nikto/i, /nmap/i,
+      /bot/i,
+      /crawler/i,
+      /spider/i,
+      /scraper/i,
+      /curl/i,
+      /wget/i,
+      /python/i,
+      /java/i,
+      /sqlmap/i,
+      /nikto/i,
+      /nmap/i,
     ];
 
     return suspiciousPatterns.some(pattern => pattern.test(userAgent));

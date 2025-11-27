@@ -16,6 +16,7 @@ const logging_service_1 = require("./logging.service");
 const logging_interceptor_1 = require("./logging.interceptor");
 const logging_middleware_1 = require("./logging.middleware");
 const correlation_service_1 = require("./correlation.service");
+const activity_log_service_1 = require("./activity-log.service");
 let LoggingModule = class LoggingModule {
     constructor(loggingService) {
         this.loggingService = loggingService;
@@ -40,15 +41,13 @@ exports.LoggingModule = LoggingModule = __decorate([
         providers: [
             logging_service_1.LoggingService,
             correlation_service_1.CorrelationService,
+            activity_log_service_1.ActivityLogService,
             {
                 provide: core_1.APP_INTERCEPTOR,
                 useClass: logging_interceptor_1.LoggingInterceptor,
             },
         ],
-        exports: [
-            logging_service_1.LoggingService,
-            correlation_service_1.CorrelationService,
-        ],
+        exports: [logging_service_1.LoggingService, correlation_service_1.CorrelationService, activity_log_service_1.ActivityLogService],
     }),
     __metadata("design:paramtypes", [logging_service_1.LoggingService])
 ], LoggingModule);

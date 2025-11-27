@@ -21,8 +21,37 @@ export declare class SiteSocialsDto {
     zalo?: string;
     github?: string;
 }
+export declare class SiteBusinessDto {
+    taxCode?: string;
+    businessLicense?: string;
+    currency?: string;
+    timezone?: string;
+}
+export declare class SiteEmailDto {
+    emailHost?: string;
+    emailPort?: string;
+    emailUsername?: string;
+    emailPassword?: string;
+    emailFrom?: string;
+}
+export declare class SiteNotificationsDto {
+    orderNotification?: boolean;
+    paymentNotification?: boolean;
+    reviewNotification?: boolean;
+    lowStockNotification?: boolean;
+}
+export declare class SiteSecurityDto {
+    twoFactorAuth?: boolean;
+    sessionTimeout?: number;
+    passwordExpiry?: number;
+    maxLoginAttempts?: number;
+}
 export declare class UpdateSettingsDto {
     general?: SiteGeneralDto;
     about?: SiteAboutDto;
     socials?: SiteSocialsDto;
+    business?: SiteBusinessDto;
+    email?: SiteEmailDto;
+    notifications?: SiteNotificationsDto;
+    security?: SiteSecurityDto;
 }

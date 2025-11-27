@@ -73,7 +73,8 @@ export class CacheService {
 
   // Get cache value
   async get<T>(key: string, optionsOrPrefix: any = 'app'): Promise<T | null> {
-    const prefix = typeof optionsOrPrefix === 'string' ? optionsOrPrefix : optionsOrPrefix?.prefix ?? 'app';
+    const prefix =
+      typeof optionsOrPrefix === 'string' ? optionsOrPrefix : (optionsOrPrefix?.prefix ?? 'app');
     const fullKey = this.buildKey(key, prefix);
 
     try {
@@ -128,7 +129,7 @@ export class CacheService {
 
     try {
       if (this.redis) {
-        return await this.redis.exists(fullKey) === 1;
+        return (await this.redis.exists(fullKey)) === 1;
       } else {
         return this.existsInMemory(fullKey);
       }
@@ -139,10 +140,15 @@ export class CacheService {
   }
 
   // Increment counter
-  async increment(key: string, valueOrAmount: any = 1, optionsOrPrefix: any = 'app'): Promise<number> {
+  async increment(
+    key: string,
+    valueOrAmount: any = 1,
+    optionsOrPrefix: any = 'app',
+  ): Promise<number> {
     const amount = typeof valueOrAmount === 'number' ? valueOrAmount : 1;
     const options = typeof optionsOrPrefix === 'object' ? optionsOrPrefix : {};
-    const prefix = typeof optionsOrPrefix === 'string' ? optionsOrPrefix : options?.prefix ?? 'app';
+    const prefix =
+      typeof optionsOrPrefix === 'string' ? optionsOrPrefix : (options?.prefix ?? 'app');
     const ttl = options?.ttl;
     const fullKey = this.buildKey(key, prefix);
 
@@ -180,7 +186,7 @@ export class CacheService {
   async getOrSet<T>(
     key: string,
     factory: () => Promise<T>,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<T> {
     const cached = await this.get<T>(key, options.prefix);
     if (cached !== null) {
@@ -197,10 +203,10 @@ export class CacheService {
     key: string,
     value: T,
     tags: string[],
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<void> {
     await this.set(key, value, options);
-    
+
     // Store tags for this key
     const tagKey = `tags:${key}`;
     await this.set(tagKey, tags, { ttl: options.ttl || this.defaultTTL });
@@ -213,7 +219,7 @@ export class CacheService {
         // Get all keys with matching tags
         const pattern = `tags:*`;
         const tagKeys = await this.redis.keys(pattern);
-        
+
         for (const tagKey of tagKeys) {
           const keyTags = await this.get<string[]>(tagKey.replace('tags:', ''));
           if (keyTags && keyTags.some(tag => tags.includes(tag))) {
@@ -235,7 +241,7 @@ export class CacheService {
         const keys = await this.redis.dbsize();
         const memory = await this.redis.info('memory');
         const memoryUsage = memory ? this.parseMemoryUsage(memory) : 'Unknown';
-        
+
         return {
           connected: true,
           keyCount: keys || 0,
@@ -331,17 +337,17 @@ export class CacheService {
     this.memoryCache.clear();
   }
 
-private parseMemoryUsage(info: string): string {
-  const lines = info.split('\n');
-  for (const line of lines) {
-    if (line.startsWith('used_memory:')) {
-      const bytes = parseInt(line.split(':')[1]);
-      const mb = (bytes / 1024 / 1024).toFixed(2);
-      return `${mb} MB`;
+  private parseMemoryUsage(info: string): string {
+    const lines = info.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('used_memory:')) {
+        const bytes = parseInt(line.split(':')[1]);
+        const mb = (bytes / 1024 / 1024).toFixed(2);
+        return `${mb} MB`;
+      }
     }
+    return 'Unknown';
   }
-  return 'Unknown';
-}
 
   // Health check
   async healthCheck(): Promise<boolean> {

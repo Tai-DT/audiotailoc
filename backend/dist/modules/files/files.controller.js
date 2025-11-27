@@ -41,7 +41,15 @@ let FilesController = class FilesController {
         }
         const validationOptions = {
             maxSize: 5 * 1024 * 1024,
-            allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            allowedMimeTypes: [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ],
             allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx'],
         };
         return this.filesService.uploadMultipleFiles(files, validationOptions);
@@ -56,7 +64,10 @@ let FilesController = class FilesController {
         if (!file) {
             throw new common_1.NotFoundException('No avatar uploaded');
         }
-        const userId = 'user123';
+        const userId = file.req?.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('User not found in request');
+        }
         return this.filesService.uploadUserAvatar(file, userId);
     }
     async getFileInfo(fileId) {

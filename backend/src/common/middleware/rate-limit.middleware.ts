@@ -21,7 +21,7 @@ export class RateLimitMiddleware implements NestMiddleware {
       windowMs: 15 * 60 * 1000, // 15 minutes
       maxRequests: 100, // 100 requests per window
       message: 'Too many requests, please try again later',
-      keyGenerator: (req) => this.getClientIdentifier(req),
+      keyGenerator: req => this.getClientIdentifier(req),
     };
 
     // Apply different limits based on endpoint
@@ -60,20 +60,20 @@ export class RateLimitMiddleware implements NestMiddleware {
     req: Request,
     res: Response,
     next: NextFunction,
-    options: RateLimitOptions
+    options: RateLimitOptions,
   ) {
     try {
       const key = options.keyGenerator!(req);
       const cacheKey = `rate_limit:${key}:${req.path}`;
-      
+
       // Get current request count
-      const currentCount = await this.cacheService.get<number>(cacheKey) || 0;
-      
+      const currentCount = (await this.cacheService.get<number>(cacheKey)) || 0;
+
       // Check if limit exceeded
       if (currentCount >= options.maxRequests) {
         // Get remaining time
         const ttl = await this.getRemainingTTL(cacheKey);
-        
+
         res.set({
           'X-RateLimit-Limit': options.maxRequests.toString(),
           'X-RateLimit-Remaining': '0',
@@ -87,7 +87,7 @@ export class RateLimitMiddleware implements NestMiddleware {
             message: options.message,
             error: 'Too Many Requests',
           },
-          HttpStatus.TOO_MANY_REQUESTS
+          HttpStatus.TOO_MANY_REQUESTS,
         );
       }
 
@@ -109,7 +109,7 @@ export class RateLimitMiddleware implements NestMiddleware {
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       // If rate limiting fails, allow the request but log the error
       console.error('Rate limiting error:', error);
       next();
@@ -121,17 +121,17 @@ export class RateLimitMiddleware implements NestMiddleware {
     const forwarded = req.get('X-Forwarded-For');
     const realIP = req.get('X-Real-IP');
     const ip = forwarded?.split(',')[0] || realIP || req.ip || req.connection.remoteAddress;
-    
+
     // For authenticated users, use user ID + IP
     const userId = (req as any).users?.id;
     if (userId) {
       return `user:${userId}:${ip}`;
     }
-    
+
     // For anonymous users, use IP + User-Agent hash
     const userAgent = req.get('User-Agent') || '';
     const userAgentHash = this.hashString(userAgent);
-    
+
     return `ip:${ip}:${userAgentHash}`;
   }
 
@@ -149,7 +149,7 @@ export class RateLimitMiddleware implements NestMiddleware {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -160,7 +160,7 @@ export class RateLimitMiddleware implements NestMiddleware {
 export function RateLimit(_options: Partial<RateLimitOptions>) {
   return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       // This would be implemented as a guard or interceptor in a real application
       return method.apply(this, args);
@@ -175,18 +175,18 @@ import { Injectable as GuardInjectable, CanActivate, ExecutionContext } from '@n
 export class RateLimitGuard implements CanActivate {
   constructor(
     private readonly cacheService: CacheService,
-    private readonly options: RateLimitOptions
+    private readonly options: RateLimitOptions,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
-    
+
     const key = this.options.keyGenerator?.(request) || this.getDefaultKey(request);
     const cacheKey = `rate_limit:${key}`;
-    
-    const currentCount = await this.cacheService.get<number>(cacheKey) || 0;
-    
+
+    const currentCount = (await this.cacheService.get<number>(cacheKey)) || 0;
+
     if (currentCount >= this.options.maxRequests) {
       response.status(429).json({
         statusCode: 429,
@@ -195,11 +195,11 @@ export class RateLimitGuard implements CanActivate {
       });
       return false;
     }
-    
+
     await this.cacheService.increment(cacheKey, 1, {
       ttl: Math.ceil(this.options.windowMs / 1000),
     });
-    
+
     return true;
   }
 

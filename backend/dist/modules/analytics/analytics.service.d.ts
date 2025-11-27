@@ -127,7 +127,12 @@ export declare class AnalyticsService {
         newCustomers: number;
         returningCustomers: number;
         avgOrderValue: number;
-        topSpenders: any[];
+        topSpenders: {
+            id: string;
+            email: string;
+            name: string;
+            totalSpent: number;
+        }[];
     }>;
     getPerformanceMetrics(range?: string): Promise<{
         totalOrders: number;

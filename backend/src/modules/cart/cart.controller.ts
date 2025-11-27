@@ -3,19 +3,19 @@ import { CartService } from './cart.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { IsString, IsNumber, Min } from 'class-validator';
 
-class AddToCartDto { 
+class AddToCartDto {
   @IsString()
-  productId!: string; 
-  
+  productId!: string;
+
   @IsNumber()
   @Min(1)
-  quantity!: number; 
+  quantity!: number;
 }
 
-class UpdateCartItemDto { 
+class UpdateCartItemDto {
   @IsNumber()
   @Min(1)
-  quantity!: number; 
+  quantity!: number;
 }
 
 @Controller('cart')
@@ -34,7 +34,7 @@ export class CartController {
     return {
       items: [],
       total: 0,
-      message: 'No cart ID provided'
+      message: 'No cart ID provided',
     };
   }
 
@@ -42,25 +42,17 @@ export class CartController {
   async addToCart(
     @Body() addToCartDto: AddToCartDto,
     @Query('cartId') cartId?: string,
-    @Query('userId') userId?: string
+    @Query('userId') userId?: string,
   ) {
     if (cartId) {
-      return this.cartService.addToGuestCart(
-        cartId,
-        addToCartDto.productId,
-        addToCartDto.quantity
-      );
+      return this.cartService.addToGuestCart(cartId, addToCartDto.productId, addToCartDto.quantity);
     }
     if (userId) {
-      return this.cartService.addToUserCart(
-        userId,
-        addToCartDto.productId,
-        addToCartDto.quantity
-      );
+      return this.cartService.addToUserCart(userId, addToCartDto.productId, addToCartDto.quantity);
     }
     return {
       success: false,
-      message: 'No cart ID provided'
+      message: 'No cart ID provided',
     };
   }
 
@@ -76,34 +68,23 @@ export class CartController {
   }
 
   @Post('guest/:cartId/items')
-  async addToGuestCart(
-    @Param('cartId') cartId: string,
-    @Body() addToCartDto: AddToCartDto
-  ) {
-    return this.cartService.addToGuestCart(
-      cartId,
-      addToCartDto.productId,
-      addToCartDto.quantity
-    );
+  async addToGuestCart(@Param('cartId') cartId: string, @Body() addToCartDto: AddToCartDto) {
+    return this.cartService.addToGuestCart(cartId, addToCartDto.productId, addToCartDto.quantity);
   }
 
   @Put('guest/:cartId/items/:productId')
   async updateGuestCartItem(
     @Param('cartId') cartId: string,
     @Param('productId') productId: string,
-    @Body() updateCartItemDto: UpdateCartItemDto
+    @Body() updateCartItemDto: UpdateCartItemDto,
   ) {
-    return this.cartService.updateGuestCartItem(
-      cartId,
-      productId,
-      updateCartItemDto.quantity
-    );
+    return this.cartService.updateGuestCartItem(cartId, productId, updateCartItemDto.quantity);
   }
 
   @Delete('guest/:cartId/items/:productId')
   async removeFromGuestCart(
     @Param('cartId') cartId: string,
-    @Param('productId') productId: string
+    @Param('productId') productId: string,
   ) {
     return this.cartService.removeFromGuestCart(cartId, productId);
   }
@@ -116,7 +97,7 @@ export class CartController {
   @Post('guest/:cartId/convert/:userId')
   async convertGuestCartToUserCart(
     @Param('cartId') cartId: string,
-    @Param('userId') userId: string
+    @Param('userId') userId: string,
   ) {
     return this.cartService.convertGuestCartToUserCart(cartId, userId);
   }
@@ -130,15 +111,8 @@ export class CartController {
 
   @UseGuards(JwtGuard)
   @Post('user/items')
-  async addToUserCart(
-    @Query('userId') userId: string,
-    @Body() addToCartDto: AddToCartDto
-  ) {
-    return this.cartService.addToUserCart(
-      userId,
-      addToCartDto.productId,
-      addToCartDto.quantity
-    );
+  async addToUserCart(@Query('userId') userId: string, @Body() addToCartDto: AddToCartDto) {
+    return this.cartService.addToUserCart(userId, addToCartDto.productId, addToCartDto.quantity);
   }
 
   @UseGuards(JwtGuard)
@@ -146,21 +120,14 @@ export class CartController {
   async updateUserCartItem(
     @Query('userId') userId: string,
     @Param('productId') productId: string,
-    @Body() updateCartItemDto: UpdateCartItemDto
+    @Body() updateCartItemDto: UpdateCartItemDto,
   ) {
-    return this.cartService.updateUserCartItem(
-      userId,
-      productId,
-      updateCartItemDto.quantity
-    );
+    return this.cartService.updateUserCartItem(userId, productId, updateCartItemDto.quantity);
   }
 
   @UseGuards(JwtGuard)
   @Delete('user/items/:productId')
-  async removeFromUserCart(
-    @Query('userId') userId: string,
-    @Param('productId') productId: string
-  ) {
+  async removeFromUserCart(@Query('userId') userId: string, @Param('productId') productId: string) {
     return this.cartService.removeFromUserCart(userId, productId);
   }
 
@@ -170,4 +137,3 @@ export class CartController {
     return this.cartService.clearUserCart(userId);
   }
 }
-

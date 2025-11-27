@@ -12,5 +12,3 @@ import { GuardsModule } from '../auth/guards.module';
   exports: [HealthService],
 })
 export class HealthModule {}
-
-

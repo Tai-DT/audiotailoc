@@ -31,12 +31,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [isAdding, setIsAdding] = React.useState(false);
   const [showCreateReview, setShowCreateReview] = React.useState(false);
   const { data: product, isLoading: isProductLoading, error: productError } = useProduct(slug);
-  const { data: wishlistData, isLoading: isWishlistLoading } = useIsInWishlist(product?.id || '');
+  const { isInWishlist, isLoading: isWishlistLoading } = useIsInWishlist(product?.id || '');
   const { data: reviewsData } = useProductReviews(product?.id || '');
-  const { toggleWishlist, isLoading: isTogglingWishlist } = useToggleWishlist();
+  const toggleWishlistMutation = useToggleWishlist();
   const { addItem: addCartItem } = useCart();
-
-  const isInWishlist = wishlistData?.isInWishlist ?? false;
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -67,7 +65,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     if (!product) return;
 
     try {
-      await toggleWishlist(product.id, isInWishlist);
+      await toggleWishlistMutation.mutateAsync(product.id);
     } catch (err) {
       console.error('Wishlist toggle error:', err);
     }
@@ -255,10 +253,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   {isAdding ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={handleAddToWishlist} 
-                  disabled={isTogglingWishlist || isWishlistLoading}
+                <Button
+                  variant="outline"
+                  onClick={handleAddToWishlist}
+                  disabled={toggleWishlistMutation.isPending || isWishlistLoading}
                   title={isInWishlist ? 'Xóa khỏi danh sách yêu thích' : 'Thêm vào danh sách yêu thích'}
                 >
                   <Heart className={`h-4 w-4 transition-colors ${isInWishlist ? 'fill-red-500 text-red-500' : 'hover:text-red-500'}`} />

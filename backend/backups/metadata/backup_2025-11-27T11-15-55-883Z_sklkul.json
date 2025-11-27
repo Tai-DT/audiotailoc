@@ -1,0 +1,16 @@
+{
+  "id": "backup_2025-11-27T11-15-55-883Z_sklkul",
+  "type": "full",
+  "timestamp": "2025-11-27T11:15:58.804Z",
+  "size": 27296,
+  "databaseVersion": "PostgreSQL 15.14 (Homebrew) on x86_64-apple-darwin23.6.0, compiled by Apple clang version 16.0.0 (clang-1600.0.26.6), 64-bit",
+  "tablesCount": 72,
+  "recordsCount": 57,
+  "duration": 3203,
+  "status": "completed",
+  "path": "backups/database/backup_2025-11-27T11-15-55-883Z_sklkul.sql.gz",
+  "checksum": "557fe1a05375aaece02315b8f60f4cbee38e2aaf77b905de5111ea8bb96f956e",
+  "compressed": true,
+  "encrypted": false,
+  "comment": "Triggered via Telegram"
+}

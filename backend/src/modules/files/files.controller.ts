@@ -40,9 +40,7 @@ export class FilesController {
     },
   })
   @ApiOperation({ summary: 'Upload a single file' })
-  async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -78,9 +76,7 @@ export class FilesController {
     },
   })
   @ApiOperation({ summary: 'Upload multiple files' })
-  async uploadMultipleFiles(
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  async uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files uploaded');
     }
@@ -88,7 +84,15 @@ export class FilesController {
     // Custom validation options for each file
     const validationOptions = {
       maxSize: 5 * 1024 * 1024, // 5MB per file
-      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedMimeTypes: [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ],
       allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx'],
     };
 
@@ -140,15 +144,16 @@ export class FilesController {
     },
   })
   @ApiOperation({ summary: 'Upload user avatar' })
-  async uploadUserAvatar(
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadUserAvatar(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new NotFoundException('No avatar uploaded');
     }
 
-    // Get user ID from JWT token (you'll need to implement this)
-    const userId = 'user123'; // This should come from the JWT token
+    // Get user ID from JWT token
+    const userId = (file as any).req?.user?.id;
+    if (!userId) {
+      throw new BadRequestException('User not found in request');
+    }
 
     return this.filesService.uploadUserAvatar(file, userId);
   }

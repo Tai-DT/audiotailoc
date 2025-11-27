@@ -14,5 +14,3 @@ import { NotificationsModule } from '../notifications/notifications.module';
   exports: [WebhooksService],
 })
 export class WebhooksModule {}
-
-

@@ -11,9 +11,10 @@ import { SiteStatsController } from './site-stats.controller';
 import { SiteStatsService } from './site-stats.service';
 import { TestimonialsController } from './testimonials.controller';
 import { TestimonialsService } from './testimonials.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, NotificationsModule],
   controllers: [
     BannersController,
     AdminBannersController,

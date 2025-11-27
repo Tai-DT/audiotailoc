@@ -120,7 +120,7 @@ test.describe('Authentication Flow', () => {
 });
 
 test.describe('Protected Routes', () => {
-  test.use({ storageState: { cookies: [] } }); // Start with clean state
+  test.use({ storageState: { cookies: [], origins: [] } }); // Start with clean state
 
   test('should redirect unauthenticated users to login', async ({ page }) => {
     // Try to access protected route directly
@@ -220,12 +220,12 @@ test.describe('Responsive Design', () => {
       const boundingBox = await formContainer.boundingBox();
       
       if (device === 'mobile') {
-        expect(boundingBox.width).toBeLessThan(400);
+        expect(boundingBox?.width).toBeLessThan(400);
       } else if (device === 'tablet') {
-        expect(boundingBox.width).toBeGreaterThan(400);
-        expect(boundingBox.width).toBeLessThan(900);
+        expect(boundingBox?.width).toBeGreaterThan(400);
+        expect(boundingBox?.width).toBeLessThan(900);
       } else {
-        expect(boundingBox.width).toBeGreaterThan(800);
+        expect(boundingBox?.width).toBeGreaterThan(800);
       }
     });
   });

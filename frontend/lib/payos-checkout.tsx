@@ -8,6 +8,34 @@ import {
   formatAmountForPayOS
 } from '@/lib/payos-config';
 
+interface PaymentToken {
+  checkoutUrl?: string;
+  token?: string;
+  paymentRequestId?: string;
+  [key: string]: unknown;
+}
+
+interface PaymentRequest {
+  orderCode: string;
+  amount: number;
+  description?: string;
+  buyerName?: string;
+  buyerEmail?: string;
+  buyerPhone?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+  [key: string]: unknown;
+}
+
+interface CheckoutOpenOptions {
+  token: string;
+  environment: 'production' | 'sandbox';
+  onSuccess?: (result: unknown) => void;
+  onError?: (error: unknown) => void;
+  onCancel?: () => void;
+  [key: string]: unknown;
+}
+
 interface PayOSCheckoutProps {
   amount: number;
   orderCode: string;
@@ -15,7 +43,7 @@ interface PayOSCheckoutProps {
   buyerName: string;
   buyerEmail: string;
   buyerPhone?: string;
-  onSuccess: (data: any) => void;
+  onSuccess: (data: PaymentToken | { success?: boolean; paymentRequestId?: string; [k: string]: unknown }) => void;
   onError: (error: Error) => void;
   onCancel: () => void;
 }
@@ -100,19 +128,30 @@ export default function PayOSCheckout({
         window.location.href = paymentToken.checkoutUrl;
       } else {
         // Fallback: try to use SDK if token is available
-        payOSClient.checkout.open({
-          token: paymentToken.token || paymentToken,
+        const tokenString = typeof paymentToken === 'string'
+          ? paymentToken
+          : (paymentToken.token ? String(paymentToken.token) : undefined);
+
+        if (!tokenString) {
+          throw new Error('Missing payment token from backend');
+        }
+
+        const openOptions: CheckoutOpenOptions = {
+          token: tokenString,
           environment: config.env === 'production' ? 'production' : 'sandbox',
-          onSuccess: (result) => {
-            onSuccess(result);
+          onSuccess: (result: unknown) => {
+            // Forward SDK result to caller
+            onSuccess(result as PaymentToken);
           },
-          onError: (error) => {
+          onError: (error: unknown) => {
             onError(error instanceof Error ? error : new Error('Payment failed'));
           },
           onCancel: () => {
             onCancel();
-          }
-        });
+          },
+        };
+        // Cast to a compatible function type to satisfy the SDK typings differences
+        (payOSClient.checkout.open as unknown as (opts: CheckoutOpenOptions) => void)(openOptions);
       }
     } catch (error) {
       console.error('PayOS payment error:', error);
@@ -123,7 +162,7 @@ export default function PayOSCheckout({
   };
 
   // Helper function to get payment token from backend
-  const getPaymentTokenFromBackend = async (paymentData: any): Promise<any> => {
+  const getPaymentTokenFromBackend = async (paymentData: PaymentRequest): Promise<PaymentToken> => {
     try {
       const token = localStorage.getItem('token');
       

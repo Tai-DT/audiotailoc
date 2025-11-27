@@ -17,14 +17,7 @@ export class BannersService {
     take?: number;
     orderBy?: Prisma.bannersOrderByWithRelationInput;
   }) {
-    const {
-      page,
-      isActive,
-      search,
-      skip = 0,
-      take = 20,
-      orderBy = { position: 'asc' },
-    } = params;
+    const { page, isActive, search, skip = 0, take = 20, orderBy = { position: 'asc' } } = params;
 
     const where: Prisma.bannersWhereInput = {
       isDeleted: false,
@@ -105,7 +98,7 @@ export class BannersService {
       this.prisma.banners.update({
         where: { id },
         data: { position: index },
-      })
+      }),
     );
 
     return this.prisma.$transaction(updates);
@@ -113,7 +106,7 @@ export class BannersService {
 
   async getActiveBanners(page?: string) {
     const now = new Date();
-    
+
     return this.prisma.banners.findMany({
       where: {
         isDeleted: false,

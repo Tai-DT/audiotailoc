@@ -1,7 +1,21 @@
-import { Controller, Get, Post, Body, Param, Patch, Query, UseGuards, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+  Delete,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -11,20 +25,17 @@ export class OrdersController {
 
   @UseGuards(AdminOrKeyGuard)
   @Get()
-  list(@Query('page') page = '1', @Query('pageSize') pageSize = '20', @Query('status') status?: string) {
+  list(
+    @Query('page') page = '1',
+    @Query('pageSize') pageSize = '20',
+    @Query('status') status?: string,
+  ) {
     return this.orders.list({ page: Number(page), pageSize: Number(pageSize), status });
   }
 
   @Post()
-  create(@Body() createOrderDto: {
-    items: Array<{ productId: string; quantity: number }>;
-    shippingAddress: string;
-    shippingCoordinates?: { lat: number; lng: number };
-    customerName?: string;
-    customerPhone?: string;
-    customerEmail?: string;
-    notes?: string;
-  }) {
+  @UsePipes(new ValidationPipe({ transform: true }))
+  create(@Body() createOrderDto: CreateOrderDto) {
     return this.orders.create(createOrderDto);
   }
 
@@ -35,7 +46,7 @@ export class OrdersController {
     return {
       totalOrders: totalOrders.total || 0,
       pendingOrders: totalOrders.total || 0,
-      completedOrders: 0
+      completedOrders: 0,
     };
   }
 
@@ -53,15 +64,8 @@ export class OrdersController {
 
   @UseGuards(AdminOrKeyGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: {
-    customerName?: string;
-    customerPhone?: string;
-    customerEmail?: string;
-    shippingAddress?: string;
-    shippingCoordinates?: { lat: number; lng: number };
-    notes?: string;
-    items?: Array<{ productId: string; quantity: number; unitPrice?: number; name?: string }>;
-  }) {
+  @UsePipes(new ValidationPipe({ transform: true }))
+  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.orders.update(id, updateOrderDto);
   }
 
@@ -70,5 +74,10 @@ export class OrdersController {
   delete(@Param('id') id: string) {
     return this.orders.delete(id);
   }
-}
 
+  @UseGuards(AdminOrKeyGuard)
+  @Post(':id/invoice')
+  sendInvoice(@Param('id') id: string) {
+    return this.orders.sendInvoice(id);
+  }
+}

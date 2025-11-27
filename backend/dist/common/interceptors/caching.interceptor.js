@@ -34,26 +34,32 @@ let CachingInterceptor = class CachingInterceptor {
         const args = Object.values(request.params || {}).concat(Object.values(request.query || {}));
         const fullCacheKey = this.generateCacheKey(cacheKey, args);
         if (this.redisClient) {
-            return new rxjs_1.Observable((subscriber) => {
-                this.redisClient.get(fullCacheKey).then((cached) => {
+            return new rxjs_1.Observable(subscriber => {
+                this.redisClient
+                    .get(fullCacheKey)
+                    .then((cached) => {
                     if (cached) {
                         const parsed = JSON.parse(cached);
                         subscriber.next(parsed);
                         subscriber.complete();
                     }
                     else {
-                        next.handle().pipe((0, rxjs_1.tap)((data) => {
+                        next
+                            .handle()
+                            .pipe((0, rxjs_1.tap)(data => {
                             this.redisClient.setex(fullCacheKey, cacheTtl || 300, JSON.stringify(data));
-                        })).subscribe({
-                            next: (data) => subscriber.next(data),
-                            error: (err) => subscriber.error(err),
+                        }))
+                            .subscribe({
+                            next: data => subscriber.next(data),
+                            error: err => subscriber.error(err),
                             complete: () => subscriber.complete(),
                         });
                     }
-                }).catch(() => {
+                })
+                    .catch(() => {
                     this.handleInMemoryCache(fullCacheKey, cacheTtl || 300, next).subscribe({
-                        next: (data) => subscriber.next(data),
-                        error: (err) => subscriber.error(err),
+                        next: data => subscriber.next(data),
+                        error: err => subscriber.error(err),
                         complete: () => subscriber.complete(),
                     });
                 });
@@ -66,7 +72,7 @@ let CachingInterceptor = class CachingInterceptor {
         if (cached && this.isValid(cached)) {
             return (0, rxjs_1.of)(cached.value);
         }
-        return next.handle().pipe((0, rxjs_1.tap)((data) => {
+        return next.handle().pipe((0, rxjs_1.tap)(data => {
             this.cache.set(cacheKey, {
                 value: data,
                 timestamp: Date.now(),
@@ -79,7 +85,7 @@ let CachingInterceptor = class CachingInterceptor {
             return baseKey;
         const argsString = args
             .filter(arg => arg !== undefined && arg !== null)
-            .map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg))
+            .map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
             .join(':');
         return `${baseKey}:${argsString}`;
     }

@@ -123,9 +123,7 @@ describe('CatalogService', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.products.findUnique.mockResolvedValue(null);
 
-      await expect(service.getBySlug('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getBySlug('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 

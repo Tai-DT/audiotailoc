@@ -9,11 +9,13 @@ import {
   Param,
   UseGuards,
   HttpStatus,
-  HttpException
+  HttpException,
 } from '@nestjs/common';
 import { JwtGuard } from '../auth/jwt.guard';
 import { MailService } from './mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { emailTemplates } from './templates/email.templates';
+import { invoiceTemplates } from './templates/invoice.templates';
 
 interface EmailTemplateData {
   name: string;
@@ -37,101 +39,62 @@ interface SendEmailData {
 export class EmailController {
   constructor(
     private readonly mailService: MailService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('templates')
-  async getEmailTemplates(@Query() query: {
-    type?: string;
-    category?: string;
-    page?: string;
-    limit?: string;
-  }) {
+  async getEmailTemplates(
+    @Query() query: { type?: string; category?: string; page?: string; limit?: string },
+  ) {
     try {
-      const page = parseInt(query.page || '1');
-      const limit = parseInt(query.limit || '20');
-      const skip = (page - 1) * limit;
-
-      // Mock templates - in real app, these would come from database
+      // Real templates from our template files
       const templates = [
         {
-          id: 'order-confirmation',
-          name: 'Xác nhận đơn hàng',
-          type: 'transactional',
-          category: 'orders',
-          subject: 'Xác nhận đơn hàng - Audio Tài Lộc',
-          lastModified: new Date('2024-01-10T08:00:00Z'),
-          usage: 1247,
-          isActive: true,
-        },
-        {
-          id: 'shipping-update',
-          name: 'Cập nhật giao hàng',
-          type: 'transactional',
-          category: 'shipping',
-          subject: 'Cập nhật đơn hàng - Audio Tài Lộc',
-          lastModified: new Date('2024-01-08T10:30:00Z'),
-          usage: 890,
-          isActive: true,
-        },
-        {
-          id: 'password-reset',
-          name: 'Đặt lại mật khẩu',
-          type: 'security',
-          category: 'security',
-          subject: 'Đặt lại mật khẩu - Audio Tài Lộc',
-          lastModified: new Date('2024-01-05T14:20:00Z'),
-          usage: 456,
-          isActive: true,
-        },
-        {
-          id: 'welcome-email',
+          id: 'welcome',
           name: 'Email chào mừng',
           type: 'transactional',
           category: 'onboarding',
           subject: 'Chào mừng đến với Audio Tài Lộc',
-          lastModified: new Date('2024-01-12T11:15:00Z'),
-          usage: 2340,
+          lastModified: new Date(),
+          usage: 0,
           isActive: true,
         },
         {
-          id: 'promotion-discount',
-          name: 'Khuyến mãi giảm giá',
-          type: 'promotional',
-          category: 'marketing',
-          subject: 'Khuyến mãi đặc biệt - Giảm giá 30%',
-          lastModified: new Date('2024-01-14T09:45:00Z'),
-          usage: 3456,
+          id: 'orderConfirmation',
+          name: 'Xác nhận đơn hàng',
+          type: 'transactional',
+          category: 'orders',
+          subject: 'Xác nhận đơn hàng - Audio Tài Lộc',
+          lastModified: new Date(),
+          usage: 0,
+          isActive: true,
+        },
+        {
+          id: 'invoice',
+          name: 'Hóa đơn điện tử',
+          type: 'transactional',
+          category: 'invoices',
+          subject: 'Hóa đơn mua hàng - Audio Tài Lộc',
+          lastModified: new Date(),
+          usage: 0,
           isActive: true,
         },
       ];
 
-      // Filter templates
-      let filteredTemplates = templates;
-      if (query.type) {
-        filteredTemplates = filteredTemplates.filter(t => t.type === query.type);
-      }
-      if (query.category) {
-        filteredTemplates = filteredTemplates.filter(t => t.category === query.category);
-      }
-
-      // Paginate
-      const paginatedTemplates = filteredTemplates.slice(skip, skip + limit);
-
       return {
         success: true,
-        data: paginatedTemplates,
+        data: templates,
         meta: {
-          total: filteredTemplates.length,
-          page,
-          limit,
-          totalPages: Math.ceil(filteredTemplates.length / limit),
+          total: templates.length,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
         },
       };
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to fetch email templates' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -139,48 +102,84 @@ export class EmailController {
   @Get('templates/:id')
   async getEmailTemplate(@Param('id') id: string) {
     try {
-      // Mock template data - in real app, fetch from database
-      const templates = {
-        'order-confirmation': {
-          id: 'order-confirmation',
-          name: 'Xác nhận đơn hàng',
-          type: 'transactional',
-          category: 'orders',
-          subject: 'Xác nhận đơn hàng - Audio Tài Lộc',
-          htmlContent: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Xác nhận đơn hàng</title>
-            </head>
-            <body>
-              <h1>🎵 Audio Tài Lộc</h1>
-              <h2>Xác nhận đơn hàng #{{orderNo}}</h2>
-              <p>Xin chào {{customerName}},</p>
-              <p>Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đã được xác nhận.</p>
-              <!-- More template content -->
-            </body>
-            </html>
-          `,
-          textContent: 'Xác nhận đơn hàng #{{orderNo}} - Audio Tài Lộc',
-          lastModified: new Date('2024-01-10T08:00:00Z'),
-          isActive: true,
-        },
-        // Add other templates...
-      };
+      let htmlContent = '';
+      let subject = '';
+      let name = '';
 
-      const template = templates[id as keyof typeof templates];
-      if (!template) {
-        throw new HttpException(
-          { success: false, message: 'Template not found' },
-          HttpStatus.NOT_FOUND
-        );
+      // Generate preview data based on template ID
+      switch (id) {
+        case 'welcome':
+          name = 'Email chào mừng';
+          subject = 'Chào mừng đến với Audio Tài Lộc';
+          htmlContent = emailTemplates.welcome('Nguyễn Văn A');
+          break;
+        case 'orderConfirmation':
+          name = 'Xác nhận đơn hàng';
+          subject = 'Xác nhận đơn hàng #ORD-123456';
+          htmlContent = emailTemplates.orderConfirmation({
+            orderNo: 'ORD-123456',
+            customerName: 'Nguyễn Văn A',
+            totalAmount: '8.500.000 ₫',
+            items: [
+              { name: 'Loa Bluetooth Sony', quantity: 1, price: '2.500.000 ₫' },
+              { name: 'Tai nghe Marshall', quantity: 2, price: '3.000.000 ₫' },
+            ],
+            status: 'PENDING',
+            shippingAddress: '123 Đường ABC, Quận 1, TP.HCM',
+            paymentMethod: 'Thanh toán khi nhận hàng (COD)',
+            createdAt: new Date().toLocaleString('vi-VN'),
+          });
+          break;
+        case 'invoice':
+          name = 'Hóa đơn điện tử';
+          subject = 'Hóa đơn #INV-2023-001';
+          htmlContent = invoiceTemplates.standard({
+            orderNo: 'ORD-2023-001',
+            status: 'completed',
+            invoiceNo: 'INV-2023-001',
+            invoiceDate: new Date().toLocaleDateString('vi-VN'),
+            customerName: 'Công ty TNHH ABC',
+            customerAddress: '456 Đường XYZ, Quận 3, TP.HCM',
+            taxCode: '0123456789',
+            items: [
+              {
+                name: 'Loa Bluetooth Sony',
+                quantity: 1,
+                price: '2.500.000 ₫',
+                total: '2.500.000 ₫',
+              },
+              {
+                name: 'Tai nghe Marshall',
+                quantity: 2,
+                price: '3.000.000 ₫',
+                total: '6.000.000 ₫',
+              },
+            ],
+            subTotal: '8.500.000 ₫',
+            taxAmount: '850.000 ₫',
+            totalAmount: '9.350.000 ₫',
+            paymentMethod: 'Chuyển khoản',
+          });
+          break;
+        default:
+          throw new HttpException(
+            { success: false, message: 'Template not found' },
+            HttpStatus.NOT_FOUND,
+          );
       }
 
       return {
         success: true,
-        data: template,
+        data: {
+          id,
+          name,
+          subject,
+          htmlContent,
+          type: 'transactional',
+          category: 'system',
+          lastModified: new Date(),
+          isActive: true,
+        },
       };
     } catch (error) {
       if (error instanceof HttpException) {
@@ -188,7 +187,7 @@ export class EmailController {
       }
       throw new HttpException(
         { success: false, message: 'Failed to fetch email template' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -213,7 +212,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to create email template' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -234,7 +233,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to update email template' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -250,21 +249,24 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to delete email template' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Get('history')
-  async getEmailHistory(@Query() query: {
-    status?: string;
-    type?: string;
-    template?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: string;
-    limit?: string;
-  }) {
+  async getEmailHistory(
+    @Query()
+    query: {
+      status?: string;
+      type?: string;
+      template?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: string;
+      limit?: string;
+    },
+  ) {
     try {
       const page = parseInt(query.page || '1');
       const limit = parseInt(query.limit || '50');
@@ -363,7 +365,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to fetch email history' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -385,16 +387,13 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to send email' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Get('stats')
-  async getEmailStats(@Query() _query: {
-    startDate?: string;
-    endDate?: string;
-  }) {
+  async getEmailStats(@Query() _query: { startDate?: string; endDate?: string }) {
     try {
       // Mock email statistics
       const stats = {
@@ -414,7 +413,12 @@ export class EmailController {
         topPerformingTemplates: [
           { id: 'order-confirmation', name: 'Xác nhận đơn hàng', openRate: 45.2, clickRate: 18.7 },
           { id: 'welcome-email', name: 'Email chào mừng', openRate: 38.9, clickRate: 22.1 },
-          { id: 'promotion-discount', name: 'Khuyến mãi giảm giá', openRate: 29.4, clickRate: 15.8 },
+          {
+            id: 'promotion-discount',
+            name: 'Khuyến mãi giảm giá',
+            openRate: 29.4,
+            clickRate: 15.8,
+          },
         ],
         emailTypeBreakdown: {
           transactional: 65,
@@ -430,7 +434,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to fetch email statistics' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -478,7 +482,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to fetch email settings' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -495,7 +499,7 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to update email settings' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

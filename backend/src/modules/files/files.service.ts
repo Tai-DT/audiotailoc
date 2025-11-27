@@ -44,7 +44,7 @@ export class FilesService {
     // Use nullish coalescing to respect ConfigService mocks that don't accept a default value
     this.uploadDir = this.config.get<string>('UPLOAD_DIR') ?? './uploads';
     this.cdnUrl = this.config.get<string>('CDN_URL') ?? '';
-    
+
     // Ensure upload directory exists
     this.ensureUploadDir();
   }
@@ -74,7 +74,7 @@ export class FilesService {
       const fileId = fullUuid.split('-')[0]; // short 8-char id
       const extension = path.extname(file.originalname).toLowerCase();
       const filename = `${fileId}${extension}`;
-      
+
       // Determine file type and subdirectory
       const isImage = file.mimetype.startsWith('image/');
       const subDir = isImage ? 'images' : 'documents';
@@ -138,7 +138,7 @@ export class FilesService {
           dimensions: isImage ? await this.getImageDimensions(file.buffer) : null,
           storage: cloudUrl ? 'cloudinary' : 'local',
           publicId: cloudPublicId || null,
-        }
+        },
       };
 
       return {
@@ -163,7 +163,7 @@ export class FilesService {
     metadata: Record<string, any> = {},
   ): Promise<FileUploadResult[]> {
     const results: FileUploadResult[] = [];
-    
+
     for (const file of files) {
       try {
         const result = await this.uploadFile(file, options, metadata);
@@ -206,10 +206,7 @@ export class FilesService {
     return result;
   }
 
-  async uploadUserAvatar(
-    file: Express.Multer.File,
-    userId: string,
-  ): Promise<FileUploadResult> {
+  async uploadUserAvatar(file: Express.Multer.File, userId: string): Promise<FileUploadResult> {
     const options: FileValidationOptions = {
       maxSize: 2 * 1024 * 1024, // 2MB
       allowedMimeTypes: ['image/jpeg', 'image/png'],
@@ -229,7 +226,7 @@ export class FilesService {
     // Update user with avatar URL
     await this.prisma.users.update({
       where: { id: userId },
-      data: { /* avatarUrl: result.url, */ }, // TODO: Add avatarUrl field to User model
+      data: { avatarUrl: result.url },
     });
 
     return result;
@@ -351,10 +348,15 @@ export class FilesService {
     };
   }
 
-  private async validateFile(file: Express.Multer.File, options: FileValidationOptions): Promise<void> {
+  private async validateFile(
+    file: Express.Multer.File,
+    options: FileValidationOptions,
+  ): Promise<void> {
     // Check file size
     if (options.maxSize && file.size > options.maxSize) {
-      throw new BadRequestException(`File size exceeds maximum allowed size of ${options.maxSize} bytes`);
+      throw new BadRequestException(
+        `File size exceeds maximum allowed size of ${options.maxSize} bytes`,
+      );
     }
 
     // Check MIME type
@@ -374,10 +376,14 @@ export class FilesService {
     if (file.mimetype.startsWith('image/') && (options.maxWidth || options.maxHeight)) {
       const dimensions = await this.getImageDimensions(file.buffer);
       if (options.maxWidth && dimensions.width > options.maxWidth) {
-        throw new BadRequestException(`Image width exceeds maximum allowed width of ${options.maxWidth}px`);
+        throw new BadRequestException(
+          `Image width exceeds maximum allowed width of ${options.maxWidth}px`,
+        );
       }
       if (options.maxHeight && dimensions.height > options.maxHeight) {
-        throw new BadRequestException(`Image height exceeds maximum allowed height of ${options.maxHeight}px`);
+        throw new BadRequestException(
+          `Image height exceeds maximum allowed height of ${options.maxHeight}px`,
+        );
       }
     }
   }
@@ -386,7 +392,7 @@ export class FilesService {
     try {
       // Temporarily disabled due to Sharp compatibility issues
       // const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${fileId}_thumb.jpg`);
-      
+
       // await sharp(filePath)
       //   .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
       //   .jpeg({ quality: 80 })

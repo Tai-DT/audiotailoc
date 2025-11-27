@@ -72,7 +72,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
         this.logger.log('Redis connected successfully');
       });
 
-      this.redis.on('error', (error) => {
+      this.redis.on('error', error => {
         this.isConnected = false;
         this.logger.error('Redis connection error', error);
       });
@@ -86,7 +86,6 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       // Test connection
       await this.redis.ping();
       this.logger.log('Redis connection test successful');
-
     } catch (error) {
       this.logger.error('Failed to initialize Redis', error);
       // Continue without cache if Redis is not available
@@ -143,11 +142,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Set cache entry
-  async set<T = any>(
-    key: string,
-    value: T,
-    options?: CacheOptions
-  ): Promise<boolean> {
+  async set<T = any>(key: string, value: T, options?: CacheOptions): Promise<boolean> {
     if (!this.isConnected || !this.redis) {
       return false;
     }
@@ -248,7 +243,11 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Increment counter
-  async increment(key: string, value: number = 1, options?: { prefix?: string; ttl?: number }): Promise<number> {
+  async increment(
+    key: string,
+    value: number = 1,
+    options?: { prefix?: string; ttl?: number },
+  ): Promise<number> {
     if (!this.isConnected || !this.redis) {
       this.logger.warn('Redis not connected, increment operation skipped');
       return 0;
@@ -259,12 +258,12 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const result = await this.redis.incrby(fullKey, value);
-      
+
       // Set TTL if provided
       if (options?.ttl) {
         await this.redis.expire(fullKey, options.ttl);
       }
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Cache increment error for key ${fullKey}`, error);
@@ -296,7 +295,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   async getOrSet<T = any>(
     key: string,
     factory: () => Promise<T>,
-    options?: CacheOptions
+    options?: CacheOptions,
   ): Promise<T> {
     // Try to get from cache first
     const cached = await this.get<T>(key, { prefix: options?.prefix || options?.keyPrefix });
@@ -353,7 +352,10 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Multi-set operation
-  async mset(keyValuePairs: { key: string; value: any }[], options?: CacheOptions): Promise<boolean> {
+  async mset(
+    keyValuePairs: { key: string; value: any }[],
+    options?: CacheOptions,
+  ): Promise<boolean> {
     if (!this.isConnected || !this.redis) {
       return false;
     }
@@ -391,9 +393,8 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
   // Get cache statistics
   getStats(): CacheStats {
-    const hitRate = this.stats.totalRequests > 0
-      ? (this.stats.hits / this.stats.totalRequests) * 100
-      : 0;
+    const hitRate =
+      this.stats.totalRequests > 0 ? (this.stats.hits / this.stats.totalRequests) * 100 : 0;
 
     return {
       hits: this.stats.hits,
@@ -456,9 +457,11 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     const sorted: any = {};
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = this.sortObjectKeys(obj[key]);
-    });
+    Object.keys(obj)
+      .sort()
+      .forEach(key => {
+        sorted[key] = this.sortObjectKeys(obj[key]);
+      });
 
     return sorted;
   }
@@ -480,7 +483,9 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Cache warming (preload frequently accessed data)
-  async warmUp(cacheEntries: { key: string; value: any; options?: CacheOptions }[]): Promise<number> {
+  async warmUp(
+    cacheEntries: { key: string; value: any; options?: CacheOptions }[],
+  ): Promise<number> {
     if (!this.isConnected || !this.redis) {
       return 0;
     }

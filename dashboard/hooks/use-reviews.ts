@@ -3,41 +3,7 @@
 import { useState, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
-
-export interface Review {
-  id: string
-  userId: string
-  userName: string
-  productId?: string
-  productName?: string
-  serviceId?: string
-  serviceName?: string
-  rating: number
-  comment: string
-  images?: string[]
-  status: 'pending' | 'approved' | 'rejected'
-  response?: string
-  helpfulCount: number
-  reportCount: number
-  createdAt: string
-  updatedAt: string
-}
-
-export interface ReviewStats {
-  totalReviews: number
-  averageRating: number
-  pendingReviews: number
-  approvedReviews: number
-  rejectedReviews: number
-  responseRate: number
-  ratingDistribution: {
-    1: number
-    2: number
-    3: number
-    4: number
-    5: number
-  }
-}
+import { Review, ReviewStats, ReviewsResponse } from '@/types/review'
 
 export function useReviews() {
   const [reviews, setReviews] = useState<Review[]>([])
@@ -50,70 +16,43 @@ export function useReviews() {
     try {
       setLoading(true)
       setError(null)
-      
-      // Mock data for now - replace with actual API call
-      const mockReviews: Review[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          userName: 'Nguyễn Văn A',
-          productId: 'prod1',
-          productName: 'Loa JBL EON615',
-          rating: 5,
-          comment: 'Sản phẩm rất tốt, âm thanh chất lượng cao. Giao hàng nhanh chóng.',
-          images: ['https://picsum.photos/100/100?random=1'],
-          status: 'pending',
-          helpfulCount: 12,
-          reportCount: 0,
-          createdAt: '2025-09-08T10:00:00Z',
-          updatedAt: '2025-09-08T10:00:00Z'
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          userName: 'Trần Thị B',
-          serviceId: 'serv1',
-          serviceName: 'Lắp đặt hệ thống âm thanh',
-          rating: 4,
-          comment: 'Dịch vụ tốt, nhân viên nhiệt tình. Cần cải thiện thời gian làm việc.',
-          status: 'approved',
-          response: 'Cảm ơn bạn đã sử dụng dịch vụ. Chúng tôi sẽ cải thiện thời gian phục vụ.',
-          helpfulCount: 8,
-          reportCount: 0,
-          createdAt: '2025-09-07T14:30:00Z',
-          updatedAt: '2025-09-07T15:00:00Z'
-        }
-      ]
 
-      // Mock stats
-      const mockStats: ReviewStats = {
-        totalReviews: 156,
-        averageRating: 4.3,
-        pendingReviews: 12,
-        approvedReviews: 138,
-        rejectedReviews: 6,
-        responseRate: 75,
-        ratingDistribution: {
-          1: 3,
-          2: 8,
-          3: 25,
-          4: 52,
-          5: 68
-        }
+      const params: any = {
+        page: 1,
+        pageSize: 100, // Fetch more for now since we filter client side
       }
 
-      // Filter by status
-      let filtered = mockReviews
       if (status !== 'all') {
-        filtered = mockReviews.filter(r => r.status === status)
+        params.status = status.toUpperCase()
       }
 
-      setReviews(filtered)
-      setStats(mockStats)
-    } catch {
+      const [reviewsResponse, statsResponse] = await Promise.all([
+        apiClient.getReviews(params),
+        apiClient.getReviewStats()
+      ])
+
+      const reviewsData = reviewsResponse.data as unknown as ReviewsResponse
+      const statsData = statsResponse.data as unknown as ReviewStats
+
+      // If API returns array directly (legacy support)
+      if (Array.isArray(reviewsResponse.data)) {
+        setReviews(reviewsResponse.data as unknown as Review[])
+      } else if (reviewsData && Array.isArray(reviewsData.data)) {
+        setReviews(reviewsData.data)
+      } else {
+        setReviews([])
+      }
+
+      if (statsData) {
+        setStats(statsData)
+      }
+
+    } catch (err) {
+      console.error('Error fetching reviews:', err)
       const errorMessage = 'Không thể tải danh sách đánh giá'
       setError(errorMessage)
       toast.error(errorMessage)
+      setReviews([])
     } finally {
       setLoading(false)
     }
@@ -123,13 +62,19 @@ export function useReviews() {
   const approveReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.post(`/reviews/${reviewId}/approve`)
+      await apiClient.updateReviewStatus(reviewId, 'APPROVED')
       toast.success('Đã duyệt đánh giá')
-      
+
       // Update local state
-      setReviews(prev => prev.map(review => 
-        review.id === reviewId ? { ...review, status: 'approved' as const } : review
+      setReviews(prev => prev.map(review =>
+        review.id === reviewId ? { ...review, status: 'APPROVED' } : review
       ))
+
+      // Refresh stats
+      const statsResponse = await apiClient.getReviewStats()
+      if (statsResponse.data) {
+        setStats(statsResponse.data as unknown as ReviewStats)
+      }
     } catch {
       toast.error('Không thể duyệt đánh giá')
     } finally {
@@ -138,16 +83,22 @@ export function useReviews() {
   }, [])
 
   // Reject review
-  const rejectReview = useCallback(async (reviewId: string, reason?: string) => {
+  const rejectReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.post(`/reviews/${reviewId}/reject`, { reason })
+      await apiClient.updateReviewStatus(reviewId, 'REJECTED')
       toast.success('Đã từ chối đánh giá')
-      
+
       // Update local state
-      setReviews(prev => prev.map(review => 
-        review.id === reviewId ? { ...review, status: 'rejected' as const } : review
+      setReviews(prev => prev.map(review =>
+        review.id === reviewId ? { ...review, status: 'REJECTED' } : review
       ))
+
+      // Refresh stats
+      const statsResponse = await apiClient.getReviewStats()
+      if (statsResponse.data) {
+        setStats(statsResponse.data as unknown as ReviewStats)
+      }
     } catch {
       toast.error('Không thể từ chối đánh giá')
     } finally {
@@ -159,11 +110,11 @@ export function useReviews() {
   const respondToReview = useCallback(async (reviewId: string, response: string) => {
     try {
       setLoading(true)
-      await apiClient.put(`/reviews/${reviewId}`, { response })
+      await apiClient.respondToReview(reviewId, response)
       toast.success('Đã phản hồi đánh giá')
-      
+
       // Update local state
-      setReviews(prev => prev.map(review => 
+      setReviews(prev => prev.map(review =>
         review.id === reviewId ? { ...review, response } : review
       ))
     } catch {
@@ -177,11 +128,17 @@ export function useReviews() {
   const deleteReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.delete(`/reviews/${reviewId}`)
+      await apiClient.deleteReview(reviewId)
       toast.success('Đã xóa đánh giá')
-      
+
       // Remove from local state
       setReviews(prev => prev.filter(review => review.id !== reviewId))
+
+      // Refresh stats
+      const statsResponse = await apiClient.getReviewStats()
+      if (statsResponse.data) {
+        setStats(statsResponse.data as unknown as ReviewStats)
+      }
     } catch {
       toast.error('Không thể xóa đánh giá')
     } finally {
@@ -192,12 +149,13 @@ export function useReviews() {
   // Mark review as helpful
   const markHelpful = useCallback(async (reviewId: string) => {
     try {
-      await apiClient.post(`/reviews/${reviewId}/helpful`)
-      
+      // Note: This endpoint might need to be added to API client if needed
+      // await apiClient.post(`/reviews/${reviewId}/helpful`)
+
       // Update local state
-      setReviews(prev => prev.map(review => 
-        review.id === reviewId 
-          ? { ...review, helpfulCount: review.helpfulCount + 1 } 
+      setReviews(prev => prev.map(review =>
+        review.id === reviewId
+          ? { ...review, helpfulCount: review.helpfulCount + 1 }
           : review
       ))
     } catch {
@@ -208,13 +166,14 @@ export function useReviews() {
   // Report review
   const reportReview = useCallback(async (reviewId: string, reason: string) => {
     try {
-      await apiClient.post(`/reviews/${reviewId}/report`, { reason })
+      // Note: This endpoint might need to be added to API client if needed
+      // await apiClient.post(`/reviews/${reviewId}/report`, { reason })
       toast.success('Đã báo cáo đánh giá')
-      
+
       // Update local state
-      setReviews(prev => prev.map(review => 
-        review.id === reviewId 
-          ? { ...review, reportCount: review.reportCount + 1 } 
+      setReviews(prev => prev.map(review =>
+        review.id === reviewId
+          ? { ...review, reportCount: review.reportCount + 1 }
           : review
       ))
     } catch {

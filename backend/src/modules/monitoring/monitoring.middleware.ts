@@ -14,7 +14,7 @@ export class MonitoringMiddleware implements NestMiddleware {
     // Override res.end to capture response metrics
     const originalEnd = res.end;
     const self = this;
-    res.end = function(chunk?: any, encoding?: BufferEncoding | (() => void)) {
+    res.end = function (chunk?: any, encoding?: BufferEncoding | (() => void)) {
       const duration = Date.now() - start;
       const statusCode = res.statusCode;
 

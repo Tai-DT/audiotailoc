@@ -89,6 +89,25 @@ export default function CustomerAdminPage() {
   const exportDataMutation = useExportUserData();
   const deleteAccountMutation = useDeleteAccount();
 
+  // Local types for bookings/payments used in this view (narrowed to fields displayed)
+  type BookingSummary = {
+    id: string;
+    serviceName?: string;
+    date?: string | null;
+    technicianName?: string | null;
+    price?: number | null;
+    status?: string | null;
+  };
+
+  type PaymentSummary = {
+    id: string;
+    description?: string | null;
+    createdAt?: string | null;
+    transactionId?: string | null;
+    amount?: number | null;
+    status?: string | null;
+  };
+
   // Initialize form data when user data loads
   React.useEffect(() => {
     if (user) {
@@ -107,7 +126,7 @@ export default function CustomerAdminPage() {
     try {
       await updateProfileMutation.mutateAsync(formData);
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -158,7 +177,7 @@ export default function CustomerAdminPage() {
         newPassword: '',
         confirmPassword: ''
       });
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -185,7 +204,7 @@ export default function CustomerAdminPage() {
     try {
       await deleteAccountMutation.mutateAsync(deletePassword);
       setShowDeleteDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -438,7 +457,7 @@ export default function CustomerAdminPage() {
                 </div>
               ) : bookings && bookings.length > 0 ? (
                 <div className="space-y-4">
-                  {bookings.map((booking: any) => (
+                  {bookings.map((booking: BookingSummary) => (
                     <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium">{booking.serviceName || 'Service'}</h4>
@@ -490,7 +509,7 @@ export default function CustomerAdminPage() {
                 </div>
               ) : payments && payments.length > 0 ? (
                 <div className="space-y-4">
-                  {payments.map((payment: any) => (
+                  {payments.map((payment: PaymentSummary) => (
                     <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium">{payment.description || 'Payment'}</h4>

@@ -12,6 +12,9 @@ export declare class UsersService {
         name: string | null;
         phone: string | null;
         role: string;
+        avatarUrl: string | null;
+        resetToken: string | null;
+        resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -22,7 +25,7 @@ export declare class UsersService {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string;
+            userId: string | null;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -30,17 +33,31 @@ export declare class UsersService {
             shippingAddress: string | null;
             shippingCoordinates: string | null;
             promotionCode: string | null;
+            isDeleted: boolean;
+            deletedAt: Date | null;
         }[];
+        id: string;
+        email: string;
+        name: string;
+        phone: string;
+        role: string;
+        avatarUrl: string;
+        createdAt: Date;
+        updatedAt: Date;
         _count: {
             orders: number;
         };
-    } & {
+    }>;
+    findByIdForAuth(id: string): Promise<{
         id: string;
         email: string;
         password: string;
         name: string | null;
         phone: string | null;
         role: string;
+        avatarUrl: string | null;
+        resetToken: string | null;
+        resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -55,7 +72,7 @@ export declare class UsersService {
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
     }): Promise<{
-        users: {
+        items: {
             orders: {
                 totalCents: number;
             }[];
@@ -64,17 +81,16 @@ export declare class UsersService {
             name: string;
             phone: string;
             role: string;
+            avatarUrl: string;
             createdAt: Date;
             _count: {
                 orders: number;
             };
         }[];
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-        };
+        total: number;
+        page: number;
+        limit: number;
+        pages: number;
     }>;
     create(createUserDto: {
         email: string;
@@ -102,6 +118,9 @@ export declare class UsersService {
         name: string | null;
         phone: string | null;
         role: string;
+        avatarUrl: string | null;
+        resetToken: string | null;
+        resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -134,6 +153,33 @@ export declare class UsersService {
         id: string;
         email: string;
         name: string;
+        updatedAt: Date;
+    }>;
+    setResetToken(userId: string, hashedToken: string, expiresAt: Date): Promise<void>;
+    findByResetToken(hashedToken: string): Promise<{
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        phone: string | null;
+        role: string;
+        avatarUrl: string | null;
+        resetToken: string | null;
+        resetExpires: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    completePasswordReset(userId: string, hashedPassword: string): Promise<{
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        phone: string | null;
+        role: string;
+        avatarUrl: string | null;
+        resetToken: string | null;
+        resetExpires: Date | null;
+        createdAt: Date;
         updatedAt: Date;
     }>;
     private generateRandomPassword;

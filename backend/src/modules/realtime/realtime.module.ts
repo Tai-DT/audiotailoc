@@ -12,6 +12,6 @@ import { PrismaModule } from '../../prisma/prisma.module';
 @Module({
   imports: [PrismaModule, JwtModule, ConfigModule],
   providers: [RealtimeGateway, RealtimeService],
-  exports: [RealtimeService],
+  exports: [RealtimeService, RealtimeGateway],
 })
 export class RealtimeModule {}

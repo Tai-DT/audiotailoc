@@ -14,6 +14,10 @@ declare class ShippingAddressDto {
 declare class CheckoutDto {
     promotionCode?: string;
     shippingAddress: ShippingAddressDto;
+    items?: Array<{
+        productId: string;
+        quantity: number;
+    }>;
 }
 export declare class CheckoutController {
     private readonly checkout;
@@ -32,7 +36,7 @@ export declare class CheckoutController {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string;
+            userId: string | null;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -40,6 +44,8 @@ export declare class CheckoutController {
             shippingAddress: string | null;
             shippingCoordinates: string | null;
             promotionCode: string | null;
+            isDeleted: boolean;
+            deletedAt: Date | null;
         };
     }>;
     getByOrderNo(req: any, orderNo: string): Promise<{
@@ -49,10 +55,10 @@ export declare class CheckoutController {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
-            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
+            price: bigint;
             unitPrice: bigint | null;
         }[];
         payments: {
@@ -60,12 +66,12 @@ export declare class CheckoutController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            transactionId: string | null;
-            provider: string;
-            amountCents: number;
             metadata: string | null;
             orderId: string;
+            transactionId: string | null;
             intentId: string | null;
+            provider: string;
+            amountCents: number;
         }[];
     } & {
         status: string;
@@ -73,7 +79,7 @@ export declare class CheckoutController {
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -81,6 +87,8 @@ export declare class CheckoutController {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        isDeleted: boolean;
+        deletedAt: Date | null;
     }>;
 }
 export {};

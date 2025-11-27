@@ -1,4 +1,4 @@
-import { } from '@nestjs/common';
+import {} from '@nestjs/common';
 import { MonitoringService } from './monitoring.service';
 
 // Custom metrics decorators

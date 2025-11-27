@@ -62,9 +62,11 @@ export class CreateProductDto {
     example: 'premium-audio-cable',
   })
   @IsOptional()
-  @Transform(({ value }) => value === null ? undefined : value)
+  @Transform(({ value }) => (value === null ? undefined : value))
   @IsString()
-  @Matches(/^[a-z0-9-]+$/, { message: 'Slug must contain only lowercase letters, numbers, and hyphens' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+  })
   slug?: string;
 
   @ApiPropertyOptional({
@@ -100,16 +102,6 @@ export class CreateProductDto {
   @IsNumber()
   @Min(0)
   originalPriceCents?: number;
-
-  @ApiPropertyOptional({
-    description: 'Stock quantity',
-    example: 50,
-    default: 0,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  stockQuantity?: number = 0;
 
   @ApiPropertyOptional({
     description: 'SKU (Stock Keeping Unit)',
@@ -257,7 +249,8 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: 'Meta description for SEO',
-    example: 'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
+    example:
+      'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
   })
   @IsOptional()
   @IsString()
@@ -297,7 +290,9 @@ export class UpdateProductDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9-]+$/, { message: 'Slug must contain only lowercase letters, numbers, and hyphens' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+  })
   slug?: string;
 
   @ApiPropertyOptional({
@@ -334,15 +329,6 @@ export class UpdateProductDto {
   @IsNumber()
   @Min(0)
   originalPriceCents?: number;
-
-  @ApiPropertyOptional({
-    description: 'Stock quantity',
-    example: 50,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  stockQuantity?: number;
 
   @ApiPropertyOptional({
     description: 'SKU (Stock Keeping Unit)',
@@ -487,7 +473,8 @@ export class UpdateProductDto {
 
   @ApiPropertyOptional({
     description: 'Meta description for SEO',
-    example: 'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
+    example:
+      'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
   })
   @IsOptional()
   @IsString()
@@ -654,12 +641,6 @@ export class ProductResponseDto {
     example: 399000,
   })
   originalPriceCents?: number;
-
-  @ApiProperty({
-    description: 'Stock quantity',
-    example: 50,
-  })
-  stockQuantity!: number;
 
   @ApiPropertyOptional({
     description: 'SKU',
@@ -877,7 +858,7 @@ export class ProductAnalyticsDto {
 
   @ApiProperty({
     description: 'Products by category',
-    example: { 'audio-cables': 25, 'speakers': 30 },
+    example: { 'audio-cables': 25, speakers: 30 },
   })
   productsByCategory!: Record<string, number>;
 

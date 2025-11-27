@@ -9,7 +9,23 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './modules/caching/cache.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { SupportModule } from './modules/support/support.module';
+import { TechniciansModule } from './modules/technicians/technicians.module';
+import { ServicesModule } from './modules/services/services.module';
+import { ServiceTypesModule } from './modules/service-types/service-types.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { MarketingModule } from './modules/marketing/marketing.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { BackupModule } from './modules/backup/backup.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { SiteModule } from './modules/site/site.module';
 
 @Module({
   imports: [
@@ -24,7 +40,24 @@ import { PaymentsModule } from './modules/payments/payments.module';
     AuthModule,
     AnalyticsModule,
     CheckoutModule,
+    OrdersModule,
+    BookingsModule,
     PaymentsModule,
+    ChatModule,
+    SupportModule,
+    TechniciansModule,
+    ServicesModule,
+    ServiceTypesModule,
+    // Dashboard Modules
+    PromotionsModule,
+    ProjectsModule,
+    MarketingModule, // Handles campaigns
+    ReviewsModule,
+    NotificationsModule,
+    ReportsModule,
+    BackupModule, // Use existing BackupModule
+    SettingsModule,
+    SiteModule,
   ],
   controllers: [],
   providers: [

@@ -44,9 +44,8 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
     const userAgent = request.get('User-Agent') || '';
 
     // Determine status code
-    const status = exception instanceof HttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status =
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Get error details
     const errorDetails = this.getErrorDetails(exception);
@@ -64,10 +63,7 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
 
     // Record error in monitoring
     if (this.monitoringService) {
-      this.monitoringService.recordError(
-        errorDetails.code,
-        path
-      );
+      this.monitoringService.recordError(errorDetails.code, path);
     }
 
     // Create error response
@@ -101,10 +97,12 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
       request.ip ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
-      request.headers['x-forwarded-for'] as string ||
-      request.headers['x-real-ip'] as string ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
       'unknown'
-    ).split(',')[0].trim();
+    )
+      .split(',')[0]
+      .trim();
   }
 
   private getErrorDetails(exception: any): {
@@ -115,12 +113,16 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
   } {
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
-      const message = typeof response === 'string'
-        ? response
-        : (typeof response === 'object' && response && 'message' in response ? (response as any).message : exception.message);
-      const code = typeof response === 'object' && response && 'code' in response
-        ? (response as any).code
-        : this.getErrorCode(exception.constructor.name, exception.getStatus());
+      const message =
+        typeof response === 'string'
+          ? response
+          : typeof response === 'object' && response && 'message' in response
+            ? (response as any).message
+            : exception.message;
+      const code =
+        typeof response === 'object' && response && 'code' in response
+          ? (response as any).code
+          : this.getErrorCode(exception.constructor.name, exception.getStatus());
 
       return {
         code,
@@ -164,20 +166,20 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
 
   private getErrorCode(className: string, status: number): string {
     const errorCodes: Record<string, string> = {
-      'BadRequestException': 'BAD_REQUEST',
-      'UnauthorizedException': 'UNAUTHORIZED',
-      'ForbiddenException': 'FORBIDDEN',
-      'NotFoundException': 'NOT_FOUND',
-      'ConflictException': 'CONFLICT',
-      'GoneException': 'GONE',
-      'PayloadTooLargeException': 'PAYLOAD_TOO_LARGE',
-      'UnsupportedMediaTypeException': 'UNSUPPORTED_MEDIA_TYPE',
-      'UnprocessableEntityException': 'VALIDATION_ERROR',
-      'InternalServerErrorException': 'INTERNAL_ERROR',
-      'NotImplementedException': 'NOT_IMPLEMENTED',
-      'BadGatewayException': 'BAD_GATEWAY',
-      'ServiceUnavailableException': 'SERVICE_UNAVAILABLE',
-      'GatewayTimeoutException': 'GATEWAY_TIMEOUT',
+      BadRequestException: 'BAD_REQUEST',
+      UnauthorizedException: 'UNAUTHORIZED',
+      ForbiddenException: 'FORBIDDEN',
+      NotFoundException: 'NOT_FOUND',
+      ConflictException: 'CONFLICT',
+      GoneException: 'GONE',
+      PayloadTooLargeException: 'PAYLOAD_TOO_LARGE',
+      UnsupportedMediaTypeException: 'UNSUPPORTED_MEDIA_TYPE',
+      UnprocessableEntityException: 'VALIDATION_ERROR',
+      InternalServerErrorException: 'INTERNAL_ERROR',
+      NotImplementedException: 'NOT_IMPLEMENTED',
+      BadGatewayException: 'BAD_GATEWAY',
+      ServiceUnavailableException: 'SERVICE_UNAVAILABLE',
+      GatewayTimeoutException: 'GATEWAY_TIMEOUT',
     };
 
     return errorCodes[className] || `HTTP_${status}`;
@@ -212,21 +214,11 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
     };
 
     if (status >= 500) {
-      this.logger.error(
-        `Server Error: ${error.message}`,
-        logContext,
-        exception.stack,
-      );
+      this.logger.error(`Server Error: ${error.message}`, logContext, exception.stack);
     } else if (status >= 400) {
-      this.logger.warn(
-        `Client Error: ${error.message}`,
-        logContext,
-      );
+      this.logger.warn(`Client Error: ${error.message}`, logContext);
     } else {
-      this.logger.log(
-        `Request Error: ${error.message}`,
-        logContext,
-      );
+      this.logger.log(`Request Error: ${error.message}`, logContext);
     }
   }
 }

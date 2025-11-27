@@ -118,7 +118,7 @@ let FilesService = FilesService_1 = class FilesService {
                     dimensions: isImage ? await this.getImageDimensions(file.buffer) : null,
                     storage: cloudUrl ? 'cloudinary' : 'local',
                     publicId: cloudPublicId || null,
-                }
+                },
             };
             return {
                 id: fileRecord.id,
@@ -185,7 +185,7 @@ let FilesService = FilesService_1 = class FilesService {
         const result = await this.uploadFile(file, options, metadata);
         await this.prisma.users.update({
             where: { id: userId },
-            data: {},
+            data: { avatarUrl: result.url },
         });
         return result;
     }

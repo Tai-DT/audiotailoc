@@ -57,38 +57,44 @@ export class ErrorTrackingService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly loggingService: LoggingService
+    private readonly loggingService: LoggingService,
   ) {
     // Clean up old errors every hour
-    setInterval(() => {
-      this.cleanupOldErrors();
-    }, 60 * 60 * 1000);
+    setInterval(
+      () => {
+        this.cleanupOldErrors();
+      },
+      60 * 60 * 1000,
+    );
   }
 
   // Capture and track errors
-  captureError(error: Error, context?: {
-    userId?: string;
-    userEmail?: string;
-    ip?: string;
-    method?: string;
-    url?: string;
-    headers?: Record<string, string>;
-    body?: any;
-    level?: 'error' | 'warning' | 'info';
-    tags?: Record<string, string>;
-  }): string {
+  captureError(
+    error: Error,
+    context?: {
+      userId?: string;
+      userEmail?: string;
+      ip?: string;
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: any;
+      level?: 'error' | 'warning' | 'info';
+      tags?: Record<string, string>;
+    },
+  ): string {
     const errorId = this.generateErrorId();
     const fingerprint = this.generateFingerprint(error, context);
     const timestamp = new Date();
 
     // Check if this error already exists
     const existingError = this.findExistingError(fingerprint);
-    
+
     if (existingError) {
       // Update existing error
       existingError.count++;
       existingError.lastSeen = timestamp;
-      
+
       // Log the occurrence
       this.loggingService.error(`Recurring error: ${error.message}`, {
         errorId: existingError.id,
@@ -96,7 +102,7 @@ export class ErrorTrackingService {
         fingerprint,
         ...context,
       });
-      
+
       return existingError.id;
     }
 
@@ -109,17 +115,21 @@ export class ErrorTrackingService {
       timestamp,
       environment: this.config.get<string>('NODE_ENV') || 'development',
       release: this.config.get<string>('APP_VERSION'),
-      user: context?.userId ? {
-        id: context.userId,
-        email: context.userEmail,
-        ip: context.ip,
-      } : undefined,
-      request: context?.method ? {
-        method: context.method,
-        url: context.url || '',
-        headers: this.sanitizeHeaders(context.headers || {}),
-        body: this.sanitizeBody(context.body),
-      } : undefined,
+      user: context?.userId
+        ? {
+            id: context.userId,
+            email: context.userEmail,
+            ip: context.ip,
+          }
+        : undefined,
+      request: context?.method
+        ? {
+            method: context.method,
+            url: context.url || '',
+            headers: this.sanitizeHeaders(context.headers || {}),
+            body: this.sanitizeBody(context.body),
+          }
+        : undefined,
       context: {
         ...context?.tags,
         errorType: error.constructor.name,
@@ -162,8 +172,7 @@ export class ErrorTrackingService {
     const timeRangeMs = this.getTimeRangeMs(timeRange);
     const cutoff = new Date(now.getTime() - timeRangeMs);
 
-    const recentErrors = Array.from(this.errors.values())
-      .filter(error => error.lastSeen >= cutoff);
+    const recentErrors = Array.from(this.errors.values()).filter(error => error.lastSeen >= cutoff);
 
     const totalErrors = recentErrors.reduce((sum, error) => sum + error.count, 0);
     const newErrors = recentErrors.filter(error => error.firstSeen >= cutoff).length;
@@ -286,7 +295,7 @@ export class ErrorTrackingService {
 
   private getStackSignature(stack?: string): string {
     if (!stack) return '';
-    
+
     // Extract the first few lines of the stack trace for fingerprinting
     const lines = stack.split('\n').slice(0, 3);
     return lines
@@ -298,7 +307,7 @@ export class ErrorTrackingService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -319,7 +328,7 @@ export class ErrorTrackingService {
 
   private sanitizeHeaders(headers: Record<string, string>): Record<string, string> {
     const sanitized = { ...headers };
-    
+
     // Remove sensitive headers
     const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
     sensitiveHeaders.forEach(header => {
@@ -335,7 +344,7 @@ export class ErrorTrackingService {
     if (!body || typeof body !== 'object') return body;
 
     const sanitized = { ...body };
-    
+
     // Remove sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'creditCard'];
     sensitiveFields.forEach(field => {
@@ -356,8 +365,10 @@ export class ErrorTrackingService {
       /authentication.*failed/i,
     ];
 
-    return criticalPatterns.some(pattern => pattern.test(error.message)) ||
-           error.level === 'error' && error.count > 10;
+    return (
+      criticalPatterns.some(pattern => pattern.test(error.message)) ||
+      (error.level === 'error' && error.count > 10)
+    );
   }
 
   private handleCriticalError(error: ErrorReport): void {
@@ -381,7 +392,7 @@ export class ErrorTrackingService {
   private sendToExternalService(_error: ErrorReport): void {
     // Integration with external services like Sentry, Bugsnag, etc.
     const sentryDsn = this.config.get<string>('SENTRY_DSN');
-    
+
     if (sentryDsn) {
       try {
         // This would send to Sentry or similar service
@@ -394,16 +405,20 @@ export class ErrorTrackingService {
 
   private getTimeRangeMs(timeRange: 'hour' | 'day' | 'week'): number {
     switch (timeRange) {
-      case 'hour': return 60 * 60 * 1000;
-      case 'day': return 24 * 60 * 60 * 1000;
-      case 'week': return 7 * 24 * 60 * 60 * 1000;
-      default: return 24 * 60 * 60 * 1000;
+      case 'hour':
+        return 60 * 60 * 1000;
+      case 'day':
+        return 24 * 60 * 60 * 1000;
+      case 'week':
+        return 7 * 24 * 60 * 60 * 1000;
+      default:
+        return 24 * 60 * 60 * 1000;
     }
   }
 
   private cleanupOldErrors(): void {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    
+
     for (const [fingerprint, error] of this.errors.entries()) {
       if (error.lastSeen < oneWeekAgo) {
         this.errors.delete(fingerprint);

@@ -19,6 +19,7 @@ export declare class WishlistController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isDeleted: boolean;
             slug: string;
             shortDescription: string | null;
             priceCents: bigint;
@@ -33,7 +34,6 @@ export declare class WishlistController {
             warranty: string | null;
             weight: number | null;
             dimensions: string | null;
-            stockQuantity: number;
             minOrderQuantity: number;
             maxOrderQuantity: number | null;
             maxStock: number | null;
@@ -43,7 +43,6 @@ export declare class WishlistController {
             canonicalUrl: string | null;
             featured: boolean;
             isActive: boolean;
-            isDeleted: boolean;
             viewCount: number;
         };
     } & {
@@ -54,12 +53,16 @@ export declare class WishlistController {
         productId: string;
     }>;
     getWishlist(req: AuthenticatedRequest): Promise<{
-        items: ({
+        items: {
             products: {
+                stock: number;
                 categories: {
                     id: string;
                     name: string;
                     slug: string;
+                };
+                inventory: {
+                    stock: number;
                 };
                 id: string;
                 name: string;
@@ -68,16 +71,14 @@ export declare class WishlistController {
                 originalPriceCents: bigint;
                 imageUrl: string;
                 images: string;
-                stockQuantity: number;
                 isActive: boolean;
             };
-        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
             productId: string;
-        })[];
+        }[];
         total: number;
     }>;
     getWishlistCount(req: AuthenticatedRequest): Promise<{

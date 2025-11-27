@@ -70,20 +70,15 @@ export declare class AnalyticsController {
     getTopProducts(limit?: string): Promise<{
         id: string;
         name: string;
-        sold: number;
+        salesCount: number;
         revenue: number;
+        stock: number;
     }[]>;
     getUserActivity(range?: string): Promise<{
         pageViews: number;
         sessions: number;
         avgSessionDuration: number;
         bounceRate: number;
-        uniqueVisitors: number;
-        returnVisitors: number;
-        topPages: {
-            path: string;
-            views: number;
-        }[];
     }>;
     getSalesMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").SalesMetrics>;
     getCustomerMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").CustomerMetrics>;

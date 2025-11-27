@@ -11,7 +11,7 @@ export class QueryOptimizer {
       cursor?: string;
       orderBy?: any;
     },
-    maxPageSize: number = 100
+    maxPageSize: number = 100,
   ): {
     skip?: number;
     take: number;
@@ -44,7 +44,7 @@ export class QueryOptimizer {
    */
   static optimizeSearch(
     searchTerm: string,
-    fields: string[]
+    fields: string[],
   ): Prisma.StringFilter | Prisma.StringFilter[] {
     if (!searchTerm || searchTerm.length < 2) {
       return {};
@@ -71,17 +71,14 @@ export class QueryOptimizer {
   /**
    * Optimize include/select statements to avoid N+1 queries
    */
-  static optimizeIncludes<T>(
-    baseInclude: T,
-    requestedFields?: string[]
-  ): T {
+  static optimizeIncludes<T>(baseInclude: T, requestedFields?: string[]): T {
     if (!requestedFields || requestedFields.length === 0) {
       return baseInclude;
     }
 
     // Filter includes based on requested fields
     const optimizedInclude = {} as T;
-    
+
     for (const [key, value] of Object.entries(baseInclude as any)) {
       if (requestedFields.includes(key)) {
         (optimizedInclude as any)[key] = value;
@@ -171,7 +168,7 @@ export class QueryOptimizer {
   static optimizeOrderBy(
     sortBy?: string,
     sortOrder?: 'asc' | 'desc',
-    defaultSort: any = { createdAt: 'desc' }
+    defaultSort: any = { createdAt: 'desc' },
   ): any {
     if (!sortBy) {
       return defaultSort;
@@ -181,20 +178,12 @@ export class QueryOptimizer {
 
     // Map common sort fields to optimized versions
     const sortMapping: Record<string, any> = {
-      'name': { name: order },
-      'price': { priceCents: order },
-      'created': { createdAt: order },
-      'updated': { updatedAt: order },
-      'popularity': [
-        { featured: 'desc' },
-        { viewCount: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      'relevance': [
-        { featured: 'desc' },
-        { _relevance: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      name: { name: order },
+      price: { priceCents: order },
+      created: { createdAt: order },
+      updated: { updatedAt: order },
+      popularity: [{ featured: 'desc' }, { viewCount: 'desc' }, { createdAt: 'desc' }],
+      relevance: [{ featured: 'desc' }, { _relevance: 'desc' }, { createdAt: 'desc' }],
     };
 
     return sortMapping[sortBy] || { [sortBy]: order };
@@ -203,12 +192,14 @@ export class QueryOptimizer {
   /**
    * Create database indexes suggestions based on query patterns
    */
-  static suggestIndexes(queryPatterns: Array<{
-    table: string;
-    whereFields: string[];
-    orderByFields: string[];
-    frequency: number;
-  }>): Array<{
+  static suggestIndexes(
+    queryPatterns: Array<{
+      table: string;
+      whereFields: string[];
+      orderByFields: string[];
+      frequency: number;
+    }>,
+  ): Array<{
     table: string;
     fields: string[];
     type: 'btree' | 'gin' | 'gist';
@@ -222,18 +213,21 @@ export class QueryOptimizer {
     }> = [];
 
     // Group patterns by table
-    const tablePatterns = queryPatterns.reduce((acc, pattern) => {
-      if (!acc[pattern.table]) {
-        acc[pattern.table] = [];
-      }
-      acc[pattern.table].push(pattern);
-      return acc;
-    }, {} as Record<string, typeof queryPatterns>);
+    const tablePatterns = queryPatterns.reduce(
+      (acc, pattern) => {
+        if (!acc[pattern.table]) {
+          acc[pattern.table] = [];
+        }
+        acc[pattern.table].push(pattern);
+        return acc;
+      },
+      {} as Record<string, typeof queryPatterns>,
+    );
 
     for (const [table, patterns] of Object.entries(tablePatterns)) {
       // Analyze field usage frequency
       const fieldUsage: Record<string, number> = {};
-      
+
       patterns.forEach(pattern => {
         [...pattern.whereFields, ...pattern.orderByFields].forEach(field => {
           fieldUsage[field] = (fieldUsage[field] || 0) + pattern.frequency;
@@ -242,7 +236,8 @@ export class QueryOptimizer {
 
       // Suggest indexes for frequently used fields
       for (const [field, frequency] of Object.entries(fieldUsage)) {
-        if (frequency > 100) { // High frequency threshold
+        if (frequency > 100) {
+          // High frequency threshold
           suggestions.push({
             table,
             fields: [field],
@@ -272,12 +267,12 @@ export class QueryOptimizer {
     if (field.includes('tags') || field.includes('search')) {
       return 'gin';
     }
-    
+
     // Suggest GIST indexes for geometric data
     if (field.includes('location') || field.includes('geo')) {
       return 'gist';
     }
-    
+
     // Default to B-tree for most cases
     return 'btree';
   }
@@ -287,19 +282,19 @@ export class QueryOptimizer {
       whereFields: string[];
       orderByFields: string[];
       frequency: number;
-    }>
+    }>,
   ): Array<{ fields: string[]; frequency: number }> {
     const combinations: Record<string, number> = {};
 
     patterns.forEach(pattern => {
       const allFields = [...pattern.whereFields, ...pattern.orderByFields];
-      
+
       // Generate combinations of 2-3 fields
       for (let i = 0; i < allFields.length; i++) {
         for (let j = i + 1; j < allFields.length; j++) {
           const combo = [allFields[i], allFields[j]].sort().join(',');
           combinations[combo] = (combinations[combo] || 0) + pattern.frequency;
-          
+
           // Three-field combinations
           for (let k = j + 1; k < allFields.length; k++) {
             const combo3 = [allFields[i], allFields[j], allFields[k]].sort().join(',');

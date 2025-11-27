@@ -27,9 +27,12 @@ export class PerformanceService {
 
   constructor(private readonly cacheService: CacheService) {
     // Clean up old metrics every hour
-    setInterval(() => {
-      this.cleanupMetrics();
-    }, 60 * 60 * 1000);
+    setInterval(
+      () => {
+        this.cleanupMetrics();
+      },
+      60 * 60 * 1000,
+    );
   }
 
   // Record a custom metric
@@ -42,7 +45,7 @@ export class PerformanceService {
     };
 
     this.metrics.push(metric);
-    
+
     // Keep only recent metrics
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
@@ -57,15 +60,18 @@ export class PerformanceService {
   // Record request performance
   recordRequest(metrics: RequestMetrics) {
     this.requestMetrics.push(metrics);
-    
+
     // Keep only recent requests
     if (this.requestMetrics.length > this.maxMetrics) {
       this.requestMetrics = this.requestMetrics.slice(-this.maxMetrics);
     }
 
     // Log slow requests
-    if (metrics.duration > 1000) { // > 1 second
-      this.logger.warn(`Slow request: ${metrics.method} ${metrics.path} took ${metrics.duration}ms`);
+    if (metrics.duration > 1000) {
+      // > 1 second
+      this.logger.warn(
+        `Slow request: ${metrics.method} ${metrics.path} took ${metrics.duration}ms`,
+      );
     }
 
     // Update cache with aggregated metrics
@@ -107,20 +113,24 @@ export class PerformanceService {
 
     // Calculate request statistics
     const totalRequests = recentRequests.length;
-    const averageResponseTime = totalRequests > 0 
-      ? recentRequests.reduce((sum, r) => sum + r.duration, 0) / totalRequests 
-      : 0;
+    const averageResponseTime =
+      totalRequests > 0
+        ? recentRequests.reduce((sum, r) => sum + r.duration, 0) / totalRequests
+        : 0;
     const errorRequests = recentRequests.filter(r => r.statusCode >= 400).length;
     const errorRate = totalRequests > 0 ? (errorRequests / totalRequests) * 100 : 0;
     const requestsPerMinute = totalRequests / (timeRangeMs / 60000);
 
     // Calculate endpoint statistics
-    const endpointStats = new Map<string, {
-      count: number;
-      totalDuration: number;
-      errors: number;
-      method: string;
-    }>();
+    const endpointStats = new Map<
+      string,
+      {
+        count: number;
+        totalDuration: number;
+        errors: number;
+        method: string;
+      }
+    >();
 
     recentRequests.forEach(request => {
       const key = `${request.method}:${request.path}`;
@@ -140,13 +150,15 @@ export class PerformanceService {
       endpointStats.set(key, existing);
     });
 
-    const endpoints = Array.from(endpointStats.entries()).map(([key, stats]) => ({
-      path: key.split(':')[1],
-      method: stats.method,
-      count: stats.count,
-      averageResponseTime: stats.totalDuration / stats.count,
-      errorRate: (stats.errors / stats.count) * 100,
-    })).sort((a, b) => b.count - a.count);
+    const endpoints = Array.from(endpointStats.entries())
+      .map(([key, stats]) => ({
+        path: key.split(':')[1],
+        method: stats.method,
+        count: stats.count,
+        averageResponseTime: stats.totalDuration / stats.count,
+        errorRate: (stats.errors / stats.count) * 100,
+      }))
+      .sort((a, b) => b.count - a.count);
 
     // Get system metrics
     const memoryUsage = process.memoryUsage();
@@ -191,13 +203,16 @@ export class PerformanceService {
   }
 
   // Get custom metrics
-  getCustomMetrics(name?: string, timeRange: 'hour' | 'day' | 'week' = 'hour'): PerformanceMetric[] {
+  getCustomMetrics(
+    name?: string,
+    timeRange: 'hour' | 'day' | 'week' = 'hour',
+  ): PerformanceMetric[] {
     const now = new Date();
     const timeRangeMs = this.getTimeRangeMs(timeRange);
     const cutoff = new Date(now.getTime() - timeRangeMs);
 
     let filtered = this.metrics.filter(m => m.timestamp >= cutoff);
-    
+
     if (name) {
       filtered = filtered.filter(m => m.name === name);
     }
@@ -226,7 +241,7 @@ export class PerformanceService {
     // Check memory usage
     const memoryUsage = process.memoryUsage();
     const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-    
+
     checks.push({
       name: 'memory',
       status: memoryUsagePercent < 90 ? 'pass' : 'fail',
@@ -242,8 +257,9 @@ export class PerformanceService {
     // Check response times
     const recentRequests = this.requestMetrics.slice(-100); // Last 100 requests
     if (recentRequests.length > 0) {
-      const avgResponseTime = recentRequests.reduce((sum, r) => sum + r.duration, 0) / recentRequests.length;
-      
+      const avgResponseTime =
+        recentRequests.reduce((sum, r) => sum + r.duration, 0) / recentRequests.length;
+
       checks.push({
         name: 'response_time',
         status: avgResponseTime < 1000 ? 'pass' : 'fail',
@@ -261,7 +277,7 @@ export class PerformanceService {
     // Check error rate
     const recentErrors = recentRequests.filter(r => r.statusCode >= 500).length;
     const errorRate = recentRequests.length > 0 ? (recentErrors / recentRequests.length) * 100 : 0;
-    
+
     checks.push({
       name: 'error_rate',
       status: errorRate < 5 ? 'pass' : 'fail',
@@ -304,13 +320,13 @@ export class PerformanceService {
   private shouldLogMetric(name: string, value: number): boolean {
     // Log database query times > 100ms
     if (name.includes('db_query') && value > 100) return true;
-    
+
     // Log cache miss rates > 50%
     if (name.includes('cache_miss_rate') && value > 50) return true;
-    
+
     // Log API response times > 500ms
     if (name.includes('api_response_time') && value > 500) return true;
-    
+
     return false;
   }
 
@@ -322,10 +338,14 @@ export class PerformanceService {
 
   private getTimeRangeMs(timeRange: 'hour' | 'day' | 'week'): number {
     switch (timeRange) {
-      case 'hour': return 60 * 60 * 1000;
-      case 'day': return 24 * 60 * 60 * 1000;
-      case 'week': return 7 * 24 * 60 * 60 * 1000;
-      default: return 60 * 60 * 1000;
+      case 'hour':
+        return 60 * 60 * 1000;
+      case 'day':
+        return 24 * 60 * 60 * 1000;
+      case 'week':
+        return 7 * 24 * 60 * 60 * 1000;
+      default:
+        return 60 * 60 * 1000;
     }
   }
 
@@ -336,10 +356,12 @@ export class PerformanceService {
 
   private cleanupMetrics() {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
+
     this.metrics = this.metrics.filter(m => m.timestamp > oneHourAgo);
     this.requestMetrics = this.requestMetrics.filter(r => r.timestamp > oneHourAgo);
-    
-    this.logger.log(`Cleaned up old metrics. Current count: ${this.metrics.length} metrics, ${this.requestMetrics.length} requests`);
+
+    this.logger.log(
+      `Cleaned up old metrics. Current count: ${this.metrics.length} metrics, ${this.requestMetrics.length} requests`,
+    );
   }
 }

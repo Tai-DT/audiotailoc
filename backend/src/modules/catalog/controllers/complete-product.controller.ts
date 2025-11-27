@@ -37,7 +37,7 @@ import {
   ProductListQueryDto,
   ProductSearchSuggestionDto,
   ProductSortBy,
-  SortOrder
+  SortOrder,
 } from '../dto/complete-product.dto';
 
 @ApiTags('Products')
@@ -93,10 +93,10 @@ export class CompleteProductController {
     description: 'Page number (starts from 1)',
   })
   @ApiQuery({
-  name: 'pageSize',
-  required: false,
-  type: Number,
-  description: 'Items per page (1-100)',
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Items per page (1-100)',
   })
   @ApiQuery({
     name: 'sortBy',
@@ -190,7 +190,10 @@ export class CompleteProductController {
     type: Number,
     description: 'Maximum results (1-50)',
   })
-  async search(@Query('q') query: string, @Query('limit') limit?: number): Promise<ProductListResponseDto> {
+  async search(
+    @Query('q') query: string,
+    @Query('limit') limit?: number,
+  ): Promise<ProductListResponseDto> {
     this.logger.debug(`search called with q="${query}" limit=${limit}`);
     return this.catalogService.searchProducts(query, limit);
   }
@@ -217,7 +220,10 @@ export class CompleteProductController {
     type: Number,
     description: 'Maximum suggestions (1-20)',
   })
-  async getSuggestions(@Query('q') query: string, @Query('limit') limit?: number): Promise<ProductSearchSuggestionDto[]> {
+  async getSuggestions(
+    @Query('q') query: string,
+    @Query('limit') limit?: number,
+  ): Promise<ProductSearchSuggestionDto[]> {
     return this.catalogService.getSearchSuggestions(query, limit);
   }
 
@@ -360,7 +366,9 @@ export class CompleteProductController {
       },
     },
   })
-  async checkDeletable(@Param('id') id: string): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
+  async checkDeletable(
+    @Param('id') id: string,
+  ): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
     return this.catalogService.checkProductDeletable(id);
   }
 
@@ -594,7 +602,9 @@ export class CompleteProductController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized - Admin access required',
   })
-  async importCsv(@Body('csvData') csvData: string): Promise<{ imported: number; errors: string[] }> {
+  async importCsv(
+    @Body('csvData') csvData: string,
+  ): Promise<{ imported: number; errors: string[] }> {
     return this.catalogService.importProductsFromCsv(csvData);
   }
 
@@ -653,7 +663,10 @@ export class CompleteProductController {
         totalProducts: { type: 'number' },
         featuredProducts: { type: 'number' },
         categoriesCount: { type: 'number' },
-        recentProducts: { type: 'array', items: { $ref: '#/components/schemas/ProductResponseDto' } },
+        recentProducts: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/ProductResponseDto' },
+        },
       },
     },
   })

@@ -67,7 +67,7 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
             '/catalog/categories',
             '/services',
             '/services/types',
-            '/health'
+            '/health',
         ];
         if (publicRoutes.some(route => path.includes(route) || path.includes(`/api/v1${route}`))) {
             return true;

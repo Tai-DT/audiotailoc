@@ -24,10 +24,10 @@ export declare class CartController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
     } & {
         status: string;

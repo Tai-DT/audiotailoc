@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -17,15 +12,13 @@ export interface Response<T> {
 }
 
 @Injectable()
-export class ResponseTransformInterceptor<T>
-  implements NestInterceptor<T, Response<T>>
-{
+export class ResponseTransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     const request = context.switchToHttp().getRequest();
     const _response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
-      map((data) => ({
+      map(data => ({
         success: true,
         data,
         message: this.getSuccessMessage(request.method, request.url),
@@ -52,4 +45,3 @@ export class ResponseTransformInterceptor<T>
     }
   }
 }
-

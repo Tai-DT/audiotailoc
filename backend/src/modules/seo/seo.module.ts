@@ -8,4 +8,3 @@ import { SeoController } from './seo.controller';
   exports: [SeoService],
 })
 export class SeoModule {}
-

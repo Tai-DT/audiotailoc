@@ -1,13 +1,13 @@
 import { applyDecorators, Type } from '@nestjs/common';
-import { 
-  ApiOperation, 
-  ApiResponse, 
-  ApiBearerAuth, 
-  ApiParam, 
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
   ApiQuery,
   ApiBody,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 import { ErrorExamples } from './swagger.constants';
 
@@ -23,7 +23,8 @@ export function ApiListEndpoint(options: {
   const decorators = [
     ApiOperation({
       summary: options.summary,
-      description: options.description || `Retrieve a paginated list of ${options.itemName.toLowerCase()}`,
+      description:
+        options.description || `Retrieve a paginated list of ${options.itemName.toLowerCase()}`,
     }),
     ApiQuery({
       name: 'page',
@@ -102,7 +103,7 @@ export function ApiListEndpoint(options: {
         status: 401,
         description: 'Authentication required',
         schema: { example: ErrorExamples.UNAUTHORIZED },
-      })
+      }),
     );
   }
 
@@ -122,7 +123,8 @@ export function ApiGetByIdEndpoint(options: {
   const decorators = [
     ApiOperation({
       summary: options.summary,
-      description: options.description || `Retrieve a specific ${options.itemName.toLowerCase()} by ID`,
+      description:
+        options.description || `Retrieve a specific ${options.itemName.toLowerCase()} by ID`,
     }),
     ApiParam({
       name: options.paramName || 'id',
@@ -155,7 +157,7 @@ export function ApiGetByIdEndpoint(options: {
         status: 401,
         description: 'Authentication required',
         schema: { example: ErrorExamples.UNAUTHORIZED },
-      })
+      }),
     );
   }
 
@@ -209,7 +211,7 @@ export function ApiCreateEndpoint(options: {
         status: 403,
         description: 'Admin access required',
         schema: { example: ErrorExamples.FORBIDDEN },
-      })
+      }),
     );
   }
 
@@ -274,7 +276,7 @@ export function ApiUpdateEndpoint(options: {
         status: 403,
         description: 'Admin access required',
         schema: { example: ErrorExamples.FORBIDDEN },
-      })
+      }),
     );
   }
 
@@ -331,7 +333,7 @@ export function ApiDeleteEndpoint(options: {
         status: 403,
         description: 'Admin access required',
         schema: { example: ErrorExamples.FORBIDDEN },
-      })
+      }),
     );
   }
 
@@ -402,7 +404,7 @@ export function ApiFileUploadEndpoint(options: {
         status: 401,
         description: 'Authentication required',
         schema: { example: ErrorExamples.UNAUTHORIZED },
-      })
+      }),
     );
   }
 

@@ -29,6 +29,11 @@ interface Product {
   weight?: number | null
   dimensions?: string | null
   stockQuantity?: number
+  inventory?: {
+    stock: number;
+    reserved: number;
+    available: number;
+  }
   minOrderQuantity?: number
   maxOrderQuantity?: number | null
   tags?: string | null
@@ -116,6 +121,9 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
   }
 
   const categoryName = categories.find(cat => cat.id === product.categoryId)?.name || product.categoryId
+
+  // Helper to get stock quantity with backward compatibility
+  const getStock = (p: Product) => p.inventory?.stock ?? p.stockQuantity ?? 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -242,22 +250,22 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                   </div>
                 </div>
               )}
-              {product.stockQuantity !== undefined && (
+              {(product.inventory?.stock !== undefined || product.stockQuantity !== undefined) && (
                 <div className="flex items-center gap-2">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Tồn kho</label>
                     <div className="flex items-center gap-2">
                       <p className={`font-medium ${
-                        product.stockQuantity === 0 ? 'text-red-600' :
-                        product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                        getStock(product) === 0 ? 'text-red-600' :
+                        getStock(product) < 10 ? 'text-yellow-600' : 'text-green-600'
                       }`}>
-                        {product.stockQuantity}
+                        {getStock(product)}
                       </p>
-                      {product.stockQuantity === 0 && (
+                      {getStock(product) === 0 && (
                         <Badge variant="destructive" className="text-xs">Hết hàng</Badge>
                       )}
-                      {product.stockQuantity > 0 && product.stockQuantity < 10 && (
+                      {getStock(product) > 0 && getStock(product) < 10 && (
                         <Badge variant="secondary" className="text-xs">Sắp hết</Badge>
                       )}
                     </div>

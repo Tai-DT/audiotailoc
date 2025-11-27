@@ -12,12 +12,14 @@ const booking_controller_1 = require("./booking.controller");
 const booking_service_1 = require("./booking.service");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const service_types_module_1 = require("../service-types/service-types.module");
+const notifications_module_1 = require("../notifications/notifications.module");
+const technicians_module_1 = require("../technicians/technicians.module");
 let BookingModule = class BookingModule {
 };
 exports.BookingModule = BookingModule;
 exports.BookingModule = BookingModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, service_types_module_1.ServiceTypesModule],
+        imports: [prisma_module_1.PrismaModule, service_types_module_1.ServiceTypesModule, notifications_module_1.NotificationsModule, technicians_module_1.TechniciansModule],
         controllers: [booking_controller_1.BookingController],
         providers: [booking_service_1.BookingService],
         exports: [booking_service_1.BookingService],

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
@@ -10,8 +16,8 @@ export class UsersService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService
-  ) { }
+    private readonly mailService: MailService,
+  ) {}
 
   async findByEmail(email: string) {
     return this.prisma.users.findUnique({ where: { email } });
@@ -20,19 +26,25 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.users.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
         orders: {
           take: 5,
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         },
         _count: {
           select: {
             orders: true,
-            // reviews: true, // Field not available in SQLite schema
-            // wishlistItems: true // Field not available in SQLite schema
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -40,6 +52,10 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async findByIdForAuth(id: string) {
+    return this.prisma.users.findUnique({ where: { id } });
   }
 
   async findAll(params: {
@@ -62,7 +78,7 @@ export class UsersService {
       where.OR = [
         { email: { contains: params.search, mode: 'insensitive' } },
         { name: { contains: params.search, mode: 'insensitive' } },
-        { phone: { contains: params.search } }
+        { phone: { contains: params.search } },
       ];
     }
 
@@ -112,35 +128,41 @@ export class UsersService {
           name: true,
           phone: true,
           role: true,
+          avatarUrl: true,
           createdAt: true,
           orders: {
             select: {
-              totalCents: true
-            }
+              totalCents: true,
+            },
           },
           _count: {
             select: {
-              orders: true
-            }
-          }
+              orders: true,
+            },
+          },
         },
-        orderBy
+        orderBy,
       }),
-      this.prisma.users.count({ where })
+      this.prisma.users.count({ where }),
     ]);
 
     return {
-      users,
-      pagination: {
-        page: params.page,
-        limit: params.limit,
-        total,
-        pages: Math.ceil(total / params.limit)
-      }
+      items: users,
+      total,
+      page: params.page,
+      limit: params.limit,
+      pages: Math.ceil(total / params.limit),
     };
   }
 
-  async create(createUserDto: { email: string; password?: string; name: string; phone?: string; role?: 'USER' | 'ADMIN'; generatePassword?: boolean }) {
+  async create(createUserDto: {
+    email: string;
+    password?: string;
+    name: string;
+    phone?: string;
+    role?: 'USER' | 'ADMIN';
+    generatePassword?: boolean;
+  }) {
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
       throw new BadRequestException('Email already exists');
@@ -169,7 +191,7 @@ export class UsersService {
         name: createUserDto.name,
         phone: createUserDto.phone,
         role: createUserDto.role || 'USER',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -177,8 +199,8 @@ export class UsersService {
         name: true,
         phone: true,
         role: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     // Send email with password if it was generated
@@ -202,18 +224,21 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(params.password, 12);
-    return this.prisma.users.create({ 
-      data: { 
+    return this.prisma.users.create({
+      data: {
         id: randomUUID(),
-        email: params.email, 
-        password: hashedPassword, 
+        email: params.email,
+        password: hashedPassword,
         name: params.name ?? '',
-        updatedAt: new Date()
-      } 
+        updatedAt: new Date(),
+      },
     });
   }
 
-  async update(id: string, updateUserDto: { name?: string; phone?: string; role?: 'USER' | 'ADMIN' }) {
+  async update(
+    id: string,
+    updateUserDto: { name?: string; phone?: string; role?: 'USER' | 'ADMIN' },
+  ) {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -228,8 +253,8 @@ export class UsersService {
         name: true,
         phone: true,
         role: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
   }
 
@@ -257,19 +282,19 @@ export class UsersService {
       // Get all orders for this user
       const orders = await this.prisma.orders.findMany({
         where: { userId: id },
-        select: { id: true }
+        select: { id: true },
       });
 
       // Delete order items for each order
       for (const order of orders) {
         await this.prisma.order_items.deleteMany({
-          where: { orderId: order.id }
+          where: { orderId: order.id },
         });
       }
 
       // Delete orders
       await this.prisma.orders.deleteMany({
-        where: { userId: id }
+        where: { userId: id },
       });
     } catch (_error) {
       console.log('Error deleting orders, continuing...');
@@ -278,14 +303,14 @@ export class UsersService {
     // Delete cart items and cart
     try {
       const cart = await this.prisma.carts.findFirst({
-        where: { userId: id }
+        where: { userId: id },
       });
       if (cart) {
         await this.prisma.cart_items.deleteMany({
-          where: { cartId: cart.id }
+          where: { cartId: cart.id },
         });
         await this.prisma.carts.delete({
-          where: { id: cart.id }
+          where: { id: cart.id },
         });
       }
     } catch (_error) {
@@ -293,11 +318,12 @@ export class UsersService {
     }
 
     // Finally delete the user using transaction
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async tx => {
       await tx.users.delete({
-        where: { id }
+        where: { id },
       });
-    }); return { message: 'User deleted successfully' };
+    });
+    return { message: 'User deleted successfully' };
   }
 
   async getStats() {
@@ -306,28 +332,28 @@ export class UsersService {
       this.prisma.users.count({
         where: {
           createdAt: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-          }
-        }
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
       }),
       this.prisma.users.count({
         where: {
           orders: {
             some: {
               createdAt: {
-                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-              }
-            }
-          }
-        }
-      })
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              },
+            },
+          },
+        },
+      }),
     ]);
 
     return {
       totalUsers,
       newUsersThisMonth,
       activeUsers,
-      conversionRate: totalUsers > 0 ? (activeUsers / totalUsers * 100).toFixed(2) : 0
+      conversionRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0,
     };
   }
 
@@ -338,17 +364,17 @@ export class UsersService {
       by: ['createdAt'],
       where: {
         createdAt: {
-          gte: startDate
-        }
+          gte: startDate,
+        },
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     return dailyStats.map(stat => ({
       date: stat.createdAt.toISOString().split('T')[0],
-      newUsers: stat._count.id
+      newUsers: stat._count.id,
     }));
   }
 
@@ -365,8 +391,38 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
+    });
+  }
+
+  async setResetToken(userId: string, hashedToken: string, expiresAt: Date) {
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        resetToken: hashedToken,
+        resetExpires: expiresAt,
+      },
+    });
+  }
+
+  async findByResetToken(hashedToken: string) {
+    return this.prisma.users.findFirst({
+      where: {
+        resetToken: hashedToken,
+        resetExpires: { gt: new Date() },
+      },
+    });
+  }
+
+  async completePasswordReset(userId: string, hashedPassword: string) {
+    return this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetExpires: null,
+      },
     });
   }
 
@@ -390,12 +446,12 @@ export class UsersService {
                 products: {
                   select: {
                     name: true,
-                    slug: true
-                  }
-                }
-              }
-            }
-          }
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
         },
         carts: {
           include: {
@@ -404,14 +460,14 @@ export class UsersService {
                 products: {
                   select: {
                     name: true,
-                    slug: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -430,7 +486,7 @@ export class UsersService {
         phone: userData.phone,
         role: userData.role,
         createdAt: userData.createdAt,
-        updatedAt: userData.updatedAt
+        updatedAt: userData.updatedAt,
       },
       orders: (userData as any).orders.map((order: any) => ({
         id: order.id,
@@ -440,20 +496,27 @@ export class UsersService {
         items: order.order_items.map((item: any) => ({
           productName: item.products?.name,
           quantity: item.quantity,
-          priceCents: item.price
-        }))
+          priceCents: item.price,
+        })),
       })),
-      cart: (userData as any).carts.length > 0 ? {
-        items: (userData as any).carts[0].cart_items.map((item: any) => ({
-          productName: item.products?.name,
-          quantity: item.quantity,
-          addedAt: item.createdAt
-        }))
-      } : null,
+      cart:
+        (userData as any).carts.length > 0
+          ? {
+              items: (userData as any).carts[0].cart_items.map((item: any) => ({
+                productName: item.products?.name,
+                quantity: item.quantity,
+                addedAt: item.createdAt,
+              })),
+            }
+          : null,
       statistics: {
         totalOrders: (userData as any).orders.length,
-        totalSpent: (userData as any).orders.reduce((sum: number, order: any) => sum + (order.totalCents || 0), 0) / 100
-      }
+        totalSpent:
+          (userData as any).orders.reduce(
+            (sum: number, order: any) => sum + (order.totalCents || 0),
+            0,
+          ) / 100,
+      },
     };
   }
 
@@ -488,12 +551,3 @@ export class UsersService {
     await this.mailService.send(email, subject, text, html);
   }
 }
-
-
-
-
-
-
-
-
-

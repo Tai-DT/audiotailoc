@@ -7,5 +7,3 @@ export class AppController {
     return { name: 'audiotailoc-backend', version: '0.1.0' };
   }
 }
-
-

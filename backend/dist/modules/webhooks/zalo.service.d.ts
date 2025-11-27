@@ -6,6 +6,7 @@ export declare class ZaloService {
     constructor(cfg: ConfigService, prisma: PrismaService);
     private get accessToken();
     private get secret();
+    private verifySignature;
     handleIncoming(headers: Record<string, string>, body: any): Promise<string>;
     replyToUser(zaloUserId: string, text: string): Promise<void>;
 }

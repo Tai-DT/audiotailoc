@@ -35,10 +35,7 @@ export class CorrelationService {
   }
 
   // Run function within correlation context
-  static runInContext<T>(
-    context: CorrelationContext,
-    callback: () => T
-  ): T {
+  static runInContext<T>(context: CorrelationContext, callback: () => T): T {
     return this.storage.run(context, callback);
   }
 
@@ -151,7 +148,8 @@ export class CorrelationService {
   }
 
   // Clean up old contexts (call periodically)
-  static cleanup(maxAge: number = 3600000) { // 1 hour default
+  static cleanup(maxAge: number = 3600000) {
+    // 1 hour default
     const now = Date.now();
     const toDelete: string[] = [];
 

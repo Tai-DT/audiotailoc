@@ -2,7 +2,6 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller('security')
 export class SecurityController {
-  
   @Get()
   async findAll() {
     return {
@@ -10,9 +9,9 @@ export class SecurityController {
       data: {
         message: 'security module is working',
         status: 'active',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      message: 'security data retrieved successfully'
+      message: 'security data retrieved successfully',
     };
   }
 
@@ -24,8 +23,8 @@ export class SecurityController {
         module: 'security',
         status: 'operational',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
   }
 }

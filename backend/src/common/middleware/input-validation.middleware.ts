@@ -81,11 +81,11 @@ export class InputValidationMiddleware implements NestMiddleware {
 
     if (typeof obj === 'object') {
       const sanitized: any = {};
-      
+
       for (const [key, value] of Object.entries(obj)) {
         // Sanitize the key
         const sanitizedKey = this.securityService.sanitizeInput(key);
-        
+
         // Skip potentially dangerous keys
         if (this.isDangerousKey(sanitizedKey)) {
           continue;
@@ -94,7 +94,7 @@ export class InputValidationMiddleware implements NestMiddleware {
         // Recursively sanitize the value
         sanitized[sanitizedKey] = this.sanitizeObject(value);
       }
-      
+
       return sanitized;
     }
 
@@ -112,9 +112,7 @@ export class InputValidationMiddleware implements NestMiddleware {
       'javascript',
     ];
 
-    return dangerousKeys.some(dangerous => 
-      key.toLowerCase().includes(dangerous.toLowerCase())
-    );
+    return dangerousKeys.some(dangerous => key.toLowerCase().includes(dangerous.toLowerCase()));
   }
 
   private getMaxContentLength(path: string): number {
@@ -122,15 +120,15 @@ export class InputValidationMiddleware implements NestMiddleware {
     if (path.includes('/upload') || path.includes('/files')) {
       return 10 * 1024 * 1024; // 10MB for file uploads
     }
-    
+
     if (path.includes('/api/products') && path.includes('images')) {
       return 5 * 1024 * 1024; // 5MB for product images
     }
-    
+
     if (path.includes('/api/support/tickets')) {
       return 1 * 1024 * 1024; // 1MB for support tickets (may include attachments)
     }
-    
+
     // Default limit for regular API requests
     return 100 * 1024; // 100KB
   }
@@ -141,9 +139,11 @@ export class InputValidationMiddleware implements NestMiddleware {
 
     // Allow JSON for API endpoints
     if (path.includes('/api/')) {
-      if (!contentType.includes('application/json') && 
-          !contentType.includes('multipart/form-data') &&
-          !contentType.includes('application/x-www-form-urlencoded')) {
+      if (
+        !contentType.includes('application/json') &&
+        !contentType.includes('multipart/form-data') &&
+        !contentType.includes('application/x-www-form-urlencoded')
+      ) {
         throw new BadRequestException('Invalid content type for API endpoint');
       }
     }
@@ -183,7 +183,7 @@ export function IsSecureString(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any, _args: ValidationArguments) {
           if (typeof value !== 'string') return false;
-          
+
           // Check for XSS patterns
           const xssPatterns = [
             /<script[^>]*>.*?<\/script>/gi,
@@ -191,7 +191,7 @@ export function IsSecureString(validationOptions?: ValidationOptions) {
             /on\w+\s*=/gi,
             /<iframe[^>]*>.*?<\/iframe>/gi,
           ];
-          
+
           return !xssPatterns.some(pattern => pattern.test(value));
         },
         defaultMessage(args: ValidationArguments) {
@@ -212,18 +212,14 @@ export function IsSecureEmail(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any, _args: ValidationArguments) {
           if (typeof value !== 'string') return false;
-          
+
           // Basic email validation
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) return false;
-          
+
           // Check for suspicious patterns
-          const suspiciousPatterns = [
-            /javascript:/gi,
-            /<script/gi,
-            /on\w+=/gi,
-          ];
-          
+          const suspiciousPatterns = [/javascript:/gi, /<script/gi, /on\w+=/gi];
+
           return !suspiciousPatterns.some(pattern => pattern.test(value));
         },
         defaultMessage(args: ValidationArguments) {
@@ -244,11 +240,11 @@ export function IsSecurePhoneNumber(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any, _args: ValidationArguments) {
           if (typeof value !== 'string') return false;
-          
+
           // Vietnamese phone number validation
           const phoneRegex = /^(\+84|84|0)(3|5|7|8|9)\d{8}$/;
           const cleanPhone = value.replace(/\s/g, '');
-          
+
           return phoneRegex.test(cleanPhone);
         },
         defaultMessage(args: ValidationArguments) {
@@ -269,19 +265,21 @@ export function IsStrongPassword(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any, _args: ValidationArguments) {
           if (typeof value !== 'string') return false;
-          
+
           // Password strength validation
           const minLength = 8;
           const hasUpperCase = /[A-Z]/.test(value);
           const hasLowerCase = /[a-z]/.test(value);
           const hasNumbers = /\d/.test(value);
           const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-          
-          return value.length >= minLength && 
-                 hasUpperCase && 
-                 hasLowerCase && 
-                 hasNumbers && 
-                 hasSpecialChar;
+
+          return (
+            value.length >= minLength &&
+            hasUpperCase &&
+            hasLowerCase &&
+            hasNumbers &&
+            hasSpecialChar
+          );
         },
         defaultMessage(args: ValidationArguments) {
           return `${args.property} must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters`;

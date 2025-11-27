@@ -3,6 +3,8 @@
  * Cấu hình PayOS cho ứng dụng Audio Tài Lộc
  */
 
+import crypto from 'crypto';
+
 export interface PayOSConfig {
   clientId: string;
   apiKey: string;
@@ -74,35 +76,43 @@ export function formatAmountForPayOS(amount: number): number {
 /**
  * Tạo signature cho PayOS webhook
  */
-export function generateWebhookSignature(data: any, checksumKey: string): string {
-  const crypto = require('crypto');
-  
+export function generateWebhookSignature(data: Record<string, unknown>, checksumKey: string): string {
+
   // Sort the data object keys alphabetically
   const sortedKeys = Object.keys(data).sort();
-  
-  // Create the signature string
+
+  // Create the signature string using stable serialization for objects
   let signatureString = '';
-  sortedKeys.forEach(key => {
-    if (data[key] !== undefined && data[key] !== null) {
-      signatureString += `${key}=${data[key]}&`;
+  sortedKeys.forEach((key) => {
+    const raw = (data as Record<string, unknown>)[key];
+    if (raw !== undefined && raw !== null) {
+      let value: string;
+      if (typeof raw === 'object') {
+        try {
+          value = JSON.stringify(raw);
+        } catch {
+          value = String(raw);
+        }
+      } else {
+        value = String(raw);
+      }
+      signatureString += `${key}=${value}&`;
     }
   });
-  
-  // Remove the trailing '&'
-  signatureString = signatureString.slice(0, -1);
-  
+
+  // Remove the trailing '&' if present
+  if (signatureString.endsWith('&')) signatureString = signatureString.slice(0, -1);
+
   // Generate HMAC SHA256 signature
-  return crypto.createHmac('sha256', checksumKey)
-    .update(signatureString)
-    .digest('hex');
+  return crypto.createHmac('sha256', checksumKey).update(signatureString).digest('hex');
 }
 
 /**
  * Xác thực webhook signature từ PayOS
  */
 export function verifyWebhookSignature(
-  receivedSignature: string, 
-  data: any, 
+  receivedSignature: string,
+  data: Record<string, unknown>,
   checksumKey: string
 ): boolean {
   const expectedSignature = generateWebhookSignature(data, checksumKey);

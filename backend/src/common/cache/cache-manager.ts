@@ -66,7 +66,7 @@ export class CacheManager {
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private redis?: Redis
+    private redis?: Redis,
   ) {}
 
   /**
@@ -133,11 +133,7 @@ export class CacheManager {
   /**
    * Set value in cache with multi-layer support
    */
-  async set<T>(
-    key: string,
-    value: T,
-    options?: { ttl?: number; tags?: string[] }
-  ): Promise<void> {
+  async set<T>(key: string, value: T, options?: { ttl?: number; tags?: string[] }): Promise<void> {
     const prefixedKey = this.buildKey(key);
     const ttl = options?.ttl ?? this.config.ttl;
 
@@ -146,11 +142,8 @@ export class CacheManager {
 
       // Set in all enabled layers
       await Promise.all([
-        this.config.enableLocalCache &&
-          this.setInLocalCache(prefixedKey, value, ttl),
-        this.config.enableRedisCache &&
-          this.redis &&
-          this.setInRedis(prefixedKey, value, ttl),
+        this.config.enableLocalCache && this.setInLocalCache(prefixedKey, value, ttl),
+        this.config.enableRedisCache && this.redis && this.setInRedis(prefixedKey, value, ttl),
         this.cacheManager.set(prefixedKey, value, ttl),
       ]);
 
@@ -217,12 +210,63 @@ export class CacheManager {
   }
 
   /**
+   * Expose local cache keys (already prefixed)
+   */
+  getLocalKeys(): string[] {
+    return Array.from(this.localCache.keys());
+  }
+
+  /**
+   * Redis availability helper
+   */
+  hasRedis(): boolean {
+    return !!this.redis;
+  }
+
+  /**
+   * Scan Redis keys using a stream; returns an async generator of key batches.
+   */
+  async *scanRedisStream(pattern: string): AsyncGenerator<string[], void, unknown> {
+    if (!this.redis) return;
+    const stream = (this.redis as any).scanStream
+      ? (this.redis as any).scanStream({ match: this.buildKey(pattern) })
+      : null;
+
+    if (!stream) {
+      // Fallback to KEYS (not ideal for production) if scanStream unavailable
+      const keys = await this.redis.keys(this.buildKey(pattern));
+      yield keys;
+      return;
+    }
+
+    for await (const resultKeys of stream) {
+      yield resultKeys as string[];
+    }
+  }
+
+  /**
+   * Delete by raw key (already prefixed) without rebuilding prefix.
+   */
+  async deleteRawKey(prefixedKey: string): Promise<void> {
+    try {
+      this.deleteFromLocalCache(prefixedKey);
+      if (this.redis) {
+        await this.redis.del(prefixedKey);
+      }
+      await this.cacheManager.del(prefixedKey);
+      this.metrics.deletes++;
+    } catch (error) {
+      this.logger.error(`Cache delete error for raw key ${prefixedKey}: ${error}`);
+    }
+  }
+
+  /**
    * Get or compute value (cache-aside pattern)
    */
   async getOrCompute<T>(
     key: string,
     compute: () => Promise<T>,
-    options?: { ttl?: number; tags?: string[] }
+    options?: { ttl?: number; tags?: string[] },
   ): Promise<T> {
     // Try to get from cache
     const cached = await this.get<T>(key);
@@ -246,10 +290,10 @@ export class CacheManager {
     const results = new Map<string, T | null>();
 
     await Promise.all(
-      keys.map(async (key) => {
+      keys.map(async key => {
         const value = await this.get<T>(key);
         results.set(key, value);
-      })
+      }),
     );
 
     return results;
@@ -260,10 +304,10 @@ export class CacheManager {
    */
   async setBatch<T>(
     entries: Array<{ key: string; value: T; ttl?: number }>,
-    tags?: string[]
+    tags?: string[],
   ): Promise<void> {
     await Promise.all(
-      entries.map((entry) => this.set(entry.key, entry.value, { ttl: entry.ttl, tags }))
+      entries.map(entry => this.set(entry.key, entry.value, { ttl: entry.ttl, tags })),
     );
   }
 
@@ -292,10 +336,7 @@ export class CacheManager {
         this.metrics.hits + this.metrics.misses > 0
           ? (this.metrics.hits / (this.metrics.hits + this.metrics.misses)) * 100
           : 0,
-      averageSize:
-        this.metrics.sets > 0
-          ? this.totalSize / this.metrics.sets
-          : 0,
+      averageSize: this.metrics.sets > 0 ? this.totalSize / this.metrics.sets : 0,
     };
   }
 
@@ -339,7 +380,7 @@ export class CacheManager {
       }
 
       const current = (await this.get<Set<string>>(prefixedKey)) || new Set();
-      members.forEach((m) => current.add(m));
+      members.forEach(m => current.add(m));
       await this.set(prefixedKey, current);
       return current.size;
     } catch (error) {
@@ -360,7 +401,7 @@ export class CacheManager {
       }
 
       const current = (await this.get<Set<string>>(prefixedKey)) || new Set();
-      members.forEach((m) => current.delete(m));
+      members.forEach(m => current.delete(m));
       await this.set(prefixedKey, current);
       return current.size;
     } catch (error) {
@@ -412,7 +453,7 @@ export class CacheManager {
 
       if (keys.length > 0) {
         await this.redis.del(...keys);
-        keys.forEach((key) => this.localCache.delete(key));
+        keys.forEach(key => this.localCache.delete(key));
       }
 
       await this.redis.del(tagKey);

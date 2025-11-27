@@ -365,7 +365,10 @@ Response (200 OK):
       "originalPriceCents": 75000,
       "imageUrl": "https://...",
       "images": "[...]",
-      "stockQuantity": 50,
+      "inventory": {
+        "stock": 50,
+        "lowStockThreshold": 5
+      },
       "featured": true,
       "isActive": true,
       "viewCount": 150,
@@ -412,7 +415,6 @@ Response (200 OK):
     "warranty": "2 years",
     "weight": 2.5,
     "dimensions": "10x10x15cm",
-    "stockQuantity": 50,
     "minOrderQuantity": 1,
     "maxOrderQuantity": 5,
     "viewCount": 150,
@@ -451,7 +453,6 @@ Content-Type: application/json
   "warranty": "1 year",
   "weight": 2.0,
   "dimensions": "10x10x10cm",
-  "stockQuantity": 100,
   "minOrderQuantity": 1,
   "maxOrderQuantity": 10
 }
@@ -471,8 +472,7 @@ Content-Type: application/json
 
 {
   "name": "Updated Product Name",
-  "priceCents": 95000,
-  "stockQuantity": 75
+  "priceCents": 95000
 }
 
 Response (200 OK):
