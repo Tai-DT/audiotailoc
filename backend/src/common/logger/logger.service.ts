@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as winston from 'winston';
-// @ts-ignore - Import style for winston-daily-rotate-file
+// @ts-expect-error - winston-daily-rotate-file has incomplete type definitions
 import * as DailyRotateFileNamespace from 'winston-daily-rotate-file';
 import { join } from 'path';
 

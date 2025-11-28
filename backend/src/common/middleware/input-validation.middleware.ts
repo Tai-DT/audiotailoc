@@ -174,7 +174,7 @@ export class InputValidationMiddleware implements NestMiddleware {
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
 export function IsSecureString(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSecureString',
       target: object.constructor,
@@ -203,7 +203,7 @@ export function IsSecureString(validationOptions?: ValidationOptions) {
 }
 
 export function IsSecureEmail(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSecureEmail',
       target: object.constructor,
@@ -231,7 +231,7 @@ export function IsSecureEmail(validationOptions?: ValidationOptions) {
 }
 
 export function IsSecurePhoneNumber(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSecurePhoneNumber',
       target: object.constructor,
@@ -256,7 +256,7 @@ export function IsSecurePhoneNumber(validationOptions?: ValidationOptions) {
 }
 
 export function IsStrongPassword(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isStrongPassword',
       target: object.constructor,

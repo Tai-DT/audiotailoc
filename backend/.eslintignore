@@ -1,0 +1,15 @@
+# Files with incomplete TypeScript configuration
+src/common/INTEGRATION_EXAMPLES.ts
+src/modules/backup/backup-health.middleware.ts
+
+# Build artifacts
+dist/
+node_modules/
+*.d.ts
+
+# Test files
+**/*.spec.ts
+**/*.test.ts
+
+# Temporary files
+*.tmp.ts

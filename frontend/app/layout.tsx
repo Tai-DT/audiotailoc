@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
+import { SocketProvider } from "@/components/providers/socket-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
@@ -76,10 +77,11 @@ export default function RootLayout({
         <OrganizationStructuredData />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
-            <CartProvider>
-              <Header />
-              {children}
-              <Footer />
+            <SocketProvider>
+              <CartProvider>
+                <Header />
+                {children}
+                <Footer />
               <Toaster
                 position="top-right"
                 toastOptions={{
@@ -98,7 +100,8 @@ export default function RootLayout({
               />
               <ZaloChatWidget phoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
               <ChatLauncher />
-            </CartProvider>
+              </CartProvider>
+            </SocketProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

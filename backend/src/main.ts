@@ -219,6 +219,7 @@ async function bootstrap() {
   // Note: ApiVersioningInterceptor is registered in the ApiVersioningModule
 
   // Rate limiting middleware
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const rateLimit = require('express-rate-limit');
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

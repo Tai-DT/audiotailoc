@@ -311,6 +311,13 @@ export const API_ENDPOINTS = {
     COUNT: '/wishlist/count',
     CLEAR: '/wishlist',
   },
+
+  // Chat
+  CHAT: {
+    CONVERSATIONS: '/chat/conversations',
+    MESSAGES: '/chat/messages',
+    CONVERSATION_MESSAGES: (id: string) => `/chat/conversations/${id}/messages`,
+  },
 } as const;
 
 // Helper function to handle API responses

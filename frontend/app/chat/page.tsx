@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,8 +9,9 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { format } from "date-fns"
 import { toast } from "react-hot-toast"
-import { apiClient } from "@/lib/api"
+import { apiClient, API_ENDPOINTS } from "@/lib/api"
 import { CONTACT_CONFIG } from "@/lib/contact-config"
+import { useSocket } from "@/components/providers/socket-provider"
 
 interface ConversationState {
   id: string
@@ -52,6 +53,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const { socket, isConnected } = useSocket()
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(LOCAL_KEY)
@@ -66,10 +69,52 @@ export default function ChatPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!socket || !conversation) return
+
+    // Join conversation room
+    socket.emit('join_conversation', { conversationId: conversation.id })
+
+    // Listen for new messages
+    const handleNewMessage = (payload: any) => {
+      // Check if message belongs to current conversation
+      if (payload.conversationId !== conversation.id) return
+
+      const newMessage: ChatMessage = {
+        id: payload.id || `msg-${Date.now()}`,
+        conversationId: payload.conversationId,
+        content: payload.content,
+        senderType: payload.senderType,
+        senderId: payload.senderId,
+        createdAt: payload.createdAt || new Date().toISOString()
+      }
+
+      setMessages(prev => {
+        // Prevent duplicates
+        if (prev.some(m => m.id === newMessage.id)) return prev
+        return [...prev, newMessage]
+      })
+    }
+
+    socket.on('new_message', handleNewMessage)
+
+    return () => {
+      socket.off('new_message', handleNewMessage)
+      socket.emit('leave_conversation', { conversationId: conversation.id })
+    }
+  }, [socket, conversation])
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [messages])
+
   const fetchMessages = async (state: ConversationState) => {
     try {
       setLoading(true)
-      const res = await apiClient.get(`/chat/conversations/${state.id}/messages`, {
+      const res = await apiClient.get(API_ENDPOINTS.CHAT.CONVERSATION_MESSAGES(state.id), {
         params: { limit: 50, guestId: state.guestId, guestToken: state.guestToken }
       })
       const payload = res.data as ChatMessagesResponse | ChatMessage[]
@@ -92,7 +137,7 @@ export default function ChatPage() {
     }
     setLoading(true)
     try {
-      const res = await apiClient.post('/chat/conversations', {
+      const res = await apiClient.post(API_ENDPOINTS.CHAT.CONVERSATIONS, {
         guestName,
         guestPhone,
         initialMessage,
@@ -134,7 +179,7 @@ export default function ChatPage() {
     setMessages(prev => [...prev, temp])
     setMessage("")
     try {
-      const res = await apiClient.post('/chat/messages', {
+      const res = await apiClient.post(API_ENDPOINTS.CHAT.MESSAGES, {
         conversationId: conversation.id,
         content: temp.content,
         senderId: conversation.guestId,
@@ -209,9 +254,9 @@ export default function ChatPage() {
                           </div>
                         </div>
                       ))}
+                      <div ref={scrollRef} />
                     </div>
                   )}
-                  <div />
                 </ScrollArea>
               </div>
               <div className="p-4 border-t bg-slate-50 dark:bg-slate-900">
@@ -221,6 +266,12 @@ export default function ChatPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder={isConversationReady ? "Nhập tin nhắn" : "Bắt đầu cuộc trò chuyện trước"}
                     disabled={!isConversationReady || sending}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
                   />
                   <Button onClick={sendMessage} disabled={!isConversationReady || sending || !message.trim()}>
                     {sending ? "Đang gửi..." : "Gửi"}
