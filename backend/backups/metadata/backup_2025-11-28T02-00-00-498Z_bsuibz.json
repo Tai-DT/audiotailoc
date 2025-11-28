@@ -1,0 +1,21 @@
+{
+  "id": "backup_2025-11-28T02-00-00-498Z_bsuibz",
+  "type": "files",
+  "timestamp": "2025-11-28T02:00:03.097Z",
+  "size": 26820,
+  "duration": 313,
+  "status": "completed",
+  "path": "backups/files/backup_2025-11-28T02-00-00-498Z_bsuibz_files.tar.gz",
+  "checksum": "058cd553cd39049260dd4b2969722e8d3a8128a8f3ed5cab043ac73f7a39c150",
+  "compressed": true,
+  "directories": [
+    "./uploads",
+    "./logs",
+    "./backups/metadata",
+    "./public"
+  ],
+  "excludePatterns": [
+    "*.tmp",
+    "*.log"
+  ]
+}

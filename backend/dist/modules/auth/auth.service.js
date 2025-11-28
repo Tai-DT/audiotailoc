@@ -68,7 +68,11 @@ let AuthService = class AuthService {
             });
         }
         try {
-            return await this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
+            return await this.users.create({
+                email: dto.email,
+                password: dto.password,
+                name: dto.name ?? '',
+            });
         }
         catch (error) {
             if (error instanceof common_1.BadRequestException) {

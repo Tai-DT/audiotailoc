@@ -788,10 +788,10 @@ let BackupService = BackupService_1 = class BackupService {
             ];
             const rclone = (0, child_process_1.spawn)('rclone', args);
             let stderr = '';
-            rclone.stderr.on('data', (data) => {
+            rclone.stderr.on('data', data => {
                 stderr += data.toString();
             });
-            rclone.on('close', (code) => {
+            rclone.on('close', code => {
                 if (code === 0) {
                     this.logger.log('Upload to Google Drive successful');
                     resolve();
@@ -800,7 +800,7 @@ let BackupService = BackupService_1 = class BackupService {
                     reject(new Error(`rclone failed with code ${code}: ${stderr}`));
                 }
             });
-            rclone.on('error', (err) => {
+            rclone.on('error', err => {
                 reject(err);
             });
         });

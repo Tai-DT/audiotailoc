@@ -82,7 +82,7 @@ let WishlistService = class WishlistService {
                 createdAt: 'desc',
             },
         });
-        const mappedItems = wishlistItems.map((item) => ({
+        const mappedItems = wishlistItems.map(item => ({
             ...item,
             products: {
                 ...item.products,

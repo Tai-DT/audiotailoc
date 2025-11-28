@@ -179,7 +179,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
                         }
                         if (targetProductId) {
                             const inventory = await tx.inventory.findUnique({
-                                where: { productId: targetProductId }
+                                where: { productId: targetProductId },
                             });
                             if (inventory) {
                                 const previousStock = inventory.stock;
@@ -188,8 +188,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                     where: { productId: targetProductId },
                                     data: {
                                         stock: { increment: item.quantity },
-                                        updatedAt: new Date()
-                                    }
+                                        updatedAt: new Date(),
+                                    },
                                 });
                                 await tx.inventory_movements.create({
                                     data: {
@@ -202,8 +202,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                         reason: `Order cancelled: ${order.orderNumber}`,
                                         referenceId: order.id,
                                         referenceType: 'ORDER',
-                                        createdAt: new Date()
-                                    }
+                                        createdAt: new Date(),
+                                    },
                                 });
                             }
                         }
@@ -369,7 +369,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
                 });
                 try {
                     const inventory = await tx.inventory.findUnique({
-                        where: { productId: itemData.productId }
+                        where: { productId: itemData.productId },
                     });
                     if (inventory) {
                         const previousStock = inventory.stock;
@@ -378,8 +378,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                             where: { productId: itemData.productId },
                             data: {
                                 stock: { decrement: itemData.quantity },
-                                updatedAt: new Date()
-                            }
+                                updatedAt: new Date(),
+                            },
                         });
                         await tx.inventory_movements.create({
                             data: {
@@ -392,8 +392,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                 reason: `Order created: ${createdOrder.orderNo}`,
                                 referenceId: createdOrder.id,
                                 referenceType: 'ORDER',
-                                createdAt: new Date()
-                            }
+                                createdAt: new Date(),
+                            },
                         });
                     }
                     else {
@@ -486,7 +486,9 @@ let OrdersService = OrdersService_1 = class OrdersService {
         if (updateData.items) {
             const existingItems = await this.prisma.order_items.findMany({
                 where: { orderId: id },
-                include: { products: { select: { id: true, name: true, inventory: { select: { stock: true } } } } }
+                include: {
+                    products: { select: { id: true, name: true, inventory: { select: { stock: true } } } },
+                },
             });
             await this.prisma.order_items.deleteMany({ where: { orderId: id } });
             let subtotalCents = 0;
@@ -549,7 +551,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
                             const quantityDifference = (newItem.quantity || 1) - (oldItem.quantity || 0);
                             if (quantityDifference !== 0) {
                                 const inventory = await tx.inventory.findUnique({
-                                    where: { productId: newItem.productId }
+                                    where: { productId: newItem.productId },
                                 });
                                 if (inventory) {
                                     const previousStock = inventory.stock;
@@ -558,8 +560,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                         where: { productId: newItem.productId },
                                         data: {
                                             stock: { decrement: quantityDifference },
-                                            updatedAt: new Date()
-                                        }
+                                            updatedAt: new Date(),
+                                        },
                                     });
                                     await tx.inventory_movements.create({
                                         data: {
@@ -572,8 +574,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                             reason: `Order updated: ${order.orderNo}`,
                                             referenceId: order.id,
                                             referenceType: 'ORDER',
-                                            createdAt: new Date()
-                                        }
+                                            createdAt: new Date(),
+                                        },
                                     });
                                 }
                             }
@@ -736,7 +738,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
                         for (const item of order.order_items) {
                             if (item.productId) {
                                 const inventory = await tx.inventory.findUnique({
-                                    where: { productId: item.productId }
+                                    where: { productId: item.productId },
                                 });
                                 if (inventory) {
                                     const previousStock = inventory.stock;
@@ -745,8 +747,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                         where: { productId: item.productId },
                                         data: {
                                             stock: { increment: item.quantity },
-                                            updatedAt: new Date()
-                                        }
+                                            updatedAt: new Date(),
+                                        },
                                     });
                                     await tx.inventory_movements.create({
                                         data: {
@@ -759,8 +761,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                                             reason: `Order deleted (Soft Delete): ${order.orderNo}`,
                                             referenceId: order.id,
                                             referenceType: 'ORDER',
-                                            createdAt: new Date()
-                                        }
+                                            createdAt: new Date(),
+                                        },
                                     });
                                 }
                             }
@@ -782,8 +784,8 @@ let OrdersService = OrdersService_1 = class OrdersService {
                 data: {
                     isDeleted: true,
                     deletedAt: new Date(),
-                    status: 'CANCELLED'
-                }
+                    status: 'CANCELLED',
+                },
             });
             return { message: 'Đơn hàng đã được xóa thành công', id };
         }
