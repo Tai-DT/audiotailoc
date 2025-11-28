@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Script from 'next/script';
 import { Button } from './button';
 
 interface ZaloChatProps {
@@ -16,25 +17,6 @@ export function ZaloChat({
   size = 'medium',
   className = ''
 }: ZaloChatProps) {
-  useEffect(() => {
-    // Load Zalo SDK if not already loaded
-    if (!window.zaloSDK) {
-      const script = document.createElement('script');
-      script.src = 'https://sp.zalo.me/plugins/sdk.js';
-      script.async = true;
-      script.onload = () => {
-        // Initialize Zalo Chat
-        if (window.zaloSDK) {
-          window.zaloSDK.init({
-            oaid: phoneNumber,
-            appId: phoneNumber // Using phone number as appId for direct chat
-          });
-        }
-      };
-      document.head.appendChild(script);
-    }
-  }, [phoneNumber]);
-
   const handleChatClick = () => {
     // Open Zalo chat with correct URL format
     const zaloUrl = `https://zalo.me/${phoneNumber.replace(/[\s\-\(\)\+]/g, '')}`;
@@ -55,9 +37,23 @@ export function ZaloChat({
   };
 
   return (
-    <div className={`fixed ${positionClasses[position]} z-50 ${className}`}>
-      <Button
-        onClick={handleChatClick}
+    <>
+      <Script
+        src="https://sp.zalo.me/plugins/sdk.js"
+        strategy="lazyOnload"
+        onLoad={() => {
+          // Initialize Zalo Chat
+          if (window.zaloSDK) {
+            window.zaloSDK.init({
+              oaid: phoneNumber,
+              appId: phoneNumber // Using phone number as appId for direct chat
+            });
+          }
+        }}
+      />
+      <div className={`fixed ${positionClasses[position]} z-50 ${className}`}>
+        <Button
+          onClick={handleChatClick}
         className={`
           ${sizeClasses[size]}
           rounded-full bg-[#0068FF] hover:bg-[#0052CC]
@@ -110,8 +106,9 @@ export function ZaloChat({
           <span className="font-semibold">0768426262</span>
         </div>
         <div className="absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
