@@ -61,12 +61,12 @@ let InventoryService = InventoryService_1 = class InventoryService {
         return this.updateInventory(productId, {
             quantity: dto.stock,
             reserved: dto.reserved,
-            lowStockThreshold: dto.lowStockThreshold
+            lowStockThreshold: dto.lowStockThreshold,
         });
     }
     async delete(productId) {
         return this.prisma.inventory.delete({
-            where: { productId }
+            where: { productId },
         });
     }
     async updateInventory(productId, updateDto) {

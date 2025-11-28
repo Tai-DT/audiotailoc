@@ -477,6 +477,7 @@ export class BackupController {
       }
 
       // Check if backup file exists
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const fs = require('fs');
       if (!fs.existsSync(backup.path)) {
         throw new HttpException(
@@ -571,6 +572,7 @@ export class BackupController {
       }
 
       // Delete the backup file and metadata
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const fs = require('fs').promises;
       try {
         await fs.unlink(backup.path);
