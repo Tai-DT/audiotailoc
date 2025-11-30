@@ -38,7 +38,13 @@ const emit = (eventName: (typeof AUTH_EVENTS)[keyof typeof AUTH_EVENTS], detail?
 export const authStorage = {
   getAccessToken(): string | null {
     if (!isBrowser) return null;
-    return localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    // #region agent log
+    if (typeof window !== 'undefined') {
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-storage.ts:47',message:'getAccessToken called',data:{hasToken:!!token,tokenLength:token?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    }
+    // #endregion
+    return token;
   },
 
   getRefreshToken(): string | null {
@@ -72,6 +78,11 @@ export const authStorage = {
   },
 
   setSession(session: AuthSession) {
+    // #region agent log
+    if (typeof window !== 'undefined') {
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-storage.ts:74',message:'setSession - entry',data:{hasAccessToken:!!session?.accessToken,hasRefreshToken:!!session?.refreshToken,hasUser:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    }
+    // #endregion
     if (!isBrowser) return;
     const { accessToken, refreshToken, expiresInMs, user, rememberMe } = session;
     localStorage.setItem(TOKEN_KEY, accessToken);
@@ -87,6 +98,11 @@ export const authStorage = {
     if (typeof rememberMe === 'boolean') {
       localStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
     }
+    // #region agent log
+    if (typeof window !== 'undefined') {
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-storage.ts:91',message:'setSession - after localStorage.setItem',data:{tokenInStorage:!!localStorage.getItem(TOKEN_KEY)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    }
+    // #endregion
     emit(AUTH_EVENTS.SESSION_UPDATED, { hasRefreshToken: Boolean(refreshToken) });
   },
 

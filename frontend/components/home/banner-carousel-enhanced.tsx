@@ -387,13 +387,15 @@ export function BannerCarousel() {
                   className="relative h-full w-full overflow-hidden rounded-xl"
                 >
                   {currentBanner?.imageUrl ? (
-                    <Image
-                      src={currentBanner.imageUrl}
-                      alt={currentBanner.title ?? 'Audio Tài Lộc banner'}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={currentBanner.imageUrl}
+                        alt={currentBanner.title ?? 'Audio Tài Lộc banner'}
+                        fill
+                        className="object-cover"
+                        priority
+                      />
+                    </div>
                   ) : (
                     <div className="h-full w-full rounded-xl bg-background/60 backdrop-blur-sm flex items-center justify-center">
                       <div className="text-center space-y-4">

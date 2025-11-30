@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { authStorage } from '@/lib/auth-storage';
 import {
   ShoppingBag,
   Package,
@@ -35,17 +36,106 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: ty
 };
 
 export default function OrdersPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const isAuthenticated = !!user;
   const router = useRouter();
   const { data: orders, isLoading, error } = useOrders();
-
-  // Redirect if not authenticated
+  
+  // Use ref to track retry interval and current user state
+  const retryIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const userRef = React.useRef(user);
+  const hasRedirectedRef = React.useRef(false);
+  
+  // Update user ref when user changes
   React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
+    userRef.current = user;
+  }, [user]);
+
+  // Redirect if not authenticated (only after auth check is complete)
+  React.useEffect(() => {
+    // Reset redirect flag when auth state changes
+    if (isAuthenticated) {
+      hasRedirectedRef.current = false;
     }
-  }, [isAuthenticated, router]);
+    
+    // Clear any existing interval
+    if (retryIntervalRef.current) {
+      clearInterval(retryIntervalRef.current);
+      retryIntervalRef.current = null;
+    }
+    
+    // Only redirect if:
+    // 1. Auth check is complete (not loading)
+    // 2. User is not authenticated
+    // 3. We haven't already redirected
+    if (!authLoading && !isAuthenticated && !hasRedirectedRef.current) {
+      // Check token in storage as a fallback
+      const hasToken = Boolean(authStorage.getAccessToken());
+      
+      // If no token, definitely redirect
+      if (!hasToken) {
+        hasRedirectedRef.current = true;
+        const timer = setTimeout(() => {
+          router.push('/login?redirect=' + encodeURIComponent('/orders'));
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+      
+      // If token exists but user is null, wait a bit more for query to complete
+      // Give it up to 5 seconds for the query to complete (allows React Query retry to work)
+      let retryCount = 0;
+      const maxRetries = 25; // 25 retries * 200ms = 5 seconds max wait
+      
+      retryIntervalRef.current = setInterval(() => {
+        retryCount++;
+        // Check current user state from ref (always up-to-date)
+        const currentUser = userRef.current;
+        const currentToken = authStorage.getAccessToken();
+        
+        // If user is now available, stop retrying
+        if (currentUser) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          hasRedirectedRef.current = false;
+          return;
+        }
+        
+        // If token is gone, redirect immediately
+        if (!currentToken) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          if (!hasRedirectedRef.current) {
+            hasRedirectedRef.current = true;
+            router.push('/login?redirect=' + encodeURIComponent('/orders'));
+          }
+          return;
+        }
+        
+        // If max retries reached and still no user, redirect
+        if (retryCount >= maxRetries) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          if (!hasRedirectedRef.current) {
+            hasRedirectedRef.current = true;
+            router.push('/login?redirect=' + encodeURIComponent('/orders'));
+          }
+        }
+      }, 200);
+      
+      return () => {
+        if (retryIntervalRef.current) {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+        }
+      };
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -64,12 +154,28 @@ export default function OrdersPage() {
     });
   };
 
-  if (!isAuthenticated) {
+  // Show loading state while checking authentication
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
+            <p className="text-muted-foreground">Đang kiểm tra xác thực...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this should be handled by useEffect, but show message as fallback)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Đang chuyển hướng...</h1>
+            <p className="text-muted-foreground">Vui lòng đăng nhập để truy cập trang này</p>
           </div>
         </main>
       </div>

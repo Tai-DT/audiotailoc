@@ -236,6 +236,37 @@ class ApiClient {
           if (this.onUnauthorized && !endpoint.includes('/auth/login')) {
             this.onUnauthorized();
           }
+        } else if (response.status === 422) {
+          // Validation errors - extract detailed messages
+          const validationErrors = data?.errors || data?.error || data?.message;
+          
+          if (Array.isArray(validationErrors)) {
+            // If errors is an array, join them
+            errorMessage = validationErrors.map((err: any) => 
+              typeof err === 'string' ? err : err?.message || JSON.stringify(err)
+            ).join(', ');
+          } else if (typeof validationErrors === 'object' && validationErrors !== null) {
+            // If errors is an object with field-specific errors
+            const fieldErrors = Object.entries(validationErrors)
+              .map(([field, messages]: [string, any]) => {
+                const msg = Array.isArray(messages) ? messages.join(', ') : messages;
+                return `${field}: ${msg}`;
+              })
+              .join('; ');
+            errorMessage = fieldErrors || data?.message as string || 'Validation failed. Please check your input.';
+          } else if (typeof validationErrors === 'string') {
+            errorMessage = validationErrors;
+          } else {
+            // Fallback to message or generic error
+            errorMessage = data?.message as string || 'Validation failed. Please check your input and try again.';
+          }
+          
+          // For login specifically, provide more helpful message
+          if (endpoint.includes('/auth/login')) {
+            if (!errorMessage.toLowerCase().includes('email') && !errorMessage.toLowerCase().includes('password')) {
+              errorMessage = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại thông tin đăng nhập.';
+            }
+          }
         } else if (response.status === 403) {
           errorMessage = 'Access Denied: You do not have permission to access this resource. Please check your credentials.';
         } else if (response.status === 404) {

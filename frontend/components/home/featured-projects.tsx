@@ -121,16 +121,18 @@ export function FeaturedProjects() {
           {projects.map((project) => (
             <Card key={project.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
               <div className="relative aspect-video overflow-hidden">
-                <Image
-                  src={project.thumbnailImage || project.coverImage || project.images?.[0] || '/placeholder-project.jpg'}
-                  alt={project.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-project.jpg';
-                  }}
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={project.thumbnailImage || project.coverImage || project.images?.[0] || '/placeholder-project.jpg'}
+                    alt={project.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-project.jpg';
+                    }}
+                  />
+                </div>
                 <div className="absolute top-4 left-4">
                   <Badge variant="secondary">
                     {project.status === 'COMPLETED' ? 'Hoàn thành' :

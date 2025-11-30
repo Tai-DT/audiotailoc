@@ -87,13 +87,15 @@ export function Hero() {
     <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="absolute inset-0 pointer-events-none">
         {banner?.imageUrl && (
-          <Image
-            src={banner.imageUrl}
-            alt={banner.title ?? 'Audio Tài Lộc'}
-            fill
-            priority
-            className="object-cover opacity-30"
-          />
+          <div className="relative w-full h-full">
+            <Image
+              src={banner.imageUrl}
+              alt={banner.title ?? 'Audio Tài Lộc'}
+              fill
+              priority
+              className="object-cover opacity-30"
+            />
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-background/80" />
       </div>

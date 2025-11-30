@@ -79,46 +79,46 @@ export function UserActions() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
+          <DropdownMenuContent className="w-56 rounded-lg shadow-lg" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal px-4 py-3">
+              <div className="flex flex-col space-y-2">
+                <p className="text-sm font-semibold leading-none text-foreground">{user?.name}</p>
+                <p className="text-xs leading-none text-muted-foreground truncate">
                   {user?.email}
                 </p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="my-2" />
             <DropdownMenuItem asChild>
-              <Link href="/profile" className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Trang cá nhân</span>
+              <Link href="/profile" className="cursor-pointer px-4 py-2 flex items-center gap-3 rounded-md hover:bg-accent transition-colors">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Trang cá nhân</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/orders" className="cursor-pointer">
-                <ShoppingBag className="mr-2 h-4 w-4" />
-                <span>Đơn hàng</span>
+              <Link href="/orders" className="cursor-pointer px-4 py-2 flex items-center gap-3 rounded-md hover:bg-accent transition-colors">
+                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Đơn hàng</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/wishlist" className="cursor-pointer">
-                <Heart className="mr-2 h-4 w-4" />
-                <span>Danh sách yêu thích</span>
+              <Link href="/wishlist" className="cursor-pointer px-4 py-2 flex items-center gap-3 rounded-md hover:bg-accent transition-colors">
+                <Heart className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Danh sách yêu thích</span>
                 {wishlistCount > 0 && (
                   <Badge
                     variant="secondary"
-                    className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                    className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground"
                   >
                     {wishlistCount}
                   </Badge>
                 )}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Đăng xuất</span>
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 py-2 flex items-center gap-3 rounded-md text-destructive hover:bg-destructive/10 transition-colors">
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm">Đăng xuất</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

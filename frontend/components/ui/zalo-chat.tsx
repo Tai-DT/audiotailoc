@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { } from 'react';
 import Script from 'next/script';
 import { Button } from './button';
 

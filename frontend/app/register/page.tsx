@@ -25,18 +25,18 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const registerMutation = useRegister();
   const router = useRouter();
 
   const isAuthenticated = !!user;
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (only after auth check is complete)
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,6 +92,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      // Don't call router.push here - it's already handled in mutation's onSuccess
       await registerMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
@@ -99,7 +100,7 @@ export default function RegisterPage() {
         name: formData.fullName,
         phone: formData.phone,
       });
-      router.push('/');
+      // Router push is handled in mutation's onSuccess callback
     } catch (error) {
       console.error('Registration error:', error);
       // Error is handled by the mutation
@@ -185,7 +186,7 @@ export default function RegisterPage() {
                       id="password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                      placeholder="Nhập mật khẩu (tối thiểu 8 ký tự, chữ hoa, số, ký tự đặc biệt)"
                       value={formData.password}
                       onChange={handleInputChange}
                       className="pl-10 pr-10"

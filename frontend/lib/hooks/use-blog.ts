@@ -6,7 +6,7 @@ export const blogQueryKeys = {
   all: ['blog'] as const,
   articles: {
     all: ['blog', 'articles'] as const,
-    list: (params: any) => ['blog', 'articles', 'list', params] as const,
+    list: (params: { page?: number; limit?: number; categoryId?: string; tag?: string; search?: string; status?: string; published?: boolean }) => ['blog', 'articles', 'list', params] as const,
     detail: (slug: string) => ['blog', 'articles', 'detail', slug] as const,
     featured: (limit: number) => ['blog', 'articles', 'featured', limit] as const,
     related: (slug: string, limit: number) => ['blog', 'articles', 'related', slug, limit] as const,

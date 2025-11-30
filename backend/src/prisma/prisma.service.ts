@@ -5,10 +5,21 @@ import { withAccelerate } from '@prisma/extension-accelerate';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
+    // Configure connection pool to prevent "too many connections" error
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const connectionLimit = process.env.DATABASE_CONNECTION_LIMIT || '10';
+    
+    // Add connection_limit to DATABASE_URL if not already present
+    let configuredUrl = databaseUrl;
+    if (databaseUrl && !databaseUrl.includes('connection_limit')) {
+      const separator = databaseUrl.includes('?') ? '&' : '?';
+      configuredUrl = `${databaseUrl}${separator}connection_limit=${connectionLimit}&pool_timeout=20`;
+    }
+
     super({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL,
+          url: configuredUrl,
         },
       },
       log: ['error'],

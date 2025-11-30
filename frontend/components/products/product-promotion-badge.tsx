@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tag } from 'lucide-react';
-import { apiClient } from '@/lib/api';
 
 interface Promotion {
   id: string;
@@ -30,17 +29,19 @@ export function ProductPromotionBadge({ productId, categoryId }: ProductPromotio
 
       setLoading(true);
       try {
-        const params = categoryId ? `?categoryId=${categoryId}` : '';
-        const response = await apiClient.get(`/promotions/product/${productId}${params}`);
+        // Temporarily disable promotions API call since backend endpoint doesn't exist
+        // const params = categoryId ? `?categoryId=${categoryId}` : '';
+        // const response = await apiClient.get(`/promotions/product/${productId}${params}`);
 
-        const promotionsData = response?.data?.data || response?.data || [];
+        // const promotionsData = response?.data?.data || response?.data || [];
 
         // Filter active promotions only
-        const activePromotions = Array.isArray(promotionsData)
-          ? promotionsData.filter((p: Promotion) => p)
-          : [];
+        // const activePromotions = Array.isArray(promotionsData)
+        //   ? promotionsData.filter((p: Promotion) => p)
+        //   : [];
 
-        setPromotions(activePromotions);
+        // setPromotions(activePromotions);
+        setPromotions([]);
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
         setPromotions([]);

@@ -32,7 +32,8 @@ export const useOrders = (filters: OrderFilters = {}) => {
   return useQuery({
     queryKey: orderQueryKeys.list(filters),
     queryFn: async () => {
-      const response = await apiClient.get('/orders', { params: filters });
+      // Use /orders/me for authenticated users
+      const response = await apiClient.get('/orders/me', { params: filters });
       return handleApiResponse<PaginatedResponse<Order>>(response);
     },
   });
@@ -42,7 +43,8 @@ export const useOrder = (id: string) => {
   return useQuery({
     queryKey: orderQueryKeys.detail(id),
     queryFn: async () => {
-      const response = await apiClient.get(`/orders/${id}`);
+      // Use /orders/me/:id for authenticated users
+      const response = await apiClient.get(`/orders/me/${id}`);
       return handleApiResponse<Order>(response);
     },
     enabled: !!id,

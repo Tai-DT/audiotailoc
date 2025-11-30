@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Backend & Dashboard Integration Tests",
+    "description": "Test collection để kiểm tra backend và kết nối với dashboard",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3010/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "dashboard_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Backend Health Checks",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Backend Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3010/docs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["docs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard API Tests",
+      "item": [
+        {
+          "name": "Dashboard Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{dashboard_url}}/",
+              "host": ["{{dashboard_url}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "Test API Connection from Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Test endpoint mà dashboard sử dụng để kết nối với backend"
+          }
+        }
+      ]
+    }
+  ]
+}

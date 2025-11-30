@@ -33,12 +33,43 @@ export function ProductCard({
 
   // Get the primary image URL - prefer images array, fallback to imageUrl
   const getProductImage = () => {
+    // Helper to validate and normalize image URL
+    const normalizeImageUrl = (url: string | null | undefined): string | null => {
+      if (!url || typeof url !== 'string') return null;
+      
+      // If it's already a valid URL (http/https, absolute path, or data URL), return as is
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:')) {
+        return url;
+      }
+      
+      // If it's just a filename (like "jbl-pasion-10.jpg"), try to construct a path
+      // Check if it looks like a filename (has extension and no slashes)
+      if (url.includes('.') && !url.includes('/') && !url.includes('\\')) {
+        // Try common image paths - but since we don't know the exact structure, return null to use placeholder
+        // This prevents 404 errors from invalid paths
+        return null;
+      }
+      
+      return null;
+    };
+
+    // Validate and return first valid image from array
     if (product.images && product.images.length > 0) {
-      return product.images[0];
+      for (const img of product.images) {
+        const normalized = normalizeImageUrl(img);
+        if (normalized) {
+          return normalized;
+        }
+      }
     }
-    if (product.imageUrl) {
-      return product.imageUrl;
+    
+    // Fallback to imageUrl if valid
+    const normalizedImageUrl = normalizeImageUrl(product.imageUrl);
+    if (normalizedImageUrl) {
+      return normalizedImageUrl;
     }
+    
+    // Default placeholder
     return '/placeholder-product.svg';
   };
 
@@ -47,18 +78,20 @@ export function ProductCard({
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/20">
         <AspectRatio ratio={1}>
-          <Link href={`/products/${product.slug}`}>
-            <Image
-              src={getProductImage()}
-              alt={product.name}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder-product.svg';
-              }}
-            />
+          <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
+            <div className="relative w-full h-full">
+              <Image
+                src={getProductImage()}
+                alt={product.name}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder-product.svg';
+                }}
+              />
+            </div>
             {/* Gradient overlay on hover */}
             <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
           </Link>

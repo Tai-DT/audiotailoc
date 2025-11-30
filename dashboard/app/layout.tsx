@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
-import { ToastProvider } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SocketProvider } from "@/providers/socket-provider";
+import { ClientProviders } from "@/components/providers/client-providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,11 +41,9 @@ export default function RootLayout({
           <AuthProvider>
             <SocketProvider>
               <div suppressHydrationWarning>
-                <TooltipProvider>
-                  <ToastProvider>
-                    {children}
-                  </ToastProvider>
-                </TooltipProvider>
+                <ClientProviders>
+                  {children}
+                </ClientProviders>
               </div>
             </SocketProvider>
           </AuthProvider>

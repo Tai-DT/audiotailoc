@@ -12,7 +12,7 @@ import { SubNav } from './header/sub-nav';
 import { UserActions } from './header/user-actions';
 import { DesktopNav } from './header/desktop-nav';
 import { SearchBar } from './header/search-bar';
-import type { Category, ServiceType, Service } from '@/lib/types';
+import type { Category } from '@/lib/types';
 
 export function Header() {
   const [searchQuery, setSearchQuery] = React.useState<string>('');

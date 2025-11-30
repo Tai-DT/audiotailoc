@@ -105,7 +105,21 @@ export default function KnowledgeBasePage() {
   const { data: articleCategories } = useArticleCategories();
 
   const articles = articlesData?.items || mockArticles;
-  const availableCategories = articleCategories || categories;  const filteredArticles = articles.filter(article => {
+  const availableCategories = articleCategories || categories;
+
+  // Temporarily disable API calls to avoid 404 errors
+  // TODO: Re-enable when backend endpoints are available
+  // const { data: articlesData } = useArticles({
+  //   published: true,
+  //   pageSize: 50
+  // });
+  //
+  // const { data: articleCategories } = useArticleCategories();
+  //
+  // const articles = articlesData?.items || mockArticles;
+  // const availableCategories = articleCategories || categories;
+
+  const filteredArticles = articles.filter(article => {
     const matchesSearch = !searchQuery ||
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||

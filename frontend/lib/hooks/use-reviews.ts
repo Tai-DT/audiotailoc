@@ -5,7 +5,7 @@ import { ProductReview, PaginatedResponse } from '../types';
 export const reviewQueryKeys = {
   all: ['reviews'] as const,
   lists: () => [...reviewQueryKeys.all, 'list'] as const,
-  list: (filters: any) => [...reviewQueryKeys.lists(), filters] as const,
+  list: (filters: { page?: number; pageSize?: number }) => [...reviewQueryKeys.lists(), filters] as const,
   product: (productId: string) => [...reviewQueryKeys.all, 'product', productId] as const,
 };
 

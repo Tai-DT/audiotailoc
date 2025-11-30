@@ -139,20 +139,20 @@ export class EmailController {
             invoiceNo: 'INV-2023-001',
             invoiceDate: new Date().toLocaleDateString('vi-VN'),
             customerName: 'Công ty TNHH ABC',
-            customerAddress: '456 Đường XYZ, Quận 3, TP.HCM',
+            companyAddress: '456 Đường XYZ, Quận 3, TP.HCM',
             taxCode: '0123456789',
             items: [
               {
                 name: 'Loa Bluetooth Sony',
                 quantity: 1,
                 price: '2.500.000 ₫',
-                total: '2.500.000 ₫',
+                
               },
               {
                 name: 'Tai nghe Marshall',
                 quantity: 2,
                 price: '3.000.000 ₫',
-                total: '6.000.000 ₫',
+                
               },
             ],
             subTotal: '8.500.000 ₫',

@@ -145,25 +145,59 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-lg border bg-gray-50 overflow-hidden relative">
-              {product.images && product.images.length > 0 ? (
-                <Image 
-                  src={product.images[0]} 
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : product.imageUrl ? (
-                <Image 
-                  src={product.imageUrl} 
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  Không có hình ảnh
-                </div>
-              )}
+              {(() => {
+                // Helper to validate and normalize image URL
+                const normalizeImageUrl = (url: string | null | undefined): string | null => {
+                  if (!url || typeof url !== 'string') return null;
+                  
+                  // If it's already a valid URL (http/https, absolute path, or data URL), return as is
+                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:')) {
+                    return url;
+                  }
+                  
+                  // If it's just a filename (like "jbl-pasion-10.jpg"), return null to use placeholder
+                  if (url.includes('.') && !url.includes('/') && !url.includes('\\')) {
+                    return null;
+                  }
+                  
+                  return null;
+                };
+
+                // Try to get valid image from images array
+                let imageUrl: string | null = null;
+                if (product.images && product.images.length > 0) {
+                  for (const img of product.images) {
+                    const normalized = normalizeImageUrl(img);
+                    if (normalized) {
+                      imageUrl = normalized;
+                      break;
+                    }
+                  }
+                }
+                
+                // Fallback to imageUrl if no valid image found
+                if (!imageUrl) {
+                  imageUrl = normalizeImageUrl(product.imageUrl);
+                }
+                
+                // Use placeholder if no valid image
+                if (!imageUrl) {
+                  imageUrl = '/placeholder-product.svg';
+                }
+
+                return (
+                  <Image 
+                    src={imageUrl} 
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-product.svg';
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
 

@@ -19,18 +19,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const loginMutation = useLogin();
   const router = useRouter();
 
   const isAuthenticated = !!user;
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (only after auth check is complete)
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +43,9 @@ export default function LoginPage() {
 
     try {
       // Note: rememberMe is handled by the browser/auth storage, not the API payload for now
+      // Don't call router.push here - it's already handled in mutation's onSuccess
       await loginMutation.mutateAsync({ email, password });
-      router.push('/');
+      // Router push is handled in mutation's onSuccess callback
     } catch (error) {
       // Error is handled by the mutation
       console.error('Login error:', error);
@@ -56,8 +57,9 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setIsLoading(true);
     try {
-      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'demo123' });
-      router.push('/');
+      // Don't call router.push here - it's already handled in mutation's onSuccess
+      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'Demo123!' });
+      // Router push is handled in mutation's onSuccess callback
     } catch (error) {
       // Error is handled by the mutation
       console.error('Demo login error:', error);

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { authStorage } from '@/lib/auth-storage';
 import {
   Heart,
   ShoppingCart,
@@ -23,7 +24,7 @@ import { WishlistItem } from '@/lib/types';
 import { useAddToCart } from '@/lib/hooks/use-api';
 
 export default function WishlistPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const isAuthenticated = !!user;
   const router = useRouter();
 
@@ -59,19 +60,124 @@ export default function WishlistPage() {
     }).format(price);
   };
 
-  // Redirect if not authenticated
+  // Use ref to track retry interval and current user state
+  const retryIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const userRef = React.useRef(user);
+  const hasRedirectedRef = React.useRef(false);
+  
+  // Update user ref when user changes
   React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+    userRef.current = user;
+  }, [user]);
 
-  if (!isAuthenticated) {
+  // Redirect if not authenticated (only after auth check is complete)
+  React.useEffect(() => {
+    // Reset redirect flag when auth state changes
+    if (isAuthenticated) {
+      hasRedirectedRef.current = false;
+    }
+    
+    // Clear any existing interval
+    if (retryIntervalRef.current) {
+      clearInterval(retryIntervalRef.current);
+      retryIntervalRef.current = null;
+    }
+    
+    // Only redirect if:
+    // 1. Auth check is complete (not loading)
+    // 2. User is not authenticated
+    // 3. We haven't already redirected
+    if (!authLoading && !isAuthenticated && !hasRedirectedRef.current) {
+      // Check token in storage as a fallback
+      const hasToken = Boolean(authStorage.getAccessToken());
+      
+      // If no token, definitely redirect
+      if (!hasToken) {
+        hasRedirectedRef.current = true;
+        const timer = setTimeout(() => {
+          router.push('/login?redirect=' + encodeURIComponent('/wishlist'));
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+      
+      // If token exists but user is null, wait a bit more for query to complete
+      // Give it up to 5 seconds for the query to complete (allows React Query retry to work)
+      let retryCount = 0;
+      const maxRetries = 25; // 25 retries * 200ms = 5 seconds max wait
+      
+      retryIntervalRef.current = setInterval(() => {
+        retryCount++;
+        // Check current user state from ref (always up-to-date)
+        const currentUser = userRef.current;
+        const currentToken = authStorage.getAccessToken();
+        
+        // If user is now available, stop retrying
+        if (currentUser) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          hasRedirectedRef.current = false;
+          return;
+        }
+        
+        // If token is gone, redirect immediately
+        if (!currentToken) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          if (!hasRedirectedRef.current) {
+            hasRedirectedRef.current = true;
+            router.push('/login?redirect=' + encodeURIComponent('/wishlist'));
+          }
+          return;
+        }
+        
+        // If max retries reached and still no user, redirect
+        if (retryCount >= maxRetries) {
+          if (retryIntervalRef.current) {
+            clearInterval(retryIntervalRef.current);
+            retryIntervalRef.current = null;
+          }
+          if (!hasRedirectedRef.current) {
+            hasRedirectedRef.current = true;
+            router.push('/login?redirect=' + encodeURIComponent('/wishlist'));
+          }
+        }
+      }, 200);
+      
+      return () => {
+        if (retryIntervalRef.current) {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+        }
+      };
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Show loading state while checking authentication
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
+            <p className="text-muted-foreground">Đang kiểm tra xác thực...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this should be handled by useEffect, but show message as fallback)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Đang chuyển hướng...</h1>
+            <p className="text-muted-foreground">Vui lòng đăng nhập để truy cập trang này</p>
           </div>
         </main>
       </div>

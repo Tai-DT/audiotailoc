@@ -38,9 +38,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         const token = authStorage.getAccessToken();
 
-        const socketInstance = io(socketUrl, {
+        // Backend uses namespace /api/v1/realtime
+        const socketInstance = io(`${socketUrl}/api/v1/realtime`, {
             path: "/socket.io",
-            transports: ["websocket"],
+            transports: ["websocket", "polling"],
             autoConnect: true,
             auth: {
                 token: token ? `Bearer ${token}` : undefined,
@@ -48,16 +49,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         socketInstance.on("connect", () => {
-            console.log("Socket connected");
+            // Only log in development if explicitly enabled
+            if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_SOCKET_LOGS === 'true') {
+                console.log("Socket connected");
+            }
             setIsConnected(true);
         });
 
         socketInstance.on("disconnect", () => {
-            console.log("Socket disconnected");
+            // Only log in development if explicitly enabled
+            if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_SOCKET_LOGS === 'true') {
+                console.log("Socket disconnected");
+            }
             setIsConnected(false);
         });
 
         socketInstance.on("connect_error", (err) => {
+            // Always log connection errors as they indicate real issues
             console.error("Socket connection error:", err);
         });
 

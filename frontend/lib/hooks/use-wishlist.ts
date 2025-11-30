@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
 import { Wishlist, WishlistItem, CreateWishlistItemDto } from '../types';
+import { authStorage } from '../auth-storage';
 
 export const wishlistQueryKeys = {
   all: ['wishlist'] as const,
@@ -8,12 +9,15 @@ export const wishlistQueryKeys = {
 };
 
 export const useWishlist = () => {
+  const hasToken = Boolean(authStorage.getAccessToken());
+  
   return useQuery({
     queryKey: wishlistQueryKeys.details(),
     queryFn: async () => {
       const response = await apiClient.get('/wishlist');
       return handleApiResponse<Wishlist>(response);
     },
+    enabled: hasToken, // Only run query if token exists
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -24,7 +28,8 @@ export const useAddToWishlist = () => {
   return useMutation({
     mutationFn: async (productId: string) => {
       const data: CreateWishlistItemDto = { productId };
-      const response = await apiClient.post('/wishlist/items', data);
+      // Backend uses POST /wishlist
+      const response = await apiClient.post('/wishlist', data);
       return handleApiResponse<WishlistItem>(response);
     },
     onSuccess: () => {
@@ -38,7 +43,8 @@ export const useRemoveFromWishlist = () => {
 
   return useMutation({
     mutationFn: async (productId: string) => {
-      const response = await apiClient.delete(`/wishlist/items/${productId}`);
+      // Backend uses DELETE /wishlist/:productId
+      const response = await apiClient.delete(`/wishlist/${productId}`);
       return handleApiResponse<{ success: boolean }>(response);
     },
     onSuccess: () => {

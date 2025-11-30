@@ -890,6 +890,156 @@ export class OrdersService {
   }
 
   /**
+   * Get orders for a specific user
+   */
+  async getUserOrders(
+    userId: string,
+    params: { page?: number; pageSize?: number; status?: string },
+  ) {
+    const page = Math.max(1, Math.floor(params.page ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
+    const where: any = { 
+      userId,
+      isDeleted: false 
+    };
+    if (params.status) where.status = params.status;
+
+    return this.prisma
+      .$transaction([
+        this.prisma.orders.count({ where }),
+        this.prisma.orders.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            order_items: {
+              include: {
+                products: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    imageUrl: true,
+                    inventory: {
+                      select: {
+                        stock: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                amountCents: true,
+                status: true,
+                method: true,
+                createdAt: true,
+              },
+            },
+          },
+        }),
+      ])
+      .then(([total, items]) => ({
+        total,
+        page,
+        pageSize,
+        items: items.map(order => this.transformOrderForResponse({
+          id: order.id,
+          orderNo: order.orderNo,
+          status: order.status,
+          totalCents: order.totalCents,
+          shippingAddress: order.shippingAddress,
+          shippingName: order.shippingName,
+          shippingPhone: order.shippingPhone,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          items: order.order_items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            product: item.products,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.unitPrice,
+            total: Number(item.unitPrice || 0) * item.quantity,
+          })),
+          payments: order.payments,
+        })),
+      }));
+  }
+
+  /**
+   * Get a single order for a specific user (with ownership check)
+   */
+  async getUserOrder(userId: string, orderId: string) {
+    const order = await this.prisma.orders.findFirst({
+      where: { 
+        id: orderId,
+        userId,
+        isDeleted: false 
+      },
+      include: {
+        order_items: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                imageUrl: true,
+                inventory: {
+                  select: {
+                    stock: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            amountCents: true,
+            status: true,
+            method: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+
+    return this.transformOrderForResponse({
+      id: order.id,
+      orderNo: order.orderNo,
+      status: order.status,
+      totalCents: order.totalCents,
+      shippingAddress: order.shippingAddress,
+      shippingName: order.shippingName,
+      shippingPhone: order.shippingPhone,
+      shippingNotes: order.shippingNotes,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      items: order.order_items.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        product: item.products,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.unitPrice,
+        total: Number(item.unitPrice || 0) * item.quantity,
+      })),
+      payments: order.payments,
+    });
+  }
+
+  /**
    * Transform order response to handle BigInt serialization
    * Converts BigInt values from order_items to numbers
    */

@@ -5,7 +5,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Header } from "@/components/layout/header";
+import { HeaderWrapper } from "@/components/layout/header-wrapper";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import { ZaloChatWidget } from "@/components/ui/zalo-chat-widget";
@@ -79,7 +79,7 @@ export default function RootLayout({
           <QueryProvider>
             <SocketProvider>
               <CartProvider>
-                <Header />
+                <HeaderWrapper />
                 {children}
                 <Footer />
               <Toaster

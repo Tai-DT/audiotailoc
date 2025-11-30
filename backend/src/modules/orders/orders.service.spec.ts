@@ -5,6 +5,7 @@ import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
 import { TelegramService } from '../notifications/telegram.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('OrdersService', () => {
@@ -15,6 +16,7 @@ describe('OrdersService', () => {
     orders: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
@@ -64,6 +66,12 @@ describe('OrdersService', () => {
     calculateDiscount: jest.fn().mockResolvedValue(0),
   };
 
+  const mockInventoryService = {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    // add any other inventory helper methods used in tests
+  };
+
   beforeEach(async () => {
     // Ensure $transaction executes the callback with the mocked client and returns its result
     mockPrismaService.$transaction.mockImplementation(async (cb: any) => {
@@ -80,6 +88,7 @@ describe('OrdersService', () => {
         { provide: TelegramService, useValue: mockTelegramService },
         { provide: CacheService, useValue: mockCacheService },
         { provide: PromotionsService, useValue: mockPromotionsService },
+        { provide: InventoryService, useValue: mockInventoryService },
       ],
     }).compile();
 
@@ -95,7 +104,7 @@ describe('OrdersService', () => {
     it('should create a new order successfully', async () => {
       const createOrderDto = {
         userId: 'user-1',
-        order_items: [{ productId: 'product-1', quantity: 2 }],
+        items: [{ productId: 'product-1', quantity: 2 }],
         shippingAddress: 'Test Address',
       };
 
@@ -103,6 +112,7 @@ describe('OrdersService', () => {
         id: 'product-1',
         name: 'Test Product',
         priceCents: 100000,
+        inventory: { stock: 10 },
       };
 
       const mockOrder = {
@@ -151,6 +161,7 @@ describe('OrdersService', () => {
       expect(mockPrismaService.orders.create).toHaveBeenCalled();
       expect(mockPrismaService.products.findUnique).toHaveBeenCalledWith({
         where: { id: 'product-1' },
+        include: { inventory: true },
       });
     });
   });
@@ -184,13 +195,13 @@ describe('OrdersService', () => {
         payments: [],
       };
 
-      mockPrismaService.orders.findUnique.mockResolvedValue(mockOrder);
+      mockPrismaService.orders.findFirst.mockResolvedValue(mockOrder);
 
       const result = await service.get('order-1');
 
       expect(result.id).toBe(mockOrder.id);
-      expect(mockPrismaService.orders.findUnique).toHaveBeenCalledWith({
-        where: { id: 'order-1' },
+      expect(mockPrismaService.orders.findFirst).toHaveBeenCalledWith({
+        where: { id: 'order-1', isDeleted: false },
         include: {
           order_items: true,
           payments: true,
@@ -199,7 +210,7 @@ describe('OrdersService', () => {
     });
 
     it('should throw NotFoundException if order not found', async () => {
-      mockPrismaService.orders.findUnique.mockResolvedValue(null);
+      mockPrismaService.orders.findFirst.mockResolvedValue(null);
 
       await expect(service.get('non-existent')).rejects.toThrow(NotFoundException);
     });
@@ -224,7 +235,7 @@ describe('OrdersService', () => {
         status: newStatus,
       };
 
-      mockPrismaService.orders.findUnique.mockResolvedValue(mockOrder);
+      mockPrismaService.orders.findFirst.mockResolvedValue(mockOrder);
       mockPrismaService.orders.update.mockResolvedValue(mockUpdatedOrder);
       mockPrismaService.order_items.findMany.mockResolvedValue([]);
       mockPrismaService.users.findUnique.mockResolvedValue(null);

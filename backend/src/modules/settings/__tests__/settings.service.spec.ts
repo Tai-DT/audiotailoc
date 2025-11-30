@@ -1,12 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SettingsService } from '../settings.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { MailService } from '../../notifications/mail.service';
 
 describe('SettingsService', () => {
   let service: SettingsService;
   let prisma: PrismaService;
 
   const mockPrismaService = {};
+  const mockMailService = {
+    send: jest.fn().mockResolvedValue(true),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -15,6 +19,10 @@ describe('SettingsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: MailService,
+          useValue: mockMailService,
         },
       ],
     }).compile();

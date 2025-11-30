@@ -51,16 +51,23 @@ export const useFeaturedProjects = (limit = 3) => {
   return useQuery({
     queryKey: projectQueryKeys.featured(limit),
     queryFn: async () => {
-      const response = await apiClient.get('/projects', {
-        params: {
-          featured: true,
-          isActive: true,
-          page: 1,
-          pageSize: limit,
-        },
-      });
-      const data = handleApiResponse<PaginatedResponse<Project>>(response);
-      return data.items;
+      try {
+        const response = await apiClient.get('/projects', {
+          params: {
+            featured: true,
+            isActive: true,
+            page: 1,
+            pageSize: limit,
+          },
+        });
+        const data = handleApiResponse<PaginatedResponse<Project>>(response);
+        // Ensure we always return an array, never undefined
+        return Array.isArray(data?.items) ? data.items : [];
+      } catch (error) {
+        // Return empty array on error to prevent undefined
+        console.error('Failed to fetch featured projects:', error);
+        return [];
+      }
     },
     staleTime: 15 * 60 * 1000,
   });

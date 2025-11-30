@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
-import { dashboardQueryKeys } from './use-dashboard';
 
 export interface InventoryAnalytics {
   totalItems: number;

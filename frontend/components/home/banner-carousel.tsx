@@ -267,13 +267,15 @@ export function BannerCarousel() {
             className="absolute inset-0"
           >
             {currentBanner?.imageUrl && (
-              <Image
-                src={currentBanner.imageUrl}
-                alt={currentBanner.title ?? 'Audio Tài Lộc'}
-                fill
-                priority
-                className="object-cover"
-              />
+              <div className="relative w-full h-full">
+                <Image
+                  src={currentBanner.imageUrl}
+                  alt={currentBanner.title ?? 'Audio Tài Lộc'}
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </div>
             )}
           </motion.div>
         </AnimatePresence>

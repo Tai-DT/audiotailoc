@@ -6,8 +6,9 @@ const API_BASE_URL = configuredBaseUrl && configuredBaseUrl.length > 0
   ? configuredBaseUrl
   : 'http://localhost:3010/api/v1';
 
-// Debug: Log the API base URL (only in development)
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+// Debug: Log the API base URL (only if explicitly enabled)
+// Set NEXT_PUBLIC_ENABLE_API_LOGS=true to enable verbose logging
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_API_LOGS === 'true') {
   console.log('[API Client] Base URL:', API_BASE_URL);
   console.log('[API Client] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
 }
@@ -24,13 +25,18 @@ export const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Debug: Log the full request URL
-    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+    // Debug: Log the full request URL (only if explicitly enabled)
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_API_LOGS === 'true') {
       const fullUrl = config.baseURL + (config.url || '');
       console.log('[API Client] Request:', config.method?.toUpperCase(), fullUrl);
     }
     
     const token = authStorage.getAccessToken();
+    // #region agent log
+    if (typeof window !== 'undefined' && config.url && !config.url.includes('/auth/login')) {
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:37',message:'Request interceptor - checking token',data:{url:config.url,hasToken:!!token,tokenLength:token?.length,willAttach:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    }
+    // #endregion
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
@@ -127,30 +133,45 @@ apiClient.interceptors.response.use(
         
         // Log grouped error information with color coding based on status
         const statusCode = errorInfo.status as number;
-        const logStyle = statusCode >= 500 ? 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;'
-                       : statusCode >= 400 ? 'background: #ff9800; color: white; padding: 2px 5px; border-radius: 3px;'
-                       : 'background: #2196f3; color: white; padding: 2px 5px; border-radius: 3px;';
         
-        console.groupCollapsed(
-          `%c${errorInfo.method || 'REQUEST'} ${errorInfo.url || 'API'} - ${statusCode || 'ERROR'}`,
-          logStyle
-        );
-        // Surface key fields first for quick debugging
-        console.error('API Error message:', errorInfo.errorMessage || errorInfo.message || 'Unknown error');
-        console.error('HTTP status:', statusCode);
-        if (errorInfo.fullUrl) console.error('Request URL:', errorInfo.fullUrl);
-        if (errorInfo.requestData) console.error('Request data:', errorInfo.requestData);
-        // Prefer to show the response body if available (most useful)
-        if (errorInfo.responseData) {
-          console.error('Response body:', errorInfo.responseData);
+        // Don't log 401/403 as errors - they're expected when user is not authenticated
+        // Only log them as debug if user had a session (unexpected logout)
+        const isAuthError = statusCode === 401 || statusCode === 403;
+        const hadSession = Boolean(authStorage.getAccessToken());
+        
+        // Skip logging 401/403 if user didn't have a session (expected behavior)
+        if (isAuthError && !hadSession) {
+          // Silently skip - this is expected when user is not logged in
         } else {
-          // Fallback: show the structured errorInfo object
-          console.error('Error Details:', errorInfo);
+          // Log other errors or unexpected auth errors
+          const logStyle = statusCode >= 500 ? 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;'
+                         : statusCode >= 400 ? 'background: #ff9800; color: white; padding: 2px 5px; border-radius: 3px;'
+                         : 'background: #2196f3; color: white; padding: 2px 5px; border-radius: 3px;';
+          
+          // Use console.warn for 401/403 (even if unexpected), console.error for others
+          const logMethod = isAuthError ? console.warn : console.error;
+          
+          console.groupCollapsed(
+            `%c${errorInfo.method || 'REQUEST'} ${errorInfo.url || 'API'} - ${statusCode || 'ERROR'}`,
+            logStyle
+          );
+          // Surface key fields first for quick debugging
+          logMethod('API Error message:', errorInfo.errorMessage || errorInfo.message || 'Unknown error');
+          logMethod('HTTP status:', statusCode);
+          if (errorInfo.fullUrl) logMethod('Request URL:', errorInfo.fullUrl);
+          if (errorInfo.requestData) logMethod('Request data:', errorInfo.requestData);
+          // Prefer to show the response body if available (most useful)
+          if (errorInfo.responseData) {
+            logMethod('Response body:', errorInfo.responseData);
+          } else {
+            // Fallback: show the structured errorInfo object
+            logMethod('Error Details:', errorInfo);
+          }
+          if (error && error.stack) {
+            console.debug('Stack Trace:', error.stack);
+          }
+          console.groupEnd();
         }
-        if (error && error.stack) {
-          console.debug('Stack Trace:', error.stack);
-        }
-        console.groupEnd();
         
       } catch (logError) {
         // Fallback: log the original error if structured logging fails
@@ -167,8 +188,14 @@ apiClient.interceptors.response.use(
         authStorage.clearSession();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(AUTH_EVENTS.LOGOUT));
-          if (!window.location.pathname.startsWith('/login')) {
-            window.location.href = '/login';
+          // Only redirect if not already on login/register page
+          // Let React Router handle the redirect for better UX
+          const currentPath = window.location.pathname;
+          if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register')) {
+            // Use a small delay to allow React state to update first
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 100);
           }
         }
       }

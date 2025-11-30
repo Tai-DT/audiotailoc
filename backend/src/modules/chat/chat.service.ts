@@ -74,7 +74,9 @@ export class ChatService {
             id: randomUUID(),
             content: dto.initialMessage,
             senderType: 'USER',
-            senderId: dto.userId || guestId,
+            // For guest messages, set senderId to null since it has foreign key constraint to users table
+            // The guestId is stored in the conversation record instead
+            senderId: dto.userId || null,
             createdAt: new Date(),
           },
         },
@@ -144,7 +146,9 @@ export class ChatService {
         conversationId: dto.conversationId,
         content: dto.content,
         senderType: dto.senderType || (isAdmin ? 'ADMIN' : 'USER'),
-        senderId: dto.senderId || ctx?.requesterUserId || conversation.guestId,
+        // For guest messages, set senderId to null since it has foreign key constraint to users table
+        // The guestId is stored in the conversation record instead
+        senderId: conversation.userId ? (dto.senderId || ctx?.requesterUserId) : null,
         createdAt: new Date(),
       },
     });
@@ -155,11 +159,19 @@ export class ChatService {
       data: { updatedAt: new Date() },
     });
 
-    // Emit realtime event
-    this.realtimeGateway.broadcastEvent(`chat:${dto.conversationId}:message`, message);
+    // Emit realtime event to conversation room
+    // Use emitChatMessage to send to subscribers in the conversation room
+    this.realtimeGateway.emitChatMessage(dto.conversationId, {
+      id: message.id,
+      conversationId: dto.conversationId,
+      content: message.content,
+      senderType: message.senderType,
+      senderId: message.senderId,
+      createdAt: message.createdAt.toISOString(),
+    });
 
-    // Also notify admins generally
-    if (dto.senderType === 'USER' && conversation.userId) {
+    // Also notify admins generally for user messages
+    if (dto.senderType === 'USER') {
       this.realtimeGateway.broadcastEvent('chat:message', {
         conversationId: dto.conversationId,
         message,

@@ -57,7 +57,7 @@ export class PromotionsController {
     private readonly campaignService: PromotionCampaignsService,
     private readonly projectsService: PromotionProjectsService,
     private readonly settingsService: PromotionSettingsService,
-  ) {}
+  ) { }
 
   // ==================== PUBLIC ENDPOINTS ====================
 
@@ -199,6 +199,10 @@ export class PromotionsController {
    * Get promotions for a specific product
    * @public
    */
+  /**
+   * Get promotions for a specific product
+   * @public
+   */
   @Get('product/:productId/applicable')
   @UseGuards(RateLimitGuard)
   async getPromotionsForProduct(
@@ -206,6 +210,19 @@ export class PromotionsController {
     @Query('categoryId') categoryId?: string,
   ) {
     return this.promotionsService.getPromotionsForProduct(productId, categoryId);
+  }
+
+  /**
+   * Get promotions for a specific product (Alias)
+   * @public
+   */
+  @Get('product/:id')
+  @UseGuards(RateLimitGuard)
+  async getPromotionsForProductAlias(
+    @Param('id') id: string,
+    @Query('categoryId') categoryId?: string,
+  ) {
+    return this.promotionsService.getPromotionsForProduct(id, categoryId);
   }
 
   /**
