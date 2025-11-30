@@ -142,3 +142,6 @@ jspm_packages/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# MCP configuration (contains secrets)
+.roo/
