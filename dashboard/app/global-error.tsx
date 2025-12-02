@@ -32,7 +32,7 @@ export default function GlobalError({
                   Thử lại
                 </button>
                 <button
-                  onClick={() => window.location.href = '/dashboard'}
+                  onClick={() => window.location.href = '/'}
                   className="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
                 >
                   Về trang chủ

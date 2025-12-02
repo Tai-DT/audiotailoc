@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { PageBanner } from '@/components/ui/page-banner';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Search, Grid, List, Clock, Users } from 'lucide-react';

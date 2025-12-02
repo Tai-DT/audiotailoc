@@ -42,13 +42,7 @@ interface Product {
   warranty?: string | null
   weight?: number | null
   dimensions?: string | null
-  inventory?: {
-    stock: number
-    reserved: number
-    available: number
-    lowStockThreshold: number
-  }
-  stockQuantity?: number // For backward compatibility
+  stockQuantity?: number
   minOrderQuantity?: number
   maxOrderQuantity?: number | null
   tags?: string | null
@@ -170,7 +164,7 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
         warranty: product.warranty || '',
         weight: product.weight || 0,
         dimensions: product.dimensions || '',
-        stockQuantity: product.inventory?.stock ?? product.stockQuantity ?? 0,
+        stockQuantity: product.stockQuantity || 0,
         minOrderQuantity: product.minOrderQuantity || 1,
         maxOrderQuantity: product.maxOrderQuantity || 0,
         tags: product.tags || '',
@@ -409,27 +403,6 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
       if (product) {
         // Update existing product
         await apiClient.updateProduct(product.id, productData)
-
-        // Check if stock quantity changed and update inventory if needed
-        const currentStock = product.inventory?.stock ?? product.stockQuantity ?? 0
-        const newStock = Number(formData.stockQuantity) || 0
-        
-        if (newStock !== currentStock) {
-          const delta = newStock - currentStock
-          if (delta !== 0) {
-            try {
-              await apiClient.adjustInventory(product.id, {
-                stockDelta: delta,
-                reason: 'Manual update from product form',
-                referenceType: 'MANUAL_ADJUSTMENT'
-              })
-            } catch (invError) {
-              console.error('Failed to update inventory:', invError)
-              toast.error('Cập nhật thông tin thành công nhưng lỗi cập nhật tồn kho')
-            }
-          }
-        }
-
         toast.success('Cập nhật sản phẩm thành công')
       } else {
         // Create new product

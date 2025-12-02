@@ -1,47 +1,29 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Query,
-  UseGuards,
-  Delete,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards, Delete, Post } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsBooleanString, IsInt, IsOptional } from 'class-validator';
 
 class ListQueryDto {
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   page?: number;
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   pageSize?: number;
-  @IsOptional()
-  @IsBooleanString()
+  @IsOptional() @IsBooleanString()
   lowStockOnly?: string;
 }
 
 class AdjustDto {
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   stockDelta?: number;
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   reservedDelta?: number;
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   lowStockThreshold?: number;
-
+  
   // Absolute values (alternative to deltas)
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   stock?: number;
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   reserved?: number;
 }
 
@@ -52,11 +34,7 @@ export class InventoryController {
 
   @Get()
   list(@Query() q: ListQueryDto) {
-    return this.inventory.list({
-      page: q.page,
-      pageSize: q.pageSize,
-      lowStockOnly: q.lowStockOnly === 'true',
-    });
+    return this.inventory.list({ page: q.page, pageSize: q.pageSize, lowStockOnly: q.lowStockOnly === 'true' });
   }
 
   @Patch(':productId')
@@ -68,4 +46,10 @@ export class InventoryController {
   delete(@Param('productId') productId: string) {
     return this.inventory.delete(productId);
   }
+
+  @Post('sync')
+  syncWithProducts() {
+    return this.inventory.syncWithProducts();
+  }
 }
+

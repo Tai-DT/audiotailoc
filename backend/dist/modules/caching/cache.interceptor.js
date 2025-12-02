@@ -104,9 +104,7 @@ let CacheInterceptor = CacheInterceptor_1 = class CacheInterceptor {
             return obj;
         }
         const sorted = {};
-        Object.keys(obj)
-            .sort()
-            .forEach(key => {
+        Object.keys(obj).sort().forEach(key => {
             sorted[key] = this.sortObjectKeys(obj[key]);
         });
         return sorted;

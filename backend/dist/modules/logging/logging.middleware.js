@@ -92,9 +92,7 @@ let LoggingMiddleware = LoggingMiddleware_1 = class LoggingMiddleware {
             request.socket.remoteAddress ||
             request.headers['x-forwarded-for'] ||
             request.headers['x-real-ip'] ||
-            'unknown')
-            .split(',')[0]
-            .trim();
+            'unknown').split(',')[0].trim();
     }
     sanitizeHeaders(headers) {
         const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'password'];

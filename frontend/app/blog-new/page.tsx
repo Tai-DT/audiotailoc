@@ -20,13 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBlogArticles, useBlogCategories } from '@/lib/hooks/use-api';
-import { BlogArticle, BlogCategory } from '@/lib/types';
+import { BlogArticle } from '@/lib/types';
 
 export default function BlogNewPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  const { data: articlesResponse, isLoading: articlesLoading } = useBlogArticles({
+  const { data: articlesData, isLoading: articlesLoading } = useBlogArticles({
     published: true,
     page: 1,
     limit: 20,
@@ -34,9 +34,10 @@ export default function BlogNewPage() {
     search: searchQuery || undefined,
   });
 
-  const { data: categories } = useBlogCategories({ published: true });
+  const { data: categoriesData } = useBlogCategories({ published: true });
 
-  const articles = articlesResponse?.data || [];
+  const articles = articlesData?.data || [];
+  const categories = categoriesData?.data || [];
   const isLoading = articlesLoading;
 
   const handleSearch = (e: React.FormEvent) => {
@@ -104,7 +105,7 @@ export default function BlogNewPage() {
                   >
                     Tất cả
                   </Button>
-                  {categories?.slice(0, 5).map((category: BlogCategory) => (
+                  {categories.slice(0, 5).map((category) => (
                     <Button
                       key={category.id}
                       variant={selectedCategory === category.id ? 'default' : 'outline'}
@@ -215,7 +216,7 @@ export default function BlogNewPage() {
             )}
 
             {/* Load More Button */}
-            {articlesResponse && articlesResponse.pagination.totalPages > 1 && (
+            {articlesData && articlesData.pagination.totalPages > 1 && (
               <div className="text-center mt-8">
                 <Button variant="outline" size="lg">
                   Xem thêm bài viết
@@ -243,7 +244,7 @@ export default function BlogNewPage() {
                   >
                     Tất cả bài viết
                   </Button>
-                  {categories?.map((category: BlogCategory) => (
+                  {categories.map((category) => (
                     <Button
                       key={category.id}
                       variant={selectedCategory === category.id ? 'default' : 'ghost'}

@@ -10,50 +10,17 @@ export declare class CatalogController {
     private readonly catalog;
     constructor(catalog: CatalogService);
     list(query: any): Promise<{
-        items: any;
-        pagination: {
-            total: any;
-            page: any;
-            pageSize: any;
-        };
-        data?: undefined;
-    } | {
-        data: any[];
-        pagination: {
-            total: number;
-            page: number;
-            pageSize: number;
-        };
-        items?: undefined;
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
     }>;
-    searchProducts(q: string, limit?: number): Promise<{
-        data: any;
-        pagination: {
-            total: any;
-            page: any;
-            pageSize: any;
-        };
-    }>;
-    get(id: string): Promise<import("./catalog.service").ProductDto>;
-    getBySlug(slug: string): Promise<import("./catalog.service").ProductDto>;
-    checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;
-    generateUniqueSku(baseName?: string): Promise<string>;
-    createCategory(dto: CreateCategoryDto): Promise<{
-        id: string;
-        slug: string;
-        name: string;
-        description?: string | null;
-        imageUrl?: string | null;
-        parentId: string | null;
-    }>;
-    listCategories(): Promise<any[]>;
-    getCategoryAlias(slug: string): Promise<{
+    listCategories(): Promise<{
         id: string;
         slug: string;
         name: string;
         parentId: string | null;
-        isActive: boolean;
-    }>;
+    }[]>;
     getCategoryBySlug(slug: string): Promise<{
         id: string;
         slug: string;
@@ -68,27 +35,32 @@ export declare class CatalogController {
         pageSize: number;
         totalPages: number;
     }>;
-    getCategoryById(id: string): Promise<{
+    createCategory(dto: CreateCategoryDto): Promise<{
         id: string;
         slug: string;
         name: string;
-        description?: string | null;
-        imageUrl?: string | null;
         parentId: string | null;
-        isActive: boolean;
     }>;
-    updateCategoryById(id: string, dto: UpdateCategoryDto): Promise<{
+    updateCategory(id: string, dto: UpdateCategoryDto): Promise<{
         id: string;
         slug: string;
         name: string;
-        description?: string | null;
-        imageUrl?: string | null;
         parentId: string | null;
     }>;
-    deleteCategoryById(id: string): Promise<{
+    deleteCategory(id: string): Promise<{
         deleted: boolean;
         message?: string;
     }>;
+    searchProducts(q: string, limit?: number): Promise<{
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
+    }>;
+    get(id: string): Promise<import("./catalog.service").ProductDto>;
+    getBySlug(slug: string): Promise<import("./catalog.service").ProductDto>;
+    checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;
+    generateUniqueSku(baseName?: string): Promise<string>;
     create(dto: CreateProductDto): Promise<import("./catalog.service").ProductDto>;
     update(id: string, dto: UpdateProductDto): Promise<import("./catalog.service").ProductDto>;
     remove(id: string): Promise<{
@@ -99,20 +71,16 @@ export declare class CatalogController {
         deleted: number;
     }>;
     getTopViewedProducts(limit?: number): Promise<{
-        data: any;
-        pagination: {
-            total: any;
-            page: any;
-            pageSize: any;
-        };
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
     }>;
     getRecentProducts(limit?: number): Promise<{
-        data: any;
-        pagination: {
-            total: any;
-            page: any;
-            pageSize: any;
-        };
+        items: import("./catalog.service").ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
     }>;
 }
 export {};

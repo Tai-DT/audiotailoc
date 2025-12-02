@@ -27,7 +27,7 @@ export function useServiceTypes() {
       const response = await apiClient.get<ServiceType[]>('/service-types')
       console.log('[useServiceTypes] GET /service-types response:', response)
       setServiceTypes(response.data || [])
-    } catch {
+    } catch (err) {
       setError('Không thể tải danh sách loại dịch vụ')
       toast.error('Không thể tải danh sách loại dịch vụ')
     } finally {

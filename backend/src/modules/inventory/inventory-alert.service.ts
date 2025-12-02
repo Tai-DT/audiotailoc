@@ -1,16 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TelegramService } from '../notifications/telegram.service';
 
 @Injectable()
 export class InventoryAlertService {
-  private readonly logger = new Logger(InventoryAlertService.name);
-
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly telegram: TelegramService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: {
     productId: string;
@@ -19,7 +13,7 @@ export class InventoryAlertService {
     threshold?: number;
     currentStock?: number;
   }) {
-    const alert = await this.prisma.inventory_alerts.create({
+    return this.prisma.inventory_alerts.create({
       data: {
         id: randomUUID(),
         productId: data.productId,
@@ -27,7 +21,7 @@ export class InventoryAlertService {
         message: data.message,
         threshold: data.threshold,
         currentStock: data.currentStock ?? 0,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       },
       include: {
         products: {
@@ -38,47 +32,24 @@ export class InventoryAlertService {
             categories: {
               select: {
                 id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Send Telegram notification
-    try {
-      if (data.type === 'OUT_OF_STOCK') {
-        await this.telegram.sendOutOfStockAlert({
-          name: alert.products?.name,
-          sku: alert.products?.sku,
-          stock: data.currentStock,
-        });
-      } else if (data.type === 'LOW_STOCK') {
-        await this.telegram.sendLowStockAlert({
-          name: alert.products?.name,
-          sku: alert.products?.sku,
-          stock: data.currentStock,
-        });
+                name: true
+              }
+            }
+          }
+        }
       }
-    } catch (error) {
-      this.logger.error('Failed to send inventory alert notification:', error);
-    }
-
-    return alert;
+    });
   }
 
-  async findAll(
-    params: {
-      page?: number;
-      pageSize?: number;
-      productId?: string;
-      type?: string;
-      isResolved?: boolean;
-      startDate?: Date;
-      endDate?: Date;
-    } = {},
-  ) {
+  async findAll(params: {
+    page?: number;
+    pageSize?: number;
+    productId?: string;
+    type?: string;
+    isResolved?: boolean;
+    startDate?: Date;
+    endDate?: Date;
+  } = {}) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
 
@@ -119,23 +90,23 @@ export class InventoryAlertService {
               categories: {
                 select: {
                   id: true,
-                  name: true,
-                },
-              },
-            },
-          },
+                  name: true
+                }
+              }
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
+        take: pageSize
+      })
     ]);
 
     return {
       total,
       page,
       pageSize,
-      items,
+      items
     };
   }
 
@@ -145,7 +116,7 @@ export class InventoryAlertService {
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.inventory_alerts.count({
-        where: { productId },
+        where: { productId }
       }),
       this.prisma.inventory_alerts.findMany({
         where: { productId },
@@ -158,23 +129,23 @@ export class InventoryAlertService {
               categories: {
                 select: {
                   id: true,
-                  name: true,
-                },
-              },
-            },
-          },
+                  name: true
+                }
+              }
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
+        take: pageSize
+      })
     ]);
 
     return {
       total,
       page,
       pageSize,
-      items,
+      items
     };
   }
 
@@ -183,36 +154,36 @@ export class InventoryAlertService {
       where: { id },
       data: {
         isResolved: true,
-        resolvedAt: new Date(),
+        resolvedAt: new Date()
       },
       include: {
         products: {
           select: {
             id: true,
             name: true,
-            sku: true,
-          },
-        },
-      },
+            sku: true
+          }
+        }
+      }
     });
   }
 
   async bulkResolve(ids: string[], _userId?: string) {
     return this.prisma.inventory_alerts.updateMany({
       where: {
-        id: { in: ids },
+        id: { in: ids }
       },
       data: {
         isResolved: true,
-        resolvedAt: new Date(),
-      },
+        resolvedAt: new Date()
+      }
     });
   }
 
   async getActiveAlerts() {
     return this.prisma.inventory_alerts.findMany({
       where: {
-        isResolved: false,
+        isResolved: false
       },
       include: {
         products: {
@@ -223,47 +194,43 @@ export class InventoryAlertService {
             categories: {
               select: {
                 id: true,
-                name: true,
-              },
-            },
-          },
-        },
+                name: true
+              }
+            }
+          }
+        }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }
     });
   }
 
   async getAlertSummary() {
-    const [totalAlerts, activeAlerts, resolvedAlerts, alertsByType] =
-      await this.prisma.$transaction([
-        this.prisma.inventory_alerts.count(),
-        this.prisma.inventory_alerts.count({ where: { isResolved: false } }),
-        this.prisma.inventory_alerts.count({ where: { isResolved: true } }),
-        (this.prisma.inventory_alerts.groupBy as any)({
-          by: ['type'],
-          _count: {
-            id: true,
-          },
-          where: {
-            isResolved: false,
-          },
-          orderBy: {
-            type: 'asc',
-          },
-        }),
-      ]);
+    const [totalAlerts, activeAlerts, resolvedAlerts, alertsByType] = await this.prisma.$transaction([
+      this.prisma.inventory_alerts.count(),
+      this.prisma.inventory_alerts.count({ where: { isResolved: false } }),
+      this.prisma.inventory_alerts.count({ where: { isResolved: true } }),
+      (this.prisma.inventory_alerts.groupBy as any)({
+        by: ['type'],
+        _count: {
+          id: true
+        },
+        where: {
+          isResolved: false
+        },
+        orderBy: {
+          type: 'asc'
+        }
+      })
+    ]);
 
     return {
       total: totalAlerts,
       active: activeAlerts,
       resolved: resolvedAlerts,
-      byType: alertsByType.reduce(
-        (acc, item) => {
-          acc[item.type] = (item._count as any).id ?? 0;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
+      byType: alertsByType.reduce((acc, item) => {
+        acc[item.type] = (item._count as any).id ?? 0;
+        return acc;
+      }, {} as Record<string, number>)
     };
   }
 
@@ -274,20 +241,20 @@ export class InventoryAlertService {
         id: true,
         name: true,
         sku: true,
+        stockQuantity: true,
         maxStock: true,
         inventory: {
           select: {
-            stock: true,
-            lowStockThreshold: true,
-          },
-        },
-      },
+            lowStockThreshold: true
+          }
+        }
+      }
     });
 
     const alerts = [];
 
     for (const product of products) {
-      const currentStock = product.inventory?.stock ?? 0;
+      const currentStock = product.stockQuantity;
       const lowStockThreshold = product.inventory?.lowStockThreshold;
       const maxStock = product.maxStock;
 
@@ -297,20 +264,18 @@ export class InventoryAlertService {
           where: {
             productId: product.id,
             type: 'LOW_STOCK',
-            isResolved: false,
-          },
+            isResolved: false
+          }
         });
 
         if (!existingAlert) {
-          alerts.push(
-            await this.create({
-              productId: product.id,
-              type: 'LOW_STOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) có tồn kho thấp: ${currentStock} <= ${lowStockThreshold}`,
-              threshold: lowStockThreshold,
-              currentStock: currentStock,
-            }),
-          );
+          alerts.push(await this.create({
+            productId: product.id,
+            type: 'LOW_STOCK',
+            message: `Sản phẩm ${product.name} (${product.sku}) có tồn kho thấp: ${currentStock} <= ${lowStockThreshold}`,
+            threshold: lowStockThreshold,
+            currentStock: currentStock
+          }));
         }
       }
 
@@ -320,19 +285,17 @@ export class InventoryAlertService {
           where: {
             productId: product.id,
             type: 'OUT_OF_STOCK',
-            isResolved: false,
-          },
+            isResolved: false
+          }
         });
 
         if (!existingAlert) {
-          alerts.push(
-            await this.create({
-              productId: product.id,
-              type: 'OUT_OF_STOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) đã hết hàng`,
-              currentStock: 0,
-            }),
-          );
+          alerts.push(await this.create({
+            productId: product.id,
+            type: 'OUT_OF_STOCK',
+            message: `Sản phẩm ${product.name} (${product.sku}) đã hết hàng`,
+            currentStock: 0
+          }));
         }
       }
 
@@ -342,20 +305,18 @@ export class InventoryAlertService {
           where: {
             productId: product.id,
             type: 'OVERSTOCK',
-            isResolved: false,
-          },
+            isResolved: false
+          }
         });
 
         if (!existingAlert) {
-          alerts.push(
-            await this.create({
-              productId: product.id,
-              type: 'OVERSTOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) tồn kho quá nhiều: ${currentStock} >= ${maxStock}`,
-              threshold: maxStock,
-              currentStock: currentStock,
-            }),
-          );
+          alerts.push(await this.create({
+            productId: product.id,
+            type: 'OVERSTOCK',
+            message: `Sản phẩm ${product.name} (${product.sku}) tồn kho quá nhiều: ${currentStock} >= ${maxStock}`,
+            threshold: maxStock,
+            currentStock: currentStock
+          }));
         }
       }
     }
@@ -365,15 +326,15 @@ export class InventoryAlertService {
 
   async delete(id: string) {
     return this.prisma.inventory_alerts.delete({
-      where: { id },
+      where: { id }
     });
   }
 
   async bulkDelete(ids: string[]) {
     return this.prisma.inventory_alerts.deleteMany({
       where: {
-        id: { in: ids },
-      },
+        id: { in: ids }
+      }
     });
   }
 }

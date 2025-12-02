@@ -35,10 +35,7 @@ export class WishlistController {
   @ApiResponse({ status: 201, description: 'Product added to wishlist successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @ApiResponse({ status: 409, description: 'Product already in wishlist' })
-  async addToWishlist(
-    @Request() req: AuthenticatedRequest,
-    @Body() createWishlistDto: CreateWishlistDto,
-  ) {
+  async addToWishlist(@Request() req: AuthenticatedRequest, @Body() createWishlistDto: CreateWishlistDto) {
     const userId = req.user.sub;
     return this.wishlistService.addToWishlist(userId, createWishlistDto);
   }
@@ -74,10 +71,7 @@ export class WishlistController {
   @ApiOperation({ summary: 'Remove product from wishlist' })
   @ApiResponse({ status: 200, description: 'Product removed from wishlist successfully' })
   @ApiResponse({ status: 404, description: 'Product not found in wishlist' })
-  async removeFromWishlist(
-    @Request() req: AuthenticatedRequest,
-    @Param('productId') productId: string,
-  ) {
+  async removeFromWishlist(@Request() req: AuthenticatedRequest, @Param('productId') productId: string) {
     const userId = req.user.sub;
     return this.wishlistService.removeFromWishlist(userId, productId);
   }

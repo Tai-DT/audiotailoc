@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Eye, EyeOff, Mail, Lock, Copy } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { toast } from "sonner"
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -27,10 +28,10 @@ export default function LoginPage() {
 
   // If already authenticated, redirect
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (isAuthenticated) {
       router.push(redirectTo);
     }
-  }, [isAuthenticated, authLoading, router, redirectTo]);
+  }, [isAuthenticated, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,12 +43,12 @@ export default function LoginPage() {
       // Redirect to the intended page or dashboard
       router.push(redirectTo)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Đăng nhập thất bại. Vui lòng thử lại.';
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(errorMessage)
-
+      
       // Show helpful hint if using wrong password format
       if (errorMessage.includes('credentials') || errorMessage.includes('password')) {
-        setError('Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại thông tin đăng nhập (Mật khẩu có phân biệt hoa thường).');
+        setError('Invalid email or password. Please make sure you are using the correct credentials (Password is case-sensitive).');
       }
     } finally {
       setIsLoading(false)
@@ -61,25 +62,18 @@ export default function LoginPage() {
     }))
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">AT</span>
+    <ProtectedRoute requireAuth={false}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xl">AT</span>
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl text-center">Audio Tài Lộc</CardTitle>
-          <CardDescription className="text-center">
+            <CardTitle className="text-2xl text-center">Audio Tài Lộc</CardTitle>
+            <CardDescription className="text-center">
             Đăng nhập vào hệ thống quản lý
           </CardDescription>
         </CardHeader>
@@ -158,8 +152,47 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="font-semibold mb-2">Demo credentials:</p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-mono text-xs">Email: admin@audiotailoc.com</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText('admin@audiotailoc.com');
+                    toast.success('Email copied to clipboard');
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-mono text-xs">Password: Admin1234</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText('Admin1234');
+                    toast.success('Password copied to clipboard');
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+              ⚠️ Password is case-sensitive
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
+    </ProtectedRoute>
   )
 }

@@ -64,7 +64,10 @@ let LoggingService = LoggingService_1 = class LoggingService {
         const logLevel = this.config.get('LOG_LEVEL') || 'info';
         const logFormat = this.config.get('LOG_FORMAT') || 'json';
         const environment = this.config.get('NODE_ENV') || 'development';
-        const formats = [winston.format.timestamp(), winston.format.errors({ stack: true })];
+        const formats = [
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }),
+        ];
         if (logFormat === 'json') {
             formats.push(winston.format.json());
         }
@@ -231,13 +234,9 @@ let LoggingService = LoggingService_1 = class LoggingService {
             statusCode: context?.statusCode,
             duration: context?.duration,
             category: 'user_activity',
-            severity: 'info',
+            severity: 'info'
         }).catch(error => {
-            this.error('Failed to save activity log to database', {
-                error: error,
-                userId,
-                action,
-            });
+            this.error('Failed to save activity log to database', { error: error, userId, action });
         });
     }
     async saveActivityLog(data) {
@@ -257,8 +256,8 @@ let LoggingService = LoggingService_1 = class LoggingService {
                     statusCode: data.statusCode || null,
                     duration: data.duration || null,
                     category: data.category,
-                    severity: data.severity,
-                },
+                    severity: data.severity
+                }
             });
         }
         catch (error) {

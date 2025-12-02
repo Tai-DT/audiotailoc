@@ -17,70 +17,61 @@ export class InventoryReportService {
     }
 
     if (filters?.lowStockOnly) {
-      // Since we can't easily compare two fields in Prisma where clause directly in this version,
-      // we'll filter in memory or use raw query if performance is critical.
-      // For now, let's fetch and filter.
+      where.inventory = {
+        lowStockThreshold: {
+          not: null
+        },
+        stockQuantity: {
+          lte: this.prisma.inventory.fields.lowStockThreshold
+        }
+      };
     }
 
     if (filters?.outOfStockOnly) {
-      where.inventory = { stock: 0 };
+      where.stockQuantity = 0;
     }
 
-    let products = await this.prisma.products.findMany({
+    const products = await this.prisma.products.findMany({
       where,
       select: {
         id: true,
         name: true,
         sku: true,
+        stockQuantity: true,
         maxStock: true,
         categoryId: true,
         categories: {
           select: {
             id: true,
-            name: true,
-          },
-        },
-        inventory: {
-          select: {
-            lowStockThreshold: true,
-            stock: true,
-          },
-        },
+            name: true
+          }
+        }
       },
       orderBy: {
-        name: 'asc',
-      },
+        name: 'asc'
+      }
     });
-
-    if (filters?.lowStockOnly) {
-      products = products.filter(
-        p =>
-          p.inventory?.lowStockThreshold &&
-          (p.inventory?.stock ?? 0) <= p.inventory.lowStockThreshold,
-      );
-    }
 
     const report = {
       totalProducts: products.length,
-      totalStockValue: products.reduce((sum, product) => sum + (product.inventory?.stock ?? 0), 0),
-      lowStockProducts: products.filter(
-        p =>
-          p.inventory?.lowStockThreshold &&
-          (p.inventory?.stock ?? 0) <= p.inventory.lowStockThreshold,
+      totalStockValue: products.reduce((sum, product) => sum + product.stockQuantity, 0),
+      lowStockProducts: products.filter(p =>
+        p.maxStock && p.stockQuantity <= p.maxStock
       ).length,
-      outOfStockProducts: products.filter(p => (p.inventory?.stock ?? 0) === 0).length,
-      overstockProducts: products.filter(p => p.maxStock && (p.inventory?.stock ?? 0) >= p.maxStock)
-        .length,
+      outOfStockProducts: products.filter(p => p.stockQuantity === 0).length,
+      overstockProducts: products.filter(p =>
+        p.maxStock && p.stockQuantity >= p.maxStock
+      ).length,
       products: products.map(product => ({
         id: product.id,
         name: product.name,
         sku: product.sku,
-        currentStock: product.inventory?.stock ?? 0,
-        lowStockThreshold: product.inventory?.lowStockThreshold || null,
+        currentStock: product.stockQuantity,
+        lowStockThreshold: null,
         maxStock: product.maxStock,
         category: product.categories?.name,
-        status: this.getStockStatus(product),
-      })),
+        status: this.getStockStatus(product)
+      }))
     };
 
     return report;
@@ -134,20 +125,20 @@ export class InventoryReportService {
           select: {
             id: true,
             name: true,
-            sku: true,
-          },
+            sku: true
+          }
         },
         users: {
           select: {
             id: true,
             name: true,
-            email: true,
-          },
-        },
+            email: true
+          }
+        }
       },
       orderBy: {
-        createdAt: 'desc',
-      },
+        createdAt: 'desc'
+      }
     });
 
     const summary = {
@@ -159,7 +150,7 @@ export class InventoryReportService {
         .filter(m => m.type === 'STOCK_OUT' || m.type === 'ADJUSTMENT_OUT' || m.type === 'SALE')
         .reduce((sum, m) => sum + m.quantity, 0),
       movementsByType: this.groupMovementsByType(movements),
-      movements: movements,
+      movements: movements
     };
 
     return summary;
@@ -207,13 +198,13 @@ export class InventoryReportService {
           select: {
             id: true,
             name: true,
-            sku: true,
-          },
-        },
+            sku: true
+          }
+        }
       },
       orderBy: {
-        createdAt: 'desc',
-      },
+        createdAt: 'desc'
+      }
     });
 
     const summary = {
@@ -221,14 +212,14 @@ export class InventoryReportService {
       activeAlerts: alerts.filter(a => !a.isResolved).length,
       resolvedAlerts: alerts.filter(a => a.isResolved).length,
       alertsByType: this.groupAlertsByType(alerts),
-      alerts: alerts,
+      alerts: alerts
     };
 
     return summary;
   }
 
   private getStockStatus(product: any): string {
-    const stock = product.inventory?.stock ?? 0;
+    const stock = product.stockQuantity;
     const _lowThreshold = null;
     const maxStock = product.maxStock;
 

@@ -10,7 +10,6 @@ export interface User {
   email: string;
   name?: string;
   phone?: string;
-  avatar?: string;
   role: 'USER' | 'ADMIN' | 'MODERATOR';
   createdAt: string;
   updatedAt: string;
@@ -49,8 +48,6 @@ export interface Product {
   featured?: boolean;
   isActive: boolean;
   viewCount?: number;
-  averageRating?: number;
-  reviewCount?: number;
   createdAt: string;
   updatedAt: string;
   // Relations
@@ -323,14 +320,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  
-  // For reviews endpoint specifically
-  reviews?: T[];
-  stats?: {
-    averageRating: number;
-    totalReviews: number;
-    ratingDistribution: Record<number, number>;
-  };
 }
 
 export interface DashboardOverview {
@@ -597,23 +586,3 @@ export interface ServiceFilters {
   pageSize?: number;
 }
 
-
-export interface Wishlist {
-  id: string;
-  userId: string;
-  items: WishlistItem[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface WishlistItem {
-  id: string;
-  wishlistId: string;
-  productId: string;
-  createdAt: string;
-  product?: Product;
-}
-
-export interface CreateWishlistItemDto {
-  productId: string;
-}

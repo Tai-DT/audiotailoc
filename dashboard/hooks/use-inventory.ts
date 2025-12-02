@@ -1,13 +1,68 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
-import {
-  InventoryItem,
-  StockMovement,
-  InventoryAlert,
-  InventoryStats,
-  Category
-} from "@/types/inventory"
+
+interface InventoryItem {
+  id: string
+  productId: string
+  productName: string
+  productImage?: string
+  sku: string
+  stock: number
+  reserved: number
+  available: number
+  lowStockThreshold: number
+  status: "in_stock" | "low_stock" | "out_of_stock"
+  lastUpdated: Date
+  category?: string
+  price?: number
+}
+
+interface StockMovement {
+  id: string
+  productId: string
+  productName: string
+  type: "IN" | "OUT" | "RESERVED" | "UNRESERVED" | "ADJUSTMENT"
+  quantity: number
+  previousStock: number
+  newStock: number
+  reason: string
+  referenceId?: string
+  referenceType?: string
+  userId?: string
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface InventoryAlert {
+  id: string
+  productId: string
+  productName: string
+  type: "LOW_STOCK" | "OUT_OF_STOCK" | "OVERSTOCK" | "EXPIRING"
+  message: string
+  threshold?: number
+  currentStock: number
+  isResolved: boolean
+  resolvedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+
+interface InventoryStats {
+  totalProducts: number
+  inStock: number
+  lowStock: number
+  outOfStock: number
+  totalValue: number
+}
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
 
 export function useInventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
@@ -28,19 +83,13 @@ export function useInventory() {
     try {
       // Use the dedicated inventory API
       const inventoryRes = await apiClient.getInventory({ limit: 200 })
-      const inventoryData = inventoryRes.data as unknown
-      let inventoryItems: any[] = []
-
-      if (inventoryData && typeof inventoryData === 'object' && 'items' in inventoryData && Array.isArray((inventoryData as any).items)) {
-        inventoryItems = (inventoryData as any).items
-      } else if (Array.isArray(inventoryData)) {
-        inventoryItems = inventoryData
-      }
+      const inventoryItems = (inventoryRes?.data as { items?: unknown[] })?.items || inventoryRes?.data as unknown[] || []
 
       // Map to InventoryItem format
-      const mapped: InventoryItem[] = inventoryItems.map((item: any) => {
-        const product = item.product || {}
-
+      const mapped: InventoryItem[] = inventoryItems.map((item: unknown) => {
+        const inventoryItem = item as Record<string, unknown>
+        const product = inventoryItem.product as Record<string, unknown> || {}
+        
         // Get category name from the category object or fallback to categoryId
         let categoryName = 'Chưa phân loại';
         if (product.category && typeof product.category === 'object') {
@@ -48,19 +97,18 @@ export function useInventory() {
           if (category.name) {
             categoryName = category.name;
           }
-        } else if (item.category && typeof item.category === 'object') {
-          const category = item.category as Category;
+        } else if (inventoryItem.category && typeof inventoryItem.category === 'object') {
+          const category = inventoryItem.category as Category;
           if (category.name) {
             categoryName = category.name;
           }
         } else if (product.categoryId) {
-          categoryName = typeof product.categoryId === 'string' ? product.categoryId : 'Chưa phân loại';
+          categoryName = product.categoryId as string;
         }
 
-        const stock = (item.inventory?.stock ?? item.stock ?? item.stockQuantity ?? 0) as number
-        const lowStockThreshold = (item.inventory?.lowStockThreshold ?? item.lowStockThreshold ?? 5) as number
-        const reserved = (item.inventory?.reserved ?? item.reserved ?? 0) as number
-        const available = (item.inventory?.available ?? item.available ?? (stock - reserved)) as number
+        const stock = (inventoryItem.stock || inventoryItem.stockQuantity || 0) as number
+        const lowStockThreshold = (inventoryItem.lowStockThreshold || 5) as number
+        const available = (inventoryItem.available || (stock - (inventoryItem.reserved as number || 0))) as number
 
         // Calculate status based on stock levels
         let status: InventoryItem['status'] = 'in_stock'
@@ -71,19 +119,19 @@ export function useInventory() {
         }
 
         return {
-          id: (item.id || item.productId) as string,
-          productId: item.productId as string,
-          productName: (product.name || item.productName || item.name || 'Unknown Product') as string,
-          productImage: (product.imageUrl || product.image || item.productImage || item.image) as string,
-          sku: (product.sku || item.sku || '') as string,
+          id: (inventoryItem.id || inventoryItem.productId) as string,
+          productId: inventoryItem.productId as string,
+          productName: (product.name || inventoryItem.productName || inventoryItem.name || 'Unknown Product') as string,
+          productImage: (product.imageUrl || product.image || inventoryItem.productImage || inventoryItem.image) as string,
+          sku: (product.sku || inventoryItem.sku || '') as string,
           stock,
-          reserved,
+          reserved: (inventoryItem.reserved || 0) as number,
           available,
           lowStockThreshold,
           status,
-          lastUpdated: item.lastUpdated ? new Date(item.lastUpdated as string) : new Date(),
+          lastUpdated: inventoryItem.lastUpdated ? new Date(inventoryItem.lastUpdated as string) : new Date(),
           category: categoryName,
-          price: (product.priceCents ? Math.round((product.priceCents as number) / 100) : (item.price || (item.priceCents ? Math.round((item.priceCents as number) / 100) : undefined))) as number | undefined,
+          price: (product.priceCents ? Math.round((product.priceCents as number) / 100) : (inventoryItem.price || (inventoryItem.priceCents ? Math.round((inventoryItem.priceCents as number) / 100) : undefined))) as number | undefined,
         }
       })
 
@@ -99,9 +147,7 @@ export function useInventory() {
       }
       setStats(newStats)
     } catch (error) {
-      console.error('Error fetching inventory:', error)
       toast.error('Không thể tải dữ liệu tồn kho')
-      setInventory([])
     } finally {
       setLoading(false)
     }
@@ -111,41 +157,33 @@ export function useInventory() {
   const fetchMovements = useCallback(async () => {
     try {
       const response = await apiClient.getInventoryMovements({ limit: 50 })
-      const movementsDataRaw = response.data as unknown
-      let movementsData: any[] = []
+      const movementsData = (response?.data as { items?: unknown[] })?.items || response?.data as unknown[] || []
 
-      if (movementsDataRaw && typeof movementsDataRaw === 'object' && 'items' in movementsDataRaw && Array.isArray((movementsDataRaw as any).items)) {
-        movementsData = (movementsDataRaw as any).items
-      } else if (Array.isArray(movementsDataRaw)) {
-        movementsData = movementsDataRaw
-      }
-
-      const mappedMovements: StockMovement[] = movementsData.map((item: any) => {
-        const product = item.product || {}
+      const mappedMovements: StockMovement[] = movementsData.map((item: unknown) => {
+        const movement = item as Record<string, unknown>
+        const product = movement.product as Record<string, unknown> || {}
 
         return {
-          id: item.id as string,
-          productId: item.productId as string,
-          productName: (product.name || item.productName || 'Unknown Product') as string,
-          type: item.type as StockMovement['type'],
-          quantity: item.quantity as number,
-          previousStock: item.previousStock as number,
-          newStock: item.newStock as number,
-          reason: item.reason as string,
-          referenceId: item.referenceId as string,
-          referenceType: item.referenceType as string,
-          userId: item.userId as string,
-          notes: item.notes as string,
-          createdAt: new Date(item.createdAt as string),
-          updatedAt: new Date(item.updatedAt as string)
+          id: movement.id as string,
+          productId: movement.productId as string,
+          productName: (product.name || movement.productName || 'Unknown Product') as string,
+          type: movement.type as StockMovement['type'],
+          quantity: movement.quantity as number,
+          previousStock: movement.previousStock as number,
+          newStock: movement.newStock as number,
+          reason: movement.reason as string,
+          referenceId: movement.referenceId as string,
+          referenceType: movement.referenceType as string,
+          userId: movement.userId as string,
+          notes: movement.notes as string,
+          createdAt: new Date(movement.createdAt as string),
+          updatedAt: new Date(movement.updatedAt as string)
         }
       })
 
       setMovements(mappedMovements)
     } catch (error) {
-      console.error('Error fetching movements:', error)
       toast.error('Không thể tải dữ liệu biến động kho')
-      setMovements([])
     }
   }, [])
 
@@ -153,38 +191,30 @@ export function useInventory() {
   const fetchAlerts = useCallback(async () => {
     try {
       const response = await apiClient.getInventoryAlerts({ limit: 50 })
-      const alertsDataRaw = response.data as unknown
-      let alertsData: any[] = []
+      const alertsData = (response?.data as { items?: unknown[] })?.items || response?.data as unknown[] || []
 
-      if (alertsDataRaw && typeof alertsDataRaw === 'object' && 'items' in alertsDataRaw && Array.isArray((alertsDataRaw as any).items)) {
-        alertsData = (alertsDataRaw as any).items
-      } else if (Array.isArray(alertsDataRaw)) {
-        alertsData = alertsDataRaw
-      }
-
-      const mappedAlerts: InventoryAlert[] = alertsData.map((item: any) => {
-        const product = item.product || {}
+      const mappedAlerts: InventoryAlert[] = alertsData.map((item: unknown) => {
+        const alert = item as Record<string, unknown>
+        const product = alert.product as Record<string, unknown> || {}
 
         return {
-          id: item.id as string,
-          productId: item.productId as string,
-          productName: (product.name || item.productName || 'Unknown Product') as string,
-          type: item.type as InventoryAlert['type'],
-          message: item.message as string,
-          threshold: item.threshold as number,
-          currentStock: item.currentStock as number,
-          isResolved: item.isResolved as boolean,
-          resolvedAt: item.resolvedAt ? new Date(item.resolvedAt as string) : undefined,
-          createdAt: new Date(item.createdAt as string),
-          updatedAt: new Date(item.updatedAt as string)
+          id: alert.id as string,
+          productId: alert.productId as string,
+          productName: (product.name || alert.productName || 'Unknown Product') as string,
+          type: alert.type as InventoryAlert['type'],
+          message: alert.message as string,
+          threshold: alert.threshold as number,
+          currentStock: alert.currentStock as number,
+          isResolved: alert.isResolved as boolean,
+          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt as string) : undefined,
+          createdAt: new Date(alert.createdAt as string),
+          updatedAt: new Date(alert.updatedAt as string)
         }
       })
 
       setAlerts(mappedAlerts)
     } catch (error) {
-      console.error('Error fetching alerts:', error)
       toast.error('Không thể tải dữ liệu cảnh báo')
-      setAlerts([])
     }
   }, [])
 
@@ -221,45 +251,14 @@ export function useInventory() {
       // Refresh inventory to reflect backend changes
       await fetchInventory()
       toast.success('Đã cập nhật tồn kho thành công')
-    } catch {
+    } catch (_error) {
       throw new Error('Không thể cập nhật tồn kho')
     }
   }, [inventory, fetchInventory])
 
   // Edit product (SKU/name/stock)
   const editProduct = useCallback(async (productId: string, patch: Partial<{ name: string; sku: string; stockQuantity: number }>) => {
-    // Separate stock update from product details update
-    const { stockQuantity, ...productPatch } = patch
-    
-    // Update product details if any
-    if (Object.keys(productPatch).length > 0) {
-      await apiClient.updateProduct(productId, productPatch)
-    }
-
-    // Update stock if provided
-    if (stockQuantity !== undefined) {
-      // We need to get current stock first to calculate delta
-      // Or we could implement a setStock method in API, but adjustInventory uses delta
-      // For now, let's fetch the product to get current stock
-      try {
-        const productRes = await apiClient.getProduct(productId)
-        const product = productRes.data as any
-        const currentStock = product.inventory?.stock ?? product.stockQuantity ?? 0
-        const delta = stockQuantity - currentStock
-        
-        if (delta !== 0) {
-          await apiClient.adjustInventory(productId, {
-            stockDelta: delta,
-            reason: 'Quick Edit Adjustment',
-            referenceType: 'MANUAL_ADJUSTMENT'
-          })
-        }
-      } catch (error) {
-        console.error('Error updating stock in editProduct:', error)
-        toast.error('Lỗi cập nhật tồn kho')
-      }
-    }
-
+    await apiClient.updateProduct(productId, patch)
     await fetchInventory()
   }, [fetchInventory])
 
@@ -269,36 +268,31 @@ export function useInventory() {
     await fetchInventory()
   }, [fetchInventory])
 
-  // Create movement
-  const createMovement = useCallback(async (movement: Omit<StockMovement, "id" | "createdAt" | "updatedAt" | "productName" | "previousStock" | "newStock">) => {
+  // Create movement (UI only for now)
+  const createMovement = useCallback(async (movement: Omit<StockMovement, "id" | "createdAt">) => {
     try {
-      await apiClient.createInventoryMovement({
-        productId: movement.productId,
-        type: movement.type,
-        quantity: movement.quantity,
-        reason: movement.reason,
-        notes: movement.notes,
-        referenceId: movement.referenceId,
-        referenceType: movement.referenceType,
-        userId: movement.userId
-      })
-
-      await fetchMovements()
-      await fetchInventory()
-
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const newMovement: StockMovement = {
+        ...movement,
+        id: `mov-${Date.now()}`,
+        createdAt: new Date()
+      }
+      
+      setMovements(prev => [newMovement, ...prev])
       toast.success("Đã tạo biến động kho")
-    } catch (error) {
-      console.error('Error creating movement:', error)
+    } catch {
       toast.error("Không thể tạo biến động kho")
     }
-  }, [fetchMovements, fetchInventory])
+  }, [])
 
   // Export inventory
   const exportInventory = useCallback(async () => {
     try {
       // Export CSV client-side
-      const headers = ['id', 'sku', 'productName', 'stock', 'reserved', 'available'].join(',')
-      const lines = inventory.map(i => [i.productId, i.sku, `"${(i.productName || '').replace(/"/g, '""')}"`, i.stock, i.reserved, i.available].join(','))
+      const headers = ['id','sku','productName','stock','reserved','available'].join(',')
+      const lines = inventory.map(i => [i.productId, i.sku, `"${(i.productName||'').replace(/"/g,'""')}"`, i.stock, i.reserved, i.available].join(','))
       const csv = [headers, ...lines].join('\n')
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
@@ -348,18 +342,7 @@ export function useInventory() {
         let product = pid ? byId.get(pid) : null
         if (!product && sku) product = bySku.get(sku.toLowerCase())
         if (!product) continue
-        
-        // Calculate delta for adjustment
-        const currentStock = (product.inventory as any)?.stock ?? (product.stockQuantity as number) ?? 0
-        const delta = stockNum - currentStock
-        
-        if (delta !== 0) {
-          await apiClient.adjustInventory(product.id as string, {
-            stockDelta: delta,
-            reason: 'CSV Import Adjustment',
-            referenceType: 'IMPORT'
-          })
-        }
+        await apiClient.updateProduct(product.id as string, { stockQuantity: stockNum })
       }
 
       await fetchInventory()

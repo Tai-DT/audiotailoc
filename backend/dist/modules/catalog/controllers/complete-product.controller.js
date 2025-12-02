@@ -739,10 +739,7 @@ __decorate([
                 totalProducts: { type: 'number' },
                 featuredProducts: { type: 'number' },
                 categoriesCount: { type: 'number' },
-                recentProducts: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/ProductResponseDto' },
-                },
+                recentProducts: { type: 'array', items: { $ref: '#/components/schemas/ProductResponseDto' } },
             },
         },
     }),

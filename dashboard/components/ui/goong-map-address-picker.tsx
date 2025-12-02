@@ -29,7 +29,7 @@ export function GoongMapAddressPicker({
 }: GoongMapAddressPickerProps) {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [searchValue, setSearchValue] = useState(value)
-  const [suggestions, setSuggestions] = useState<Array<{ description: string, place_id: string }>>([])
+  const [suggestions, setSuggestions] = useState<Array<{description: string, place_id: string}>>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Debounce search function
@@ -41,7 +41,7 @@ export function GoongMapAddressPicker({
     }
 
     try {
-      const response = await apiClient.searchPlaces(query)
+      const response = await apiClient.geocodeAddress(query)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = response.data as any
 
@@ -72,27 +72,12 @@ export function GoongMapAddressPicker({
     }, 300)
   }
 
-  const handleSuggestionSelect = async (suggestion: { description: string, place_id: string }) => {
+  const handleSuggestionSelect = (suggestion: {description: string, place_id: string}) => {
     setSearchValue(suggestion.description)
     setShowSuggestions(false)
     setSuggestions([])
-
-    // Fetch place details to get coordinates
-    try {
-      const response = await apiClient.getPlaceDetail(suggestion.place_id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = response.data as any
-
-      if (data?.result?.geometry?.location) {
-        const { lat, lng } = data.result.geometry.location
-        onChange?.(suggestion.description, { lat, lng })
-      } else {
-        onChange?.(suggestion.description, undefined)
-      }
-    } catch (error) {
-      console.error('Failed to get place details:', error)
-      onChange?.(suggestion.description, undefined)
-    }
+  // Trigger change with address only (no map coordinates in text-only mode)
+  onChange?.(suggestion.description, undefined)
   }
 
   // Cleanup search timeout on unmount

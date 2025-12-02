@@ -18,10 +18,10 @@ const shared_module_1 = require("./shared/shared.module");
 const users_module_1 = require("./users/users.module");
 const admin_module_1 = require("./admin/admin.module");
 const catalog_module_1 = require("./catalog/catalog.module");
+const payments_module_1 = require("./payments/payments.module");
 const cart_module_1 = require("./cart/cart.module");
 const promotions_module_1 = require("./promotions/promotions.module");
 const checkout_module_1 = require("./checkout/checkout.module");
-const payments_module_1 = require("./payments/payments.module");
 const orders_module_1 = require("./orders/orders.module");
 const inventory_module_1 = require("./inventory/inventory.module");
 const wishlist_module_1 = require("./wishlist/wishlist.module");
@@ -46,10 +46,7 @@ const projects_module_1 = require("./projects/projects.module");
 const seo_module_1 = require("./seo/seo.module");
 const blog_module_1 = require("./blog/blog.module");
 const test_module_1 = require("./test/test.module");
-const reviews_module_1 = require("./reviews/reviews.module");
-const messages_module_1 = require("./messages/messages.module");
-const categories_module_1 = require("./categories/categories.module");
-const reports_module_1 = require("./reports/reports.module");
+const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     config_1.ConfigModule.forRoot({ isGlobal: true }),
     cache_module_1.CacheModule.forRoot({
@@ -73,9 +70,6 @@ const runtimeImports = [
     realtime_module_1.RealtimeModule,
     ai_module_1.AiModule,
     catalog_module_1.CatalogModule,
-    cart_module_1.CartModule,
-    promotions_module_1.PromotionsModule,
-    checkout_module_1.CheckoutModule,
     payments_module_1.PaymentsModule,
     orders_module_1.OrdersModule,
     inventory_module_1.InventoryModule,
@@ -90,11 +84,10 @@ const runtimeImports = [
     blog_module_1.BlogModule,
     projects_module_1.ProjectsModule,
     test_module_1.TestModule,
-    reviews_module_1.ReviewsModule,
-    messages_module_1.MessagesModule,
-    categories_module_1.CategoriesModule,
-    reports_module_1.ReportsModule,
 ];
+if (FEATURE_CHECKOUT) {
+    runtimeImports.push(cart_module_1.CartModule, promotions_module_1.PromotionsModule, checkout_module_1.CheckoutModule);
+}
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;

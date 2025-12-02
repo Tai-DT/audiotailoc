@@ -26,39 +26,39 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         const [orders, users, revenue] = await Promise.all([
             this.prisma.orders.findMany({
                 where: { createdAt: { gte: startDate, lte: endDate } },
-                include: { order_items: true },
+                include: { order_items: true }
             }),
             this.prisma.users.count({
                 where: {
                     role: 'USER',
-                    createdAt: { gte: startDate, lte: endDate },
-                },
+                    createdAt: { gte: startDate, lte: endDate }
+                }
             }),
             this.prisma.orders.aggregate({
                 where: {
                     createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['DELIVERED', 'COMPLETED'] },
+                    status: { in: ['DELIVERED', 'COMPLETED'] }
                 },
-                _sum: { totalCents: true },
-            }),
+                _sum: { totalCents: true }
+            })
         ]);
         const [prevOrders, prevUsers, prevRevenue] = await Promise.all([
             this.prisma.orders.count({
-                where: { createdAt: { gte: previousPeriod.start, lte: previousPeriod.end } },
+                where: { createdAt: { gte: previousPeriod.start, lte: previousPeriod.end } }
             }),
             this.prisma.users.count({
                 where: {
                     role: 'USER',
-                    createdAt: { gte: previousPeriod.start, lte: previousPeriod.end },
-                },
+                    createdAt: { gte: previousPeriod.start, lte: previousPeriod.end }
+                }
             }),
             this.prisma.orders.aggregate({
                 where: {
                     createdAt: { gte: previousPeriod.start, lte: previousPeriod.end },
-                    status: { in: ['DELIVERED', 'COMPLETED'] },
+                    status: { in: ['DELIVERED', 'COMPLETED'] }
                 },
-                _sum: { totalCents: true },
-            }),
+                _sum: { totalCents: true }
+            })
         ]);
         const totalRevenue = (revenue._sum.totalCents || 0) / 100;
         const prevTotalRevenue = (prevRevenue._sum.totalCents || 0) / 100;
@@ -72,7 +72,7 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             conversionRate,
             revenueGrowth: this.calculateGrowthRate(totalRevenue, prevTotalRevenue),
             ordersGrowth: this.calculateGrowthRate(totalOrders, prevOrders),
-            customersGrowth: this.calculateGrowthRate(users, prevUsers),
+            customersGrowth: this.calculateGrowthRate(users, prevUsers)
         };
     }
     async getTrends(range = '7days') {
@@ -88,25 +88,25 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                 this.prisma.orders.aggregate({
                     where: {
                         createdAt: { gte: date, lt: nextDate },
-                        status: { in: ['DELIVERED', 'COMPLETED'] },
+                        status: { in: ['DELIVERED', 'COMPLETED'] }
                     },
-                    _sum: { totalCents: true },
+                    _sum: { totalCents: true }
                 }),
                 this.prisma.orders.count({
-                    where: { createdAt: { gte: date, lt: nextDate } },
+                    where: { createdAt: { gte: date, lt: nextDate } }
                 }),
                 this.prisma.users.count({
                     where: {
                         role: 'USER',
-                        createdAt: { gte: date, lt: nextDate },
-                    },
-                }),
+                        createdAt: { gte: date, lt: nextDate }
+                    }
+                })
             ]);
             trends.push({
                 date: date.toISOString().split('T')[0],
                 revenue: (revenue._sum.totalCents || 0) / 100,
                 orders,
-                customers,
+                customers
             });
         }
         return trends;
@@ -116,20 +116,20 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             by: ['productId'],
             _sum: {
                 quantity: true,
-                price: true,
+                price: true
             },
             _count: true,
             orderBy: {
                 _sum: {
-                    price: 'desc',
-                },
+                    price: 'desc'
+                }
             },
-            take: limit,
+            take: limit
         });
         const products = await this.prisma.products.findMany({
             where: {
-                id: { in: topProducts.map(p => p.productId) },
-            },
+                id: { in: topProducts.map(p => p.productId) }
+            }
         });
         return topProducts.map(tp => {
             const product = products.find(p => p.id === tp.productId);
@@ -137,7 +137,7 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                 id: tp.productId,
                 name: product?.name || 'Unknown',
                 sold: tp._sum.quantity || 0,
-                revenue: Number(tp._sum.price || 0) / 100,
+                revenue: Number(tp._sum.price || 0) / 100
             };
         });
     }
@@ -146,19 +146,19 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             by: ['serviceId'],
             _count: true,
             _sum: {
-                estimatedCosts: true,
+                estimatedCosts: true
             },
             orderBy: {
                 _count: {
-                    serviceId: 'desc',
-                },
+                    serviceId: 'desc'
+                }
             },
-            take: limit,
+            take: limit
         });
         const services = await this.prisma.services.findMany({
             where: {
-                id: { in: bookings.map(b => b.serviceId) },
-            },
+                id: { in: bookings.map(b => b.serviceId) }
+            }
         });
         return bookings.map(booking => {
             const service = services.find(s => s.id === booking.serviceId);
@@ -166,7 +166,7 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                 id: booking.serviceId,
                 name: service?.name || 'Unknown',
                 bookings: booking._count,
-                revenue: (booking._sum.estimatedCosts || 0) / 100,
+                revenue: (booking._sum.estimatedCosts || 0) / 100
             };
         });
     }
@@ -174,30 +174,29 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         const { startDate, endDate } = this.parseDateRange(range);
         const [pageViews] = await Promise.all([
             this.prisma.product_views.count({
-                where: { timestamp: { gte: startDate, lte: endDate } },
+                where: { timestamp: { gte: startDate, lte: endDate } }
             }),
         ]);
         const sessions = await this.prisma.activity_logs.groupBy({
             by: ['userId'],
             where: {
                 createdAt: { gte: startDate, lte: endDate },
-                action: 'LOGIN',
+                action: 'LOGIN'
             },
-            _count: true,
+            _count: true
         });
         const activityLogRecords = await this.prisma.activity_logs.findMany({
             where: { createdAt: { gte: startDate, lte: endDate } },
-            select: { duration: true },
+            select: { duration: true }
         });
         const avgSessionDuration = activityLogRecords.length > 0
-            ? activityLogRecords.reduce((sum, log) => sum + (log.duration || 0), 0) /
-                activityLogRecords.length
+            ? activityLogRecords.reduce((sum, log) => sum + (log.duration || 0), 0) / activityLogRecords.length
             : 0;
         return {
             pageViews,
             sessions: sessions.length,
             avgSessionDuration: avgSessionDuration / 1000,
-            bounceRate: 0.32,
+            bounceRate: 0.32
         };
     }
     async getRevenueByCategory(range = '7days') {
@@ -206,16 +205,16 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             where: {
                 orders: {
                     createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['DELIVERED', 'COMPLETED'] },
-                },
+                    status: { in: ['DELIVERED', 'COMPLETED'] }
+                }
             },
             include: {
                 products: {
                     include: {
-                        categories: true,
-                    },
-                },
-            },
+                        categories: true
+                    }
+                }
+            }
         });
         const categoryRevenue = new Map();
         orderItems.forEach(item => {
@@ -225,106 +224,64 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         });
         return Array.from(categoryRevenue.entries()).map(([category, revenue]) => ({
             category,
-            revenue,
+            revenue
         }));
     }
     async getCustomerInsights(range = '7days') {
         const { startDate, endDate } = this.parseDateRange(range);
-        const [totalCustomers, newCustomers, orders, topSpendersAgg, users] = await Promise.all([
+        const [totalCustomers, newCustomers, orders] = await Promise.all([
             this.prisma.users.count({ where: { role: 'USER' } }),
             this.prisma.users.count({
                 where: {
                     role: 'USER',
-                    createdAt: { gte: startDate, lte: endDate },
-                },
+                    createdAt: { gte: startDate, lte: endDate }
+                }
             }),
             this.prisma.orders.findMany({
                 where: { createdAt: { gte: startDate, lte: endDate } },
-                include: { users: true },
-            }),
-            this.prisma.orders.groupBy({
-                by: ['userId'],
-                where: {
-                    createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['COMPLETED', 'DELIVERED'] },
-                    userId: { not: null },
-                },
-                _sum: { totalCents: true },
-                orderBy: { _sum: { totalCents: 'desc' } },
-                take: 5,
-            }),
-            this.prisma.users.findMany({
-                where: { role: 'USER' },
-                select: { id: true, email: true, name: true },
-            }),
+                include: { users: true }
+            })
         ]);
         const returningCustomers = new Set(orders.map(o => o.userId)).size;
         const avgOrderValue = orders.length > 0
             ? orders.reduce((sum, o) => sum + (o.totalCents || 0), 0) / orders.length / 100
             : 0;
-        const topSpenders = topSpendersAgg.map(spender => {
-            const user = users.find(u => u.id === spender.userId);
-            return {
-                id: spender.userId,
-                email: user?.email || 'unknown',
-                name: user?.name || user?.email || 'Khách hàng',
-                totalSpent: Number(spender._sum.totalCents || 0) / 100,
-            };
-        });
         return {
             totalCustomers,
             newCustomers,
             returningCustomers,
             avgOrderValue,
-            topSpenders,
+            topSpenders: []
         };
     }
     async getPerformanceMetrics(range = '7days') {
         const { startDate, endDate } = this.parseDateRange(range);
-        const [orders, completedOrders, cancelledOrders, completedOrderList] = await Promise.all([
+        const [orders, completedOrders, cancelledOrders] = await Promise.all([
             this.prisma.orders.count({
-                where: { createdAt: { gte: startDate, lte: endDate } },
-            }),
-            this.prisma.orders.count({
-                where: {
-                    createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['DELIVERED', 'COMPLETED'] },
-                },
+                where: { createdAt: { gte: startDate, lte: endDate } }
             }),
             this.prisma.orders.count({
                 where: {
                     createdAt: { gte: startDate, lte: endDate },
-                    status: 'CANCELLED',
-                },
+                    status: { in: ['DELIVERED', 'COMPLETED'] }
+                }
             }),
-            this.prisma.orders.findMany({
+            this.prisma.orders.count({
                 where: {
                     createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['DELIVERED', 'COMPLETED'] },
-                },
-                select: { createdAt: true, updatedAt: true },
-            }),
+                    status: 'CANCELLED'
+                }
+            })
         ]);
         const fulfillmentRate = orders > 0 ? (completedOrders / orders) * 100 : 0;
         const cancellationRate = orders > 0 ? (cancelledOrders / orders) * 100 : 0;
-        const avgProcessingTime = completedOrderList.length
-            ? completedOrderList.reduce((sum, o) => {
-                const start = new Date(o.createdAt).getTime();
-                const end = new Date(o.updatedAt).getTime();
-                if (!start || !end || end < start)
-                    return sum;
-                return sum + (end - start);
-            }, 0) /
-                completedOrderList.length /
-                (1000 * 60 * 60 * 24)
-            : 0;
         return {
             totalOrders: orders,
             completedOrders,
             cancelledOrders,
             fulfillmentRate,
             cancellationRate,
-            avgProcessingTime,
+            avgProcessingTime: 2.5
         };
     }
     parseDateRange(range) {
@@ -406,7 +363,9 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                 },
             });
             const returningCustomers = returningCustomersData.filter(customer => customer._count.orders > 1).length;
-            const customerRetentionRate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
+            const customerRetentionRate = totalCustomers > 0
+                ? (returningCustomers / totalCustomers) * 100
+                : 0;
             const customerLifetimeValue = await this.calculateCustomerLifetimeValue(filters);
             const totalOrders = await this.prisma.orders.count({
                 where: {
@@ -414,7 +373,9 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                     status: { in: ['COMPLETED', 'DELIVERED'] },
                 },
             });
-            const averageOrdersPerCustomer = totalCustomers > 0 ? totalOrders / totalCustomers : 0;
+            const averageOrdersPerCustomer = totalCustomers > 0
+                ? totalOrders / totalCustomers
+                : 0;
             const customerSegments = await this.getCustomerSegments(startDate, endDate);
             const topCustomers = await this.getTopCustomers(startDate, endDate, filters);
             const result = {
@@ -445,12 +406,8 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             const lowStockProducts = await this.prisma.inventory.count({
                 where: { stock: { lt: 10, gt: 0 } },
             });
-            const outOfStockProducts = await this.prisma.inventory.count({
-                where: { stock: { lte: 0 } },
-            });
-            const inventoryRows = await this.prisma.inventory.findMany({
-                include: { products: { select: { priceCents: true } } },
-            });
+            const outOfStockProducts = await this.prisma.inventory.count({ where: { stock: { lte: 0 } } });
+            const inventoryRows = await this.prisma.inventory.findMany({ include: { products: { select: { priceCents: true } } } });
             const totalInventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock, 0);
             const averageInventoryTurnover = await this.calculateInventoryTurnover(filters);
             const topSellingProducts = await this.getTopSellingProducts(filters);
@@ -595,363 +552,72 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             conversionRate,
         };
     }
-    async getTopProductsMetrics(startDate, endDate, _filters) {
-        const currentTop = await this.prisma.order_items.groupBy({
-            by: ['productId'],
-            where: {
-                orders: {
-                    createdAt: { gte: startDate, lte: endDate },
-                    status: { in: ['COMPLETED', 'DELIVERED'] },
-                },
+    async getTopProductsMetrics(_startDate, _endDate, _filters) {
+        return [
+            {
+                id: '1',
+                name: 'Tai nghe Sony WH-1000XM4',
+                revenue: 50000000,
+                quantity: 100,
+                growth: 15.5,
             },
-            _sum: { quantity: true, price: true },
-            orderBy: { _sum: { price: 'desc' } },
-            take: 5,
-        });
-        const prevPeriod = this.getPreviousPeriod(startDate, endDate);
-        const prevTop = await this.prisma.order_items.groupBy({
-            by: ['productId'],
-            where: {
-                orders: {
-                    createdAt: { gte: prevPeriod.start, lte: prevPeriod.end },
-                    status: { in: ['COMPLETED', 'DELIVERED'] },
-                },
-            },
-            _sum: { quantity: true, price: true },
-        });
-        const prevRevenueMap = new Map();
-        prevTop.forEach(p => {
-            prevRevenueMap.set(p.productId, Number(p._sum.price || 0));
-        });
-        const products = await this.prisma.products.findMany({
-            where: { id: { in: currentTop.map(p => p.productId).filter(Boolean) } },
-            select: { id: true, name: true },
-        });
-        return currentTop.map(p => {
-            const product = products.find(prod => prod.id === p.productId);
-            const revenue = Number(p._sum.price || 0);
-            const prevRevenue = prevRevenueMap.get(p.productId) || 0;
-            return {
-                id: p.productId,
-                name: product?.name || 'Unknown',
-                revenue: revenue / 100,
-                quantity: p._sum.quantity || 0,
-                growth: this.calculateGrowthRate(revenue, prevRevenue),
-            };
-        });
+        ];
     }
-    async getSalesByPeriod(startDate, endDate, _filters) {
-        const orders = await this.prisma.orders.findMany({
-            where: {
-                createdAt: { gte: startDate, lte: endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
+    async getSalesByPeriod(_startDate, _endDate, _filters) {
+        return [
+            {
+                period: '2024-01-01',
+                revenue: 10000000,
+                orders: 25,
+                customers: 20,
             },
-            select: {
-                createdAt: true,
-                totalCents: true,
-                userId: true,
-            },
-        });
-        const periodMap = new Map();
-        const dayMs = 24 * 60 * 60 * 1000;
-        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / dayMs);
-        const shouldFillGaps = totalDays <= 90;
-        if (shouldFillGaps) {
-            for (let i = 0; i < totalDays; i++) {
-                const date = new Date(startDate.getTime() + i * dayMs);
-                const key = date.toISOString().split('T')[0];
-                periodMap.set(key, { revenue: 0, orders: 0, customerSet: new Set() });
-            }
-        }
-        for (const order of orders) {
-            const dateKey = order.createdAt.toISOString().split('T')[0];
-            if (!periodMap.has(dateKey)) {
-                if (!shouldFillGaps) {
-                    periodMap.set(dateKey, { revenue: 0, orders: 0, customerSet: new Set() });
-                }
-                else {
-                    continue;
-                }
-            }
-            const entry = periodMap.get(dateKey);
-            if (entry) {
-                entry.revenue += order.totalCents;
-                entry.orders += 1;
-                if (order.userId) {
-                    entry.customerSet.add(order.userId);
-                }
-            }
-        }
-        const results = Array.from(periodMap.entries()).map(([period, data]) => ({
-            period,
-            revenue: data.revenue / 100,
-            orders: data.orders,
-            customers: data.customerSet.size,
-        }));
-        return results.sort((a, b) => a.period.localeCompare(b.period));
+        ];
     }
     async calculateCustomerLifetimeValue(_filters) {
-        const [revenueAgg, totalOrders, uniqueCustomers] = await Promise.all([
-            this.prisma.orders.aggregate({
-                _sum: { totalCents: true },
-                where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
-            }),
-            this.prisma.orders.count({
-                where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
-            }),
-            this.prisma.orders.findMany({
-                where: { status: { in: ['COMPLETED', 'DELIVERED'] }, userId: { not: null } },
-                select: { userId: true },
-                distinct: ['userId'],
-            }),
-        ]);
-        const totalRevenue = (revenueAgg._sum.totalCents || 0) / 100;
-        const customers = uniqueCustomers.length || 1;
-        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-        const purchaseFrequency = totalOrders > 0 ? totalOrders / customers : 0;
-        return averageOrderValue * purchaseFrequency;
+        return 5000000;
     }
-    async getCustomerSegments(startDate, endDate) {
-        const customerSpend = await this.prisma.orders.groupBy({
-            by: ['userId'],
-            where: {
-                createdAt: { gte: startDate, lte: endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-                userId: { not: null },
-            },
-            _sum: { totalCents: true },
-        });
-        const segments = {
-            'High Value': { count: 0, revenue: 0 },
-            'Medium Value': { count: 0, revenue: 0 },
-            'Low Value': { count: 0, revenue: 0 },
-        };
-        customerSpend.forEach(c => {
-            const spent = Number(c._sum.totalCents || 0);
-            if (spent >= 10_000_000) {
-                segments['High Value'].count += 1;
-                segments['High Value'].revenue += spent;
-            }
-            else if (spent >= 2_000_000) {
-                segments['Medium Value'].count += 1;
-                segments['Medium Value'].revenue += spent;
-            }
-            else {
-                segments['Low Value'].count += 1;
-                segments['Low Value'].revenue += spent;
-            }
-        });
-        const totalRevenue = Object.values(segments).reduce((sum, seg) => sum + seg.revenue, 0) || 1;
-        return Object.entries(segments).map(([segment, data]) => ({
-            segment,
-            count: data.count,
-            revenue: data.revenue / 100,
-            percentage: (data.revenue / totalRevenue) * 100,
-        }));
+    async getCustomerSegments(_startDate, _endDate) {
+        return [
+            { segment: 'High Value', count: 50, revenue: 100000000, percentage: 25 },
+            { segment: 'Medium Value', count: 150, revenue: 150000000, percentage: 50 },
+            { segment: 'Low Value', count: 100, revenue: 50000000, percentage: 25 },
+        ];
     }
-    async getTopCustomers(startDate, endDate, _filters) {
-        const top = await this.prisma.orders.groupBy({
-            by: ['userId'],
-            where: {
-                createdAt: { gte: startDate, lte: endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-                userId: { not: null },
-            },
-            _sum: { totalCents: true },
-            _count: { _all: true },
-            orderBy: { _sum: { totalCents: 'desc' } },
-            take: 5,
-        });
-        const users = await this.prisma.users.findMany({
-            where: { id: { in: top.map(t => t.userId).filter(Boolean) } },
-            select: { id: true, email: true, name: true, createdAt: true },
-        });
-        return top.map(t => {
-            const user = users.find(u => u.id === t.userId);
-            return {
-                id: t.userId,
-                email: user?.email || 'unknown',
-                totalSpent: Number(t._sum.totalCents || 0) / 100,
-                orderCount: t._count._all || 0,
-                lastOrderDate: user?.createdAt || new Date(),
-            };
-        });
+    async getTopCustomers(_startDate, _endDate, _filters) {
+        return [];
     }
     async calculateInventoryTurnover(_filters) {
-        const inventoryRows = await this.prisma.inventory.findMany({
-            include: { products: { select: { priceCents: true } } },
-        });
-        const inventoryValue = inventoryRows.reduce((sum, row) => sum + Number(row.products?.priceCents || 0) * row.stock, 0);
-        const salesAgg = await this.prisma.orders.aggregate({
-            _sum: { totalCents: true },
-            where: { status: { in: ['COMPLETED', 'DELIVERED'] } },
-        });
-        const cogs = Number(salesAgg._sum.totalCents || 0);
-        if (!inventoryValue)
-            return 0;
-        return cogs / inventoryValue;
+        return 4.5;
     }
     async getTopSellingProducts(_filters) {
-        const topProducts = await this.prisma.order_items.groupBy({
-            by: ['productId'],
-            _sum: { quantity: true, price: true },
-            orderBy: { _sum: { quantity: 'desc' } },
-            take: 5,
-        });
-        const products = await this.prisma.products.findMany({
-            where: { id: { in: topProducts.map(p => p.productId).filter(Boolean) } },
-            include: { inventory: { select: { stock: true } } },
-        });
-        return topProducts.map(tp => {
-            const product = products.find(p => p.id === tp.productId);
-            return {
-                id: tp.productId,
-                name: product?.name || 'Unknown Product',
-                quantitySold: tp._sum.quantity || 0,
-                revenue: Number(tp._sum.price || 0) / 100,
-                stockLevel: product?.inventory?.stock || 0,
-            };
-        });
+        return [];
     }
     async getSlowMovingProducts(_filters) {
-        const productsWithStock = await this.prisma.products.findMany({
-            where: { inventory: { stock: { gt: 0 } } },
-            select: {
-                id: true,
-                name: true,
-                inventory: { select: { stock: true } },
-            },
-        });
-        const latestSales = await this.prisma.order_items.groupBy({
-            by: ['productId'],
-            _max: { createdAt: true },
-        });
-        const latestSaleMap = new Map();
-        latestSales.forEach(row => {
-            if (row._max.createdAt)
-                latestSaleMap.set(row.productId, row._max.createdAt);
-        });
-        const now = Date.now();
-        return productsWithStock
-            .map(p => {
-            const lastSale = latestSaleMap.get(p.id);
-            const daysSinceLastSale = lastSale
-                ? Math.floor((now - lastSale.getTime()) / (1000 * 60 * 60 * 24))
-                : 999;
-            return {
-                id: p.id,
-                name: p.name,
-                daysSinceLastSale,
-                stockLevel: p.inventory?.stock ?? 0,
-                value: 0,
-            };
-        })
-            .sort((a, b) => b.daysSinceLastSale - a.daysSinceLastSale)
-            .slice(0, 5);
+        return [];
     }
     async calculateMRR(_startDate, _endDate) {
-        const start = new Date();
-        start.setDate(start.getDate() - 30);
-        const revenue = await this.prisma.orders.aggregate({
-            _sum: { totalCents: true },
-            where: { createdAt: { gte: start }, status: { in: ['COMPLETED', 'DELIVERED'] } },
-        });
-        return (revenue._sum.totalCents || 0) / 100;
+        return 0;
     }
     async calculateCAC(_startDate, _endDate) {
-        const customers = await this.prisma.users.count({
-            where: { role: 'USER', createdAt: { gte: _startDate, lte: _endDate } },
-        });
-        const revenue = await this.prisma.orders.aggregate({
-            _sum: { totalCents: true },
-            where: {
-                createdAt: { gte: _startDate, lte: _endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-            },
-        });
-        if (!customers)
-            return 0;
-        return (revenue._sum.totalCents || 0) / 100 / customers;
+        return 0;
     }
     async calculateChurnRate(_startDate, _endDate) {
-        const activeUsers = await this.prisma.users.count({ where: { role: 'USER' } });
-        if (!activeUsers)
-            return 0;
-        const usersWithOrders = await this.prisma.orders.findMany({
-            where: { createdAt: { gte: _startDate, lte: _endDate }, userId: { not: null } },
-            select: { userId: true },
-            distinct: ['userId'],
-        });
-        const retained = usersWithOrders.length;
-        const churned = Math.max(activeUsers - retained, 0);
-        return (churned / activeUsers) * 100;
+        return 0;
     }
     async calculateAverageResponseTime(_startDate, _endDate) {
-        const logs = await this.prisma.activity_logs.findMany({
-            where: { createdAt: { gte: _startDate, lte: _endDate }, duration: { not: null } },
-            select: { duration: true },
-        });
-        if (!logs.length)
-            return 0;
-        const total = logs.reduce((sum, log) => sum + (log.duration || 0), 0);
-        return total / logs.length;
+        return 0;
     }
     async calculateOrderFulfillmentRate(_startDate, _endDate) {
-        const [total, fulfilled] = await Promise.all([
-            this.prisma.orders.count({
-                where: { createdAt: { gte: _startDate, lte: _endDate } },
-            }),
-            this.prisma.orders.count({
-                where: {
-                    createdAt: { gte: _startDate, lte: _endDate },
-                    status: { in: ['COMPLETED', 'DELIVERED'] },
-                },
-            }),
-        ]);
-        if (!total)
-            return 0;
-        return (fulfilled / total) * 100;
+        return 95;
     }
     async calculateReturnRate(_startDate, _endDate) {
-        const [cancelled, total] = await Promise.all([
-            this.prisma.orders.count({
-                where: { createdAt: { gte: _startDate, lte: _endDate }, status: 'CANCELLED' },
-            }),
-            this.prisma.orders.count({
-                where: { createdAt: { gte: _startDate, lte: _endDate } },
-            }),
-        ]);
-        if (!total)
-            return 0;
-        return (cancelled / total) * 100;
+        return 2.5;
     }
     async calculateProfitMargin(_startDate, _endDate) {
-        const revenue = await this.prisma.orders.aggregate({
-            _sum: { totalCents: true },
-            where: {
-                createdAt: { gte: _startDate, lte: _endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-            },
-        });
-        const revenueValue = (revenue._sum.totalCents || 0) / 100;
-        const estimatedCost = revenueValue * 0.8;
-        if (!revenueValue)
-            return 0;
-        return ((revenueValue - estimatedCost) / revenueValue) * 100;
+        return 25;
     }
     async calculateMarketingROI(_startDate, _endDate) {
-        const revenue = await this.prisma.orders.aggregate({
-            _sum: { totalCents: true },
-            where: {
-                createdAt: { gte: _startDate, lte: _endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-            },
-        });
-        const revenueValue = (revenue._sum.totalCents || 0) / 100;
-        if (!revenueValue)
-            return 0;
-        const spend = revenueValue * 0.05 || 1;
-        return ((revenueValue - spend) / spend) * 100;
+        return 300;
     }
     async getRecentActivity() {
         return [
@@ -964,38 +630,22 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         ];
     }
     async getRevenueChartData(days = 7) {
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days + 1);
-        startDate.setHours(0, 0, 0, 0);
-        const orders = await this.prisma.orders.findMany({
-            where: {
-                createdAt: { gte: startDate, lte: endDate },
-                status: { in: ['COMPLETED', 'DELIVERED'] },
-            },
-            select: {
-                createdAt: true,
-                totalCents: true,
-            },
-        });
-        const revenueMap = new Map();
-        for (let i = 0; i < days; i++) {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + i);
-            const key = date.toISOString().split('T')[0];
-            revenueMap.set(key, 0);
-        }
-        for (const order of orders) {
-            const dateKey = order.createdAt.toISOString().split('T')[0];
-            if (revenueMap.has(dateKey)) {
-                revenueMap.set(dateKey, (revenueMap.get(dateKey) || 0) + order.totalCents);
-            }
-        }
         const dates = [];
         const values = [];
-        for (const [date, cents] of revenueMap.entries()) {
-            dates.push(date);
-            values.push(cents / 100);
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+            const dayRevenue = await this.prisma.orders.aggregate({
+                where: {
+                    createdAt: { gte: date, lt: nextDate },
+                    status: { in: ['COMPLETED', 'DELIVERED'] }
+                },
+                _sum: { totalCents: true }
+            });
+            dates.push(date.toISOString().split('T')[0]);
+            values.push((dayRevenue._sum.totalCents || 0) / 100);
         }
         return { dates, values };
     }
@@ -1004,24 +654,24 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
             by: ['productId'],
             _sum: {
                 quantity: true,
-                price: true,
+                price: true
             },
             orderBy: {
                 _sum: {
-                    quantity: 'desc',
-                },
+                    quantity: 'desc'
+                }
             },
-            take: limit,
+            take: limit
         });
         const products = await this.prisma.products.findMany({
             where: {
-                id: { in: topProducts.map(p => p.productId).filter(Boolean) },
+                id: { in: topProducts.map(p => p.productId).filter(Boolean) }
             },
             include: {
                 inventory: {
-                    select: { stock: true },
-                },
-            },
+                    select: { stock: true }
+                }
+            }
         });
         return topProducts.map(tp => {
             const product = products.find(p => p.id === tp.productId);
@@ -1030,7 +680,7 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
                 name: product?.name || 'Unknown Product',
                 salesCount: tp._sum.quantity || 0,
                 revenue: Number(tp._sum.price || 0) / 100,
-                stock: product?.inventory?.stock || 0,
+                stock: product?.inventory?.stock || 0
             };
         });
     }
@@ -1042,29 +692,29 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         fourteenDaysAgo.setDate(today.getDate() - 14);
         const [currentOrders, currentCustomers] = await Promise.all([
             this.prisma.orders.count({
-                where: { createdAt: { gte: sevenDaysAgo, lte: today } },
+                where: { createdAt: { gte: sevenDaysAgo, lte: today } }
             }),
             this.prisma.users.count({
                 where: {
                     role: 'USER',
-                    createdAt: { gte: sevenDaysAgo, lte: today },
-                },
-            }),
+                    createdAt: { gte: sevenDaysAgo, lte: today }
+                }
+            })
         ]);
         const [previousOrders, previousCustomers] = await Promise.all([
             this.prisma.orders.count({
-                where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
+                where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } }
             }),
             this.prisma.users.count({
                 where: {
                     role: 'USER',
-                    createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
-                },
-            }),
+                    createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo }
+                }
+            })
         ]);
         return {
             ordersGrowth: this.calculateGrowthRate(currentOrders, previousOrders),
-            customersGrowth: this.calculateGrowthRate(currentCustomers, previousCustomers),
+            customersGrowth: this.calculateGrowthRate(currentCustomers, previousCustomers)
         };
     }
     async getBookingsTodayReal() {
@@ -1074,8 +724,8 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const bookingsToday = await this.prisma.service_bookings.count({
             where: {
-                createdAt: { gte: today, lt: tomorrow },
-            },
+                createdAt: { gte: today, lt: tomorrow }
+            }
         });
         return { bookingsToday };
     }

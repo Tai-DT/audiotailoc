@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductGrid } from '@/components/products/product-grid';
-import { useRecentProducts } from '@/lib/hooks/use-api';
+import { useTopViewedProducts } from '@/lib/hooks/use-api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '@/components/providers/cart-provider';
 
 export function NewProductsSection() {
-  const { data: products, isLoading } = useRecentProducts(8);
+  // Giả sử API có endpoint cho sản phẩm mới, tạm thời dùng useTopViewedProducts
+  const { data: products, isLoading } = useTopViewedProducts(6);
   const { addItem: addCartItem } = useCart();
 
   const handleAddToCart = (productId: string) => {

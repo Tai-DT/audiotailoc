@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
-import { SocketProvider } from "@/components/providers/socket-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
@@ -11,7 +10,6 @@ import { Toaster } from "react-hot-toast";
 import { ZaloChatWidget } from "@/components/ui/zalo-chat-widget";
 import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
-import { ChatLauncher } from "@/components/ui/chat-launcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,20 +46,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: CANONICAL_BASE,
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  verification: {
-    google: 'google-site-verification-code', // Cần cập nhật mã thực tế
-  },
 };
 
 export default function RootLayout({
@@ -77,11 +61,10 @@ export default function RootLayout({
         <OrganizationStructuredData />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
-            <SocketProvider>
-              <CartProvider>
-                <Header />
-                {children}
-                <Footer />
+            <CartProvider>
+              <Header />
+              {children}
+              <Footer />
               <Toaster
                 position="top-right"
                 toastOptions={{
@@ -99,9 +82,7 @@ export default function RootLayout({
                 }}
               />
               <ZaloChatWidget phoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
-              <ChatLauncher />
-              </CartProvider>
-            </SocketProvider>
+            </CartProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

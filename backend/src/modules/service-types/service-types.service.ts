@@ -49,10 +49,7 @@ export class ServiceTypesService {
   }
 
   async update(id: string, updateServiceTypeDto: UpdateServiceTypeDto) {
-    console.log(
-      `[ServiceTypesService] Updating service type ${id} with data:`,
-      updateServiceTypeDto,
-    );
+    console.log(`[ServiceTypesService] Updating service type ${id} with data:`, updateServiceTypeDto);
     await this.findOne(id); // Check if service type exists
 
     const result = await this.prisma.service_types.update({

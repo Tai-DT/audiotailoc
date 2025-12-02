@@ -137,7 +137,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             if (!isValidSignature) {
                 throw new common_1.BadRequestException('Invalid MOMO webhook signature');
             }
-            const { orderId, resultCode, amount, transId, message: _message } = data;
+            const { orderId, resultCode, amount, transId, message: _message, } = data;
             const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: orderId },
                 include: { orders: true },
@@ -205,7 +205,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             if (!isValidSignature) {
                 throw new common_1.BadRequestException('Invalid PAYOS webhook signature');
             }
-            const { orderCode, status, amount, transactionId, description: _description } = data;
+            const { orderCode, status, amount, transactionId, description: _description, } = data;
             const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: orderCode },
                 include: { orders: true },
@@ -276,7 +276,10 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             .sort()
             .map(key => `${key}=${params[key]}`)
             .join('&');
-        const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
+        const expectedHash = crypto
+            .createHmac('sha256', secret)
+            .update(signData)
+            .digest('hex');
         return vnp_SecureHash === expectedHash;
     }
     validateMOMOSignature(data) {
@@ -288,7 +291,10 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             .sort()
             .map(key => `${key}=${params[key]}`)
             .join('&');
-        const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
+        const expectedHash = crypto
+            .createHmac('sha256', secret)
+            .update(signData)
+            .digest('hex');
         return signature === expectedHash;
     }
     validatePAYOSSignature(data) {
@@ -297,7 +303,10 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             return false;
         const { signature, ...params } = data;
         const dataStr = JSON.stringify(params);
-        const expectedHash = crypto.createHmac('sha256', checksumKey).update(dataStr).digest('hex');
+        const expectedHash = crypto
+            .createHmac('sha256', checksumKey)
+            .update(dataStr)
+            .digest('hex');
         return signature === expectedHash;
     }
     async handleOrderStatusWebhook(data) {

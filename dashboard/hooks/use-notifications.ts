@@ -133,7 +133,7 @@ export function useNotifications() {
       
       setNotifications(prev => [newNotification, ...prev])
       toast.success('Thông báo đã được gửi')
-    } catch {
+    } catch (err) {
       toast.error('Không thể gửi thông báo')
     } finally {
       setLoading(false)
@@ -154,7 +154,7 @@ export function useNotifications() {
           ? { ...n, isRead: true, readAt: new Date().toISOString() }
           : n
       ))
-    } catch {
+    } catch (err) {
       toast.error('Không thể đánh dấu đã đọc')
     }
   }, [])
@@ -172,7 +172,7 @@ export function useNotifications() {
         readAt: n.readAt || now
       })))
       toast.success('Đã đánh dấu tất cả là đã đọc')
-    } catch {
+    } catch (err) {
       toast.error('Không thể đánh dấu tất cả')
     }
   }, [])
@@ -182,7 +182,7 @@ export function useNotifications() {
     try {
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       toast.success('Đã xóa thông báo')
-    } catch {
+    } catch (err) {
       // Silent error handling
     }
   }, [])
@@ -192,7 +192,7 @@ export function useNotifications() {
     try {
       setSettings(prev => ({ ...prev, ...newSettings }))
       toast.success('Đã cập nhật cài đặt thông báo')
-    } catch {
+    } catch (err) {
       toast.error('Không thể cập nhật cài đặt')
     }
   }, [])
@@ -301,7 +301,7 @@ export function useNotifications() {
           socketManager.off('notification:new', handleNewNotification)
           socketManager.off('notification:update', handleNotificationUpdate)
         }
-      } catch {
+      } catch (error) {
         // Silent error - socket connection may not be available
         connectedRef.current = false
       }

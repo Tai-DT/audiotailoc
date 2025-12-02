@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
 
 interface Promotion {
   id: string
@@ -32,36 +31,6 @@ interface PromotionStats {
   conversionRate: number
 }
 
-interface PromotionApi {
-  id: string
-  code: string
-  name: string
-  description?: string
-  type: string
-  value: number
-  minOrderAmount?: number
-  min_order_amount?: number
-  maxDiscount?: number
-  max_discount?: number
-  usageLimit?: number
-  usageCount?: number
-  isActive: boolean
-  startDate?: string
-  starts_at?: string
-  endDate?: string
-  expiresAt?: string
-  createdAt?: string
-  categories?: string[]
-  products?: string[]
-  customerSegments?: string[]
-  created_by?: string
-  createdBy?: string
-}
-
-interface PromotionsApiData {
-  promotions?: PromotionApi[]
-}
-
 export function usePromotions() {
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(false)
@@ -74,53 +43,180 @@ export function usePromotions() {
     conversionRate: 0
   })
 
-  // Fetch promotions data from real API
+  // Fetch promotions data
   const fetchPromotions = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch promotions
-      const response = await apiClient.getPromotions()
-
-      if (response.success && response.data) {
-        const apiData = response.data as PromotionsApiData
-        const promotionsData = apiData.promotions || []
-
-        // Transform data to match interface
-        const transformedPromotions: Promotion[] = promotionsData.map((promo) => ({
-          id: promo.id,
-          code: promo.code,
-          name: promo.name,
-          description: promo.description,
-          type: promo.type.toLowerCase().replace('_', '_') as Promotion['type'],
-          value: promo.value,
-          minOrderAmount: promo.minOrderAmount ?? promo.min_order_amount,
-          maxDiscount: promo.maxDiscount ?? promo.max_discount,
-          usageLimit: promo.usageLimit,
-          usageCount: promo.usageCount ?? 0,
-          isActive: promo.isActive,
-          startDate: new Date(promo.startDate || promo.starts_at || promo.createdAt || new Date().toISOString()),
-          endDate: new Date(promo.endDate || promo.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-          categories: promo.categories || [],
-          products: promo.products || [],
-          customerSegments: promo.customerSegments || [],
-          createdAt: new Date(promo.createdAt || new Date().toISOString()),
-          createdBy: promo.created_by || promo.createdBy || 'Admin'
-        }))
-
-        setPromotions(transformedPromotions)
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const mockPromotions: Promotion[] = [
+        {
+          id: "promo-1",
+          code: "FLASH50",
+          name: "Flash Sale 50%",
+          description: "Giảm 50% cho toàn bộ sản phẩm trong 24 giờ",
+          type: "percentage",
+          value: 50,
+          minOrderAmount: 500000,
+          maxDiscount: 2000000,
+          usageLimit: 100,
+          usageCount: 87,
+          isActive: true,
+          startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          createdBy: "Admin"
+        },
+        {
+          id: "promo-2", 
+          code: "FREESHIP",
+          name: "Miễn phí vận chuyển",
+          description: "Free ship cho đơn hàng trên 300,000đ",
+          type: "free_shipping",
+          value: 0,
+          minOrderAmount: 300000,
+          usageCount: 234,
+          isActive: true,
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+          createdBy: "Manager"
+        },
+        {
+          id: "promo-3",
+          code: "NEWBIE20",
+          name: "Khách hàng mới giảm 20%",
+          description: "Dành cho khách hàng đăng ký lần đầu",
+          type: "percentage",
+          value: 20,
+          maxDiscount: 500000,
+          usageLimit: 500,
+          usageCount: 156,
+          isActive: true,
+          startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+          customerSegments: ["new_customer"],
+          createdAt: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000),
+          createdBy: "Admin"
+        },
+        {
+          id: "promo-4",
+          code: "COMBO25",
+          name: "Combo Deal 25%",
+          description: "Mua combo tai nghe + loa giảm 25%",
+          type: "percentage",
+          value: 25,
+          minOrderAmount: 1000000,
+          usageCount: 45,
+          isActive: true,
+          startDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          categories: ["headphones", "speakers"],
+          createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+          createdBy: "Manager"
+        },
+        {
+          id: "promo-5",
+          code: "FIXED100K",
+          name: "Giảm 100,000đ",
+          description: "Giảm cố định 100,000đ cho đơn hàng trên 2 triệu",
+          type: "fixed_amount",
+          value: 100000,
+          minOrderAmount: 2000000,
+          usageLimit: 50,
+          usageCount: 23,
+          isActive: true,
+          startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+          createdBy: "Admin"
+        },
+        {
+          id: "promo-6",
+          code: "BUY2GET1",
+          name: "Mua 2 tặng 1",
+          description: "Mua 2 phụ kiện tặng 1 phụ kiện cùng loại",
+          type: "buy_x_get_y",
+          value: 2,
+          usageCount: 78,
+          isActive: false,
+          startDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+          categories: ["accessories"],
+          createdAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000),
+          createdBy: "Manager"
+        },
+        {
+          id: "promo-7",
+          code: "SUMMER30",
+          name: "Summer Sale 30%",
+          description: "Khuyến mãi hè giảm 30% tất cả sản phẩm",
+          type: "percentage",
+          value: 30,
+          maxDiscount: 1500000,
+          usageLimit: 200,
+          usageCount: 189,
+          isActive: false,
+          startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
+          createdBy: "Admin"
+        },
+        {
+          id: "promo-8",
+          code: "BIRTHDAY40",
+          name: "Sinh nhật giảm 40%",
+          description: "Ưu đãi đặc biệt trong tháng sinh nhật",
+          type: "percentage",
+          value: 40,
+          maxDiscount: 1000000,
+          usageCount: 67,
+          isActive: true,
+          startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+          customerSegments: ["birthday_month"],
+          createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+          createdBy: "Manager"
+        }
+      ]
+      
+      setPromotions(mockPromotions)
+      
+      // Calculate stats
+      const now = new Date()
+      const activePromotions = mockPromotions.filter(p => 
+        p.isActive && p.startDate <= now && p.endDate >= now
+      ).length
+      
+      const expiredPromotions = mockPromotions.filter(p => 
+        p.endDate < now
+      ).length
+      
+      const totalUsage = mockPromotions.reduce((sum, p) => sum + p.usageCount, 0)
+      const totalSavings = mockPromotions.reduce((sum, p) => {
+        if (p.type === "percentage") {
+          // Estimate savings based on usage and average order value
+          return sum + (p.usageCount * 1500000 * p.value / 100)
+        } else if (p.type === "fixed_amount") {
+          return sum + (p.usageCount * p.value)
+        }
+        return sum
+      }, 0)
+      
+      const newStats: PromotionStats = {
+        totalPromotions: mockPromotions.length,
+        activePromotions,
+        expiredPromotions,
+        totalSavings,
+        totalUsage,
+        conversionRate: Math.round((totalUsage / (mockPromotions.length * 100)) * 100) // Mock conversion rate
       }
-
-      // Fetch stats
-      const statsResponse = await apiClient.getPromotionStats()
-      if (statsResponse.success && statsResponse.data) {
-        const statsData = statsResponse.data as PromotionStats
-        setStats(statsData)
-      }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể tải dữ liệu khuyến mãi"
-      console.error('Error fetching promotions:', error)
-      toast.error(message)
+      
+      setStats(newStats)
+      
+    } catch {
+      toast.error("Không thể tải dữ liệu khuyến mãi")
     } finally {
       setLoading(false)
     }
@@ -129,158 +225,190 @@ export function usePromotions() {
   // Create promotion
   const createPromotion = useCallback(async (promotionData: Partial<Promotion>) => {
     try {
-      const createData = {
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const newPromotion: Promotion = {
+        id: `promo-${Date.now()}`,
         code: promotionData.code || "",
         name: promotionData.name || "",
         description: promotionData.description,
-        type: (promotionData.type || "percentage").toUpperCase().replace('_', '_') as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUY_X_GET_Y',
+        type: promotionData.type || "percentage",
         value: promotionData.value || 0,
         minOrderAmount: promotionData.minOrderAmount,
         maxDiscount: promotionData.maxDiscount,
         usageLimit: promotionData.usageLimit,
+        usageCount: 0,
         isActive: promotionData.isActive ?? true,
-        startsAt: promotionData.startDate,
-        expiresAt: promotionData.endDate,
+        startDate: promotionData.startDate || new Date(),
+        endDate: promotionData.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         categories: promotionData.categories,
         products: promotionData.products,
         customerSegments: promotionData.customerSegments,
+        createdAt: new Date(),
+        createdBy: "Admin"
       }
-
-      const response = await apiClient.createPromotion(createData)
-
-      if (response.success) {
-        await fetchPromotions() // Refresh list
-        toast.success(response.message || "Đã tạo chương trình khuyến mãi")
-      }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể tạo chương trình khuyến mãi"
-      console.error('Error creating promotion:', error)
-      toast.error(message)
-      throw error
+      
+      setPromotions(prev => [newPromotion, ...prev])
+      
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        totalPromotions: prev.totalPromotions + 1,
+        activePromotions: newPromotion.isActive ? prev.activePromotions + 1 : prev.activePromotions
+      }))
+      
+    } catch {
+      throw new Error("Failed to create promotion")
     }
-  }, [fetchPromotions])
+  }, [])
 
   // Update promotion
   const updatePromotion = useCallback(async (id: string, promotionData: Partial<Promotion>) => {
     try {
-      const updateData: Record<string, unknown> = {}
-
-      if (promotionData.code) updateData.code = promotionData.code
-      if (promotionData.name) updateData.name = promotionData.name
-      if (promotionData.description !== undefined) updateData.description = promotionData.description
-      if (promotionData.type) updateData.type = promotionData.type.toUpperCase().replace('_', '_')
-      if (promotionData.value !== undefined) updateData.value = promotionData.value
-      if (promotionData.minOrderAmount !== undefined) updateData.minOrderAmount = promotionData.minOrderAmount
-      if (promotionData.maxDiscount !== undefined) updateData.maxDiscount = promotionData.maxDiscount
-      if (promotionData.usageLimit !== undefined) updateData.usageLimit = promotionData.usageLimit
-      if (promotionData.isActive !== undefined) updateData.isActive = promotionData.isActive
-      if (promotionData.startDate) updateData.startsAt = promotionData.startDate
-      if (promotionData.endDate) updateData.expiresAt = promotionData.endDate
-      if (promotionData.categories) updateData.categories = promotionData.categories
-      if (promotionData.products) updateData.products = promotionData.products
-      if (promotionData.customerSegments) updateData.customerSegments = promotionData.customerSegments
-
-      const response = await apiClient.updatePromotion(id, updateData)
-
-      if (response.success) {
-        await fetchPromotions() // Refresh list
-        toast.success(response.message || "Đã cập nhật chương trình khuyến mãi")
-      }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể cập nhật chương trình khuyến mãi"
-      console.error('Error updating promotion:', error)
-      toast.error(message)
-      throw error
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setPromotions(prev => prev.map(promo => 
+        promo.id === id ? { ...promo, ...promotionData } : promo
+      ))
+      
+    } catch {
+      throw new Error("Failed to update promotion")
     }
-  }, [fetchPromotions])
+  }, [])
 
   // Delete promotion
   const deletePromotion = useCallback(async (id: string) => {
     try {
-      const response = await apiClient.deletePromotion(id)
-
-      if (response.success) {
-        await fetchPromotions() // Refresh list
-        toast.success(response.message || "Đã xóa chương trình khuyến mãi")
-      }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể xóa chương trình khuyến mãi"
-      console.error('Error deleting promotion:', error)
-      toast.error(message)
-      throw error
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setPromotions(prev => {
+        const updated = prev.filter(promo => promo.id !== id)
+        
+        // Update stats
+        const now = new Date()
+        const activeCount = updated.filter(p => 
+          p.isActive && p.startDate <= now && p.endDate >= now
+        ).length
+        
+        setStats(prevStats => ({
+          ...prevStats,
+          totalPromotions: updated.length,
+          activePromotions: activeCount
+        }))
+        
+        return updated
+      })
+      
+    } catch {
+      throw new Error("Failed to delete promotion")
     }
-  }, [fetchPromotions])
+  }, [])
 
   // Duplicate promotion
   const duplicatePromotion = useCallback(async (id: string) => {
     try {
-      const response = await apiClient.duplicatePromotion(id)
-
-      if (response.success) {
-        await fetchPromotions() // Refresh list
-        toast.success(response.message || "Đã sao chép chương trình khuyến mãi")
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      const original = promotions.find(p => p.id === id)
+      if (!original) throw new Error("Promotion not found")
+      
+      const duplicated: Promotion = {
+        ...original,
+        id: `promo-${Date.now()}`,
+        code: `${original.code}_COPY`,
+        name: `${original.name} (Copy)`,
+        usageCount: 0,
+        createdAt: new Date(),
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể sao chép chương trình khuyến mãi"
-      console.error('Error duplicating promotion:', error)
-      toast.error(message)
-      throw error
+      
+      setPromotions(prev => [duplicated, ...prev])
+      
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        totalPromotions: prev.totalPromotions + 1,
+        activePromotions: duplicated.isActive ? prev.activePromotions + 1 : prev.activePromotions
+      }))
+      
+    } catch {
+      throw new Error("Failed to duplicate promotion")
     }
-  }, [fetchPromotions])
+  }, [promotions])
 
   // Toggle promotion status
   const togglePromotion = useCallback(async (id: string) => {
     try {
-      const response = await apiClient.togglePromotionStatus(id)
-
-      if (response.success) {
-        await fetchPromotions() // Refresh list
-        toast.success(response.message || "Đã cập nhật trạng thái khuyến mãi")
-      }
-
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể cập nhật trạng thái khuyến mãi"
-      console.error('Error toggling promotion:', error)
-      toast.error(message)
-      throw error
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      setPromotions(prev => prev.map(promo => {
+        if (promo.id === id) {
+          const updated = { ...promo, isActive: !promo.isActive }
+          
+          // Update stats
+          setStats(prevStats => ({
+            ...prevStats,
+            activePromotions: updated.isActive 
+              ? prevStats.activePromotions + 1 
+              : prevStats.activePromotions - 1
+          }))
+          
+          return updated
+        }
+        return promo
+      }))
+      
+    } catch {
+      throw new Error("Failed to toggle promotion")
     }
-  }, [fetchPromotions])
+  }, [])
 
   // Get promotion by code
-  const getPromotionByCode = useCallback(async (code: string) => {
-    try {
-      const response = await apiClient.getPromotionByCode(code)
-
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
-    } catch (error) {
-      console.error('Error getting promotion by code:', error)
-      return null
-    }
-  }, [])
+  const getPromotionByCode = useCallback((code: string) => {
+    return promotions.find(p => p.code === code && p.isActive)
+  }, [promotions])
 
   // Validate promotion
-  const validatePromotion = useCallback(async (code: string, orderAmount: number = 0) => {
-    try {
-      const result = await apiClient.validatePromotionCode(code, orderAmount)
-      return result
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Mã khuyến mãi không hợp lệ"
-      console.error('Error validating promotion:', error)
-      return { valid: false, error: message }
+  const validatePromotion = useCallback((code: string, orderAmount: number = 0) => {
+    const promotion = getPromotionByCode(code)
+    
+    if (!promotion) {
+      return { valid: false, error: "Mã khuyến mãi không tồn tại hoặc đã hết hạn" }
     }
-  }, [])
+    
+    const now = new Date()
+    if (promotion.startDate > now) {
+      return { valid: false, error: "Mã khuyến mãi chưa có hiệu lực" }
+    }
+    
+    if (promotion.endDate < now) {
+      return { valid: false, error: "Mã khuyến mãi đã hết hạn" }
+    }
+    
+    if (promotion.usageLimit && promotion.usageCount >= promotion.usageLimit) {
+      return { valid: false, error: "Mã khuyến mãi đã được sử dụng hết" }
+    }
+    
+    if (promotion.minOrderAmount && orderAmount < promotion.minOrderAmount) {
+      return { 
+        valid: false, 
+        error: `Đơn hàng tối thiểu ${promotion.minOrderAmount.toLocaleString('vi-VN')}đ để sử dụng mã này` 
+      }
+    }
+    
+    return { valid: true, promotion }
+  }, [getPromotionByCode])
 
   // Calculate discount
   const calculateDiscount = useCallback((promotion: Promotion, orderAmount: number) => {
     let discount = 0
-
+    
     switch (promotion.type) {
       case "percentage":
         discount = orderAmount * (promotion.value / 100)
@@ -300,7 +428,7 @@ export function usePromotions() {
         discount = 0
         break
     }
-
+    
     return Math.min(discount, orderAmount)
   }, [])
 

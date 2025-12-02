@@ -41,10 +41,10 @@ let WishlistService = class WishlistService {
                 id: (0, crypto_1.randomUUID)(),
                 updatedAt: new Date(),
                 users: { connect: { id: userId } },
-                products: { connect: { id: productId } },
+                products: { connect: { id: productId } }
             },
             include: {
-                products: true,
+                products: true
             },
         });
         return wishlistItem;
@@ -63,11 +63,7 @@ let WishlistService = class WishlistService {
                         imageUrl: true,
                         images: true,
                         isActive: true,
-                        inventory: {
-                            select: {
-                                stock: true,
-                            },
-                        },
+                        stockQuantity: true,
                         categories: {
                             select: {
                                 id: true,
@@ -82,15 +78,8 @@ let WishlistService = class WishlistService {
                 createdAt: 'desc',
             },
         });
-        const mappedItems = wishlistItems.map(item => ({
-            ...item,
-            products: {
-                ...item.products,
-                stock: item.products.inventory?.stock || 0,
-            },
-        }));
         return {
-            items: mappedItems,
+            items: wishlistItems,
             total: wishlistItems.length,
         };
     }

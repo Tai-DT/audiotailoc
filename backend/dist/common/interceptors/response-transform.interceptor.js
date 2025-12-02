@@ -13,7 +13,7 @@ let ResponseTransformInterceptor = class ResponseTransformInterceptor {
     intercept(context, next) {
         const request = context.switchToHttp().getRequest();
         const _response = context.switchToHttp().getResponse();
-        return next.handle().pipe((0, operators_1.map)(data => ({
+        return next.handle().pipe((0, operators_1.map)((data) => ({
             success: true,
             data,
             message: this.getSuccessMessage(request.method, request.url),

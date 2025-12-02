@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, Query, UseGuards } from '@nestjs/common';
+import { 
+  Body, 
+  Controller, 
+  Get, 
+  Post, 
+  Put, 
+  Delete,
+  Param, 
+  Query, 
+  UseGuards 
+} from '@nestjs/common';
 import { SupportService } from './support.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
@@ -92,7 +102,7 @@ export class SupportController {
     @Query('published') published?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
+    @Query('pageSize') pageSize?: string
   ) {
     return this.supportService.getArticles({
       category,
@@ -113,15 +123,7 @@ export class SupportController {
   @Put('kb/articles/:id')
   updateArticle(
     @Param('id') id: string,
-    @Body()
-    dto: Partial<{
-      title: string;
-      content: string;
-      category: string;
-      tags: string[];
-      published: boolean;
-      slug: string;
-    }>,
+    @Body() dto: Partial<{ title: string; content: string; category: string; tags: string[]; published: boolean; slug: string }>
   ) {
     return this.supportService.updateArticle(id, dto);
   }
@@ -175,7 +177,7 @@ export class SupportController {
     @Query('priority') priority?: string,
     @Query('assignedTo') assignedTo?: string,
     @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
+    @Query('pageSize') pageSize?: string
   ) {
     return this.supportService.getTickets({
       userId,
@@ -189,7 +191,10 @@ export class SupportController {
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put('tickets/:id/status')
-  updateTicketStatus(@Param('id') id: string, @Body() dto: UpdateTicketStatusDto) {
+  updateTicketStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateTicketStatusDto
+  ) {
     return this.supportService.updateTicketStatus(id, dto.status, dto.assignedTo);
   }
 

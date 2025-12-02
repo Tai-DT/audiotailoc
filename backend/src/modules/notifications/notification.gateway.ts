@@ -26,7 +26,7 @@ interface NotificationData {
       process.env.DASHBOARD_URL || 'http://localhost:3001',
       'http://localhost:3000',
       'http://localhost:3001',
-      'http://localhost:3002',
+      'http://localhost:3002'
     ],
     credentials: true,
   },
@@ -42,7 +42,7 @@ export class NotificationGateway {
 
   async handleConnection(client: Socket) {
     this.logger.log(`Notification client connected: ${client.id}`);
-
+    
     // Extract user ID from auth token
     const token = client.handshake.auth.token;
     if (token) {
@@ -52,10 +52,9 @@ export class NotificationGateway {
           this.connectedUsers.set(userId, client);
           client.join(`user_${userId}`);
           this.logger.log(`User ${userId} connected for notifications`);
-
+          
           // Send pending notifications
-          const pendingNotifications =
-            await this.notificationService.getPendingNotifications(userId);
+          const pendingNotifications = await this.notificationService.getPendingNotifications(userId);
           if (pendingNotifications.length > 0) {
             client.emit('pending_notifications', pendingNotifications);
           }
@@ -68,7 +67,7 @@ export class NotificationGateway {
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Notification client disconnected: ${client.id}`);
-
+    
     // Remove user from connected users
     for (const [userId, socket] of this.connectedUsers.entries()) {
       if (socket.id === client.id) {
@@ -116,7 +115,7 @@ export class NotificationGateway {
       client.emit('new_notification', notification);
       this.logger.log(`Notification sent to user ${userId}: ${notification.title}`);
     }
-
+    
     // Also save to database for offline users
     await this.notificationService.createNotification({
       userId,

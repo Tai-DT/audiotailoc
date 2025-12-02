@@ -28,7 +28,7 @@ let MonitoringInterceptor = class MonitoringInterceptor {
             const route = this.getRoutePattern(context);
             const statusCode = response.statusCode;
             this.monitoringService.recordRequest(method, route, statusCode, duration);
-        }), (0, operators_1.catchError)(error => {
+        }), (0, operators_1.catchError)((error) => {
             const duration = Date.now() - start;
             const method = request.method;
             const route = this.getRoutePattern(context);

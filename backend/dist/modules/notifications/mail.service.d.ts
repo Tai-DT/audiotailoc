@@ -1,7 +1,17 @@
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { OrderEmailData } from './templates/email.templates';
-import { InvoiceData } from './templates/invoice.templates';
+interface OrderEmailData {
+    orderNo: string;
+    customerName: string;
+    totalAmount: string;
+    items: Array<{
+        name: string;
+        quantity: number;
+        price: string;
+    }>;
+    status: string;
+    trackingUrl?: string;
+}
 export declare class MailService {
     private readonly config;
     private readonly prisma;
@@ -9,7 +19,6 @@ export declare class MailService {
     private transporter;
     private from;
     constructor(config: ConfigService, prisma: PrismaService);
-    private escapeHtml;
     send(to: string, subject: string, text: string, html?: string): Promise<any>;
     private generateOrderConfirmationTemplate;
     private generateOrderStatusTemplate;
@@ -22,5 +31,5 @@ export declare class MailService {
     }): Promise<any>;
     sendOrderStatusUpdate(to: string, orderData: OrderEmailData): Promise<any>;
     sendWelcomeEmail(to: string, customerName: string): Promise<any>;
-    sendInvoice(to: string, invoiceData: InvoiceData): Promise<any>;
 }
+export {};

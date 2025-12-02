@@ -66,9 +66,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'list_backups', type, status },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'list_backups', type, status } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -87,11 +85,7 @@ let BackupController = class BackupController {
             this.loggingService.logError(error, { metadata: { operation: 'backup_preflight' } });
             throw new common_1.HttpException({
                 success: false,
-                error: {
-                    code: 'BACKUP_PREFLIGHT_ERROR',
-                    message: 'Failed to run backup preflight',
-                    details: error.message,
-                },
+                error: { code: 'BACKUP_PREFLIGHT_ERROR', message: 'Failed to run backup preflight', details: error.message },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -121,9 +115,7 @@ let BackupController = class BackupController {
             if (error instanceof common_1.HttpException) {
                 throw error;
             }
-            this.loggingService.logError(error, {
-                metadata: { operation: 'get_backup_details', backupId },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'get_backup_details', backupId } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -152,9 +144,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'create_full_backup', options },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'create_full_backup', options } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -188,9 +178,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'create_incremental_backup', options },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'create_incremental_backup', options } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -221,9 +209,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'create_file_backup', options },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'create_file_backup', options } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -255,9 +241,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'restore_from_backup', backupId, options },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'restore_from_backup', backupId, options } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -301,9 +285,7 @@ let BackupController = class BackupController {
             if (error instanceof common_1.HttpException) {
                 throw error;
             }
-            this.loggingService.logError(error, {
-                metadata: { operation: 'point_in_time_recovery', options },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'point_in_time_recovery', options } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -354,9 +336,7 @@ let BackupController = class BackupController {
                 });
             });
             readStream.on('error', (error) => {
-                this.loggingService.logError(error, {
-                    metadata: { operation: 'download_backup', backupId },
-                });
+                this.loggingService.logError(error, { metadata: { operation: 'download_backup', backupId } });
                 response.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
                     success: false,
                     error: {
@@ -370,9 +350,7 @@ let BackupController = class BackupController {
             if (error instanceof common_1.HttpException) {
                 throw error;
             }
-            this.loggingService.logError(error, {
-                metadata: { operation: 'download_backup', backupId },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'download_backup', backupId } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -400,18 +378,14 @@ let BackupController = class BackupController {
                 await fs.unlink(backup.path);
             }
             catch (error) {
-                this.loggingService.logError(error, {
-                    metadata: { operation: 'delete_backup_file', backupId, path: backup.path },
-                });
+                this.loggingService.logError(error, { metadata: { operation: 'delete_backup_file', backupId, path: backup.path } });
             }
             const metadataPath = `./backups/metadata/${backupId}.json`;
             try {
                 await fs.unlink(metadataPath);
             }
             catch (error) {
-                this.loggingService.logError(error, {
-                    metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath },
-                });
+                this.loggingService.logError(error, { metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath } });
             }
             this.loggingService.logBusinessEvent('backup_deleted', {
                 backupId,
@@ -427,9 +401,7 @@ let BackupController = class BackupController {
             if (error instanceof common_1.HttpException) {
                 throw error;
             }
-            this.loggingService.logError(error, {
-                metadata: { operation: 'delete_backup', backupId },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'delete_backup', backupId } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -453,9 +425,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'cleanup_old_backups' },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'cleanup_old_backups' } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -485,15 +455,9 @@ let BackupController = class BackupController {
                 totalSize: backups.reduce((sum, b) => sum + b.size, 0),
                 averageBackupSize: backups.length > 0 ? backups.reduce((sum, b) => sum + b.size, 0) / backups.length : 0,
                 largestBackup: backups.length > 0 ? Math.max(...backups.map(b => b.size)) : 0,
-                oldestBackup: backups.length > 0
-                    ? backups.reduce((oldest, current) => current.timestamp < oldest.timestamp ? current : oldest).timestamp
-                    : null,
-                newestBackup: backups.length > 0
-                    ? backups.reduce((newest, current) => current.timestamp > newest.timestamp ? current : newest).timestamp
-                    : null,
-                successRate: backups.length > 0
-                    ? (backups.filter(b => b.status === 'completed').length / backups.length) * 100
-                    : 0,
+                oldestBackup: backups.length > 0 ? backups.reduce((oldest, current) => current.timestamp < oldest.timestamp ? current : oldest).timestamp : null,
+                newestBackup: backups.length > 0 ? backups.reduce((newest, current) => current.timestamp > newest.timestamp ? current : newest).timestamp : null,
+                successRate: backups.length > 0 ? (backups.filter(b => b.status === 'completed').length / backups.length) * 100 : 0,
                 status,
             };
             this.loggingService.logBusinessEvent('backup_analytics_requested', {
@@ -506,9 +470,7 @@ let BackupController = class BackupController {
             };
         }
         catch (error) {
-            this.loggingService.logError(error, {
-                metadata: { operation: 'get_backup_analytics' },
-            });
+            this.loggingService.logError(error, { metadata: { operation: 'get_backup_analytics' } });
             throw new common_1.HttpException({
                 success: false,
                 error: {
@@ -613,7 +575,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], BackupController.prototype, "getBackupAnalytics", null);
 exports.BackupController = BackupController = __decorate([
-    (0, common_1.Controller)('backup'),
+    (0, common_1.Controller)('api/v1/backup'),
     __metadata("design:paramtypes", [backup_service_1.BackupService,
         logging_service_1.LoggingService])
 ], BackupController);

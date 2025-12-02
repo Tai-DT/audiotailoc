@@ -18,9 +18,9 @@ export declare class BannersService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            isDeleted: boolean;
             imageUrl: string;
             isActive: boolean;
+            isDeleted: boolean;
             page: string;
             title: string;
             subtitle: string | null;
@@ -42,9 +42,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;
@@ -61,9 +61,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;
@@ -80,9 +80,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;
@@ -99,9 +99,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;
@@ -118,9 +118,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;
@@ -137,9 +137,9 @@ export declare class BannersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isDeleted: boolean;
         imageUrl: string;
         isActive: boolean;
+        isDeleted: boolean;
         page: string;
         title: string;
         subtitle: string | null;

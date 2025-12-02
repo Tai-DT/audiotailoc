@@ -29,7 +29,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   
-  const { user, isLoading } = useAuth();
+  const { data: user, isLoading } = useAuth();
   const logoutMutation = useLogout();
 
   // Check if user is authenticated and has admin role
@@ -146,12 +146,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="p-4 border-t">
             <div className="flex items-center space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar} alt={user.name || 'Admin'} />
-                <AvatarFallback>{(user.name || 'A').charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.name || 'Admin User'}
+                  {user.name}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
                   {user.email}
@@ -198,12 +198,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               {/* User menu */}
               <div className="flex items-center space-x-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar} alt={user.name || 'Admin'} />
-                  <AvatarFallback>{(user.name || 'A').charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium text-gray-900">
-                    {user.name || 'Admin User'}
+                    {user.name}
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleLogout}>

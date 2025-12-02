@@ -39,11 +39,11 @@ let CartService = CartService_1 = class CartService {
                                 priceCents: true,
                                 images: true,
                                 imageUrl: true,
-                            },
-                        },
-                    },
-                },
-            },
+                            }
+                        }
+                    }
+                }
+            }
         });
         this.logger.log(`Guest cart created: ${guestCart.id}`);
         return guestCart;
@@ -53,7 +53,7 @@ let CartService = CartService_1 = class CartService {
             where: {
                 id: cartId,
                 userId: null,
-                status: 'ACTIVE',
+                status: 'ACTIVE'
             },
             include: {
                 cart_items: {
@@ -65,11 +65,11 @@ let CartService = CartService_1 = class CartService {
                                 priceCents: true,
                                 images: true,
                                 imageUrl: true,
-                            },
-                        },
-                    },
-                },
-            },
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
@@ -77,24 +77,24 @@ let CartService = CartService_1 = class CartService {
         return this.calculateCartTotals(cart);
     }
     async addToGuestCart(cartId, productId, quantity = 1) {
-        const cart = await this.prisma.carts.findFirst({
+        let cart = await this.prisma.carts.findFirst({
             where: {
                 id: cartId,
                 userId: null,
-                status: 'ACTIVE',
-            },
+                status: 'ACTIVE'
+            }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
         const product = await this.prisma.products.findUnique({
-            where: { id: productId },
+            where: { id: productId }
         });
         if (!product) {
             throw new common_1.NotFoundException('Product not found');
         }
         const inventory = await this.prisma.inventory.findUnique({
-            where: { productId: productId },
+            where: { productId: productId }
         });
         if (!inventory) {
             this.logger.warn(`No inventory record found for product ${productId}`);
@@ -108,13 +108,13 @@ let CartService = CartService_1 = class CartService {
         const existingItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
-                productId,
-            },
+                productId
+            }
         });
         if (existingItem) {
             await this.prisma.cart_items.update({
                 where: { id: existingItem.id },
-                data: { quantity: existingItem.quantity + quantity },
+                data: { quantity: existingItem.quantity + quantity }
             });
         }
         else {
@@ -125,8 +125,8 @@ let CartService = CartService_1 = class CartService {
                     carts: { connect: { id: cart.id } },
                     products: { connect: { id: productId } },
                     quantity,
-                    price: product.priceCents,
-                },
+                    price: product.priceCents
+                }
             });
         }
         this.logger.log(`Added ${quantity} of product ${productId} to guest cart ${cartId}`);
@@ -134,7 +134,7 @@ let CartService = CartService_1 = class CartService {
     }
     async updateGuestCartItem(cartId, productId, quantity) {
         const cart = await this.prisma.carts.findFirst({
-            where: { id: cartId, userId: null, status: 'ACTIVE' },
+            where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
@@ -142,40 +142,31 @@ let CartService = CartService_1 = class CartService {
         const cartItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
-                productId,
-            },
+                productId
+            }
         });
         if (!cartItem) {
             throw new common_1.NotFoundException('Cart item not found');
         }
         const delta = quantity - cartItem.quantity;
-        if (delta > 0) {
-            const inventory = await this.prisma.inventory.findUnique({
-                where: { productId: productId },
-            });
-            if (inventory) {
-                const availableStock = inventory.stock - inventory.reserved;
-                if (availableStock < delta) {
-                    throw new common_1.NotFoundException(`Insufficient stock. Available: ${availableStock}, Requested increase: ${delta}`);
-                }
-            }
+        if (delta !== 0) {
         }
         if (quantity <= 0) {
             await this.prisma.cart_items.delete({
-                where: { id: cartItem.id },
+                where: { id: cartItem.id }
             });
         }
         else {
             await this.prisma.cart_items.update({
                 where: { id: cartItem.id },
-                data: { quantity },
+                data: { quantity }
             });
         }
         return this.getGuestCart(cartId);
     }
     async removeFromGuestCart(cartId, productId) {
         const cart = await this.prisma.carts.findFirst({
-            where: { id: cartId, userId: null, status: 'ACTIVE' },
+            where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
@@ -188,7 +179,7 @@ let CartService = CartService_1 = class CartService {
     }
     async clearGuestCart(cartId) {
         const cart = await this.prisma.carts.findFirst({
-            where: { id: cartId, userId: null, status: 'ACTIVE' },
+            where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('Guest cart not found');
@@ -201,29 +192,29 @@ let CartService = CartService_1 = class CartService {
     }
     async convertGuestCartToUserCart(cartId, userId) {
         const guestCart = await this.prisma.carts.findFirst({
-            where: { id: cartId, userId: null, status: 'ACTIVE' },
+            where: { id: cartId, userId: null, status: 'ACTIVE' }
         });
         if (!guestCart) {
             throw new common_1.NotFoundException('Guest cart not found');
         }
         const existingUserCart = await this.prisma.carts.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, status: 'ACTIVE' }
         });
         if (existingUserCart) {
             const guestItems = await this.prisma.cart_items.findMany({
-                where: { cartId: guestCart.id },
+                where: { cartId: guestCart.id }
             });
             for (const item of guestItems) {
                 const existingItem = await this.prisma.cart_items.findFirst({
                     where: {
                         cartId: existingUserCart.id,
-                        productId: item.productId,
-                    },
+                        productId: item.productId
+                    }
                 });
                 if (existingItem) {
                     await this.prisma.cart_items.update({
                         where: { id: existingItem.id },
-                        data: { quantity: existingItem.quantity + item.quantity },
+                        data: { quantity: existingItem.quantity + item.quantity }
                     });
                 }
                 else {
@@ -234,13 +225,13 @@ let CartService = CartService_1 = class CartService {
                             carts: { connect: { id: existingUserCart.id } },
                             products: { connect: { id: item.productId } },
                             quantity: item.quantity,
-                            price: item.price,
-                        },
+                            price: item.price
+                        }
                     });
                 }
             }
             await this.prisma.carts.delete({
-                where: { id: guestCart.id },
+                where: { id: guestCart.id }
             });
             return this.getUserCart(userId);
         }
@@ -248,8 +239,8 @@ let CartService = CartService_1 = class CartService {
             await this.prisma.carts.update({
                 where: { id: guestCart.id },
                 data: {
-                    userId,
-                },
+                    userId
+                }
             });
             return this.getUserCart(userId);
         }
@@ -258,7 +249,7 @@ let CartService = CartService_1 = class CartService {
         const cart = await this.prisma.carts.findFirst({
             where: {
                 userId,
-                status: 'ACTIVE',
+                status: 'ACTIVE'
             },
             include: {
                 cart_items: {
@@ -269,11 +260,11 @@ let CartService = CartService_1 = class CartService {
                                 name: true,
                                 priceCents: true,
                                 images: true,
-                            },
-                        },
-                    },
-                },
-            },
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!cart) {
             return this.createUserCart(userId);
@@ -286,7 +277,7 @@ let CartService = CartService_1 = class CartService {
                 id: (0, crypto_1.randomUUID)(),
                 updatedAt: new Date(),
                 userId,
-                status: 'ACTIVE',
+                status: 'ACTIVE'
             },
             include: {
                 cart_items: {
@@ -297,18 +288,18 @@ let CartService = CartService_1 = class CartService {
                                 name: true,
                                 priceCents: true,
                                 images: true,
-                            },
-                        },
-                    },
-                },
-            },
+                            }
+                        }
+                    }
+                }
+            }
         });
         this.logger.log(`User cart created: ${userId}`);
         return this.calculateCartTotals(cart);
     }
     async addToUserCart(userId, productId, quantity = 1) {
         let cart = await this.prisma.carts.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             cart = await this.createUserCart(userId);
@@ -317,33 +308,21 @@ let CartService = CartService_1 = class CartService {
             throw new Error('Failed to create or find cart');
         }
         const product = await this.prisma.products.findUnique({
-            where: { id: productId },
+            where: { id: productId }
         });
         if (!product) {
             throw new common_1.NotFoundException('Product not found');
         }
-        const inventory = await this.prisma.inventory.findUnique({
-            where: { productId: productId },
-        });
-        if (!inventory) {
-            this.logger.warn(`No inventory record found for product ${productId}`);
-        }
-        else {
-            const availableStock = inventory.stock - inventory.reserved;
-            if (availableStock < quantity) {
-                throw new common_1.NotFoundException(`Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`);
-            }
-        }
         const existingItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
-                productId,
-            },
+                productId
+            }
         });
         if (existingItem) {
             await this.prisma.cart_items.update({
                 where: { id: existingItem.id },
-                data: { quantity: existingItem.quantity + quantity },
+                data: { quantity: existingItem.quantity + quantity }
             });
         }
         else {
@@ -354,15 +333,15 @@ let CartService = CartService_1 = class CartService {
                     carts: { connect: { id: cart.id } },
                     products: { connect: { id: productId } },
                     quantity,
-                    price: product.priceCents,
-                },
+                    price: product.priceCents
+                }
             });
         }
         return this.getUserCart(userId);
     }
     async updateUserCartItem(userId, productId, quantity) {
         const cart = await this.prisma.carts.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
@@ -370,40 +349,31 @@ let CartService = CartService_1 = class CartService {
         const cartItem = await this.prisma.cart_items.findFirst({
             where: {
                 cartId: cart.id,
-                productId,
-            },
+                productId
+            }
         });
         if (!cartItem) {
             throw new common_1.NotFoundException('Cart item not found');
         }
         const delta = quantity - cartItem.quantity;
-        if (delta > 0) {
-            const inventory = await this.prisma.inventory.findUnique({
-                where: { productId: productId },
-            });
-            if (inventory) {
-                const availableStock = inventory.stock - inventory.reserved;
-                if (availableStock < delta) {
-                    throw new common_1.NotFoundException(`Insufficient stock. Available: ${availableStock}, Requested increase: ${delta}`);
-                }
-            }
+        if (delta !== 0) {
         }
         if (quantity <= 0) {
             await this.prisma.cart_items.delete({
-                where: { id: cartItem.id },
+                where: { id: cartItem.id }
             });
         }
         else {
             await this.prisma.cart_items.update({
                 where: { id: cartItem.id },
-                data: { quantity },
+                data: { quantity }
             });
         }
         return this.getUserCart(userId);
     }
     async removeFromUserCart(userId, productId) {
         const cart = await this.prisma.carts.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
@@ -416,7 +386,7 @@ let CartService = CartService_1 = class CartService {
     }
     async clearUserCart(userId) {
         const cart = await this.prisma.carts.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, status: 'ACTIVE' }
         });
         if (!cart) {
             throw new common_1.NotFoundException('User cart not found');
@@ -429,7 +399,7 @@ let CartService = CartService_1 = class CartService {
     }
     calculateCartTotals(cart) {
         const subtotal = cart.items.reduce((sum, item) => {
-            return sum + (item.price ?? item.products?.priceCents ?? 0) * item.quantity;
+            return sum + ((item.price ?? item.products?.priceCents ?? 0) * item.quantity);
         }, 0);
         const itemCount = cart.items.reduce((sum, item) => {
             return sum + item.quantity;
@@ -440,7 +410,7 @@ let CartService = CartService_1 = class CartService {
             itemCount,
             tax: Math.round(subtotal * 0.1),
             shipping: subtotal > 500000 ? 0 : 30000,
-            total: subtotal + Math.round(subtotal * 0.1) + (subtotal > 500000 ? 0 : 30000),
+            total: subtotal + Math.round(subtotal * 0.1) + (subtotal > 500000 ? 0 : 30000)
         };
     }
     async cleanupExpiredGuestCarts() {
@@ -449,21 +419,18 @@ let CartService = CartService_1 = class CartService {
             where: {
                 userId: null,
                 createdAt: { lt: sevenDaysAgo },
-                status: 'ACTIVE',
-            },
+                status: 'ACTIVE'
+            }
         });
         for (const cart of expiredCarts) {
             await this.prisma.carts.update({
                 where: { id: cart.id },
-                data: { status: 'ABANDONED' },
+                data: { status: 'ABANDONED' }
             });
         }
         this.logger.log(`Cleaned up ${expiredCarts.length} expired guest carts`);
     }
     async getCartWithTotals(userId) {
-        if (!userId) {
-            return { cart: null, items: [], subtotalCents: 0 };
-        }
         const cart = await this.prisma.carts.findFirst({
             where: { userId, status: 'ACTIVE' },
         });

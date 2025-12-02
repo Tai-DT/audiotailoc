@@ -1,4 +1,14 @@
-import { Controller, Get, Query, Post, Body, Param, UseGuards, Req, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SearchService, SearchFilters, SearchResponse } from './search.service';
 import { AdminGuard } from '../auth/admin.guard';
@@ -8,7 +18,7 @@ import { AdminGuard } from '../auth/admin.guard';
  * Handles search endpoints for products, services, blog, and knowledge base
  */
 @ApiTags('Search')
-@Controller('search')
+@Controller('api/v1/search')
 export class SearchController {
   private readonly logger = new Logger(SearchController.name);
 
@@ -24,43 +34,17 @@ export class SearchController {
     description: 'Unified search across products, services, blog articles, and knowledge base',
   })
   @ApiQuery({ name: 'q', description: 'Search query', type: String, required: true })
-  @ApiQuery({
-    name: 'type',
-    description: 'Content type filter',
-    enum: ['product', 'service', 'blog', 'knowledge', 'all'],
-    required: false,
-  })
+  @ApiQuery({ name: 'type', description: 'Content type filter', enum: ['product', 'service', 'blog', 'knowledge', 'all'], required: false })
   @ApiQuery({ name: 'category', description: 'Category filter', type: String, required: false })
   @ApiQuery({ name: 'priceMin', description: 'Minimum price', type: Number, required: false })
   @ApiQuery({ name: 'priceMax', description: 'Maximum price', type: Number, required: false })
   @ApiQuery({ name: 'brand', description: 'Brand filter', type: String, required: false })
-  @ApiQuery({
-    name: 'serviceType',
-    description: 'Service type filter',
-    type: String,
-    required: false,
-  })
+  @ApiQuery({ name: 'serviceType', description: 'Service type filter', type: String, required: false })
   @ApiQuery({ name: 'minRating', description: 'Minimum rating', type: Number, required: false })
-  @ApiQuery({
-    name: 'sortBy',
-    description: 'Sort by',
-    enum: ['relevance', 'price-asc', 'price-desc', 'newest', 'popular', 'rating'],
-    required: false,
-  })
+  @ApiQuery({ name: 'sortBy', description: 'Sort by', enum: ['relevance', 'price-asc', 'price-desc', 'newest', 'popular', 'rating'], required: false })
   @ApiQuery({ name: 'page', description: 'Page number', type: Number, required: false, example: 1 })
-  @ApiQuery({
-    name: 'pageSize',
-    description: 'Page size',
-    type: Number,
-    required: false,
-    example: 20,
-  })
-  @ApiQuery({
-    name: 'includeFacets',
-    description: 'Include facets in response',
-    type: Boolean,
-    required: false,
-  })
+  @ApiQuery({ name: 'pageSize', description: 'Page size', type: Number, required: false, example: 20 })
+  @ApiQuery({ name: 'includeFacets', description: 'Include facets in response', type: Boolean, required: false })
   @ApiResponse({ status: 200, description: 'Search results' })
   @ApiResponse({ status: 400, description: 'Invalid search query' })
   async search(
@@ -97,9 +81,9 @@ export class SearchController {
 
       // Log search query (extract user ID if authenticated)
       const userId = req?.users?.sub || null;
-      this.searchService
-        .logSearchQuery(userId, query, result.total)
-        .catch(error => this.logger.error('Failed to log search query:', error));
+      this.searchService.logSearchQuery(userId, query, result.total).catch(error =>
+        this.logger.error('Failed to log search query:', error),
+      );
 
       return result;
     } catch (error) {
@@ -117,13 +101,7 @@ export class SearchController {
     summary: 'Get popular search queries',
     description: 'Retrieve the most popular search queries',
   })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of results',
-    type: Number,
-    required: false,
-    example: 10,
-  })
+  @ApiQuery({ name: 'limit', description: 'Number of results', type: Number, required: false, example: 10 })
   @ApiResponse({ status: 200, description: 'Popular searches' })
   async getPopularSearches(@Query('limit') limit?: string) {
     try {
@@ -146,13 +124,7 @@ export class SearchController {
     description: 'Get autocomplete suggestions based on partial query',
   })
   @ApiQuery({ name: 'q', description: 'Partial query', type: String, required: true })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of suggestions',
-    type: Number,
-    required: false,
-    example: 5,
-  })
+  @ApiQuery({ name: 'limit', description: 'Number of suggestions', type: Number, required: false, example: 5 })
   @ApiResponse({ status: 200, description: 'Search suggestions' })
   async getSearchSuggestions(@Query('q') query: string, @Query('limit') limit?: string) {
     try {
@@ -233,9 +205,9 @@ export class SearchController {
 
       // Log search query
       const userId = req?.users?.sub || null;
-      this.searchService
-        .logSearchQuery(userId, query, result.total)
-        .catch(error => this.logger.error('Failed to log search query:', error));
+      this.searchService.logSearchQuery(userId, query, result.total).catch(error =>
+        this.logger.error('Failed to log search query:', error),
+      );
 
       return result;
     } catch (error) {

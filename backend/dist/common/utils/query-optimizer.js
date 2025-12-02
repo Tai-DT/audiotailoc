@@ -117,12 +117,20 @@ class QueryOptimizer {
         }
         const order = sortOrder || 'desc';
         const sortMapping = {
-            name: { name: order },
-            price: { priceCents: order },
-            created: { createdAt: order },
-            updated: { updatedAt: order },
-            popularity: [{ featured: 'desc' }, { viewCount: 'desc' }, { createdAt: 'desc' }],
-            relevance: [{ featured: 'desc' }, { _relevance: 'desc' }, { createdAt: 'desc' }],
+            'name': { name: order },
+            'price': { priceCents: order },
+            'created': { createdAt: order },
+            'updated': { updatedAt: order },
+            'popularity': [
+                { featured: 'desc' },
+                { viewCount: 'desc' },
+                { createdAt: 'desc' },
+            ],
+            'relevance': [
+                { featured: 'desc' },
+                { _relevance: 'desc' },
+                { createdAt: 'desc' },
+            ],
         };
         return sortMapping[sortBy] || { [sortBy]: order };
     }

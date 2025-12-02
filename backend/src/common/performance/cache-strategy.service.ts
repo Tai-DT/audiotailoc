@@ -1,14 +1,14 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { MetricsService } from '../monitoring/metrics.service';
 
 /**
  * Cache strategies enum
  */
 export enum CacheStrategy {
-  LRU = 'LRU', // Least Recently Used
-  LFU = 'LFU', // Least Frequently Used
-  FIFO = 'FIFO', // First In First Out
-  TTL = 'TTL', // Time To Live
+  LRU = 'LRU',           // Least Recently Used
+  LFU = 'LFU',           // Least Frequently Used
+  FIFO = 'FIFO',         // First In First Out
+  TTL = 'TTL',           // Time To Live
 }
 
 /**
@@ -57,7 +57,9 @@ export class CacheStrategyService {
   private readonly strategy: CacheStrategy;
   private readonly defaultTTL: number; // Default TTL in milliseconds
 
-  constructor(@Optional() private readonly metricsService?: MetricsService) {
+  constructor(
+    @Optional() private readonly metricsService?: MetricsService,
+  ) {
     this.maxSize = this.parseSize(process.env.CACHE_MAX_SIZE || '100MB');
     this.strategy = (process.env.CACHE_STRATEGY as CacheStrategy) || CacheStrategy.LRU;
     this.defaultTTL = parseInt(process.env.CACHE_DEFAULT_TTL || '3600000', 10);
@@ -147,7 +149,9 @@ export class CacheStrategyService {
       this.metricsService.setCacheSize('strategy', this.currentSize);
     }
 
-    this.logger.debug(`Cached ${key}: ${this.formatBytes(size)} (${duration}ms)`);
+    this.logger.debug(
+      `Cached ${key}: ${this.formatBytes(size)} (${duration}ms)`,
+    );
   }
 
   /**
@@ -269,7 +273,9 @@ export class CacheStrategyService {
     }
 
     const duration = Date.now() - startTime;
-    this.logger.log(`Warmed cache with ${entries.length} entries in ${duration}ms`);
+    this.logger.log(
+      `Warmed cache with ${entries.length} entries in ${duration}ms`,
+    );
   }
 
   /**

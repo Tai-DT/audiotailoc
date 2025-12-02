@@ -16,7 +16,9 @@ const monitoring_interceptor_1 = require("./monitoring.interceptor");
 const logging_service_1 = require("./logging.service");
 let MonitoringModule = class MonitoringModule {
     configure(consumer) {
-        consumer.apply(monitoring_middleware_1.MonitoringMiddleware).forRoutes('*');
+        consumer
+            .apply(monitoring_middleware_1.MonitoringMiddleware)
+            .forRoutes('*');
     }
 };
 exports.MonitoringModule = MonitoringModule;

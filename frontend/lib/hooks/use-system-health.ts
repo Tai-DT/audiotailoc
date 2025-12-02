@@ -49,7 +49,7 @@ export interface SystemHealthData {
 export interface HealthCheck {
   status: 'healthy' | 'unhealthy' | 'degraded';
   message: string;
-  details?: unknown;
+  details?: any;
   responseTime?: number;
 }
 

@@ -11,7 +11,7 @@ export declare class InputValidationMiddleware implements NestMiddleware {
     private validateContentType;
 }
 import { ValidationOptions } from 'class-validator';
-export declare function IsSecureString(validationOptions?: ValidationOptions): (object: object, propertyName: string) => void;
-export declare function IsSecureEmail(validationOptions?: ValidationOptions): (object: object, propertyName: string) => void;
-export declare function IsSecurePhoneNumber(validationOptions?: ValidationOptions): (object: object, propertyName: string) => void;
-export declare function IsStrongPassword(validationOptions?: ValidationOptions): (object: object, propertyName: string) => void;
+export declare function IsSecureString(validationOptions?: ValidationOptions): (object: Object, propertyName: string) => void;
+export declare function IsSecureEmail(validationOptions?: ValidationOptions): (object: Object, propertyName: string) => void;
+export declare function IsSecurePhoneNumber(validationOptions?: ValidationOptions): (object: Object, propertyName: string) => void;
+export declare function IsStrongPassword(validationOptions?: ValidationOptions): (object: Object, propertyName: string) => void;

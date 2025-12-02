@@ -135,7 +135,7 @@ function ProductsPageContent() {
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-destructive">
               <X className="h-4 w-4 flex-shrink-0" />
-              <span><strong>Không tìm thấy {"\""}{categorySlug}{"\""}</strong> - Hiển thị tất cả sản phẩm</span>
+              <span><strong>Không tìm thấy "{categorySlug}"</strong> - Hiển thị tất cả sản phẩm</span>
             </div>
           </div>
         </div>
@@ -267,11 +267,11 @@ function ProductsPageContent() {
               <span>
                 {data?.items.length || 0} sản phẩm
                 {currentCategory && <span className="font-medium text-foreground"> • {currentCategory.name}</span>}
-                {filters.q && <span className="font-medium text-foreground"> • {"\""}{filters.q}{"\""}</span>}
+                {filters.q && <span className="font-medium text-foreground"> • "{filters.q}"</span>}
               </span>
             </div>
           )}
-
+          
           <ProductGrid
             products={data?.items || []}
             loading={isLoading || categoriesLoading}

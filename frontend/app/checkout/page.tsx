@@ -91,21 +91,15 @@ export default function CheckoutPage() {
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<AddressSuggestion | null>(null);
   const [shippingCoordinates, setShippingCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Promotion code state
-  interface AppliedPromotion {
-    name?: string;
-    [key: string]: unknown;
-  }
-
-  const [promotionCode, setPromotionCode] = useState('');
-  const [appliedPromotion, setAppliedPromotion] = useState<AppliedPromotion | null>(null);
-  const [promotionDiscount, setPromotionDiscount] = useState(0);
-  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
 
   const shippingFee = total > 500000 ? 0 : 30000;
-  const finalTotal = total + shippingFee - promotionDiscount;
+  const finalTotal = total + shippingFee;
+
+  useEffect(() => {
+    if (items.length === 0) {
+      router.push('/cart');
+    }
+  }, [items.length, router]);
 
   const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -116,15 +110,6 @@ export default function CheckoutPage() {
       setShippingCoordinates(null);
     }
   };
-
-  // Redirect to cart immediately if empty (before any renders)
-  useEffect(() => {
-    if (items.length === 0 && !isRedirecting) {
-      setIsRedirecting(true);
-      toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.');
-      router.push('/cart');
-    }
-  }, [items.length, router, isRedirecting]);
 
   useEffect(() => {
     const query = shippingInfo.address.trim();
@@ -227,264 +212,95 @@ export default function CheckoutPage() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleApplyPromotion = async () => {
-    if (!promotionCode.trim()) {
-      toast.error('Vui lòng nhập mã khuyến mãi');
-      return;
-    }
-
-    setIsValidatingPromo(true);
-    try {
-      // Prepare cart items for promotion validation
-      // Frontend cart items only contain basic product info, so we send
-      // minimal data (productId, quantity, priceCents) and let backend
-      // infer category eligibility.
-      const cartItemsForPromo = items.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-        priceCents: item.price,
-      }));
-
-      const response = await apiClient.post('/promotions/apply-to-cart', {
-        code: promotionCode.toUpperCase(),
-        items: cartItemsForPromo
-      });
-
-      const promoData = response?.data?.data ?? response?.data;
-
-      if (promoData.valid) {
-        setAppliedPromotion(promoData.promotion);
-        setPromotionDiscount(promoData.totalDiscount || 0);
-        toast.success(`Áp dụng mã ${promotionCode.toUpperCase()} thành công! Giảm ${promoData.totalDiscount.toLocaleString('vi-VN')}₫`);
-      } else {
-        toast.error(promoData.message || 'Mã khuyến mãi không hợp lệ');
-        setAppliedPromotion(null);
-        setPromotionDiscount(0);
-      }
-    } catch (error: unknown) {
-      console.error('Failed to apply promotion:', error);
-
-      type ErrorWithResponse = {
-        response?: { data?: { message?: string } };
-      };
-
-      const err = error as ErrorWithResponse;
-      toast.error(err.response?.data?.message || 'Không thể áp dụng mã khuyến mãi');
-      setAppliedPromotion(null);
-      setPromotionDiscount(0);
-    } finally {
-      setIsValidatingPromo(false);
-    }
-  };
-
-  const handleRemovePromotion = () => {
-    setPromotionCode('');
-    setAppliedPromotion(null);
-    setPromotionDiscount(0);
-    toast.success('Đã xóa mã khuyến mãi');
-  };
-
   const handlePlaceOrder = async () => {
-    // Prevent multiple submissions
-    if (isProcessing || isRedirecting) {
-      return;
-    }
-
     if (!agreeToTerms) {
       toast.error('Vui lòng đồng ý với điều khoản và điều kiện');
-      return;
-    }
-
-    // Kiểm tra giỏ hàng trống trước khi gửi request
-    if (!items || items.length === 0) {
-      toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.');
-      setIsRedirecting(true);
-      router.push('/cart');
-      return;
-    }
-
-    // Kiểm tra thông tin giao hàng
-    if (!shippingInfo.fullName || !shippingInfo.email || !shippingInfo.phone || !shippingInfo.address) {
-      toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
-      setCurrentStep(1);
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const orderData = {
+        customerName: shippingInfo.fullName,
+        customerPhone: shippingInfo.phone,
+        customerEmail: shippingInfo.email,
+        shippingAddress: shippingInfo.address,
+        notes: shippingInfo.notes,
+        paymentMethod,
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          name: item.name,
+        })),
+        shippingCoordinates: shippingCoordinates ?? undefined,
+        goongPlaceId: selectedPlace?.place_id || selectedPlace?.placeId,
+        finalTotal,
+      };
 
-      // Log cart items for debugging
-      console.log('[Checkout] Cart items:', items.length, 'items');
-      console.log('[Checkout] Total:', total);
-
-      // Bước 1: Tạo order từ cart
-      console.log('[Checkout] Creating order...');
-      
-      // Prepare cart items để gửi cho guest checkout
-      const cartItems = items.map(item => ({
-        productId: item.id,
-        quantity: item.quantity
-      }));
-      
-      const orderResponse = await apiClient.post('/checkout', {
-        promotionCode: appliedPromotion ? promotionCode.toUpperCase() : undefined,
-        shippingAddress: {
-          fullName: shippingInfo.fullName,
-          phone: shippingInfo.phone,
-          email: shippingInfo.email,
-          address: shippingInfo.address,
-          notes: shippingInfo.notes,
-          coordinates: shippingCoordinates,
-          goongPlaceId: selectedPlace?.place_id || selectedPlace?.placeId,
-        },
-        items: cartItems  // Gửi cart items cho guest checkout
-      }, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
-
-      // Unwrap backend response which may be wrapped as { success, data }
-      const orderData = orderResponse?.data?.data ?? orderResponse?.data ?? {};
-      console.log('[Checkout] Order created:', orderData);
-      const { id: orderId, orderNo } = orderData;
-
-      // Bước 2: Tạo payment intent dựa trên phương thức thanh toán
-      console.log('[Checkout] Creating payment intent...', { 
-        orderId, 
-        provider: paymentMethod === 'payos' ? 'PAYOS' : 'COD' 
-      });
-      
-      const intentResponse = await apiClient.post('/payments/intents', {
-        orderId,
-        provider: paymentMethod === 'payos' ? 'PAYOS' : 'COD',
-        idempotencyKey: `${orderId}-${Date.now()}`,
-        returnUrl: `${window.location.origin}/order-success?orderId=${orderNo}`
-      }, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
-
-      // Unwrap backend response which may be wrapped as { success, data }
-      const intentData = intentResponse?.data?.data ?? intentResponse?.data ?? {};
-      console.log('[Checkout] Payment intent created:', intentData);
-      const redirectUrl =
-        intentData.redirectUrl ||
-        intentData.url ||
-        intentData.paymentUrl ||
-        intentData.redirect_url ||
-        intentData.payUrl ||
-        undefined;
-
-      // Bước 3: Xử lý response dựa trên phương thức thanh toán
+      // Process payment based on method
       if (paymentMethod === 'payos') {
-        if (!redirectUrl) {
-          throw new Error('Không nhận được link thanh toán từ PayOS. Vui lòng thử lại.');
+        const response = await fetch('/api/payment/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderData,
+            paymentMethod: 'payos'
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.paymentUrl) {
+          toast.success('Đang chuyển hướng đến PayOS...');
+          // Redirect to PayOS payment page in the same window
+          window.location.href = result.paymentUrl;
+          return;
+        } else {
+          throw new Error(result.error || 'PayOS payment failed');
         }
-        
-        console.log('[Checkout] Redirecting to PayOS:', redirectUrl);
-        toast.success('Đang chuyển đến trang thanh toán...');
-        
-        // ✅ FIX: Lưu orderId để clear cart SAU KHI webhook confirm
-        // KHÔNG clear cart ở đây để tránh mất data nếu user quay lại
-        localStorage.setItem('pending-payos-order', orderNo);
-        
-        // Đợi 1 giây để user thấy toast message
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 1000);
-        return;
       }
 
       if (paymentMethod === 'cod') {
-        // COD: Đơn hàng đã được xác nhận, redirect đến order success
-        toast.success('Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
-        clearCart();
-        router.push(`/order-success?orderId=${orderNo}&method=cod`);
-        return;
-      }
+        const response = await fetch('/api/payment/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderData,
+            paymentMethod: 'cod'
+          }),
+        });
 
-      throw new Error('Phương thức thanh toán không hợp lệ');
+        const result = await response.json();
 
-      } catch (error: unknown) {
-      console.error('[Checkout] Order creation failed:', error);
-      
-      // Normalize axios error and include full response for debugging (typed)
-      interface AxiosErrorLike {
-        response?: { status?: number; data?: unknown };
-        message?: string;
-      }
-      const axiosError = error as AxiosErrorLike;
-      const statusCode = axiosError.response?.status;
-      const responseData = axiosError.response?.data as Record<string, unknown> | undefined;
-      const errorCode = responseData ? (responseData['code'] as string | undefined) : undefined;
-      const errorMessage = (responseData && (responseData['message'] as string)) || axiosError.message || 'Có lỗi xảy ra';
-      
-      // Detailed debug log
-      console.error('[Checkout] Error details:', {
-        statusCode,
-        errorCode,
-        errorMessage,
-        responseData,
-        timestamp: new Date().toISOString()
-      });
-      
-      // ✅ FIX: Handle specific errors
-      if (statusCode === 400) {
-        if (errorMessage.includes('Giỏ hàng trống') || errorCode === 'EMPTY_CART') {
-          toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.');
-          setIsRedirecting(true);
+        if (result.success) {
+          toast.success('Đặt hàng COD thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
           clearCart();
-          setTimeout(() => router.push('/cart'), 1500);
+          router.push(`/order-success?orderId=${result.orderId}&method=cos`);
           return;
-        }
-        
-        if (errorMessage.includes('thông tin giao hàng') || errorCode === 'INVALID_SHIPPING') {
-          toast.error('Thông tin giao hàng không hợp lệ. Vui lòng kiểm tra lại.');
-          setCurrentStep(1);
-          return;
-        }
-        
-        if (errorCode === 'INVALID_BUYER_EMAIL') {
-          toast.error('Email không hợp lệ. Vui lòng kiểm tra lại địa chỉ email.');
-          setCurrentStep(1);
-          return;
+        } else {
+          throw new Error(result.error || 'COD order failed');
         }
       }
-      
-      if (statusCode === 500) {
-        toast.error('Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.', { duration: 5000 });
-        return;
-      }
-      
-      if (statusCode === 503) {
-        toast.error('Hệ thống thanh toán tạm thời không khả dụng. Vui lòng thử lại sau.', { duration: 5000 });
-        return;
-      }
-      
-      // ✅ FIX: Generic error with actionable message
-      toast.error(
-        errorMessage + '\\n\\nNếu lỗi tiếp diễn, vui lòng liên hệ hỗ trợ: support@audiotailoc.com',
-        { duration: 5000 }
-      );
-      
+
+      throw new Error('Invalid payment method');
+
+    } catch (error) {
+      console.error('Order creation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra. Vui lòng thử lại.';
+      toast.error(errorMessage);
     } finally {
-      // Only reset processing if not redirecting
-      if (!isRedirecting) {
-        setIsProcessing(false);
-      }
+      setIsProcessing(false);
     }
   };
 
-  // Don't render checkout UI if cart is empty or redirecting
-  if (items.length === 0 || isRedirecting) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Đang chuyển hướng...</p>
-        </div>
-      </div>
-    );
+  if (items.length === 0) {
+    return null;
   }
 
   return (
@@ -757,55 +573,6 @@ export default function CheckoutPage() {
 
                   <Separator />
 
-                  {/* Promotion Code Section */}
-                  <div className="space-y-2">
-                    {!appliedPromotion ? (
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Nhập mã khuyến mãi"
-                          value={promotionCode}
-                          onChange={(e) => setPromotionCode(e.target.value.toUpperCase())}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') handleApplyPromotion();
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleApplyPromotion}
-                          disabled={isValidatingPromo || !promotionCode.trim()}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {isValidatingPromo ? 'Kiểm tra...' : 'Áp dụng'}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 p-3 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <div>
-                            <p className="text-sm font-medium text-green-600">
-                              Mã {promotionCode.toUpperCase()}
-                            </p>
-                            <p className="text-xs text-green-600/80">
-                              {appliedPromotion.name}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={handleRemovePromotion}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Xóa
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Tạm tính</span>
@@ -817,12 +584,6 @@ export default function CheckoutPage() {
                         {shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString('vi-VN')}₫`}
                       </span>
                     </div>
-                    {promotionDiscount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Giảm giá</span>
-                        <span>-{promotionDiscount.toLocaleString('vi-VN')}₫</span>
-                      </div>
-                    )}
                     <Separator />
                     <div className="flex justify-between font-semibold">
                       <span>Tổng cộng</span>
@@ -845,7 +606,7 @@ export default function CheckoutPage() {
                     ) : (
                       <Button
                         onClick={handlePlaceOrder}
-                        disabled={isProcessing || !agreeToTerms || items.length === 0}
+                        disabled={isProcessing || !agreeToTerms}
                         className="w-full"
                         size="lg"
                       >

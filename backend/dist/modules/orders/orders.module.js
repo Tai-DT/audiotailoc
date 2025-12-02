@@ -15,21 +15,12 @@ const users_module_1 = require("../users/users.module");
 const notifications_module_1 = require("../notifications/notifications.module");
 const guards_module_1 = require("../auth/guards.module");
 const cache_service_1 = require("../caching/cache.service");
-const promotions_module_1 = require("../promotions/promotions.module");
-const inventory_module_1 = require("../inventory/inventory.module");
 let OrdersModule = class OrdersModule {
 };
 exports.OrdersModule = OrdersModule;
 exports.OrdersModule = OrdersModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule,
-            users_module_1.UsersModule,
-            notifications_module_1.NotificationsModule,
-            guards_module_1.GuardsModule,
-            promotions_module_1.PromotionsModule,
-            inventory_module_1.InventoryModule,
-        ],
+        imports: [config_1.ConfigModule, users_module_1.UsersModule, notifications_module_1.NotificationsModule, guards_module_1.GuardsModule],
         providers: [orders_service_1.OrdersService, cache_service_1.CacheService],
         controllers: [orders_controller_1.OrdersController],
         exports: [orders_service_1.OrdersService],

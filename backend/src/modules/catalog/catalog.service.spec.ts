@@ -56,7 +56,7 @@ describe('CatalogService', () => {
           priceCents: 100000,
           originalPriceCents: null,
           isActive: true,
-          images: [],
+          images: undefined,
           specifications: undefined,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -68,29 +68,31 @@ describe('CatalogService', () => {
           priceCents: 200000,
           originalPriceCents: null,
           isActive: true,
-          images: [],
+          images: undefined,
           specifications: undefined,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
       ];
 
+      // Mock $transaction to return [count, products]
       mockPrismaService.$transaction.mockResolvedValue([2, mockProducts]);
 
       const result = await service.listProducts({ page: 1, pageSize: 10 });
 
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('items');
-      expect(Array.isArray(result.items)).toBe(true);
+      expect(result.items).toEqual(mockProducts);
+      expect(result.total).toBe(2);
       expect(mockPrismaService.$transaction).toHaveBeenCalled();
     });
 
     it('should filter products by featured', async () => {
+      // Mock $transaction to return [0, []]
       mockPrismaService.$transaction.mockResolvedValue([0, []]);
 
       const result = await service.listProducts({ page: 1, pageSize: 10, featured: true });
 
-      expect(result).toBeDefined();
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
       expect(mockPrismaService.$transaction).toHaveBeenCalled();
     });
   });
@@ -104,7 +106,7 @@ describe('CatalogService', () => {
         priceCents: 100000,
         originalPriceCents: null,
         isActive: true,
-        images: [],
+        images: undefined,
         specifications: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -123,7 +125,9 @@ describe('CatalogService', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.products.findUnique.mockResolvedValue(null);
 
-      await expect(service.getBySlug('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.getBySlug('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -35,7 +35,7 @@ export class SeoService {
   async getProductSeo(productId: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const product = await this.prisma.products.findUnique({
       where: { id: productId },
-      include: { categories: true },
+      include: { categories: true }
     });
 
     if (!product) {
@@ -67,7 +67,7 @@ export class SeoService {
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
       twitterImage: product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
-      structuredData,
+      structuredData
     };
   }
 
@@ -75,7 +75,7 @@ export class SeoService {
   async getCategorySeo(categoryId: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const category = await this.prisma.categories.findUnique({
       where: { id: categoryId },
-      include: { products: true },
+      include: { products: true }
     });
 
     if (!category) {
@@ -102,14 +102,14 @@ export class SeoService {
       twitterCard: 'summary_large_image',
       twitterTitle: title,
       twitterDescription: description || '',
-      twitterImage: `${this.defaultSiteUrl}/images/default-category.jpg`,
+      twitterImage: `${this.defaultSiteUrl}/images/default-category.jpg`
     };
   }
 
   // Generate SEO data for page
   async getPageSeo(slug: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const page = await this.prisma.pages.findUnique({
-      where: { slug },
+      where: { slug }
     });
 
     if (!page) {
@@ -137,14 +137,14 @@ export class SeoService {
       twitterCard: 'summary_large_image',
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
-      twitterImage: `${this.defaultSiteUrl}/images/default-page.jpg`,
+      twitterImage: `${this.defaultSiteUrl}/images/default-page.jpg`
     };
   }
 
   // Generate SEO data for project
   async getProjectSeo(id: string, lang: 'vi' | 'en' = 'vi'): Promise<PageSeoData> {
     const project = await this.prisma.projects.findUnique({
-      where: { id },
+      where: { id }
     });
 
     if (!project) {
@@ -172,30 +172,27 @@ export class SeoService {
       twitterCard: 'summary_large_image',
       twitterTitle: ogTitle,
       twitterDescription: ogDescription || description || '',
-      twitterImage: `${this.defaultSiteUrl}/images/default-project.jpg`,
+      twitterImage: `${this.defaultSiteUrl}/images/default-project.jpg`
     };
   }
 
   // Generate SEO data for home page
   getHomeSeo(lang: 'vi' | 'en' = 'vi'): PageSeoData {
-    const title =
-      lang === 'en'
-        ? 'Audio Tài Lộc - Professional Audio Equipment'
-        : 'Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp';
+    const title = lang === 'en' 
+      ? 'Audio Tài Lộc - Professional Audio Equipment'
+      : 'Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp';
 
-    const description =
-      lang === 'en'
-        ? 'Professional audio equipment, sound systems, and audio solutions. High-quality products for studios, events, and home audio.'
-        : 'Thiết bị âm thanh chuyên nghiệp, hệ thống âm thanh và giải pháp audio. Sản phẩm chất lượng cao cho studio, sự kiện và âm thanh gia đình';
+    const description = lang === 'en'
+      ? 'Professional audio equipment, sound systems, and audio solutions. High-quality products for studios, events, and home audio.'
+      : 'Thiết bị âm thanh chuyên nghiệp, hệ thống âm thanh và giải pháp audio. Sản phẩm chất lượng cao cho studio, sự kiện và âm thanh gia đình';
 
     return {
       type: 'home',
       title,
       description,
-      keywords:
-        lang === 'en'
-          ? 'audio equipment, sound systems, professional audio, studio equipment'
-          : 'thiết bị âm thanh, hệ thống âm thanh, âm thanh chuyên nghiệp, thiết bị studio',
+      keywords: lang === 'en' 
+        ? 'audio equipment, sound systems, professional audio, studio equipment'
+        : 'thiết bị âm thanh, hệ thống âm thanh, âm thanh chuyên nghiệp, thiết bị studio',
       canonicalUrl: this.defaultSiteUrl,
       ogTitle: title,
       ogDescription: description,
@@ -204,7 +201,7 @@ export class SeoService {
       twitterCard: 'summary_large_image',
       twitterTitle: title,
       twitterDescription: description,
-      twitterImage: `${this.defaultSiteUrl}/images/og-home.jpg`,
+      twitterImage: `${this.defaultSiteUrl}/images/og-home.jpg`
     };
   }
 
@@ -213,11 +210,8 @@ export class SeoService {
     const [products, categories, pages, projects] = await Promise.all([
       this.prisma.products.findMany({ select: { slug: true, updatedAt: true } }),
       this.prisma.categories.findMany({ select: { slug: true, updatedAt: true } }),
-      this.prisma.pages.findMany({
-        where: { isPublished: true },
-        select: { slug: true, updatedAt: true },
-      }),
-      this.prisma.projects.findMany({ select: { id: true, updatedAt: true } }),
+      this.prisma.pages.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
+      this.prisma.projects.findMany({ select: { id: true, updatedAt: true } })
     ]);
 
     let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -278,40 +272,35 @@ Disallow: /static/`;
       sku: product.id,
       brand: {
         '@type': 'Brand',
-        name: this.defaultSiteName,
+        name: this.defaultSiteName
       },
       offers: {
         '@type': 'Offer',
         price: product.priceCents / 100,
         priceCurrency: 'VND',
-        availability:
-          product.inventory?.stock > 0
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-        url: `${this.defaultSiteUrl}/products/${product.slug}`,
+        availability: product.inventory?.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: `${this.defaultSiteUrl}/products/${product.slug}`
       },
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: 4.5,
-        reviewCount: product.reviews?.length || 0,
-      },
+        reviewCount: product.reviews?.length || 0
+      }
     };
   }
 
   // Get default SEO data
   private getDefaultSeo(type: string, lang: 'vi' | 'en'): PageSeoData {
-    const title =
-      lang === 'en'
-        ? `${this.defaultSiteName} - Professional Audio Equipment`
-        : `${this.defaultSiteName} - Thiết bị âm thanh chuyên nghiệp`;
+    const title = lang === 'en' 
+      ? `${this.defaultSiteName} - Professional Audio Equipment`
+      : `${this.defaultSiteName} - Thiết bị âm thanh chuyên nghiệp`;
 
     return {
       type: type as any,
       title,
-      description:
-        lang === 'en'
-          ? 'Professional audio equipment and sound systems'
-          : 'Thiết bị âm thanh và hệ thống âm thanh chuyên nghiệp',
+      description: lang === 'en' 
+        ? 'Professional audio equipment and sound systems'
+        : 'Thiết bị âm thanh và hệ thống âm thanh chuyên nghiệp',
       keywords: lang === 'en' ? 'audio, equipment, sound' : 'âm thanh, thiết bị, âm thanh',
       canonicalUrl: this.defaultSiteUrl,
       ogTitle: title,
@@ -321,7 +310,7 @@ Disallow: /static/`;
       twitterCard: 'summary_large_image',
       twitterTitle: title,
       twitterDescription: title,
-      twitterImage: `${this.defaultSiteUrl}/images/default-og.jpg`,
+      twitterImage: `${this.defaultSiteUrl}/images/default-og.jpg`
     };
   }
 }

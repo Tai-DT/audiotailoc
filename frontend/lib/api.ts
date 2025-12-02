@@ -56,107 +56,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Debug: Log API errors (only in development)
+    // Debug: Log API errors
     if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      try {
-        // Always start with a minimal valid error object
-        const errorInfo: Record<string, unknown> = {
-          timestamp: new Date().toISOString(),
-          type: 'API_ERROR'
-        };
-        
-        // Extract error name and code first
-        if (error?.name) errorInfo.errorName = error.name;
-        if (error?.code) errorInfo.errorCode = error.code;
-        if (error?.message) errorInfo.errorMessage = error.message;
-        
-        // Extract request config information
-        if (error?.config) {
-          if (error.config.url) errorInfo.url = error.config.url;
-          if (error.config.method) errorInfo.method = error.config.method.toUpperCase();
-          if (error.config.baseURL) errorInfo.baseURL = error.config.baseURL;
-          // Build full URL for easier debugging
-          if (error.config.baseURL && error.config.url) {
-            errorInfo.fullUrl = `${error.config.baseURL}${error.config.url}`;
-          }
-          // Add request data for debugging (be careful with sensitive data)
-          if (error.config.data) {
-            try {
-              const requestData = typeof error.config.data === 'string' 
-                ? JSON.parse(error.config.data) 
-                : error.config.data;
-              // Don't log passwords or tokens
-              const sanitizedData = { ...requestData };
-              if (sanitizedData.password) sanitizedData.password = '***';
-              if (sanitizedData.token) sanitizedData.token = '***';
-              errorInfo.requestData = sanitizedData;
-            } catch {
-              // Ignore parse errors
-            }
-          }
-        }
-        
-        // Extract response information
-        if (error?.response) {
-          if (error.response.status) errorInfo.status = error.response.status;
-          if (error.response.statusText) errorInfo.statusText = error.response.statusText;
-          
-          // Extract response data and message
-          if (error.response.data) {
-            if (typeof error.response.data === 'object') {
-              if (error.response.data.message) {
-                errorInfo.message = error.response.data.message;
-              }
-              // Include full response data for debugging
-              errorInfo.responseData = error.response.data;
-            } else {
-              errorInfo.message = String(error.response.data);
-            }
-          }
-        }
-        
-        // Use error message as fallback if no response message
-        if (!errorInfo.message && error?.message) {
-          errorInfo.message = error.message;
-        }
-        
-        // Set default message if still empty
-        if (!errorInfo.message) {
-          errorInfo.message = 'Unknown API error';
-        }
-        
-        // Log grouped error information with color coding based on status
-        const statusCode = errorInfo.status as number;
-        const logStyle = statusCode >= 500 ? 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;'
-                       : statusCode >= 400 ? 'background: #ff9800; color: white; padding: 2px 5px; border-radius: 3px;'
-                       : 'background: #2196f3; color: white; padding: 2px 5px; border-radius: 3px;';
-        
-        console.groupCollapsed(
-          `%c${errorInfo.method || 'REQUEST'} ${errorInfo.url || 'API'} - ${statusCode || 'ERROR'}`,
-          logStyle
-        );
-        // Surface key fields first for quick debugging
-        console.error('API Error message:', errorInfo.errorMessage || errorInfo.message || 'Unknown error');
-        console.error('HTTP status:', statusCode);
-        if (errorInfo.fullUrl) console.error('Request URL:', errorInfo.fullUrl);
-        if (errorInfo.requestData) console.error('Request data:', errorInfo.requestData);
-        // Prefer to show the response body if available (most useful)
-        if (errorInfo.responseData) {
-          console.error('Response body:', errorInfo.responseData);
-        } else {
-          // Fallback: show the structured errorInfo object
-          console.error('Error Details:', errorInfo);
-        }
-        if (error && error.stack) {
-          console.debug('Stack Trace:', error.stack);
-        }
-        console.groupEnd();
-        
-      } catch (logError) {
-        // Fallback: log the original error if structured logging fails
-        console.error('[API Client] Failed to process error:', logError);
-        console.error('[API Client] Original error:', error);
-      }
+      console.error('[API Client] Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        fullResponse: error.response?.data,
+      });
     }
     
     const status = error.response?.status;
@@ -184,7 +92,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
-    PROFILE: '/users/profile',
+    PROFILE: '/auth/profile',
   },
   
   // Products
@@ -220,21 +128,6 @@ export const API_ENDPOINTS = {
     CLEAR: '/cart/clear',
   },
   
-  // Checkout
-  CHECKOUT: {
-    CREATE: '/checkout',
-    CREATE_ORDER: '/checkout/create-order',
-  },
-
-  // Payments
-  PAYMENTS: {
-    METHODS: '/payments/methods',
-    STATUS: '/payments/status',
-    INTENTS: '/payments/intents',
-    CREATE_PAYOS: '/payments/payos/create-payment',
-    PAYOS_STATUS: (orderCode: string) => `/payments/payos/payment-status/${orderCode}`,
-  },
-
   // Orders
   ORDERS: {
     LIST: '/orders',
@@ -311,13 +204,6 @@ export const API_ENDPOINTS = {
     COUNT: '/wishlist/count',
     CLEAR: '/wishlist',
   },
-
-  // Chat
-  CHAT: {
-    CONVERSATIONS: '/chat/conversations',
-    MESSAGES: '/chat/messages',
-    CONVERSATION_MESSAGES: (id: string) => `/chat/conversations/${id}/messages`,
-  },
 } as const;
 
 // Helper function to handle API responses
@@ -356,3 +242,4 @@ export const handleApiError = (error: { response?: { data?: { message?: string }
   const status = error.response?.status;
   return { message, status };
 };
+

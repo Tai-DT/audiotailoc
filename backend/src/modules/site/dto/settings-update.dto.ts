@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsEmail, IsUrl, ValidateNested } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEmail,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
 
 export class SiteGeneralDto {
   @ApiPropertyOptional()
@@ -93,91 +99,6 @@ export class SiteSocialsDto {
   github?: string;
 }
 
-export class SiteBusinessDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  taxCode?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  businessLicense?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  currency?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  timezone?: string;
-}
-
-export class SiteEmailDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailHost?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailPort?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailUsername?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailPassword?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailFrom?: string;
-}
-
-export class SiteNotificationsDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  orderNotification?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  paymentNotification?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  reviewNotification?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  lowStockNotification?: boolean;
-}
-
-export class SiteSecurityDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  twoFactorAuth?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  sessionTimeout?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  passwordExpiry?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  maxLoginAttempts?: number;
-}
-
 export class UpdateSettingsDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -196,28 +117,4 @@ export class UpdateSettingsDto {
   @ValidateNested()
   @Type(() => SiteSocialsDto)
   socials?: SiteSocialsDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SiteBusinessDto)
-  business?: SiteBusinessDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SiteEmailDto)
-  email?: SiteEmailDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SiteNotificationsDto)
-  notifications?: SiteNotificationsDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SiteSecurityDto)
-  security?: SiteSecurityDto;
 }

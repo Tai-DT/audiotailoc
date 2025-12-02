@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { data: user } = useAuth();
   const updateProfileMutation = useUpdateProfile();
   const isAuthenticated = !!user;
   const router = useRouter();

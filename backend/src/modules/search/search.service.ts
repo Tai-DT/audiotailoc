@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { randomUUID } from 'crypto';
 
 /**
  * Search Service
@@ -81,24 +80,18 @@ export class SearchService {
 
       const normalizedQuery = query.trim().toLowerCase();
       const page = Math.max(1, filters.page ?? 1);
-      const pageSize = Math.min(
-        this.maxPageSize,
-        Math.max(1, filters.pageSize ?? this.defaultPageSize),
-      );
+      const pageSize = Math.min(this.maxPageSize, Math.max(1, filters.pageSize ?? this.defaultPageSize));
       const skip = (page - 1) * pageSize;
 
       // Determine search types
-      const searchTypes =
-        filters.type === 'all' || !filters.type
-          ? ['product', 'service', 'blog', 'knowledge']
-          : [filters.type];
+      const searchTypes = filters.type === 'all' || !filters.type
+        ? ['product', 'service', 'blog', 'knowledge']
+        : [filters.type];
 
       // Execute parallel searches
       const [results, facets] = await Promise.all([
         this.executeParallelSearch(normalizedQuery, searchTypes, filters, skip, pageSize),
-        filters.includeFacets
-          ? this.generateFacets(normalizedQuery, searchTypes, filters)
-          : undefined,
+        filters.includeFacets ? this.generateFacets(normalizedQuery, searchTypes, filters) : undefined,
       ]);
 
       // Sort results by relevance
@@ -443,7 +436,9 @@ export class SearchService {
           const categories = await this.prisma.categories.findMany({
             where: {
               id: {
-                in: categoryQuery.filter(p => p.categoryId).map(p => p.categoryId as string),
+                in: categoryQuery
+                  .filter(p => p.categoryId)
+                  .map(p => p.categoryId as string),
               },
             },
             select: { id: true, name: true },
@@ -496,7 +491,9 @@ export class SearchService {
           const types = await this.prisma.service_types.findMany({
             where: {
               id: {
-                in: typeQuery.filter(s => s.typeId).map(s => s.typeId as string),
+                in: typeQuery
+                  .filter(s => s.typeId)
+                  .map(s => s.typeId as string),
               },
             },
             select: { id: true, name: true },
@@ -574,48 +571,17 @@ export class SearchService {
   /**
    * Log search query for analytics
    */
-  async logSearchQuery(userId: string | null, query: string, _resultsCount: number): Promise<void> {
-    try {
-      await this.prisma.search_queries.create({
-        data: {
-          id: randomUUID(),
-          query: query.trim(),
-          userId: userId,
-          timestamp: new Date(),
-        },
-      });
-    } catch (error) {
-      // Silent fail for logging
-      this.logger.warn(`Failed to log search query: ${error}`);
-    }
+  async logSearchQuery(_userId: string | null, _query: string, _resultsCount: number): Promise<void> {
+    // Search query logging disabled - model not available
+    return;
   }
 
   /**
    * Get popular search queries
    */
-  async getPopularSearches(limit: number = 10): Promise<Array<{ query: string; count: number }>> {
-    try {
-      const popular = await this.prisma.search_queries.groupBy({
-        by: ['query'],
-        _count: {
-          query: true,
-        },
-        orderBy: {
-          _count: {
-            query: 'desc',
-          },
-        },
-        take: limit,
-      });
-
-      return popular.map(item => ({
-        query: item.query,
-        count: item._count.query,
-      }));
-    } catch (error) {
-      this.logger.error('Error fetching popular searches:', error);
-      return [];
-    }
+  async getPopularSearches(_limit: number = 10): Promise<Array<{ query: string; count: number }>> {
+    // Search query analytics disabled - model not available
+    return [];
   }
 
   /**

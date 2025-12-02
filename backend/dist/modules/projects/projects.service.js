@@ -17,11 +17,10 @@ let ProjectsService = class ProjectsService {
         this.prisma = prisma;
     }
     async findAll(params) {
-        const { page = 1, limit = 10, status, featured, category, search } = params;
+        const { page = 1, limit = 10, status, featured, category } = params;
         const skip = (page - 1) * limit;
         const where = {
             isActive: true,
-            isDeleted: false,
         };
         if (status) {
             where.status = status;
@@ -32,20 +31,15 @@ let ProjectsService = class ProjectsService {
         if (category) {
             where.category = category;
         }
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { client: { contains: search, mode: 'insensitive' } },
-                { category: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-            ];
-        }
         const [projects, total] = await Promise.all([
             this.prisma.projects.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+                orderBy: [
+                    { displayOrder: 'asc' },
+                    { createdAt: 'desc' },
+                ],
                 include: {
                     users: {
                         select: {
@@ -74,7 +68,10 @@ let ProjectsService = class ProjectsService {
                 isActive: true,
                 isFeatured: true,
             },
-            orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+            orderBy: [
+                { displayOrder: 'asc' },
+                { createdAt: 'desc' },
+            ],
             take: 6,
         });
     }
@@ -206,48 +203,17 @@ let ProjectsService = class ProjectsService {
             },
         });
     }
-    async remove(id, permanent = false) {
+    async remove(id) {
         const project = await this.prisma.projects.findUnique({
             where: { id },
         });
         if (!project) {
-            throw new common_1.NotFoundException(`Project with ID "${id}" not found`);
+            throw new common_1.NotFoundException('Project not found');
         }
-        if (permanent) {
-            await this.prisma.projects.delete({
-                where: { id },
-            });
-            return { message: 'Project permanently deleted', id };
-        }
-        else {
-            await this.prisma.projects.update({
-                where: { id },
-                data: {
-                    isDeleted: true,
-                    deletedAt: new Date(),
-                },
-            });
-            return { message: 'Project soft deleted successfully', id };
-        }
-    }
-    async restore(id) {
-        const project = await this.prisma.projects.findUnique({
+        await this.prisma.projects.delete({
             where: { id },
         });
-        if (!project) {
-            throw new common_1.NotFoundException(`Project with ID "${id}" not found`);
-        }
-        if (!project.isDeleted) {
-            throw new common_1.BadRequestException('Project is not deleted');
-        }
-        await this.prisma.projects.update({
-            where: { id },
-            data: {
-                isDeleted: false,
-                deletedAt: null,
-            },
-        });
-        return { message: 'Project restored successfully', id };
+        return { message: 'Project deleted successfully' };
     }
     async toggleFeatured(id) {
         const project = await this.prisma.projects.findUnique({

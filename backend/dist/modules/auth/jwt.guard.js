@@ -54,8 +54,7 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
     }
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
-        const fullPath = req.originalUrl || `${req.baseUrl || ''}${req.path || ''}` || req.route?.path || req.path;
-        const path = typeof fullPath === 'string' ? fullPath : String(fullPath);
+        const path = req.route?.path || req.path;
         const publicRoutes = [
             '/auth/register',
             '/auth/login',
@@ -67,9 +66,9 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
             '/catalog/categories',
             '/services',
             '/services/types',
-            '/health',
+            '/health'
         ];
-        if (publicRoutes.some(route => path.includes(route) || path.includes(`/api/v1${route}`))) {
+        if (publicRoutes.some(route => path.includes(route))) {
             return true;
         }
         const header = req.headers['authorization'];
@@ -97,7 +96,7 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
                 this.logger.warn(`Invalid token for ${path}: ${error.message}`);
                 throw new common_1.UnauthorizedException('Invalid token');
             }
-            this.logger.error(`Token verification failed for ${path}: ${error?.message || String(error)}`, error);
+            this.logger.error(`Token verification failed for ${path}:`, error);
             throw new common_1.UnauthorizedException('Token verification failed');
         }
     }

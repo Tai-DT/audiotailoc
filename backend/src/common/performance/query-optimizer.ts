@@ -56,12 +56,19 @@ export class QueryOptimizer {
 
     // Record metrics
     if (metricsService) {
-      metricsService.recordDatabaseQuery(operation, model, duration, 'success');
+      metricsService.recordDatabaseQuery(
+        operation,
+        model,
+        duration,
+        'success',
+      );
     }
 
     // Log slow queries
     if (isSlow) {
-      this.logger.warn(`Slow query detected: ${model}.${operation} took ${duration}ms`);
+      this.logger.warn(
+        `Slow query detected: ${model}.${operation} took ${duration}ms`,
+      );
     }
   }
 
@@ -86,8 +93,7 @@ export class QueryOptimizer {
     }
 
     const slowQueries = this.queryMetrics.filter(m => m.isSlow).length;
-    const avgDuration =
-      this.queryMetrics.reduce((sum, m) => sum + m.duration, 0) / this.queryMetrics.length;
+    const avgDuration = this.queryMetrics.reduce((sum, m) => sum + m.duration, 0) / this.queryMetrics.length;
 
     const queryBreakdown: Record<string, { count: number; avgDuration: number }> = {};
     for (const metric of this.queryMetrics) {
@@ -116,7 +122,7 @@ export class QueryOptimizer {
   /**
    * Optimize select query - add only needed fields
    */
-  static optimizeSelect<_T>(
+  static optimizeSelect<T>(
     baseSelect: Record<string, boolean | object>,
     includeRelations: boolean = false,
   ): Record<string, boolean | object> {
@@ -150,7 +156,9 @@ export class QueryOptimizer {
   /**
    * Optimize WHERE clause
    */
-  static optimizeWhereClause(where: Record<string, any>): Record<string, any> {
+  static optimizeWhereClause(
+    where: Record<string, any>,
+  ): Record<string, any> {
     const optimized: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(where)) {
@@ -175,14 +183,22 @@ export class QueryOptimizer {
   /**
    * Add common fields selection
    */
-  static getDefaultSelect<_T extends Record<string, any>>(
+  static getDefaultSelect<T extends Record<string, any>>(
     excludeFields: string[] = ['password', 'refreshToken'],
   ): Record<string, boolean> {
     const defaultSelect: Record<string, boolean> = {};
 
     // This would be customized per model
     // Example for User model
-    const commonFields = ['id', 'createdAt', 'updatedAt', 'email', 'name', 'phone', 'avatar'];
+    const commonFields = [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'email',
+      'name',
+      'phone',
+      'avatar',
+    ];
 
     for (const field of commonFields) {
       if (!excludeFields.includes(field)) {
@@ -197,13 +213,13 @@ export class QueryOptimizer {
    * Batch queries to reduce N+1 problems
    */
   static async executeBatchQueries<T>(
-    _queries: Array<() => Promise<T>>,
+    queries: Array<() => Promise<T>>,
     batchSize: number = 10,
   ): Promise<T[]> {
     const results: T[] = [];
 
-    for (let i = 0; i < _queries.length; i += batchSize) {
-      const batch = _queries.slice(i, i + batchSize);
+    for (let i = 0; i < queries.length; i += batchSize) {
+      const batch = queries.slice(i, i + batchSize);
       const batchResults = await Promise.all(batch.map(q => q()));
       results.push(...batchResults);
     }
@@ -214,7 +230,10 @@ export class QueryOptimizer {
   /**
    * Prefetch related data to avoid N+1 queries
    */
-  static createPrefetchConfig(relations: string[], depth: number = 1): Record<string, any> {
+  static createPrefetchConfig(
+    relations: string[],
+    depth: number = 1,
+  ): Record<string, any> {
     const config: Record<string, any> = {};
 
     for (const relation of relations) {
@@ -336,7 +355,7 @@ export class QueryOptimizer {
     const stats = this.getQueryStats();
     const analysis = this.analyzeQueryPatterns();
 
-    const report = `
+    let report = `
 === Database Query Performance Report ===
 
 Statistics:
@@ -381,7 +400,10 @@ export class DatabaseOptimizer {
   /**
    * Check if N+1 query pattern likely
    */
-  static detectNPlusOnePattern(queries: QueryMetrics[], threshold: number = 10): boolean {
+  static detectNPlusOnePattern(
+    queries: QueryMetrics[],
+    threshold: number = 10,
+  ): boolean {
     const queryMap = new Map<string, number>();
 
     for (const query of queries) {
@@ -441,7 +463,7 @@ export class IndexOptimizer {
   /**
    * Suggest indexes based on query patterns
    */
-  static suggestIndexes(_queries: QueryMetrics[]): Array<{
+  static suggestIndexes(queries: QueryMetrics[]): Array<{
     model: string;
     field: string;
     reason: string;

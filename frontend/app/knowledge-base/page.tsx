@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { PageBanner } from '@/components/ui/page-banner';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';

@@ -1,25 +1,16 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-  Logger,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   private readonly logger = new Logger(JwtGuard.name);
-
+  
   constructor(private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    // Derive the full request path (prefer originalUrl if available)
-    const fullPath =
-      req.originalUrl || `${req.baseUrl || ''}${req.path || ''}` || req.route?.path || req.path;
-    const path = typeof fullPath === 'string' ? fullPath : String(fullPath);
+    const path = req.route?.path || req.path;
 
     // Allow public auth routes without authentication
     const publicRoutes = [
@@ -33,11 +24,10 @@ export class JwtGuard implements CanActivate {
       '/catalog/categories',
       '/services',
       '/services/types',
-      '/health',
+      '/health'
     ];
 
-    // Allow both plain and API-prefixed public routes (tests may use global prefix /api/v1)
-    if (publicRoutes.some(route => path.includes(route) || path.includes(`/api/v1${route}`))) {
+    if (publicRoutes.some(route => path.includes(route))) {
       return true;
     }
 
@@ -47,7 +37,7 @@ export class JwtGuard implements CanActivate {
       throw new UnauthorizedException('Missing bearer token');
     }
     const token = header.slice(7);
-
+    
     try {
       const secret = this.config.get<string>('JWT_ACCESS_SECRET');
       if (!secret) {
@@ -62,14 +52,13 @@ export class JwtGuard implements CanActivate {
         this.logger.warn(`Expired token for ${path}`);
         throw new UnauthorizedException('Token has expired');
       } else if (error instanceof jwt.JsonWebTokenError) {
-        this.logger.warn(`Invalid token for ${path}: ${(error as any).message}`);
+        this.logger.warn(`Invalid token for ${path}: ${error.message}`);
         throw new UnauthorizedException('Invalid token');
       }
-      this.logger.error(
-        `Token verification failed for ${path}: ${(error as any)?.message || String(error)}`,
-        error as any,
-      );
+      this.logger.error(`Token verification failed for ${path}:`, error);
       throw new UnauthorizedException('Token verification failed');
     }
   }
 }
+
+

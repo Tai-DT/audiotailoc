@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const { user } = useAuth();
+  const { data: user } = useAuth();
   const loginMutation = useLogin();
   const router = useRouter();
 
@@ -42,8 +42,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Note: rememberMe is handled by the browser/auth storage, not the API payload for now
-      await loginMutation.mutateAsync({ email, password });
+      await loginMutation.mutateAsync({ email, password, rememberMe });
       router.push('/');
     } catch (error) {
       // Error is handled by the mutation
@@ -56,7 +55,7 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setIsLoading(true);
     try {
-      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'demo123' });
+      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'demo123', rememberMe: true });
       router.push('/');
     } catch (error) {
       // Error is handled by the mutation

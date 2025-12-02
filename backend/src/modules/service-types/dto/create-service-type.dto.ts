@@ -9,6 +9,7 @@ export class CreateServiceTypeDto {
   @IsOptional()
   description?: string;
 
+
   @IsString()
   @IsOptional()
   icon?: string;

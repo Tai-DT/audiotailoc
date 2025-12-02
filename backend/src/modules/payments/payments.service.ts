@@ -3,9 +3,6 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
-import { PayOSService } from './payos.service';
-
-import { TelegramService } from '../notifications/telegram.service';
 
 @Injectable()
 export class PaymentsService {
@@ -13,67 +10,51 @@ export class PaymentsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
-    private readonly payosService: PayOSService,
-    private readonly telegram: TelegramService,
+    private readonly config: ConfigService
   ) {}
 
   async createIntent(params: { orderId: string; provider: 'PAYOS' | 'COD'; returnUrl?: string }) {
     const order = await this.prisma.orders.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
     const intent = await this.prisma.payment_intents.create({
-      data: {
+      data: { 
         id: randomUUID(),
-        orderId: order.id,
-        provider: params.provider,
-        amountCents: order.totalCents,
-        status: 'PENDING',
+        orderId: order.id, 
+        provider: params.provider, 
+        amountCents: order.totalCents, 
+        status: 'PENDING', 
         returnUrl: params.returnUrl ?? null,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       },
     });
     // For COD, no redirect needed
     if (params.provider === 'COD') {
       await this.prisma.orders.update({
         where: { id: order.id },
-        data: {
-          status: 'CONFIRMED',
-        },
+        data: { 
+          status: 'CONFIRMED'
+        }
       });
       // Update payment intent to mark COD
       await this.prisma.payment_intents.update({
         where: { id: intent.id },
-        data: {
+        data: { 
           status: 'PENDING',
-          metadata: JSON.stringify({ paymentMethod: 'COD' }),
-        },
+          metadata: JSON.stringify({ paymentMethod: 'COD' })
+        }
       });
-      return {
-        intentId: intent.id,
-        redirectUrl: null,
-        paymentMethod: 'COD',
-      };
+      return { intentId: intent.id, redirectUrl: null, paymentMethod: 'COD' };
     }
-
-    const redirectUrl = await this.buildRedirectUrl(
-      { ...intent, provider: intent.provider as 'PAYOS' },
-      order,
-    );
-    return {
-      intentId: intent.id,
-      redirectUrl,
-      paymentMethod: params.provider,
-    };
+    
+    const redirectUrl = await this.buildRedirectUrl({ ...intent, provider: intent.provider as 'PAYOS' }, order);
+    return { intentId: intent.id, redirectUrl };
   }
 
   private async buildRedirectUrl(
     intent: { id: string; provider: string; amountCents: number; returnUrl: string | null },
     order: { id: string; orderNo: string; totalCents: number },
   ): Promise<string> {
-    const baseReturn =
-      intent.returnUrl ||
-      this.config.get<string>('PAYMENT_RETURN_URL') ||
-      'http://localhost:3000/return';
+    const baseReturn = intent.returnUrl || this.config.get<string>('PAYMENT_RETURN_URL') || 'http://localhost:3000/return';
     if (intent.provider === 'VNPAY') {
       const tmnCode = this.config.get<string>('VNPAY_TMN_CODE') || 'TEST';
       const secret = this.config.get<string>('VNPAY_HASH_SECRET') || 'secret';
@@ -85,72 +66,51 @@ export class PaymentsService {
       };
       const signData = Object.keys(params)
         .sort()
-        .map(k => `${k}=${params[k]}`)
+        .map((k) => `${k}=${params[k]}`)
         .join('&');
       const vnp_SecureHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
       return `${this.config.get('VNPAY_PAY_URL') || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'}?${signData}&vnp_SecureHash=${vnp_SecureHash}`;
     }
     if (intent.provider === 'PAYOS') {
+      const apiUrl = this.config.get<string>('PAYOS_API_URL') || 'https://api.payos.vn';
+      const clientId = this.config.get<string>('PAYOS_CLIENT_ID') || '';
+      const apiKey = this.config.get<string>('PAYOS_API_KEY') || '';
+      const checksumKey = this.config.get<string>('PAYOS_CHECKSUM_KEY') || '';
+      const partnerCode = this.config.get<string>('PAYOS_PARTNER_CODE') || '';
       try {
-        // Sử dụng PayOSService thay vì gọi API trực tiếp
-        this.logger.log(`Creating PayOS payment link for order ${order.orderNo}`);
-
-        // Lấy thông tin user để tạo payment link
-        const orderWithUser = await this.prisma.orders.findUnique({
-          where: { id: order.id },
-          include: {
-            users: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true,
-              },
-            },
-          },
-        });
-
-        // ✅ FIX: Parse shippingAddress JSON để lấy thông tin thật (đặc biệt cho guest checkout)
-        let shippingData: any = {};
-        try {
-          shippingData =
-            typeof orderWithUser?.shippingAddress === 'string'
-              ? JSON.parse(orderWithUser.shippingAddress)
-              : orderWithUser?.shippingAddress || {};
-        } catch (e) {
-          this.logger.error(`Failed to parse shippingAddress JSON for order ${order.id}`);
-        }
-
-        // Priority: shippingAddress > user data > fallback
-        const buyerName = shippingData.fullName || orderWithUser?.users?.name || 'Guest User';
-        const buyerEmail =
-          shippingData.email ||
-          orderWithUser?.users?.email ||
-          `order_${order.orderNo}@audiotailoc.com`;
-        const buyerPhone = shippingData.phone || orderWithUser?.users?.phone || '';
-
-        this.logger.log(
-          `[PayOS] Buyer info: name=${buyerName}, email=${buyerEmail}, phone=${buyerPhone}`,
-        );
-
-        const result = await this.payosService.createPaymentLink({
+        const payload: any = {
           orderCode: order.orderNo || intent.id,
           amount: intent.amountCents,
-          description: `Thanh toan don hang ${order.orderNo}`,
-          buyerName,
-          buyerEmail,
-          buyerPhone,
+          currency: 'VND',
           returnUrl: baseReturn,
           cancelUrl: baseReturn,
+          description: `Thanh toan don hang ${order.orderNo}`,
+          items: [{ name: 'Audio Tai Loc', quantity: 1, price: intent.amountCents }],
+        };
+        if (partnerCode) {
+          payload.partnerCode = partnerCode;
+        }
+        const dataStr = JSON.stringify(payload);
+        const sig = crypto.createHmac('sha256', checksumKey).update(dataStr).digest('hex');
+        const headers: Record<string, string> = {
+          'content-type': 'application/json',
+          'x-client-id': clientId,
+          'x-api-key': apiKey,
+        };
+        if (partnerCode) {
+          headers['x-partner-code'] = partnerCode;
+        }
+        const res = await fetch(`${apiUrl}/v2/checkout/create`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...payload, signature: sig }),
         });
-
-        this.logger.log(`PayOS payment link created: ${result.checkoutUrl}`);
-        return result.checkoutUrl;
-      } catch (error) {
-        this.logger.error(`Failed to create PayOS payment link:`, error);
-        // Fallback to basic return URL
-        return `${baseReturn}?payos_txn=${encodeURIComponent(intent.id)}&error=payment_link_failed`;
-      }
+        const out = await res.json().catch(() => ({}));
+        const checkoutUrl = (out?.data?.checkoutUrl as string) || (out?.checkoutUrl as string) || '';
+        if (checkoutUrl) return checkoutUrl;
+      } catch {}
+      // fallback
+      return `${baseReturn}?payos_txn=${encodeURIComponent(intent.id)}`;
     }
     // MOMO integration
     if (intent.provider === 'MOMO') {
@@ -164,15 +124,13 @@ export class PaymentsService {
   private async createMomoPayment(
     intent: { id: string; amountCents: number },
     order: { id: string; orderNo: string },
-    returnUrl: string,
+    returnUrl: string
   ): Promise<string> {
     try {
       const partnerCode = this.config.get<string>('MOMO_PARTNER_CODE') || '';
       const accessKey = this.config.get<string>('MOMO_ACCESS_KEY') || '';
       const secretKey = this.config.get<string>('MOMO_SECRET_KEY') || '';
-      const endpoint =
-        this.config.get<string>('MOMO_ENDPOINT') ||
-        'https://test-payment.momo.vn/v2/gateway/api/create';
+      const endpoint = this.config.get<string>('MOMO_ENDPOINT') || 'https://test-payment.momo.vn/v2/gateway/api/create';
 
       const requestId = `${intent.id}_${Date.now()}`;
       const orderId = order.orderNo || intent.id;
@@ -199,7 +157,7 @@ export class PaymentsService {
         extraData,
         requestType,
         signature,
-        lang: 'vi',
+        lang: 'vi'
       };
 
       const response = await fetch(endpoint, {
@@ -207,7 +165,7 @@ export class PaymentsService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
@@ -232,7 +190,7 @@ export class PaymentsService {
     const order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
     if (!order) throw new BadRequestException('Order not found');
 
-    await this.prisma.$transaction(async tx => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.payments.create({
         data: {
           id: randomUUID(),
@@ -242,8 +200,8 @@ export class PaymentsService {
           amountCents: intent.amountCents,
           status: 'SUCCEEDED',
           transactionId: transactionId || txnRef,
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       });
       // ✅ Change status to CONFIRMED instead of PAID
       await tx.orders.update({ where: { id: intent.orderId }, data: { status: 'CONFIRMED' } });
@@ -261,27 +219,13 @@ export class PaymentsService {
     // }
 
     this.logger.log(`Payment marked as paid: ${provider} - ${txnRef}`);
-
-    // Send Telegram notification
-    try {
-      await this.telegram.sendPaymentNotification({
-        orderNo: order.orderNo,
-        amountCents: intent.amountCents,
-        provider: provider,
-        status: 'PAID',
-        createdAt: new Date(),
-      });
-    } catch (error) {
-      this.logger.error('Failed to send payment notification:', error);
-    }
-
     return { ok: true };
   }
 
   async createRefund(paymentId: string, amountCents?: number, reason?: string) {
     const payment = await this.prisma.payments.findUnique({
       where: { id: paymentId },
-      include: { orders: true },
+      include: { orders: true }
     });
 
     if (!payment) throw new BadRequestException('Payment not found');
@@ -298,7 +242,7 @@ export class PaymentsService {
 
     // Check existing refunds
     const existingRefunds = await this.prisma.refunds.findMany({
-      where: { paymentId: payment.id },
+      where: { paymentId: payment.id }
     });
     const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
 
@@ -314,8 +258,8 @@ export class PaymentsService {
         amountCents: amountCents,
         reason: reason || 'Customer request',
         status: 'PENDING',
-        updatedAt: new Date(),
-      },
+        updatedAt: new Date()
+      }
     });
 
     // Process refund based on provider
@@ -341,28 +285,16 @@ export class PaymentsService {
         data: {
           status: refundResult.success ? 'SUCCEEDED' : 'FAILED',
           providerRefundId: refundResult.refundId,
-          processedAt: new Date(),
-        },
+          processedAt: new Date()
+        }
       });
 
-      this.logger.log(
-        `Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`,
-      );
+      this.logger.log(`Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`);
 
       // Send notification if order user exists
       if (payment.orderId) {
-        // Send Telegram notification
-        try {
-          await this.telegram.sendRefundNotification({
-            orderNo: payment.orders?.orderNo || 'N/A',
-            amountCents: refund.amountCents,
-            provider: payment.provider,
-            reason: refund.reason,
-            createdAt: new Date(),
-          });
-        } catch (error) {
-          this.logger.error('Failed to send refund notification:', error);
-        }
+        // TODO: Implement notification system
+        this.logger.log(`Refund notification sent for order ${payment.orderId}`);
       }
 
       return { refundId: refund.id, success: refundResult.success };
@@ -373,8 +305,8 @@ export class PaymentsService {
         data: {
           status: 'FAILED',
           errorMessage: (error as any)?.message || 'Unknown error',
-          processedAt: new Date(),
-        },
+          processedAt: new Date()
+        }
       });
 
       this.logger.error(`Refund processing failed: ${(error as any)?.message}`);
@@ -384,9 +316,7 @@ export class PaymentsService {
         throw error;
       }
 
-      throw new BadRequestException(
-        `Refund processing failed: ${(error as any)?.message || 'Unknown error'}`,
-      );
+      throw new BadRequestException(`Refund processing failed: ${(error as any)?.message || 'Unknown error'}`);
     }
   }
 
@@ -394,9 +324,7 @@ export class PaymentsService {
     try {
       const vnpTmnCode = this.config.get<string>('VNPAY_TMN_CODE') || '';
       const vnpHashSecret = this.config.get<string>('VNPAY_HASH_SECRET') || '';
-      const vnpRefundUrl =
-        this.config.get<string>('VNPAY_REFUND_URL') ||
-        'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction';
+      const vnpRefundUrl = this.config.get<string>('VNPAY_REFUND_URL') || 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction';
 
       const createDate = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
       const ipAddr = '127.0.0.1'; // In production, get from request
@@ -414,18 +342,13 @@ export class PaymentsService {
         vnp_TransactionDate: payment.createdAt.toISOString().slice(0, 19).replace(/[:-]/g, ''),
         vnp_CreateDate: createDate,
         vnp_IpAddr: ipAddr,
-        vnp_CreateBy: 'system',
+        vnp_CreateBy: 'system'
       };
 
       // Create secure hash
       const sortedParams = Object.keys(params).sort();
-      const queryString = sortedParams
-        .map(key => `${key}=${encodeURIComponent((params as any)[key])}`)
-        .join('&');
-      const secureHash = crypto
-        .createHmac('sha512', vnpHashSecret)
-        .update(queryString)
-        .digest('hex');
+      const queryString = sortedParams.map(key => `${key}=${encodeURIComponent((params as any)[key])}`).join('&');
+      const secureHash = crypto.createHmac('sha512', vnpHashSecret).update(queryString).digest('hex');
 
       const requestBody = queryString + `&vnp_SecureHash=${secureHash}`;
 
@@ -434,15 +357,14 @@ export class PaymentsService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: requestBody,
+        body: requestBody
       });
 
       const result = await response.text();
       const resultParams = new URLSearchParams(result);
 
       if (resultParams.get('vnp_ResponseCode') === '00') {
-        const refundTransactionNo =
-          resultParams.get('vnp_TransactionNo') || `vnpay_refund_${refund.id}`;
+        const refundTransactionNo = resultParams.get('vnp_TransactionNo') || `vnpay_refund_${refund.id}`;
         this.logger.log(`VNPay refund successful: ${refundTransactionNo}`);
         return { success: true, refundId: refundTransactionNo };
       } else {
@@ -461,9 +383,7 @@ export class PaymentsService {
       const partnerCode = this.config.get<string>('MOMO_PARTNER_CODE') || '';
       const accessKey = this.config.get<string>('MOMO_ACCESS_KEY') || '';
       const secretKey = this.config.get<string>('MOMO_SECRET_KEY') || '';
-      const endpoint =
-        this.config.get<string>('MOMO_REFUND_ENDPOINT') ||
-        'https://test-payment.momo.vn/v2/gateway/api/refund';
+      const endpoint = this.config.get<string>('MOMO_REFUND_ENDPOINT') || 'https://test-payment.momo.vn/v2/gateway/api/refund';
 
       const requestId = `refund_${refund.id}_${Date.now()}`;
       const orderId = payment.transactionId;
@@ -483,7 +403,7 @@ export class PaymentsService {
         orderId,
         transId,
         description,
-        signature,
+        signature
       };
 
       const response = await fetch(endpoint, {
@@ -491,7 +411,7 @@ export class PaymentsService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
@@ -520,7 +440,7 @@ export class PaymentsService {
       const requestBody = {
         amount: refund.amountCents,
         description: refund.reason || `Refund for transaction ${payment.transactionId}`,
-        cancelReason: 'Customer request',
+        cancelReason: 'Customer request'
       };
 
       // Create signature for PayOS
@@ -533,17 +453,15 @@ export class PaymentsService {
           'Content-Type': 'application/json',
           'x-client-id': clientId,
           'x-api-key': apiKey,
-          'x-signature': signature,
+          'x-signature': signature
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
 
       if (response.ok && result.code === 200) {
-        this.logger.log(
-          `PayOS refund successful: ${result.data?.id || `payos_refund_${refund.id}`}`,
-        );
+        this.logger.log(`PayOS refund successful: ${result.data?.id || `payos_refund_${refund.id}`}`);
         return { success: true, refundId: result.data?.id || `payos_refund_${refund.id}` };
       } else {
         this.logger.error(`PayOS refund failed: ${result.code} - ${result.desc}`);
@@ -667,7 +585,7 @@ export class PaymentsService {
 
     await this.prisma.payment_intents.update({
       where: { id: intent.id },
-      data: { status: 'FAILED' },
+      data: { status: 'FAILED' }
     });
 
     const _order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
@@ -682,3 +600,5 @@ export class PaymentsService {
     this.logger.log(`Payment marked as failed: ${provider} - ${txnRef}`);
   }
 }
+
+

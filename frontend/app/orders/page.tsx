@@ -35,7 +35,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: ty
 };
 
 export default function OrdersPage() {
-  const { user } = useAuth();
+  const { data: user } = useAuth();
   const isAuthenticated = !!user;
   const router = useRouter();
   const { data: orders, isLoading, error } = useOrders();

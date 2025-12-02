@@ -106,7 +106,6 @@ export declare class SupportService {
         totalPages: number;
     }>;
     updateTicketStatus(id: string, status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED', assignedTo?: string): Promise<SupportTicket>;
-    private mapPrismaTicketToInterface;
     searchKnowledgeBase(query: string): Promise<KnowledgeBaseArticle[]>;
     getCategories(): Promise<string[]>;
     sendTestEmail(email: string): Promise<{
