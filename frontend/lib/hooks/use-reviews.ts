@@ -2,10 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
 import { ProductReview, PaginatedResponse } from '../types';
 
+interface ReviewFilters {
+  productId?: string;
+  userId?: string;
+  rating?: number;
+  page?: number;
+  pageSize?: number;
+}
+
 export const reviewQueryKeys = {
   all: ['reviews'] as const,
   lists: () => [...reviewQueryKeys.all, 'list'] as const,
-  list: (filters: any) => [...reviewQueryKeys.lists(), filters] as const,
+  list: (filters: ReviewFilters) => [...reviewQueryKeys.lists(), filters] as const,
   product: (productId: string) => [...reviewQueryKeys.all, 'product', productId] as const,
 };
 

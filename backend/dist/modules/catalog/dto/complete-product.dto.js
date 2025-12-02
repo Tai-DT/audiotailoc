@@ -49,7 +49,6 @@ __decorate([
 ], ProductSpecificationDto.prototype, "value", void 0);
 class CreateProductDto {
     constructor() {
-        this.stockQuantity = 0;
         this.minOrderQuantity = 1;
         this.isActive = true;
         this.featured = false;
@@ -71,9 +70,11 @@ __decorate([
         example: 'premium-audio-cable',
     }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => value === null ? undefined : value),
+    (0, class_transformer_1.Transform)(({ value }) => (value === null ? undefined : value)),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Matches)(/^[a-z0-9-]+$/, { message: 'Slug must contain only lowercase letters, numbers, and hyphens' }),
+    (0, class_validator_1.Matches)(/^[a-z0-9-]+$/, {
+        message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+    }),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "slug", void 0);
 __decorate([
@@ -114,17 +115,6 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "originalPriceCents", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Stock quantity',
-        example: 50,
-        default: 0,
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateProductDto.prototype, "stockQuantity", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'SKU (Stock Keeping Unit)',
@@ -313,6 +303,17 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "canonicalUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Stock quantity',
+        example: 100,
+        minimum: 0,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateProductDto.prototype, "stockQuantity", void 0);
 class UpdateProductDto {
 }
 exports.UpdateProductDto = UpdateProductDto;
@@ -333,7 +334,9 @@ __decorate([
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Matches)(/^[a-z0-9-]+$/, { message: 'Slug must contain only lowercase letters, numbers, and hyphens' }),
+    (0, class_validator_1.Matches)(/^[a-z0-9-]+$/, {
+        message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+    }),
     __metadata("design:type", String)
 ], UpdateProductDto.prototype, "slug", void 0);
 __decorate([
@@ -375,16 +378,6 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], UpdateProductDto.prototype, "originalPriceCents", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Stock quantity',
-        example: 50,
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], UpdateProductDto.prototype, "stockQuantity", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'SKU (Stock Keeping Unit)',
@@ -570,6 +563,17 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], UpdateProductDto.prototype, "canonicalUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Stock quantity',
+        example: 100,
+        minimum: 0,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], UpdateProductDto.prototype, "stockQuantity", void 0);
 class ProductListQueryDto {
     constructor() {
         this.page = 1;
@@ -740,13 +744,6 @@ __decorate([
     }),
     __metadata("design:type", Number)
 ], ProductResponseDto.prototype, "originalPriceCents", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Stock quantity',
-        example: 50,
-    }),
-    __metadata("design:type", Number)
-], ProductResponseDto.prototype, "stockQuantity", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'SKU',
@@ -1001,7 +998,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Products by category',
-        example: { 'audio-cables': 25, 'speakers': 30 },
+        example: { 'audio-cables': 25, speakers: 30 },
     }),
     __metadata("design:type", Object)
 ], ProductAnalyticsDto.prototype, "productsByCategory", void 0);

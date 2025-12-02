@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { OrderItem } from '@/lib/types';
-import { useAuth } from '@/lib/hooks/use-auth';
 import { useOrder } from '@/lib/hooks/use-api';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import {
   ArrowLeft,
   Package,
@@ -39,18 +39,9 @@ const statusConfig = {
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
 };
 
-export default function OrderDetailPage({ params }: OrderDetailPageProps) {
+function OrderDetailPageContent({ params }: OrderDetailPageProps) {
   const { id } = React.use(params);
-  const { data: user } = useAuth();
   const { data: order, isLoading, error } = useOrder(id);
-  const router = useRouter();
-
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    }
-  }, [user, router]);
 
   if (isLoading) {
     return (
@@ -331,5 +322,13 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function OrderDetailPage({ params }: OrderDetailPageProps) {
+  return (
+    <AuthGuard>
+      <OrderDetailPageContent params={params} />
+    </AuthGuard>
   );
 }

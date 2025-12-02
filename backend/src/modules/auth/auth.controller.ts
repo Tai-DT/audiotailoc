@@ -56,23 +56,29 @@ export class AuthController {
     const user = await this.auth.register(dto);
     // Auto-login after successful registration
     const tokens = await this.auth.login({ email: dto.email, password: dto.password });
+    // Access token expires in 15 minutes (15 * 60 * 1000 ms)
+    const expiresInMs = 15 * 60 * 1000;
     return {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      expiresInMs,
       user: { id: user.id, email: user.email, name: user.name }
     };
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for login
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute for login (increased for development)
   @Post('login')
   async login(@Body() dto: LoginDto) {
     const tokens = await this.auth.login(dto).catch(() => {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     });
     const user = await this.users.findById(tokens.userId);
+    // Access token expires in 15 minutes (15 * 60 * 1000 ms)
+    const expiresInMs = 15 * 60 * 1000;
     return {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      expiresInMs,
       user: {
         id: user?.id,
         email: user?.email,
@@ -88,7 +94,12 @@ export class AuthController {
     const tokens = await this.auth.refresh(dto.refreshToken).catch(() => {
       throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     });
-    return tokens;
+    // Access token expires in 15 minutes (15 * 60 * 1000 ms)
+    const expiresInMs = 15 * 60 * 1000;
+    return {
+      ...tokens,
+      expiresInMs
+    };
   }
 
   @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour for forgot password
@@ -113,7 +124,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for change password
   @Put('change-password')
   async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
-    const userId = req.users?.sub as string | undefined;
+    const userId = req.user?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
 
     const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
@@ -126,9 +137,56 @@ export class AuthController {
   @SkipThrottle() // Skip rate limiting for authenticated /me requests
   @Get('me')
   async me(@Req() req: any) {
-    const userId = req.users?.sub as string | undefined;
+    const userId = req.user?.sub as string | undefined;
     if (!userId) return { userId: null };
     const u = await this.users.findById(userId);
     return { userId, email: u?.email ?? null, role: (u as any)?.role ?? null };
+  }
+
+  @UseGuards(JwtGuard)
+  @SkipThrottle() // Skip rate limiting for authenticated /profile requests
+  @Get('profile')
+  async getProfile(@Req() req: any) {
+    const userId = req.user?.sub as string | undefined;
+    if (!userId) {
+      throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
+    }
+    const user = await this.users.findById(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: (user as any)?.role ?? 'USER',
+      phone: (user as any)?.phone ?? null,
+      avatar: (user as any)?.avatar ?? null,
+      address: (user as any)?.address ?? null,
+      isActive: (user as any)?.isActive ?? true,
+      createdAt: (user as any)?.createdAt ?? null,
+    };
+  }
+
+  @UseGuards(JwtGuard)
+  @SkipThrottle() // Skip rate limiting for authenticated /profile requests
+  @Put('profile')
+  async updateProfile(@Req() req: any, @Body() updateData: any) {
+    const userId = req.user?.sub as string | undefined;
+    if (!userId) {
+      throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
+    }
+    const updatedUser = await this.users.update(userId, updateData);
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      role: (updatedUser as any)?.role ?? 'USER',
+      phone: (updatedUser as any)?.phone ?? null,
+      avatar: (updatedUser as any)?.avatar ?? null,
+      address: (updatedUser as any)?.address ?? null,
+      isActive: (updatedUser as any)?.isActive ?? true,
+      createdAt: (updatedUser as any)?.createdAt ?? null,
+    };
   }
 }

@@ -41,6 +41,7 @@ export declare class ProjectsUploadController {
             endDate: Date | null;
             duration: string | null;
             category: string | null;
+            budget: string | null;
             isFeatured: boolean;
             results: string | null;
             displayOrder: number;
@@ -54,7 +55,6 @@ export declare class ProjectsUploadController {
             githubUrl: string | null;
             liveUrl: string | null;
             teamSize: number | null;
-            budget: string | null;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;
@@ -105,6 +105,7 @@ export declare class ProjectsUploadController {
             endDate: Date | null;
             duration: string | null;
             category: string | null;
+            budget: string | null;
             isFeatured: boolean;
             results: string | null;
             displayOrder: number;
@@ -118,7 +119,6 @@ export declare class ProjectsUploadController {
             githubUrl: string | null;
             liveUrl: string | null;
             teamSize: number | null;
-            budget: string | null;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;
@@ -170,6 +170,7 @@ export declare class ProjectsUploadController {
             endDate: Date | null;
             duration: string | null;
             category: string | null;
+            budget: string | null;
             isFeatured: boolean;
             results: string | null;
             displayOrder: number;
@@ -183,7 +184,6 @@ export declare class ProjectsUploadController {
             githubUrl: string | null;
             liveUrl: string | null;
             teamSize: number | null;
-            budget: string | null;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;
@@ -235,6 +235,7 @@ export declare class ProjectsUploadController {
             endDate: Date | null;
             duration: string | null;
             category: string | null;
+            budget: string | null;
             isFeatured: boolean;
             results: string | null;
             displayOrder: number;
@@ -248,7 +249,6 @@ export declare class ProjectsUploadController {
             githubUrl: string | null;
             liveUrl: string | null;
             teamSize: number | null;
-            budget: string | null;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;
@@ -302,6 +302,7 @@ export declare class ProjectsUploadController {
             endDate: Date | null;
             duration: string | null;
             category: string | null;
+            budget: string | null;
             isFeatured: boolean;
             results: string | null;
             displayOrder: number;
@@ -315,7 +316,6 @@ export declare class ProjectsUploadController {
             githubUrl: string | null;
             liveUrl: string | null;
             teamSize: number | null;
-            budget: string | null;
             testimonial: string | null;
             challenges: string | null;
             solutions: string | null;

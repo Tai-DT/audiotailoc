@@ -19,7 +19,8 @@ function CustomError(options) {
                 const statusCode = options.statusCode || common_1.HttpStatus.INTERNAL_SERVER_ERROR;
                 const errorResponse = {
                     code: options.code || 'INTERNAL_ERROR',
-                    message: options.message || (error instanceof Error ? error.message : 'An unexpected error occurred'),
+                    message: options.message ||
+                        (error instanceof Error ? error.message : 'An unexpected error occurred'),
                     details: options.details || undefined,
                     originalError: error instanceof Error ? error.message : 'Unknown error',
                 };

@@ -11,6 +11,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
+import { BigIntSerializeInterceptor } from './common/interceptors/bigint-serialize.interceptor';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -166,6 +167,7 @@ async function bootstrap() {
   // Global filters and interceptors
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(
+    new BigIntSerializeInterceptor(), // Must be first to serialize BigInt before other interceptors
     new LoggingInterceptor(),
     new ResponseTransformInterceptor(),
   );
@@ -192,7 +194,10 @@ async function bootstrap() {
   app.use(limiter);
 
   // Global prefix - sử dụng API v1 (phiên bản duy nhất và tốt nhất)
-  app.setGlobalPrefix('api/v1');
+  // Exclude health và root endpoints khỏi prefix để hỗ trợ cả /health và /api/v1/health
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['health', ''],
+  });
 
   // Simple documentation for single API version
   const enableDocs = (config.get('ENABLE_SWAGGER') ?? 'true') !== 'false';

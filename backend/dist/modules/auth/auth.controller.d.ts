@@ -36,6 +36,7 @@ export declare class AuthController {
     register(dto: RegisterDto): Promise<{
         token: string;
         refreshToken: string;
+        expiresInMs: number;
         user: {
             id: string;
             email: string;
@@ -45,6 +46,7 @@ export declare class AuthController {
     login(dto: LoginDto): Promise<{
         token: string;
         refreshToken: string;
+        expiresInMs: number;
         user: {
             id: string;
             email: string;
@@ -53,6 +55,7 @@ export declare class AuthController {
         };
     }>;
     refresh(dto: RefreshTokenDto): Promise<{
+        expiresInMs: number;
         accessToken: string;
         refreshToken: string;
     }>;
@@ -73,6 +76,28 @@ export declare class AuthController {
         userId: string;
         email: string;
         role: any;
+    }>;
+    getProfile(req: any): Promise<{
+        id: string;
+        email: string;
+        name: string;
+        role: any;
+        phone: any;
+        avatar: any;
+        address: any;
+        isActive: any;
+        createdAt: any;
+    }>;
+    updateProfile(req: any, updateData: any): Promise<{
+        id: string;
+        email: string;
+        name: string;
+        role: any;
+        phone: any;
+        avatar: any;
+        address: any;
+        isActive: any;
+        createdAt: any;
     }>;
 }
 export {};

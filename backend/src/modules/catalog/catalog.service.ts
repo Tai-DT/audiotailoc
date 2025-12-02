@@ -70,11 +70,23 @@ export class CatalogService {
     const cached = await this.cache.get<{ items: ProductDto[]; total: number; page: number; pageSize: number }>(cacheKey);
     if (cached) return cached;
 
+    // Build orderBy object with type safety
+    let orderBy: Record<string, 'asc' | 'desc'>;
+    if (orderByField === 'viewCount') {
+      orderBy = { viewCount: orderDirection };
+    } else if (orderByField === 'priceCents') {
+      orderBy = { priceCents: orderDirection };
+    } else if (orderByField === 'name') {
+      orderBy = { name: orderDirection };
+    } else {
+      orderBy = { createdAt: orderDirection };
+    }
+
     const [total, rawItems] = await this.prisma.$transaction([
       this.prisma.products.count({ where }),
       this.prisma.products.findMany({
         where,
-        orderBy: { [orderByField]: orderDirection },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import {
   Heart,
   ShoppingCart,
@@ -21,11 +20,7 @@ import { toast } from 'react-hot-toast';
 import { useWishlist, useRemoveFromWishlist, WishlistItem } from '@/lib/hooks/use-wishlist';
 import { useAddToCart } from '@/lib/hooks/use-api';
 
-export default function WishlistPage() {
-  const { data: user } = useAuth();
-  const isAuthenticated = !!user;
-  const router = useRouter();
-
+function WishlistPageContent() {
   // Use real API hooks
   const { data: wishlistData, isLoading, error } = useWishlist();
   const removeFromWishlistMutation = useRemoveFromWishlist();
@@ -58,24 +53,6 @@ export default function WishlistPage() {
     }).format(price);
   };
 
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -141,23 +118,38 @@ export default function WishlistPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {wishlist.map((item: WishlistItem) => (
-                <Card key={item.id} className="group hover:shadow-lg transition-shadow">
+              {wishlist.map((item: WishlistItem) => {
+                const itemId = item?.id || '';
+                const productId = item?.productId || '';
+                const product = item?.product;
+                const productSlug = product?.slug;
+                const productName = product?.name || 'Sản phẩm';
+                const productImageUrl = product?.imageUrl;
+                const productPriceCents = product?.priceCents || 0;
+                const productOriginalPriceCents = product?.originalPriceCents;
+                const productStockQuantity = product?.stockQuantity || 0;
+                
+                return (
+                <Card key={itemId} className="group hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
                     {/* Product Image */}
                     <div className="relative aspect-square overflow-hidden rounded-t-lg">
                       <Image
-                        src={item.product?.imageUrl || '/placeholder-product.svg'}
-                        alt={item.product?.name || 'Sản phẩm'}
+                        src={productImageUrl || '/placeholder-product.svg'}
+                        alt={productName}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-product.svg';
+                        }}
                       />
                       <div className="absolute top-3 right-3">
                         <Button
                           size="icon"
                           variant="destructive"
                           className="w-8 h-8 rounded-full"
-                          onClick={() => handleRemoveFromWishlist(item.productId)}
+                          onClick={() => handleRemoveFromWishlist(productId)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -166,11 +158,17 @@ export default function WishlistPage() {
 
                     {/* Product Info */}
                     <div className="p-4">
-                      <Link href={`/products/${item.product?.slug}`}>
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
-                          {item.product?.name || 'Sản phẩm'}
+                      {productSlug ? (
+                        <Link href={`/products/${productSlug}`}>
+                          <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
+                            {productName}
+                          </h3>
+                        </Link>
+                      ) : (
+                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                          {productName}
                         </h3>
-                      </Link>
+                      )}
 
                       <div className="flex items-center space-x-2 mb-3">
                         <div className="flex items-center space-x-1">
@@ -188,15 +186,15 @@ export default function WishlistPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex flex-col">
                           <span className="text-lg font-bold text-green-600">
-                            {formatPrice(item.product?.priceCents / 100 || 0)}
+                            {formatPrice((productPriceCents || 0) / 100)}
                           </span>
-                          {item.product?.originalPriceCents && item.product.originalPriceCents > item.product.priceCents && (
+                          {productOriginalPriceCents && productPriceCents && productOriginalPriceCents > productPriceCents && (
                             <span className="text-sm text-muted-foreground line-through">
-                              {formatPrice(item.product.originalPriceCents / 100)}
+                              {formatPrice(productOriginalPriceCents / 100)}
                             </span>
                           )}
                         </div>
-                        {item.product?.stockQuantity > 0 ? (
+                        {productStockQuantity > 0 ? (
                           <Badge variant="secondary" className="text-green-600">
                             <Package className="w-3 h-3 mr-1" />
                             Còn hàng
@@ -212,22 +210,25 @@ export default function WishlistPage() {
                       <div className="flex space-x-2">
                         <Button
                           className="flex-1"
-                          onClick={() => handleAddToCart(item.productId)}
-                          disabled={item.product?.stockQuantity === 0}
+                          onClick={() => handleAddToCart(productId)}
+                          disabled={productStockQuantity === 0}
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" />
                           Thêm vào giỏ
                         </Button>
-                        <Button variant="outline" size="icon" asChild>
-                          <Link href={`/products/${item.product?.slug}`}>
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                        </Button>
+                        {productSlug && (
+                          <Button variant="outline" size="icon" asChild>
+                            <Link href={`/products/${productSlug}`}>
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
 
@@ -247,5 +248,13 @@ export default function WishlistPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function WishlistPage() {
+  return (
+    <AuthGuard>
+      <WishlistPageContent />
+    </AuthGuard>
   );
 }

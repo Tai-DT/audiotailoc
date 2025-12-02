@@ -198,7 +198,7 @@ export function SimpleHeader({
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/login">
+                <Link href="/auth/login">
                   <Button variant="ghost" size="sm">
                     Đăng nhập
                   </Button>

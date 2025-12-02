@@ -49,7 +49,7 @@ let CartController = class CartController {
         return {
             items: [],
             total: 0,
-            message: 'No cart ID provided'
+            message: 'No cart ID provided',
         };
     }
     async addToCart(addToCartDto, cartId, userId) {
@@ -61,7 +61,7 @@ let CartController = class CartController {
         }
         return {
             success: false,
-            message: 'No cart ID provided'
+            message: 'No cart ID provided',
         };
     }
     async createGuestCart() {

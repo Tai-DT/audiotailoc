@@ -18,8 +18,6 @@ const admin_settings_controller_1 = require("./admin-settings.controller");
 const simple_settings_controller_1 = require("./simple-settings.controller");
 const site_stats_controller_1 = require("./site-stats.controller");
 const site_stats_service_1 = require("./site-stats.service");
-const testimonials_controller_1 = require("./testimonials.controller");
-const testimonials_service_1 = require("./testimonials.service");
 let SiteModule = class SiteModule {
 };
 exports.SiteModule = SiteModule;
@@ -33,10 +31,9 @@ exports.SiteModule = SiteModule = __decorate([
             admin_settings_controller_1.AdminSettingsController,
             simple_settings_controller_1.SimpleSettingsController,
             site_stats_controller_1.SiteStatsController,
-            testimonials_controller_1.TestimonialsController,
         ],
-        providers: [banners_service_1.BannersService, settings_service_1.SettingsService, site_stats_service_1.SiteStatsService, testimonials_service_1.TestimonialsService],
-        exports: [banners_service_1.BannersService, settings_service_1.SettingsService, site_stats_service_1.SiteStatsService, testimonials_service_1.TestimonialsService],
+        providers: [banners_service_1.BannersService, settings_service_1.SettingsService, site_stats_service_1.SiteStatsService],
+        exports: [banners_service_1.BannersService, settings_service_1.SettingsService, site_stats_service_1.SiteStatsService],
     })
 ], SiteModule);
 //# sourceMappingURL=site.module.js.map

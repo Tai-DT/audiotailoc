@@ -66,22 +66,23 @@ export class PromotionProjectReviewsService {
         throw new NotFoundException('Promotion not found');
       }
 
-      const review = await this.prisma.project_promotion_reviews.create({
-        data: {
-          id: uuidv4(),
-          projectId: data.projectId,
-          promotionId: data.promotionId,
-          userId: data.userId,
-          rating: data.rating,
-          title: data.title,
-          comment: data.comment,
-          status: 'PENDING',
-          isVerified: false,
-          helpfulCount: 0,
-        },
-      });
-
-      return this.formatReview(review);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.create({
+      //   data: {
+      //     id: uuidv4(),
+      //     projectId: data.projectId,
+      //     promotionId: data.promotionId,
+      //     userId: data.userId,
+      //     rating: data.rating,
+      //     title: data.title,
+      //     comment: data.comment,
+      //     status: 'PENDING',
+      //     isVerified: false,
+      //     helpfulCount: 0,
+      //   },
+      // });
+      // return this.formatReview(review);
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
@@ -95,15 +96,15 @@ export class PromotionProjectReviewsService {
    */
   async getReviewById(reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        return null;
-      }
-
-      return this.formatReview(review);
+      // TODO: project_promotion_reviews table does not exist
+      return null;
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   return null;
+      // }
+      // return this.formatReview(review);
     } catch (error) {
       throw new BadRequestException(`Failed to get review: ${(error as any).message}`);
     }
@@ -145,27 +146,30 @@ export class PromotionProjectReviewsService {
 
       // Get total and reviews
       const [reviews, total] = await Promise.all([
-        this.prisma.project_promotion_reviews.findMany({
-          where: whereCondition,
-          skip,
-          take,
-          include: { users: { select: { name: true, avatarUrl: true } } },
-          orderBy: this.getOrderByClause(filters?.orderBy),
-        }),
-        this.prisma.project_promotion_reviews.count({
-          where: whereCondition,
-        }),
+        // TODO: project_promotion_reviews table does not exist
+        [], // this.prisma.project_promotion_reviews.findMany({
+        //   where: whereCondition,
+        //   skip,
+        //   take,
+        //   include: { users: { select: { name: true, avatarUrl: true } } },
+        //   orderBy: this.getOrderByClause(filters?.orderBy),
+        // }),
+        // TODO: project_promotion_reviews table does not exist
+        0, // this.prisma.project_promotion_reviews.count({
+        //   where: whereCondition,
+        // }),
       ]);
 
       // Calculate statistics
-      const allReviews = await this.prisma.project_promotion_reviews.findMany({
-        where: {
-          projectId,
-          promotionId,
-          status: 'APPROVED',
-        },
-        select: { rating: true },
-      });
+      // TODO: project_promotion_reviews table does not exist
+      const allReviews: any[] = []; // await this.prisma.project_promotion_reviews.findMany({
+      //   where: {
+      //     projectId,
+      //     promotionId,
+      //     status: 'APPROVED',
+      //   },
+      //   select: { rating: true },
+      // });
 
       const averageRating =
         allReviews.length > 0
@@ -220,14 +224,16 @@ export class PromotionProjectReviewsService {
       }
 
       const [reviews, total] = await Promise.all([
-        this.prisma.project_promotion_reviews.findMany({
-          where: whereCondition,
-          skip,
-          take,
-          include: { users: { select: { name: true, avatarUrl: true } } },
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.project_promotion_reviews.count({ where: whereCondition }),
+        // TODO: project_promotion_reviews table does not exist
+        [], // this.prisma.project_promotion_reviews.findMany({
+        //   where: whereCondition,
+        //   skip,
+        //   take,
+        //   include: { users: { select: { name: true, avatarUrl: true } } },
+        //   orderBy: { createdAt: 'desc' },
+        // }),
+        // TODO: project_promotion_reviews table does not exist
+        0, // this.prisma.project_promotion_reviews.count({ where: whereCondition }),
       ]);
 
       return {
@@ -247,30 +253,28 @@ export class PromotionProjectReviewsService {
     updates: UpdateProjectPromotionReviewDto,
   ): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      if (updates.rating && (updates.rating < 1 || updates.rating > 5)) {
-        throw new BadRequestException('Rating must be between 1 and 5');
-      }
-
-      const updated = await this.prisma.project_promotion_reviews.update({
-        where: { id: reviewId },
-        data: {
-          rating: updates.rating,
-          title: updates.title,
-          comment: updates.comment,
-          status: updates.status,
-          isVerified: updates.isVerified,
-        },
-      });
-
-      return this.formatReview(updated);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // if (updates.rating && (updates.rating < 1 || updates.rating > 5)) {
+      //   throw new BadRequestException('Rating must be between 1 and 5');
+      // }
+      // const updated = await this.prisma.project_promotion_reviews.update({
+      //   where: { id: reviewId },
+      //   data: {
+      //     rating: updates.rating,
+      //     title: updates.title,
+      //     comment: updates.comment,
+      //     status: updates.status,
+      //     isVerified: updates.isVerified,
+      //   },
+      // });
+      // return this.formatReview(updated);
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
@@ -284,19 +288,18 @@ export class PromotionProjectReviewsService {
    */
   async deleteReview(reviewId: string): Promise<boolean> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      await this.prisma.project_promotion_reviews.delete({
-        where: { id: reviewId },
-      });
-
-      return true;
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // await this.prisma.project_promotion_reviews.delete({
+      //   where: { id: reviewId },
+      // });
+      // return true;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -310,20 +313,19 @@ export class PromotionProjectReviewsService {
    */
   async approveReview(reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      const updated = await this.prisma.project_promotion_reviews.update({
-        where: { id: reviewId },
-        data: { status: 'APPROVED' },
-      });
-
-      return this.formatReview(updated);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // const updated = await this.prisma.project_promotion_reviews.update({
+      //   where: { id: reviewId },
+      //   data: { status: 'APPROVED' },
+      // });
+      // return this.formatReview(updated);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -337,20 +339,19 @@ export class PromotionProjectReviewsService {
    */
   async rejectReview(reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      const updated = await this.prisma.project_promotion_reviews.update({
-        where: { id: reviewId },
-        data: { status: 'REJECTED' },
-      });
-
-      return this.formatReview(updated);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // const updated = await this.prisma.project_promotion_reviews.update({
+      //   where: { id: reviewId },
+      //   data: { status: 'REJECTED' },
+      // });
+      // return this.formatReview(updated);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -364,24 +365,23 @@ export class PromotionProjectReviewsService {
    */
   async markAsHelpful(reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      const updated = await this.prisma.project_promotion_reviews.update({
-        where: { id: reviewId },
-        data: {
-          helpfulCount: {
-            increment: 1,
-          },
-        },
-      });
-
-      return this.formatReview(updated);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // const updated = await this.prisma.project_promotion_reviews.update({
+      //   where: { id: reviewId },
+      //   data: {
+      //     helpfulCount: {
+      //       increment: 1,
+      //     },
+      //   },
+      // });
+      // return this.formatReview(updated);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -405,17 +405,18 @@ export class PromotionProjectReviewsService {
     helpfulnessScore: number;
   }> {
     try {
-      const reviews = await this.prisma.project_promotion_reviews.findMany({
-        where: {
-          projectId,
-          promotionId,
-        },
-        select: {
-          rating: true,
-          status: true,
-          helpfulCount: true,
-        },
-      });
+      // TODO: project_promotion_reviews table does not exist
+      const reviews: any[] = []; // await this.prisma.project_promotion_reviews.findMany({
+      //   where: {
+      //     projectId,
+      //     promotionId,
+      //   },
+      //   select: {
+      //     rating: true,
+      //     status: true,
+      //     helpfulCount: true,
+      //   },
+      // });
 
       const approved = reviews.filter(r => r.status === 'APPROVED');
       const pending = reviews.filter(r => r.status === 'PENDING');
@@ -481,16 +482,18 @@ export class PromotionProjectReviewsService {
       }
 
       const [reviews, total] = await Promise.all([
-        this.prisma.project_promotion_reviews.findMany({
-          where: whereCondition,
-          skip,
-          take,
-          include: { users: { select: { name: true, email: true, avatarUrl: true } } },
-          orderBy: { createdAt: 'asc' },
-        }),
-        this.prisma.project_promotion_reviews.count({
-          where: whereCondition,
-        }),
+        // TODO: project_promotion_reviews table does not exist
+        [], // this.prisma.project_promotion_reviews.findMany({
+        //   where: whereCondition,
+        //   skip,
+        //   take,
+        //   include: { users: { select: { name: true, email: true, avatarUrl: true } } },
+        //   orderBy: { createdAt: 'asc' },
+        // }),
+        // TODO: project_promotion_reviews table does not exist
+        0, // this.prisma.project_promotion_reviews.count({
+        //   where: whereCondition,
+        // }),
       ]);
 
       return {
@@ -507,20 +510,19 @@ export class PromotionProjectReviewsService {
    */
   async verifyReview(reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
-      const review = await this.prisma.project_promotion_reviews.findUnique({
-        where: { id: reviewId },
-      });
-
-      if (!review) {
-        throw new NotFoundException('Review not found');
-      }
-
-      const updated = await this.prisma.project_promotion_reviews.update({
-        where: { id: reviewId },
-        data: { isVerified: true },
-      });
-
-      return this.formatReview(updated);
+      // TODO: project_promotion_reviews table does not exist
+      throw new NotFoundException('project_promotion_reviews table does not exist');
+      // const review = await this.prisma.project_promotion_reviews.findUnique({
+      //   where: { id: reviewId },
+      // });
+      // if (!review) {
+      //   throw new NotFoundException('Review not found');
+      // }
+      // const updated = await this.prisma.project_promotion_reviews.update({
+      //   where: { id: reviewId },
+      //   data: { isVerified: true },
+      // });
+      // return this.formatReview(updated);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -547,14 +549,16 @@ export class PromotionProjectReviewsService {
       const take = filters?.take || 20;
 
       const [reviews, total] = await Promise.all([
-        this.prisma.project_promotion_reviews.findMany({
-          where: { userId },
-          skip,
-          take,
-          orderBy: { createdAt: 'desc' },
-          include: { projects: { select: { name: true } }, promotions: { select: { name: true } } },
-        }),
-        this.prisma.project_promotion_reviews.count({ where: { userId } }),
+        // TODO: project_promotion_reviews table does not exist
+        [], // this.prisma.project_promotion_reviews.findMany({
+        //   where: { userId },
+        //   skip,
+        //   take,
+        //   orderBy: { createdAt: 'desc' },
+        //   include: { projects: { select: { name: true } }, promotions: { select: { name: true } } },
+        // }),
+        // TODO: project_promotion_reviews table does not exist
+        0, // this.prisma.project_promotion_reviews.count({ where: { userId } }),
       ]);
 
       return {
@@ -571,16 +575,17 @@ export class PromotionProjectReviewsService {
    */
   async bulkApproveReviews(reviewIds: string[]): Promise<number> {
     try {
-      const result = await this.prisma.project_promotion_reviews.updateMany({
-        where: {
-          id: { in: reviewIds },
-        },
-        data: {
-          status: 'APPROVED',
-        },
-      });
-
-      return result.count;
+      // TODO: project_promotion_reviews table does not exist
+      return 0;
+      // const result = await this.prisma.project_promotion_reviews.updateMany({
+      //   where: {
+      //     id: { in: reviewIds },
+      //   },
+      //   data: {
+      //     status: 'APPROVED',
+      //   },
+      // });
+      // return result.count;
     } catch (error) {
       throw new BadRequestException(`Failed to bulk approve reviews: ${(error as any).message}`);
     }
@@ -591,16 +596,17 @@ export class PromotionProjectReviewsService {
    */
   async bulkRejectReviews(reviewIds: string[]): Promise<number> {
     try {
-      const result = await this.prisma.project_promotion_reviews.updateMany({
-        where: {
-          id: { in: reviewIds },
-        },
-        data: {
-          status: 'REJECTED',
-        },
-      });
-
-      return result.count;
+      // TODO: project_promotion_reviews table does not exist
+      return 0;
+      // const result = await this.prisma.project_promotion_reviews.updateMany({
+      //   where: {
+      //     id: { in: reviewIds },
+      //   },
+      //   data: {
+      //     status: 'REJECTED',
+      //   },
+      // });
+      // return result.count;
     } catch (error) {
       throw new BadRequestException(`Failed to bulk reject reviews: ${(error as any).message}`);
     }

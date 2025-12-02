@@ -406,6 +406,26 @@ class ApiClient {
     return this.request('/catalog/categories');
   }
 
+  async createCategory(data: { name: string; description?: string; parentId?: string; isActive?: boolean }) {
+    return this.request('/catalog/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCategory(id: string, data: { name?: string; description?: string; parentId?: string; isActive?: boolean }) {
+    return this.request(`/catalog/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCategory(id: string) {
+    return this.request(`/catalog/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Analytics endpoints
   async getAnalytics() {
     return this.request('/analytics/dashboard');
@@ -1106,6 +1126,74 @@ class ApiClient {
 
   async getBookingsTodayReal() {
     return this.request('/analytics/services/bookings-today-real');
+  }
+
+  // Maps/Places endpoints
+  async searchPlaces(query: string) {
+    return this.request(`/maps/geocode?query=${encodeURIComponent(query)}`);
+  }
+
+  async getPlaceDetail(placeId: string) {
+    return this.request(`/maps/place-detail?placeId=${encodeURIComponent(placeId)}`);
+  }
+
+  // Chat endpoints
+  async getChatMessages(
+    conversationId: string,
+    params?: {
+      limit?: number;
+      guestId?: string;
+      guestToken?: string;
+    }
+  ) {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.guestId) query.append('guestId', params.guestId);
+    if (params?.guestToken) query.append('guestToken', params.guestToken);
+
+    const queryString = query.toString();
+    return this.request(`/chat/conversations/${conversationId}/messages${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getConversations(params?: {
+    limit?: number;
+    page?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.page) query.append('page', params.page.toString());
+
+    const queryString = query.toString();
+    return this.request(`/chat/conversations${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async startConversation(data: {
+    guestName: string;
+    guestPhone: string;
+    initialMessage?: string;
+  }) {
+    return this.request('/chat/conversations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendChatMessage(data: {
+    conversationId: string;
+    content: string;
+    senderId?: string;
+    senderType: string;
+    guestToken?: string;
+  }) {
+    return this.request(`/chat/conversations/${data.conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        content: data.content,
+        senderId: data.senderId,
+        senderType: data.senderType,
+        guestToken: data.guestToken,
+      }),
+    });
   }
 }
 

@@ -123,7 +123,7 @@ let PaymentsController = class PaymentsController {
         };
     }
     async getMyPayments(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId) {
             throw new Error('User not authenticated');
         }

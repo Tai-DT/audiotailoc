@@ -76,7 +76,7 @@ export default function ChatPage() {
     socket.emit('join_conversation', { conversationId: conversation.id })
 
     // Listen for new messages
-    const handleNewMessage = (payload: any) => {
+    const handleNewMessage = (payload: { id?: string; conversationId: string; content: string; senderType: string; senderId?: string; createdAt: string }) => {
       // Check if message belongs to current conversation
       if (payload.conversationId !== conversation.id) return
 

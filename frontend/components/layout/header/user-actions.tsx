@@ -125,7 +125,7 @@ export function UserActions() {
       ) : (
         <div className="hidden sm:flex items-center space-x-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Đăng nhập</Link>
+            <Link href="/auth/login">Đăng nhập</Link>
           </Button>
           <Button size="sm" asChild>
             <Link href="/register">Đăng ký</Link>

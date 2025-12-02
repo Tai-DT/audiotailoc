@@ -224,7 +224,7 @@ export class CompleteProductService {
         specifications: undefined,
         features: 'Test features',
         warranty: '1 year',
-        stockQuantity: 10,
+        // stockQuantity: 10, // Field does not exist in ProductResponseDto
         minOrderQuantity: 1,
         maxOrderQuantity: 5,
         tags: 'test,tag',
@@ -618,7 +618,7 @@ export class CompleteProductService {
         shortDescription: product.shortDescription,
         priceCents: product.priceCents,
         originalPriceCents: product.originalPriceCents,
-        stockQuantity: product.stockQuantity,
+        // stockQuantity: product.stockQuantity, // Field does not exist in ProductResponseDto
         sku: product.sku ? `${product.sku}-COPY` : null,
         warranty: product.warranty,
         features: product.features,
@@ -970,7 +970,7 @@ export class CompleteProductService {
       specifications: product.specifications,
       features: product.features,
       warranty: product.warranty,
-      stockQuantity: product.stockQuantity,
+      // stockQuantity: product.stockQuantity, // Field does not exist in ProductResponseDto
       minOrderQuantity: product.minOrderQuantity,
       maxOrderQuantity: product.maxOrderQuantity,
       tags: product.tags,

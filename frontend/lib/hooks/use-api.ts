@@ -206,13 +206,33 @@ export const useTopViewedProducts = (limit = 10) => {
   return useQuery({
     queryKey: [...queryKeys.products.topViewed, limit],
     queryFn: async () => {
-      const response = await apiClient.get('/catalog/products/analytics/top-viewed', {
-        params: { limit },
-      });
-      const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
-      return paginatedResponse.items;
+      try {
+        const response = await apiClient.get('/catalog/products/analytics/top-viewed', {
+          params: { limit },
+        });
+        const paginatedResponse = handleApiResponse<PaginatedResponse<Product>>(response);
+        // Handle both paginated and direct array responses
+        if (Array.isArray(paginatedResponse)) {
+          return paginatedResponse;
+        }
+        return paginatedResponse.items || [];
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          console.warn('[useTopViewedProducts] Endpoint not found (404). Returning empty array.');
+          return [];
+        }
+        throw error;
+      }
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };
 

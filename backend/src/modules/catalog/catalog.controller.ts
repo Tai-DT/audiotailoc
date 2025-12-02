@@ -210,14 +210,25 @@ export class CatalogController {
   @Get('products/analytics/top-viewed')
   @UseGuards() // Remove authentication for public access
   async getTopViewedProducts(@Query('limit') limit?: number) {
-    const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
-    return this.catalog.listProducts({
-      page: 1,
-      pageSize: limitNum,
-      sortBy: 'viewCount',
-      sortOrder: 'desc'
-      // Removed featured filter to show all products sorted by view count
-    });
+    try {
+      const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50); // Max 50
+      return await this.catalog.listProducts({
+        page: 1,
+        pageSize: limitNum,
+        sortBy: 'viewCount',
+        sortOrder: 'desc'
+        // Removed featured filter to show all products sorted by view count
+      });
+    } catch (error) {
+      console.error('Error fetching top-viewed products:', error);
+      // Return empty result instead of throwing 500
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: Math.min(parseInt(limit?.toString() || '10'), 50),
+      };
+    }
   }
 
   @Get('products/analytics/recent')

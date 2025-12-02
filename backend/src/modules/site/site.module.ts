@@ -9,8 +9,6 @@ import { AdminSettingsController } from './admin-settings.controller';
 import { SimpleSettingsController } from './simple-settings.controller';
 import { SiteStatsController } from './site-stats.controller';
 import { SiteStatsService } from './site-stats.service';
-import { TestimonialsController } from './testimonials.controller';
-import { TestimonialsService } from './testimonials.service';
 
 @Module({
   imports: [PrismaModule],
@@ -21,9 +19,8 @@ import { TestimonialsService } from './testimonials.service';
     AdminSettingsController,
     SimpleSettingsController,
     SiteStatsController,
-    TestimonialsController,
   ],
-  providers: [BannersService, SettingsService, SiteStatsService, TestimonialsService],
-  exports: [BannersService, SettingsService, SiteStatsService, TestimonialsService],
+  providers: [BannersService, SettingsService, SiteStatsService],
+  exports: [BannersService, SettingsService, SiteStatsService],
 })
 export class SiteModule {}

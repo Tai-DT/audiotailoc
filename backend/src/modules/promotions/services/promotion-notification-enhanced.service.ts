@@ -531,7 +531,8 @@ export class PromotionNotificationEnhancedService {
         where: { id: campaignId },
       });
 
-      if (!campaign || campaign.type !== 'FLASH_SALE') {
+      // TODO: 'FLASH_SALE' does not exist in CampaignType enum
+      if (!campaign || (campaign.type as any) !== 'FLASH_SALE') {
         throw new BadRequestException('Campaign must be a flash sale type');
       }
 

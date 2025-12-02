@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ServiceBooking, Payment } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -217,8 +218,8 @@ export default function CustomerAdminPage() {
             <p className="text-sm text-muted-foreground mb-4">
               {profileError instanceof Error ? profileError.message : 'Failed to load user data'}
             </p>
-            <Link href="/login">
-              <Button>Go to Login</Button>
+            <Link href="/register">
+              <Button>Đăng ký tài khoản</Button>
             </Link>
           </CardContent>
         </Card>
@@ -438,7 +439,7 @@ export default function CustomerAdminPage() {
                 </div>
               ) : bookings && bookings.length > 0 ? (
                 <div className="space-y-4">
-                  {bookings.map((booking: any) => (
+                  {bookings.map((booking: ServiceBooking & { serviceName?: string; date?: string; technicianName?: string; price?: number }) => (
                     <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium">{booking.serviceName || 'Service'}</h4>
@@ -490,7 +491,7 @@ export default function CustomerAdminPage() {
                 </div>
               ) : payments && payments.length > 0 ? (
                 <div className="space-y-4">
-                  {payments.map((payment: any) => (
+                  {payments.map((payment: Payment & { description?: string; amount?: number }) => (
                     <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium">{payment.description || 'Payment'}</h4>

@@ -224,8 +224,8 @@ export class PromotionCheckoutService {
         description: true,
         type: true,
         value: true,
-        minOrderAmount: true,
-        maxDiscount: true,
+        min_order_amount: true,
+        max_discount: true,
         expiresAt: true,
       },
     });
@@ -234,7 +234,7 @@ export class PromotionCheckoutService {
 
     for (const promotion of promotions) {
       // Check minimum order amount
-      if (promotion.minOrderAmount && checkout.subtotalCents / 100 < promotion.minOrderAmount) {
+      if (promotion.min_order_amount && checkout.subtotalCents / 100 < promotion.min_order_amount) {
         continue;
       }
 
@@ -247,8 +247,8 @@ export class PromotionCheckoutService {
       let potentialDiscount = 0;
       if (promotion.type === 'PERCENTAGE') {
         potentialDiscount = (checkout.subtotalCents * promotion.value) / 100 / 100;
-        if (promotion.maxDiscount) {
-          potentialDiscount = Math.min(potentialDiscount, promotion.maxDiscount / 100);
+        if (promotion.max_discount) {
+          potentialDiscount = Math.min(potentialDiscount, promotion.max_discount / 100);
         }
       } else if (promotion.type === 'FIXED_AMOUNT') {
         potentialDiscount = promotion.value / 100;
@@ -257,8 +257,8 @@ export class PromotionCheckoutService {
       applicable.push({
         ...promotion,
         potentialDiscount,
-        minOrderAmount: promotion.minOrderAmount / 100,
-        maxDiscount: promotion.maxDiscount ? promotion.maxDiscount / 100 : null,
+        minOrderAmount: promotion.min_order_amount ? promotion.min_order_amount / 100 : null,
+        maxDiscount: promotion.max_discount ? promotion.max_discount / 100 : null,
       });
     }
 
@@ -277,14 +277,14 @@ export class PromotionCheckoutService {
       return applicable.slice(0, limit);
     }
 
-    // Get customer's used promotions
-    const usedPromotions = await this.prisma.customer_promotions.findMany({
-      where: { userId: checkout.userId },
-      select: { promotionId: true },
-      distinct: ['promotionId'],
-    });
-
-    const usedPromotionIds = usedPromotions.map(up => up.promotionId);
+    // Get customer's used promotions - TODO: Implement customer_promotions tracking
+    // const usedPromotions = await this.prisma.customer_promotions.findMany({
+    //   where: { userId: checkout.userId },
+    //   select: { promotionId: true },
+    //   distinct: ['promotionId'],
+    // });
+    // const usedPromotionIds = usedPromotions.map(up => up.promotionId);
+    const usedPromotionIds: string[] = [];
 
     // Filter out already used promotions
     const suggestions = applicable.filter(p => !usedPromotionIds.includes(p.id));
@@ -360,7 +360,7 @@ export class PromotionCheckoutService {
 
     const now = new Date();
 
-    if (promotion.startsAt && promotion.startsAt > now) {
+    if (promotion.starts_at && promotion.starts_at > now) {
       return {
         available: false,
         reason: 'Promotion is not yet active',
@@ -377,7 +377,7 @@ export class PromotionCheckoutService {
     // Check usage limit
     const metadata = (promotion.metadata as any) || {};
     const usageCount = metadata.usageCount || 0;
-    const usageLimit = metadata.usageLimit || promotion.usageLimit;
+    const usageLimit = metadata.usageLimit || promotion.usage_limit;
 
     if (usageLimit && usageCount >= usageLimit) {
       return {
@@ -419,13 +419,13 @@ export class PromotionCheckoutService {
     }
 
     // Bonus if customer meets minimum order
-    if (promotion.minOrderAmount && checkout.subtotalCents / 100 >= promotion.minOrderAmount) {
+    if (promotion.min_order_amount && checkout.subtotalCents / 100 >= promotion.min_order_amount) {
       score += 15;
     }
 
     // Bonus based on discount amount
-    if (promotion.maxDiscount) {
-      const savingsPotential = promotion.maxDiscount / 100 / (checkout.subtotalCents / 100);
+    if (promotion.max_discount) {
+      const savingsPotential = promotion.max_discount / 100 / (checkout.subtotalCents / 100);
       if (savingsPotential > 0.1) {
         // More than 10% savings
         score += 15;

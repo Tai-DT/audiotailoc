@@ -107,7 +107,7 @@ export function useAddToWishlist() {
       const status = (error as ApiError)?.status ?? (error as { response?: { status?: number } }).response?.status;
       if (status === 401 || status === 403) {
         toast.error('Vui lòng đăng nhập để thêm vào danh sách yêu thích');
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
         return;
       }
       const { message } = handleApiError(error as ApiError);

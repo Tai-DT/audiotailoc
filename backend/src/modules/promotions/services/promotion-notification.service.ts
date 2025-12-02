@@ -190,14 +190,16 @@ export class PromotionNotificationService {
     }
 
     // Find users who have used this promotion
-    const usersWhoUsed = await this.prisma.customer_promotions.findMany({
-      where: {
-        promotionId,
-        status: 'APPLIED',
-      },
-      distinct: ['userId'],
-      select: { userId: true },
-    });
+    // TODO: customer_promotions table does not exist
+    const usersWhoUsed: any[] = [];
+    // const usersWhoUsed = await this.prisma.customer_promotions.findMany({
+    //   where: {
+    //     promotionId,
+    //     status: 'APPLIED',
+    //   },
+    //   distinct: ['userId'],
+    //   select: { userId: true },
+    // });
 
     const template: NotificationTemplate = {
       type: NotificationType.PROMOTION_EXPIRING,

@@ -21,7 +21,7 @@ export declare class OrdersController {
                 productSlug: any;
                 productName: string;
                 quantity: number;
-                price: number | bigint;
+                price: number;
                 total: number;
             }[];
         }[];
@@ -47,59 +47,58 @@ export declare class OrdersController {
         completedOrders: number;
     }>;
     get(id: string): Promise<{
+        totalCents: number;
+        subtotalCents: number;
         order_items: {
+            price: number;
+            unitPrice: number;
             id: string;
-            name: string | null;
             createdAt: Date;
             updatedAt: Date;
+            name: string | null;
             imageUrl: string | null;
-            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
-            unitPrice: bigint | null;
         }[];
         payments: {
-            status: string;
             id: string;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
-            transactionId: string | null;
-            provider: string;
-            amountCents: number;
-            metadata: string | null;
             orderId: string;
             intentId: string | null;
+            provider: string;
+            amountCents: number;
+            transactionId: string | null;
+            metadata: string | null;
         }[];
-    } & {
-        status: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         orderNo: string;
         userId: string;
-        subtotalCents: number;
         discountCents: number;
         shippingCents: number;
-        totalCents: number;
+        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     updateStatus(id: string, status: string): Promise<{
-        status: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         orderNo: string;
         userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
+        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     update(id: string, updateOrderDto: {
         customerName?: string;

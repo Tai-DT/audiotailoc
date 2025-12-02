@@ -16,7 +16,7 @@ const protectedRoutes = [
 
 const adminRoutes = ['/admin']
 
-const authRoutes = ['/login', '/register']
+const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
 
 export function proxy(request: NextRequest) {
   try {
@@ -30,7 +30,9 @@ export function proxy(request: NextRequest) {
     let user: { role?: string } | null = null
     if (userCookie?.value) {
       try {
-        user = JSON.parse(userCookie.value)
+        // Decode URI component if it was encoded
+        const decodedValue = decodeURIComponent(userCookie.value)
+        user = JSON.parse(decodedValue)
       } catch {
         user = null
       }
@@ -43,14 +45,52 @@ export function proxy(request: NextRequest) {
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
+    // Log for debugging (only in development)
+    if (process.env.NODE_ENV === 'development' && isProtectedRoute) {
+      console.log('[Proxy] Protected route check:', {
+        pathname,
+        hasToken: !!token,
+        hasUser: !!user,
+        isAuthenticated,
+        tokenLength: token?.length || 0
+      })
+      // #region agent log
+      // Note: Server-side logging - cannot use fetch, use console.log only
+      // Logs will appear in server console
+      // #endregion
+    }
+
     if (isProtectedRoute && !isAuthenticated) {
-      const url = new URL('/login', request.url)
+      const url = new URL('/auth/login', request.url)
       url.searchParams.set('redirect', pathname)
+      // #region agent log
+      console.log('[Proxy] Redirecting to login:', {
+        pathname,
+        redirectUrl: url.toString(),
+        hasToken: !!token,
+        hasUser: !!user,
+        tokenCookie: tokenCookie?.value ? 'present' : 'missing',
+        userCookie: userCookie?.value ? 'present' : 'missing',
+        allCookies: request.cookies.getAll().map(c => c.name)
+      })
+      // #endregion
       return NextResponse.redirect(url)
     }
 
+    // #region agent log
+    if (isProtectedRoute && isAuthenticated) {
+      console.log('[Proxy] Allowing access to protected route:', {
+        pathname,
+        hasToken: !!token,
+        hasUser: !!user,
+        tokenLength: token?.length || 0,
+        userRole: user?.role
+      })
+    }
+    // #endregion
+
     if (isAdminRoute && !isAuthenticated) {
-      const url = new URL('/login', request.url)
+      const url = new URL('/auth/login', request.url)
       url.searchParams.set('redirect', pathname)
       url.searchParams.set('requireAdmin', 'true')
       return NextResponse.redirect(url)

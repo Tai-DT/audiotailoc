@@ -102,9 +102,11 @@ let AuthController = class AuthController {
             throw new common_1.HttpException('Invalid payload', common_1.HttpStatus.BAD_REQUEST);
         const user = await this.auth.register(dto);
         const tokens = await this.auth.login({ email: dto.email, password: dto.password });
+        const expiresInMs = 15 * 60 * 1000;
         return {
             token: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+            expiresInMs,
             user: { id: user.id, email: user.email, name: user.name }
         };
     }
@@ -113,9 +115,11 @@ let AuthController = class AuthController {
             throw new common_1.HttpException('Invalid credentials', common_1.HttpStatus.UNAUTHORIZED);
         });
         const user = await this.users.findById(tokens.userId);
+        const expiresInMs = 15 * 60 * 1000;
         return {
             token: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+            expiresInMs,
             user: {
                 id: user?.id,
                 email: user?.email,
@@ -128,7 +132,11 @@ let AuthController = class AuthController {
         const tokens = await this.auth.refresh(dto.refreshToken).catch(() => {
             throw new common_1.HttpException('Invalid refresh token', common_1.HttpStatus.UNAUTHORIZED);
         });
-        return tokens;
+        const expiresInMs = 15 * 60 * 1000;
+        return {
+            ...tokens,
+            expiresInMs
+        };
     }
     async forgotPassword(dto) {
         const _result = await this.auth.forgotPassword(dto.email).catch(() => {
@@ -143,7 +151,7 @@ let AuthController = class AuthController {
         return { message: 'Password has been reset successfully' };
     }
     async changePassword(req, dto) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId)
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
         const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
@@ -152,11 +160,50 @@ let AuthController = class AuthController {
         return { message: 'Password has been changed successfully' };
     }
     async me(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId)
             return { userId: null };
         const u = await this.users.findById(userId);
         return { userId, email: u?.email ?? null, role: u?.role ?? null };
+    }
+    async getProfile(req) {
+        const userId = req.user?.sub;
+        if (!userId) {
+            throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        const user = await this.users.findById(userId);
+        if (!user) {
+            throw new common_1.HttpException('User not found', common_1.HttpStatus.NOT_FOUND);
+        }
+        return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user?.role ?? 'USER',
+            phone: user?.phone ?? null,
+            avatar: user?.avatar ?? null,
+            address: user?.address ?? null,
+            isActive: user?.isActive ?? true,
+            createdAt: user?.createdAt ?? null,
+        };
+    }
+    async updateProfile(req, updateData) {
+        const userId = req.user?.sub;
+        if (!userId) {
+            throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        const updatedUser = await this.users.update(userId, updateData);
+        return {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            name: updatedUser.name,
+            role: updatedUser?.role ?? 'USER',
+            phone: updatedUser?.phone ?? null,
+            avatar: updatedUser?.avatar ?? null,
+            address: updatedUser?.address ?? null,
+            isActive: updatedUser?.isActive ?? true,
+            createdAt: updatedUser?.createdAt ?? null,
+        };
     }
 };
 exports.AuthController = AuthController;
@@ -175,7 +222,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
-    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
+    (0, throttler_1.Throttle)({ default: { limit: 30, ttl: 60000 } }),
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -225,6 +272,25 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "me", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, throttler_1.SkipThrottle)(),
+    (0, common_1.Get)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, throttler_1.SkipThrottle)(),
+    (0, common_1.Put)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateProfile", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),

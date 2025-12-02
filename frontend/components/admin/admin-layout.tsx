@@ -35,7 +35,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Check if user is authenticated and has admin role
   React.useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login');
+      router.push('/auth/login');
       return;
     }
     

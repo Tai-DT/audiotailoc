@@ -38,11 +38,13 @@ export default function ProfilePage() {
 
       // Update local user state
       // We need to refresh the user data from the server to ensure we have the latest state
-      const refreshed = await refreshUser()
-
-      if (!refreshed) {
+      try {
+        await refreshUser()
+      } catch (error) {
         // Fallback if refresh fails
-        setUser({ ...user, name: formData.name })
+        if (user) {
+          setUser({ ...user, name: formData.name })
+        }
       }
 
       toast({

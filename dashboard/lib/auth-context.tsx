@@ -8,6 +8,7 @@ interface User {
   email: string
   name: string
   role?: string
+  avatarUrl?: string
 }
 
 interface AuthTokens {
@@ -24,6 +25,7 @@ interface AuthContextType {
   logout: () => void
   refreshToken: () => Promise<void>
   refreshUser: () => Promise<void>
+  setUser: (user: User | null) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -275,7 +277,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     refreshToken,
-    refreshUser
+    refreshUser,
+    setUser
   }
 
   return (

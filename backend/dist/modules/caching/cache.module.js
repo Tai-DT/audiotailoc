@@ -27,7 +27,8 @@ let CacheModule = CacheModule_1 = class CacheModule {
                         const backend = String(config.get('CACHE_BACKEND') || '').toLowerCase();
                         const restUrl = config.get('UPSTASH_REDIS_REST_URL', '');
                         const restToken = config.get('UPSTASH_REDIS_REST_TOKEN', '');
-                        const enableUpstash = backend === 'upstash' || String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
+                        const enableUpstash = backend === 'upstash' ||
+                            String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
                         if (enableUpstash && restUrl && restToken) {
                             return new upstash_cache_service_1.UpstashCacheService(config);
                         }
@@ -59,7 +60,8 @@ let CacheModule = CacheModule_1 = class CacheModule {
                         const backend = String(config.get('CACHE_BACKEND') || '').toLowerCase();
                         const restUrl = config.get('UPSTASH_REDIS_REST_URL', '');
                         const restToken = config.get('UPSTASH_REDIS_REST_TOKEN', '');
-                        const enableUpstash = backend === 'upstash' || String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
+                        const enableUpstash = backend === 'upstash' ||
+                            String(config.get('ENABLE_UPSTASH') ?? '').toLowerCase() === 'true';
                         if (enableUpstash && restUrl && restToken) {
                             return new upstash_cache_service_1.UpstashCacheService(config);
                         }

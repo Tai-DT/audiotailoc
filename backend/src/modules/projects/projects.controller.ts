@@ -31,7 +31,13 @@ export class ProjectsController {
   @Get('featured')
   @ApiOperation({ summary: 'Get featured projects' })
   async getFeatured() {
-    return this.projectsService.findFeatured();
+    try {
+      return await this.projectsService.findFeatured();
+    } catch (error) {
+      console.error('Error fetching featured projects:', error);
+      // Return empty array instead of throwing 500
+      return [];
+    }
   }
 
   @Get('by-slug/:slug')

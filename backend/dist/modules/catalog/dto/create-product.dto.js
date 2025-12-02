@@ -14,10 +14,10 @@ const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateProductDto {
     constructor() {
-        this.stockQuantity = 0;
         this.minOrderQuantity = 1;
         this.isActive = true;
         this.featured = false;
+        this.stockQuantity = 0;
     }
 }
 exports.CreateProductDto = CreateProductDto;
@@ -76,18 +76,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "shortDescription", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Product stock quantity',
-        example: 100,
-        minimum: 0,
-        default: 0,
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateProductDto.prototype, "stockQuantity", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Product SKU (Stock Keeping Unit)',
@@ -275,4 +263,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "canonicalUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Stock quantity',
+        example: 100,
+        minimum: 0,
+        default: 0,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateProductDto.prototype, "stockQuantity", void 0);
 //# sourceMappingURL=create-product.dto.js.map

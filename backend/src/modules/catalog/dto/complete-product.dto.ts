@@ -272,6 +272,16 @@ export class CreateProductDto {
   @IsOptional()
   @IsUrl()
   canonicalUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Stock quantity',
+    example: 100,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stockQuantity?: number;
 }
 
 export class UpdateProductDto {
@@ -496,6 +506,16 @@ export class UpdateProductDto {
   @IsOptional()
   @IsUrl()
   canonicalUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Stock quantity',
+    example: 100,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stockQuantity?: number;
 }
 
 export class ProductListQueryDto {

@@ -68,19 +68,22 @@ let OrdersService = class OrdersService {
                 orderNumber: order.orderNo,
                 customerName: order.users?.name || 'N/A',
                 customerEmail: order.users?.email || 'N/A',
-                totalAmount: order.totalCents,
+                totalAmount: Number(order.totalCents),
                 status: order.status,
                 createdAt: order.createdAt,
                 updatedAt: order.updatedAt,
-                items: order.order_items.map(item => ({
-                    id: item.id,
-                    productId: item.productId,
-                    productSlug: item.products?.slug || null,
-                    productName: item.products?.name || item.name || 'Sản phẩm',
-                    quantity: item.quantity,
-                    price: item.unitPrice || 0,
-                    total: Number(item.unitPrice || 0) * item.quantity
-                }))
+                items: order.order_items.map(item => {
+                    const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
+                    return {
+                        id: item.id,
+                        productId: item.productId,
+                        productSlug: item.products?.slug || null,
+                        productName: item.products?.name || item.name || 'Sản phẩm',
+                        quantity: item.quantity,
+                        price: unitPrice,
+                        total: unitPrice * item.quantity
+                    };
+                })
             }))
         }));
     }
@@ -88,7 +91,16 @@ let OrdersService = class OrdersService {
         const order = await this.prisma.orders.findUnique({ where: { id }, include: { order_items: true, payments: true } });
         if (!order)
             throw new common_1.NotFoundException('Không tìm thấy đơn hàng');
-        return order;
+        return {
+            ...order,
+            totalCents: Number(order.totalCents),
+            subtotalCents: order.subtotalCents ? Number(order.subtotalCents) : null,
+            order_items: order.order_items.map(item => ({
+                ...item,
+                price: item.price ? Number(item.price) : null,
+                unitPrice: item.unitPrice ? Number(item.unitPrice) : null,
+            })),
+        };
     }
     async updateStatus(id, status) {
         const order = await this.get(id);
@@ -148,11 +160,11 @@ let OrdersService = class OrdersService {
                         const orderData = {
                             orderNo: order.orderNo,
                             customerName: user.name || user.email,
-                            totalAmount: `${(order.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
+                            totalAmount: `${(Number(order.totalCents) / 100).toLocaleString('vi-VN')} VNĐ`,
                             items: orderWithItems.order_items.map((item) => ({
                                 name: item.name || 'Sản phẩm',
                                 quantity: item.quantity,
-                                price: `${(item.unitPrice / 100).toLocaleString('vi-VN')} VNĐ`
+                                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`
                             })),
                             status: status
                         };
@@ -383,18 +395,21 @@ let OrdersService = class OrdersService {
             customerName: fullOrder.users?.name || 'N/A',
             customerEmail: fullOrder.users?.email || 'N/A',
             customerPhone: fullOrder.users?.phone || 'N/A',
-            totalAmount: fullOrder.totalCents,
+            totalAmount: Number(fullOrder.totalCents),
             status: fullOrder.status,
             shippingAddress: fullOrder.shippingAddress,
             createdAt: fullOrder.createdAt,
             updatedAt: fullOrder.updatedAt,
-            items: fullOrder.order_items.map(item => ({
-                id: item.id,
-                productName: item.products?.name || item.name || 'Sản phẩm',
-                quantity: item.quantity,
-                price: item.unitPrice || 0,
-                total: Number(item.unitPrice || 0) * item.quantity
-            }))
+            items: fullOrder.order_items.map(item => {
+                const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
+                return {
+                    id: item.id,
+                    productName: item.products?.name || item.name || 'Sản phẩm',
+                    quantity: item.quantity,
+                    price: unitPrice,
+                    total: unitPrice * item.quantity
+                };
+            })
         };
     }
     async delete(id) {

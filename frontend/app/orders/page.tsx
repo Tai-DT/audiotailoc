@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import {
   ShoppingBag,
   Package,
@@ -34,18 +34,8 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: ty
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
 };
 
-export default function OrdersPage() {
-  const { data: user } = useAuth();
-  const isAuthenticated = !!user;
-  const router = useRouter();
+function OrdersPageContent() {
   const { data: orders, isLoading, error } = useOrders();
-
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -54,27 +44,22 @@ export default function OrdersPage() {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'N/A';
+    }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -89,12 +74,26 @@ export default function OrdersPage() {
   }
 
   if (error) {
+    // Check if it's a 403 Forbidden error (user doesn't have permission)
+    const isForbidden = (error as any)?.response?.status === 403;
+    
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4 text-red-600">Có lỗi xảy ra</h1>
-            <p className="text-muted-foreground">Không thể tải danh sách đơn hàng</p>
+            <h1 className="text-2xl font-bold mb-4 text-red-600">
+              {isForbidden ? 'Không có quyền truy cập' : 'Có lỗi xảy ra'}
+            </h1>
+            <p className="text-muted-foreground mb-4">
+              {isForbidden 
+                ? 'Bạn không có quyền truy cập vào danh sách đơn hàng. Vui lòng liên hệ quản trị viên nếu bạn cần hỗ trợ.'
+                : 'Không thể tải danh sách đơn hàng. Vui lòng thử lại sau.'}
+            </p>
+            {!isForbidden && (
+              <Button onClick={() => window.location.reload()}>
+                Thử lại
+              </Button>
+            )}
           </div>
         </main>
       </div>
@@ -143,9 +142,12 @@ export default function OrdersPage() {
                 const normalizedStatus = (order.status?.toUpperCase?.() || 'PENDING') as OrderStatus;
                 const status = statusConfig[normalizedStatus] ?? statusConfig.PENDING;
                 const StatusIcon = status.icon;
+                const orderId = order?.id || '';
+                const orderTotalCents = order?.totalCents || 0;
+                const orderItems = order?.items || [];
 
                 return (
-                  <Card key={order.id} className="hover:shadow-md transition-shadow">
+                  <Card key={orderId} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -162,7 +164,7 @@ export default function OrdersPage() {
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-semibold text-green-600">
-                            {formatPrice(order.totalCents / 100)}
+                            {formatPrice(orderTotalCents / 100)}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Mã đơn: #{order.orderNo || 'N/A'}
@@ -174,28 +176,41 @@ export default function OrdersPage() {
                     <CardContent>
                       {/* Order Items */}
                       <div className="space-y-4 mb-6">
-                        {order.items?.map((item: OrderItem) => (
-                          <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-                              <Package className="w-8 h-8 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold">{item.product?.name || 'Sản phẩm'}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Số lượng: {item.quantity}
-                              </p>
-                              <p className="text-sm font-medium">
-                                {formatPrice(item.price)}
-                              </p>
-                            </div>
+                        {orderItems.length > 0 ? (
+                          orderItems.map((item: OrderItem) => {
+                            const itemId = item?.id || '';
+                            const itemQuantity = item?.quantity || 0;
+                            const itemPrice = item?.price || 0;
+                            const productName = item?.product?.name || 'Sản phẩm';
+                            
+                            return (
+                              <div key={itemId} className="flex items-center space-x-4 p-4 border rounded-lg">
+                                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+                                  <Package className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">{productName}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    Số lượng: {itemQuantity}
+                                  </p>
+                                  <p className="text-sm font-medium">
+                                    {formatPrice(itemPrice)}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            Không có sản phẩm nào trong đơn hàng này
                           </div>
-                        ))}
+                        )}
                       </div>
 
                       <Separator className="mb-4" />
 
                       {/* Order Actions */}
-                      <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           {order.shippingAddress && (
                             <div className="flex items-center space-x-1">
@@ -210,18 +225,20 @@ export default function OrdersPage() {
                         </div>
 
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/orders/${order.id}`}>
-                              <Eye className="w-4 h-4 mr-1" />
-                              Chi tiết
-                            </Link>
-                          </Button>
+                          {orderId && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/orders/${orderId}`}>
+                                <Eye className="w-4 h-4 mr-1" />
+                                Chi tiết
+                              </Link>
+                            </Button>
+                          )}
                           {order.status === 'COMPLETED' && (
                             <Button variant="outline" size="sm">
                               Đánh giá
                             </Button>
                           )}
-                          {['PENDING', 'PROCESSING'].includes(order.status) && (
+                          {order.status && ['PENDING', 'PROCESSING'].includes(order.status) && (
                             <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                               Hủy đơn
                             </Button>
@@ -236,7 +253,7 @@ export default function OrdersPage() {
           )}
 
           {/* Order Statistics */}
-          {orders && orders.items.length > 0 && (
+          {orders && orders.items && orders.items.length > 0 && (
             <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
@@ -247,7 +264,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {orders.items.filter((o: Order) => o.status === 'COMPLETED').length}
+                    {orders.items.filter((o: Order) => o?.status === 'COMPLETED' || o?.status === 'DELIVERED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã giao</div>
                 </CardContent>
@@ -255,7 +272,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {orders.items.filter((o: Order) => ['PENDING', 'PROCESSING'].includes(o.status)).length}
+                    {orders.items.filter((o: Order) => o?.status && ['PENDING', 'PROCESSING', 'CONFIRMED'].includes(o.status)).length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đang xử lý</div>
                 </CardContent>
@@ -263,7 +280,7 @@ export default function OrdersPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-red-600">
-                    {orders.items.filter((o: Order) => o.status === 'CANCELLED').length}
+                    {orders.items.filter((o: Order) => o?.status === 'CANCELLED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã hủy</div>
                 </CardContent>
@@ -273,5 +290,13 @@ export default function OrdersPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <AuthGuard>
+      <OrdersPageContent />
+    </AuthGuard>
   );
 }
