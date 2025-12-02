@@ -436,7 +436,10 @@ model orders {
   totalCents          Int
   status              String                @default("PENDING")
   shippingAddress     String?
+  shippingName        String?
+  shippingPhone       String?
   shippingCoordinates String?
+  shippingNotes       String?
   promotionCode       String?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime
@@ -1139,8 +1142,9 @@ model users {
   loyalty_accounts        loyalty_accounts?
   messages                messages[]
   orders                  orders[]
-  product_reviews         product_reviews[]
-  product_views           product_views[]
+  address                 String?
+  dateOfBirth             DateTime?
+  gender                  String?
   projects                projects[]
   search_queries          search_queries[]
   service_bookings        service_bookings[]
@@ -1153,6 +1157,8 @@ model users {
   promotionAuditLogs      promotion_audit_logs[]
   promotionVersions       promotion_versions[]
   projectPromotionReviews project_promotion_reviews[] @relation("projectPromotionReviews")
+  productReviews          product_reviews[]
+  productViews            product_views[]
 }
 
 model conversations {

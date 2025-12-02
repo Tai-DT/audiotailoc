@@ -17,6 +17,9 @@ export declare class UsersService {
         resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
     }>;
     findById(id: string): Promise<{
         orders: {
@@ -31,7 +34,10 @@ export declare class UsersService {
             shippingCents: number;
             totalCents: number;
             shippingAddress: string | null;
+            shippingName: string | null;
+            shippingPhone: string | null;
             shippingCoordinates: string | null;
+            shippingNotes: string | null;
             promotionCode: string | null;
             isDeleted: boolean;
             deletedAt: Date | null;
@@ -44,6 +50,9 @@ export declare class UsersService {
         avatarUrl: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
         _count: {
             orders: number;
         };
@@ -60,6 +69,9 @@ export declare class UsersService {
         resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
     }>;
     findAll(params: {
         page: number;
@@ -123,11 +135,17 @@ export declare class UsersService {
         resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
     }>;
     update(id: string, updateUserDto: {
         name?: string;
         phone?: string;
         role?: 'USER' | 'ADMIN';
+        address?: string;
+        dateOfBirth?: string;
+        gender?: string;
     }): Promise<{
         id: string;
         email: string;
@@ -135,6 +153,9 @@ export declare class UsersService {
         phone: string;
         role: string;
         updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
     }>;
     remove(id: string, currentUser?: any): Promise<{
         message: string;
@@ -168,6 +189,9 @@ export declare class UsersService {
         resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
     }>;
     completePasswordReset(userId: string, hashedPassword: string): Promise<{
         id: string;
@@ -181,6 +205,9 @@ export declare class UsersService {
         resetExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
     }>;
     private generateRandomPassword;
     exportUserData(userId: string): Promise<{

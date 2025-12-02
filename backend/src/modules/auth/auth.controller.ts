@@ -73,7 +73,15 @@ export class AuthController {
     return {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: (user as any)?.role ?? 'USER',
+        avatar: (user as any)?.avatarUrl ?? null,
+        createdAt: (user as any)?.createdAt ?? new Date().toISOString(),
+        updatedAt: (user as any)?.updatedAt ?? new Date().toISOString(),
+      },
     };
   }
 
@@ -97,7 +105,9 @@ export class AuthController {
         email: user?.email,
         name: user?.name,
         role: (user as any)?.role ?? 'USER',
-        avatarUrl: (user as any)?.avatarUrl ?? null,
+        avatar: (user as any)?.avatarUrl ?? null,
+        createdAt: (user as any)?.createdAt ?? new Date().toISOString(),
+        updatedAt: (user as any)?.updatedAt ?? new Date().toISOString(),
       },
     };
   }
@@ -152,14 +162,16 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: any) {
     const userId = (req as any).user?.sub as string | undefined;
-    if (!userId) return { userId: null };
+    if (!userId) return { id: null };
     const u = await this.users.findById(userId);
     return {
-      userId,
+      id: userId,
       email: u?.email ?? null,
       role: (u as any)?.role ?? null,
-      avatarUrl: (u as any)?.avatarUrl ?? null,
+      avatar: (u as any)?.avatarUrl ?? null,
       name: u?.name ?? null,
+      createdAt: (u as any)?.createdAt ?? new Date().toISOString(),
+      updatedAt: (u as any)?.updatedAt ?? new Date().toISOString(),
     };
   }
 }

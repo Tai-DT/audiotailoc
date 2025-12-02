@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { SettingsController } from '../settings.controller';
 import { SettingsService } from '../settings.service';
+import { JwtGuard } from '../../auth/jwt.guard';
+import { AdminOrKeyGuard } from '../../auth/admin-or-key.guard';
 
 describe('SettingsController', () => {
   let controller: SettingsController;
@@ -11,6 +14,10 @@ describe('SettingsController', () => {
     update: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SettingsController],
@@ -19,8 +26,17 @@ describe('SettingsController', () => {
           provide: SettingsService,
           useValue: mockSettingsService,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
-    }).compile();
+    })
+    .overrideGuard(JwtGuard)
+    .useValue({ canActivate: jest.fn(() => true) })
+    .overrideGuard(AdminOrKeyGuard)
+    .useValue({ canActivate: jest.fn(() => true) })
+    .compile();
 
     controller = module.get<SettingsController>(SettingsController);
     service = module.get<SettingsService>(SettingsService);

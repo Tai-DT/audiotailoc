@@ -26,20 +26,24 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Debug: Log the full request URL (only if explicitly enabled)
-    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_API_LOGS === 'true') {
-      const fullUrl = config.baseURL + (config.url || '');
-      console.log('[API Client] Request:', config.method?.toUpperCase(), fullUrl);
+    // FORCE LOGGING FOR DEBUGGING
+    if (true || (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_API_LOGS === 'true')) {
+      const fullUrl = (config.baseURL || '') + (config.url || '');
+      console.log('[DEBUG_API] Request:', config.method?.toUpperCase(), fullUrl);
     }
     
     const token = authStorage.getAccessToken();
-    // #region agent log
-    if (typeof window !== 'undefined' && config.url && !config.url.includes('/auth/login')) {
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:37',message:'Request interceptor - checking token',data:{url:config.url,hasToken:!!token,tokenLength:token?.length,willAttach:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    }
-    // #endregion
+    
+    // Debug log for token
+    // FORCE LOGGING FOR DEBUGGING
+    console.log(`[DEBUG_API] Request to ${config.url} - Token exists: ${!!token}, Token length: ${token?.length || 0}`);
+
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[DEBUG_API] Added Authorization header to ${config.url}`);
+    } else {
+      console.warn(`[DEBUG_API] No token found for request to ${config.url}`);
     }
     // If PUBLIC_ORDER_API_KEY is configured, and the request is to orders endpoints,
     // attach the x-order-key header so backend can validate public order requests.
@@ -185,18 +189,12 @@ apiClient.interceptors.response.use(
       const hadSession = Boolean(authStorage.getAccessToken());
 
       if (hadSession) {
-        authStorage.clearSession();
+        // Don't clear session immediately - let useUser hook handle it
+        // This allows React Query retry logic to work properly
+        // The useUser hook will clear session after retries are exhausted
+        // Only dispatch logout event to notify components
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(AUTH_EVENTS.LOGOUT));
-          // Only redirect if not already on login/register page
-          // Let React Router handle the redirect for better UX
-          const currentPath = window.location.pathname;
-          if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register')) {
-            // Use a small delay to allow React state to update first
-            setTimeout(() => {
-              window.location.href = '/login';
-            }, 100);
-          }
         }
       }
     }

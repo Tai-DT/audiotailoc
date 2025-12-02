@@ -65,6 +65,21 @@ __decorate([
     (0, class_validator_1.IsEnum)(['USER', 'ADMIN']),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "role", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "dateOfBirth", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "gender", void 0);
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -83,14 +98,36 @@ let UsersController = class UsersController {
         });
     }
     async getProfile(req) {
-        const userId = req.users?.sub;
+        console.log('[DEBUG_CONTROLLER] getProfile called');
+        console.log('[DEBUG_CONTROLLER] req.user:', JSON.stringify(req.user));
+        console.log('[DEBUG_CONTROLLER] req.users:', JSON.stringify(req.users));
+        const userId = req.user?.sub || req.users?.sub;
+        console.log('[DEBUG_CONTROLLER] Extracted userId:', userId);
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }
         return this.usersService.findById(userId);
     }
+    async updateProfile(req, updateUserDto) {
+        const userId = req.user?.sub || req.users?.sub;
+        if (!userId) {
+            throw new common_1.UnauthorizedException('User not authenticated');
+        }
+        const sanitizedData = {
+            name: updateUserDto.name,
+            phone: updateUserDto.phone,
+            address: updateUserDto.address,
+            dateOfBirth: updateUserDto.dateOfBirth,
+            gender: updateUserDto.gender,
+        };
+        Object.keys(sanitizedData).forEach(key => sanitizedData[key] === undefined && delete sanitizedData[key]);
+        console.log('DEBUG_CONTROLLER: userId', userId);
+        console.log('DEBUG_CONTROLLER: updateUserDto', JSON.stringify(updateUserDto));
+        console.log('DEBUG_CONTROLLER: sanitizedData', JSON.stringify(sanitizedData));
+        return this.usersService.update(userId, sanitizedData);
+    }
     async exportUserData(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub || req.users?.sub;
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }
@@ -102,11 +139,18 @@ let UsersController = class UsersController {
     async create(createUserDto) {
         return this.usersService.create(createUserDto);
     }
-    async update(id, updateUserDto) {
+    async update(id, updateUserDto, req) {
+        const currentUser = req.user || req.users;
+        if (currentUser.role !== 'ADMIN' && currentUser.sub !== id) {
+            throw new common_1.UnauthorizedException('You can only update your own profile');
+        }
+        if (updateUserDto.role && currentUser.role !== 'ADMIN') {
+            throw new common_1.UnauthorizedException('Only admins can change user roles');
+        }
         return this.usersService.update(id, updateUserDto);
     }
     async remove(id, req) {
-        return this.usersService.remove(id, req.users);
+        return this.usersService.remove(id, req.users || req.user);
     }
     async getStats() {
         return this.usersService.getStats();
@@ -142,6 +186,15 @@ __decorate([
 ], UsersController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Patch)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, UpdateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)('export-data'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -169,8 +222,9 @@ __decorate([
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, UpdateUserDto]),
+    __metadata("design:paramtypes", [String, UpdateUserDto, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "update", null);
 __decorate([

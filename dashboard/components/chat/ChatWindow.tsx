@@ -52,7 +52,7 @@ export function ChatWindow({
             <div className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 flex items-center justify-between px-6">
                 <div className="flex items-center gap-3">
                     <Avatar>
-                        <AvatarImage src={conversation.users?.avatarUrl || undefined} />
+                        <AvatarImage src={conversation.users?.avatar || conversation.users?.avatarUrl || undefined} />
                         <AvatarFallback>
                             {(conversation.users?.name || conversation.guestName || 'U').charAt(0).toUpperCase()}
                         </AvatarFallback>

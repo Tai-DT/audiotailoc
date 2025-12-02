@@ -70,6 +70,9 @@ let UsersService = UsersService_1 = class UsersService {
                 avatarUrl: true,
                 createdAt: true,
                 updatedAt: true,
+                address: true,
+                dateOfBirth: true,
+                gender: true,
                 orders: {
                     take: 5,
                     orderBy: { createdAt: 'desc' },
@@ -229,15 +232,22 @@ let UsersService = UsersService_1 = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
+        const data = { ...updateUserDto };
+        if (data.dateOfBirth) {
+            data.dateOfBirth = new Date(data.dateOfBirth);
+        }
         return this.prisma.users.update({
             where: { id },
-            data: updateUserDto,
+            data,
             select: {
                 id: true,
                 email: true,
                 name: true,
                 phone: true,
                 role: true,
+                address: true,
+                dateOfBirth: true,
+                gender: true,
                 updatedAt: true,
             },
         });

@@ -29,7 +29,7 @@ export class OrdersService {
     private readonly cache: CacheService,
     private readonly promotionsService: PromotionsService,
     private readonly inventoryService: InventoryService,
-  ) {}
+  ) { }
 
   list(params: { page?: number; pageSize?: number; status?: string }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -898,9 +898,9 @@ export class OrdersService {
   ) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
-    const where: any = { 
+    const where: any = {
       userId,
-      isDeleted: false 
+      isDeleted: false
     };
     if (params.status) where.status = params.status;
 
@@ -935,7 +935,7 @@ export class OrdersService {
                 id: true,
                 amountCents: true,
                 status: true,
-                method: true,
+                provider: true,
                 createdAt: true,
               },
             },
@@ -975,10 +975,10 @@ export class OrdersService {
    */
   async getUserOrder(userId: string, orderId: string) {
     const order = await this.prisma.orders.findFirst({
-      where: { 
+      where: {
         id: orderId,
         userId,
-        isDeleted: false 
+        isDeleted: false
       },
       include: {
         order_items: {
@@ -1003,7 +1003,7 @@ export class OrdersService {
             id: true,
             amountCents: true,
             status: true,
-            method: true,
+            provider: true,
             createdAt: true,
             updatedAt: true,
           },

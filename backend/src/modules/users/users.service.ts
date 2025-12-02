@@ -17,7 +17,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
   async findByEmail(email: string) {
     return this.prisma.users.findUnique({ where: { email } });
@@ -35,6 +35,9 @@ export class UsersService {
         avatarUrl: true,
         createdAt: true,
         updatedAt: true,
+        address: true,
+        dateOfBirth: true,
+        gender: true,
         orders: {
           take: 5,
           orderBy: { createdAt: 'desc' },
@@ -237,22 +240,37 @@ export class UsersService {
 
   async update(
     id: string,
-    updateUserDto: { name?: string; phone?: string; role?: 'USER' | 'ADMIN' },
+    updateUserDto: {
+      name?: string;
+      phone?: string;
+      role?: 'USER' | 'ADMIN';
+      address?: string;
+      dateOfBirth?: string;
+      gender?: string;
+    },
   ) {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
+    const data: any = { ...updateUserDto };
+    if (data.dateOfBirth) {
+      data.dateOfBirth = new Date(data.dateOfBirth);
+    }
+
     return this.prisma.users.update({
       where: { id },
-      data: updateUserDto,
+      data,
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
         role: true,
+        address: true,
+        dateOfBirth: true,
+        gender: true,
         updatedAt: true,
       },
     });
@@ -502,12 +520,12 @@ export class UsersService {
       cart:
         (userData as any).carts.length > 0
           ? {
-              items: (userData as any).carts[0].cart_items.map((item: any) => ({
-                productName: item.products?.name,
-                quantity: item.quantity,
-                addedAt: item.createdAt,
-              })),
-            }
+            items: (userData as any).carts[0].cart_items.map((item: any) => ({
+              productName: item.products?.name,
+              quantity: item.quantity,
+              addedAt: item.createdAt,
+            })),
+          }
           : null,
       statistics: {
         totalOrders: (userData as any).orders.length,

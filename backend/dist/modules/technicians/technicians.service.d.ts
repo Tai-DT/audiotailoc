@@ -96,6 +96,7 @@ export declare class TechniciansService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
             userId: string | null;
             scheduledAt: Date | null;
             serviceId: string;
@@ -105,7 +106,6 @@ export declare class TechniciansService {
             notes: string | null;
             estimatedCosts: number | null;
             actualCosts: number | null;
-            address: string | null;
             coordinates: string | null;
             goongPlaceId: string | null;
         })[];

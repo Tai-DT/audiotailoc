@@ -15,10 +15,17 @@ const client_1 = require("@prisma/client");
 const extension_accelerate_1 = require("@prisma/extension-accelerate");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor() {
+        const databaseUrl = process.env.DATABASE_URL || '';
+        const connectionLimit = process.env.DATABASE_CONNECTION_LIMIT || '10';
+        let configuredUrl = databaseUrl;
+        if (databaseUrl && !databaseUrl.includes('connection_limit')) {
+            const separator = databaseUrl.includes('?') ? '&' : '?';
+            configuredUrl = `${databaseUrl}${separator}connection_limit=${connectionLimit}&pool_timeout=20`;
+        }
         super({
             datasources: {
                 db: {
-                    url: process.env.DATABASE_URL,
+                    url: configuredUrl,
                 },
             },
             log: ['error'],

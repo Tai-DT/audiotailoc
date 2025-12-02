@@ -27,7 +27,10 @@ export interface Conversation {
         id: string;
         name: string;
         email: string;
-        avatarUrl?: string;
+        avatar?: string | null;
+        avatarUrl?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
     };
     messages?: Message[]; // Last message
     unreadCount?: number;

@@ -24,88 +24,53 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-// Mock data - in real app this would come from API
-interface BookingRecord {
-  id: string;
-  serviceId: string;
-  serviceName: string;
-  serviceImage?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  scheduledAt: string;
-  duration: number;
-  location: string;
-  notes?: string;
-  estimatedCosts?: number;
-  actualCosts?: number;
-  technicianName?: string;
-  technicianPhone?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const mockBookings: BookingRecord[] = [
-  {
-    id: '1',
-    serviceId: 'service-1',
-    serviceName: 'Thiết lập hệ thống âm thanh gia đình',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'COMPLETED',
-    scheduledAt: '2024-01-20T14:00:00Z',
-    duration: 120,
-    location: '123 Đường ABC, Quận 1, TP.HCM',
-    notes: 'Khách hàng yêu cầu kiểm tra toàn bộ hệ thống loa và micro',
-    estimatedCosts: 1500000,
-    actualCosts: 1450000,
-    technicianName: 'Nguyễn Văn A',
-    technicianPhone: '0987654321',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-20T16:00:00Z',
-  },
-  {
-    id: '2',
-    serviceId: 'service-2',
-    serviceName: 'Sửa chữa loa Bluetooth',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'CONFIRMED',
-    scheduledAt: '2024-01-25T09:00:00Z',
-    duration: 60,
-    location: '456 Đường XYZ, Quận 2, TP.HCM',
-    notes: 'Loa không kết nối được với điện thoại',
-    estimatedCosts: 300000,
-    technicianName: 'Trần Thị B',
-    technicianPhone: '0987654322',
-    createdAt: '2024-01-18T14:20:00Z',
-    updatedAt: '2024-01-18T14:30:00Z',
-  },
-  {
-    id: '3',
-    serviceId: 'service-3',
-    serviceName: 'Lắp đặt micro karaoke',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'PENDING',
-    scheduledAt: '2024-01-30T16:00:00Z',
-    duration: 90,
-    location: '789 Đường DEF, Quận 3, TP.HCM',
-    notes: 'Cần lắp đặt hệ thống micro cho phòng karaoke gia đình',
-    estimatedCosts: 800000,
-    createdAt: '2024-01-22T11:15:00Z',
-    updatedAt: '2024-01-22T11:15:00Z',
-  }
-];
+import { useBookings, useCancelBooking } from '@/lib/hooks/use-bookings';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { ServiceBooking } from '@/lib/types';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function BookingHistoryPage() {
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<ServiceBooking | null>(null);
+  
+  const filters = {
+    ...(statusFilter !== 'all' && { status: statusFilter as any }),
+  };
+  
+  const { data: bookingsData, isLoading, error } = useBookings(filters);
+  const cancelBookingMutation = useCancelBooking();
+  
+  const bookings = bookingsData?.items || [];
 
-  const filteredBookings = mockBookings.filter(booking => {
-    const matchesSearch = booking.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         booking.location.toLowerCase().includes(searchQuery.toLowerCase());
+  // Redirect if not authenticated
+  React.useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login?redirect=' + encodeURIComponent('/booking-history'));
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  const filteredBookings = bookings.filter(booking => {
+    const serviceName = booking.service?.name || '';
+    const location = booking.address || '';
+    const matchesSearch = serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
+  
+  const handleCancelBooking = async (id: string) => {
+    try {
+      await cancelBookingMutation.mutateAsync(id);
+      toast.success('Đã hủy lịch hẹn thành công');
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi hủy lịch hẹn');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -123,6 +88,41 @@ export default function BookingHistoryPage() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+  
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return null; // Will redirect
+  }
+  
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Đang tải lịch hẹn...</h1>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4 text-red-600">Có lỗi xảy ra</h1>
+          <p className="text-muted-foreground">Không thể tải lịch sử đặt lịch</p>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -264,8 +264,8 @@ export default function BookingHistoryPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0"></div>
                         <div>
-                          <p className="font-medium line-clamp-1">{booking.serviceName}</p>
-                          <p className="text-sm text-gray-600">{booking.duration} phút</p>
+                          <p className="font-medium line-clamp-1">{booking.service?.name || 'Dịch vụ'}</p>
+                          <p className="text-sm text-gray-600">{booking.service?.duration || 0} phút</p>
                         </div>
                       </div>
                     </TableCell>
@@ -274,10 +274,10 @@ export default function BookingHistoryPage() {
                         <Calendar className="h-4 w-4 text-gray-400" />
                         <div>
                           <p className="font-medium">
-                            {format(new Date(booking.scheduledAt), 'dd/MM/yyyy', { locale: vi })}
+                            {booking.scheduledAt ? format(new Date(booking.scheduledAt), 'dd/MM/yyyy', { locale: vi }) : 'Chưa xác định'}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {format(new Date(booking.scheduledAt), 'HH:mm', { locale: vi })}
+                            {booking.scheduledAt ? format(new Date(booking.scheduledAt), 'HH:mm', { locale: vi }) : ''}
                           </p>
                         </div>
                       </div>
@@ -285,7 +285,7 @@ export default function BookingHistoryPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <p className="text-sm line-clamp-2">{booking.location}</p>
+                        <p className="text-sm line-clamp-2">{booking.address || 'Chưa cập nhật'}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -308,119 +308,128 @@ export default function BookingHistoryPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedBooking(booking)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
-                          </DialogHeader>
-                          {selectedBooking && (
-                            <div className="space-y-6">
-                              <div className="flex items-start gap-4">
-                                <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-lg">{selectedBooking.serviceName}</h3>
-                                  <div className="flex items-center gap-2 mt-2">
-                                    {getStatusIcon(selectedBooking.status)}
-                                    {getStatusBadge(selectedBooking.status)}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Separator />
-
-                              <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Thời gian hẹn</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Calendar className="h-4 w-4 text-gray-400" />
-                                      <span className="font-medium">
-                                        {format(new Date(selectedBooking.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Thời lượng</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Clock className="h-4 w-4 text-gray-400" />
-                                      <span>{selectedBooking.duration} phút</span>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Địa điểm</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <MapPin className="h-4 w-4 text-gray-400" />
-                                      <span className="text-sm">{selectedBooking.location}</span>
+                      <div className="flex items-center gap-2 justify-end">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedBooking(booking)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
+                            </DialogHeader>
+                            {selectedBooking && (
+                              <div className="space-y-6">
+                                <div className="flex items-start gap-4">
+                                  <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                                  <div className="flex-1">
+                                    <h3 className="font-semibold text-lg">{selectedBooking.service?.name || 'Dịch vụ'}</h3>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      {getStatusIcon(selectedBooking.status)}
+                                      {getStatusBadge(selectedBooking.status)}
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Chi phí dự kiến</label>
-                                    <p className="font-medium text-lg mt-1">
-                                      {selectedBooking.estimatedCosts?.toLocaleString('vi-VN')}₫
-                                    </p>
-                                  </div>
+                                <Separator />
 
-                                  {selectedBooking.actualCosts && (
+                                <div className="grid grid-cols-2 gap-6">
+                                  <div className="space-y-4">
                                     <div>
-                                      <label className="text-sm font-medium text-gray-600">Chi phí thực tế</label>
-                                      <p className="font-medium text-lg mt-1 text-green-600">
-                                        {selectedBooking.actualCosts.toLocaleString('vi-VN')}₫
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {selectedBooking.technicianName && (
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Kỹ thuật viên</label>
+                                      <label className="text-sm font-medium text-gray-600">Thời gian hẹn</label>
                                       <div className="flex items-center gap-2 mt-1">
-                                        <Avatar className="h-8 w-8">
-                                          <AvatarFallback>
-                                            <User className="h-4 w-4" />
-                                          </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                          <p className="font-medium">{selectedBooking.technicianName}</p>
-                                          {selectedBooking.technicianPhone && (
-                                            <p className="text-sm text-gray-600">{selectedBooking.technicianPhone}</p>
-                                          )}
-                                        </div>
+                                        <Calendar className="h-4 w-4 text-gray-400" />
+                                        <span className="font-medium">
+                                          {selectedBooking.scheduledAt ? format(new Date(selectedBooking.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'Chưa xác định'}
+                                        </span>
                                       </div>
                                     </div>
-                                  )}
+
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Thời lượng</label>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Clock className="h-4 w-4 text-gray-400" />
+                                        <span>{selectedBooking.service?.duration || 0} phút</span>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Địa điểm</label>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                        <span className="text-sm">{selectedBooking.address || 'Chưa cập nhật'}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                    {selectedBooking.estimatedCosts && (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Chi phí dự kiến</label>
+                                        <p className="font-medium text-lg mt-1">
+                                          {selectedBooking.estimatedCosts.toLocaleString('vi-VN')}₫
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {selectedBooking.actualCosts && (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Chi phí thực tế</label>
+                                        <p className="font-medium text-lg mt-1 text-green-600">
+                                          {selectedBooking.actualCosts.toLocaleString('vi-VN')}₫
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
 
-                              {selectedBooking.notes && (
-                                <div>
-                                  <label className="text-sm font-medium text-gray-600">Ghi chú</label>
-                                  <p className="mt-1 p-3 bg-gray-50 rounded-md">{selectedBooking.notes}</p>
+                                {selectedBooking.notes && (
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-600">Ghi chú</label>
+                                    <p className="mt-1 p-3 bg-gray-50 rounded-md">{selectedBooking.notes}</p>
+                                  </div>
+                                )}
+
+                                <Separator />
+
+                                <div className="flex justify-between items-center text-sm text-gray-600">
+                                  <span>Ngày tạo: {format(new Date(selectedBooking.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                                  <span>Cập nhật: {format(new Date(selectedBooking.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                                 </div>
-                              )}
-
-                              <Separator />
-
-                              <div className="flex justify-between items-center text-sm text-gray-600">
-                                <span>Ngày tạo: {format(new Date(selectedBooking.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
-                                <span>Cập nhật: {format(new Date(selectedBooking.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                                
+                                {['PENDING', 'CONFIRMED'].includes(selectedBooking.status) && (
+                                  <>
+                                    <Separator />
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => handleCancelBooking(selectedBooking.id)}
+                                      disabled={cancelBookingMutation.isPending}
+                                      className="w-full"
+                                    >
+                                      {cancelBookingMutation.isPending ? 'Đang hủy...' : 'Hủy lịch hẹn'}
+                                    </Button>
+                                  </>
+                                )}
                               </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                        {['PENDING', 'CONFIRMED'].includes(booking.status) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelBooking(booking.id)}
+                            disabled={cancelBookingMutation.isPending}
+                          >
+                            Hủy
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

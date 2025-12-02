@@ -10,6 +10,7 @@ exports.SupportModule = void 0;
 const common_1 = require("@nestjs/common");
 const support_service_1 = require("./support.service");
 const support_controller_1 = require("./support.controller");
+const knowledge_base_controller_1 = require("./knowledge-base.controller");
 const auth_module_1 = require("../auth/auth.module");
 const notifications_module_1 = require("../notifications/notifications.module");
 let SupportModule = class SupportModule {
@@ -19,7 +20,7 @@ exports.SupportModule = SupportModule = __decorate([
     (0, common_1.Module)({
         imports: [auth_module_1.AuthModule, notifications_module_1.NotificationsModule],
         providers: [support_service_1.SupportService],
-        controllers: [support_controller_1.SupportController],
+        controllers: [support_controller_1.SupportController, knowledge_base_controller_1.KnowledgeBaseController],
         exports: [support_service_1.SupportService],
     })
 ], SupportModule);

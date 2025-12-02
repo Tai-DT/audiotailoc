@@ -48,7 +48,10 @@ export declare class AdminController {
                     shippingCents: number;
                     totalCents: number;
                     shippingAddress: string | null;
+                    shippingName: string | null;
+                    shippingPhone: string | null;
                     shippingCoordinates: string | null;
+                    shippingNotes: string | null;
                     promotionCode: string | null;
                     isDeleted: boolean;
                     deletedAt: Date | null;

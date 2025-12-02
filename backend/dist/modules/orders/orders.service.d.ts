@@ -56,7 +56,10 @@ export declare class OrdersService {
         shippingCents: number;
         totalCents: number;
         shippingAddress: string | null;
+        shippingName: string | null;
+        shippingPhone: string | null;
         shippingCoordinates: string | null;
+        shippingNotes: string | null;
         promotionCode: string | null;
         isDeleted: boolean;
         deletedAt: Date | null;
@@ -71,5 +74,16 @@ export declare class OrdersService {
         message: string;
         id: string;
     }>;
+    getUserOrders(userId: string, params: {
+        page?: number;
+        pageSize?: number;
+        status?: string;
+    }): Promise<{
+        total: number;
+        page: number;
+        pageSize: number;
+        items: any[];
+    }>;
+    getUserOrder(userId: string, orderId: string): Promise<any>;
     private transformOrderForResponse;
 }

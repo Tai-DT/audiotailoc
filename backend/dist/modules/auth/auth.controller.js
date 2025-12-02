@@ -105,7 +105,15 @@ let AuthController = class AuthController {
         return {
             token: tokens.accessToken,
             refreshToken: tokens.refreshToken,
-            user: { id: user.id, email: user.email, name: user.name },
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user?.role ?? 'USER',
+                avatar: user?.avatarUrl ?? null,
+                createdAt: user?.createdAt ?? new Date().toISOString(),
+                updatedAt: user?.updatedAt ?? new Date().toISOString(),
+            },
         };
     }
     async login(dto) {
@@ -124,7 +132,9 @@ let AuthController = class AuthController {
                 email: user?.email,
                 name: user?.name,
                 role: user?.role ?? 'USER',
-                avatarUrl: user?.avatarUrl ?? null,
+                avatar: user?.avatarUrl ?? null,
+                createdAt: user?.createdAt ?? new Date().toISOString(),
+                updatedAt: user?.updatedAt ?? new Date().toISOString(),
             },
         };
     }
@@ -160,14 +170,16 @@ let AuthController = class AuthController {
     async me(req) {
         const userId = req.user?.sub;
         if (!userId)
-            return { userId: null };
+            return { id: null };
         const u = await this.users.findById(userId);
         return {
-            userId,
+            id: userId,
             email: u?.email ?? null,
             role: u?.role ?? null,
-            avatarUrl: u?.avatarUrl ?? null,
+            avatar: u?.avatarUrl ?? null,
             name: u?.name ?? null,
+            createdAt: u?.createdAt ?? new Date().toISOString(),
+            updatedAt: u?.updatedAt ?? new Date().toISOString(),
         };
     }
 };

@@ -40,6 +40,10 @@ export declare class AuthController {
             id: string;
             email: string;
             name: string;
+            role: any;
+            avatar: any;
+            createdAt: any;
+            updatedAt: any;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -50,7 +54,9 @@ export declare class AuthController {
             email: string;
             name: string;
             role: any;
-            avatarUrl: any;
+            avatar: any;
+            createdAt: any;
+            updatedAt: any;
         };
     }>;
     refresh(dto: RefreshTokenDto): Promise<{
@@ -67,17 +73,21 @@ export declare class AuthController {
         message: string;
     }>;
     me(req: any): Promise<{
-        userId: any;
+        id: any;
         email?: undefined;
         role?: undefined;
-        avatarUrl?: undefined;
+        avatar?: undefined;
         name?: undefined;
+        createdAt?: undefined;
+        updatedAt?: undefined;
     } | {
-        userId: string;
+        id: string;
         email: string;
         role: any;
-        avatarUrl: any;
+        avatar: any;
         name: string;
+        createdAt: any;
+        updatedAt: any;
     }>;
 }
 export {};

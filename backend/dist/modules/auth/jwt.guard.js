@@ -73,6 +73,8 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
             return true;
         }
         const header = req.headers['authorization'];
+        this.logger.log(`[DEBUG_GUARD] Checking auth for ${path}`);
+        this.logger.log(`[DEBUG_GUARD] Header present: ${!!header}`);
         if (!header || !header.startsWith('Bearer ')) {
             this.logger.warn(`Missing or invalid authorization header for ${path}`);
             throw new common_1.UnauthorizedException('Missing bearer token');
@@ -85,6 +87,7 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
                 throw new common_1.UnauthorizedException('JWT configuration error');
             }
             const payload = jwt.verify(token, secret);
+            this.logger.log(`[DEBUG_GUARD] Token verified. Payload: ${JSON.stringify(payload)}`);
             req.user = payload;
             return true;
         }

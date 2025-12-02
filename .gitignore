@@ -145,3 +145,18 @@ jspm_packages/
 
 # MCP configuration (contains secrets)
 .roo/
+
+# Backup files
+backend/backups/database/*.gz
+backend/backups/database/*.sql
+backend/backups/files/*.gz
+backend/backups/metadata/*.json
+*.bak
+.env.bak
+
+# Test artifacts
+.playwright-mcp/*.png
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo

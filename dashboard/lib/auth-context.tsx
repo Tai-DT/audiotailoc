@@ -8,7 +8,9 @@ interface User {
   email: string
   name: string
   role?: string
-  avatarUrl?: string | null
+  avatar?: string | null
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface AuthTokens {
@@ -116,17 +118,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const response = await apiClient.getCurrentUser()
-      const userData = response.data as { userId?: string; id?: string; email: string; role?: string; name?: string; avatarUrl?: string | null }
+      const userData = response.data as { userId?: string; id?: string; email: string; role?: string; name?: string; avatar?: string | null; avatarUrl?: string | null; createdAt?: string; updatedAt?: string }
 
       // Handle both userId and id fields
       const userId = userData.userId || userData.id
+      // Handle both avatar and avatarUrl fields (for backward compatibility)
+      const avatar = userData.avatar !== undefined ? userData.avatar : userData.avatarUrl
+      
       if (userId && userData.email) {
         setUser({
           id: userId,
           email: userData.email,
           name: userData.name || userData.email.split('@')[0],
           role: userData.role || 'user',
-          avatarUrl: userData.avatarUrl || null
+          avatar: avatar || null,
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
         })
         return true
       } else {
@@ -161,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const respData = response?.data ?? response
       let accessToken: string | null = null
       let refreshTokenValue: string | null = null
-      let userData: { id: string; email: string; name?: string; role?: string; avatarUrl?: string | null } | null = null
+      let userData: { id: string; email: string; name?: string; role?: string; avatar?: string | null; avatarUrl?: string | null; createdAt?: string; updatedAt?: string } | null = null
 
       // Extract token from nested structure
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,7 +232,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: userData.email,
           name: userData.name || userData.email.split('@')[0],
           role: userData.role || 'user',
-          avatarUrl: userData.avatarUrl || null
+          avatar: userData.avatar !== undefined ? userData.avatar : userData.avatarUrl || null,
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt
         })
       } else {
         // Fallback: try to get user data from token or API

@@ -1,9 +1,43 @@
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+interface AuthenticatedRequest {
+    user: {
+        sub: string;
+        email: string;
+        role: string;
+    };
+}
 export declare class OrdersController {
     private readonly orders;
     constructor(orders: OrdersService);
+    getMyOrders(req: AuthenticatedRequest, page?: string, pageSize?: string, status?: string): Promise<{
+        total: number;
+        page: number;
+        pageSize: number;
+        items: any[];
+    }>;
+    getMyOrder(req: AuthenticatedRequest, id: string): Promise<any>;
+    cancelMyOrder(req: AuthenticatedRequest, id: string): Promise<{
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        orderNo: string;
+        userId: string | null;
+        subtotalCents: number;
+        discountCents: number;
+        shippingCents: number;
+        totalCents: number;
+        shippingAddress: string | null;
+        shippingName: string | null;
+        shippingPhone: string | null;
+        shippingCoordinates: string | null;
+        shippingNotes: string | null;
+        promotionCode: string | null;
+        isDeleted: boolean;
+        deletedAt: Date | null;
+    }>;
     list(page?: string, pageSize?: string, status?: string): Promise<{
         total: number;
         page: number;
@@ -47,7 +81,10 @@ export declare class OrdersController {
         shippingCents: number;
         totalCents: number;
         shippingAddress: string | null;
+        shippingName: string | null;
+        shippingPhone: string | null;
         shippingCoordinates: string | null;
+        shippingNotes: string | null;
         promotionCode: string | null;
         isDeleted: boolean;
         deletedAt: Date | null;
@@ -62,3 +99,4 @@ export declare class OrdersController {
         message: string;
     }>;
 }
+export {};

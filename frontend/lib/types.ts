@@ -12,6 +12,9 @@ export interface User {
   phone?: string;
   avatar?: string;
   role: 'USER' | 'ADMIN' | 'MODERATOR';
+  address?: string;
+  dateOfBirth?: string;
+  gender?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,7 +88,7 @@ export interface Cart {
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   items: CartItem[];
 }
 
@@ -113,7 +116,7 @@ export interface Order {
   promotionCode?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   user: User;
   items: OrderItem[];
   payments?: Payment[];
@@ -130,7 +133,7 @@ export interface OrderItem {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   product: Product;
 }
 
@@ -166,7 +169,7 @@ export interface Service {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
-  
+
   // SEO properties
   seoTitle?: string;
   metaTitle?: string;
@@ -174,7 +177,7 @@ export interface Service {
   metaDescription?: string;
   metaKeywords?: string;
   canonicalUrl?: string;
-  
+
   serviceType?: ServiceType;
 }
 
@@ -189,7 +192,7 @@ export interface ServiceType {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
-  
+
   services?: Service[];
 }
 
@@ -205,7 +208,7 @@ export interface ServiceBooking {
   actualCosts?: number;
   createdAt: string;
   updatedAt: string;
-  
+
   user: User;
   service: Service;
 }
@@ -323,7 +326,7 @@ export interface PaginatedResponse<T> {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  
+
   // For reviews endpoint specifically
   reviews?: T[];
   stats?: {

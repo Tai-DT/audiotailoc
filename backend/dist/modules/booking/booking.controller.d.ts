@@ -87,12 +87,16 @@ export declare class BookingController {
                 resetExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                dateOfBirth: Date | null;
+                gender: string | null;
             };
         } & {
             status: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
             userId: string | null;
             scheduledAt: Date | null;
             serviceId: string;
@@ -102,7 +106,6 @@ export declare class BookingController {
             notes: string | null;
             estimatedCosts: number | null;
             actualCosts: number | null;
-            address: string | null;
             coordinates: string | null;
             goongPlaceId: string | null;
         })[];
@@ -144,6 +147,7 @@ export declare class BookingController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -153,7 +157,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     })[]>;
@@ -234,12 +237,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -249,7 +256,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;
@@ -320,12 +326,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -335,7 +345,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;
@@ -406,12 +415,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -421,7 +434,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;
@@ -478,12 +490,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -493,7 +509,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;
@@ -564,12 +579,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -579,7 +598,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;
@@ -650,12 +668,16 @@ export declare class BookingController {
             resetExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            dateOfBirth: Date | null;
+            gender: string | null;
         };
     } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string | null;
         userId: string | null;
         scheduledAt: Date | null;
         serviceId: string;
@@ -665,7 +687,6 @@ export declare class BookingController {
         notes: string | null;
         estimatedCosts: number | null;
         actualCosts: number | null;
-        address: string | null;
         coordinates: string | null;
         goongPlaceId: string | null;
     }>;

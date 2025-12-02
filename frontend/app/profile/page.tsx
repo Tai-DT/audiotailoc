@@ -56,24 +56,45 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: ty
 };
 
 export default function ProfilePage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, refetch } = useAuth();
+  
+  // DEBUG LOGS
+  React.useEffect(() => {
+    console.log('[DEBUG_PROFILE] Auth State:', {
+      user,
+      authLoading,
+      isAuthenticated: !!user,
+      token: authStorage.getAccessToken() ? 'Present' : 'Missing'
+    });
+  }, [user, authLoading]);
+
   const updateProfileMutation = useUpdateProfile();
   const isAuthenticated = !!user;
   const router = useRouter();
-  
+
+  // Force refetch of user data if we have token but no user yet
+  // This handles the case where page navigated directly to /profile with token in localStorage
+  React.useEffect(() => {
+    const hasToken = Boolean(authStorage.getAccessToken());
+    if (hasToken && !user && !authLoading && refetch) {
+      console.log('[DEBUG_PROFILE] Triggering manual refetch...');
+      refetch().catch(err => console.error('[DEBUG_PROFILE] Refetch failed:', err));
+    }
+  }, [user, authLoading, refetch]);
+
   // Track if we've already attempted redirect to avoid multiple redirects
   const hasRedirectedRef = React.useRef(false);
   const [isEditing, setIsEditing] = React.useState(false);
-  
+
   // Data fetching hooks
   const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useOrders();
   const orders = ordersData?.items || [];
-  
+
   const { data: wishlistData, isLoading: wishlistLoading, error: wishlistError } = useWishlist();
   const wishlist = wishlistData?.items || [];
   const removeFromWishlistMutation = useRemoveFromWishlist();
   const addToCartMutation = useAddToCart();
-  
+
   // Helper functions
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -91,7 +112,7 @@ export default function ProfilePage() {
       minute: '2-digit'
     });
   };
-  
+
   // Wishlist handlers
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
@@ -110,7 +131,7 @@ export default function ProfilePage() {
       toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
     }
   };
-  
+
   const [formData, setFormData] = React.useState({
     fullName: '',
     email: '',
@@ -123,25 +144,31 @@ export default function ProfilePage() {
   // Use ref to track retry interval and current user state
   const retryIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const userRef = React.useRef(user);
-  
+
   // Update user ref when user changes
   React.useEffect(() => {
     userRef.current = user;
   }, [user]);
-  
+
   // Redirect if not authenticated (only after auth check is complete)
   React.useEffect(() => {
     // Reset redirect flag when auth state changes
     if (isAuthenticated) {
       hasRedirectedRef.current = false;
+      // Clear any existing interval when authenticated
+      if (retryIntervalRef.current) {
+        clearInterval(retryIntervalRef.current);
+        retryIntervalRef.current = null;
+      }
+      return;
     }
-    
+
     // Clear any existing interval
     if (retryIntervalRef.current) {
       clearInterval(retryIntervalRef.current);
       retryIntervalRef.current = null;
     }
-    
+
     // Only redirect if:
     // 1. Auth check is complete (not loading)
     // 2. User is not authenticated
@@ -149,7 +176,7 @@ export default function ProfilePage() {
     if (!authLoading && !isAuthenticated && !hasRedirectedRef.current) {
       // Check token in storage as a fallback
       const hasToken = Boolean(authStorage.getAccessToken());
-      
+
       // If no token, definitely redirect
       if (!hasToken) {
         hasRedirectedRef.current = true;
@@ -158,19 +185,19 @@ export default function ProfilePage() {
         }, 100);
         return () => clearTimeout(timer);
       }
-      
+
       // If token exists but user is null, wait a bit more for query to complete
       // This handles the case where token was just set but query hasn't completed yet
       // Give it up to 5 seconds for the query to complete (allows React Query retry to work)
       let retryCount = 0;
       const maxRetries = 25; // 25 retries * 200ms = 5 seconds max wait
-      
+
       retryIntervalRef.current = setInterval(() => {
         retryCount++;
         // Check current user state from ref (always up-to-date)
         const currentUser = userRef.current;
         const currentToken = authStorage.getAccessToken();
-        
+
         // If user is now available, stop retrying
         if (currentUser) {
           if (retryIntervalRef.current) {
@@ -180,7 +207,7 @@ export default function ProfilePage() {
           hasRedirectedRef.current = false;
           return;
         }
-        
+
         // If token is gone, redirect immediately
         if (!currentToken) {
           if (retryIntervalRef.current) {
@@ -193,7 +220,7 @@ export default function ProfilePage() {
           }
           return;
         }
-        
+
         // If max retries reached and still no user, redirect
         if (retryCount >= maxRetries) {
           if (retryIntervalRef.current) {
@@ -206,7 +233,7 @@ export default function ProfilePage() {
           }
         }
       }, 200);
-      
+
       return () => {
         if (retryIntervalRef.current) {
           clearInterval(retryIntervalRef.current);
@@ -214,7 +241,7 @@ export default function ProfilePage() {
         }
       };
     }
-  }, [authLoading, isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router, user]);
 
   // Initialize form data when user data is available
   React.useEffect(() => {
@@ -223,9 +250,9 @@ export default function ProfilePage() {
         fullName: user.name || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: '', // TODO: Add address field to user model
-        dateOfBirth: '', // TODO: Add dateOfBirth field to user model
-        gender: '' // TODO: Add gender field to user model
+        address: user.address || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user.gender || ''
       });
     }
   }, [user]);
@@ -238,7 +265,10 @@ export default function ProfilePage() {
     try {
       await updateProfileMutation.mutateAsync({
         name: formData.fullName,
-        phone: formData.phone
+        phone: formData.phone,
+        address: formData.address,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender
       });
       setIsEditing(false);
     } catch {
@@ -252,9 +282,9 @@ export default function ProfilePage() {
         fullName: user.name || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: '',
-        dateOfBirth: '',
-        gender: ''
+        address: user.address || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user.gender || ''
       });
     }
     setIsEditing(false);
@@ -436,6 +466,49 @@ export default function ProfilePage() {
                         <div className="flex items-center space-x-2 p-2 border rounded">
                           <MapPin className="w-4 h-4 text-muted-foreground" />
                           <span>{formData.address || 'Chưa cập nhật'}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfBirth">Ngày sinh</Label>
+                      {isEditing ? (
+                        <Input
+                          id="dateOfBirth"
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                        />
+                      ) : (
+                        <div className="flex items-center space-x-2 p-2 border rounded">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span>{formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Giới tính</Label>
+                      {isEditing ? (
+                        <select
+                          id="gender"
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          value={formData.gender}
+                          onChange={(e) => handleInputChange('gender', e.target.value)}
+                        >
+                          <option value="">Chọn giới tính</option>
+                          <option value="male">Nam</option>
+                          <option value="female">Nữ</option>
+                          <option value="other">Khác</option>
+                        </select>
+                      ) : (
+                        <div className="flex items-center space-x-2 p-2 border rounded">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span>
+                            {formData.gender === 'male' ? 'Nam' :
+                              formData.gender === 'female' ? 'Nữ' :
+                                formData.gender === 'other' ? 'Khác' : 'Chưa cập nhật'}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -734,28 +807,28 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="notify-orders">Email thông báo đơn hàng</Label>
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           id="notify-orders"
-                          defaultChecked 
+                          defaultChecked
                           className="rounded"
                           aria-label="Nhận email thông báo đơn hàng"
                         />
                       </div>
                       <div className="flex items-center justify-between">
                         <Label htmlFor="notify-promotions">Khuyến mãi và ưu đãi</Label>
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           id="notify-promotions"
-                          defaultChecked 
+                          defaultChecked
                           className="rounded"
                           aria-label="Nhận thông báo về khuyến mãi và ưu đãi"
                         />
                       </div>
                       <div className="flex items-center justify-between">
                         <Label htmlFor="notify-updates">Cập nhật sản phẩm</Label>
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           id="notify-updates"
                           className="rounded"
                           aria-label="Nhận thông báo về cập nhật sản phẩm mới"

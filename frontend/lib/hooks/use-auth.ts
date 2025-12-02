@@ -1,8 +1,9 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
 import { User, LoginForm, RegisterForm, ApiResponse } from '../types';
 import { useRouter } from 'next/navigation';
-import { authStorage } from '../auth-storage';
+import { authStorage, AUTH_EVENTS, TOKEN_KEY } from '../auth-storage';
 
 export const authQueryKeys = {
   user: ['auth', 'user'] as const,
@@ -13,9 +14,18 @@ export const authQueryKeys = {
 let tokenSetTime: number | null = null;
 
 export const useUser = () => {
+  const queryClient = useQueryClient();
+  
   return useQuery({
     queryKey: authQueryKeys.user,
     queryFn: async () => {
+      const token = authStorage.getAccessToken();
+      
+      // If no token, return null (not an error - user is just not authenticated)
+      if (!token) {
+        return null;
+      }
+      
       try {
         const response = await apiClient.get('/auth/me');
         return handleApiResponse<User>(response);
@@ -30,8 +40,6 @@ export const useUser = () => {
             // This allows retry logic in protected pages to work
             if (timeSinceTokenSet < 5000) {
               // Don't clear token yet - let protected pages retry logic handle it
-              // The protected pages will check if user is available after retries
-              // If still no user after retries, they will redirect to login
               console.warn('[useUser] 401/403 error but token was set recently, not clearing yet to allow retry');
               // Throw error to trigger React Query retry mechanism
               throw error;
@@ -44,7 +52,8 @@ export const useUser = () => {
         return null;
       }
     },
-    enabled: () => Boolean(authStorage.getAccessToken()), // Check token directly - reactive
+    // Always enable query - it will check for token internally
+    enabled: true,
     retry: (failureCount, error) => {
       // Retry if token was set recently (within 5 seconds) and we got 401/403
       if (error && typeof error === 'object' && 'response' in error) {
@@ -60,7 +69,7 @@ export const useUser = () => {
       return false;
     },
     retryDelay: (attemptIndex) => {
-      // Faster retry: 100ms, 200ms, 400ms, 800ms, 1600ms (instead of 1s, 2s, 4s, 8s, 16s)
+      // Faster retry: 100ms, 200ms, 400ms, 800ms, 1600ms
       return Math.min(100 * 2 ** attemptIndex, 2000);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -75,24 +84,11 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: async (data: LoginForm) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:37',message:'Login mutationFn - before API call',data:{email:data.email,hasTokenBefore:!!authStorage.getAccessToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const response = await apiClient.post('/auth/login', data);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:40',message:'Login mutationFn - response received',data:{hasResponse:!!response,hasData:!!response?.data,responseDataKeys:response?.data?Object.keys(response.data):null,responseDataString:JSON.stringify(response?.data).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const result = handleApiResponse<{ user: User; token: string; refreshToken?: string }>(response);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:45',message:'Login mutationFn - after handleApiResponse',data:{hasResult:!!result,resultKeys:result?Object.keys(result):null,hasToken:!!result?.token,hasRefreshToken:!!result?.refreshToken,hasUser:!!result?.user,tokenField:result?.token?'token':'NOT_FOUND',resultString:JSON.stringify(result).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       return result;
     },
     onSuccess: async (data) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:48',message:'Login onSuccess - entry',data:{hasData:!!data,hasToken:!!data?.token,hasUser:!!data?.user,hasRefreshToken:!!data?.refreshToken,tokenInStorage:!!authStorage.getAccessToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
       // Store token and user session in authStorage
       if (data?.token) {
         // JWT access token expires in 15 minutes (900000ms) based on backend config
@@ -106,16 +102,15 @@ export const useLogin = () => {
             email: data.user.email,
             name: data.user.name,
             phone: data.user.phone,
-            avatar: data.user.avatar || (data.user as any).avatarUrl,
+            avatar: data.user.avatar,
             role: data.user.role,
+            createdAt: data.user.createdAt,
+            updatedAt: data.user.updatedAt,
           } : undefined,
           rememberMe: false, // TODO: Get from login form if needed
         });
         // Track when token was set to avoid clearing it too quickly after login
         tokenSetTime = Date.now();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:67',message:'Login onSuccess - after setSession',data:{tokenInStorage:!!authStorage.getAccessToken(),tokenLength:authStorage.getAccessToken()?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         
         // Small delay to ensure token is set in localStorage and axios interceptor is ready
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -124,19 +119,17 @@ export const useLogin = () => {
       // Update React Query cache with user data immediately (optimistic update)
       queryClient.setQueryData(authQueryKeys.user, data.user);
       
-      // Now that token is set, the useUser query will be enabled automatically
-      // Refetch to ensure we have the latest data from server and sync properly
-      // Await refetch to ensure query completes before navigation
+      // Invalidate all queries to trigger refetch with new token
+      // This ensures useUser hook picks up the new token and fetches fresh user data
+      await queryClient.invalidateQueries();
+      
+      // Now refetch user data specifically to ensure we have the latest from server
       try {
         await queryClient.refetchQueries({ queryKey: authQueryKeys.user });
       } catch (error) {
         // If refetch fails, the optimistic update from setQueryData will still be available
         console.warn('Failed to refetch user data after login:', error);
       }
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:73',message:'Login onSuccess - before router.push',data:{tokenInStorage:!!authStorage.getAccessToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       
       // Small delay to ensure React state updates are complete before navigation
       setTimeout(() => {
@@ -169,8 +162,10 @@ export const useRegister = () => {
             email: data.user.email,
             name: data.user.name,
             phone: data.user.phone,
-            avatar: data.user.avatar || (data.user as any).avatarUrl,
+            avatar: data.user.avatar,
             role: data.user.role,
+            createdAt: data.user.createdAt,
+            updatedAt: data.user.updatedAt,
           } : undefined,
           rememberMe: false,
         });
@@ -205,13 +200,35 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: async () => {
-      await apiClient.post('/auth/logout');
+      try {
+        // Try to call logout endpoint, but don't fail if it doesn't exist (404)
+        await apiClient.post('/auth/logout');
+      } catch (error) {
+        // If endpoint doesn't exist (404) or any other error, just ignore it
+        // We'll still clear the session locally
+        if (error && typeof error === 'object' && 'response' in error) {
+          const apiError = error as { response?: { status?: number } };
+          // Only log non-404 errors
+          if (apiError.response?.status !== 404) {
+            console.warn('[useLogout] Logout API call failed:', error);
+          }
+        }
+        // Don't throw - we want to clear session regardless
+      }
     },
     onSuccess: () => {
       // Clear session from authStorage
       authStorage.clearSession();
       queryClient.setQueryData(authQueryKeys.user, null);
       queryClient.clear(); // Clear all cache on logout
+      router.push('/login');
+    },
+    onError: () => {
+      // Even if API call fails, still clear session and redirect
+      // This ensures logout works even if backend endpoint doesn't exist
+      authStorage.clearSession();
+      queryClient.setQueryData(authQueryKeys.user, null);
+      queryClient.clear();
       router.push('/login');
     },
   });
@@ -259,16 +276,23 @@ export const useResetPassword = () => {
 };
 
 export const useAuth = () => {
-  const { data: user, isLoading, error } = useUser();
+  const hasToken = Boolean(authStorage.getAccessToken());
+  const { data: user, isLoading, error, isFetching, refetch } = useUser();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
   const logoutMutation = useLogout();
 
+  // If there's no token, we know immediately that user is not authenticated
+  // If there's a token, wait for query to complete
+  const actualLoading = hasToken ? (isLoading || isFetching) : false;
+  const isAuthenticated = hasToken && !!user;
+
   return {
     user,
-    isLoading,
-    isAuthenticated: !!user,
+    isLoading: actualLoading,
+    isAuthenticated,
     error,
+    refetch, // Export refetch so components can manually trigger user data refresh
     login: loginMutation.mutate,
     loginAsync: loginMutation.mutateAsync,
     isLoggingIn: loginMutation.isPending,

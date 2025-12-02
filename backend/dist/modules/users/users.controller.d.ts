@@ -11,6 +11,9 @@ declare class UpdateUserDto {
     name?: string;
     phone?: string;
     role?: 'USER' | 'ADMIN';
+    address?: string;
+    dateOfBirth?: string;
+    gender?: string;
 }
 export declare class UsersController {
     private readonly usersService;
@@ -49,7 +52,10 @@ export declare class UsersController {
             shippingCents: number;
             totalCents: number;
             shippingAddress: string | null;
+            shippingName: string | null;
+            shippingPhone: string | null;
             shippingCoordinates: string | null;
+            shippingNotes: string | null;
             promotionCode: string | null;
             isDeleted: boolean;
             deletedAt: Date | null;
@@ -62,9 +68,23 @@ export declare class UsersController {
         avatarUrl: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
         _count: {
             orders: number;
         };
+    }>;
+    updateProfile(req: any, updateUserDto: UpdateUserDto): Promise<{
+        id: string;
+        email: string;
+        name: string;
+        phone: string;
+        role: string;
+        updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
     }>;
     exportUserData(req: any): Promise<{
         exportDate: string;
@@ -99,7 +119,10 @@ export declare class UsersController {
             shippingCents: number;
             totalCents: number;
             shippingAddress: string | null;
+            shippingName: string | null;
+            shippingPhone: string | null;
             shippingCoordinates: string | null;
+            shippingNotes: string | null;
             promotionCode: string | null;
             isDeleted: boolean;
             deletedAt: Date | null;
@@ -112,6 +135,9 @@ export declare class UsersController {
         avatarUrl: string;
         createdAt: Date;
         updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
         _count: {
             orders: number;
         };
@@ -124,13 +150,16 @@ export declare class UsersController {
         role: string;
         createdAt: Date;
     }>;
-    update(id: string, updateUserDto: UpdateUserDto): Promise<{
+    update(id: string, updateUserDto: UpdateUserDto, req: any): Promise<{
         id: string;
         email: string;
         name: string;
         phone: string;
         role: string;
         updatedAt: Date;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
     }>;
     remove(id: string, req: any): Promise<{
         message: string;

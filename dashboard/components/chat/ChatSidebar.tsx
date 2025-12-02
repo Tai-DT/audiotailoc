@@ -39,7 +39,7 @@ export function ChatSidebar({ conversations, activeId, onSelect }: ChatSidebarPr
                                     )}
                                 >
                                     <Avatar>
-                                        <AvatarImage src={conversation.users?.avatarUrl || undefined} />
+                                        <AvatarImage src={conversation.users?.avatar || conversation.users?.avatarUrl || undefined} />
                                         <AvatarFallback>
                                             {conversation.users?.name?.charAt(0).toUpperCase() || 'U'}
                                         </AvatarFallback>

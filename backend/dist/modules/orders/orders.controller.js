@@ -17,11 +17,29 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const orders_service_1 = require("./orders.service");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
+const jwt_guard_1 = require("../auth/jwt.guard");
 const create_order_dto_1 = require("./dto/create-order.dto");
 const update_order_dto_1 = require("./dto/update-order.dto");
 let OrdersController = class OrdersController {
     constructor(orders) {
         this.orders = orders;
+    }
+    async getMyOrders(req, page = '1', pageSize = '20', status) {
+        const userId = req.user.sub;
+        return this.orders.getUserOrders(userId, {
+            page: Number(page),
+            pageSize: Number(pageSize),
+            status,
+        });
+    }
+    async getMyOrder(req, id) {
+        const userId = req.user.sub;
+        return this.orders.getUserOrder(userId, id);
+    }
+    async cancelMyOrder(req, id) {
+        const userId = req.user.sub;
+        await this.orders.getUserOrder(userId, id);
+        return this.orders.updateStatus(id, 'CANCELLED');
     }
     list(page = '1', pageSize = '20', status) {
         return this.orders.list({ page: Number(page), pageSize: Number(pageSize), status });
@@ -54,6 +72,35 @@ let OrdersController = class OrdersController {
     }
 };
 exports.OrdersController = OrdersController;
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('pageSize')),
+    __param(3, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object, String]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "getMyOrders", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Get)('me/:id'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "getMyOrder", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Patch)('me/:id/cancel'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "cancelMyOrder", null);
 __decorate([
     (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Get)(),

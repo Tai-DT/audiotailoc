@@ -42,6 +42,11 @@ export class JwtGuard implements CanActivate {
     }
 
     const header = req.headers['authorization'] as string | undefined;
+    
+    // DEBUG LOG
+    this.logger.log(`[DEBUG_GUARD] Checking auth for ${path}`);
+    this.logger.log(`[DEBUG_GUARD] Header present: ${!!header}`);
+    
     if (!header || !header.startsWith('Bearer ')) {
       this.logger.warn(`Missing or invalid authorization header for ${path}`);
       throw new UnauthorizedException('Missing bearer token');
@@ -55,6 +60,10 @@ export class JwtGuard implements CanActivate {
         throw new UnauthorizedException('JWT configuration error');
       }
       const payload = jwt.verify(token, secret);
+      
+      // DEBUG LOG
+      this.logger.log(`[DEBUG_GUARD] Token verified. Payload: ${JSON.stringify(payload)}`);
+      
       (req as any).user = payload;
       return true;
     } catch (error) {

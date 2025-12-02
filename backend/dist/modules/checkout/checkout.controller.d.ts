@@ -42,7 +42,10 @@ export declare class CheckoutController {
             shippingCents: number;
             totalCents: number;
             shippingAddress: string | null;
+            shippingName: string | null;
+            shippingPhone: string | null;
             shippingCoordinates: string | null;
+            shippingNotes: string | null;
             promotionCode: string | null;
             isDeleted: boolean;
             deletedAt: Date | null;
@@ -69,9 +72,9 @@ export declare class CheckoutController {
             metadata: string | null;
             orderId: string;
             transactionId: string | null;
-            intentId: string | null;
             provider: string;
             amountCents: number;
+            intentId: string | null;
         }[];
     } & {
         status: string;
@@ -85,7 +88,10 @@ export declare class CheckoutController {
         shippingCents: number;
         totalCents: number;
         shippingAddress: string | null;
+        shippingName: string | null;
+        shippingPhone: string | null;
         shippingCoordinates: string | null;
+        shippingNotes: string | null;
         promotionCode: string | null;
         isDeleted: boolean;
         deletedAt: Date | null;
