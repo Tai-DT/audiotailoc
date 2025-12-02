@@ -95,11 +95,19 @@ export default function GuestChatPage() {
   useEffect(() => {
     if (!conversation) return
 
-    const handleNewMessage = (data: any) => {
-      const message = data.data || data
+    const handleNewMessage = (data: unknown) => {
+      let message: ChatMessage | undefined
+      if (data && typeof data === 'object') {
+        if ('data' in data && data.data && typeof data.data === 'object') {
+          message = data.data as ChatMessage
+        } else if ('id' in data) {
+          message = data as ChatMessage
+        }
+      }
+      if (!message || !message.id) return
       setMessages(prev => {
-        if (prev.some(m => m.id === message.id)) return prev
-        return [...prev, message]
+        if (prev.some(m => m.id === message!.id)) return prev
+        return [...prev, message!]
       })
     }
 

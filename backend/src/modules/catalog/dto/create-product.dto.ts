@@ -217,4 +217,15 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   canonicalUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Stock quantity',
+    example: 100,
+    minimum: 0,
+    default: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stockQuantity?: number = 0;
 }

@@ -19,9 +19,28 @@ export const useTestimonials = () => {
   return useQuery({
     queryKey: ['testimonials'],
     queryFn: async () => {
-      const response = await apiClient.get('/testimonials');
-      return handleApiResponse<Testimonial[]>(response);
+      try {
+        const response = await apiClient.get('/testimonials');
+        return handleApiResponse<Testimonial[]>(response);
+      } catch (error: unknown) {
+        // Handle 404 or missing endpoint gracefully
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          console.warn('[useTestimonials] Testimonials endpoint not found (404). Returning empty array.');
+          return [];
+        }
+        // Re-throw other errors
+        throw error;
+      }
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };

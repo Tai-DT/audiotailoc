@@ -59,8 +59,8 @@ export function ProductCard({
     <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover-lift bg-card/80 backdrop-blur-sm border-border/50">
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/20">
-        <AspectRatio ratio={1}>
-          <Link href={`/products/${product.slug}`}>
+        <AspectRatio ratio={1} className="relative">
+          <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
             <Image
               src={getProductImage()}
               alt={product.name}

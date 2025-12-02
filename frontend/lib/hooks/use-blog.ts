@@ -2,11 +2,21 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
 import { BlogArticle, BlogCategory, PaginatedBlogResponse } from '../types';
 
+interface BlogListParams {
+  status?: string;
+  categoryId?: string;
+  authorId?: string;
+  search?: string;
+  published?: boolean;
+  page?: number;
+  limit?: number;
+}
+
 export const blogQueryKeys = {
   all: ['blog'] as const,
   articles: {
     all: ['blog', 'articles'] as const,
-    list: (params: any) => ['blog', 'articles', 'list', params] as const,
+    list: (params: BlogListParams) => ['blog', 'articles', 'list', params] as const,
     detail: (slug: string) => ['blog', 'articles', 'detail', slug] as const,
     featured: (limit: number) => ['blog', 'articles', 'featured', limit] as const,
     related: (slug: string, limit: number) => ['blog', 'articles', 'related', slug, limit] as const,

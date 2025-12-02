@@ -352,7 +352,7 @@ export function MobileNav({
                 <div className="space-y-2">
                   <SheetClose asChild>
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="/login">Đăng nhập</Link>
+                      <Link href="/auth/login">Đăng nhập</Link>
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>

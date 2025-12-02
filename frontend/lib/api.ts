@@ -31,7 +31,20 @@ apiClient.interceptors.request.use(
     }
     
     const token = authStorage.getAccessToken();
-    if (token) {
+    // #region agent log
+    if (config.url?.includes('/auth/profile') || config.url?.includes('/auth/login')) {
+      console.log('[DEBUG] Request interceptor', { url: config.url, hasToken: !!token, tokenLength: token?.length || 0 });
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:33',message:'Request interceptor',data:{url:config.url,hasToken:!!token,tokenLength:token?.length||0,hasAuthHeader:!!config.headers?.Authorization},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    }
+    // #endregion
+    
+    // Don't add Authorization header to auth endpoints (login, register, refresh)
+    // These endpoints don't require authentication
+    const isAuthEndpoint = config.url?.includes('/auth/login') || 
+                          config.url?.includes('/auth/register') || 
+                          config.url?.includes('/auth/refresh');
+    
+    if (token && !isAuthEndpoint) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -56,27 +69,125 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Debug: Log API errors
+    // Debug: Log API errors with better error handling
     if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      console.error('[API Client] Error:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        fullResponse: error.response?.data,
-      });
+      const errorInfo: Record<string, unknown> = {};
+      
+      // Handle axios errors
+      if (error.config) {
+        errorInfo.url = error.config.url || 'unknown';
+        errorInfo.method = error.config.method?.toUpperCase() || 'unknown';
+        errorInfo.baseURL = error.config.baseURL;
+      }
+      
+      // Handle response errors
+      if (error.response) {
+        errorInfo.status = error.response.status;
+        errorInfo.statusText = error.response.statusText;
+        errorInfo.data = error.response.data;
+        errorInfo.message = error.response.data?.message || error.response.statusText || 'Request failed';
+      } else if (error.request) {
+        // Network error or timeout
+        errorInfo.type = 'network_error';
+        errorInfo.message = error.message || 'Network error - unable to reach server';
+      } else {
+        // Other error - ensure we always have some info
+        errorInfo.type = 'unknown_error';
+        errorInfo.message = error.message || String(error) || 'An unknown error occurred';
+      }
+      
+      // Include full error for debugging
+      if (error.stack) {
+        errorInfo.stack = error.stack;
+      }
+      
+      // Always include error object for debugging if available
+      if (error && typeof error === 'object') {
+        const originalError: Record<string, unknown> = {};
+        if (error.name) originalError.name = error.name;
+        if (error.message) originalError.message = error.message;
+        if ((error as { code?: string }).code) originalError.code = (error as { code?: string }).code;
+        
+        // Only add originalError if it has at least one property
+        if (Object.keys(originalError).length > 0) {
+          errorInfo.originalError = originalError;
+        }
+      }
+      
+      // Don't log 429 errors as errors, they're expected during rate limiting
+      // Don't log 404 errors for known missing endpoints (like /testimonials)
+      const isKnownMissingEndpoint = error.config?.url?.includes('/testimonials');
+      if (error.response?.status !== 429 && !(error.response?.status === 404 && isKnownMissingEndpoint)) {
+        // Only log if errorInfo has meaningful content
+        // Check for actual values, not just existence of keys
+        const hasType = errorInfo.type && typeof errorInfo.type === 'string' && errorInfo.type.trim() !== '';
+        const hasMessage = errorInfo.message && typeof errorInfo.message === 'string' && errorInfo.message.trim() !== '';
+        const hasStatus = typeof errorInfo.status === 'number' && errorInfo.status > 0;
+        const hasData = errorInfo.data !== undefined && errorInfo.data !== null && 
+                       (typeof errorInfo.data !== 'object' || Object.keys(errorInfo.data as object).length > 0);
+        const hasUrl = errorInfo.url && typeof errorInfo.url === 'string' && errorInfo.url !== 'unknown';
+        const hasStack = errorInfo.stack && typeof errorInfo.stack === 'string';
+        
+        const hasInfo = hasType || hasMessage || hasStatus || hasData || hasUrl || hasStack;
+        
+        if (hasInfo) {
+          console.error('[API Client] Error:', errorInfo);
+        } else {
+          // Only log fallback if we're in development and error has some meaningful content
+          if (process.env.NODE_ENV === 'development' && (error.message || error.name || error.stack)) {
+            console.warn('[API Client] Error (minimal info):', {
+              name: error.name,
+              message: error.message,
+              url: error.config?.url,
+              status: error.response?.status
+            });
+          }
+        }
+      }
     }
     
     const status = error.response?.status;
+    
+    // Handle rate limiting (429)
+    if (status === 429) {
+      const retryAfter = error.response?.headers?.['retry-after'] || error.response?.headers?.['Retry-After'];
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+      const retryMinutes = Math.ceil(retrySeconds / 60);
+      
+      // Don't log 429 errors as regular errors, they're expected during rate limiting
+      console.warn(`[API Client] Rate limited (429). Retry after ${retrySeconds}s (${retryMinutes} min)`);
+      
+      // Add retry-after info to error for better error messages
+      if (error.response) {
+        error.response.data = {
+          ...error.response.data,
+          message: `Quá nhiều yêu cầu. Vui lòng thử lại sau ${retryMinutes} phút.`,
+          retryAfter: retrySeconds,
+        };
+      }
+    }
+    
     if (status === 401 || status === 403) {
       const hadSession = Boolean(authStorage.getAccessToken());
+      const requestUrl = error.config?.url || '';
+      
+      // Only clear session if the error is from an auth endpoint
+      // This prevents clearing session when other endpoints return 401/403
+      // (e.g., when user doesn't have permission or endpoint doesn't exist)
+      const isAuthEndpoint = requestUrl.includes('/auth/profile') || 
+                            requestUrl.includes('/auth/me') ||
+                            requestUrl.includes('/auth/refresh');
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:147',message:'API 401/403 error',data:{status,requestUrl,isAuthEndpoint,hadSession,willClearSession:hadSession && isAuthEndpoint},timestamp:Date.now(),sessionId:'debug-session',runId:'run8',hypothesisId:'Q'})}).catch(()=>{});
+      // #endregion
 
-      if (hadSession) {
+      if (hadSession && isAuthEndpoint) {
         authStorage.clearSession();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(AUTH_EVENTS.LOGOUT));
-          if (!window.location.pathname.startsWith('/login')) {
-            window.location.href = '/login';
+          if (!window.location.pathname.startsWith('/auth/login')) {
+            window.location.href = '/auth/login';
           }
         }
       }

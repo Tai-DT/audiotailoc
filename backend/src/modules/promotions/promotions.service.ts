@@ -75,10 +75,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promo.startsAt || promo.createdAt,
+        startDate: promo.starts_at || promo.createdAt,
         endDate: promo.expiresAt,
-        minOrderAmount: promo.minOrderAmount,
-        maxDiscount: promo.maxDiscount,
+        minOrderAmount: promo.min_order_amount,
+        maxDiscount: promo.max_discount,
       };
     });
 
@@ -113,10 +113,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
     };
   }
@@ -143,10 +143,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
     };
   }
@@ -185,13 +185,13 @@ export class PromotionsService {
         description: createDto.description,
         type: createDto.type || 'PERCENTAGE',
         value: createDto.value,
-        minOrderAmount: createDto.minOrderAmount,
-        maxDiscount: createDto.maxDiscount,
+        min_order_amount: createDto.minOrderAmount,
+        max_discount: createDto.maxDiscount,
         isActive: createDto.isActive ?? true,
-        startsAt: createDto.startsAt,
+        starts_at: createDto.startsAt,
         expiresAt: createDto.expiresAt,
         metadata,
-        createdBy: createdBy,
+        created_by: createdBy,
         updatedAt: new Date(),
       },
     });
@@ -205,10 +205,10 @@ export class PromotionsService {
         categories: createDto.categories || [],
         products: createDto.products || [],
         customerSegments: createDto.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
       message: 'Promotion created successfully',
     };
@@ -238,7 +238,7 @@ export class PromotionsService {
     }
 
     // Validate dates
-    const startsAt = updateDto.startsAt || existing.startsAt;
+    const startsAt = updateDto.startsAt || existing.starts_at;
     const expiresAt = updateDto.expiresAt || existing.expiresAt;
     if (startsAt && expiresAt && startsAt >= expiresAt) {
       throw new BadRequestException('Start date must be before expiration date');
@@ -261,10 +261,10 @@ export class PromotionsService {
         description: updateDto.description,
         type: updateDto.type,
         value: updateDto.value,
-        minOrderAmount: updateDto.minOrderAmount,
-        maxDiscount: updateDto.maxDiscount,
+        min_order_amount: updateDto.minOrderAmount,
+        max_discount: updateDto.maxDiscount,
         isActive: updateDto.isActive,
-        startsAt: updateDto.startsAt,
+        starts_at: updateDto.startsAt,
         expiresAt: updateDto.expiresAt,
         metadata,
         updatedAt: new Date(),
@@ -280,10 +280,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
       message: 'Promotion updated successfully',
     };
@@ -336,16 +336,16 @@ export class PromotionsService {
         description: existing.description,
         type: existing.type,
         value: existing.value,
-        minOrderAmount: existing.minOrderAmount,
-        maxDiscount: existing.maxDiscount,
+        min_order_amount: existing.min_order_amount,
+        max_discount: existing.max_discount,
         isActive: existing.isActive,
-        startsAt: new Date(),
+        starts_at: new Date(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         metadata: {
           ...existingMetadata,
           usageCount: 0, // Reset usage count
         },
-        createdBy: existing.createdBy,
+        created_by: existing.created_by,
         updatedAt: new Date(),
       },
     });
@@ -359,10 +359,10 @@ export class PromotionsService {
         categories: existingMetadata.categories || [],
         products: existingMetadata.products || [],
         customerSegments: existingMetadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
       message: 'Promotion duplicated successfully',
     };
@@ -398,10 +398,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
       message: `Promotion ${promotion.isActive ? 'activated' : 'deactivated'} successfully`,
     };
@@ -430,7 +430,7 @@ export class PromotionsService {
     }
 
     const now = new Date();
-    if (promotion.startsAt && promotion.startsAt > now) {
+    if (promotion.starts_at && promotion.starts_at > now) {
       return {
         valid: false,
         error: 'Mã khuyến mãi chưa có hiệu lực',
@@ -455,10 +455,10 @@ export class PromotionsService {
       };
     }
 
-    if (promotion.minOrderAmount && orderAmount < promotion.minOrderAmount) {
+    if (promotion.min_order_amount && orderAmount < promotion.min_order_amount) {
       return {
         valid: false,
-        error: `Đơn hàng tối thiểu ${promotion.minOrderAmount.toLocaleString('vi-VN')}đ để sử dụng mã này`,
+        error: `Đơn hàng tối thiểu ${promotion.min_order_amount?.toLocaleString('vi-VN')}đ để sử dụng mã này`,
       };
     }
 
@@ -467,8 +467,8 @@ export class PromotionsService {
     switch (promotion.type) {
       case 'PERCENTAGE':
         discount = orderAmount * (promotion.value / 100);
-        if (promotion.maxDiscount) {
-          discount = Math.min(discount, promotion.maxDiscount);
+        if (promotion.max_discount) {
+          discount = Math.min(discount, promotion.max_discount);
         }
         break;
       case 'FIXED_AMOUNT':
@@ -491,10 +491,10 @@ export class PromotionsService {
         categories: metadata.categories || [],
         products: metadata.products || [],
         customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
+        startDate: promotion.starts_at || promotion.createdAt,
         endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
+        minOrderAmount: promotion.min_order_amount,
+        maxDiscount: promotion.max_discount,
       },
       discount: Math.min(discount, orderAmount),
     };
@@ -510,7 +510,7 @@ export class PromotionsService {
     const activePromotions = allPromotions.filter(p => {
       const isActive = p.isActive;
       const notExpired = !p.expiresAt || p.expiresAt >= now;
-      const hasStarted = !p.startsAt || p.startsAt <= now;
+      const hasStarted = !p.starts_at || p.starts_at <= now;
       return isActive && notExpired && hasStarted;
     });
 
@@ -576,7 +576,7 @@ export class PromotionsService {
 
     // Validate time range
     const now = new Date();
-    if (promotion.startsAt && promotion.startsAt > now) {
+    if (promotion.starts_at && promotion.starts_at > now) {
       return { valid: false, error: 'Mã khuyến mãi chưa có hiệu lực' };
     }
     if (promotion.expiresAt && promotion.expiresAt < now) {
@@ -591,10 +591,10 @@ export class PromotionsService {
     const totalAmount = cartItems.reduce((sum, item) => sum + item.priceCents * item.quantity, 0);
 
     // Check minimum order amount
-    if (promotion.minOrderAmount && totalAmount < promotion.minOrderAmount) {
+    if (promotion.min_order_amount && totalAmount < promotion.min_order_amount) {
       return {
         valid: false,
-        error: `Đơn hàng tối thiểu ${promotion.minOrderAmount.toLocaleString('vi-VN')}đ`,
+        error: `Đơn hàng tối thiểu ${promotion.min_order_amount?.toLocaleString('vi-VN')}đ`,
       };
     }
 
@@ -638,13 +638,13 @@ export class PromotionsService {
         });
 
         // Apply max discount cap
-        if (promotion.maxDiscount && totalDiscount > promotion.maxDiscount) {
-          const ratio = promotion.maxDiscount / totalDiscount;
+        if (promotion.max_discount && totalDiscount > promotion.max_discount) {
+          const ratio = promotion.max_discount / totalDiscount;
           itemDiscounts.forEach(item => {
             item.discount = Math.round(item.discount * ratio);
             item.finalPrice = item.originalPrice - Math.round(item.discount / item.quantity);
           });
-          totalDiscount = promotion.maxDiscount;
+          totalDiscount = promotion.max_discount;
         }
         break;
 
@@ -848,7 +848,7 @@ export class PromotionsService {
 
     for (const promotion of allPromotions) {
       // Check time validity
-      if (promotion.startsAt && promotion.startsAt > now) continue;
+      if (promotion.starts_at && promotion.starts_at > now) continue;
       if (promotion.expiresAt && promotion.expiresAt < now) continue;
 
       const metadata = (promotion.metadata as any) || {};
@@ -868,10 +868,10 @@ export class PromotionsService {
           usageLimit: metadata.usageLimit,
           categories: metadata.categories || [],
           products: metadata.products || [],
-          startDate: promotion.startsAt || promotion.createdAt,
+          startDate: promotion.starts_at || promotion.createdAt,
           endDate: promotion.expiresAt,
-          minOrderAmount: promotion.minOrderAmount,
-          maxDiscount: promotion.maxDiscount,
+          minOrderAmount: promotion.min_order_amount,
+          maxDiscount: promotion.max_discount,
         });
       }
     }

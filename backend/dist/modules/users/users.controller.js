@@ -79,18 +79,18 @@ let UsersController = class UsersController {
             startDate,
             endDate,
             sortBy,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
         });
     }
     async getProfile(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }
         return this.usersService.findById(userId);
     }
     async exportUserData(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }
@@ -106,7 +106,7 @@ let UsersController = class UsersController {
         return this.usersService.update(id, updateUserDto);
     }
     async remove(id, req) {
-        return this.usersService.remove(id, req.users);
+        return this.usersService.remove(id, req.user);
     }
     async getStats() {
         return this.usersService.getStats();

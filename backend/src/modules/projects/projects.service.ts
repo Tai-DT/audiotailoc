@@ -65,17 +65,23 @@ export class ProjectsService {
   }
 
   async findFeatured() {
-    return this.prisma.projects.findMany({
-      where: {
-        isActive: true,
-        isFeatured: true,
-      },
-      orderBy: [
-        { displayOrder: 'asc' },
-        { createdAt: 'desc' },
-      ],
-      take: 6,
-    });
+    try {
+      return await this.prisma.projects.findMany({
+        where: {
+          isActive: true,
+          isFeatured: true,
+        },
+        orderBy: [
+          { displayOrder: 'asc' },
+          { createdAt: 'desc' },
+        ],
+        take: 6,
+      });
+    } catch (error) {
+      // Fallback: return empty array if there's an error
+      console.error('Error fetching featured projects:', error);
+      return [];
+    }
   }
 
   async findBySlug(slug: string) {

@@ -27,11 +27,8 @@ import { PromotionReportingService } from './services/promotion-reporting.servic
 import { PromotionNotificationService } from './services/promotion-notification.service';
 import { PromotionBackupService, BackupType } from './services/promotion-backup.service';
 import { PromotionDashboardService } from './services/promotion-dashboard.service';
-import {
-  PromotionCampaignsService,
-  CampaignStatus,
-  CampaignType,
-} from './services/promotion-campaigns.service';
+import { PromotionCampaignsService } from './services/promotion-campaigns.service';
+import { CampaignStatus, CampaignType } from '@prisma/client';
 import { PromotionProjectsService } from './services/promotion-projects.service';
 import { PromotionSettingsService } from './services/promotion-settings.service';
 import {

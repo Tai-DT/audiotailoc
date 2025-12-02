@@ -185,11 +185,7 @@ function IsSecureEmail(validationOptions) {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!emailRegex.test(value))
                         return false;
-                    const suspiciousPatterns = [
-                        /javascript:/gi,
-                        /<script/gi,
-                        /on\w+=/gi,
-                    ];
+                    const suspiciousPatterns = [/javascript:/gi, /<script/gi, /on\w+=/gi];
                     return !suspiciousPatterns.some(pattern => pattern.test(value));
                 },
                 defaultMessage(args) {
@@ -237,11 +233,11 @@ function IsStrongPassword(validationOptions) {
                     const hasLowerCase = /[a-z]/.test(value);
                     const hasNumbers = /\d/.test(value);
                     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-                    return value.length >= minLength &&
+                    return (value.length >= minLength &&
                         hasUpperCase &&
                         hasLowerCase &&
                         hasNumbers &&
-                        hasSpecialChar;
+                        hasSpecialChar);
                 },
                 defaultMessage(args) {
                     return `${args.property} must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters`;

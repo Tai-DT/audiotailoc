@@ -62,7 +62,7 @@ export function useSearch() {
       setError(null)
       
       // Call backend search API
-      const response = await apiClient.request(`/api/v1/search?q=${encodeURIComponent(query)}&type=${type}`)
+      const response = await apiClient.get<{ results: any[] }>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
       const results = response.data?.results || []
       
       // Transform backend results to match SearchResult interface
@@ -120,7 +120,7 @@ export function useSearch() {
   const fetchPopular = useCallback(async () => {
     try {
       // Call backend API for popular searches
-      const response = await apiClient.request('/api/v1/search/popular?limit=10')
+      const response = await apiClient.get<any[]>('/search/popular', { params: { limit: 10 } })
       const popular = response.data || []
       
       // Transform to match PopularSearch interface
@@ -151,7 +151,7 @@ export function useSearch() {
       }
       
       // Call backend API for search suggestions
-      const response = await apiClient.request(`/api/v1/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+      const response = await apiClient.get<any[]>('/search/suggestions', { params: { q: query, limit: 5 } })
       const suggestions = response.data || []
       
       // Return array of suggestion strings

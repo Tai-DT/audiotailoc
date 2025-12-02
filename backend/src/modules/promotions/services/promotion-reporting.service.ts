@@ -342,14 +342,15 @@ export class PromotionReportingService {
   async getSegmentAnalysis() {
     const promotions = await this.prisma.promotions.findMany({
       where: {
-        customerSegment: { not: null },
+        // customerSegment field does not exist in schema
+        // customerSegment: { not: null },
       },
     });
 
     const segments: Record<string, any> = {};
 
     for (const promo of promotions) {
-      const segment = promo.customerSegment || 'unknown';
+      const segment = 'unknown'; // customerSegment field does not exist in schema
 
       if (!segments[segment]) {
         segments[segment] = {
@@ -394,14 +395,16 @@ export class PromotionReportingService {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
-      const analytics = await this.prisma.promotion_analytics.findMany({
-        where: {
-          date: {
-            gte: monthStart,
-            lte: monthEnd,
-          },
-        },
-      });
+      // TODO: promotion_analytics table does not exist in schema
+      const analytics: any[] = [];
+      // const analytics = await this.prisma.promotion_analytics.findMany({
+      //   where: {
+      //     date: {
+      //       gte: monthStart,
+      //       lte: monthEnd,
+      //     },
+      //   },
+      // });
 
       const revenue = analytics.reduce((sum, a) => sum + Number(a.revenueImpact), 0);
       const discount = analytics.reduce((sum, a) => sum + Number(a.discountGiven), 0);
@@ -476,7 +479,7 @@ export class PromotionReportingService {
     // Check for unused promotions
     const unusedPromos = await this.prisma.promotions.findMany({
       where: {
-        usageCount: 0,
+        usage_count: 0,
         isActive: true,
       },
     });

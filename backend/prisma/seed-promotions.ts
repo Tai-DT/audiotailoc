@@ -7,11 +7,12 @@ async function seedPromotions() {
     console.log('🎉 Seeding promotions...');
 
     // Clear existing promotions
-    await prisma.customer_promotions.deleteMany();
-    await prisma.promotions_products.deleteMany();
-    await prisma.promotions_categories.deleteMany();
-    await prisma.promotion_audit_logs.deleteMany();
-    await prisma.promotion_analytics.deleteMany();
+    // TODO: These tables do not exist in schema
+    // await prisma.customer_promotions.deleteMany();
+    // await prisma.promotions_products.deleteMany();
+    // await prisma.promotions_categories.deleteMany();
+    // await prisma.promotion_audit_logs.deleteMany();
+    // await prisma.promotion_analytics.deleteMany();
     await prisma.promotions.deleteMany();
 
     // Get some categories and products for linking
@@ -200,67 +201,70 @@ async function seedPromotions() {
         console.log(`✅ Created promotion: ${created.name} (${created.code})`);
 
         // Link some promotions to categories
-        if (categories.length > 0 && ['SUMMER2024', 'SAVE100K'].includes(created.code)) {
-            for (const category of categories.slice(0, 2)) {
-                await prisma.promotions_categories.create({
-                    data: {
-                        id: randomUUID(),
-                        promotionId: created.id,
-                        categoryId: category.id,
-                    },
-                });
-            }
-            console.log(`   📁 Linked to ${categories.slice(0, 2).length} categories`);
-        }
+        // TODO: promotions_categories table does not exist
+        // if (categories.length > 0 && ['SUMMER2024', 'SAVE100K'].includes(created.code)) {
+        //     for (const category of categories.slice(0, 2)) {
+        //         await prisma.promotions_categories.create({
+        //             data: {
+        //                 id: randomUUID(),
+        //                 promotionId: created.id,
+        //                 categoryId: category.id,
+        //             },
+        //         });
+        //     }
+        //     console.log(`   📁 Linked to ${categories.slice(0, 2).length} categories`);
+        // }
 
         // Link some promotions to products
-        if (products.length > 0 && ['VIP25', 'FLASH50'].includes(created.code)) {
-            for (const product of products.slice(0, 3)) {
-                await prisma.promotions_products.create({
-                    data: {
-                        id: randomUUID(),
-                        promotionId: created.id,
-                        productId: product.id,
-                    },
-                });
-            }
-            console.log(`   📦 Linked to ${products.slice(0, 3).length} products`);
-        }
+        // TODO: promotions_products table does not exist
+        // if (products.length > 0 && ['VIP25', 'FLASH50'].includes(created.code)) {
+        //     for (const product of products.slice(0, 3)) {
+        //         await prisma.promotions_products.create({
+        //             data: {
+        //                 id: randomUUID(),
+        //                 promotionId: created.id,
+        //                 productId: product.id,
+        //             },
+        //         });
+        //     }
+        //     console.log(`   📦 Linked to ${products.slice(0, 3).length} products`);
+        // }
 
         // Create some analytics data for active promotions
-        if (created.isActive && created.startsAt <= now) {
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-
-                await prisma.promotion_analytics.create({
-                    data: {
-                        id: randomUUID(),
-                        promotionId: created.id,
-                        date: date,
-                        impressions: Math.floor(Math.random() * 1000) + 100,
-                        clicks: Math.floor(Math.random() * 200) + 20,
-                        conversions: Math.floor(Math.random() * 50) + 5,
-                        revenueImpact: (Math.random() * 10000000 + 1000000).toFixed(2),
-                        discountGiven: (Math.random() * 500000 + 50000).toFixed(2),
-                        usageCount: Math.floor(Math.random() * 20) + 1,
-                    },
-                });
-            }
-            console.log(`   📊 Created 7 days of analytics data`);
-        }
+        // TODO: promotion_analytics table does not exist
+        // if (created.isActive && created.starts_at <= now) {
+        //     for (let i = 0; i < 7; i++) {
+        //         const date = new Date(now);
+        //         date.setDate(date.getDate() - i);
+        //         await prisma.promotion_analytics.create({
+        //             data: {
+        //                 id: randomUUID(),
+        //                 promotionId: created.id,
+        //                 date: date,
+        //                 impressions: Math.floor(Math.random() * 1000) + 100,
+        //                 clicks: Math.floor(Math.random() * 200) + 20,
+        //                 conversions: Math.floor(Math.random() * 50) + 5,
+        //                 revenueImpact: (Math.random() * 10000000 + 1000000).toFixed(2),
+        //                 discountGiven: (Math.random() * 500000 + 50000).toFixed(2),
+        //                 usageCount: Math.floor(Math.random() * 20) + 1,
+        //             },
+        //         });
+        //     }
+        //     console.log(`   📊 Created 7 days of analytics data`);
+        // }
 
         // Create audit log for creation
-        await prisma.promotion_audit_logs.create({
-            data: {
-                id: randomUUID(),
-                promotionId: created.id,
-                userId: admin.id,
-                action: 'CREATED',
-                newValues: promotion,
-                reason: 'Initial seed data',
-            },
-        });
+        // TODO: promotion_audit_logs table does not exist
+        // await prisma.promotion_audit_logs.create({
+        //     data: {
+        //         id: randomUUID(),
+        //         promotionId: created.id,
+        //         userId: admin.id,
+        //         action: 'CREATED',
+        //         newValues: promotion,
+        //         reason: 'Initial seed data',
+        //     },
+        // });
     }
 
     console.log(`\n✅ Successfully seeded ${promotions.length} promotions`);

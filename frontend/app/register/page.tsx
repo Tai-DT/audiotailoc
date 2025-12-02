@@ -249,8 +249,8 @@ export default function RegisterPage() {
 
               <div className="text-center text-sm">
                 Đã có tài khoản?{' '}
-                <Link href="/login" className="text-primary hover:underline">
-                  Đăng nhập ngay
+                <Link href="/register" className="text-primary hover:underline">
+                  Đăng ký ngay
                 </Link>
               </div>
             </CardContent>

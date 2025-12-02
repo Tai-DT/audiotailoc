@@ -77,10 +77,16 @@ interface SubNavItem {
 
 export function Header() {
   const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [isMounted, setIsMounted] = React.useState(false);
   const { itemCount } = useCart() as { itemCount: number };
   const { data: user } = useAuth() as { data?: { id?: string; name?: string; email?: string; avatar?: string } | null };
 
-  const isAuthenticated = !!user;
+  // Only check authentication after mount to prevent hydration mismatch
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isAuthenticated = isMounted && !!user;
   const { data: wishlistCount } = useWishlistCount({ enabled: isAuthenticated }) as { data?: { count: number } | undefined };
   const {
     data: categories,
@@ -176,7 +182,6 @@ export function Header() {
                 alt="Audio Tài Lộc"
                 width={128}
                 height={32}
-                priority
                 className="h-7 w-24 sm:h-8 sm:w-32 object-contain dark:hidden"
               />
               <Image
@@ -184,7 +189,6 @@ export function Header() {
                 alt="Audio Tài Lộc"
                 width={128}
                 height={32}
-                priority
                 className="hidden h-7 w-24 sm:h-8 sm:w-32 object-contain dark:block"
               />
             </div>
@@ -384,24 +388,26 @@ export function Header() {
           {/* User Actions */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             <ThemeToggle />
-            {/* Wishlist */}
-            {isAuthenticated && (
-              <Link href="/wishlist" className="relative group">
-                <Button variant="ghost" size="icon" className="hover:bg-tertiary hover:text-tertiary-foreground transition-all duration-300 hover-lift h-9 w-9 sm:h-10 sm:w-10">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 group-hover:text-warning transition-colors" />
-                  {wishlistCount?.count && wishlistCount.count > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground hover:bg-warning/90"
-                    >
-                      {wishlistCount.count}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            )}
+            {/* Wishlist - Always render wrapper to maintain DOM structure, only show content if authenticated after mount */}
+            <div className="h-9 w-9 sm:h-10 sm:w-10">
+              {isMounted && isAuthenticated && (
+                <Link href="/wishlist" className="relative group block">
+                  <Button variant="ghost" size="icon" className="hover:bg-tertiary hover:text-tertiary-foreground transition-all duration-300 hover-lift h-9 w-9 sm:h-10 sm:w-10">
+                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 group-hover:text-warning transition-colors" />
+                    {wishlistCount?.count && wishlistCount.count > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground hover:bg-warning/90"
+                      >
+                        {wishlistCount.count}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              )}
+            </div>
 
-            {/* Cart */}
+            {/* Cart - Always render to maintain consistent DOM structure */}
             <Link href="/cart" className="relative group">
               <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover-lift h-9 w-9 sm:h-10 sm:w-10">
                 <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 group-hover:text-accent transition-colors" />
@@ -416,8 +422,19 @@ export function Header() {
               </Button>
             </Link>
 
-            {/* User Menu */}
-            {isAuthenticated ? (
+            {/* User Menu - Always render same structure to prevent hydration mismatch */}
+            {!isMounted ? (
+              // Server render: always show login/register buttons
+              <div className="hidden sm:flex items-center space-x-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/auth/login">Đăng nhập</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/register">Đăng ký</Link>
+                </Button>
+              </div>
+            ) : isAuthenticated ? (
+              // Client render after mount: show user menu if authenticated
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
@@ -473,9 +490,10 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
+              // Client render after mount: show login/register if not authenticated
               <div className="hidden sm:flex items-center space-x-2">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">Đăng nhập</Link>
+                  <Link href="/auth/login">Đăng nhập</Link>
                 </Button>
                 <Button size="sm" asChild>
                   <Link href="/register">Đăng ký</Link>

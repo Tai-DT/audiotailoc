@@ -5,7 +5,6 @@ export declare class CreateProductDto {
     priceCents: number;
     originalPriceCents?: number;
     shortDescription?: string;
-    stockQuantity?: number;
     sku?: string;
     warranty?: string;
     features?: string;
@@ -26,4 +25,5 @@ export declare class CreateProductDto {
     model?: string;
     metaKeywords?: string;
     canonicalUrl?: string;
+    stockQuantity?: number;
 }

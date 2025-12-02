@@ -242,7 +242,7 @@ export class PromotionDashboardService {
         type: true,
         value: true,
         isActive: true,
-        startsAt: true,
+        starts_at: true,
         expiresAt: true,
       },
       orderBy: sortConfig,
@@ -263,7 +263,7 @@ export class PromotionDashboardService {
           type: promo.type,
           value: Number(promo.value),
           isActive: promo.isActive,
-          startsAt: promo.startsAt,
+          startsAt: promo.starts_at,
           expiresAt: promo.expiresAt,
           estimatedSavings: metrics.totalDiscountGiven,
           applicableProductCount: 0, // Would need products join
@@ -292,11 +292,12 @@ export class PromotionDashboardService {
   async getPromotionPreview(promotionId: string): Promise<PromotionPreview> {
     const promotion = await this.prisma.promotions.findUnique({
       where: { id: promotionId },
-      include: {
-        products: {
-          select: { productId: true },
-        },
-      },
+      // TODO: Add products relation if needed
+      // include: {
+      //   products: {
+      //     select: { productId: true },
+      //   },
+      // },
     });
 
     if (!promotion) {
@@ -313,10 +314,10 @@ export class PromotionDashboardService {
       type: promotion.type,
       value: Number(promotion.value),
       isActive: promotion.isActive,
-      startsAt: promotion.startsAt,
+      startsAt: promotion.starts_at,
       expiresAt: promotion.expiresAt,
       estimatedSavings: metrics.totalDiscountGiven,
-      applicableProductCount: promotion.products?.length || 0,
+      applicableProductCount: 0, // TODO: Add products relation if needed
       estimatedReach: metrics.totalUsageCount,
       conversionRate: metrics.overallConversionRate,
     };

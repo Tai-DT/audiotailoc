@@ -31,7 +31,7 @@ let BookingController = class BookingController {
         return this.bookingService.findAll();
     }
     async getMyBookings(req) {
-        const userId = req.users?.sub;
+        const userId = req.user?.sub;
         if (!userId) {
             throw new common_1.UnauthorizedException('User not authenticated');
         }

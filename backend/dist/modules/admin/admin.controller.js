@@ -19,7 +19,7 @@ const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const config_1 = require("@nestjs/config");
 const logging_service_1 = require("../monitoring/logging.service");
-const activity_log_service_1 = require("../../services/activity-log.service");
+const activity_log_service_1 = require("../logging/activity-log.service");
 class AdminDashboardDto {
 }
 class BulkActionDto {

@@ -29,9 +29,7 @@ let EnhancedExceptionFilter = EnhancedExceptionFilter_1 = class EnhancedExceptio
         const path = request.url;
         const method = request.method;
         const userAgent = request.get('User-Agent') || '';
-        const status = exception instanceof common_1.HttpException
-            ? exception.getStatus()
-            : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+        const status = exception instanceof common_1.HttpException ? exception.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
         const errorDetails = this.getErrorDetails(exception);
         this.logError(exception, {
             status,
@@ -70,14 +68,18 @@ let EnhancedExceptionFilter = EnhancedExceptionFilter_1 = class EnhancedExceptio
             request.socket.remoteAddress ||
             request.headers['x-forwarded-for'] ||
             request.headers['x-real-ip'] ||
-            'unknown').split(',')[0].trim();
+            'unknown')
+            .split(',')[0]
+            .trim();
     }
     getErrorDetails(exception) {
         if (exception instanceof common_1.HttpException) {
             const response = exception.getResponse();
             const message = typeof response === 'string'
                 ? response
-                : (typeof response === 'object' && response && 'message' in response ? response.message : exception.message);
+                : typeof response === 'object' && response && 'message' in response
+                    ? response.message
+                    : exception.message;
             const code = typeof response === 'object' && response && 'code' in response
                 ? response.code
                 : this.getErrorCode(exception.constructor.name, exception.getStatus());
@@ -116,20 +118,20 @@ let EnhancedExceptionFilter = EnhancedExceptionFilter_1 = class EnhancedExceptio
     }
     getErrorCode(className, status) {
         const errorCodes = {
-            'BadRequestException': 'BAD_REQUEST',
-            'UnauthorizedException': 'UNAUTHORIZED',
-            'ForbiddenException': 'FORBIDDEN',
-            'NotFoundException': 'NOT_FOUND',
-            'ConflictException': 'CONFLICT',
-            'GoneException': 'GONE',
-            'PayloadTooLargeException': 'PAYLOAD_TOO_LARGE',
-            'UnsupportedMediaTypeException': 'UNSUPPORTED_MEDIA_TYPE',
-            'UnprocessableEntityException': 'VALIDATION_ERROR',
-            'InternalServerErrorException': 'INTERNAL_ERROR',
-            'NotImplementedException': 'NOT_IMPLEMENTED',
-            'BadGatewayException': 'BAD_GATEWAY',
-            'ServiceUnavailableException': 'SERVICE_UNAVAILABLE',
-            'GatewayTimeoutException': 'GATEWAY_TIMEOUT',
+            BadRequestException: 'BAD_REQUEST',
+            UnauthorizedException: 'UNAUTHORIZED',
+            ForbiddenException: 'FORBIDDEN',
+            NotFoundException: 'NOT_FOUND',
+            ConflictException: 'CONFLICT',
+            GoneException: 'GONE',
+            PayloadTooLargeException: 'PAYLOAD_TOO_LARGE',
+            UnsupportedMediaTypeException: 'UNSUPPORTED_MEDIA_TYPE',
+            UnprocessableEntityException: 'VALIDATION_ERROR',
+            InternalServerErrorException: 'INTERNAL_ERROR',
+            NotImplementedException: 'NOT_IMPLEMENTED',
+            BadGatewayException: 'BAD_GATEWAY',
+            ServiceUnavailableException: 'SERVICE_UNAVAILABLE',
+            GatewayTimeoutException: 'GATEWAY_TIMEOUT',
         };
         return errorCodes[className] || `HTTP_${status}`;
     }

@@ -17,12 +17,12 @@ export class CheckoutController {
 
   @Post('create-order')
   async create(@Request() req: any, @Body() dto: CheckoutDto) {
-    const order = await this.checkout.createOrder(req.users?.sub, { promotionCode: dto.promotionCode });
+    const order = await this.checkout.createOrder(req.user?.sub, { promotionCode: dto.promotionCode });
     return { order };
   }
 
   @Get('order-by-no/:orderNo')
   async getByOrderNo(@Request() req: any, @Param('orderNo') orderNo: string) {
-    return this.checkout.getOrderForUserByNo(req.users?.sub, orderNo);
+    return this.checkout.getOrderForUserByNo(req.user?.sub, orderNo);
   }
 }

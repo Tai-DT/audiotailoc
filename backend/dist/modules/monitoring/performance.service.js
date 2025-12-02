@@ -77,13 +77,15 @@ let PerformanceService = PerformanceService_1 = class PerformanceService {
             }
             endpointStats.set(key, existing);
         });
-        const endpoints = Array.from(endpointStats.entries()).map(([key, stats]) => ({
+        const endpoints = Array.from(endpointStats.entries())
+            .map(([key, stats]) => ({
             path: key.split(':')[1],
             method: stats.method,
             count: stats.count,
             averageResponseTime: stats.totalDuration / stats.count,
             errorRate: (stats.errors / stats.count) * 100,
-        })).sort((a, b) => b.count - a.count);
+        }))
+            .sort((a, b) => b.count - a.count);
         const memoryUsage = process.memoryUsage();
         const uptime = process.uptime();
         const cpuUsage = process.cpuUsage();
@@ -209,10 +211,14 @@ let PerformanceService = PerformanceService_1 = class PerformanceService {
     }
     getTimeRangeMs(timeRange) {
         switch (timeRange) {
-            case 'hour': return 60 * 60 * 1000;
-            case 'day': return 24 * 60 * 60 * 1000;
-            case 'week': return 7 * 24 * 60 * 60 * 1000;
-            default: return 60 * 60 * 1000;
+            case 'hour':
+                return 60 * 60 * 1000;
+            case 'day':
+                return 24 * 60 * 60 * 1000;
+            case 'week':
+                return 7 * 24 * 60 * 60 * 1000;
+            default:
+                return 60 * 60 * 1000;
         }
     }
     getActiveRequestCount() {

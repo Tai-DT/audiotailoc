@@ -72,7 +72,7 @@ export class PaymentsController {
   @UseGuards(JwtGuard)
   @Get('my-payments')
   async getMyPayments(@Req() req: any) {
-    const userId = req.users?.sub;
+    const userId = req.user?.sub;
     if (!userId) {
       throw new Error('User not authenticated');
     }

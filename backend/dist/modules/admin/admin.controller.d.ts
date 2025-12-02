@@ -1,7 +1,7 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { LoggingService } from '../monitoring/logging.service';
-import { ActivityLogService } from '../../services/activity-log.service';
+import { ActivityLogService } from '../logging/activity-log.service';
 declare class AdminDashboardDto {
     startDate?: string;
     endDate?: string;

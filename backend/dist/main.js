@@ -15,6 +15,7 @@ const swagger_1 = require("@nestjs/swagger");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
 const response_transform_interceptor_1 = require("./common/interceptors/response-transform.interceptor");
+const bigint_serialize_interceptor_1 = require("./common/interceptors/bigint-serialize.interceptor");
 if (process && process.stdout && typeof process.stdout.on === 'function') {
     process.stdout.on('error', (err) => {
         if (err && (err.code === 'EPIPE' || err.code === 'EIO')) {
@@ -128,7 +129,7 @@ async function bootstrap() {
         },
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
-    app.useGlobalInterceptors(new logging_interceptor_1.LoggingInterceptor(), new response_transform_interceptor_1.ResponseTransformInterceptor());
+    app.useGlobalInterceptors(new bigint_serialize_interceptor_1.BigIntSerializeInterceptor(), new logging_interceptor_1.LoggingInterceptor(), new response_transform_interceptor_1.ResponseTransformInterceptor());
     const rateLimit = require('express-rate-limit');
     const limiter = rateLimit({
         windowMs: 15 * 60 * 1000,
@@ -145,7 +146,9 @@ async function bootstrap() {
         },
     });
     app.use(limiter);
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api/v1', {
+        exclude: ['health', ''],
+    });
     const enableDocs = (config.get('ENABLE_SWAGGER') ?? 'true') !== 'false';
     if (enableDocs) {
         const apiConfig = new swagger_1.DocumentBuilder()

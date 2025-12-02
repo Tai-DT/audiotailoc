@@ -37,7 +37,7 @@ export class BookingController {
   @ApiOperation({ summary: 'Get current user bookings' })
   @ApiResponse({ status: 200, description: 'Returns user bookings' })
   async getMyBookings(@Req() req: any) {
-    const userId = req.users?.sub;
+    const userId = req.user?.sub;
     if (!userId) {
       throw new UnauthorizedException('User not authenticated');
     }

@@ -41,11 +41,24 @@ let CatalogService = class CatalogService {
         const cached = await this.cache.get(cacheKey);
         if (cached)
             return cached;
+        let orderBy;
+        if (orderByField === 'viewCount') {
+            orderBy = { viewCount: orderDirection };
+        }
+        else if (orderByField === 'priceCents') {
+            orderBy = { priceCents: orderDirection };
+        }
+        else if (orderByField === 'name') {
+            orderBy = { name: orderDirection };
+        }
+        else {
+            orderBy = { createdAt: orderDirection };
+        }
         const [total, rawItems] = await this.prisma.$transaction([
             this.prisma.products.count({ where }),
             this.prisma.products.findMany({
                 where,
-                orderBy: { [orderByField]: orderDirection },
+                orderBy,
                 skip: (page - 1) * pageSize,
                 take: pageSize,
             }),

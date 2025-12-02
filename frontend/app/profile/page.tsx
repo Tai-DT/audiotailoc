@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth, useUpdateProfile } from '@/lib/hooks/use-auth';
+import { useOrders } from '@/lib/hooks/use-api';
+import { useWishlist } from '@/lib/hooks/use-wishlist';
+import { AuthGuard } from '@/components/auth/auth-guard';
+import Link from 'next/link';
 import {
   User,
   Mail,
@@ -27,11 +30,11 @@ import {
   Settings
 } from 'lucide-react';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { data: user } = useAuth();
   const updateProfileMutation = useUpdateProfile();
-  const isAuthenticated = !!user;
-  const router = useRouter();
+  const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useOrders();
+  const { data: wishlistData, isLoading: wishlistLoading } = useWishlist();
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
     fullName: '',
@@ -42,12 +45,8 @@ export default function ProfilePage() {
     gender: ''
   });
 
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+  const orders = ordersData?.items || [];
+  const wishlist = wishlistData?.items || [];
 
   // Initialize form data when user data is available
   React.useEffect(() => {
@@ -93,19 +92,11 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
-          </div>
-        </main>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
-  const displayName = user.name || user.name || user.email || 'Khách hàng';
+  const displayName = user.name || user.email || 'Khách hàng';
   const avatarFallback = (displayName.charAt(0) || '?').toUpperCase();
 
   return (
@@ -179,13 +170,14 @@ export default function ProfilePage() {
           </Card>
 
           {/* Profile Content */}
-          <Tabs defaultValue="info" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="info">Thông tin</TabsTrigger>
-              <TabsTrigger value="orders">Đơn hàng</TabsTrigger>
-              <TabsTrigger value="wishlist">Yêu thích</TabsTrigger>
-              <TabsTrigger value="settings">Cài đặt</TabsTrigger>
-            </TabsList>
+          <div className="w-full space-y-6">
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+                <TabsTrigger value="info" className="w-full">Thông tin</TabsTrigger>
+                <TabsTrigger value="orders" className="w-full">Đơn hàng</TabsTrigger>
+                <TabsTrigger value="wishlist" className="w-full">Yêu thích</TabsTrigger>
+                <TabsTrigger value="settings" className="w-full">Cài đặt</TabsTrigger>
+              </TabsList>
 
             {/* Personal Information */}
             <TabsContent value="info">
@@ -263,19 +255,82 @@ export default function ProfilePage() {
             <TabsContent value="orders">
               <Card>
                 <CardHeader>
-                  <CardTitle>Lịch sử đơn hàng</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Lịch sử đơn hàng</CardTitle>
+                    {orders.length > 0 && (
+                      <Button variant="outline" asChild>
+                        <Link href="/orders">Xem tất cả</Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Chưa có đơn hàng nào</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Bạn chưa đặt đơn hàng nào. Hãy khám phá sản phẩm của chúng tôi!
-                    </p>
-                    <Button>
-                      Khám phá sản phẩm
-                    </Button>
-                  </div>
+                  {ordersLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Đang tải đơn hàng...</p>
+                    </div>
+                  ) : ordersError ? (
+                    <div className="text-center py-8">
+                      <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2 text-yellow-600">
+                        {(ordersError as any)?.response?.status === 403 
+                          ? 'Không có quyền truy cập' 
+                          : 'Không thể tải đơn hàng'}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {(ordersError as any)?.response?.status === 403
+                          ? 'Bạn không có quyền truy cập vào danh sách đơn hàng.'
+                          : 'Đã xảy ra lỗi khi tải danh sách đơn hàng. Vui lòng thử lại sau.'}
+                      </p>
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Chưa có đơn hàng nào</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Bạn chưa đặt đơn hàng nào. Hãy khám phá sản phẩm của chúng tôi!
+                      </p>
+                      <Button asChild>
+                        <Link href="/products">Khám phá sản phẩm</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.slice(0, 5).map((order: any) => {
+                        const orderId = order?.id || '';
+                        const orderNo = order?.orderNo || (orderId ? orderId.slice(0, 8) : 'N/A');
+                        const createdAt = order?.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'N/A';
+                        const totalCents = order?.totalCents || 0;
+                        
+                        return (
+                          <div key={orderId} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <p className="font-semibold">Đơn hàng #{orderNo}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {createdAt}
+                              </p>
+                              <p className="text-sm font-medium text-green-600 mt-1">
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(totalCents / 100)}
+                              </p>
+                            </div>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/orders/${orderId}`}>Xem chi tiết</Link>
+                            </Button>
+                          </div>
+                        );
+                      })}
+                      {orders.length > 5 && (
+                        <div className="text-center pt-4">
+                          <Button variant="outline" asChild>
+                            <Link href="/orders">Xem tất cả {orders.length} đơn hàng</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -284,19 +339,83 @@ export default function ProfilePage() {
             <TabsContent value="wishlist">
               <Card>
                 <CardHeader>
-                  <CardTitle>Danh sách yêu thích</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Danh sách yêu thích</CardTitle>
+                    {wishlist.length > 0 && (
+                      <Button variant="outline" asChild>
+                        <Link href="/wishlist">Xem tất cả</Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Danh sách trống</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.
-                    </p>
-                    <Button>
-                      Khám phá sản phẩm
-                    </Button>
-                  </div>
+                  {wishlistLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Đang tải danh sách yêu thích...</p>
+                    </div>
+                  ) : wishlist.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Danh sách trống</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.
+                      </p>
+                      <Button asChild>
+                        <Link href="/products">Khám phá sản phẩm</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {wishlist.slice(0, 5).map((item: any) => {
+                        const product = item?.product;
+                        const productSlug = product?.slug;
+                        const productName = product?.name || 'Sản phẩm';
+                        const productImageUrl = product?.imageUrl;
+                        const productPriceCents = product?.priceCents || 0;
+                        
+                        return (
+                          <div key={item?.id || Math.random()} className="flex items-center space-x-4 p-4 border rounded-lg">
+                            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+                              {productImageUrl ? (
+                                <img
+                                  src={productImageUrl}
+                                  alt={productName}
+                                  className="w-full h-full object-cover rounded-lg"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <Heart className="w-8 h-8 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{productName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(productPriceCents / 100)}
+                              </p>
+                            </div>
+                            {productSlug && (
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/products/${productSlug}`}>Xem</Link>
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {wishlist.length > 5 && (
+                        <div className="text-center pt-4">
+                          <Button variant="outline" asChild>
+                            <Link href="/wishlist">Xem tất cả {wishlist.length} sản phẩm</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -361,9 +480,28 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  // #region agent log
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('audiotailoc_token') : null;
+    const user = typeof window !== 'undefined' ? localStorage.getItem('audiotailoc_user') : null;
+    const cookies = typeof document !== 'undefined' ? document.cookie : '';
+    const hasTokenCookie = cookies.includes('audiotailoc_token=');
+    fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'profile/page.tsx:456',message:'ProfilePage mounted',data:{pathname:typeof window !== 'undefined' ? window.location.pathname : 'SSR',hasToken:!!token,hasUser:!!user,hasTokenCookie,cookies},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'L'})}).catch(()=>{});
+  }, []);
+  // #endregion
+  
+  return (
+    <AuthGuard>
+      <ProfilePageContent />
+    </AuthGuard>
   );
 }

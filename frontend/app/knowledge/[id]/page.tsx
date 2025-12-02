@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useArticle } from '@/lib/hooks/use-api';
 import { notFound } from 'next/navigation';
 
@@ -38,7 +39,7 @@ export default function ArticleDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 prose dark:prose-invert">
-      <a href="/knowledge" className="no-underline text-sm text-primary hover:text-accent transition-colors">← Quay lại</a>
+      <Link href="/knowledge" className="no-underline text-sm text-primary hover:text-accent transition-colors">← Quay lại</Link>
       <h1>{data.title}</h1>
       <p className="text-xs text-muted-foreground">Chuyên mục: {data.category} • Lượt xem: {data.viewCount}</p>
       <hr />

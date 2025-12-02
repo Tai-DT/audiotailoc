@@ -4,4 +4,5 @@ export declare class CreatePaymentDto {
     amountCents: number;
     paymentMethod: PaymentProvider;
     transactionId?: string;
+    description?: string;
 }

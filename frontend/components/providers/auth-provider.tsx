@@ -127,13 +127,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const user = JSON.parse(storedUser);
           const tokenExpiry = storedTokenExpiry ? parseInt(storedTokenExpiry) : null;
 
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:126',message:'AuthProvider loadUser check',data:{hasStoredUser:!!storedUser,hasStoredToken:!!storedToken,hasStoredRefreshToken:!!storedRefreshToken,hasTokenExpiry:!!tokenExpiry,tokenExpiry,tokenExpiryTime:tokenExpiry?new Date(tokenExpiry).toISOString():null,now:Date.now(),isExpired:tokenExpiry?Date.now()>(tokenExpiry-5*60*1000):false},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+          // #endregion
+
           // Check if token is expired (with 5 minute buffer)
           if (tokenExpiry && Date.now() > (tokenExpiry - 5 * 60 * 1000)) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:131',message:'AuthProvider token expired, clearing',data:{hasStoredRefreshToken:!!storedRefreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+            // #endregion
             // Try to refresh token if refresh token exists
             if (storedRefreshToken) {
               refreshToken(storedRefreshToken);
             } else {
               // Clear expired data
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:136',message:'AuthProvider clearing expired token (no refresh token)',data:{stackTrace:new Error().stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+              // #endregion
               localStorage.removeItem('audiotailoc_user');
               localStorage.removeItem('audiotailoc_token');
               localStorage.removeItem('audiotailoc_refresh_token');
@@ -145,6 +155,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error loading user from localStorage:', error);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:146',message:'AuthProvider loadUser error, clearing',data:{errorMessage:(error as Error)?.message,stackTrace:new Error().stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+        // #endregion
         localStorage.removeItem('audiotailoc_user');
         localStorage.removeItem('audiotailoc_token');
         localStorage.removeItem('audiotailoc_refresh_token');
@@ -169,6 +182,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // If refresh token is expired, logout the user
         if (Date.now() > expiryTime) {
           console.log('Refresh token expired, logging out user');
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:170',message:'AuthProvider refresh token expired, clearing',data:{expiryTime,now:Date.now(),stackTrace:new Error().stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+          // #endregion
           localStorage.removeItem('audiotailoc_user');
           localStorage.removeItem('audiotailoc_token');
           localStorage.removeItem('audiotailoc_refresh_token');
@@ -178,12 +194,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error checking token expiration:', error);
-        // If we can't decode the token, clear everything
-        localStorage.removeItem('audiotailoc_user');
-        localStorage.removeItem('audiotailoc_token');
-        localStorage.removeItem('audiotailoc_refresh_token');
-        localStorage.removeItem('audiotailoc_token_expiry');
-        dispatch({ type: 'AUTH_LOGOUT' });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:179',message:'AuthProvider token decode error (not clearing)',data:{errorMessage:(error as Error)?.message,stackTrace:new Error().stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+        // #endregion
+        // Don't clear localStorage if we can't decode the refresh token
+        // The token might still be valid, we just can't check its expiration
+        // Only clear if we're certain the token is expired or invalid
+        // This prevents false positives that clear valid sessions
       }
     };
 
@@ -196,6 +213,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Function to refresh access token
   const refreshToken = async (refreshTokenValue: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:217',message:'AuthProvider refreshToken called',data:{hasRefreshToken:!!refreshTokenValue,refreshTokenLength:refreshTokenValue?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+    // #endregion
     try {
       const response = await apiClient.post(API_ENDPOINTS.AUTH.REFRESH, {
         refreshToken: refreshTokenValue
@@ -217,6 +237,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth-provider.tsx:235',message:'AuthProvider refreshToken failed, clearing',data:{errorMessage:(error as Error)?.message,stackTrace:new Error().stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'N'})}).catch(()=>{});
+      // #endregion
       // Clear all stored data on refresh failure
       localStorage.removeItem('audiotailoc_user');
       localStorage.removeItem('audiotailoc_token');

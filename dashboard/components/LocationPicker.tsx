@@ -23,6 +23,25 @@ interface PlacePrediction {
     };
 }
 
+interface GoongApiResponse {
+    predictions?: PlacePrediction[];
+    items?: PlacePrediction[];
+    result?: {
+        geometry?: {
+            location?: {
+                lat: number;
+                lng: number;
+            };
+        };
+    };
+    geometry?: {
+        location?: {
+            lat: number;
+            lng: number;
+        };
+    };
+}
+
 export function LocationPicker({ value, onChange, placeholder = 'Nhập địa chỉ...', className }: LocationPickerProps) {
     const [inputValue, setInputValue] = useState(value || '');
     const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
@@ -49,12 +68,15 @@ export function LocationPicker({ value, onChange, placeholder = 'Nhập địa c
             try {
                 setLoading(true);
                 const response = await apiClient.searchPlaces(debouncedSearch);
-                if (response.success && response.data) {
-                    const data = response.data as any;
-                    if (data.predictions) {
-                        setPredictions(data.predictions);
-                        setIsOpen(true);
-                    }
+                // Backend returns Goong API format directly: { predictions: [...] } or { items: [] }
+                const data = response.data as GoongApiResponse;
+                if (data.predictions) {
+                    setPredictions(data.predictions);
+                    setIsOpen(true);
+                } else if (data.items && Array.isArray(data.items)) {
+                    // Handle alternative format from Goong API
+                    setPredictions(data.items);
+                    setIsOpen(true);
                 }
             } catch (error) {
                 console.error('Error fetching places:', error);
@@ -84,14 +106,17 @@ export function LocationPicker({ value, onChange, placeholder = 'Nhập địa c
 
         try {
             const response = await apiClient.getPlaceDetail(prediction.place_id);
-            if (response.success && response.data) {
-                const data = response.data as any;
-                if (data.result && data.result.geometry && data.result.geometry.location) {
-                    const { lat, lng } = data.result.geometry.location;
-                    onChange(prediction.description, `${lat},${lng}`, prediction.place_id);
-                } else {
-                    onChange(prediction.description, undefined, prediction.place_id);
-                }
+            // Backend returns Goong API format directly: { result: {...} }
+            const data = response.data as GoongApiResponse;
+            const result = data.result || data;
+            const geometry = result && typeof result === 'object' && 'geometry' in result 
+                ? (result as GoongApiResponse).geometry 
+                : data.geometry;
+            if (geometry && geometry.location) {
+                const { lat, lng } = geometry.location;
+                onChange(prediction.description, `${lat},${lng}`, prediction.place_id);
+            } else {
+                onChange(prediction.description, undefined, prediction.place_id);
             }
         } catch (error) {
             console.error('Error fetching place details:', error);

@@ -173,8 +173,8 @@ export class PromotionBackupEnhancedService {
       const campaign = await this.prisma.campaigns.findUnique({
         where: { id: campaignId },
         include: {
-          campaign_promotions: { include: { promotions: true } },
-          campaign_metrics: true,
+          // campaign_promotions: { include: { promotions: true } }, // campaign_promotions does not exist
+          // campaign_metrics: true, // campaign_metrics does not exist
         },
       });
 
@@ -516,18 +516,19 @@ export class PromotionBackupEnhancedService {
     const [campaigns, promotions, reviews] = await Promise.all([
       this.prisma.campaigns.findMany({
         include: {
-          campaign_promotions: true,
-          campaign_metrics: true,
+          // campaign_promotions: true, // campaign_promotions does not exist
+          // campaign_metrics: true, // campaign_metrics does not exist
         },
       }),
       this.prisma.promotions.findMany({
-        include: {
-          products: true,
-          categories: true,
-          customerUsage: true,
-        },
+        // include: {
+        //   products: true, // products relation does not exist
+        //   categories: true, // categories relation does not exist
+        //   customerUsage: true, // customerUsage does not exist
+        // },
       }),
-      this.prisma.project_promotion_reviews.findMany(),
+      // TODO: project_promotion_reviews table does not exist
+      [], // this.prisma.project_promotion_reviews.findMany(),
     ]);
 
     return { campaigns, promotions, reviews };
@@ -538,16 +539,17 @@ export class PromotionBackupEnhancedService {
       this.prisma.campaigns.findMany({
         where: { updatedAt: { gte: sinceTime } },
         include: {
-          campaign_promotions: true,
-          campaign_metrics: true,
+          // campaign_promotions: true, // campaign_promotions does not exist
+          // campaign_metrics: true, // campaign_metrics does not exist
         },
       }),
       this.prisma.promotions.findMany({
         where: { updatedAt: { gte: sinceTime } },
       }),
-      this.prisma.project_promotion_reviews.findMany({
-        where: { updatedAt: { gte: sinceTime } },
-      }),
+      // TODO: project_promotion_reviews table does not exist
+      [], // this.prisma.project_promotion_reviews.findMany({
+      //   where: { updatedAt: { gte: sinceTime } },
+      // }),
     ]);
 
     return { campaigns, promotions, reviews };

@@ -32,7 +32,13 @@ let ProjectsController = class ProjectsController {
         });
     }
     async getFeatured() {
-        return this.projectsService.findFeatured();
+        try {
+            return await this.projectsService.findFeatured();
+        }
+        catch (error) {
+            console.error('Error fetching featured projects:', error);
+            return [];
+        }
     }
     async getBySlug(slug) {
         return this.projectsService.findBySlug(slug);

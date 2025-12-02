@@ -61,8 +61,8 @@ import { ProjectsModule } from './projects/projects.module';
 import { SeoModule } from './seo/seo.module';
 import { BlogModule } from './blog/blog.module';
 
-// Test module for payment testing
-import { TestModule } from './test/test.module';
+// Test module removed
+// import { TestModule } from './test/test.module';
 
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
@@ -121,7 +121,7 @@ const runtimeImports = [
     ProjectsModule,
 
     // Test module for payment testing
-    TestModule,
+    // TestModule, // Removed
 ];
 
 if (FEATURE_CHECKOUT) {

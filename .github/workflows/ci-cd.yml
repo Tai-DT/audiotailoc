@@ -157,15 +157,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm ci
+    
     - name: Run security audit - Backend
       working-directory: ./backend
       run: npm audit --production --audit-level=moderate
       continue-on-error: true
     
+    - name: Install dashboard dependencies
+      working-directory: ./dashboard
+      run: npm ci
+    
     - name: Run security audit - Dashboard
       working-directory: ./dashboard
       run: npm audit --production --audit-level=moderate
       continue-on-error: true
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
     
     - name: Run security audit - Frontend
       working-directory: ./frontend

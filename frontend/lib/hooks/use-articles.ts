@@ -2,10 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '../api';
 import { KnowledgeBaseArticle, PaginatedResponse } from '../types';
 
+interface ArticleFilters {
+  category?: string;
+  tags?: string[];
+  page?: number;
+  pageSize?: number;
+  published?: boolean;
+}
+
 export const articleQueryKeys = {
   all: ['articles'] as const,
   lists: () => [...articleQueryKeys.all, 'list'] as const,
-  list: (filters: any) => [...articleQueryKeys.lists(), filters] as const,
+  list: (filters: ArticleFilters) => [...articleQueryKeys.lists(), filters] as const,
   details: () => [...articleQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...articleQueryKeys.details(), id] as const,
   search: (query: string) => [...articleQueryKeys.all, 'search', query] as const,

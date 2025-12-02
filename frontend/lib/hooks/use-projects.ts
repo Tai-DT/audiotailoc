@@ -47,10 +47,37 @@ export function useFeaturedProjects(limit = 6) {
   return useQuery({
     queryKey: ['projects', 'featured', limit],
     queryFn: async () => {
-      const response = await apiClient.get(API_ENDPOINTS.PROJECTS.FEATURED, {
-        params: { limit },
-      });
-      return handleApiResponse<Project[]>(response);
+      try {
+        const response = await apiClient.get(API_ENDPOINTS.PROJECTS.FEATURED, {
+          params: { limit },
+        });
+        const data = handleApiResponse<Project[] | { items?: Project[]; data?: Project[] }>(response);
+        // Handle both array and paginated responses
+        if (Array.isArray(data)) {
+          return data;
+        }
+        if (data && typeof data === 'object' && 'items' in data && Array.isArray(data.items)) {
+          return data.items;
+        }
+        if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+          return data.data;
+        }
+        return [];
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          console.warn('[useFeaturedProjects] Endpoint not found (404). Returning empty array.');
+          return [];
+        }
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 }

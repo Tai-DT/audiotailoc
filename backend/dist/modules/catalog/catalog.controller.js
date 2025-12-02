@@ -99,13 +99,24 @@ let CatalogController = class CatalogController {
         return this.catalog.removeMany(body?.ids ?? []);
     }
     async getTopViewedProducts(limit) {
-        const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50);
-        return this.catalog.listProducts({
-            page: 1,
-            pageSize: limitNum,
-            sortBy: 'viewCount',
-            sortOrder: 'desc'
-        });
+        try {
+            const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50);
+            return await this.catalog.listProducts({
+                page: 1,
+                pageSize: limitNum,
+                sortBy: 'viewCount',
+                sortOrder: 'desc'
+            });
+        }
+        catch (error) {
+            console.error('Error fetching top-viewed products:', error);
+            return {
+                items: [],
+                total: 0,
+                page: 1,
+                pageSize: Math.min(parseInt(limit?.toString() || '10'), 50),
+            };
+        }
     }
     async getRecentProducts(limit) {
         const limitNum = Math.min(parseInt(limit?.toString() || '10'), 50);
