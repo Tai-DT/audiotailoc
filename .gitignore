@@ -145,3 +145,7 @@ jspm_packages/
 
 # MCP configuration with secrets
 .roo/mcp.json
+
+# Backup files
+backend/backups/
+*.sql.gz
