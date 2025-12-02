@@ -16,13 +16,12 @@ const inventory_alert_service_1 = require("./inventory-alert.service");
 const inventory_alert_controller_1 = require("./inventory-alert.controller");
 const guards_module_1 = require("../auth/guards.module");
 const users_module_1 = require("../users/users.module");
-const notifications_module_1 = require("../notifications/notifications.module");
 let InventoryModule = class InventoryModule {
 };
 exports.InventoryModule = InventoryModule;
 exports.InventoryModule = InventoryModule = __decorate([
     (0, common_1.Module)({
-        imports: [guards_module_1.GuardsModule, users_module_1.UsersModule, notifications_module_1.NotificationsModule],
+        imports: [guards_module_1.GuardsModule, users_module_1.UsersModule],
         providers: [inventory_service_1.InventoryService, inventory_movement_service_1.InventoryMovementService, inventory_alert_service_1.InventoryAlertService],
         controllers: [inventory_controller_1.InventoryController, inventory_movement_controller_1.InventoryMovementController, inventory_alert_controller_1.InventoryAlertController],
         exports: [inventory_service_1.InventoryService, inventory_movement_service_1.InventoryMovementService, inventory_alert_service_1.InventoryAlertService],

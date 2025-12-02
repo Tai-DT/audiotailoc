@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Tag,
   Percent,
@@ -21,16 +20,12 @@ import {
   Trash2,
   Copy,
   BarChart3,
-  CheckCircle,
-  Package,
-  FolderTree
+  CheckCircle
 } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { toast } from "sonner"
 import { usePromotions } from "@/hooks/use-promotions"
-import { useCategories } from "@/hooks/use-categories"
-import { apiClient } from "@/lib/api-client"
 
 interface Promotion {
   id: string
@@ -53,11 +48,6 @@ interface Promotion {
   createdBy: string
 }
 
-interface ProductListItem {
-  id: string
-  name: string
-}
-
 export default function PromotionsPage() {
   const {
     promotions,
@@ -69,10 +59,6 @@ export default function PromotionsPage() {
     duplicatePromotion
   } = usePromotions()
 
-  const { categories } = useCategories()
-  const [products, setProducts] = useState<ProductListItem[]>([])
-  const [loadingProducts, setLoadingProducts] = useState(false)
-
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
@@ -81,71 +67,8 @@ export default function PromotionsPage() {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null)
   const [newPromotion, setNewPromotion] = useState<Partial<Promotion>>({
     type: "percentage",
-    isActive: true,
-    categories: [],
-    products: []
+    isActive: true
   })
-
-  // Load products when dialog opens
-  useEffect(() => {
-    if (showCreateDialog || showEditDialog) {
-      loadProducts()
-    }
-  }, [showCreateDialog, showEditDialog])
-
-  const loadProducts = async () => {
-    setLoadingProducts(true)
-    try {
-      const response = await apiClient.getProducts({ limit: 1000 })
-
-      type ProductsPayload = {
-        items?: ProductListItem[]
-        data?: { items?: ProductListItem[] }
-      }
-
-      const raw = response as unknown as ProductsPayload
-      const productsData = raw.items || raw.data?.items || []
-      setProducts(productsData)
-    } catch (error) {
-      console.error('Failed to load products:', error)
-    } finally {
-      setLoadingProducts(false)
-    }
-  }
-
-  const toggleCategory = (categoryId: string) => {
-    const current = newPromotion.categories || []
-    const updated = current.includes(categoryId)
-      ? current.filter(id => id !== categoryId)
-      : [...current, categoryId]
-    setNewPromotion({ ...newPromotion, categories: updated })
-  }
-
-  const toggleProduct = (productId: string) => {
-    const current = newPromotion.products || []
-    const updated = current.includes(productId)
-      ? current.filter(id => id !== productId)
-      : [...current, productId]
-    setNewPromotion({ ...newPromotion, products: updated })
-  }
-
-  const toggleEditCategory = (categoryId: string) => {
-    if (!selectedPromotion) return
-    const current = selectedPromotion.categories || []
-    const updated = current.includes(categoryId)
-      ? current.filter(id => id !== categoryId)
-      : [...current, categoryId]
-    setSelectedPromotion({ ...selectedPromotion, categories: updated })
-  }
-
-  const toggleEditProduct = (productId: string) => {
-    if (!selectedPromotion) return
-    const current = selectedPromotion.products || []
-    const updated = current.includes(productId)
-      ? current.filter(id => id !== productId)
-      : [...current, productId]
-    setSelectedPromotion({ ...selectedPromotion, products: updated })
-  }
 
   const filteredPromotions = promotions.filter(promo => {
     if (searchQuery && !promo.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -280,7 +203,7 @@ export default function PromotionsPage() {
                 <Tag className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalPromotions ?? 0}</div>
+                <div className="text-2xl font-bold">{stats.totalPromotions}</div>
                 <p className="text-xs text-muted-foreground">
                   Đã tạo
                 </p>
@@ -293,9 +216,9 @@ export default function PromotionsPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats?.activePromotions ?? 0}</div>
+                <div className="text-2xl font-bold text-green-600">{stats.activePromotions}</div>
                 <p className="text-xs text-muted-foreground">
-                  {stats?.totalPromotions ? Math.round(((stats?.activePromotions ?? 0) / stats.totalPromotions) * 100) : 0}% tổng số
+                  {Math.round((stats.activePromotions / stats.totalPromotions) * 100)}% tổng số
                 </p>
               </CardContent>
             </Card>
@@ -306,7 +229,7 @@ export default function PromotionsPage() {
                 <Users className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{(stats?.totalUsage ?? 0).toLocaleString()}</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.totalUsage.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   Tổng lượt sử dụng
                 </p>
@@ -320,7 +243,7 @@ export default function PromotionsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {((stats?.totalSavings ?? 0) / 1000000).toFixed(1)}M
+                  {(stats.totalSavings / 1000000).toFixed(1)}M
                 </div>
                 <p className="text-xs text-muted-foreground">
                   VNĐ tiết kiệm
@@ -620,81 +543,6 @@ export default function PromotionsPage() {
                     rows={3}
                   />
                 </div>
-
-                {/* Product and Category Targeting */}
-                <div className="border-t pt-4 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-base font-semibold">Áp dụng cho sản phẩm/danh mục</Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Để trống để áp dụng cho tất cả sản phẩm
-                  </p>
-
-                  {/* Categories */}
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2">
-                      <FolderTree className="h-4 w-4" />
-                      <Label>Danh mục ({newPromotion.categories?.length || 0} đã chọn)</Label>
-                    </div>
-                    <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                      {categories.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Không có danh mục</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {categories.map((category) => (
-                            <div key={category.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`cat-${category.id}`}
-                                checked={newPromotion.categories?.includes(category.id)}
-                                onCheckedChange={() => toggleCategory(category.id)}
-                              />
-                              <label
-                                htmlFor={`cat-${category.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                              >
-                                {category.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Products */}
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      <Label>Sản phẩm ({newPromotion.products?.length || 0} đã chọn)</Label>
-                    </div>
-                    <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                      {loadingProducts ? (
-                        <p className="text-sm text-muted-foreground">Đang tải...</p>
-                      ) : products.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Không có sản phẩm</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {products.map((product) => (
-                            <div key={product.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`prod-${product.id}`}
-                                checked={newPromotion.products?.includes(product.id)}
-                                onCheckedChange={() => toggleProduct(product.id)}
-                              />
-                              <label
-                                htmlFor={`prod-${product.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                              >
-                                {product.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
@@ -742,81 +590,6 @@ export default function PromotionsPage() {
                       onChange={(e) => setSelectedPromotion({...selectedPromotion, description: e.target.value})}
                       rows={3}
                     />
-                  </div>
-
-                  {/* Product and Category Targeting */}
-                  <div className="border-t pt-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <Label className="text-base font-semibold">Áp dụng cho sản phẩm/danh mục</Label>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Để trống để áp dụng cho tất cả sản phẩm
-                    </p>
-
-                    {/* Categories */}
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <FolderTree className="h-4 w-4" />
-                        <Label>Danh mục ({selectedPromotion.categories?.length || 0} đã chọn)</Label>
-                      </div>
-                      <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                        {categories.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Không có danh mục</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {categories.map((category) => (
-                              <div key={category.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`edit-cat-${category.id}`}
-                                  checked={selectedPromotion.categories?.includes(category.id)}
-                                  onCheckedChange={() => toggleEditCategory(category.id)}
-                                />
-                                <label
-                                  htmlFor={`edit-cat-${category.id}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                >
-                                  {category.name}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Products */}
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4" />
-                        <Label>Sản phẩm ({selectedPromotion.products?.length || 0} đã chọn)</Label>
-                      </div>
-                      <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                        {loadingProducts ? (
-                          <p className="text-sm text-muted-foreground">Đang tải...</p>
-                        ) : products.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Không có sản phẩm</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {products.map((product) => (
-                              <div key={product.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`edit-prod-${product.id}`}
-                                  checked={selectedPromotion.products?.includes(product.id)}
-                                  onCheckedChange={() => toggleEditProduct(product.id)}
-                                />
-                                <label
-                                  htmlFor={`edit-prod-${product.id}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                >
-                                  {product.name}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <DialogFooter>

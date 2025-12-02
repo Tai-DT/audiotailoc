@@ -18,18 +18,10 @@ let CatalogService = class CatalogService {
     constructor(prisma, cache) {
         this.prisma = prisma;
         this.cache = cache;
-        this.inMemoryCache = new Map();
-        this.inFlightRequests = new Map();
     }
     async listProducts(params = {}) {
-        const page = (() => {
-            const p = Number(params.page ?? 1);
-            return Number.isFinite(p) ? Math.max(1, Math.floor(p)) : 1;
-        })();
-        const pageSize = (() => {
-            const s = Number(params.pageSize ?? 20);
-            return Number.isFinite(s) ? Math.min(100, Math.max(1, Math.floor(s))) : 20;
-        })();
+        const page = Math.max(1, Math.floor(params.page ?? 1));
+        const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
         const where = {};
         if (params.q) {
             where.OR = [
@@ -43,130 +35,27 @@ let CatalogService = class CatalogService {
             where.priceCents = { ...(where.priceCents || {}), lte: params.maxPrice };
         if (typeof params.featured === 'boolean')
             where.featured = params.featured;
-        if (typeof params.isActive === 'boolean')
-            where.isActive = params.isActive;
-        const orderByField = (params.sortBy === 'price'
-            ? 'priceCents'
-            : params.sortBy === 'viewCount'
-                ? 'viewCount'
-                : params.sortBy) ?? 'createdAt';
+        const orderByField = (params.sortBy === 'price' ? 'priceCents' : params.sortBy === 'viewCount' ? 'viewCount' : params.sortBy) ?? 'createdAt';
         const orderDirection = params.sortOrder ?? 'desc';
         const cacheKey = `products:list:${JSON.stringify({ where, page, pageSize, orderByField, orderDirection })}`;
-        const now = Date.now();
-        const mem = this.inMemoryCache.get(cacheKey);
-        if (mem && mem.expiresAt > now) {
-            return mem.value;
-        }
-        const inflight = this.inFlightRequests.get(cacheKey);
-        if (inflight) {
-            return inflight;
-        }
         const cached = await this.cache.get(cacheKey);
-        if (cached) {
-            this.inMemoryCache.set(cacheKey, { value: cached, expiresAt: now + 1000 });
+        if (cached)
             return cached;
-        }
-        const work = (async () => {
-            let total = 0;
-            let rawItems = [];
-            try {
-                const txFn = this.prisma.$transaction;
-                const isMockTransaction = typeof txFn === 'function' && (txFn._isMockFunction === true || !!txFn.mock);
-                if (isMockTransaction) {
-                    try {
-                        const [txTotal, txItems] = await txFn([
-                            this.prisma.products.count({ where }),
-                            this.prisma.products.findMany({
-                                where,
-                                orderBy: { [orderByField]: orderDirection },
-                                skip: (page - 1) * pageSize,
-                                take: pageSize,
-                                include: { inventory: true },
-                            }),
-                        ]);
-                        total = txTotal ?? 0;
-                        rawItems = txItems ?? [];
-                    }
-                    catch (err) {
-                        console.error('CatalogService.listProducts mocked $transaction error, falling back:', err);
-                        total = await this.prisma.products.count({ where }).catch(() => 0);
-                        rawItems = await this.prisma.products
-                            .findMany({
-                            where,
-                            orderBy: { [orderByField]: orderDirection },
-                            skip: (page - 1) * pageSize,
-                            take: pageSize,
-                            include: { inventory: true },
-                        })
-                            .catch(() => []);
-                    }
-                }
-                else {
-                    total = await this.prisma.products.count({ where });
-                    rawItems = await this.prisma.products.findMany({
-                        where,
-                        orderBy: { [orderByField]: orderDirection },
-                        skip: (page - 1) * pageSize,
-                        take: pageSize,
-                        include: { inventory: true },
-                    });
-                }
-            }
-            catch (err) {
-                console.error('CatalogService.listProducts DB error:', err);
-                total = 0;
-                rawItems = [];
-            }
-            const items = rawItems.map(item => ({
-                ...item,
-                priceCents: Number(item.priceCents),
-                originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
-                images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
-                specifications: typeof item.specifications === 'string'
-                    ? JSON.parse(item.specifications)
-                    : item.specifications,
-            }));
-            const result = { items, total, page, pageSize };
-            try {
-                await this.cache.set(cacheKey, result, { ttl: 60 });
-            }
-            catch (e) {
-            }
-            this.inMemoryCache.set(cacheKey, { value: result, expiresAt: Date.now() + 1000 });
-            return result;
-        })();
-        this.inFlightRequests.set(cacheKey, work);
-        try {
-            const result = await work;
-            return result;
-        }
-        finally {
-            this.inFlightRequests.delete(cacheKey);
-        }
-        let total = 0;
-        let rawItems = [];
-        try {
-            total = await this.prisma.products.count({ where });
-            rawItems = await this.prisma.products.findMany({
+        const [total, rawItems] = await this.prisma.$transaction([
+            this.prisma.products.count({ where }),
+            this.prisma.products.findMany({
                 where,
                 orderBy: { [orderByField]: orderDirection },
                 skip: (page - 1) * pageSize,
                 take: pageSize,
-            });
-        }
-        catch (err) {
-            console.error('CatalogService.listProducts DB error:', err);
-            total = 0;
-            rawItems = [];
-        }
+            }),
+        ]);
         const items = rawItems.map(item => ({
             ...item,
             priceCents: Number(item.priceCents),
             originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
-            images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
-            specifications: typeof item.specifications === 'string'
-                ? JSON.parse(item.specifications)
-                : item.specifications,
+            images: (typeof item.images === 'string') ? JSON.parse(item.images) : item.images,
+            specifications: (typeof item.specifications === 'string') ? JSON.parse(item.specifications) : item.specifications,
         }));
         const result = { items, total, page, pageSize };
         await this.cache.set(cacheKey, result, { ttl: 60 });
@@ -210,10 +99,8 @@ let CatalogService = class CatalogService {
             ...product,
             priceCents: Number(product.priceCents),
             originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-            images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-            specifications: typeof product.specifications === 'string'
-                ? JSON.parse(product.specifications)
-                : product.specifications,
+            images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+            specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
     }
     async checkSkuExists(sku, excludeId) {
@@ -225,12 +112,7 @@ let CatalogService = class CatalogService {
         return count > 0;
     }
     async generateUniqueSku(baseName) {
-        const base = baseName
-            ? baseName
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '')
-                .substring(0, 8)
-            : 'PROD';
+        const base = baseName ? baseName.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8) : 'PROD';
         let sku = base;
         let counter = 1;
         while (await this.checkSkuExists(sku)) {
@@ -269,6 +151,7 @@ let CatalogService = class CatalogService {
             warranty: data.warranty,
             weight: data.weight,
             dimensions: data.dimensions,
+            stockQuantity: data.stockQuantity || 0,
             minOrderQuantity: data.minOrderQuantity || 1,
             maxOrderQuantity: data.maxOrderQuantity,
             tags: data.tags,
@@ -279,19 +162,14 @@ let CatalogService = class CatalogService {
             featured: data.featured || false,
             isActive: data.isActive ?? true,
         };
-        const now = new Date();
-        const product = await this.prisma.products.create({
-            data: { id: (0, crypto_1.randomUUID)(), createdAt: now, updatedAt: now, ...productData },
-        });
+        const product = await this.prisma.products.create({ data: productData });
         await this.cache.deletePattern('products:list:*');
         return {
             ...product,
             priceCents: Number(product.priceCents),
             originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-            images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-            specifications: typeof product.specifications === 'string'
-                ? JSON.parse(product.specifications)
-                : product.specifications,
+            images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+            specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
     }
     async update(id, data) {
@@ -342,6 +220,8 @@ let CatalogService = class CatalogService {
             updateData.weight = data.weight;
         if (data.dimensions !== undefined)
             updateData.dimensions = data.dimensions;
+        if (data.stockQuantity !== undefined)
+            updateData.stockQuantity = data.stockQuantity;
         if (data.minOrderQuantity !== undefined)
             updateData.minOrderQuantity = data.minOrderQuantity;
         if (data.maxOrderQuantity !== undefined)
@@ -362,17 +242,15 @@ let CatalogService = class CatalogService {
             updateData.isActive = data.isActive;
         const product = await this.prisma.products.update({
             where: { id },
-            data: updateData,
+            data: updateData
         });
         await this.cache.deletePattern('products:list:*');
         return {
             ...product,
             priceCents: Number(product.priceCents),
             originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-            images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-            specifications: typeof product.specifications === 'string'
-                ? JSON.parse(product.specifications)
-                : product.specifications,
+            images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
+            specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
         };
     }
     async remove(id) {
@@ -383,9 +261,9 @@ let CatalogService = class CatalogService {
                     id: true,
                     name: true,
                     _count: {
-                        select: { order_items: true },
-                    },
-                },
+                        select: { order_items: true }
+                    }
+                }
             });
             if (!product) {
                 return { deleted: false, message: 'Product not found' };
@@ -393,17 +271,15 @@ let CatalogService = class CatalogService {
             if (product._count.order_items > 0) {
                 return {
                     deleted: false,
-                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
+                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
                 };
             }
-            await this.prisma.$transaction(async (tx) => {
-                await tx.inventory.deleteMany({
-                    where: { productId: id },
-                });
-                await tx.products.delete({ where: { id } });
+            await this.prisma.inventory.deleteMany({
+                where: { productId: id }
             });
+            const res = await this.prisma.products.deleteMany({ where: { id } });
             await this.cache.deletePattern('products:list:*');
-            return { deleted: true };
+            return { deleted: (res.count ?? 0) > 0 };
         }
         catch (error) {
             console.error('Error deleting product:', error);
@@ -415,14 +291,7 @@ let CatalogService = class CatalogService {
         const cached = await this.cache.get(key);
         if (cached)
             return cached;
-        const items = await this.prisma.categories.findMany({
-            orderBy: { name: 'asc' },
-            include: {
-                _count: {
-                    select: { products: true },
-                },
-            },
-        });
+        const items = await this.prisma.categories.findMany({ orderBy: { name: 'asc' } });
         await this.cache.set(key, items, { ttl: 300 });
         return items;
     }
@@ -433,14 +302,7 @@ let CatalogService = class CatalogService {
             return cached;
         const category = await this.prisma.categories.findUnique({
             where: { slug },
-            select: {
-                id: true,
-                slug: true,
-                name: true,
-                description: true,
-                parentId: true,
-                isActive: true,
-            },
+            select: { id: true, slug: true, name: true, parentId: true, isActive: true }
         });
         if (!category) {
             throw new common_1.NotFoundException(`Category with slug '${slug}' not found`);
@@ -448,74 +310,34 @@ let CatalogService = class CatalogService {
         await this.cache.set(key, category, { ttl: 300 });
         return category;
     }
-    async getCategoryById(id) {
-        const key = `categories:id:${id}`;
-        const cached = await this.cache.get(key);
-        if (cached)
-            return cached;
-        const category = await this.prisma.categories.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                slug: true,
-                name: true,
-                description: true,
-                imageUrl: true,
-                parentId: true,
-                isActive: true,
-            },
-        });
-        if (!category) {
-            throw new common_1.NotFoundException(`Category with id '${id}' not found`);
-        }
-        await this.cache.set(key, category, { ttl: 300 });
-        return category;
-    }
     async getProductsByCategory(slug, params) {
         const category = await this.getCategoryBySlug(slug);
-        const page = (() => {
-            const p = Number(params.page ?? 1);
-            return Number.isFinite(p) ? Math.max(1, Math.floor(p)) : 1;
-        })();
-        const limit = (() => {
-            const l = Number(params.limit ?? 10);
-            return Number.isFinite(l) ? Math.min(100, Math.max(1, Math.floor(l))) : 10;
-        })();
+        const page = Math.max(1, params.page || 1);
+        const limit = Math.min(100, Math.max(1, params.limit || 10));
         const offset = (page - 1) * limit;
         const where = {
             categoryId: category.id,
             isDeleted: false,
             isActive: true,
         };
-        let items = [];
-        let total = 0;
-        try {
-            const [fetchedItems, fetchedTotal] = await Promise.all([
-                this.prisma.products.findMany({
-                    where,
-                    include: {
-                        categories: {
-                            select: {
-                                id: true,
-                                name: true,
-                                slug: true,
-                            },
+        const [items, total] = await Promise.all([
+            this.prisma.products.findMany({
+                where,
+                include: {
+                    categories: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
                         },
                     },
-                    orderBy: { createdAt: 'desc' },
-                    skip: offset,
-                    take: limit,
-                }),
-                this.prisma.products.count({ where }),
-            ]);
-            items = fetchedItems;
-            total = fetchedTotal;
-        }
-        catch (err) {
-            console.error('CatalogService.getProductsByCategory DB error:', err);
-            items = [];
-            total = 0;
-        }
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.products.count({ where }),
+        ]);
         const totalPages = Math.ceil(total / limit);
         const mappedItems = items.map(item => ({
             id: item.id,
@@ -527,15 +349,14 @@ let CatalogService = class CatalogService {
             originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
             imageUrl: item.imageUrl,
             images: Array.isArray(item.images) ? item.images : [],
-            category: item.categories
-                ? {
-                    id: item.categories.id,
-                    name: item.categories.name,
-                    slug: item.categories.slug,
-                }
-                : undefined,
+            category: item.categories ? {
+                id: item.categories.id,
+                name: item.categories.name,
+                slug: item.categories.slug,
+            } : undefined,
             isActive: item.isActive,
             featured: item.featured,
+            stockQuantity: item.stockQuantity,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
         }));
@@ -558,8 +379,6 @@ let CatalogService = class CatalogService {
                 updatedAt: new Date(),
                 name: data.name,
                 slug: data.slug,
-                description: data.description,
-                imageUrl: data.imageUrl,
                 ...(data.parentId && { parent: { connect: { id: data.parentId } } }),
                 isActive: data.isActive ?? true,
             },
@@ -569,8 +388,6 @@ let CatalogService = class CatalogService {
             id: category.id,
             slug: category.slug,
             name: category.name,
-            description: category.description,
-            imageUrl: category.imageUrl,
             parentId: category.parentId,
         };
     }
@@ -588,8 +405,6 @@ let CatalogService = class CatalogService {
             data: {
                 ...(data.name && { name: data.name }),
                 ...(data.slug && { slug: data.slug }),
-                ...(data.description !== undefined && { description: data.description }),
-                ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
                 ...(data.parentId !== undefined && { parentId: data.parentId }),
                 ...(data.isActive !== undefined && { isActive: data.isActive }),
             },
@@ -599,50 +414,30 @@ let CatalogService = class CatalogService {
             id: category.id,
             slug: category.slug,
             name: category.name,
-            description: category.description,
-            imageUrl: category.imageUrl,
             parentId: category.parentId,
         };
     }
     async deleteCategory(id) {
         try {
-            const category = await this.prisma.categories.findUnique({
-                where: { id },
-                include: {
-                    products: { select: { id: true } },
-                    other_categories: { select: { id: true } },
-                },
+            const productCount = await this.prisma.products.count({
+                where: { categoryId: id },
             });
-            if (!category) {
-                return {
-                    deleted: false,
-                    message: 'Category not found',
-                };
-            }
-            const productCount = category.products?.length || 0;
             if (productCount > 0) {
-                return {
-                    deleted: false,
-                    message: `Cannot delete category "${category.name}" because it has ${productCount} associated product(s). Please remove or reassign the products first.`,
-                };
+                throw new Error(`Cannot delete category because it has ${productCount} associated product(s). Please remove or reassign the products first.`);
             }
-            const subcategoryCount = category.other_categories?.length || 0;
+            const subcategoryCount = await this.prisma.categories.count({
+                where: { parentId: id },
+            });
             if (subcategoryCount > 0) {
-                return {
-                    deleted: false,
-                    message: `Cannot delete category "${category.name}" because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`,
-                };
+                throw new Error(`Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`);
             }
             await this.prisma.categories.delete({ where: { id } });
             await this.cache.deletePattern('categories:*');
-            return { deleted: true, message: 'Category deleted successfully' };
+            return { deleted: true };
         }
         catch (error) {
             console.error('Error deleting category:', error);
-            return {
-                deleted: false,
-                message: error instanceof Error ? error.message : 'An error occurred while deleting the category',
-            };
+            return { deleted: false, message: error instanceof Error ? error.message : 'An error occurred while deleting the category' };
         }
     }
     async removeMany(slugs) {
@@ -656,7 +451,6 @@ let CatalogService = class CatalogService {
 exports.CatalogService = CatalogService;
 exports.CatalogService = CatalogService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        cache_service_1.CacheService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, cache_service_1.CacheService])
 ], CatalogService);
 //# sourceMappingURL=catalog.service.js.map

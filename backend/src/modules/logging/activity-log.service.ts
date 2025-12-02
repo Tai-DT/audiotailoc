@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface ActivityLogData {
   userId?: string;
@@ -39,8 +39,8 @@ export class ActivityLogService {
           statusCode: data.statusCode,
           duration: data.duration,
           category: data.category || 'general',
-          severity: data.severity || 'low',
-        },
+          severity: data.severity || 'low'
+        }
       });
     } catch (error) {
       console.error('Failed to log activity:', error);
@@ -81,23 +81,23 @@ export class ActivityLogService {
             select: {
               id: true,
               name: true,
-              email: true,
-            },
-          },
+              email: true
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         take: filters.limit || 100,
-        skip: filters.offset || 0,
+        skip: filters.offset || 0
       }),
-      this.prisma.activity_logs.count({ where }),
+      this.prisma.activity_logs.count({ where })
     ]);
 
     return {
       logs: logs.map(log => ({
         ...log,
-        details: log.details ? JSON.parse(log.details) : null,
+        details: log.details ? JSON.parse(log.details) : null
       })),
-      total,
+      total
     };
   }
 
@@ -108,9 +108,9 @@ export class ActivityLogService {
     const result = await this.prisma.activity_logs.deleteMany({
       where: {
         createdAt: {
-          lt: cutoffDate,
-        },
-      },
+          lt: cutoffDate
+        }
+      }
     });
 
     return result.count;
@@ -128,19 +128,19 @@ export class ActivityLogService {
       by: ['category', 'severity'],
       where,
       _count: {
-        id: true,
+        id: true
       },
       orderBy: {
         _count: {
-          id: 'desc',
-        },
-      },
+          id: 'desc'
+        }
+      }
     });
 
     return stats.map(stat => ({
       category: stat.category,
       severity: stat.severity,
-      count: stat._count.id,
+      count: stat._count.id
     }));
   }
 }

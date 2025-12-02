@@ -3,11 +3,9 @@ import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { ServiceTypesModule } from '../service-types/service-types.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { TechniciansModule } from '../technicians/technicians.module';
 
 @Module({
-  imports: [PrismaModule, ServiceTypesModule, NotificationsModule, TechniciansModule],
+  imports: [PrismaModule, ServiceTypesModule],
   controllers: [BookingController],
   providers: [BookingService],
   exports: [BookingService],

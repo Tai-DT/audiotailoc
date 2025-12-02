@@ -10,8 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Product } from '@/lib/types';
 import { useIsInWishlist, useToggleWishlist } from '@/lib/hooks/use-wishlist';
-import { formatPrice, calculateDiscountPercentage } from '@/lib/utils';
-import { ProductPromotionBadge } from './product-promotion-badge';
 
 interface ProductCardProps {
   product: Product;
@@ -19,15 +17,30 @@ interface ProductCardProps {
   onViewProduct?: (productSlug: string) => void;
 }
 
-export function ProductCard({
-  product,
-  onAddToCart,
-  onViewProduct
+export function ProductCard({ 
+  product, 
+  onAddToCart, 
+  onViewProduct 
 }: ProductCardProps) {
-  const { isInWishlist } = useIsInWishlist(product.id);
-  const toggleWishlistMutation = useToggleWishlist();
+  const { data: isInWishlistData } = useIsInWishlist(product.id);
+  const { toggleWishlist, isLoading: isWishlistLoading } = useToggleWishlist();
+  const isInWishlist = isInWishlistData?.isInWishlist || false;
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(cents);
+  };
 
-  const discount = calculateDiscountPercentage(product.originalPriceCents, product.priceCents);
+  const calculateDiscount = () => {
+    if (product.originalPriceCents && product.originalPriceCents > product.priceCents) {
+      const discount = ((product.originalPriceCents - product.priceCents) / product.originalPriceCents) * 100;
+      return Math.round(discount);
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
   const isOutOfStock = product.stockQuantity === 0;
   const isLowStock = product.stockQuantity < 10;
 
@@ -76,11 +89,6 @@ export function ProductCard({
               -{discount}% OFF
             </Badge>
           )}
-          <ProductPromotionBadge
-            productId={product.id}
-            categoryId={product.category?.id}
-            price={product.priceCents}
-          />
           {isOutOfStock && (
             <Badge variant="secondary" className="text-[10px] sm:text-xs bg-destructive/10 text-destructive border-destructive/20">
               Hết hàng
@@ -108,10 +116,10 @@ export function ProductCard({
               variant="secondary"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8"
-              disabled={toggleWishlistMutation.isPending}
+              disabled={isWishlistLoading}
               onClick={async () => {
                 try {
-                  await toggleWishlistMutation.mutateAsync(product.id);
+                  await toggleWishlist(product.id, isInWishlist);
                 } catch (error) {
                   console.error('Toggle wishlist error:', error);
                 }
@@ -128,10 +136,10 @@ export function ProductCard({
             variant="secondary"
             size="icon"
             className="h-7 w-7 bg-background/80 backdrop-blur-sm"
-            disabled={toggleWishlistMutation.isPending}
+            disabled={isWishlistLoading}
             onClick={async () => {
               try {
-                await toggleWishlistMutation.mutateAsync(product.id);
+                await toggleWishlist(product.id, isInWishlist);
               } catch (error) {
                 console.error('Toggle wishlist error:', error);
               }

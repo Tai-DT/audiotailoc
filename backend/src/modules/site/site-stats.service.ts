@@ -49,30 +49,25 @@ export class SiteStatsService {
   }
 
   async getSiteStats() {
-    const [totalProducts, totalOrders, totalUsers, totalServices, totalBookings, revenueAgg] =
-      await Promise.all([
-        this.prisma.products.count(),
-        this.prisma.orders.count(),
-        this.prisma.users.count(),
-        this.prisma.services.count(),
-        this.prisma.service_bookings.count(),
-        this.prisma.orders.aggregate({
-          _sum: { totalCents: true },
-          where: {
-            status: { in: ['COMPLETED', 'DELIVERED'] },
-          },
-        }),
-      ]);
-
-    const totalRevenue = (revenueAgg._sum.totalCents || 0) / 100;
+    const [
+      totalProducts,
+      totalOrders,
+      totalUsers,
+      totalServices,
+    ] = await Promise.all([
+      this.prisma.products.count(),
+      this.prisma.orders.count(),
+      this.prisma.users.count(),
+      this.prisma.services.count(),
+    ]);
 
     return {
       totalProducts,
       totalOrders,
       totalUsers,
       totalServices,
-      totalBookings,
-      totalRevenue,
+      totalBookings: 0, // TODO: Add bookings table
+      totalRevenue: 0, // TODO: Calculate from orders
     };
   }
 

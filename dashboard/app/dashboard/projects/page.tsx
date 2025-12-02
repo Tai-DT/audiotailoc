@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { format } from 'date-fns';
-import { ProjectsResponse, Project } from '@/types/project';
+import { ProjectsResponse } from '@/types/project';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,28 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
+
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  client?: string;
+  category?: string;
+  status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+  isActive: boolean;
+  isFeatured: boolean;
+  viewCount: number;
+  thumbnailImage?: string;
+  youtubeVideoId?: string;
+  liveUrl?: string;
+  githubUrl?: string;
+  startDate?: string;
+  endDate?: string;
+  displayOrder: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function ProjectsPage() {
   const { token } = useAuth();
@@ -80,23 +102,13 @@ export default function ProjectsPage() {
       }
 
       const response = await apiClient.get<ProjectsResponse>(`/projects?${params}`);
-      const responseData = response.data as unknown as ProjectsResponse;
-
-      if (responseData && Array.isArray(responseData.data)) {
-        setProjects(responseData.data);
-        setTotalPages(responseData.meta?.totalPages || 1);
-        setTotalProjects(responseData.meta?.total || 0);
-      } else {
-        setProjects([]);
-        setTotalPages(1);
-        setTotalProjects(0);
-      }
+      const responseData = response.data as ProjectsResponse;
+      setProjects(responseData.data || []);
+      setTotalPages(responseData.meta?.totalPages || 1);
+      setTotalProjects(responseData.meta?.total || 0);
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error('Failed to load projects');
-      setProjects([]);
-      setTotalPages(1);
-      setTotalProjects(0);
     } finally {
       setLoading(false);
     }
@@ -360,7 +372,7 @@ export default function ProjectsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {project.youtubeVideoUrl && (
+                        {project.youtubeVideoId && (
                           <Video className="h-4 w-4 text-red-500" />
                         )}
                         {project.liveUrl && (

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -31,6 +26,7 @@ export class CompleteProductService {
       shortDescription,
       priceCents,
       originalPriceCents,
+      stockQuantity = 0,
       sku,
       warranty,
       features,
@@ -85,6 +81,7 @@ export class CompleteProductService {
         shortDescription,
         priceCents,
         originalPriceCents,
+        stockQuantity,
         sku,
         warranty,
         features,
@@ -105,15 +102,6 @@ export class CompleteProductService {
         metaKeywords,
         canonicalUrl,
         updatedAt: new Date(),
-        inventory: {
-          create: {
-            id: randomUUID(),
-            stock: 0,
-            reserved: 0,
-            lowStockThreshold: 10,
-            updatedAt: new Date(),
-          },
-        },
       },
       include: {
         categories: {
@@ -123,7 +111,6 @@ export class CompleteProductService {
             slug: true,
           },
         },
-        inventory: true,
       },
     });
 
@@ -197,7 +184,6 @@ export class CompleteProductService {
               slug: true,
             },
           },
-          inventory: true,
         },
         orderBy,
         skip,
@@ -222,37 +208,36 @@ export class CompleteProductService {
   async searchProducts(query: string, limit: number = 20): Promise<ProductListResponseDto> {
     // Temporary debug: return hardcoded response
     return {
-      items: [
-        {
-          id: 'test-id',
-          slug: 'test-product',
-          name: 'Test Product',
-          description: 'Test description',
-          shortDescription: 'Test short description',
-          priceCents: 100000,
-          originalPriceCents: undefined,
-          images: undefined,
-          category: { id: 'test-cat', name: 'Test Category', slug: 'test-category' },
-          brand: 'Test Brand',
-          model: 'Test Model',
-          sku: 'TEST-001',
-          specifications: undefined,
-          features: 'Test features',
-          warranty: '1 year',
-          minOrderQuantity: 1,
-          maxOrderQuantity: 5,
-          tags: 'test,tag',
-          metaTitle: 'Test Product',
-          metaDescription: 'Test description',
-          metaKeywords: 'test,product',
-          canonicalUrl: 'https://test.com/product',
-          featured: false,
-          isActive: true,
-          viewCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ],
+      items: [{
+        id: 'test-id',
+        slug: 'test-product',
+        name: 'Test Product',
+        description: 'Test description',
+        shortDescription: 'Test short description',
+        priceCents: 100000,
+        originalPriceCents: undefined,
+        images: undefined,
+        category: { id: 'test-cat', name: 'Test Category', slug: 'test-category' },
+        brand: 'Test Brand',
+        model: 'Test Model',
+        sku: 'TEST-001',
+        specifications: undefined,
+        features: 'Test features',
+        warranty: '1 year',
+        stockQuantity: 10,
+        minOrderQuantity: 1,
+        maxOrderQuantity: 5,
+        tags: 'test,tag',
+        metaTitle: 'Test Product',
+        metaDescription: 'Test description',
+        metaKeywords: 'test,product',
+        canonicalUrl: 'https://test.com/product',
+        featured: false,
+        isActive: true,
+        viewCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }],
       total: 1,
       page: 1,
       pageSize: limit,
@@ -262,10 +247,7 @@ export class CompleteProductService {
     };
   }
 
-  async getSearchSuggestions(
-    query: string,
-    limit: number = 10,
-  ): Promise<ProductSearchSuggestionDto[]> {
+  async getSearchSuggestions(query: string, limit: number = 10): Promise<ProductSearchSuggestionDto[]> {
     const searchLimit = Math.min(Math.max(limit, 1), 20);
 
     // Get product suggestions
@@ -325,7 +307,6 @@ export class CompleteProductService {
             slug: true,
           },
         },
-        inventory: true,
       },
     });
 
@@ -347,7 +328,6 @@ export class CompleteProductService {
             slug: true,
           },
         },
-        inventory: true,
       },
     });
 
@@ -380,6 +360,7 @@ export class CompleteProductService {
       shortDescription,
       priceCents,
       originalPriceCents,
+      stockQuantity,
       sku,
       warranty,
       features,
@@ -433,6 +414,7 @@ export class CompleteProductService {
         ...(shortDescription !== undefined && { shortDescription }),
         ...(priceCents && { priceCents }),
         ...(originalPriceCents !== undefined && { originalPriceCents }),
+        ...(stockQuantity !== undefined && { stockQuantity }),
         ...(sku !== undefined && { sku }),
         ...(warranty !== undefined && { warranty }),
         ...(features !== undefined && { features }),
@@ -461,7 +443,6 @@ export class CompleteProductService {
             slug: true,
           },
         },
-        inventory: true,
       },
     });
 
@@ -476,9 +457,9 @@ export class CompleteProductService {
           id: true,
           name: true,
           _count: {
-            select: { order_items: true },
-          },
-        },
+            select: { order_items: true }
+          }
+        }
       });
 
       if (!product) {
@@ -489,7 +470,7 @@ export class CompleteProductService {
       if (product._count.order_items > 0) {
         return {
           deleted: false,
-          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
+          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
         };
       }
 
@@ -637,6 +618,7 @@ export class CompleteProductService {
         shortDescription: product.shortDescription,
         priceCents: product.priceCents,
         originalPriceCents: product.originalPriceCents,
+        stockQuantity: product.stockQuantity,
         sku: product.sku ? `${product.sku}-COPY` : null,
         warranty: product.warranty,
         features: product.features,
@@ -648,9 +630,7 @@ export class CompleteProductService {
         model: product.model,
         weight: product.weight,
         dimensions: product.dimensions,
-        specifications: product.specifications
-          ? JSON.parse(JSON.stringify(product.specifications))
-          : null,
+        specifications: product.specifications ? JSON.parse(JSON.stringify(product.specifications)) : null,
         images: product.images ? JSON.parse(JSON.stringify(product.images)) : null,
         isActive: false, // Set as inactive by default
         featured: false,
@@ -704,7 +684,7 @@ export class CompleteProductService {
       this.prisma.products.count({ where: { isDeleted: false } }),
       this.prisma.products.count({ where: { isDeleted: false, isActive: true } }),
       this.prisma.products.count({ where: { isDeleted: false, featured: true } }),
-      this.prisma.inventory.count({ where: { stock: { lte: 0 }, products: { isDeleted: false } } }),
+      this.prisma.products.count({ where: { isDeleted: false, stockQuantity: { lte: 0 } } }),
       this.prisma.products.aggregate({
         where: { isDeleted: false },
         _sum: { viewCount: true },
@@ -807,7 +787,6 @@ export class CompleteProductService {
         categories: {
           select: { name: true },
         },
-        inventory: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -819,7 +798,7 @@ export class CompleteProductService {
       'Description',
       'Price (VND)',
       'Original Price (VND)',
-      'Stock',
+      'Stock Quantity',
       'SKU',
       'Category',
       'Brand',
@@ -836,7 +815,7 @@ export class CompleteProductService {
       product.description || '',
       product.priceCents,
       product.originalPriceCents || '',
-      product.inventory?.stock ?? 0,
+      product.stockQuantity,
       product.sku || '',
       product.categories?.name || '',
       product.brand || '',
@@ -888,6 +867,9 @@ export class CompleteProductService {
             case 'original price (vnd)':
             case 'original price':
               productData.originalPriceCents = value ? parseInt(value) : undefined;
+              break;
+            case 'stock quantity':
+              productData.stockQuantity = parseInt(value) || 0;
               break;
             case 'sku':
               productData.sku = value || undefined;
@@ -988,6 +970,7 @@ export class CompleteProductService {
       specifications: product.specifications,
       features: product.features,
       warranty: product.warranty,
+      stockQuantity: product.stockQuantity,
       minOrderQuantity: product.minOrderQuantity,
       maxOrderQuantity: product.maxOrderQuantity,
       tags: product.tags,
@@ -1003,9 +986,7 @@ export class CompleteProductService {
     };
   }
 
-  async checkProductDeletable(
-    id: string,
-  ): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
+  async checkProductDeletable(id: string): Promise<{ canDelete: boolean; message: string; associatedOrdersCount: number }> {
     try {
       const product = await this.prisma.products.findUnique({
         where: { id, isDeleted: false },
@@ -1013,9 +994,9 @@ export class CompleteProductService {
           id: true,
           name: true,
           _count: {
-            select: { order_items: true },
-          },
-        },
+            select: { order_items: true }
+          }
+        }
       });
 
       if (!product) {
@@ -1028,22 +1009,18 @@ export class CompleteProductService {
         return {
           canDelete: false,
           message: `Cannot delete product "${product.name}" because it has ${associatedOrdersCount} associated order(s). Please remove or update the orders first.`,
-          associatedOrdersCount,
+          associatedOrdersCount
         };
       }
 
       return {
         canDelete: true,
         message: 'Product can be safely deleted',
-        associatedOrdersCount: 0,
+        associatedOrdersCount: 0
       };
     } catch (error) {
       console.error('Error checking product deletable status:', error);
-      return {
-        canDelete: false,
-        message: 'An error occurred while checking deletion status',
-        associatedOrdersCount: 0,
-      };
+      return { canDelete: false, message: 'An error occurred while checking deletion status', associatedOrdersCount: 0 };
     }
   }
 }

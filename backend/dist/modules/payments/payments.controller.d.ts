@@ -1,7 +1,5 @@
 import { PaymentsService } from './payments.service';
-import { PayOSService } from './payos.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PayOSCreatePaymentDto, PayOSRefundDto } from './dto/payos-webhook.dto';
 declare class CreateIntentDto {
     orderId: string;
     provider: 'PAYOS' | 'COD';
@@ -15,10 +13,8 @@ declare class CreateRefundDto {
 }
 export declare class PaymentsController {
     private readonly payments;
-    private readonly payosService;
     private readonly prisma;
-    private readonly logger;
-    constructor(payments: PaymentsService, payosService: PayOSService, prisma: PrismaService);
+    constructor(payments: PaymentsService, prisma: PrismaService);
     getPaymentMethods(): {
         methods: {
             id: string;
@@ -81,7 +77,7 @@ export declare class PaymentsController {
     } | {
         intentId: string;
         redirectUrl: string;
-        paymentMethod: "PAYOS";
+        paymentMethod?: undefined;
     }>;
     createRefund(dto: CreateRefundDto): Promise<{
         refundId: string;
@@ -95,28 +91,6 @@ export declare class PaymentsController {
     }>;
     payosCallback(orderCode?: string, ref?: string): Promise<{
         ok: boolean;
-    }>;
-    createPayOSPayment(createPaymentDto: PayOSCreatePaymentDto, req: any): Promise<{
-        success: boolean;
-        checkoutUrl: any;
-        paymentRequestId: any;
-        orderCode: any;
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: string;
-        orderCode: number;
-        checkoutUrl?: undefined;
-        paymentRequestId?: undefined;
-    }>;
-    getPayOSPaymentStatus(orderCode: string): Promise<{
-        success: boolean;
-        data: any;
-    }>;
-    createPayOSRefund(refundDto: PayOSRefundDto): Promise<{
-        success: boolean;
-        refundId: any;
-        message: string;
     }>;
     vnpayWebhook(body: any): Promise<{
         RspCode: string;
@@ -138,9 +112,17 @@ export declare class PaymentsController {
         error: number;
         message: string;
     }>;
-    payosWebhook(req: any, body: any): Promise<{
+    payosWebhook(req: any, body: any, xsig?: string): Promise<{
+        RspCode: string;
+        Message: string;
+    } | {
+        resultCode: number;
+        message: string;
+    } | {
         error: number;
         message: string;
+    } | {
+        ok: boolean;
     }>;
 }
 export {};

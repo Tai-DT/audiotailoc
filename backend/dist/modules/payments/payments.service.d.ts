@@ -1,14 +1,10 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { PayOSService } from './payos.service';
-import { TelegramService } from '../notifications/telegram.service';
 export declare class PaymentsService {
     private readonly prisma;
     private readonly config;
-    private readonly payosService;
-    private readonly telegram;
     private readonly logger;
-    constructor(prisma: PrismaService, config: ConfigService, payosService: PayOSService, telegram: TelegramService);
+    constructor(prisma: PrismaService, config: ConfigService);
     createIntent(params: {
         orderId: string;
         provider: 'PAYOS' | 'COD';
@@ -20,7 +16,7 @@ export declare class PaymentsService {
     } | {
         intentId: string;
         redirectUrl: string;
-        paymentMethod: "PAYOS";
+        paymentMethod?: undefined;
     }>;
     private buildRedirectUrl;
     private createMomoPayment;

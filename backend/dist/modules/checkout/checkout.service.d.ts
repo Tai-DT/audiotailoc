@@ -1,27 +1,23 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
-import { PromotionsService } from '../promotions/promotions.service';
+import { PromotionService } from '../promotions/promotion.service';
 import { MailService } from '../notifications/mail.service';
 export declare class CheckoutService {
     private readonly prisma;
     private readonly cart;
     private readonly promos;
     private readonly mail;
-    constructor(prisma: PrismaService, cart: CartService, promos: PromotionsService, mail: MailService);
-    createOrder(userId: string | undefined, params: {
+    constructor(prisma: PrismaService, cart: CartService, promos: PromotionService, mail: MailService);
+    createOrder(userId: string, params: {
         promotionCode?: string;
         shippingAddress?: any;
-        items?: Array<{
-            productId: string;
-            quantity: number;
-        }>;
     }): Promise<{
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string | null;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -29,8 +25,6 @@ export declare class CheckoutService {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        isDeleted: boolean;
-        deletedAt: Date | null;
     }>;
     getOrderForUserByNo(userId: string, orderNo: string): Promise<{
         order_items: {
@@ -39,10 +33,10 @@ export declare class CheckoutService {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
+            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
-            price: bigint;
             unitPrice: bigint | null;
         }[];
         payments: {
@@ -50,12 +44,12 @@ export declare class CheckoutService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            metadata: string | null;
-            orderId: string;
             transactionId: string | null;
-            intentId: string | null;
             provider: string;
             amountCents: number;
+            metadata: string | null;
+            orderId: string;
+            intentId: string | null;
         }[];
     } & {
         status: string;
@@ -63,7 +57,7 @@ export declare class CheckoutService {
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string | null;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -71,7 +65,5 @@ export declare class CheckoutService {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        isDeleted: boolean;
-        deletedAt: Date | null;
     }>;
 }

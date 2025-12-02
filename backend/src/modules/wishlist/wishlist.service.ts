@@ -39,10 +39,10 @@ export class WishlistService {
         id: randomUUID(),
         updatedAt: new Date(),
         users: { connect: { id: userId } },
-        products: { connect: { id: productId } },
+        products: { connect: { id: productId } }
       },
       include: {
-        products: true,
+        products: true
       },
     });
 
@@ -63,11 +63,7 @@ export class WishlistService {
             imageUrl: true,
             images: true,
             isActive: true,
-            inventory: {
-              select: {
-                stock: true,
-              },
-            },
+            stockQuantity: true,
             categories: {
               select: {
                 id: true,
@@ -83,16 +79,8 @@ export class WishlistService {
       },
     });
 
-    const mappedItems = wishlistItems.map(item => ({
-      ...item,
-      products: {
-        ...item.products,
-        stock: item.products.inventory?.stock || 0,
-      },
-    }));
-
     return {
-      items: mappedItems,
+      items: wishlistItems,
       total: wishlistItems.length,
     };
   }

@@ -5,13 +5,12 @@ import { UpdateSettingsDto } from '@/types/settings';
 const API_BASE_URL: string = (() => {
   const env = process.env.NEXT_PUBLIC_API_URL;
   if (env && env.trim().length > 0) return env;
-
   if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol;
+    const protocol = window.location.protocol; // includes trailing ':'
     const hostname = window.location.hostname;
     const port = window.location.port;
 
-    // If running on localhost, default to backend port 3010
+    // If running on localhost, default to backend port 3010 (common dev setup)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${protocol}//${hostname}:3010/api/v1`;
     }
@@ -24,11 +23,7 @@ const API_BASE_URL: string = (() => {
     // Default to same origin (no port) for production deployments
     return `${protocol}//${hostname}/api/v1`;
   }
-
-  // Server-side fallback
-  // Check if we are in a containerized environment or specific deployment
-  if (process.env.API_URL) return process.env.API_URL;
-
+  // Server-side fallback (dev)
   return 'http://localhost:3010/api/v1';
 })();
 
@@ -48,17 +43,19 @@ export interface ApiError extends Error {
     };
   };
   status?: number;
-  statusCode?: number;
-  error?: string;
-  timestamp?: string;
-  path?: string;
-  _correlationId?: string;
 }
 
 // Generic data type for request bodies
 export type RequestData = Record<string, unknown> | FormData | string;
 
-export type UnknownApiResponse = ApiResponse<unknown>;
+export interface ApiError {
+  statusCode: number;
+  message: string;
+  error: string;
+  timestamp: string;
+  path: string;
+  _correlationId?: string;
+}
 
 export interface CreateProductData {
   name: string;
@@ -76,7 +73,7 @@ export interface CreateProductData {
   warranty?: string;
   weight?: number;
   dimensions?: string;
-  stockQuantity?: number; // Used for initial stock creation
+  stockQuantity?: number;
   minOrderQuantity?: number;
   maxOrderQuantity?: number;
   tags?: string;
@@ -86,7 +83,6 @@ export interface CreateProductData {
   canonicalUrl?: string;
   featured?: boolean;
   isActive?: boolean;
-  slug?: string;
 }
 
 export interface UpdateProductData {
@@ -105,6 +101,7 @@ export interface UpdateProductData {
   warranty?: string;
   weight?: number;
   dimensions?: string;
+  stockQuantity?: number;
   minOrderQuantity?: number;
   maxOrderQuantity?: number;
   tags?: string;
@@ -114,7 +111,6 @@ export interface UpdateProductData {
   canonicalUrl?: string;
   featured?: boolean;
   isActive?: boolean;
-  slug?: string;
 }
 
 class ApiClient {
@@ -124,10 +120,6 @@ class ApiClient {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    // Initialize token from localStorage if available (client-side only)
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('accessToken');
-    }
   }
 
   setUnauthorizedHandler(handler: () => void) {
@@ -136,18 +128,10 @@ class ApiClient {
 
   setToken(token: string) {
     this.token = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token);
-    }
   }
 
   clearToken() {
     this.token = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-    }
   }
 
   private getHeaders(): HeadersInit {
@@ -180,18 +164,10 @@ class ApiClient {
     let responseText: string;
 
     try {
-      const defaultHeaders = this.getHeaders();
-
-      // If body is FormData, let the browser set Content-Type with boundary
-      // Otherwise, defaultHeaders includes 'Content-Type': 'application/json'
-      if (options.body instanceof FormData) {
-        delete (defaultHeaders as any)['Content-Type'];
-      }
-
       response = await fetch(url, {
         ...options,
         headers: {
-          ...defaultHeaders,
+          ...this.getHeaders(),
           ...options.headers,
         },
       });
@@ -243,7 +219,7 @@ class ApiClient {
         } else if (response.status === 429) {
           errorMessage = data?.message as string || 'Too many requests. Please wait a moment and try again.';
         } else if (response.status >= 500) {
-          errorMessage = data?.message as string || 'Server Error: Please try again later';
+          errorMessage = 'Server Error: Please try again later';
         }
 
         const error = new Error(errorMessage) as ApiError;
@@ -254,6 +230,7 @@ class ApiClient {
 
       return data as unknown as ApiResponse<T>;
     } catch (error) {
+      // Silent error handling - errors are thrown to be caught by UI components
       throw error;
     }
   }
@@ -317,7 +294,7 @@ class ApiClient {
   async getOrders(params?: { page?: number; limit?: number; status?: string }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('pageSize', params.limit.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
     if (params?.status) query.append('status', params.status.toString());
 
     return this.request(`/orders?${query.toString()}`);
@@ -365,12 +342,6 @@ class ApiClient {
   async deleteOrder(id: string) {
     return this.request(`/orders/${id}`, {
       method: 'DELETE',
-    });
-  }
-
-  async sendInvoice(id: string) {
-    return this.request(`/orders/${id}/invoice`, {
-      method: 'POST',
     });
   }
 
@@ -433,134 +404,6 @@ class ApiClient {
 
   async getCategories() {
     return this.request('/catalog/categories');
-  }
-
-  async getCategory(id: string) {
-    return this.request(`/catalog/categories/${id}`);
-  }
-
-  async createCategory(categoryData: {
-    name: string;
-    slug: string;
-    description?: string;
-    imageUrl?: string;
-    parentId?: string;
-    isActive?: boolean;
-  }) {
-    return this.request('/catalog/categories', {
-      method: 'POST',
-      body: JSON.stringify(categoryData),
-    });
-  }
-
-  async updateCategory(id: string, categoryData: {
-    name?: string;
-    slug?: string;
-    description?: string;
-    imageUrl?: string;
-    parentId?: string;
-    isActive?: boolean;
-  }) {
-    return this.request(`/catalog/categories/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(categoryData),
-    });
-  }
-
-  async deleteCategory(id: string) {
-    return this.request(`/catalog/categories/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Support endpoints
-  async getTickets(params?: {
-    userId?: string;
-    status?: string;
-    priority?: string;
-    assignedTo?: string;
-    page?: number;
-    pageSize?: number;
-  }) {
-    const query = new URLSearchParams();
-    if (params?.userId) query.append('userId', params.userId);
-    if (params?.status) query.append('status', params.status);
-    if (params?.priority) query.append('priority', params.priority);
-    if (params?.assignedTo) query.append('assignedTo', params.assignedTo);
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.pageSize) query.append('pageSize', params.pageSize.toString());
-
-    return this.request(`/support/tickets?${query.toString()}`);
-  }
-
-  async createTicket(data: {
-    subject: string;
-    description: string;
-    email: string;
-    name: string;
-    userId?: string;
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  }) {
-    return this.request('/support/tickets', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateTicketStatus(id: string, status: string, assignedTo?: string) {
-    return this.request(`/support/tickets/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status, assignedTo }),
-    });
-  }
-
-  // Marketing endpoints
-  async getCampaigns(status?: string) {
-    const query = new URLSearchParams();
-    if (status) query.append('status', status);
-    return this.request(`/marketing/campaigns?${query.toString()}`);
-  }
-
-  async createCampaign(data: {
-    name: string;
-    description?: string;
-    type?: string;
-    targetAudience?: string;
-    subject?: string;
-    content?: string;
-  }) {
-    return this.request('/marketing/campaigns', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateCampaign(id: string, data: {
-    name?: string;
-    description?: string;
-    type?: string;
-    targetAudience?: string;
-    subject?: string;
-    content?: string;
-    status?: string;
-    scheduledAt?: string;
-  }) {
-    return this.request(`/marketing/campaigns/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteCampaign(id: string) {
-    return this.request(`/marketing/campaigns/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async sendCampaign(id: string) {
-    return this.request(`/marketing/campaigns/${id}/send`, {
-      method: 'POST',
-    });
   }
 
   // Analytics endpoints
@@ -836,15 +679,6 @@ class ApiClient {
     return this.request(`/inventory/alerts/active${queryString ? `?${queryString}` : ''}`);
   }
 
-  // Maps endpoints
-  async searchPlaces(query: string) {
-    return this.request(`/maps/geocode?query=${encodeURIComponent(query)}`);
-  }
-
-  async getPlaceDetail(placeId: string) {
-    return this.request(`/maps/place-detail?placeId=${placeId}`);
-  }
-
   async getInventoryAlertsSummary(params?: {
     startDate?: string;
     endDate?: string;
@@ -907,6 +741,10 @@ class ApiClient {
     return this.request('/files/upload', {
       method: 'POST',
       body: formData,
+      headers: {
+        // Don't set Content-Type, let browser set it with boundary for FormData
+        ...Object.fromEntries(Object.entries(this.getHeaders()).filter(([key]) => key !== 'Content-Type')),
+      },
     });
   }
 
@@ -1254,10 +1092,6 @@ class ApiClient {
   }
 
   // Analytics endpoints
-  async getRevenue(period: string = 'month') {
-    return this.request(`/analytics/revenue?period=${period}`);
-  }
-
   async getRevenueChart(days: number = 7) {
     return this.request(`/analytics/revenue/chart?days=${days}`);
   }
@@ -1272,329 +1106,6 @@ class ApiClient {
 
   async getBookingsTodayReal() {
     return this.request('/analytics/services/bookings-today-real');
-  }
-
-  // ==================== Chat Endpoints ====================
-  async getConversations(params?: { status?: string; userId?: string; page?: number; limit?: number }) {
-    const query = new URLSearchParams();
-    if (params?.status) query.append('status', params.status);
-    if (params?.userId) query.append('userId', params.userId);
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    return this.request(`/chat/conversations?${query.toString()}`);
-  }
-
-  async getChatMessages(conversationId: string, params?: { page?: number; limit?: number; guestId?: string; guestToken?: string }) {
-    const query = new URLSearchParams();
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    if (params?.guestId) query.append('guestId', params.guestId);
-    if (params?.guestToken) query.append('guestToken', params.guestToken);
-    return this.request(`/chat/conversations/${conversationId}/messages?${query.toString()}`);
-  }
-
-  async sendChatMessage(data: { conversationId: string; content: string; senderId?: string; senderType?: string; guestToken?: string }) {
-    return this.request('/chat/messages', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async startConversation(data: { userId?: string; guestId?: string; guestName?: string; guestPhone?: string; initialMessage: string }) {
-    return this.request('/chat/conversations', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // ==================== Reports Export Endpoints ====================
-
-  // ===========================
-  // Reviews API
-  // ===========================
-
-  async getReviews(params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    search?: string;
-    productId?: string;
-    rating?: number;
-  }) {
-    const query = new URLSearchParams();
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    if (params?.status) query.append('status', params.status);
-    if (params?.search) query.append('search', params.search);
-    if (params?.productId) query.append('productId', params.productId);
-    if (params?.rating) query.append('rating', params.rating.toString());
-
-    return this.request(`/reviews?${query.toString()}`);
-  }
-
-  async getReviewStats() {
-    return this.request('/reviews/stats/summary');
-  }
-
-  async updateReviewStatus(id: string, status: string) {
-    return this.request(`/reviews/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
-  }
-
-  async respondToReview(id: string, response: string) {
-    return this.request(`/reviews/${id}/response`, {
-      method: 'POST',
-      body: JSON.stringify({ response }),
-    });
-  }
-
-  async deleteReview(id: string) {
-    return this.request(`/reviews/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // ===========================
-  // Promotions API
-  // ===========================
-
-  /**
-   * Get all promotions with optional filters
-   */
-  async getPromotions(filters?: {
-    isActive?: boolean;
-    type?: string;
-    search?: string;
-  }): Promise<UnknownApiResponse> {
-    const params = new URLSearchParams();
-    if (filters?.isActive !== undefined) {
-      params.append('isActive', String(filters.isActive));
-    }
-    if (filters?.type) {
-      params.append('type', filters.type);
-    }
-    if (filters?.search) {
-      params.append('search', filters.search);
-    }
-
-    const queryString = params.toString();
-    return this.get<unknown>(`/promotions${queryString ? '?' + queryString : ''}`);
-  }
-
-  /**
-   * Get promotion by ID
-   */
-  async getPromotion(id: string): Promise<UnknownApiResponse> {
-    return this.get<unknown>(`/promotions/${id}`);
-  }
-
-  /**
-   * Get promotion by code
-   */
-  async getPromotionByCode(code: string): Promise<UnknownApiResponse> {
-    return this.get<unknown>(`/promotions/code/${code}`);
-  }
-
-  /**
-   * Validate promotion code
-   */
-  async validatePromotionCode(code: string, orderAmount?: number): Promise<UnknownApiResponse> {
-    return this.post('/promotions/validate', { code, orderAmount });
-  }
-
-  /**
-   * Get promotion statistics
-   */
-  async getPromotionStats(): Promise<UnknownApiResponse> {
-    return this.get('/promotions/stats/public');
-  }
-
-  /**
-   * Create new promotion
-   */
-  async createPromotion(data: {
-    code: string;
-    name: string;
-    description?: string;
-    type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUY_X_GET_Y';
-    value: number;
-    minOrderAmount?: number;
-    maxDiscount?: number;
-    usageLimit?: number;
-    isActive?: boolean;
-    startsAt?: Date;
-    expiresAt?: Date;
-    categories?: string[];
-    products?: string[];
-    customerSegments?: string[];
-  }): Promise<UnknownApiResponse> {
-    return this.post('/promotions', data);
-  }
-
-  /**
-   * Update promotion
-   */
-  async updatePromotion(id: string, data: {
-    code?: string;
-    name?: string;
-    description?: string;
-    type?: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUY_X_GET_Y';
-    value?: number;
-    minOrderAmount?: number;
-    maxDiscount?: number;
-    usageLimit?: number;
-    isActive?: boolean;
-    startsAt?: Date;
-    expiresAt?: Date;
-    categories?: string[];
-    products?: string[];
-    customerSegments?: string[];
-  }): Promise<UnknownApiResponse> {
-    return this.put(`/promotions/${id}`, data);
-  }
-
-  /**
-   * Delete promotion
-   */
-  async deletePromotion(id: string): Promise<UnknownApiResponse> {
-    return this.delete(`/promotions/${id}`);
-  }
-
-  /**
-   * Duplicate promotion
-   */
-  async duplicatePromotion(id: string): Promise<UnknownApiResponse> {
-    return this.post(`/promotions/${id}/duplicate`, {});
-  }
-
-  /**
-   * Toggle promotion active status
-   */
-  async togglePromotionStatus(id: string): Promise<UnknownApiResponse> {
-    return this.put(`/promotions/${id}/toggle`, {});
-  }
-
-  /**
-   * Apply promotion to cart with product/category filtering
-   */
-  async applyPromotionToCart(code: string, items: Array<{
-    productId: string;
-    categoryId?: string;
-    quantity: number;
-    priceCents: number;
-  }>): Promise<UnknownApiResponse> {
-    return this.post('/promotions/apply-to-cart', { code, items });
-  }
-
-  /**
-   * Get promotions for specific product
-   */
-  async getPromotionsForProduct(productId: string, categoryId?: string): Promise<UnknownApiResponse> {
-    const params = categoryId ? `?categoryId=${categoryId}` : '';
-    return this.get(`/promotions/product/${productId}${params}`);
-  }
-
-  /**
-   * Check if product is eligible for promotion
-   */
-  async checkProductEligibility(promotionId: string, productId: string, categoryId?: string): Promise<UnknownApiResponse> {
-    const params = categoryId ? `?categoryId=${categoryId}` : '';
-    return this.get(`/promotions/${promotionId}/eligible/${productId}${params}`);
-  }
-
-  // ===========================
-  // Reports Export API
-  // ===========================
-
-  /**
-   * Export sales report
-   */
-  async exportSalesReport(
-    format: 'pdf' | 'excel' | 'csv',
-    startDate?: string,
-    endDate?: string
-  ): Promise<Blob> {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-
-    const queryString = params.toString();
-    const url = `/reports/export/sales/${format}${queryString ? '?' + queryString : ''}`;
-
-    const response = await fetch(`${this.baseURL}${url}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to export sales report: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Export inventory report
-   */
-  async exportInventoryReport(format: 'pdf' | 'excel' | 'csv'): Promise<Blob> {
-    const response = await fetch(`${this.baseURL}/reports/export/inventory/${format}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to export inventory report: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Export customers report
-   */
-  async exportCustomersReport(format: 'pdf' | 'excel' | 'csv'): Promise<Blob> {
-    const response = await fetch(`${this.baseURL}/reports/export/customers/${format}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to export customers report: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Export comprehensive report (Excel with multiple sheets)
-   */
-  async exportComprehensiveReport(): Promise<Blob> {
-    const response = await fetch(`${this.baseURL}/reports/export/comprehensive`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to export comprehensive report: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Download blob as file
-   */
-  downloadBlob(blob: Blob, filename: string): void {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
   }
 }
 

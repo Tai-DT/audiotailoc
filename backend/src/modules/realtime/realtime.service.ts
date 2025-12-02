@@ -201,9 +201,7 @@ export class RealtimeService {
         });
       }
 
-      this.logger.log(
-        `Inventory alert for ${product.name}: ${currentStock} units (threshold: ${alertThreshold})`,
-      );
+      this.logger.log(`Inventory alert for ${product.name}: ${currentStock} units (threshold: ${alertThreshold})`);
     } catch (error) {
       this.logger.error(`Failed to notify inventory alert for ${productId}:`, error);
     }
@@ -212,7 +210,7 @@ export class RealtimeService {
   /**
    * Notify payment received
    */
-  async notifyPaymentReceived(orderId: string, amount: number, _userId: string) {
+  async notifyPaymentReceived(orderId: string, amount: number, userId: string) {
     try {
       const order = await this.prisma.orders.findUnique({
         where: { id: orderId },
@@ -282,12 +280,7 @@ export class RealtimeService {
     try {
       const product = await this.prisma.products.findUnique({
         where: { id: productId },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          inventory: { select: { stock: true } },
-        },
+        select: { id: true, name: true, slug: true, stockQuantity: true },
       });
 
       if (!product) {
@@ -300,7 +293,7 @@ export class RealtimeService {
           productId,
           productName: product.name,
           isAvailable,
-          stock: product.inventory?.stock ?? 0,
+          stock: product.stockQuantity,
           timestamp: new Date().toISOString(),
         });
       }

@@ -142,6 +142,7 @@ jspm_packages/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+<<<<<<< HEAD
 
 # MCP configuration with secrets
 .roo/mcp.json
@@ -149,3 +150,5 @@ jspm_packages/
 # Backup files
 backend/backups/
 *.sql.gz
+=======
+>>>>>>> 097973e801e6e0c7fe8a46c3c1ee4e78afa72835

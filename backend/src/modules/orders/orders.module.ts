@@ -6,18 +6,9 @@ import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { GuardsModule } from '../auth/guards.module';
 import { CacheService } from '../caching/cache.service';
-import { PromotionsModule } from '../promotions/promotions.module';
-import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    UsersModule,
-    NotificationsModule,
-    GuardsModule,
-    PromotionsModule,
-    InventoryModule,
-  ],
+  imports: [ConfigModule, UsersModule, NotificationsModule, GuardsModule],
   providers: [OrdersService, CacheService],
   controllers: [OrdersController],
   exports: [OrdersService],

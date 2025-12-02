@@ -8,21 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var InventoryAlertService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryAlertService = void 0;
 const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
-const telegram_service_1 = require("../notifications/telegram.service");
-let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertService {
-    constructor(prisma, telegram) {
+let InventoryAlertService = class InventoryAlertService {
+    constructor(prisma) {
         this.prisma = prisma;
-        this.telegram = telegram;
-        this.logger = new common_1.Logger(InventoryAlertService_1.name);
     }
     async create(data) {
-        const alert = await this.prisma.inventory_alerts.create({
+        return this.prisma.inventory_alerts.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
                 productId: data.productId,
@@ -30,7 +26,7 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                 message: data.message,
                 threshold: data.threshold,
                 currentStock: data.currentStock ?? 0,
-                updatedAt: new Date(),
+                updatedAt: new Date()
             },
             include: {
                 products: {
@@ -41,33 +37,13 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                         categories: {
                             select: {
                                 id: true,
-                                name: true,
-                            },
-                        },
-                    },
-                },
-            },
+                                name: true
+                            }
+                        }
+                    }
+                }
+            }
         });
-        try {
-            if (data.type === 'OUT_OF_STOCK') {
-                await this.telegram.sendOutOfStockAlert({
-                    name: alert.products?.name,
-                    sku: alert.products?.sku,
-                    stock: data.currentStock,
-                });
-            }
-            else if (data.type === 'LOW_STOCK') {
-                await this.telegram.sendLowStockAlert({
-                    name: alert.products?.name,
-                    sku: alert.products?.sku,
-                    stock: data.currentStock,
-                });
-            }
-        }
-        catch (error) {
-            this.logger.error('Failed to send inventory alert notification:', error);
-        }
-        return alert;
     }
     async findAll(params = {}) {
         const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -104,22 +80,22 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                             categories: {
                                 select: {
                                     id: true,
-                                    name: true,
-                                },
-                            },
-                        },
-                    },
+                                    name: true
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
-                take: pageSize,
-            }),
+                take: pageSize
+            })
         ]);
         return {
             total,
             page,
             pageSize,
-            items,
+            items
         };
     }
     async findByProduct(productId, params = {}) {
@@ -127,7 +103,7 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
         const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
         const [total, items] = await this.prisma.$transaction([
             this.prisma.inventory_alerts.count({
-                where: { productId },
+                where: { productId }
             }),
             this.prisma.inventory_alerts.findMany({
                 where: { productId },
@@ -140,22 +116,22 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                             categories: {
                                 select: {
                                     id: true,
-                                    name: true,
-                                },
-                            },
-                        },
-                    },
+                                    name: true
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
-                take: pageSize,
-            }),
+                take: pageSize
+            })
         ]);
         return {
             total,
             page,
             pageSize,
-            items,
+            items
         };
     }
     async resolve(id, _userId) {
@@ -163,34 +139,34 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
             where: { id },
             data: {
                 isResolved: true,
-                resolvedAt: new Date(),
+                resolvedAt: new Date()
             },
             include: {
                 products: {
                     select: {
                         id: true,
                         name: true,
-                        sku: true,
-                    },
-                },
-            },
+                        sku: true
+                    }
+                }
+            }
         });
     }
     async bulkResolve(ids, _userId) {
         return this.prisma.inventory_alerts.updateMany({
             where: {
-                id: { in: ids },
+                id: { in: ids }
             },
             data: {
                 isResolved: true,
-                resolvedAt: new Date(),
-            },
+                resolvedAt: new Date()
+            }
         });
     }
     async getActiveAlerts() {
         return this.prisma.inventory_alerts.findMany({
             where: {
-                isResolved: false,
+                isResolved: false
             },
             include: {
                 products: {
@@ -201,13 +177,13 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                         categories: {
                             select: {
                                 id: true,
-                                name: true,
-                            },
-                        },
-                    },
-                },
+                                name: true
+                            }
+                        }
+                    }
+                }
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: 'desc' }
         });
     }
     async getAlertSummary() {
@@ -218,15 +194,15 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
             this.prisma.inventory_alerts.groupBy({
                 by: ['type'],
                 _count: {
-                    id: true,
+                    id: true
                 },
                 where: {
-                    isResolved: false,
+                    isResolved: false
                 },
                 orderBy: {
-                    type: 'asc',
-                },
-            }),
+                    type: 'asc'
+                }
+            })
         ]);
         return {
             total: totalAlerts,
@@ -235,7 +211,7 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
             byType: alertsByType.reduce((acc, item) => {
                 acc[item.type] = item._count.id ?? 0;
                 return acc;
-            }, {}),
+            }, {})
         };
     }
     async checkAndCreateAlerts() {
@@ -244,18 +220,18 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                 id: true,
                 name: true,
                 sku: true,
+                stockQuantity: true,
                 maxStock: true,
                 inventory: {
                     select: {
-                        stock: true,
-                        lowStockThreshold: true,
-                    },
-                },
-            },
+                        lowStockThreshold: true
+                    }
+                }
+            }
         });
         const alerts = [];
         for (const product of products) {
-            const currentStock = product.inventory?.stock ?? 0;
+            const currentStock = product.stockQuantity;
             const lowStockThreshold = product.inventory?.lowStockThreshold;
             const maxStock = product.maxStock;
             if (lowStockThreshold && currentStock <= lowStockThreshold) {
@@ -263,8 +239,8 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                     where: {
                         productId: product.id,
                         type: 'LOW_STOCK',
-                        isResolved: false,
-                    },
+                        isResolved: false
+                    }
                 });
                 if (!existingAlert) {
                     alerts.push(await this.create({
@@ -272,7 +248,7 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                         type: 'LOW_STOCK',
                         message: `Sản phẩm ${product.name} (${product.sku}) có tồn kho thấp: ${currentStock} <= ${lowStockThreshold}`,
                         threshold: lowStockThreshold,
-                        currentStock: currentStock,
+                        currentStock: currentStock
                     }));
                 }
             }
@@ -281,15 +257,15 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                     where: {
                         productId: product.id,
                         type: 'OUT_OF_STOCK',
-                        isResolved: false,
-                    },
+                        isResolved: false
+                    }
                 });
                 if (!existingAlert) {
                     alerts.push(await this.create({
                         productId: product.id,
                         type: 'OUT_OF_STOCK',
                         message: `Sản phẩm ${product.name} (${product.sku}) đã hết hàng`,
-                        currentStock: 0,
+                        currentStock: 0
                     }));
                 }
             }
@@ -298,8 +274,8 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                     where: {
                         productId: product.id,
                         type: 'OVERSTOCK',
-                        isResolved: false,
-                    },
+                        isResolved: false
+                    }
                 });
                 if (!existingAlert) {
                     alerts.push(await this.create({
@@ -307,7 +283,7 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
                         type: 'OVERSTOCK',
                         message: `Sản phẩm ${product.name} (${product.sku}) tồn kho quá nhiều: ${currentStock} >= ${maxStock}`,
                         threshold: maxStock,
-                        currentStock: currentStock,
+                        currentStock: currentStock
                     }));
                 }
             }
@@ -316,21 +292,20 @@ let InventoryAlertService = InventoryAlertService_1 = class InventoryAlertServic
     }
     async delete(id) {
         return this.prisma.inventory_alerts.delete({
-            where: { id },
+            where: { id }
         });
     }
     async bulkDelete(ids) {
         return this.prisma.inventory_alerts.deleteMany({
             where: {
-                id: { in: ids },
-            },
+                id: { in: ids }
+            }
         });
     }
 };
 exports.InventoryAlertService = InventoryAlertService;
-exports.InventoryAlertService = InventoryAlertService = InventoryAlertService_1 = __decorate([
+exports.InventoryAlertService = InventoryAlertService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        telegram_service_1.TelegramService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], InventoryAlertService);
 //# sourceMappingURL=inventory-alert.service.js.map

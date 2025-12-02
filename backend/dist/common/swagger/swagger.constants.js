@@ -717,7 +717,7 @@ exports.FileExamples = {
         filesByType: {
             'product-image': 1234,
             'user-avatar': 890,
-            document: 234,
+            'document': 234,
             'gallery-image': 98,
         },
         storageUsage: {
@@ -834,15 +834,15 @@ exports.InventoryExamples = {
                             type: 'restock',
                             quantity: 50,
                             date: '2024-01-01T10:00:00Z',
-                            note: 'Nhập kho từ nhà cung cấp SONY',
+                            note: 'Nhập kho từ nhà cung cấp SONY'
                         },
                         {
                             type: 'sale',
                             quantity: -5,
                             date: '2024-01-02T14:30:00Z',
-                            note: 'Bán cho khách hàng Nguyễn Văn A',
-                        },
-                    ],
+                            note: 'Bán cho khách hàng Nguyễn Văn A'
+                        }
+                    ]
                 },
                 {
                     id: 'inv_002',
@@ -855,22 +855,22 @@ exports.InventoryExamples = {
                     lowStockThreshold: 10,
                     status: 'low_stock',
                     alert: 'Cần nhập thêm hàng',
-                    lastRestocked: '2023-12-28T09:00:00Z',
-                },
+                    lastRestocked: '2023-12-28T09:00:00Z'
+                }
             ],
             pagination: {
                 page: 1,
                 pageSize: 20,
                 total: 156,
-                totalPages: 8,
+                totalPages: 8
             },
             summary: {
                 totalProducts: 156,
                 lowStockProducts: 12,
                 outOfStockProducts: 3,
-                totalValue: 567890000000,
-            },
-        },
+                totalValue: 567890000000
+            }
+        }
     },
     INVENTORY_ADJUSTMENT: {
         success: true,
@@ -883,13 +883,13 @@ exports.InventoryExamples = {
                 previousStock: 45,
                 newStock: 65,
                 previousReserved: 8,
-                newReserved: 6,
+                newReserved: 6
             },
             reason: 'Nhập hàng từ nhà cung cấp',
             adjustedBy: 'admin_user123',
-            adjustedAt: '2024-01-01T15:30:00Z',
+            adjustedAt: '2024-01-01T15:30:00Z'
         },
-        message: 'Inventory adjusted successfully',
+        message: 'Inventory adjusted successfully'
     },
     LOW_STOCK_ALERT: {
         success: true,
@@ -902,7 +902,7 @@ exports.InventoryExamples = {
                     lowStockThreshold: 10,
                     recommendedRestock: 25,
                     supplier: 'Shure Vietnam',
-                    lastOrder: '2023-12-28T09:00:00Z',
+                    lastOrder: '2023-12-28T09:00:00Z'
                 },
                 {
                     productId: 'prod_cable_003',
@@ -911,13 +911,13 @@ exports.InventoryExamples = {
                     lowStockThreshold: 15,
                     recommendedRestock: 50,
                     supplier: 'Audio Tech VN',
-                    lastOrder: '2023-12-25T14:00:00Z',
-                },
+                    lastOrder: '2023-12-25T14:00:00Z'
+                }
             ],
             totalAlerts: 12,
-            urgentAlerts: 3,
-        },
-    },
+            urgentAlerts: 3
+        }
+    }
 };
 exports.NotificationExamples = {
     NOTIFICATION_LIST: {
@@ -934,10 +934,10 @@ exports.NotificationExamples = {
                     userId: 'user_nguyenvana',
                     data: {
                         orderId: 'order_ATL001234',
-                        orderStatus: 'confirmed',
+                        orderStatus: 'confirmed'
                     },
                     createdAt: '2024-01-01T10:30:00Z',
-                    readAt: null,
+                    readAt: null
                 },
                 {
                     id: 'notif_002',
@@ -949,10 +949,10 @@ exports.NotificationExamples = {
                     userId: 'user_nguyenvana',
                     data: {
                         promotionCode: 'SONY20',
-                        validUntil: '2024-01-31T23:59:59Z',
+                        validUntil: '2024-01-31T23:59:59Z'
                     },
                     createdAt: '2024-01-01T09:00:00Z',
-                    readAt: '2024-01-01T10:15:00Z',
+                    readAt: '2024-01-01T10:15:00Z'
                 },
                 {
                     id: 'notif_003',
@@ -964,17 +964,17 @@ exports.NotificationExamples = {
                     userId: null,
                     data: {
                         maintenanceStart: '2024-01-02T02:00:00Z',
-                        maintenanceEnd: '2024-01-02T04:00:00Z',
+                        maintenanceEnd: '2024-01-02T04:00:00Z'
                     },
                     createdAt: '2024-01-01T08:00:00Z',
-                    readAt: null,
-                },
+                    readAt: null
+                }
             ],
             pagination: {
                 page: 1,
                 pageSize: 20,
                 total: 45,
-                totalPages: 3,
+                totalPages: 3
             },
             summary: {
                 total: 45,
@@ -984,10 +984,10 @@ exports.NotificationExamples = {
                     promotion: 12,
                     system: 8,
                     payment: 6,
-                    shipping: 4,
-                },
-            },
-        },
+                    shipping: 4
+                }
+            }
+        }
     },
     SEND_NOTIFICATION: {
         success: true,
@@ -1003,10 +1003,10 @@ exports.NotificationExamples = {
             deliveryStats: {
                 sent: 2,
                 delivered: 2,
-                failed: 0,
-            },
+                failed: 0
+            }
         },
-        message: 'Notification sent successfully',
+        message: 'Notification sent successfully'
     },
     NOTIFICATION_PREFERENCES: {
         success: true,
@@ -1015,27 +1015,27 @@ exports.NotificationExamples = {
             preferences: {
                 email: {
                     enabled: true,
-                    types: ['order_update', 'payment', 'system'],
+                    types: ['order_update', 'payment', 'system']
                 },
                 push: {
                     enabled: true,
-                    types: ['order_update', 'promotion', 'system'],
+                    types: ['order_update', 'promotion', 'system']
                 },
                 sms: {
                     enabled: false,
-                    types: ['order_update'],
-                },
+                    types: ['order_update']
+                }
             },
             quietHours: {
                 enabled: true,
                 start: '22:00',
                 end: '08:00',
-                timezone: 'Asia/Ho_Chi_Minh',
+                timezone: 'Asia/Ho_Chi_Minh'
             },
             language: 'vi',
-            updatedAt: '2024-01-01T10:00:00Z',
-        },
-    },
+            updatedAt: '2024-01-01T10:00:00Z'
+        }
+    }
 };
 exports.MarketingExamples = {
     CAMPAIGNS_LIST: {
@@ -1055,21 +1055,21 @@ exports.MarketingExamples = {
                     targeting: {
                         ageRange: '25-45',
                         location: ['TP.HCM', 'Hà Nội', 'Đà Nẵng'],
-                        interests: ['karaoke', 'âm nhạc', 'giải trí'],
+                        interests: ['karaoke', 'âm nhạc', 'giải trí']
                     },
                     offers: [
                         {
                             type: 'percentage',
                             value: 20,
                             category: 'Loa karaoke',
-                            conditions: 'Đơn hàng từ 5 triệu',
+                            conditions: 'Đơn hàng từ 5 triệu'
                         },
                         {
                             type: 'fixed_amount',
                             value: 500000,
                             category: 'Micro',
-                            conditions: 'Mua kèm loa',
-                        },
+                            conditions: 'Mua kèm loa'
+                        }
                     ],
                     performance: {
                         impressions: 125000,
@@ -1078,8 +1078,8 @@ exports.MarketingExamples = {
                         revenue: 45600000,
                         ctr: 6.8,
                         conversionRate: 2.75,
-                        roas: 3.04,
-                    },
+                        roas: 3.04
+                    }
                 },
                 {
                     id: 'camp_002',
@@ -1092,32 +1092,32 @@ exports.MarketingExamples = {
                     budget: 20000000,
                     targeting: {
                         segment: 'loyal_customers',
-                        purchaseHistory: 'last_6_months',
+                        purchaseHistory: 'last_6_months'
                     },
                     offers: [
                         {
                             type: 'percentage',
                             value: 35,
                             products: ['prod_speaker_001', 'prod_mic_002'],
-                            conditions: 'Số lượng có hạn',
-                        },
-                    ],
-                },
+                            conditions: 'Số lượng có hạn'
+                        }
+                    ]
+                }
             ],
             pagination: {
                 page: 1,
                 pageSize: 20,
                 total: 12,
-                totalPages: 1,
+                totalPages: 1
             },
             summary: {
                 totalCampaigns: 12,
                 activeCampaigns: 8,
                 totalBudget: 250000000,
                 totalSpent: 89000000,
-                averageRoas: 2.85,
-            },
-        },
+                averageRoas: 2.85
+            }
+        }
     },
     CAMPAIGN_ANALYTICS: {
         success: true,
@@ -1125,7 +1125,7 @@ exports.MarketingExamples = {
             campaignId: 'camp_001',
             period: {
                 start: '2024-01-15T00:00:00Z',
-                end: '2024-01-31T23:59:59Z',
+                end: '2024-01-31T23:59:59Z'
             },
             metrics: {
                 reach: 85000,
@@ -1137,7 +1137,7 @@ exports.MarketingExamples = {
                 revenue: 45600000,
                 roas: 3.04,
                 costPerClick: 1765,
-                costPerConversion: 64103,
+                costPerConversion: 64103
             },
             topProducts: [
                 {
@@ -1145,15 +1145,15 @@ exports.MarketingExamples = {
                     productName: 'Loa Karaoke SONY Pro X1',
                     clicks: 2340,
                     conversions: 89,
-                    revenue: 18900000,
+                    revenue: 18900000
                 },
                 {
                     productId: 'prod_mic_002',
                     productName: 'Micro không dây Shure SM58',
                     clicks: 1890,
                     conversions: 67,
-                    revenue: 12300000,
-                },
+                    revenue: 12300000
+                }
             ],
             audienceInsights: {
                 demographics: {
@@ -1161,21 +1161,21 @@ exports.MarketingExamples = {
                         '25-34': 45,
                         '35-44': 32,
                         '45-54': 18,
-                        '55+': 5,
+                        '55+': 5
                     },
                     gender: {
                         male: 68,
-                        female: 32,
-                    },
+                        female: 32
+                    }
                 },
                 geography: {
                     'TP.HCM': 42,
                     'Hà Nội': 28,
                     'Đà Nẵng': 15,
-                    Khác: 15,
-                },
-            },
-        },
+                    'Khác': 15
+                }
+            }
+        }
     },
     PROMOTIONS_LIST: {
         success: true,
@@ -1195,10 +1195,10 @@ exports.MarketingExamples = {
                     conditions: {
                         minOrderValue: 5000000,
                         categories: ['Loa karaoke'],
-                        brands: ['Sony'],
+                        brands: ['Sony']
                     },
                     applicableProducts: 45,
-                    totalSavings: 23400000,
+                    totalSavings: 23400000
                 },
                 {
                     id: 'promo_002',
@@ -1209,18 +1209,18 @@ exports.MarketingExamples = {
                     usageLimit: null,
                     usedCount: 234,
                     conditions: {
-                        minOrderValue: 3000000,
-                    },
-                },
+                        minOrderValue: 3000000
+                    }
+                }
             ],
             summary: {
                 totalPromotions: 8,
                 activePromotions: 5,
                 totalSavings: 89500000,
-                totalUsage: 456,
-            },
-        },
-    },
+                totalUsage: 456
+            }
+        }
+    }
 };
 exports.SearchExamples = {
     BASIC_SEARCH: {
@@ -1240,7 +1240,7 @@ exports.SearchExamples = {
                     reviewCount: 234,
                     inStock: true,
                     featured: true,
-                    relevanceScore: 0.95,
+                    relevanceScore: 0.95
                 },
                 {
                     id: 'prod_mic_002',
@@ -1255,8 +1255,8 @@ exports.SearchExamples = {
                     reviewCount: 189,
                     inStock: true,
                     featured: false,
-                    relevanceScore: 0.87,
-                },
+                    relevanceScore: 0.87
+                }
             ],
             services: [
                 {
@@ -1266,14 +1266,14 @@ exports.SearchExamples = {
                     price: 2000000,
                     category: 'Lắp đặt',
                     rating: 4.7,
-                    relevanceScore: 0.76,
-                },
+                    relevanceScore: 0.76
+                }
             ],
             total: 3,
             query: 'loa karaoke',
             searchTime: '45ms',
-            suggestions: ['loa sony', 'loa bluetooth', 'karaoke gia đình'],
-        },
+            suggestions: ['loa sony', 'loa bluetooth', 'karaoke gia đình']
+        }
     },
     PRODUCT_SEARCH: {
         success: true,
@@ -1290,17 +1290,17 @@ exports.SearchExamples = {
                     category: {
                         id: 'cat_speakers',
                         name: 'Loa karaoke',
-                        slug: 'loa-karaoke',
+                        slug: 'loa-karaoke'
                     },
                     brand: 'Sony',
                     specifications: {
                         power: '500W',
                         frequency: '50Hz - 20kHz',
-                        connectivity: ['Bluetooth', 'USB', 'AUX'],
+                        connectivity: ['Bluetooth', 'USB', 'AUX']
                     },
                     images: [
                         'https://cdn.audiotailoc.com/products/sony-pro-x1-1.jpg',
-                        'https://cdn.audiotailoc.com/products/sony-pro-x1-2.jpg',
+                        'https://cdn.audiotailoc.com/products/sony-pro-x1-2.jpg'
                     ],
                     rating: 4.8,
                     reviewCount: 234,
@@ -1308,37 +1308,37 @@ exports.SearchExamples = {
                     stockCount: 45,
                     featured: true,
                     tags: ['karaoke', 'bluetooth', 'chuyên nghiệp'],
-                    createdAt: '2023-12-01T10:00:00Z',
-                },
+                    createdAt: '2023-12-01T10:00:00Z'
+                }
             ],
             filters: {
                 categories: [
                     { id: 'cat_speakers', name: 'Loa karaoke', count: 145 },
-                    { id: 'cat_mics', name: 'Micro', count: 89 },
+                    { id: 'cat_mics', name: 'Micro', count: 89 }
                 ],
                 brands: [
                     { name: 'Sony', count: 67 },
-                    { name: 'Shure', count: 45 },
+                    { name: 'Shure', count: 45 }
                 ],
                 priceRanges: [
                     { min: 0, max: 5000000, count: 78 },
                     { min: 5000000, max: 10000000, count: 156 },
-                    { min: 10000000, max: 20000000, count: 89 },
-                ],
+                    { min: 10000000, max: 20000000, count: 89 }
+                ]
             },
             pagination: {
                 page: 1,
                 limit: 20,
                 total: 234,
-                totalPages: 12,
+                totalPages: 12
             },
             sorting: {
                 sortBy: 'relevance',
                 sortOrder: 'desc',
-                availableSort: ['relevance', 'price', 'rating', 'newest'],
+                availableSort: ['relevance', 'price', 'rating', 'newest']
             },
-            searchTime: '78ms',
-        },
+            searchTime: '78ms'
+        }
     },
     SEARCH_SUGGESTIONS: {
         success: true,
@@ -1348,37 +1348,47 @@ exports.SearchExamples = {
                     text: 'loa karaoke sony',
                     type: 'product',
                     count: 67,
-                    category: 'Loa karaoke',
+                    category: 'Loa karaoke'
                 },
                 {
                     text: 'micro không dây',
                     type: 'product',
                     count: 89,
-                    category: 'Micro',
+                    category: 'Micro'
                 },
                 {
                     text: 'hệ thống karaoke gia đình',
                     type: 'service',
                     count: 23,
-                    category: 'Dịch vụ',
+                    category: 'Dịch vụ'
                 },
                 {
                     text: 'loa bluetooth',
                     type: 'product',
                     count: 156,
-                    category: 'Loa karaoke',
+                    category: 'Loa karaoke'
                 },
                 {
                     text: 'phụ kiện karaoke',
                     type: 'product',
                     count: 234,
-                    category: 'Phụ kiện',
-                },
+                    category: 'Phụ kiện'
+                }
             ],
-            trending: ['loa karaoke sony', 'micro shure', 'dây kết nối', 'âm ly karaoke', 'loa sub'],
-            recent: ['loa bluetooth', 'micro không dây', 'cáp audio'],
-        },
-    },
+            trending: [
+                'loa karaoke sony',
+                'micro shure',
+                'dây kết nối',
+                'âm ly karaoke',
+                'loa sub'
+            ],
+            recent: [
+                'loa bluetooth',
+                'micro không dây',
+                'cáp audio'
+            ]
+        }
+    }
 };
 exports.AIExamples = {
     AI_RECOMMENDATION: {
@@ -1394,7 +1404,7 @@ exports.AIExamples = {
                     confidence: 0.92,
                     category: 'Loa karaoke',
                     rating: 4.8,
-                    imageUrl: 'https://cdn.audiotailoc.com/products/sony-pro-x1.jpg',
+                    imageUrl: 'https://cdn.audiotailoc.com/products/sony-pro-x1.jpg'
                 },
                 {
                     productId: 'prod_mic_002',
@@ -1404,13 +1414,13 @@ exports.AIExamples = {
                     confidence: 0.87,
                     category: 'Micro',
                     rating: 4.9,
-                    imageUrl: 'https://cdn.audiotailoc.com/products/shure-sm58.jpg',
-                },
+                    imageUrl: 'https://cdn.audiotailoc.com/products/shure-sm58.jpg'
+                }
             ],
             algorithm: 'collaborative_filtering',
             generatedAt: '2024-01-01T10:00:00Z',
-            userId: 'user_nguyenvana',
-        },
+            userId: 'user_nguyenvana'
+        }
     },
     CHAT_RESPONSE: {
         success: true,
@@ -1420,18 +1430,18 @@ exports.AIExamples = {
                 {
                     productId: 'prod_speaker_001',
                     name: 'Loa Karaoke SONY Pro X1',
-                    price: 10320000,
+                    price: 10320000
                 },
                 {
                     productId: 'prod_mic_002',
                     name: 'Micro không dây Shure SM58',
-                    price: 4500000,
-                },
+                    price: 4500000
+                }
             ],
             conversationId: 'conv_abc123',
             responseTime: '1.2s',
-            confidence: 0.89,
-        },
+            confidence: 0.89
+        }
     },
     SMART_SEARCH: {
         success: true,
@@ -1441,7 +1451,7 @@ exports.AIExamples = {
                 productType: 'loa karaoke',
                 roomSize: '30m2',
                 budget: 10000000,
-                purpose: 'karaoke gia đình',
+                purpose: 'karaoke gia đình'
             },
             recommendations: [
                 {
@@ -1452,21 +1462,21 @@ exports.AIExamples = {
                     reasons: [
                         'Phù hợp với phòng 30m2',
                         'Trong ngân sách 10 triệu',
-                        'Chất lượng âm thanh tốt cho karaoke',
-                    ],
-                },
+                        'Chất lượng âm thanh tốt cho karaoke'
+                    ]
+                }
             ],
             alternatives: [
                 {
                     productId: 'prod_speaker_001',
                     name: 'Loa Karaoke SONY Pro X1',
                     price: 10320000,
-                    note: 'Vượt ngân sách 320k nhưng chất lượng cao hơn',
-                },
+                    note: 'Vượt ngân sách 320k nhưng chất lượng cao hơn'
+                }
             ],
-            processingTime: '850ms',
-        },
-    },
+            processingTime: '850ms'
+        }
+    }
 };
 exports.BookingExamples = {
     BOOKING_LIST: {
@@ -1483,13 +1493,13 @@ exports.BookingExamples = {
                         id: 'user_nguyenvana',
                         name: 'Nguyễn Văn A',
                         phone: '0901234567',
-                        email: 'nguyenvana@example.com',
+                        email: 'nguyenvana@example.com'
                     },
                     technician: {
                         id: 'tech_001',
                         name: 'Trần Văn B',
                         phone: '0907654321',
-                        rating: 4.8,
+                        rating: 4.8
                     },
                     address: {
                         street: '123 Nguyễn Văn Linh',
@@ -1498,8 +1508,8 @@ exports.BookingExamples = {
                         city: 'TP.HCM',
                         coordinates: {
                             lat: 10.7329,
-                            lng: 106.7192,
-                        },
+                            lng: 106.7192
+                        }
                     },
                     scheduledDate: '2024-01-05T09:00:00Z',
                     estimatedDuration: 180,
@@ -1508,14 +1518,14 @@ exports.BookingExamples = {
                             id: 'serv_install_001',
                             name: 'Lắp đặt hệ thống âm thanh',
                             price: 2000000,
-                            duration: 120,
+                            duration: 120
                         },
                         {
                             id: 'serv_setup_001',
                             name: 'Cài đặt và test âm thanh',
                             price: 500000,
-                            duration: 60,
-                        },
+                            duration: 60
+                        }
                     ],
                     totalPrice: 2500000,
                     equipment: [
@@ -1523,18 +1533,18 @@ exports.BookingExamples = {
                             productId: 'prod_speaker_001',
                             name: 'Loa Karaoke SONY Pro X1',
                             quantity: 1,
-                            serialNumber: 'SONY-001-2024',
+                            serialNumber: 'SONY-001-2024'
                         },
                         {
                             productId: 'prod_mic_002',
                             name: 'Micro không dây Shure SM58',
                             quantity: 2,
-                            serialNumbers: ['SHURE-001-2024', 'SHURE-002-2024'],
-                        },
+                            serialNumbers: ['SHURE-001-2024', 'SHURE-002-2024']
+                        }
                     ],
                     notes: 'Khách hàng yêu cầu test kỹ trước khi hoàn thành',
                     createdAt: '2024-01-01T10:00:00Z',
-                    updatedAt: '2024-01-02T14:30:00Z',
+                    updatedAt: '2024-01-02T14:30:00Z'
                 },
                 {
                     id: 'book_002',
@@ -1545,7 +1555,7 @@ exports.BookingExamples = {
                     customer: {
                         id: 'user_tranthib',
                         name: 'Trần Thị B',
-                        phone: '0902345678',
+                        phone: '0902345678'
                     },
                     scheduledDate: '2024-01-08T14:00:00Z',
                     estimatedDuration: 90,
@@ -1554,34 +1564,34 @@ exports.BookingExamples = {
                             id: 'serv_maint_001',
                             name: 'Kiểm tra tổng thể hệ thống',
                             price: 800000,
-                            duration: 60,
+                            duration: 60
                         },
                         {
                             id: 'serv_clean_001',
                             name: 'Vệ sinh thiết bị',
                             price: 300000,
-                            duration: 30,
-                        },
+                            duration: 30
+                        }
                     ],
                     totalPrice: 1100000,
                     maintenanceType: 'routine',
-                    lastMaintenance: '2023-07-01T10:00:00Z',
-                },
+                    lastMaintenance: '2023-07-01T10:00:00Z'
+                }
             ],
             pagination: {
                 page: 1,
                 pageSize: 20,
                 total: 156,
-                totalPages: 8,
+                totalPages: 8
             },
             summary: {
                 totalBookings: 156,
                 pendingBookings: 23,
                 confirmedBookings: 89,
                 completedBookings: 44,
-                todayBookings: 8,
-            },
-        },
+                todayBookings: 8
+            }
+        }
     },
     CREATE_BOOKING: {
         success: true,
@@ -1593,16 +1603,16 @@ exports.BookingExamples = {
             customer: {
                 name: 'Lê Văn C',
                 phone: '0903456789',
-                email: 'levanc@example.com',
+                email: 'levanc@example.com'
             },
             requestedDate: '2024-01-10T10:00:00Z',
             estimatedPrice: 3000000,
             services: ['Lắp đặt hệ thống karaoke premium'],
             autoAssignment: true,
             expectedResponse: '24 hours',
-            createdAt: '2024-01-01T15:00:00Z',
+            createdAt: '2024-01-01T15:00:00Z'
         },
-        message: 'Booking created successfully. Our team will contact you within 24 hours.',
+        message: 'Booking created successfully. Our team will contact you within 24 hours.'
     },
     BOOKING_SCHEDULE: {
         success: true,
@@ -1621,17 +1631,17 @@ exports.BookingExamples = {
                             bookingId: 'book_001',
                             status: 'confirmed',
                             customer: 'Nguyễn Văn A',
-                            service: 'Lắp đặt hệ thống karaoke',
+                            service: 'Lắp đặt hệ thống karaoke'
                         },
                         {
                             timeSlot: '14:00-16:00',
                             bookingId: 'book_004',
                             status: 'confirmed',
                             customer: 'Phạm Thị D',
-                            service: 'Bảo trì định kỳ',
-                        },
+                            service: 'Bảo trì định kỳ'
+                        }
                     ],
-                    availableSlots: ['16:30-18:00'],
+                    availableSlots: ['16:30-18:00']
                 },
                 {
                     id: 'tech_002',
@@ -1639,16 +1649,16 @@ exports.BookingExamples = {
                     skills: ['maintenance', 'repair'],
                     rating: 4.6,
                     workload: 50,
-                    availableSlots: ['09:00-12:00', '14:00-17:00'],
-                },
+                    availableSlots: ['09:00-12:00', '14:00-17:00']
+                }
             ],
             summary: {
                 totalBookings: 8,
                 availableTechnicians: 5,
-                utilizationRate: 62.5,
-            },
-        },
-    },
+                utilizationRate: 62.5
+            }
+        }
+    }
 };
 exports.CustomerExamples = {
     CUSTOMER_PROFILE: {
@@ -1661,7 +1671,7 @@ exports.CustomerExamples = {
                 phone: '0901234567',
                 dateOfBirth: '1985-05-15',
                 gender: 'male',
-                avatar: 'https://cdn.audiotailoc.com/avatars/user_nguyenvana.jpg',
+                avatar: 'https://cdn.audiotailoc.com/avatars/user_nguyenvana.jpg'
             },
             address: {
                 primary: {
@@ -1670,7 +1680,7 @@ exports.CustomerExamples = {
                     district: 'Quận 7',
                     city: 'TP.HCM',
                     postalCode: '70000',
-                    isDefault: true,
+                    isDefault: true
                 },
                 shipping: [
                     {
@@ -1679,35 +1689,35 @@ exports.CustomerExamples = {
                         street: '123 Nguyễn Văn Linh',
                         ward: 'Phường 10',
                         district: 'Quận 7',
-                        city: 'TP.HCM',
-                    },
-                ],
+                        city: 'TP.HCM'
+                    }
+                ]
             },
             preferences: {
                 categories: ['Loa karaoke', 'Micro'],
                 brands: ['Sony', 'Shure'],
                 priceRange: {
                     min: 5000000,
-                    max: 20000000,
+                    max: 20000000
                 },
                 notifications: {
                     email: true,
                     sms: false,
-                    push: true,
-                },
+                    push: true
+                }
             },
             loyaltyProgram: {
                 tier: 'Gold',
                 points: 2850,
-                benefits: ['Giảm 10%', 'Freeship', 'Bảo hành mở rộng'],
+                benefits: ['Giảm 10%', 'Freeship', 'Bảo hành mở rộng']
             },
             statistics: {
                 totalOrders: 8,
                 totalSpent: 45600000,
                 averageOrderValue: 5700000,
-                favoriteCategory: 'Loa karaoke',
-            },
-        },
+                favoriteCategory: 'Loa karaoke'
+            }
+        }
     },
     CUSTOMER_INSIGHTS: {
         success: true,
@@ -1720,16 +1730,16 @@ exports.CustomerExamples = {
                     type: 'product',
                     productId: 'prod_cable_003',
                     reason: 'Phụ kiện bổ sung cho hệ thống hiện tại',
-                    confidence: 0.87,
-                },
+                    confidence: 0.87
+                }
             ],
             behaviorPatterns: {
                 preferredShoppingTime: 'weekend_morning',
                 seasonalTrends: ['Tết', 'Black Friday'],
-                brandLoyalty: 'high',
-            },
-        },
-    },
+                brandLoyalty: 'high'
+            }
+        }
+    }
 };
 exports.PagesExamples = {
     PAGES_LIST: {
@@ -1743,15 +1753,15 @@ exports.PagesExamples = {
                     type: 'static',
                     status: 'published',
                     content: {
-                        summary: 'Chuyên cung cấp thiết bị âm thanh karaoke chất lượng cao...',
+                        summary: 'Chuyên cung cấp thiết bị âm thanh karaoke chất lượng cao...'
                     },
                     seo: {
                         metaTitle: 'Giới thiệu Audio Tài Lộc - Chuyên gia thiết bị karaoke',
-                        metaDescription: 'Tìm hiểu về Audio Tài Lộc - đơn vị hàng đầu cung cấp thiết bị âm thanh karaoke chất lượng cao.',
+                        metaDescription: 'Tìm hiểu về Audio Tài Lộc - đơn vị hàng đầu cung cấp thiết bị âm thanh karaoke chất lượng cao.'
                     },
                     createdAt: '2023-01-15T10:00:00Z',
                     views: 15650,
-                    featured: true,
+                    featured: true
                 },
                 {
                     id: 'page_002',
@@ -1761,21 +1771,21 @@ exports.PagesExamples = {
                     status: 'published',
                     category: {
                         id: 'cat_guides',
-                        name: 'Hướng dẫn sử dụng',
+                        name: 'Hướng dẫn sử dụng'
                     },
                     tags: ['loa karaoke', 'hướng dẫn'],
                     readingTime: 8,
-                    views: 8920,
-                },
+                    views: 8920
+                }
             ],
             pagination: {
                 page: 1,
                 pageSize: 20,
                 total: 78,
-                totalPages: 4,
-            },
-        },
-    },
+                totalPages: 4
+            }
+        }
+    }
 };
 exports.MonitoringExamples = {
     HEALTH_CHECK: {
@@ -1792,26 +1802,26 @@ exports.MonitoringExamples = {
                     responseTime: '12ms',
                     connections: {
                         active: 5,
-                        max: 100,
-                    },
+                        max: 100
+                    }
                 },
                 redis: {
                     status: 'healthy',
                     responseTime: '3ms',
                     memory: {
                         used: '256MB',
-                        max: '1GB',
-                    },
+                        max: '1GB'
+                    }
                 },
                 storage: {
                     status: 'healthy',
                     disk: {
                         used: '15.6GB',
-                        available: '84.4GB',
-                    },
-                },
-            },
-        },
-    },
+                        available: '84.4GB'
+                    }
+                }
+            }
+        }
+    }
 };
 //# sourceMappingURL=swagger.constants.js.map

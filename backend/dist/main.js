@@ -34,7 +34,11 @@ async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const config = app.get(config_1.ConfigService);
     const port = Number(process.env.PORT || config.get('PORT') || 3010);
-    const requiredEnvVars = ['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+    const requiredEnvVars = [
+        'DATABASE_URL',
+        'JWT_ACCESS_SECRET',
+        'JWT_REFRESH_SECRET'
+    ];
     const missingVars = requiredEnvVars.filter(varName => !config.get(varName));
     if (missingVars.length > 0) {
         logger.error(`Missing required environment variables: ${missingVars.join(', ')}`);
@@ -56,11 +60,11 @@ async function bootstrap() {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", 'data:', 'https:'],
+                imgSrc: ["'self'", "data:", "https:"],
             },
         },
     }));
-    const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app,http://127.0.0.1:52312,http://127.0.0.1:50464');
+    const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
     const allowedOrigins = corsOrigins.split(',').map((origin) => origin.trim());
     app.enableCors({
         origin: (origin, callback) => {
@@ -68,60 +72,30 @@ async function bootstrap() {
                 if (process.env.NODE_ENV === 'development') {
                     return callback(null, true);
                 }
-                return callback(null, false);
-            }
-            if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
-            if (allowedOrigins.some(allowedOrigin => {
+            if (allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            }
+            else if (allowedOrigins.some(allowedOrigin => {
                 if (allowedOrigin.includes('*')) {
-                    const pattern = '^' + allowedOrigin.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$';
-                    return new RegExp(pattern).test(origin);
+                    const pattern = allowedOrigin.replace('*', '.*');
+                    const regex = new RegExp(pattern);
+                    return regex.test(origin);
                 }
                 return false;
             })) {
-                return callback(null, true);
+                callback(null, true);
             }
-            logger.warn(`CORS blocked request from: ${origin}`);
-            return callback(new Error('Not allowed by CORS'));
+            else {
+                logger.warn(`CORS blocked request from: ${origin}`);
+                callback(new Error('Not allowed by CORS'));
+            }
         },
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
-        allowedHeaders: [
-            'Content-Type',
-            'Authorization',
-            'X-Requested-With',
-            'X-Idempotency-Key',
-            'X-Admin-Key',
-            'Accept',
-            'Origin',
-            'X-Requested-With',
-            'X-Auth-Token',
-            'Access-Control-Allow-Origin',
-            'Access-Control-Allow-Headers',
-            'Access-Control-Request-Method',
-            'Access-Control-Request-Headers',
-        ],
-        exposedHeaders: [
-            'X-Total-Count',
-            'X-Page-Count',
-            'Content-Disposition',
-            'Content-Length',
-            'Content-Type',
-        ],
-        maxAge: 86400,
-        preflightContinue: false,
-        optionsSuccessStatus: 204,
-    });
-    app.use((req, res, next) => {
-        if (req.method === 'OPTIONS') {
-            res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-            res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Idempotency-Key');
-            res.header('Access-Control-Allow-Credentials', 'true');
-            return res.status(204).end();
-        }
-        next();
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
+        exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
     });
     app.use((0, express_1.json)({
         limit: '2mb',
@@ -129,12 +103,12 @@ async function bootstrap() {
             if (buf.length > 2 * 1024 * 1024) {
                 throw new Error('Request body too large');
             }
-        },
+        }
     }));
     app.use((0, express_1.urlencoded)({
         extended: true,
         limit: '2mb',
-        parameterLimit: 10000,
+        parameterLimit: 10000
     }));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: false,
@@ -144,7 +118,7 @@ async function bootstrap() {
             enableImplicitConversion: true,
         },
         errorHttpStatusCode: common_1.HttpStatus.UNPROCESSABLE_ENTITY,
-        exceptionFactory: errors => {
+        exceptionFactory: (errors) => {
             const messages = errors.map(error => `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`);
             return new common_1.HttpException({
                 statusCode: common_1.HttpStatus.UNPROCESSABLE_ENTITY,
@@ -254,7 +228,7 @@ async function bootstrap() {
     logger.log(`🌍 Environment: ${config.get('NODE_ENV') || 'development'}`);
     logger.log(`🎯 Current API Version: v1 (Unified Complete Edition)`);
 }
-bootstrap().catch(error => {
+bootstrap().catch((error) => {
     console.error('Failed to start application:', error);
     process.exit(1);
 });

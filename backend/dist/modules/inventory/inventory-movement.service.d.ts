@@ -29,14 +29,14 @@ export declare class InventoryMovementService {
         id: string;
         createdAt: Date;
         userId: string | null;
+        reason: string | null;
         productId: string;
         quantity: number;
-        notes: string | null;
-        reason: string | null;
         previousStock: number;
         newStock: number;
         referenceId: string | null;
         referenceType: string | null;
+        notes: string | null;
     }>;
     findByProduct(productId: string, params?: {
         page?: number;
@@ -61,14 +61,14 @@ export declare class InventoryMovementService {
             id: string;
             createdAt: Date;
             userId: string | null;
+            reason: string | null;
             productId: string;
             quantity: number;
-            notes: string | null;
-            reason: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;
             referenceType: string | null;
+            notes: string | null;
         })[];
     }>;
     findAll(params?: {
@@ -103,14 +103,14 @@ export declare class InventoryMovementService {
             id: string;
             createdAt: Date;
             userId: string | null;
+            reason: string | null;
             productId: string;
             quantity: number;
-            notes: string | null;
-            reason: string | null;
             previousStock: number;
             newStock: number;
             referenceId: string | null;
             referenceType: string | null;
+            notes: string | null;
         })[];
     }>;
     getSummary(productId?: string, startDate?: Date, endDate?: Date): Promise<{

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { TechniciansService } from './technicians.service';
 import { ServiceCategory } from '../../common/enums';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,28 +19,22 @@ export class TechniciansController {
   constructor(private readonly techniciansService: TechniciansService) {}
 
   @Post()
-  async createTechnician(
-    @Body()
-    createTechnicianDto: {
-      name: string;
-      phone: string;
-      email?: string;
-      specialties: ServiceCategory[];
-    },
-  ) {
+  async createTechnician(@Body() createTechnicianDto: {
+    name: string;
+    phone: string;
+    email?: string;
+    specialties: ServiceCategory[];
+  }) {
     return this.techniciansService.createTechnician(createTechnicianDto);
   }
 
   @Get()
-  async getTechnicians(
-    @Query()
-    query: {
-      isActive?: string;
-      specialty?: ServiceCategory;
-      page?: string;
-      pageSize?: string;
-    },
-  ) {
+  async getTechnicians(@Query() query: {
+    isActive?: string;
+    specialty?: ServiceCategory;
+    page?: string;
+    pageSize?: string;
+  }) {
     return this.techniciansService.getTechnicians({
       isActive: query.isActive === 'true',
       specialty: query.specialty,
@@ -40,9 +44,12 @@ export class TechniciansController {
   }
 
   @Get('available')
-  async getAvailableTechnicians(
-    @Query() query: { date: string; time: string; specialty?: ServiceCategory; duration?: string },
-  ) {
+  async getAvailableTechnicians(@Query() query: {
+    date: string;
+    time: string;
+    specialty?: ServiceCategory;
+    duration?: string;
+  }) {
     return this.techniciansService.getAvailableTechnicians({
       date: new Date(query.date),
       time: query.time,
@@ -64,11 +71,10 @@ export class TechniciansController {
   @Get(':id/workload')
   async getTechnicianWorkload(
     @Param('id') id: string,
-    @Query()
-    query: {
+    @Query() query: {
       fromDate?: string;
       toDate?: string;
-    },
+    }
   ) {
     return this.techniciansService.getTechnicianWorkload(id, {
       fromDate: query.fromDate ? new Date(query.fromDate) : undefined,
@@ -79,14 +85,13 @@ export class TechniciansController {
   @Patch(':id')
   async updateTechnician(
     @Param('id') id: string,
-    @Body()
-    updateTechnicianDto: {
+    @Body() updateTechnicianDto: {
       name?: string;
       phone?: string;
       email?: string;
       specialties?: ServiceCategory[];
       isActive?: boolean;
-    },
+    }
   ) {
     return this.techniciansService.updateTechnician(id, updateTechnicianDto);
   }
@@ -97,22 +102,24 @@ export class TechniciansController {
   }
 
   @Get(':id/availability')
-  async getTechnicianAvailability(@Param('id') id: string, @Query('date') date: string) {
+  async getTechnicianAvailability(
+    @Param('id') id: string,
+    @Query('date') date: string
+  ) {
     return this.techniciansService.getTechnicianAvailability(id, new Date(date));
   }
 
   @Patch(':id/schedule')
   async setTechnicianSchedule(
     @Param('id') id: string,
-    @Body()
-    scheduleDto: {
+    @Body() scheduleDto: {
       schedules: Array<{
         date: string;
         startTime: string;
         endTime: string;
         isAvailable: boolean;
       }>;
-    },
+    }
   ) {
     return this.techniciansService.setTechnicianSchedule(
       id,
@@ -121,7 +128,7 @@ export class TechniciansController {
         startTime: s.startTime,
         endTime: s.endTime,
         isAvailable: s.isAvailable,
-      })),
+      }))
     );
   }
 }

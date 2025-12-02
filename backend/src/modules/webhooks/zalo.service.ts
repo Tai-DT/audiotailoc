@@ -2,14 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'crypto';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class ZaloService {
-  constructor(
-    private readonly cfg: ConfigService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly cfg: ConfigService, private readonly prisma: PrismaService) {}
 
   private get accessToken() {
     return this.cfg.get<string>('ZALO_OA_ACCESS_TOKEN') || '';
@@ -18,26 +14,8 @@ export class ZaloService {
     return this.cfg.get<string>('ZALO_OA_SECRET') || '';
   }
 
-  private verifySignature(headers: Record<string, string>, body: any): boolean {
-    const signatureHeader = headers['x-zalo-signature'] || headers['X-Zalo-Signature'] || '';
-    if (!this.secret || !signatureHeader) {
-      // If no secret or signature provided, skip verification but return false to indicate not verified
-      return false;
-    }
-
-    const payload = typeof body === 'string' ? body : JSON.stringify(body);
-    const hmac = crypto.createHmac('sha256', this.secret);
-    hmac.update(payload);
-    const expected = hmac.digest('hex');
-    return expected === signatureHeader;
-  }
-
   async handleIncoming(headers: Record<string, string>, body: any) {
-    const signatureValid = this.verifySignature(headers, body);
-    if (this.secret && !signatureValid) {
-      throw new UnauthorizedException('Invalid Zalo signature');
-    }
-
+    // TODO: verify signature with secret if Zalo sends one
     const event = body;
     // Handle Zalo customer support messages
     const userId = null; // external user not mapped yet
@@ -50,8 +28,8 @@ export class ZaloService {
         question: String(text),
         category: 'ZALO_SUPPORT',
         updatedAt: new Date(),
-        ...(userId && { users: { connect: { id: userId } } }),
-      },
+        ...(userId && { users: { connect: { id: userId } } })
+      }
     });
 
     return customerQuestion.id;
@@ -66,3 +44,5 @@ export class ZaloService {
     }).catch(() => undefined);
   }
 }
+
+

@@ -1,4 +1,10 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+} from '@nestjs/common';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { Request, Response } from 'express';
 import { LoggingService, LogContext } from './logging.service';
@@ -51,7 +57,7 @@ export class LoggingInterceptor implements NestInterceptor {
     this.loggingService.logRequest(logContext);
 
     return next.handle().pipe(
-      tap(data => {
+      tap((data) => {
         // Log successful response
         const duration = Date.now() - startTime;
         const statusCode = response.statusCode;
@@ -68,7 +74,7 @@ export class LoggingInterceptor implements NestInterceptor {
         // Add correlation headers to response
         CorrelationService.addToHeaders(response.getHeaders());
       }),
-      catchError(error => {
+      catchError((error) => {
         // Log error response
         const duration = Date.now() - startTime;
 
@@ -97,8 +103,8 @@ export class LoggingInterceptor implements NestInterceptor {
     return (
       (request as any).users?.id ||
       (request as any).users?.userId ||
-      (request.headers['x-user-id'] as string) ||
-      (request.query.userId as string)
+      request.headers['x-user-id'] as string ||
+      request.query.userId as string
     );
   }
 
@@ -107,12 +113,10 @@ export class LoggingInterceptor implements NestInterceptor {
       request.ip ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
-      (request.headers['x-forwarded-for'] as string) ||
-      (request.headers['x-real-ip'] as string) ||
+      request.headers['x-forwarded-for'] as string ||
+      request.headers['x-real-ip'] as string ||
       'unknown'
-    )
-      .split(',')[0]
-      .trim();
+    ).split(',')[0].trim();
   }
 
   private getResponseSize(data: any): number {

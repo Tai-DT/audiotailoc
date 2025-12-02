@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api-client'
 
 export interface Report {
   id: string
@@ -22,13 +21,29 @@ export function useReports() {
   const fetchReports = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await apiClient.get('/reports?page=1&pageSize=100')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const responseData = response.data as any
-      if (responseData && Array.isArray(responseData.data)) {
-        setReports(responseData.data as Report[])
-      }
-    } catch {
+      
+      // Mock data - replace with actual API
+      const mockReports: Report[] = [
+        {
+          id: '1',
+          name: 'Báo cáo doanh số tháng 9/2025',
+          type: 'sales',
+          format: 'pdf',
+          period: 'Tháng 9/2025',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Báo cáo tồn kho Q3/2025',
+          type: 'inventory',
+          format: 'excel',
+          period: 'Q3/2025',
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ]
+      
+      setReports(mockReports)
+    } catch (err) {
       toast.error('Không thể tải danh sách báo cáo')
     } finally {
       setLoading(false)
@@ -40,26 +55,17 @@ export function useReports() {
     try {
       const report = reports.find(r => r.id === reportId)
       if (!report) return
-
-      toast.success('Đang chuẩn bị tải xuống...')
-
-      // Get download URL from API
-      const response = await apiClient.get(`/reports/${reportId}/export`)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const responseData = response.data as any
-      if (responseData && responseData.exportUrl) {
-        // Create a temporary link to trigger download
-        const link = document.createElement('a');
-        link.href = responseData.exportUrl;
-        link.setAttribute('download', `${report.name || 'report'}.${report.format || 'csv'}`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        toast.success('Đã bắt đầu tải xuống báo cáo')
-      } else {
-        throw new Error('No export URL returned');
-      }
-    } catch {
+      
+      // Mock download
+      const link = document.createElement('a')
+      link.href = '#' // Replace with actual download URL
+      link.download = `report-${reportId}.${report.format}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success('Đã bắt đầu tải xuống báo cáo')
+    } catch (err) {
       toast.error('Không thể tải xuống báo cáo')
     }
   }, [reports])
@@ -72,28 +78,30 @@ export function useReports() {
   }) => {
     try {
       setLoading(true)
-
-      const response = await apiClient.post('/reports/generate', {
-        type: options.type.toUpperCase(),
-        title: `Báo cáo ${options.type} - ${options.period}`,
-        description: `Được tạo tự động vào ${new Date().toLocaleString()}`,
-        parameters: {
-          period: options.period,
-          format: options.format
-        }
-      })
-
-      if (response.data) {
-        toast.success('Báo cáo đã được tạo thành công')
-        // Refresh list
-        fetchReports()
+      
+      // Mock API call
+      const newReport: Report = {
+        id: Date.now().toString(),
+        name: `Báo cáo ${options.type} - ${options.period}`,
+        type: options.type,
+        format: options.format as Report['format'],
+        period: options.period,
+        createdAt: new Date().toISOString()
       }
-    } catch {
+      
+      setReports(prev => [newReport, ...prev])
+      toast.success('Báo cáo đã được tạo thành công')
+      
+      // Trigger download
+      setTimeout(() => {
+        downloadReport(newReport.id)
+      }, 1000)
+    } catch (err) {
       toast.error('Không thể tạo báo cáo')
     } finally {
       setLoading(false)
     }
-  }, [fetchReports])
+  }, [downloadReport])
 
   // Schedule report
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -105,7 +113,7 @@ export function useReports() {
     try {
       // Mock API call
       toast.success('Đã thiết lập báo cáo định kỳ')
-    } catch {
+    } catch (err) {
       toast.error('Không thể thiết lập báo cáo định kỳ')
     }
   }, [])

@@ -65,8 +65,6 @@ let BackupService = BackupService_1 = class BackupService {
         this.retentionDays = Number(this.configService.get('BACKUP_RETENTION_DAYS', 30));
         this.maxBackupSize = Number(this.configService.get('MAX_BACKUP_SIZE_MB', 1024)) * 1024 * 1024;
         this.minFreeSpaceBytes = Number(this.configService.get('MIN_FREE_SPACE_MB', 256)) * 1024 * 1024;
-        this.gdriveRemote = this.configService.get('GDRIVE_REMOTE', 'gdriver');
-        this.gdriveFolderId = this.configService.get('GDRIVE_FOLDER_ID', '1DXFFkGozTgtj4LRqP_iajWGZrB4qaUnH');
     }
     async createFullBackup(options = {}) {
         if (this.isBackupInProgress) {
@@ -96,16 +94,6 @@ let BackupService = BackupService_1 = class BackupService {
             }
             const finalPath = encryptedPath || compressedPath || fullPath;
             const finalSize = await this.getFileSize(finalPath);
-            let cloudUrl;
-            if (options.uploadToDrive) {
-                try {
-                    await this.uploadToDrive(finalPath);
-                    cloudUrl = `gdrive://${this.gdriveRemote}/${path.basename(finalPath)}`;
-                }
-                catch (error) {
-                    this.logger.error('Failed to upload to Google Drive', error);
-                }
-            }
             const backupMetadata = {
                 id: backupId,
                 type: 'full',
@@ -121,7 +109,6 @@ let BackupService = BackupService_1 = class BackupService {
                 compressed: options.compress || false,
                 encrypted: options.encrypt || false,
                 comment: options.comment,
-                cloudUrl,
             };
             await this.saveBackupMetadata(backupMetadata);
             await this.cleanupOldBackups();
@@ -134,9 +121,8 @@ let BackupService = BackupService_1 = class BackupService {
                 backupId,
                 path: finalPath,
                 size: finalSize,
-                duration: backupMetadata.duration || Date.now() - startTime,
+                duration: backupMetadata.duration || (Date.now() - startTime),
                 metadata: backupMetadata,
-                cloudUrl,
             };
         }
         catch (error) {
@@ -153,7 +139,7 @@ let BackupService = BackupService_1 = class BackupService {
         try {
             this.logger.log(`Starting incremental backup: ${backupId}`);
             const since = options.since || new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const tables = options.tables || (await this.getAllTables());
+            const tables = options.tables || await this.getAllTables();
             const backupPath = path.join(this.backupDir, 'database', `${backupId}_incremental.sql`);
             await fs_1.promises.mkdir(path.dirname(backupPath), { recursive: true });
             await this.createIncrementalDump(backupPath, since, tables);
@@ -185,7 +171,7 @@ let BackupService = BackupService_1 = class BackupService {
                 backupId,
                 path: finalPath,
                 size: backupMetadata.size,
-                duration: backupMetadata.duration || Date.now() - startTime,
+                duration: backupMetadata.duration || (Date.now() - startTime),
                 metadata: backupMetadata,
             };
         }
@@ -197,7 +183,12 @@ let BackupService = BackupService_1 = class BackupService {
     async createFileBackup(backupId, options = {}) {
         const startTime = Date.now();
         try {
-            const defaultDirectories = ['./uploads', './logs', './backups/metadata', './public'];
+            const defaultDirectories = [
+                './uploads',
+                './logs',
+                './backups/metadata',
+                './public',
+            ];
             const directories = options.directories || defaultDirectories;
             const excludePatterns = options.excludePatterns || ['*.tmp', '*.log'];
             const backupPath = path.join(this.backupDir, 'files', `${backupId}_files.tar.gz`);
@@ -224,7 +215,7 @@ let BackupService = BackupService_1 = class BackupService {
                 backupId,
                 path: backupPath,
                 size: backupSize,
-                duration: backupMetadata.duration || Date.now() - startTime,
+                duration: backupMetadata.duration || (Date.now() - startTime),
                 metadata: backupMetadata,
             };
         }
@@ -415,16 +406,11 @@ let BackupService = BackupService_1 = class BackupService {
             const password = url.password;
             const dumpCommand = `pg_dump`;
             const args = [
-                '-h',
-                host,
-                '-p',
-                port,
-                '-U',
-                username,
-                '-d',
-                database,
-                '-f',
-                filePath,
+                '-h', host,
+                '-p', port,
+                '-U', username,
+                '-d', database,
+                '-f', filePath,
                 '-Fc',
                 '-v',
             ];
@@ -434,10 +420,10 @@ let BackupService = BackupService_1 = class BackupService {
             };
             const dumpProcess = (0, child_process_1.spawn)(dumpCommand, args, { env });
             let stderr = '';
-            dumpProcess.stderr.on('data', data => {
+            dumpProcess.stderr.on('data', (data) => {
                 stderr += data.toString();
             });
-            dumpProcess.on('close', code => {
+            dumpProcess.on('close', (code) => {
                 if (code === 0) {
                     resolve();
                 }
@@ -445,7 +431,7 @@ let BackupService = BackupService_1 = class BackupService {
                     reject(new Error(`pg_dump failed: ${stderr}`));
                 }
             });
-            dumpProcess.on('error', error => {
+            dumpProcess.on('error', (error) => {
                 reject(error);
             });
         });
@@ -501,7 +487,7 @@ let BackupService = BackupService_1 = class BackupService {
                 fs_1.promises.unlink(filePath);
                 resolve(compressedPath);
             });
-            output.on('error', error => {
+            output.on('error', (error) => {
                 reject(error);
             });
         });
@@ -551,15 +537,15 @@ let BackupService = BackupService_1 = class BackupService {
         }
     }
     async commandExists(cmd) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const which = process.platform === 'win32' ? 'where' : 'which';
             const p = (0, child_process_1.spawn)(which, [cmd]);
-            p.on('close', code => resolve(code === 0));
+            p.on('close', (code) => resolve(code === 0));
             p.on('error', () => resolve(false));
         });
     }
     async getDiskInfo(targetDir) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const platform = process.platform;
             if (platform === 'win32') {
                 const os = require('os');
@@ -568,7 +554,7 @@ let BackupService = BackupService_1 = class BackupService {
             }
             const df = (0, child_process_1.spawn)('df', ['-k', targetDir]);
             let out = '';
-            df.stdout.on('data', d => (out += d.toString()));
+            df.stdout.on('data', (d) => (out += d.toString()));
             df.on('close', () => {
                 const lines = out.trim().split('\n');
                 if (lines.length >= 2) {
@@ -719,14 +705,10 @@ let BackupService = BackupService_1 = class BackupService {
             const password = url.password;
             const restoreCommand = `pg_restore`;
             const args = [
-                '-h',
-                host,
-                '-p',
-                port,
-                '-U',
-                username,
-                '-d',
-                database,
+                '-h', host,
+                '-p', port,
+                '-U', username,
+                '-d', database,
                 '-c',
                 '-v',
                 backup.path,
@@ -740,10 +722,10 @@ let BackupService = BackupService_1 = class BackupService {
             };
             const restoreProcess = (0, child_process_1.spawn)(restoreCommand, args, { env });
             let stderr = '';
-            restoreProcess.stderr.on('data', data => {
+            restoreProcess.stderr.on('data', (data) => {
                 stderr += data.toString();
             });
-            restoreProcess.on('close', code => {
+            restoreProcess.on('close', (code) => {
                 if (code === 0) {
                     resolve();
                 }
@@ -751,7 +733,7 @@ let BackupService = BackupService_1 = class BackupService {
                     reject(new Error(`pg_restore failed: ${stderr}`));
                 }
             });
-            restoreProcess.on('error', error => {
+            restoreProcess.on('error', (error) => {
                 reject(error);
             });
         });
@@ -765,45 +747,16 @@ let BackupService = BackupService_1 = class BackupService {
         await new Promise((resolve, reject) => {
             const tarProc = (0, child_process_1.spawn)('tar', ['-xzf', archivePath, '-C', '.']);
             let stderr = '';
-            tarProc.stderr.on('data', d => (stderr += d.toString()));
-            tarProc.on('close', code => {
+            tarProc.stderr.on('data', (d) => (stderr += d.toString()));
+            tarProc.on('close', (code) => {
                 if (code === 0)
                     resolve();
                 else
                     reject(new Error(`tar extract failed: ${stderr}`));
             });
-            tarProc.on('error', err => reject(err));
+            tarProc.on('error', (err) => reject(err));
         });
         this.logger.log(`File backup restored from ${archivePath}`);
-    }
-    async uploadToDrive(filePath) {
-        return new Promise((resolve, reject) => {
-            this.logger.log(`Uploading to Google Drive: ${filePath}`);
-            const args = [
-                'copy',
-                filePath,
-                `${this.gdriveRemote}:`,
-                '--drive-root-folder-id',
-                this.gdriveFolderId,
-            ];
-            const rclone = (0, child_process_1.spawn)('rclone', args);
-            let stderr = '';
-            rclone.stderr.on('data', data => {
-                stderr += data.toString();
-            });
-            rclone.on('close', code => {
-                if (code === 0) {
-                    this.logger.log('Upload to Google Drive successful');
-                    resolve();
-                }
-                else {
-                    reject(new Error(`rclone failed with code ${code}: ${stderr}`));
-                }
-            });
-            rclone.on('error', err => {
-                reject(err);
-            });
-        });
     }
 };
 exports.BackupService = BackupService;

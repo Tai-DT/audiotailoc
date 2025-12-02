@@ -9,11 +9,21 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsString()
-  description?: string;
+  parentId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean = true;
+}
+
+export class UpdateCategoryDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
 
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  slug?: string;
 
   @IsOptional()
   @IsString()
@@ -21,5 +31,5 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean = true;
+  isActive?: boolean;
 }

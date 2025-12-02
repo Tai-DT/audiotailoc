@@ -5,7 +5,6 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ToastProvider } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { SocketProvider } from "@/providers/socket-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,15 +39,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <SocketProvider>
-              <div suppressHydrationWarning>
-                <TooltipProvider>
-                  <ToastProvider>
-                    {children}
-                  </ToastProvider>
-                </TooltipProvider>
-              </div>
-            </SocketProvider>
+            <div suppressHydrationWarning>
+              <TooltipProvider>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </TooltipProvider>
+            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>

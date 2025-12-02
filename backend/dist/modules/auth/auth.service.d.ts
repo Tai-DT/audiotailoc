@@ -1,13 +1,11 @@
 import { UsersService } from '../users/users.service';
 import { SecurityService } from '../security/security.service';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '../notifications/mail.service';
 export declare class AuthService {
     private readonly users;
     private readonly config;
     private readonly securityService;
-    private readonly mailService;
-    constructor(users: UsersService, config: ConfigService, securityService: SecurityService, mailService: MailService);
+    constructor(users: UsersService, config: ConfigService, securityService: SecurityService);
     register(dto: {
         email: string;
         password: string;

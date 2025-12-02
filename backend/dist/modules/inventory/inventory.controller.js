@@ -66,17 +66,16 @@ let InventoryController = class InventoryController {
         this.inventory = inventory;
     }
     list(q) {
-        return this.inventory.list({
-            page: q.page,
-            pageSize: q.pageSize,
-            lowStockOnly: q.lowStockOnly === 'true',
-        });
+        return this.inventory.list({ page: q.page, pageSize: q.pageSize, lowStockOnly: q.lowStockOnly === 'true' });
     }
     adjust(productId, dto) {
         return this.inventory.adjust(productId, dto);
     }
     delete(productId) {
         return this.inventory.delete(productId);
+    }
+    syncWithProducts() {
+        return this.inventory.syncWithProducts();
     }
 };
 exports.InventoryController = InventoryController;
@@ -102,6 +101,12 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "delete", null);
+__decorate([
+    (0, common_1.Post)('sync'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "syncWithProducts", null);
 exports.InventoryController = InventoryController = __decorate([
     (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Controller)('inventory'),

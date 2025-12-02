@@ -13,12 +13,7 @@ type Product = {
   slug?: string;
   sku?: string | null;
   categoryId?: string | null;
-  inventory?: {
-    stock: number;
-    reserved: number;
-    available: number;
-  };
-  stockQuantity?: number;
+  stockQuantity: number;
   priceCents?: number;
 };
 
@@ -56,8 +51,7 @@ export default function InventoryList() {
         slug: p.slug,
         sku: p.sku ?? null,
         categoryId: p.categoryId ?? null,
-        inventory: p.inventory,
-        stockQuantity: p.inventory?.stock ?? p.stockQuantity ?? 0,
+        stockQuantity: p.stockQuantity ?? 0,
         priceCents: p.priceCents,
       }));
       setProducts(mapped);
@@ -108,12 +102,11 @@ export default function InventoryList() {
   const rows = useMemo(() => {
     return products.map((p) => {
       const reserved = reservedByProduct[p.id] || 0;
-      const stock = p.inventory?.stock ?? p.stockQuantity ?? 0;
-      const available = Math.max(0, stock - reserved);
+      const available = Math.max(0, (p.stockQuantity || 0) - reserved);
       let status: "in" | "low" | "out" = "in";
-      if (stock <= 0 || available <= 0) status = "out";
+      if (p.stockQuantity <= 0 || available <= 0) status = "out";
       else if (available <= 5) status = "low";
-      return { ...p, reserved, available, status, stockQuantity: stock };
+      return { ...p, reserved, available, status };
     });
   }, [products, reservedByProduct]);
 

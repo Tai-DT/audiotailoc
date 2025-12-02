@@ -1,20 +1,22 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { QueryProjectsDto } from './dto/query-projects.dto';
 
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(params: QueryProjectsDto) {
-    const { page = 1, limit = 10, status, featured, category, search } = params;
+  async findAll(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    featured?: boolean;
+    category?: string;
+  }) {
+    const { page = 1, limit = 10, status, featured, category } = params;
     const skip = (page - 1) * limit;
 
     const where: any = {
       isActive: true,
-      isDeleted: false, // Exclude soft-deleted
     };
 
     if (status) {
@@ -29,21 +31,15 @@ export class ProjectsService {
       where.category = category;
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { client: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
     const [projects, total] = await Promise.all([
       this.prisma.projects.findMany({
         where,
         skip,
         take: limit,
-        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+        orderBy: [
+          { displayOrder: 'asc' },
+          { createdAt: 'desc' },
+        ],
         include: {
           users: {
             select: {
@@ -74,7 +70,10 @@ export class ProjectsService {
         isActive: true,
         isFeatured: true,
       },
-      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [
+        { displayOrder: 'asc' },
+        { createdAt: 'desc' },
+      ],
       take: 6,
     });
   }
@@ -187,7 +186,7 @@ export class ProjectsService {
     // Update slug if name changed
     if (data.name && data.name !== project.name && !data.slug) {
       data.slug = this.generateSlug(data.name);
-
+      
       // Ensure slug is unique
       const existingProject = await this.prisma.projects.findFirst({
         where: {
@@ -235,56 +234,20 @@ export class ProjectsService {
     });
   }
 
-  async remove(id: string, permanent: boolean = false) {
+  async remove(id: string) {
     const project = await this.prisma.projects.findUnique({
       where: { id },
     });
 
     if (!project) {
-      throw new NotFoundException(`Project with ID "${id}" not found`);
+      throw new NotFoundException('Project not found');
     }
 
-    if (permanent) {
-      // Permanent delete
-      await this.prisma.projects.delete({
-        where: { id },
-      });
-      return { message: 'Project permanently deleted', id };
-    } else {
-      // Soft delete
-      await this.prisma.projects.update({
-        where: { id },
-        data: {
-          isDeleted: true,
-          deletedAt: new Date(),
-        },
-      });
-      return { message: 'Project soft deleted successfully', id };
-    }
-  }
-
-  async restore(id: string) {
-    const project = await this.prisma.projects.findUnique({
+    await this.prisma.projects.delete({
       where: { id },
     });
 
-    if (!project) {
-      throw new NotFoundException(`Project with ID "${id}" not found`);
-    }
-
-    if (!project.isDeleted) {
-      throw new BadRequestException('Project is not deleted');
-    }
-
-    await this.prisma.projects.update({
-      where: { id },
-      data: {
-        isDeleted: false,
-        deletedAt: null,
-      },
-    });
-
-    return { message: 'Project restored successfully', id };
+    return { message: 'Project deleted successfully' };
   }
 
   async toggleFeatured(id: string) {
@@ -340,20 +303,16 @@ export class ProjectsService {
   }
 
   private extractYouTubeId(url: string): string | null {
-    const regex =
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
   }
 
-  async updateImages(
-    id: string,
-    imageData: {
-      thumbnailImage?: string;
-      coverImage?: string;
-      galleryImages?: string;
-    },
-  ) {
+  async updateImages(id: string, imageData: {
+    thumbnailImage?: string;
+    coverImage?: string;
+    galleryImages?: string;
+  }) {
     const project = await this.prisma.projects.findUnique({
       where: { id },
     });

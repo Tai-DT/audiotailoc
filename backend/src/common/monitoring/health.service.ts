@@ -100,7 +100,7 @@ export class HealthService {
       });
     }
 
-    const _responseTime = Date.now() - startTime;
+    const responseTime = Date.now() - startTime;
     const overallStatus = this.determineOverallStatus(checks);
     const memUsage = process.memoryUsage();
 
@@ -177,8 +177,7 @@ export class HealthService {
       const info = await this.redisClient.info('memory');
       const memoryUsage = this.parseRedisMemory(info);
 
-      const status =
-        responseTime > 100 || memoryUsage.percentage > 90 ? HealthStatus.DEGRADED : HealthStatus.UP;
+      const status = responseTime > 100 || memoryUsage.percentage > 90 ? HealthStatus.DEGRADED : HealthStatus.UP;
 
       return {
         status,

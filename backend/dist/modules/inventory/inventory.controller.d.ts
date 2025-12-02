@@ -15,40 +15,81 @@ export declare class InventoryController {
     private readonly inventory;
     constructor(inventory: InventoryService);
     list(q: ListQueryDto): Promise<{
-        items: ({
-            products: {
-                model: string | null;
-                tags: string | null;
-                description: string | null;
+        total: number;
+        page: number;
+        pageSize: number;
+        items: {
+            product: {
+                priceCents: number;
+                categories: {
+                    id: string;
+                    name: string;
+                    slug: string;
+                };
                 id: string;
                 name: string;
-                createdAt: Date;
-                updatedAt: Date;
-                isDeleted: boolean;
                 slug: string;
-                shortDescription: string | null;
-                priceCents: bigint;
-                originalPriceCents: bigint | null;
-                imageUrl: string | null;
-                images: string | null;
-                categoryId: string | null;
-                brand: string | null;
-                sku: string | null;
-                specifications: string | null;
-                features: string | null;
-                warranty: string | null;
-                weight: number | null;
-                dimensions: string | null;
-                minOrderQuantity: number;
-                maxOrderQuantity: number | null;
-                maxStock: number | null;
-                metaTitle: string | null;
-                metaDescription: string | null;
-                metaKeywords: string | null;
-                canonicalUrl: string | null;
-                featured: boolean;
+                imageUrl: string;
+                categoryId: string;
+                sku: string;
                 isActive: boolean;
-                viewCount: number;
+                isDeleted: boolean;
+            };
+            products: {
+                categories: {
+                    id: string;
+                    name: string;
+                    slug: string;
+                };
+                id: string;
+                name: string;
+                slug: string;
+                priceCents: bigint;
+                imageUrl: string;
+                categoryId: string;
+                sku: string;
+                isActive: boolean;
+                isDeleted: boolean;
+            };
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            productId: string;
+            stock: number;
+            reserved: number;
+            lowStockThreshold: number;
+        }[];
+    }>;
+    adjust(productId: string, dto: AdjustDto): Promise<{
+        products: {
+            name: string;
+            sku: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        productId: string;
+        stock: number;
+        reserved: number;
+        lowStockThreshold: number;
+    }>;
+    delete(productId: string): Promise<{
+        message: string;
+        productId: string;
+        productName: string;
+        sku: string;
+    }>;
+    syncWithProducts(): Promise<{
+        syncedProducts: number;
+        orphanedInventoriesCount: number;
+        createdInventories: any[];
+        orphanedInventoriesList: ({
+            products: {
+                name: string;
+                sku: string;
+                isActive: boolean;
+                isDeleted: boolean;
             };
         } & {
             id: string;
@@ -59,30 +100,6 @@ export declare class InventoryController {
             reserved: number;
             lowStockThreshold: number;
         })[];
-        meta: {
-            total: number;
-            page: number;
-            pageSize: number;
-            totalPages: number;
-        };
-    }>;
-    adjust(productId: string, dto: AdjustDto): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        productId: string;
-        stock: number;
-        reserved: number;
-        lowStockThreshold: number;
-    }>;
-    delete(productId: string): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        productId: string;
-        stock: number;
-        reserved: number;
-        lowStockThreshold: number;
     }>;
 }
 export {};

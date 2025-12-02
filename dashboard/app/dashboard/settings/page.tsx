@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,31 +17,28 @@ import {
   Save
 } from "lucide-react"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
-import type { UpdateSettingsDto, SiteSettingsState, SiteSettingsResponse } from "@/types/settings"
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(false)
-  const [settings, setSettings] = useState<SiteSettingsState>({
+  const [settings, setSettings] = useState({
     // Store settings
-    storeName: "",
-    storeEmail: "",
-    storePhone: "",
-    storeAddress: "",
-    storeLogo: "",
+    storeName: "Audio Tài Lộc",
+    storeEmail: "contact@audiotailoc.com",
+    storePhone: "0123456789",
+    storeAddress: "123 Đường ABC, Quận XYZ, TP.HCM",
+    storeLogo: "/logo.png",
 
     // Business settings
-    taxCode: "",
-    businessLicense: "",
+    taxCode: "0123456789",
+    businessLicense: "GP-123456",
     currency: "VND",
     timezone: "Asia/Ho_Chi_Minh",
 
     // Email settings
-    emailHost: "",
-    emailPort: "",
+    emailHost: "smtp.gmail.com",
+    emailPort: "587",
     emailUsername: "",
     emailPassword: "",
-    emailFrom: "",
+    emailFrom: "noreply@audiotailoc.com",
 
     // Notification settings
     orderNotification: true,
@@ -54,91 +51,27 @@ export default function SettingsPage() {
     sessionTimeout: 30,
     passwordExpiry: 90,
     maxLoginAttempts: 5,
-  })
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setLoading(true)
-        const response = await apiClient.getSiteSettings()
-        if (response.success && response.data) {
-          const data = response.data as unknown as SiteSettingsResponse
-          setSettings(prev => ({
-            ...prev,
-            ...(data.general || {}),
-            ...(data.business || {}),
-            ...(data.email || {}),
-            ...(data.notifications || {}),
-            ...(data.security || {}),
-          }))
-        }
-      } catch (error) {
-        console.error('Failed to fetch settings:', error)
-        toast.error("Không thể tải cài đặt")
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchSettings()
-  }, [])
+    // System settings
+    maintenance: false,
+    maintenanceMessage: "",
+    backupEnabled: true,
+    backupSchedule: "daily",
+
+    // Display settings
+    theme: "light",
+    language: "vi",
+    dateFormat: "DD/MM/YYYY",
+    itemsPerPage: 20
+  })
 
   const handleSave = async (section: string) => {
     try {
-      setLoading(true)
-
-      const updateData: UpdateSettingsDto = {}
-
-      switch (section) {
-        case 'store':
-          updateData.general = {
-            storeName: settings.storeName,
-            storeEmail: settings.storeEmail,
-            storePhone: settings.storePhone,
-            storeAddress: settings.storeAddress,
-            storeLogo: settings.storeLogo
-          }
-          break
-        case 'business':
-          updateData.business = {
-            taxCode: settings.taxCode,
-            businessLicense: settings.businessLicense,
-            currency: settings.currency,
-            timezone: settings.timezone
-          }
-          break
-        case 'email':
-          updateData.email = {
-            emailHost: settings.emailHost,
-            emailPort: settings.emailPort,
-            emailUsername: settings.emailUsername,
-            emailPassword: settings.emailPassword,
-            emailFrom: settings.emailFrom
-          }
-          break
-        case 'notifications':
-          updateData.notifications = {
-            orderNotification: settings.orderNotification,
-            paymentNotification: settings.paymentNotification,
-            reviewNotification: settings.reviewNotification,
-            lowStockNotification: settings.lowStockNotification
-          }
-          break
-        case 'security':
-          updateData.security = {
-            twoFactorAuth: settings.twoFactorAuth,
-            sessionTimeout: settings.sessionTimeout,
-            passwordExpiry: settings.passwordExpiry,
-            maxLoginAttempts: settings.maxLoginAttempts
-          }
-          break
-      }
-
-      await apiClient.updateSiteSettings(updateData)
-      toast.success(`Đã lưu cài đặt`)
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      toast.success(`Đã lưu cài đặt ${section}`)
     } catch {
       toast.error("Không thể lưu cài đặt")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -180,7 +113,7 @@ export default function SettingsPage() {
                   <Input
                     id="storeName"
                     value={settings.storeName}
-                    onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
+                    onChange={(e) => setSettings({...settings, storeName: e.target.value})}
                     placeholder="Nhập tên cửa hàng"
                   />
                 </div>
@@ -190,7 +123,7 @@ export default function SettingsPage() {
                     id="storeEmail"
                     type="email"
                     value={settings.storeEmail}
-                    onChange={(e) => setSettings({ ...settings, storeEmail: e.target.value })}
+                    onChange={(e) => setSettings({...settings, storeEmail: e.target.value})}
                     placeholder="contact@example.com"
                   />
                 </div>
@@ -199,7 +132,7 @@ export default function SettingsPage() {
                   <Input
                     id="storePhone"
                     value={settings.storePhone}
-                    onChange={(e) => setSettings({ ...settings, storePhone: e.target.value })}
+                    onChange={(e) => setSettings({...settings, storePhone: e.target.value})}
                     placeholder="0123456789"
                   />
                 </div>
@@ -208,7 +141,7 @@ export default function SettingsPage() {
                   <Input
                     id="storeAddress"
                     value={settings.storeAddress}
-                    onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })}
+                    onChange={(e) => setSettings({...settings, storeAddress: e.target.value})}
                     placeholder="123 Đường ABC, Quận XYZ"
                   />
                 </div>
@@ -219,14 +152,14 @@ export default function SettingsPage() {
                 <Input
                   id="storeLogo"
                   value={settings.storeLogo}
-                  onChange={(e) => setSettings({ ...settings, storeLogo: e.target.value })}
+                  onChange={(e) => setSettings({...settings, storeLogo: e.target.value})}
                   placeholder="https://example.com/logo.png"
                 />
               </div>
 
-              <Button onClick={() => handleSave("store")} disabled={loading}>
+              <Button onClick={() => handleSave("cửa hàng")}>
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </CardContent>
           </Card>
@@ -251,7 +184,7 @@ export default function SettingsPage() {
                   <Input
                     id="taxCode"
                     value={settings.taxCode}
-                    onChange={(e) => setSettings({ ...settings, taxCode: e.target.value })}
+                    onChange={(e) => setSettings({...settings, taxCode: e.target.value})}
                     placeholder="0123456789"
                   />
                 </div>
@@ -260,13 +193,13 @@ export default function SettingsPage() {
                   <Input
                     id="businessLicense"
                     value={settings.businessLicense}
-                    onChange={(e) => setSettings({ ...settings, businessLicense: e.target.value })}
+                    onChange={(e) => setSettings({...settings, businessLicense: e.target.value})}
                     placeholder="GP-123456"
                   />
                 </div>
                 <div>
                   <Label htmlFor="currency">Tiền tệ</Label>
-                  <Select value={settings.currency} onValueChange={(value) => setSettings({ ...settings, currency: value })}>
+                  <Select value={settings.currency} onValueChange={(value) => setSettings({...settings, currency: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn tiền tệ" />
                     </SelectTrigger>
@@ -279,7 +212,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <Label htmlFor="timezone">Múi giờ</Label>
-                  <Select value={settings.timezone} onValueChange={(value) => setSettings({ ...settings, timezone: value })}>
+                  <Select value={settings.timezone} onValueChange={(value) => setSettings({...settings, timezone: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn múi giờ" />
                     </SelectTrigger>
@@ -292,9 +225,9 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button onClick={() => handleSave("business")} disabled={loading}>
+              <Button onClick={() => handleSave("kinh doanh")}>
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </CardContent>
           </Card>
@@ -319,7 +252,7 @@ export default function SettingsPage() {
                   <Input
                     id="emailHost"
                     value={settings.emailHost}
-                    onChange={(e) => setSettings({ ...settings, emailHost: e.target.value })}
+                    onChange={(e) => setSettings({...settings, emailHost: e.target.value})}
                     placeholder="smtp.gmail.com"
                   />
                 </div>
@@ -328,7 +261,7 @@ export default function SettingsPage() {
                   <Input
                     id="emailPort"
                     value={settings.emailPort}
-                    onChange={(e) => setSettings({ ...settings, emailPort: e.target.value })}
+                    onChange={(e) => setSettings({...settings, emailPort: e.target.value})}
                     placeholder="587"
                   />
                 </div>
@@ -337,7 +270,7 @@ export default function SettingsPage() {
                   <Input
                     id="emailUsername"
                     value={settings.emailUsername}
-                    onChange={(e) => setSettings({ ...settings, emailUsername: e.target.value })}
+                    onChange={(e) => setSettings({...settings, emailUsername: e.target.value})}
                     placeholder="your-email@gmail.com"
                   />
                 </div>
@@ -347,7 +280,7 @@ export default function SettingsPage() {
                     id="emailPassword"
                     type="password"
                     value={settings.emailPassword}
-                    onChange={(e) => setSettings({ ...settings, emailPassword: e.target.value })}
+                    onChange={(e) => setSettings({...settings, emailPassword: e.target.value})}
                     placeholder="App password"
                   />
                 </div>
@@ -358,14 +291,14 @@ export default function SettingsPage() {
                 <Input
                   id="emailFrom"
                   value={settings.emailFrom}
-                  onChange={(e) => setSettings({ ...settings, emailFrom: e.target.value })}
+                  onChange={(e) => setSettings({...settings, emailFrom: e.target.value})}
                   placeholder="noreply@example.com"
                 />
               </div>
 
-              <Button onClick={() => handleSave("email")} disabled={loading}>
+              <Button onClick={() => handleSave("email")}>
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </CardContent>
           </Card>
@@ -393,7 +326,7 @@ export default function SettingsPage() {
                   <Switch
                     id="orderNotification"
                     checked={settings.orderNotification}
-                    onCheckedChange={(checked) => setSettings({ ...settings, orderNotification: checked })}
+                    onCheckedChange={(checked) => setSettings({...settings, orderNotification: checked})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -404,7 +337,7 @@ export default function SettingsPage() {
                   <Switch
                     id="paymentNotification"
                     checked={settings.paymentNotification}
-                    onCheckedChange={(checked) => setSettings({ ...settings, paymentNotification: checked })}
+                    onCheckedChange={(checked) => setSettings({...settings, paymentNotification: checked})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -415,7 +348,7 @@ export default function SettingsPage() {
                   <Switch
                     id="reviewNotification"
                     checked={settings.reviewNotification}
-                    onCheckedChange={(checked) => setSettings({ ...settings, reviewNotification: checked })}
+                    onCheckedChange={(checked) => setSettings({...settings, reviewNotification: checked})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -426,14 +359,14 @@ export default function SettingsPage() {
                   <Switch
                     id="lowStockNotification"
                     checked={settings.lowStockNotification}
-                    onCheckedChange={(checked) => setSettings({ ...settings, lowStockNotification: checked })}
+                    onCheckedChange={(checked) => setSettings({...settings, lowStockNotification: checked})}
                   />
                 </div>
               </div>
 
-              <Button onClick={() => handleSave("notifications")} disabled={loading}>
+              <Button onClick={() => handleSave("thông báo")}>
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </CardContent>
           </Card>
@@ -459,7 +392,7 @@ export default function SettingsPage() {
                     id="sessionTimeout"
                     type="number"
                     value={settings.sessionTimeout}
-                    onChange={(e) => setSettings({ ...settings, sessionTimeout: parseInt(e.target.value) })}
+                    onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value)})}
                     placeholder="30"
                   />
                 </div>
@@ -469,7 +402,7 @@ export default function SettingsPage() {
                     id="passwordExpiry"
                     type="number"
                     value={settings.passwordExpiry}
-                    onChange={(e) => setSettings({ ...settings, passwordExpiry: parseInt(e.target.value) })}
+                    onChange={(e) => setSettings({...settings, passwordExpiry: parseInt(e.target.value)})}
                     placeholder="90"
                   />
                 </div>
@@ -479,7 +412,7 @@ export default function SettingsPage() {
                     id="maxLoginAttempts"
                     type="number"
                     value={settings.maxLoginAttempts}
-                    onChange={(e) => setSettings({ ...settings, maxLoginAttempts: parseInt(e.target.value) })}
+                    onChange={(e) => setSettings({...settings, maxLoginAttempts: parseInt(e.target.value)})}
                     placeholder="5"
                   />
                 </div>
@@ -493,13 +426,13 @@ export default function SettingsPage() {
                 <Switch
                   id="twoFactorAuth"
                   checked={settings.twoFactorAuth}
-                  onCheckedChange={(checked) => setSettings({ ...settings, twoFactorAuth: checked })}
+                  onCheckedChange={(checked) => setSettings({...settings, twoFactorAuth: checked})}
                 />
               </div>
 
-              <Button onClick={() => handleSave("security")} disabled={loading}>
+              <Button onClick={() => handleSave("bảo mật")}>
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </CardContent>
           </Card>

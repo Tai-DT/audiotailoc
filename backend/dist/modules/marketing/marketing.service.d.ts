@@ -18,12 +18,12 @@ export declare class MarketingService {
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
-        createdBy: string | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
-        subject: string | null;
+        createdBy: string | null;
         templateId: string | null;
     }[]>;
     getCampaign(id: string): Promise<{
@@ -38,12 +38,12 @@ export declare class MarketingService {
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
-        createdBy: string | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
-        subject: string | null;
+        createdBy: string | null;
         templateId: string | null;
     }>;
     createCampaign(data: {
@@ -67,12 +67,12 @@ export declare class MarketingService {
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
-        createdBy: string | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
-        subject: string | null;
+        createdBy: string | null;
         templateId: string | null;
     }>;
     updateCampaign(id: string, data: Partial<{
@@ -97,12 +97,12 @@ export declare class MarketingService {
         startDate: Date | null;
         endDate: Date | null;
         scheduledAt: Date | null;
-        createdBy: string | null;
+        subject: string | null;
         targetAudience: string | null;
         discountPercent: number | null;
         discountAmount: number | null;
         sentAt: Date | null;
-        subject: string | null;
+        createdBy: string | null;
         templateId: string | null;
     }>;
     deleteCampaign(id: string): Promise<{

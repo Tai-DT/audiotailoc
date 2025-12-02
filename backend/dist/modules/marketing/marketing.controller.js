@@ -132,7 +132,7 @@ let MarketingController = class MarketingController {
 };
 exports.MarketingController = MarketingController;
 __decorate([
-    (0, common_1.Get)('campaigns'),
+    (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

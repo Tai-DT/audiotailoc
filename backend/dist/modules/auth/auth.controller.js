@@ -94,7 +94,7 @@ let AuthController = class AuthController {
         return {
             authenticated: false,
             message: 'Authentication status endpoint',
-            timestamp: new Date().toISOString(),
+            timestamp: new Date().toISOString()
         };
     }
     async register(dto) {
@@ -105,13 +105,10 @@ let AuthController = class AuthController {
         return {
             token: tokens.accessToken,
             refreshToken: tokens.refreshToken,
-            user: { id: user.id, email: user.email, name: user.name },
+            user: { id: user.id, email: user.email, name: user.name }
         };
     }
     async login(dto) {
-        if (!dto?.email || !dto?.password) {
-            throw new common_1.HttpException('Missing required fields', common_1.HttpStatus.UNPROCESSABLE_ENTITY);
-        }
         const tokens = await this.auth.login(dto).catch(() => {
             throw new common_1.HttpException('Invalid credentials', common_1.HttpStatus.UNAUTHORIZED);
         });
@@ -123,9 +120,8 @@ let AuthController = class AuthController {
                 id: user?.id,
                 email: user?.email,
                 name: user?.name,
-                role: user?.role ?? 'USER',
-                avatarUrl: user?.avatarUrl ?? null,
-            },
+                role: user?.role ?? 'USER'
+            }
         };
     }
     async refresh(dto) {
@@ -147,28 +143,20 @@ let AuthController = class AuthController {
         return { message: 'Password has been reset successfully' };
     }
     async changePassword(req, dto) {
-        const userId = req.user?.sub;
+        const userId = req.users?.sub;
         if (!userId)
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
-        const _result = await this.auth
-            .changePassword(userId, dto.currentPassword, dto.newPassword)
-            .catch(() => {
+        const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
             throw new common_1.HttpException('Current password is incorrect', common_1.HttpStatus.BAD_REQUEST);
         });
         return { message: 'Password has been changed successfully' };
     }
     async me(req) {
-        const userId = req.user?.sub;
+        const userId = req.users?.sub;
         if (!userId)
             return { userId: null };
         const u = await this.users.findById(userId);
-        return {
-            userId,
-            email: u?.email ?? null,
-            role: u?.role ?? null,
-            avatarUrl: u?.avatarUrl ?? null,
-            name: u?.name ?? null,
-        };
+        return { userId, email: u?.email ?? null, role: u?.role ?? null };
     }
 };
 exports.AuthController = AuthController;
@@ -240,7 +228,6 @@ __decorate([
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService,
-        users_service_1.UsersService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService, users_service_1.UsersService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

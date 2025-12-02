@@ -58,10 +58,11 @@ export default function BlogPage() {
   );
 
   const { data: articlesResponse, isLoading: articlesLoading } = useBlogArticles(filters);
-  const { data: categories } = useBlogCategories({ published: true, limit: 100 });
+  const { data: categoriesResponse } = useBlogCategories({ published: true, limit: 100 });
 
   const articles = articlesResponse?.data ?? [];
   const pagination = articlesResponse?.pagination;
+  const categories = categoriesResponse?.data ?? [];
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -120,7 +121,7 @@ export default function BlogPage() {
                     >
                       Tất cả bài viết
                     </Button>
-                    {categories?.map((category: BlogCategory) => (
+                    {categories.map((category) => (
                       <Button
                         key={category.id}
                         variant={selectedCategory === category.id ? 'default' : 'ghost'}

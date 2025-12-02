@@ -22,8 +22,14 @@ exports.BackupModule = BackupModule = __decorate([
     (0, common_1.Module)({
         imports: [config_1.ConfigModule, logging_module_1.LoggingModule, prisma_module_1.PrismaModule],
         controllers: [backup_controller_1.BackupController],
-        providers: [backup_service_1.BackupService, backup_scheduler_service_1.BackupSchedulerService],
-        exports: [backup_service_1.BackupService, backup_scheduler_service_1.BackupSchedulerService],
+        providers: [
+            backup_service_1.BackupService,
+            backup_scheduler_service_1.BackupSchedulerService,
+        ],
+        exports: [
+            backup_service_1.BackupService,
+            backup_scheduler_service_1.BackupSchedulerService,
+        ],
     })
 ], BackupModule);
 //# sourceMappingURL=backup.module.js.map

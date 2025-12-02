@@ -20,22 +20,14 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
         const { method, url, ip, user } = request;
         const userAgent = request.get('User-Agent') || '';
         const startTime = Date.now();
-        const safeStringify = (obj) => {
-            try {
-                return JSON.stringify(obj, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
-            }
-            catch {
-                return '';
-            }
-        };
         this.logger.log(`[${method}] ${url} - IP: ${ip} - User: ${user?.id || 'anonymous'} - UA: ${userAgent}`);
         return next.handle().pipe((0, rxjs_1.tap)({
-            next: data => {
+            next: (data) => {
                 const duration = Date.now() - startTime;
                 const statusCode = response.statusCode;
-                this.logger.log(`[${method}] ${url} - ${statusCode} - ${duration}ms - Size: ${safeStringify(data).length}`);
+                this.logger.log(`[${method}] ${url} - ${statusCode} - ${duration}ms - Size: ${JSON.stringify(data).length}`);
             },
-            error: error => {
+            error: (error) => {
                 const duration = Date.now() - startTime;
                 this.logger.error(`[${method}] ${url} - ${error.status || 500} - ${duration}ms - Error: ${error.message}`, error.stack);
             },

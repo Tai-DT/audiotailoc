@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSettingsDto = exports.SiteSecurityDto = exports.SiteNotificationsDto = exports.SiteEmailDto = exports.SiteBusinessDto = exports.SiteSocialsDto = exports.SiteAboutDto = exports.SiteGeneralDto = void 0;
+exports.UpdateSettingsDto = exports.SiteSocialsDto = exports.SiteAboutDto = exports.SiteGeneralDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
@@ -124,112 +124,6 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], SiteSocialsDto.prototype, "github", void 0);
-class SiteBusinessDto {
-}
-exports.SiteBusinessDto = SiteBusinessDto;
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteBusinessDto.prototype, "taxCode", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteBusinessDto.prototype, "businessLicense", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteBusinessDto.prototype, "currency", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteBusinessDto.prototype, "timezone", void 0);
-class SiteEmailDto {
-}
-exports.SiteEmailDto = SiteEmailDto;
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteEmailDto.prototype, "emailHost", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteEmailDto.prototype, "emailPort", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteEmailDto.prototype, "emailUsername", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteEmailDto.prototype, "emailPassword", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SiteEmailDto.prototype, "emailFrom", void 0);
-class SiteNotificationsDto {
-}
-exports.SiteNotificationsDto = SiteNotificationsDto;
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], SiteNotificationsDto.prototype, "orderNotification", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], SiteNotificationsDto.prototype, "paymentNotification", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], SiteNotificationsDto.prototype, "reviewNotification", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], SiteNotificationsDto.prototype, "lowStockNotification", void 0);
-class SiteSecurityDto {
-}
-exports.SiteSecurityDto = SiteSecurityDto;
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], SiteSecurityDto.prototype, "twoFactorAuth", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], SiteSecurityDto.prototype, "sessionTimeout", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], SiteSecurityDto.prototype, "passwordExpiry", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], SiteSecurityDto.prototype, "maxLoginAttempts", void 0);
 class UpdateSettingsDto {
 }
 exports.UpdateSettingsDto = UpdateSettingsDto;
@@ -254,32 +148,4 @@ __decorate([
     (0, class_transformer_1.Type)(() => SiteSocialsDto),
     __metadata("design:type", SiteSocialsDto)
 ], UpdateSettingsDto.prototype, "socials", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => SiteBusinessDto),
-    __metadata("design:type", SiteBusinessDto)
-], UpdateSettingsDto.prototype, "business", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => SiteEmailDto),
-    __metadata("design:type", SiteEmailDto)
-], UpdateSettingsDto.prototype, "email", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => SiteNotificationsDto),
-    __metadata("design:type", SiteNotificationsDto)
-], UpdateSettingsDto.prototype, "notifications", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => SiteSecurityDto),
-    __metadata("design:type", SiteSecurityDto)
-], UpdateSettingsDto.prototype, "security", void 0);
 //# sourceMappingURL=settings-update.dto.js.map

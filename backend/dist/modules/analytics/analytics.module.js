@@ -18,7 +18,11 @@ let AnalyticsModule = class AnalyticsModule {
 exports.AnalyticsModule = AnalyticsModule;
 exports.AnalyticsModule = AnalyticsModule = __decorate([
     (0, common_1.Module)({
-        imports: [guards_module_1.GuardsModule, prisma_module_1.PrismaModule, cache_module_1.CacheModule.forRoot({ isGlobal: false, ttl: 300 })],
+        imports: [
+            guards_module_1.GuardsModule,
+            prisma_module_1.PrismaModule,
+            cache_module_1.CacheModule.forRoot({ isGlobal: false, ttl: 300 }),
+        ],
         providers: [analytics_service_1.AnalyticsService],
         controllers: [analytics_controller_1.AnalyticsController],
         exports: [analytics_service_1.AnalyticsService],

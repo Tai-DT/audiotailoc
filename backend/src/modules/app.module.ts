@@ -17,10 +17,13 @@ import { AdminModule } from './admin/admin.module';
 
 // E-commerce modules - ENABLING STEP BY STEP
 import { CatalogModule } from './catalog/catalog.module';
+// import { CartModule } from './cart/cart.module'; // Disabled due to schema mismatch
+// import { PromotionsModule } from './promotions/promotions.module'; // Disabled due to schema mismatch
+// import { CheckoutModule } from './checkout/checkout.module'; // Disabled due to dependencies
+import { PaymentsModule } from './payments/payments.module';
 import { CartModule } from './cart/cart.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { CheckoutModule } from './checkout/checkout.module';
-import { PaymentsModule } from './payments/payments.module';
 import { OrdersModule } from './orders/orders.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { WishlistModule } from './wishlist/wishlist.module';
@@ -61,79 +64,69 @@ import { BlogModule } from './blog/blog.module';
 // Test module for payment testing
 import { TestModule } from './test/test.module';
 
-// New modules - Reviews, Messages, Categories, Reports
-import { ReviewsModule } from './reviews/reviews.module';
-import { MessagesModule } from './messages/messages.module';
-import { CategoriesModule } from './categories/categories.module';
-import { ReportsModule } from './reports/reports.module';
-
+const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
-  ConfigModule.forRoot({ isGlobal: true }),
-  // LoggerModule,
-  CacheModule.forRoot({
-    isGlobal: true,
-  }), // Global cache service
-  PrismaModule,
-  HealthModule,
-  // TestingModule, // Testing utilities
+    ConfigModule.forRoot({ isGlobal: true }), 
+    // LoggerModule,
+    CacheModule.forRoot({
+      isGlobal: true,
+    }), // Global cache service
+    PrismaModule, 
+    HealthModule,
+    // TestingModule, // Testing utilities
+    
+    // Authentication - CORE ONLY
+    AuthModule,
+    SharedModule,
+    UsersModule,
+    AdminModule,
+    
+    // Support and File Management - ENABLED
+    SupportModule,
+    WebhooksModule,
+    NotificationsModule,
+    FilesModule,
+    BackupModule,
+    MarketingModule,
+    MapsModule,
+    AnalyticsModule,
 
-  // Authentication - CORE ONLY
-  AuthModule,
-  SharedModule,
-  UsersModule,
-  AdminModule,
+    // Advanced Features - ENABLED
+    SearchModule,
+    RealtimeModule,
+    AiModule,
+    
+    // E-commerce modules - ENABLING STEP BY STEP
+    CatalogModule,
+    PaymentsModule,
+    OrdersModule,
+    InventoryModule,
+    WishlistModule,
 
-  // Support and File Management - ENABLED
-  SupportModule,
-  WebhooksModule,
-  NotificationsModule,
-  FilesModule,
-  BackupModule,
-  MarketingModule,
-  MapsModule,
-  AnalyticsModule,
+    // Complete Product API Module - NEW COMPLETE SYSTEM
+    CompleteProductModule,
 
-  // Advanced Features - ENABLED
-  SearchModule,
-  RealtimeModule,
-  AiModule,
+    // Services Management
+    ServicesModule,
+    ServiceTypesModule,
+    BookingModule,
+    TechniciansModule,
 
-  // E-commerce modules - ENABLED (Core features)
-  CatalogModule,
-  CartModule,
-  PromotionsModule,
-  CheckoutModule,
-  PaymentsModule,
-  OrdersModule,
-  InventoryModule,
-  WishlistModule,
+    // Site Content Management
+    SiteModule,
+    SeoModule,
+    BlogModule,
+    
+    // Portfolio/Projects
+    ProjectsModule,
 
-  // Complete Product API Module - NEW COMPLETE SYSTEM
-  CompleteProductModule,
-
-  // Services Management
-  ServicesModule,
-  ServiceTypesModule,
-  BookingModule,
-  TechniciansModule,
-
-  // Site Content Management
-  SiteModule,
-  SeoModule,
-  BlogModule,
-
-  // Portfolio/Projects
-  ProjectsModule,
-
-  // Test module for payment testing
-  TestModule,
-
-  // New modules - Reviews, Messages, Categories, Reports
-  ReviewsModule,
-  MessagesModule,
-  CategoriesModule,
-  ReportsModule,
+    // Test module for payment testing
+    TestModule,
 ];
+
+if (FEATURE_CHECKOUT) {
+  runtimeImports.push(CartModule, PromotionsModule, CheckoutModule);
+}
 
 @Module({
   imports: runtimeImports,

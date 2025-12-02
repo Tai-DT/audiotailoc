@@ -16,7 +16,7 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     findAll(page?: string, limit?: string, search?: string, role?: string, status?: string, startDate?: string, endDate?: string, sortBy?: string, sortOrder?: string): Promise<{
-        items: {
+        users: {
             orders: {
                 totalCents: number;
             }[];
@@ -25,16 +25,17 @@ export declare class UsersController {
             name: string;
             phone: string;
             role: string;
-            avatarUrl: string;
             createdAt: Date;
             _count: {
                 orders: number;
             };
         }[];
-        total: number;
-        page: number;
-        limit: number;
-        pages: number;
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
     }>;
     getProfile(req: any): Promise<{
         orders: {
@@ -43,7 +44,7 @@ export declare class UsersController {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string | null;
+            userId: string;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -51,20 +52,19 @@ export declare class UsersController {
             shippingAddress: string | null;
             shippingCoordinates: string | null;
             promotionCode: string | null;
-            isDeleted: boolean;
-            deletedAt: Date | null;
         }[];
-        id: string;
-        email: string;
-        name: string;
-        phone: string;
-        role: string;
-        avatarUrl: string;
-        createdAt: Date;
-        updatedAt: Date;
         _count: {
             orders: number;
         };
+    } & {
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        phone: string | null;
+        role: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     exportUserData(req: any): Promise<{
         exportDate: string;
@@ -93,7 +93,7 @@ export declare class UsersController {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string | null;
+            userId: string;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -101,20 +101,19 @@ export declare class UsersController {
             shippingAddress: string | null;
             shippingCoordinates: string | null;
             promotionCode: string | null;
-            isDeleted: boolean;
-            deletedAt: Date | null;
         }[];
-        id: string;
-        email: string;
-        name: string;
-        phone: string;
-        role: string;
-        avatarUrl: string;
-        createdAt: Date;
-        updatedAt: Date;
         _count: {
             orders: number;
         };
+    } & {
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        phone: string | null;
+        role: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     create(createUserDto: CreateUserDto): Promise<{
         id: string;

@@ -21,6 +21,7 @@ export type ProductDto = {
     warranty?: string | null;
     weight?: number | null;
     dimensions?: string | null;
+    stockQuantity?: number;
     minOrderQuantity?: number;
     maxOrderQuantity?: number | null;
     tags?: string | null;
@@ -38,8 +39,6 @@ export type ProductDto = {
 export declare class CatalogService {
     private readonly prisma;
     private readonly cache;
-    private readonly inMemoryCache;
-    private readonly inFlightRequests;
     constructor(prisma: PrismaService, cache: CacheService);
     listProducts(params?: {
         page?: number;
@@ -50,8 +49,12 @@ export declare class CatalogService {
         sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount';
         sortOrder?: 'asc' | 'desc';
         featured?: boolean;
-        isActive?: boolean;
-    }): Promise<any>;
+    }): Promise<{
+        items: ProductDto[];
+        total: number;
+        page: number;
+        pageSize: number;
+    }>;
     getById(id: string): Promise<ProductDto>;
     getBySlug(slug: string): Promise<ProductDto>;
     checkSkuExists(sku: string, excludeId?: string): Promise<boolean>;
@@ -62,20 +65,16 @@ export declare class CatalogService {
         deleted: boolean;
         message?: string;
     }>;
-    listCategories(): Promise<any[]>;
-    getCategoryBySlug(slug: string): Promise<{
+    listCategories(): Promise<{
         id: string;
         slug: string;
         name: string;
         parentId: string | null;
-        isActive: boolean;
-    }>;
-    getCategoryById(id: string): Promise<{
+    }[]>;
+    getCategoryBySlug(slug: string): Promise<{
         id: string;
         slug: string;
         name: string;
-        description?: string | null;
-        imageUrl?: string | null;
         parentId: string | null;
         isActive: boolean;
     }>;
@@ -92,31 +91,23 @@ export declare class CatalogService {
     createCategory(data: {
         name: string;
         slug: string;
-        description?: string;
-        imageUrl?: string;
         parentId?: string;
         isActive?: boolean;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
-        description?: string | null;
-        imageUrl?: string | null;
         parentId: string | null;
     }>;
     updateCategory(id: string, data: {
         name?: string;
         slug?: string;
-        description?: string;
-        imageUrl?: string;
         parentId?: string;
         isActive?: boolean;
     }): Promise<{
         id: string;
         slug: string;
         name: string;
-        description?: string | null;
-        imageUrl?: string | null;
         parentId: string | null;
     }>;
     deleteCategory(id: string): Promise<{

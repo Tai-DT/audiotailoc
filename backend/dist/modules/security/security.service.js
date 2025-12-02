@@ -96,8 +96,7 @@ let SecurityService = SecurityService_1 = class SecurityService {
         else {
             score += 1;
         }
-        if (this.securityConfig.passwordRequireSpecialChars &&
-            !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        if (this.securityConfig.passwordRequireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
             errors.push('Password must contain at least one special character');
         }
         else if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
@@ -274,37 +273,17 @@ let SecurityService = SecurityService_1 = class SecurityService {
     }
     isCommonPassword(password) {
         const commonPasswords = [
-            'password',
-            '123456',
-            '123456789',
-            'qwerty',
-            'abc123',
-            'password123',
-            'admin',
-            'letmein',
-            'welcome',
-            'monkey',
-            'dragon',
-            'master',
-            'shadow',
-            'football',
-            'baseball',
+            'password', '123456', '123456789', 'qwerty', 'abc123',
+            'password123', 'admin', 'letmein', 'welcome', 'monkey',
+            'dragon', 'master', 'shadow', 'football', 'baseball',
         ];
         return commonPasswords.includes(password.toLowerCase());
     }
     isSuspiciousUserAgent(userAgent) {
         const suspiciousPatterns = [
-            /bot/i,
-            /crawler/i,
-            /spider/i,
-            /scraper/i,
-            /curl/i,
-            /wget/i,
-            /python/i,
-            /java/i,
-            /sqlmap/i,
-            /nikto/i,
-            /nmap/i,
+            /bot/i, /crawler/i, /spider/i, /scraper/i,
+            /curl/i, /wget/i, /python/i, /java/i,
+            /sqlmap/i, /nikto/i, /nmap/i,
         ];
         return suspiciousPatterns.some(pattern => pattern.test(userAgent));
     }

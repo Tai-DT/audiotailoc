@@ -1,4 +1,18 @@
-import { Product } from '@/lib/types';
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  shortDescription?: string;
+  images?: string[];
+  imageUrl?: string;
+  priceCents: number;
+  stockQuantity: number;
+  category?: {
+    name: string;
+  };
+  averageRating?: number;
+  reviewCount?: number;
+}
 
 interface ProductStructuredDataProps {
   product: Product;

@@ -37,7 +37,9 @@
     "test:performance": "jest --testPathPattern=performance",
     "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
     "test:setup": "node scripts/setup-test-db.js",
-    "test:cleanup": "node scripts/cleanup-test-data.js"
+    "test:cleanup": "node scripts/cleanup-test-data.js",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged"
   },
   "dependencies": {
     "@nestjs/axios": "^3.0.0",
@@ -75,6 +77,7 @@
     "cloudinary": "^2.8.0",
     "compression": "^1.8.1",
     "cron": "^4.3.4",
+<<<<<<< HEAD
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "express-rate-limit": "^8.1.0",
@@ -84,6 +87,13 @@
     "nestjs-pino": "^4.4.1",
     "nodemailer": "^7.0.6",
     "pdfkit": "^0.17.2",
+=======
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.8.0",
+    "nestjs-pino": "^4.4.1",
+    "nodemailer": "^7.0.6",
+>>>>>>> 097973e801e6e0c7fe8a46c3c1ee4e78afa72835
     "pino": "^9.12.0",
     "pino-pretty": "^13.1.2",
     "prom-client": "^15.1.3",

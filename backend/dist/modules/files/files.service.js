@@ -60,8 +60,8 @@ let FilesService = FilesService_1 = class FilesService {
         this.prisma = prisma;
         this.cloudinary = cloudinary;
         this.logger = new common_1.Logger(FilesService_1.name);
-        this.uploadDir = this.config.get('UPLOAD_DIR') ?? './uploads';
-        this.cdnUrl = this.config.get('CDN_URL') ?? '';
+        this.uploadDir = this.config.get('UPLOAD_DIR', './uploads');
+        this.cdnUrl = this.config.get('CDN_URL', '');
         this.ensureUploadDir();
     }
     async ensureUploadDir() {
@@ -78,9 +78,8 @@ let FilesService = FilesService_1 = class FilesService {
     async uploadFile(file, options = {}, metadata = {}) {
         try {
             await this.validateFile(file, options);
-            const fullUuid = crypto.randomUUID();
-            const fileId = fullUuid.split('-')[0];
-            const extension = path.extname(file.originalname).toLowerCase();
+            const fileId = crypto.randomUUID();
+            const extension = path.extname(file.originalname);
             const filename = `${fileId}${extension}`;
             const isImage = file.mimetype.startsWith('image/');
             const subDir = isImage ? 'images' : 'documents';
@@ -118,7 +117,7 @@ let FilesService = FilesService_1 = class FilesService {
                     dimensions: isImage ? await this.getImageDimensions(file.buffer) : null,
                     storage: cloudUrl ? 'cloudinary' : 'local',
                     publicId: cloudPublicId || null,
-                },
+                }
             };
             return {
                 id: fileRecord.id,
@@ -185,7 +184,7 @@ let FilesService = FilesService_1 = class FilesService {
         const result = await this.uploadFile(file, options, metadata);
         await this.prisma.users.update({
             where: { id: userId },
-            data: { avatarUrl: result.url },
+            data: {},
         });
         return result;
     }

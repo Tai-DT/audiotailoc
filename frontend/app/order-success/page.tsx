@@ -1,168 +1,269 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCart } from '@/components/providers/cart-provider';
+import React, { useEffect, useState, Suspense, useCallback } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Home,
+  ShoppingBag,
+  RefreshCw,
+  ArrowLeft
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+interface PaymentStatus {
+  status: string;
+  orderId?: string;
+  transactionId?: string;
+  amount?: number;
+  currency?: string;
+  createdAt?: string;
+  completedAt?: string;
+  estimatedDelivery?: string;
+}
 
 function OrderSuccessContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { clearCart } = useCart();
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // detect cancelled / failed payment redirects from provider
-  const isCancelled =
-    searchParams.get('cancel') === 'true' ||
-    /CANCELLED/i.test(searchParams.get('status') || '') ||
-    Boolean(searchParams.get('error'));
+  const orderId = searchParams.get('orderId');
+  const paymentMethod = searchParams.get('method');
+
+  const checkPaymentStatus = useCallback(async () => {
+    if (!orderId || !paymentMethod) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/payment/status?orderId=${orderId}&paymentMethod=${paymentMethod}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setPaymentStatus(result.status);
+
+        // Show appropriate message based on status
+        if (result.status.status === 'COMPLETED') {
+          toast.success('Thanh toán thành công!');
+        } else if (result.status.status === 'FAILED') {
+          toast.error('Thanh toán thất bại. Vui lòng thử lại.', { icon: '❌' });
+        } else if (result.status.status === 'PENDING') {
+          toast('Đang xử lý thanh toán...', { icon: '⏳' });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      toast.error('Không thể kiểm tra trạng thái thanh toán', { icon: '❌' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId, paymentMethod]);
 
   useEffect(() => {
-    // Do NOT clear cart on cancelled payments — preserve pending order so user can retry
-    if (isCancelled) {
-      console.log('[OrderSuccess] Payment cancelled — preserving cart and pending-payos-order');
-      return;
+    // If we have orderId and paymentMethod, check payment status
+    if (orderId && paymentMethod) {
+      checkPaymentStatus();
     }
+  }, [orderId, paymentMethod, checkPaymentStatus]);
 
-    // ✅ Clear cart ONLY when payment is confirmed
-    const pendingOrder = localStorage.getItem('pending-payos-order');
-    const orderId = searchParams.get('orderId');
-
-    if (pendingOrder && orderId === pendingOrder) {
-      // Webhook đã confirm payment thành công
-      clearCart();
-      localStorage.removeItem('pending-payos-order');
-      console.log('[OrderSuccess] Cart cleared after PayOS payment confirmation');
-    } else if (searchParams.get('method') === 'cod') {
-      // COD payment - clear immediately
-      clearCart();
-      console.log('[OrderSuccess] Cart cleared after COD order');
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'success':
+        return <CheckCircle className="h-8 w-8 text-green-500" />;
+      case 'failed':
+      case 'error':
+        return <XCircle className="h-8 w-8 text-red-500" />;
+      case 'pending':
+      case 'processing':
+      default:
+        return <Clock className="h-8 w-8 text-yellow-500" />;
     }
-  }, [searchParams, clearCart, isCancelled]);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'success':
+        return <Badge className="bg-green-100 text-green-800">Thành công</Badge>;
+      case 'failed':
+      case 'error':
+        return <Badge className="bg-red-100 text-red-800">Thất bại</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">Đang xử lý</Badge>;
+      case 'processing':
+        return <Badge className="bg-blue-100 text-blue-800">Đang xử lý</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-card rounded-lg shadow-lg p-8 text-center">
-        <div className="mb-6">
-          {isCancelled ? (
-            <>
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">Thanh toán đã huỷ</h1>
-              <p className="text-muted-foreground mb-4">
-                Giao dịch chưa hoàn tất. Đơn hàng và giỏ hàng của bạn vẫn được lưu — bạn có thể thử thanh toán lại hoặc kiểm tra thông tin bên dưới.
-              </p>
-
-              <div className="bg-muted rounded-lg p-4 mb-4 text-left">
-                {searchParams.get('orderId') && (
-                  <p className="text-sm">
-                    <strong>Mã đơn:</strong> {searchParams.get('orderId')}
-                  </p>
-                )}
-                {searchParams.get('orderCode') && (
-                  <p className="text-sm">
-                    <strong>Mã nội bộ (orderCode):</strong> {searchParams.get('orderCode')}
-                  </p>
-                )}
-                {searchParams.get('status') && (
-                  <p className="text-sm">
-                    <strong>Trạng thái:</strong> {searchParams.get('status')}
-                  </p>
-                )}
-                {searchParams.get('code') && (
-                  <p className="text-sm">
-                    <strong>Mã trả về:</strong> {searchParams.get('code')}
-                  </p>
-                )}
-                {searchParams.get('id') && (
-                  <p className="text-sm">
-                    <strong>Transaction ID:</strong> {searchParams.get('id')}
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                Đặt hàng thành công!
-              </h1>
-              <p className="text-muted-foreground">
-                Cảm ơn bạn đã đặt hàng tại Audio Tài Lộc
-              </p>
-            </>
-          )}
-        </div>
-
-        {searchParams.get('orderId') && (
-          <div className="bg-muted rounded-lg p-4 mb-6">
-            <p className="text-sm text-muted-foreground mb-1">Mã đơn hàng</p>
-            <p className="text-lg font-semibold text-foreground">
-              {searchParams.get('orderId')}
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <Link href="/">
+              <Button variant="outline" size="icon" className="mb-4">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold mb-2">Kết quả đặt hàng</h1>
+            <p className="text-muted-foreground">
+              {paymentMethod === 'cos' ? 'Đặt hàng COD' : 'Kết quả thanh toán PayOS'}
             </p>
           </div>
-        )}
 
-        <p className="text-sm text-muted-foreground mb-6">
-          Chúng tôi sẽ gửi email xác nhận đơn hàng và thông tin vận chuyển đến địa chỉ email của bạn.
-        </p>
+          {/* Order Status Card */}
+          <Card className="mb-8">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                {paymentStatus ? getStatusIcon(paymentStatus.status) : <Clock className="h-8 w-8 text-gray-400" />}
+              </div>
+              <CardTitle>
+                {paymentMethod === 'cos' ? 'Đặt hàng COD' : 'Thanh toán PayOS'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {paymentStatus && (
+                <>
+                  <div className="flex justify-center">
+                    {getStatusBadge(paymentStatus.status)}
+                  </div>
 
-        <div className="space-y-3">
-          {isCancelled ? (
-            <>
-              <button
-                onClick={() => router.push('/checkout')}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-3 px-4 rounded-md transition-colors"
-              >
-                Thanh toán lại
-              </button>
-              <button
-                onClick={() => router.push('/cart')}
-                className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium py-3 px-4 rounded-md transition-colors"
-              >
-                Xem giỏ hàng
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => router.push('/products')}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-3 px-4 rounded-md transition-colors"
-              >
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Mã đơn hàng:</span>
+                      <span className="font-medium">{orderId}</span>
+                    </div>
+
+                    {paymentStatus.transactionId && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mã giao dịch:</span>
+                        <span className="font-medium">{paymentStatus.transactionId}</span>
+                      </div>
+                    )}
+
+                    {paymentStatus.amount && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Số tiền:</span>
+                        <span className="font-medium">{paymentStatus.amount.toLocaleString('vi-VN')}₫</span>
+                      </div>
+                    )}
+
+                    {paymentStatus.createdAt && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Thời gian tạo:</span>
+                        <span className="font-medium">
+                          {new Date(paymentStatus.createdAt).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    )}
+
+                    {paymentStatus.estimatedDelivery && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dự kiến giao hàng:</span>
+                        <span className="font-medium">
+                          {new Date(paymentStatus.estimatedDelivery).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status-specific messages */}
+                  {paymentStatus.status === 'COMPLETED' && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-green-800 font-medium">🎉 Thanh toán thành công!</p>
+                      <p className="text-green-600 text-sm">Đơn hàng của bạn đã được xử lý thành công.</p>
+                    </div>
+                  )}
+
+                  {paymentStatus.status === 'PENDING' && (
+                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                      <p className="text-yellow-800 font-medium">⏳ Đang xử lý</p>
+                      <p className="text-yellow-600 text-sm">Vui lòng đợi trong giây lát...</p>
+                    </div>
+                  )}
+
+                  {paymentStatus.status === 'FAILED' && (
+                    <div className="text-center p-4 bg-red-50 rounded-lg">
+                      <p className="text-red-800 font-medium">❌ Thanh toán thất bại</p>
+                      <p className="text-red-600 text-sm">Vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!paymentStatus && !isLoading && (
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-gray-600">Không tìm thấy thông tin đơn hàng</p>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="text-center p-4">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <p className="text-muted-foreground">Đang kiểm tra trạng thái...</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={checkPaymentStatus}
+              disabled={isLoading}
+              variant="outline"
+            >
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Kiểm tra lại
+            </Button>
+
+            <Link href="/">
+              <Button size="lg" className="w-full sm:w-auto">
+                <Home className="h-5 w-5 mr-2" />
+                Về trang chủ
+              </Button>
+            </Link>
+
+            <Link href="/products">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <ShoppingBag className="h-5 w-5 mr-2" />
                 Tiếp tục mua sắm
-              </button>
-              <button
-                onClick={() => router.push('/booking-history')}
-                className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium py-3 px-4 rounded-md transition-colors"
-              >
-                Xem đơn hàng của tôi
-              </button>
-            </>
-          )}
+              </Button>
+            </Link>
+          </div>
+
+          {/* Additional Information */}
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            <p>Nếu có vấn đề với đơn hàng, vui lòng liên hệ:</p>
+            <p>📧 support@audiotailoc.com | 📞 1900-XXXX</p>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 export default function OrderSuccessPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Đang tải...</p>
+        </div>
+      </div>
+    }>
       <OrderSuccessContent />
     </Suspense>
   );

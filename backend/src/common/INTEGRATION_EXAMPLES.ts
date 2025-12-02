@@ -11,14 +11,15 @@ import {
   QueryPatterns,
   TransactionManager,
   DatabaseHealthCheck,
-} from './database/query-patterns';
+  getPrismaClient,
+} from '@common/database';
 
 import {
   CacheManager,
   CacheInvalidation,
   CacheKeyBuilder,
   CACHE_PRESETS,
-} from './cache/cache-manager';
+} from '@common/cache';
 
 /**
  * Example 1: Product Service with Full Optimization
@@ -59,10 +60,10 @@ export class OptimizedProductService {
             id: true,
             name: true,
             slug: true,
-            priceCents: true,
+            price: true,
             imageUrl: true,
             description: true,
-            product_reviews: { take: 5, orderBy: { createdAt: 'desc' } },
+            reviews: { take: 5, orderBy: { createdAt: 'desc' } },
           },
         }),
       { ttl: 3600000, tags: ['products'] }
@@ -79,7 +80,7 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.paginate(
-          this.prisma.products,
+          this.prisma.product,
           {
             page,
             pageSize: 20,
@@ -87,7 +88,7 @@ export class OptimizedProductService {
               id: true,
               name: true,
               slug: true,
-              priceCents: true,
+              price: true,
               imageUrl: true,
             },
           },
@@ -107,11 +108,11 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.search(
-          this.prisma.products,
+          this.prisma.product,
           query,
           ['name', 'description', 'tags'],
           { isActive: true },
-          { take: 20 }
+          limit: 20
         ),
       { ttl: 600000, tags: ['search'] }
     );
@@ -127,7 +128,7 @@ export class OptimizedProductService {
       cacheKey,
       () =>
         this.queryPatterns.getPopular(
-          this.prisma.products,
+          this.prisma.product,
           10,
           'viewCount',
           { featured: true, isActive: true }
@@ -184,9 +185,9 @@ export class OptimizedProductService {
     // Execute in transaction
     await this.transactionManager.execute(async (tx) => {
       await this.queryPatterns.bulkUpdate(
-        tx.products,
+        tx.product,
         updateData,
-        { take: 100 }
+        batchSize: 100
       );
     });
 
@@ -326,19 +327,14 @@ export class OptimizedOrderService {
         for (const item of items) {
           const product = await tx.products.findUnique({
             where: { id: item.productId },
-            select: {
-              id: true,
-              priceCents: true,
-              inventory: { select: { stock: true } }
-            },
+            select: { id: true, price: true, stockQuantity: true },
           });
 
           if (!product) {
             throw new Error(`Product ${item.productId} not found`);
           }
 
-          const currentStock = product.inventory?.stock || 0;
-          if (currentStock < item.quantity) {
+          if (product.stockQuantity < item.quantity) {
             throw new Error(`Insufficient stock for product ${item.productId}`);
           }
 
@@ -348,7 +344,7 @@ export class OptimizedOrderService {
               orderId: order.id,
               productId: item.productId,
               quantity: item.quantity,
-              price: product.priceCents,
+              price: product.price,
             },
           });
 
@@ -358,7 +354,7 @@ export class OptimizedOrderService {
             data: { stock: { decrement: item.quantity } },
           });
 
-          total += Number(product.priceCents) * item.quantity;
+          total += Number(product.price) * item.quantity;
         }
 
         // Update order total
@@ -390,7 +386,7 @@ export class OptimizedOrderService {
       () =>
         this.prisma.orders.findMany({
           where: { userId },
-          include: { order_items: true },
+          include: { items: true },
           orderBy: { createdAt: 'desc' },
           take: 50,
         }),
@@ -569,7 +565,7 @@ export class OptimizedServiceBookingService {
       () =>
         this.prisma.service_bookings.findMany({
           where: { userId },
-          include: { services: true, technicians: true },
+          include: { service: true, technician: true },
           orderBy: { scheduledAt: 'desc' },
         }),
       { ttl: 1800000, tags: [`user:${userId}:bookings`] }

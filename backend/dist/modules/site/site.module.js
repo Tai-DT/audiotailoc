@@ -20,13 +20,12 @@ const site_stats_controller_1 = require("./site-stats.controller");
 const site_stats_service_1 = require("./site-stats.service");
 const testimonials_controller_1 = require("./testimonials.controller");
 const testimonials_service_1 = require("./testimonials.service");
-const notifications_module_1 = require("../notifications/notifications.module");
 let SiteModule = class SiteModule {
 };
 exports.SiteModule = SiteModule;
 exports.SiteModule = SiteModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, notifications_module_1.NotificationsModule],
+        imports: [prisma_module_1.PrismaModule],
         controllers: [
             banners_controller_1.BannersController,
             admin_banners_controller_1.AdminBannersController,

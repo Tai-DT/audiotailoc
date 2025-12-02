@@ -12,7 +12,9 @@ const security_service_1 = require("./security.service");
 const security_middleware_1 = require("./security.middleware");
 let SecurityModule = class SecurityModule {
     configure(consumer) {
-        consumer.apply(security_middleware_1.SecurityMiddleware).forRoutes('*');
+        consumer
+            .apply(security_middleware_1.SecurityMiddleware)
+            .forRoutes('*');
     }
 };
 exports.SecurityModule = SecurityModule;

@@ -27,9 +27,7 @@ import {
   XCircle,
   Activity,
   CreditCard,
-  RefreshCw,
-  BarChart3,
-  Download
+  RefreshCw
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -46,21 +44,89 @@ import {
   ResponsiveContainer
 } from "recharts"
 
-import {
-  DashboardStats,
-  Order,
-  Product,
-  Service,
-  User,
-  RevenueResponse,
-  RevenueChartResponse,
-  GrowthMetricsResponse,
-  TopProductResponse,
-  BookingsResponse,
-  OrdersResponse,
-  ProductsResponse
-} from "@/types/dashboard"
-import { ApiResponse } from "@/lib/api-client"
+// Analytics data types
+
+interface Order {
+  id: string
+  status: string
+  createdAt: string
+  totalCents: number
+  totalAmount: number
+  user?: {
+    name?: string
+    email: string
+  }
+  customer?: {
+    name?: string
+    email: string
+  }
+}
+
+interface Product {
+  id: string
+  name: string
+  stockQuantity: number
+  price: number
+  imageUrl?: string
+}
+
+interface Service {
+  id: string
+  name: string
+  isActive: boolean
+  price: number
+}
+
+interface User {
+  id: string
+  name?: string
+  email: string
+  createdAt: string
+  role: string
+}
+
+interface DashboardStats {
+  revenue: {
+    total: number
+    growth: number
+    chart: Array<{ date: string; value: number }>
+  }
+  orders: {
+    total: number
+    pending: number
+    completed: number
+    growth: number
+    recent: Array<{
+      id: string
+      customer: string
+      amount: number
+      status: string
+      createdAt: string
+    }>
+  }
+  customers: {
+    total: number
+    new: number
+    growth: number
+  }
+  products: {
+    total: number
+    outOfStock: number
+    lowStock: number
+    topSelling: Array<{
+      id: string
+      name: string
+      sales: number
+      revenue: number
+      stock: number
+    }>
+  }
+  services: {
+    total: number
+    active: number
+    bookings: number
+  }
+}
 
 function DashboardPage() {
   const { user, token } = useAuth()
@@ -68,8 +134,6 @@ function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState("today")
-  const [reportFormat, setReportFormat] = useState<'pdf' | 'excel' | 'csv'>('pdf')
-  const [isExporting, setIsExporting] = useState(false)
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -77,46 +141,54 @@ function DashboardPage() {
 
     try {
       setRefreshing(true)
-
-      // Parallel data fetching with error handling wrapper
-      const fetchData = async <T,>(promise: Promise<ApiResponse<T>>, fallback: T): Promise<T> => {
-        try {
-          const response = await promise
-          return response.data
-        } catch (err) {
-          console.warn('Data fetch failed:', err)
-          return fallback
-        }
-      }
-
-      // 1. Fetch core lists
-      const [ordersData, productsData, servicesData, usersData] = await Promise.all([
-        fetchData<OrdersResponse>(apiClient.getOrders({ limit: 10, page: 1 }) as Promise<ApiResponse<OrdersResponse>>, { items: [], total: 0, page: 1, pageSize: 10 }),
-        fetchData<ProductsResponse>(apiClient.getProducts({ limit: 100, page: 1 }) as Promise<ApiResponse<ProductsResponse>>, { items: [], total: 0, page: 1, pageSize: 100 }),
-        fetchData<{ services: Service[] }>(apiClient.getServices({ limit: 100, page: 1 }) as Promise<ApiResponse<{ services: Service[] }>>, { services: [] }),
-        fetchData<{ items: User[] }>(apiClient.getUsers({ limit: 100, role: 'USER' }) as Promise<ApiResponse<{ items: User[] }>>, { items: [] })
+      
+      // Fetch multiple data sources in parallel with individual error handling
+      const [ordersRes, productsRes, servicesRes, usersRes] = await Promise.allSettled([
+        apiClient.getOrders({ limit: 10, page: 1 }).catch(err => {
+          console.warn('Failed to fetch orders:', err.message)
+          return { data: { items: [] } }
+        }),
+        apiClient.getProducts({ limit: 100, page: 1 }).catch(err => {
+          console.warn('Failed to fetch products:', err.message)
+          return { data: { items: [] } }
+        }),
+        apiClient.getServices({ limit: 100, page: 1 }).catch(err => {
+          console.warn('Failed to fetch services:', err.message)
+          return { data: { services: [] } }
+        }),
+        apiClient.getUsers({ limit: 100, role: 'USER' }).catch(err => {
+          console.warn('Failed to fetch users:', err.message)
+          return { data: { items: [] } }
+        })
       ])
 
-      // 2. Fetch analytics data
-      const [revenueData, chartData, growthData, topProductsData, bookingsData] = await Promise.all([
-        fetchData<RevenueResponse>(apiClient.getRevenue('all') as Promise<ApiResponse<RevenueResponse>>, { totalRevenue: 0, revenueGrowth: 0 }),
-        fetchData<RevenueChartResponse>(apiClient.getRevenueChart(7) as Promise<ApiResponse<RevenueChartResponse>>, { dates: [], values: [] }),
-        fetchData<GrowthMetricsResponse>(apiClient.getGrowthMetrics() as Promise<ApiResponse<GrowthMetricsResponse>>, { ordersGrowth: 0, customersGrowth: 0 }),
-        fetchData<TopProductResponse[]>(apiClient.getTopSellingProductsReal(5) as Promise<ApiResponse<TopProductResponse[]>>, []),
-        fetchData<BookingsResponse>(apiClient.getBookingsTodayReal() as Promise<ApiResponse<BookingsResponse>>, { bookingsToday: 0 })
-      ])
+      // Extract data from settled promises
+      const orders = (ordersRes.status === 'fulfilled' ? 
+        (ordersRes.value.data as { items?: Order[] })?.items : []) || []
+      const products = (productsRes.status === 'fulfilled' ? 
+        (productsRes.value.data as { items?: Product[] })?.items : []) || []
+      const services = (servicesRes.status === 'fulfilled' ? 
+        (servicesRes.value.data as { services?: Service[] })?.services : []) || []
+      const users = (usersRes.status === 'fulfilled' ? 
+        (usersRes.value.data as { items?: User[] })?.items : []) || []
 
-      // Extract data safely
-      const orders = ordersData.items || []
-      const products = productsData.items || []
-      const services = servicesData.services || []
-      const users = usersData.items || []
+      // Calculate stats
+      const now = new Date()
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-      // Process Revenue
-      const totalRevenue = revenueData.totalRevenue || 0
-      const revenueGrowth = revenueData.revenueGrowth || 0
+      // Revenue calculation
+      const totalRevenue = orders.reduce((sum: number, order: Order) => 
+        sum + (order.totalCents || 0), 0) / 100
 
-      // Process Revenue Chart
+      const lastMonthRevenue = orders
+        .filter((order: Order) => new Date(order.createdAt) < thirtyDaysAgo)
+        .reduce((sum: number, order: Order) => sum + (order.totalCents || 0), 0) / 100
+
+      const revenueGrowth = lastMonthRevenue > 0 
+        ? ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+        : 100
+
+      // Fetch real revenue chart data from analytics API
       let revenueChart = Array.from({ length: 7 }, (_, i) => {
         const date = new Date()
         date.setDate(date.getDate() - (6 - i))
@@ -126,66 +198,99 @@ function DashboardPage() {
         }
       })
 
-      if (chartData?.dates && chartData?.values && Array.isArray(chartData.values)) {
-        revenueChart = chartData.dates.map((date: string, i: number) => ({
-          date: new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' }),
-          value: chartData.values[i] || 0
-        }))
+      try {
+        const revenueChartRes = await apiClient.getRevenueChart(7)
+        const chartData = (revenueChartRes.data as { dates?: string[], values?: number[] })
+        if (chartData?.dates && chartData?.values && Array.isArray(chartData.values)) {
+          revenueChart = chartData.dates.map((date: string, i: number) => ({
+            date: new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' }),
+            value: (chartData.values as number[])[i] || 0
+          }))
+        }
+      } catch (error) {
+        console.warn('Failed to fetch revenue chart:', error instanceof Error ? error.message : 'Unknown error')
       }
 
-      // Process Growth
-      const ordersGrowth = growthData.ordersGrowth || 0
-      const customersGrowth = growthData.customersGrowth || 0
+      // Orders stats
+      const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length
+      const completedOrders = orders.filter((o: Order) => o.status === 'COMPLETED').length
 
-      // Process Top Products
-      const topSellingProducts = topProductsData.length > 0 ? topProductsData.map((p) => ({
-        id: p.id,
-        name: p.name,
-        sales: p.salesCount,
-        revenue: p.revenue,
-        stock: p.stock
-      })) : products.slice(0, 5).map((p: Product) => {
-        const stock = p.inventory?.stock ?? p.stockQuantity ?? 0
-        return {
+      // Fetch real growth metrics from analytics API
+      let ordersGrowth = 0
+      let customersGrowth = 0
+      try {
+        const growthRes = await apiClient.getGrowthMetrics()
+        const growthData = (growthRes.data as { ordersGrowth?: number, customersGrowth?: number })
+        ordersGrowth = growthData?.ordersGrowth || 0
+        customersGrowth = growthData?.customersGrowth || 0
+      } catch (error) {
+        console.warn('Failed to fetch growth metrics:', error instanceof Error ? error.message : 'Unknown error')
+      }
+
+      // Customer stats
+      const newCustomers = users.filter((u: User) => {
+        const createdDate = new Date(u.createdAt)
+        return createdDate >= thirtyDaysAgo
+      }).length
+
+      // Product stats
+      const outOfStock = products.filter((p: Product) => p.stockQuantity === 0).length
+      const lowStock = products.filter((p: Product) => 
+        p.stockQuantity > 0 && p.stockQuantity < 10).length
+
+      // Fetch real top selling products from analytics API
+      let topSellingProducts: Array<{ id: string; name: string; sales: number; revenue: number; stock: number }> = []
+      try {
+        const topProductsRes = await apiClient.getTopSellingProductsReal(5)
+        const topProductsData = (topProductsRes.data as Array<{
+          id: string;
+          name: string;
+          salesCount: number;
+          revenue: number;
+          stock: number
+        }>) || []
+        topSellingProducts = topProductsData.map(p => ({
+          id: p.id,
+          name: p.name,
+          sales: p.salesCount,
+          revenue: p.revenue,
+          stock: p.stock
+        }))
+      } catch (error) {
+        console.warn('Failed to fetch top products:', error instanceof Error ? error.message : 'Unknown error')
+        // Fallback to products list if API fails
+        topSellingProducts = products.slice(0, 5).map((p: Product) => ({
           id: p.id,
           name: p.name,
           sales: 0,
           revenue: 0,
-          stock: stock
-        }
-      })
+          stock: p.stockQuantity || 0
+        }))
+      }
 
-      // Process Bookings
-      const bookings = bookingsData.bookingsToday || 0
-
-      // Calculate derived stats
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      const newCustomers = users.filter((u: User) => new Date(u.createdAt) >= thirtyDaysAgo).length
-      
-      const outOfStock = products.filter((p: Product) => {
-        const stock = p.inventory?.stock ?? p.stockQuantity ?? 0
-        return stock === 0
-      }).length
-
-      const lowStock = products.filter((p: Product) => {
-        const stock = p.inventory?.stock ?? p.stockQuantity ?? 0
-        const threshold = p.inventory?.lowStockThreshold ?? 10
-        return stock > 0 && stock < threshold
-      }).length
-      
+      // Service stats
       const activeServices = services.filter((s: Service) => s.isActive).length
-      const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length
-      const completedOrders = orders.filter((o: Order) => o.status === 'COMPLETED').length
 
+      // Fetch real bookings count from analytics API
+      let bookings = 0
+      try {
+        const bookingsRes = await apiClient.getBookingsTodayReal()
+        const bookingsData = (bookingsRes.data as { bookingsToday?: number })
+        bookings = bookingsData?.bookingsToday || 0
+      } catch (error) {
+        console.warn('Failed to fetch bookings:', error instanceof Error ? error.message : 'Unknown error')
+      }
+
+      // Recent orders
       const recentOrders = orders.slice(0, 5).map((order: Order) => ({
         id: order.id,
-        customer: order.user?.name || order.customer?.name || 'Khách hàng',
+        customer: order.user?.name || 'Khách hàng',
         amount: (order.totalCents || 0) / 100,
         status: order.status || 'PENDING',
         createdAt: order.createdAt
       }))
 
-      setStats({
+      const dashboardStats: DashboardStats = {
         revenue: {
           total: totalRevenue,
           growth: revenueGrowth,
@@ -214,9 +319,11 @@ function DashboardPage() {
           active: activeServices,
           bookings
         }
-      })
+      }
+
+      setStats(dashboardStats)
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      console.warn('Error fetching dashboard data:', error instanceof Error ? error.message : 'Unknown error')
       toast.error("Không thể tải dữ liệu dashboard")
     } finally {
       setLoading(false)
@@ -242,72 +349,16 @@ function DashboardPage() {
       COMPLETED: { label: "Hoàn thành", variant: "success" as const, icon: CheckCircle },
       CANCELLED: { label: "Đã hủy", variant: "destructive" as const, icon: XCircle },
     }
-
+    
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
     const Icon = config.icon
-
+    
     return (
       <Badge variant={config.variant} className="gap-1">
         <Icon className="h-3 w-3" />
         {config.label}
       </Badge>
     )
-  }
-
-  const handleExportReport = async (type: 'sales' | 'inventory' | 'customers') => {
-    try {
-      setIsExporting(true)
-      toast.loading(`Đang xuất báo cáo ${type}...`)
-
-      let blob: Blob
-      const filename = `bao-cao-${type}-${new Date().toISOString().split('T')[0]}`
-      const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' }
-
-      switch (type) {
-        case 'sales':
-          blob = await apiClient.exportSalesReport(reportFormat)
-          break
-        case 'inventory':
-          blob = await apiClient.exportInventoryReport(reportFormat)
-          break
-        case 'customers':
-          blob = await apiClient.exportCustomersReport(reportFormat)
-          break
-        default:
-          throw new Error('Invalid report type')
-      }
-
-      // Download the file
-      apiClient.downloadBlob(blob, `${filename}.${extensions[reportFormat]}`)
-      toast.dismiss()
-      toast.success(`Xuất báo cáo ${type} thành công`)
-    } catch (error) {
-      toast.dismiss()
-      console.error('Export error:', error)
-      toast.error(`Lỗi khi xuất báo cáo ${type}`)
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const handleQuickExportComprehensive = async () => {
-    try {
-      setIsExporting(true)
-      toast.loading('Đang tạo báo cáo tổng hợp...')
-
-      const blob = await apiClient.exportComprehensiveReport()
-      const filename = `bao-cao-tong-hop-${new Date().toISOString().split('T')[0]}.xlsx`
-
-      apiClient.downloadBlob(blob, filename)
-      toast.dismiss()
-      toast.success('Xuất báo cáo tổng hợp thành công')
-    } catch (error) {
-      toast.dismiss()
-      console.error('Export comprehensive error:', error)
-      toast.error('Lỗi khi xuất báo cáo tổng hợp')
-    } finally {
-      setIsExporting(false)
-    }
   }
 
   if (loading && !stats) {
@@ -406,33 +457,17 @@ function DashboardPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
             Làm mới
           </Button>
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl"
-            onClick={() => {
-              const today = new Date().toLocaleDateString('vi-VN', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })
-              toast.success(`Hiển thị dữ liệu: ${today}`)
-            }}
-          >
+          <Button variant="outline" className="gap-2 rounded-xl">
             <Calendar className="h-4 w-4" />
             Hôm nay
           </Button>
-          <Button
-            className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-            onClick={handleQuickExportComprehensive}
-            disabled={isExporting}
-          >
+          <Button className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white">
             <FileText className="h-4 w-4" />
-            {isExporting ? 'Đang xuất...' : 'Xuất báo cáo'}
+            Xuất báo cáo
           </Button>
         </div>
       </div>
-
+      
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat, index) => {
@@ -486,10 +521,10 @@ function DashboardPage() {
                 <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 12 }} />
                 <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} tick={{ fill: '#9ca3af', fontSize: 12 }} />
                 <Tooltip formatter={(value: number | string) => formatCurrency(Number(value))} contentStyle={{ borderRadius: 12 }} />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3B82F6"
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#3B82F6" 
                   strokeWidth={3}
                   dot={{ fill: '#3B82F6' }}
                 />
@@ -558,7 +593,7 @@ function DashboardPage() {
             </Button>
           </CardContent>
         </Card>
-
+        
         {/* Top Products */}
         <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
           <CardHeader>
@@ -648,114 +683,6 @@ function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Reports Section */}
-      <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              Báo cáo & Phân tích
-            </CardTitle>
-            <CardDescription>
-              Tạo và quản lý báo cáo kinh doanh
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              className="px-3 py-1.5 border rounded-md text-xs"
-              value={reportFormat}
-              onChange={(e) => setReportFormat(e.target.value as 'pdf' | 'excel' | 'csv')}
-            >
-              <option value="pdf">PDF</option>
-              <option value="excel">Excel</option>
-              <option value="csv">CSV</option>
-            </select>
-            <Button asChild variant="default" size="sm">
-              <Link href="/dashboard/reports">
-                <FileText className="h-4 w-4 mr-2" />
-                Xem tất cả
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Sales Report */}
-            <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-green-600">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleExportReport('sales')}
-                  disabled={isExporting}
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              </div>
-              <h4 className="font-semibold text-sm">Báo cáo Doanh số</h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Tổng hợp doanh số bán hàng
-              </p>
-              <p className="text-xs text-green-600 mt-2">
-                {formatCurrency(stats?.revenue.total || 0)} tháng này
-              </p>
-            </div>
-
-            {/* Inventory Report */}
-            <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-blue-600">
-                  <Package2 className="h-6 w-6" />
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleExportReport('inventory')}
-                  disabled={isExporting}
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              </div>
-              <h4 className="font-semibold text-sm">Báo cáo Tồn kho</h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Tình trạng tồn kho sản phẩm
-              </p>
-              <p className="text-xs text-blue-600 mt-2">
-                {stats?.products.total || 0} sản phẩm
-              </p>
-            </div>
-
-            {/* Customers Report */}
-            <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-purple-600">
-                  <UserCheck className="h-6 w-6" />
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleExportReport('customers')}
-                  disabled={isExporting}
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              </div>
-              <h4 className="font-semibold text-sm">Báo cáo Khách hàng</h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Thống kê khách hàng
-              </p>
-              <p className="text-xs text-purple-600 mt-2">
-                +{stats?.customers.new || 0} khách hàng mới
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

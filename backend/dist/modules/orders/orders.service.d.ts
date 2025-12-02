@@ -1,20 +1,11 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
-import { TelegramService } from '../notifications/telegram.service';
 import { CacheService } from '../caching/cache.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
-import { InventoryService } from '../inventory/inventory.service';
-import { PromotionsService } from '../promotions/promotions.service';
 export declare class OrdersService {
     private readonly prisma;
     private readonly mail;
-    private readonly telegram;
     private readonly cache;
-    private readonly promotionsService;
-    private readonly inventoryService;
-    private readonly logger;
-    constructor(prisma: PrismaService, mail: MailService, telegram: TelegramService, cache: CacheService, promotionsService: PromotionsService, inventoryService: InventoryService);
+    constructor(prisma: PrismaService, mail: MailService, cache: CacheService);
     list(params: {
         page?: number;
         pageSize?: number;
@@ -38,19 +29,43 @@ export declare class OrdersService {
                 productSlug: any;
                 productName: string;
                 quantity: number;
-                price: number;
+                price: number | bigint;
                 total: number;
             }[];
         }[];
     }>;
-    get(id: string): Promise<any>;
-    updateStatus(id: string, status: string): Promise<{
+    get(id: string): Promise<{
+        order_items: {
+            id: string;
+            name: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            imageUrl: string | null;
+            price: bigint;
+            orderId: string;
+            productId: string;
+            quantity: number;
+            unitPrice: bigint | null;
+        }[];
+        payments: {
+            status: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            transactionId: string | null;
+            provider: string;
+            amountCents: number;
+            metadata: string | null;
+            orderId: string;
+            intentId: string | null;
+        }[];
+    } & {
         status: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string | null;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -58,18 +73,25 @@ export declare class OrdersService {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        isDeleted: boolean;
-        deletedAt: Date | null;
     }>;
-    create(orderData: CreateOrderDto): Promise<any>;
-    update(id: string, updateData: UpdateOrderDto): Promise<any>;
-    sendInvoice(id: string): Promise<{
-        success: boolean;
-        message: string;
+    updateStatus(id: string, status: string): Promise<{
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        orderNo: string;
+        userId: string;
+        subtotalCents: number;
+        discountCents: number;
+        shippingCents: number;
+        totalCents: number;
+        shippingAddress: string | null;
+        shippingCoordinates: string | null;
+        promotionCode: string | null;
     }>;
+    create(orderData: any): Promise<any>;
+    update(id: string, updateData: any): Promise<any>;
     delete(id: string): Promise<{
         message: string;
-        id: string;
     }>;
-    private transformOrderForResponse;
 }

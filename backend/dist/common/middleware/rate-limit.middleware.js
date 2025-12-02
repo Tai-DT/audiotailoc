@@ -22,7 +22,7 @@ let RateLimitMiddleware = class RateLimitMiddleware {
             windowMs: 15 * 60 * 1000,
             maxRequests: 100,
             message: 'Too many requests, please try again later',
-            keyGenerator: req => this.getClientIdentifier(req),
+            keyGenerator: (req) => this.getClientIdentifier(req),
         };
         const endpoint = req.path;
         const method = req.method;
@@ -60,7 +60,7 @@ let RateLimitMiddleware = class RateLimitMiddleware {
         try {
             const key = options.keyGenerator(req);
             const cacheKey = `rate_limit:${key}:${req.path}`;
-            const currentCount = (await this.cacheService.get(cacheKey)) || 0;
+            const currentCount = await this.cacheService.get(cacheKey) || 0;
             if (currentCount >= options.maxRequests) {
                 const ttl = await this.getRemainingTTL(cacheKey);
                 res.set({
@@ -118,7 +118,7 @@ let RateLimitMiddleware = class RateLimitMiddleware {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
-            hash = (hash << 5) - hash + char;
+            hash = ((hash << 5) - hash) + char;
             hash = hash & hash;
         }
         return Math.abs(hash).toString(36);
@@ -148,7 +148,7 @@ let RateLimitGuard = class RateLimitGuard {
         const response = context.switchToHttp().getResponse();
         const key = this.options.keyGenerator?.(request) || this.getDefaultKey(request);
         const cacheKey = `rate_limit:${key}`;
-        const currentCount = (await this.cacheService.get(cacheKey)) || 0;
+        const currentCount = await this.cacheService.get(cacheKey) || 0;
         if (currentCount >= this.options.maxRequests) {
             response.status(429).json({
                 statusCode: 429,

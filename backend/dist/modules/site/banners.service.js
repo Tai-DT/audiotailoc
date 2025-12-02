@@ -18,7 +18,7 @@ let BannersService = class BannersService {
         this.prisma = prisma;
     }
     async findAll(params) {
-        const { page, isActive, search, skip = 0, take = 20, orderBy = { position: 'asc' } } = params;
+        const { page, isActive, search, skip = 0, take = 20, orderBy = { position: 'asc' }, } = params;
         const where = {
             isDeleted: false,
             ...(page && { page }),

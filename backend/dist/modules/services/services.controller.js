@@ -27,6 +27,7 @@ let ServicesController = class ServicesController {
         return this.servicesService.createService(createServiceDto);
     }
     async getServices(query) {
+        console.log('[DEBUG] ServicesController.getServices called with query:', query);
         return this.servicesService.getServices({
             categoryId: query.categoryId,
             typeId: query.typeId,

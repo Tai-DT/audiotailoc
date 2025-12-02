@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
  * Define the interface for sentry/node package.
  * Note: @sentry/node must be installed via: npm install @sentry/node
  */
-interface _SentryError extends Error {
+interface SentryError extends Error {
   statusCode?: number;
   code?: string;
 }
@@ -78,7 +78,9 @@ export class SentryService implements OnModuleInit {
         process.env.NODE_ENV ||
         'development';
       const traceSampleRate =
-        parseFloat(this.configService.get<string>('SENTRY_TRACE_SAMPLE_RATE') || '0.1') || 0.1;
+        parseFloat(
+          this.configService.get<string>('SENTRY_TRACE_SAMPLE_RATE') || '0.1',
+        ) || 0.1;
 
       this.sentry.init({
         dsn,
@@ -92,11 +94,14 @@ export class SentryService implements OnModuleInit {
         // Configure which errors to ignore
         beforeSend: (event: any) => this.beforeSend(event),
         // Configure which breadcrumbs to ignore
-        beforeBreadcrumb: (breadcrumb: any) => this.beforeBreadcrumb(breadcrumb),
+        beforeBreadcrumb: (breadcrumb: any) =>
+          this.beforeBreadcrumb(breadcrumb),
       });
 
       this.isInitialized = true;
-      console.log(`Sentry initialized successfully for ${environment} environment`);
+      console.log(
+        `Sentry initialized successfully for ${environment} environment`,
+      );
     } catch (error) {
       console.error(
         'Failed to initialize Sentry:',
@@ -201,7 +206,12 @@ export class SentryService implements OnModuleInit {
   /**
    * Set the current user for error tracking context
    */
-  setUser(user: { id: string; email?: string; username?: string; ip_address?: string }): void {
+  setUser(user: {
+    id: string;
+    email?: string;
+    username?: string;
+    ip_address?: string;
+  }): void {
     this.currentUser = user;
     if (this.isInitialized && this.sentry) {
       this.sentry.setUser(user);
@@ -356,7 +366,10 @@ export class SentryService implements OnModuleInit {
    */
   private beforeSend(event: any): any {
     // Filter out health check and ping endpoints
-    if (event.request?.url?.includes('/health') || event.request?.url?.includes('/ping')) {
+    if (
+      event.request?.url?.includes('/health') ||
+      event.request?.url?.includes('/ping')
+    ) {
       return null;
     }
 
@@ -367,7 +380,9 @@ export class SentryService implements OnModuleInit {
 
     // Redact sensitive data in all event parts
     if (event.request?.headers) {
-      event.request.headers = this.filterSensitiveData(event.request.headers);
+      event.request.headers = this.filterSensitiveData(
+        event.request.headers,
+      );
     }
 
     if (event.extra) {
@@ -388,7 +403,8 @@ export class SentryService implements OnModuleInit {
     // Filter out noisy breadcrumbs
     if (
       breadcrumb.category === 'http' &&
-      (breadcrumb.data?.url?.includes('/health') || breadcrumb.data?.url?.includes('/ping'))
+      (breadcrumb.data?.url?.includes('/health') ||
+        breadcrumb.data?.url?.includes('/ping'))
     ) {
       return null;
     }

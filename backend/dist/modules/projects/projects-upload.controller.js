@@ -439,7 +439,7 @@ __decorate([
                 galleryUrls: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'URLs of gallery images',
+                    description: 'URLs of gallery images'
                 },
             },
         },

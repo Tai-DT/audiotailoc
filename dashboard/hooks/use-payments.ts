@@ -40,7 +40,7 @@ export function usePayments() {
       setError(null)
       const response = await apiClient.get('/payments')
       setPayments((response.data as Payment[]) || [])
-    } catch {
+    } catch (err) {
       const errorMessage = 'Không thể tải danh sách thanh toán'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -54,7 +54,7 @@ export function usePayments() {
     try {
       const response = await apiClient.get('/payments/stats')
       setStats(response.data as PaymentStats)
-    } catch {
+    } catch (err) {
       // Silent error
     }
   }, [])
@@ -69,8 +69,9 @@ export function usePayments() {
       const response = await apiClient.post('/payments/intents', data)
       toast.success('Tạo intent thanh toán thành công')
       return response.data
-    } catch {
+    } catch (err) {
       toast.error('Không thể tạo intent thanh toán')
+      throw err
     }
   }, [])
 
@@ -87,8 +88,9 @@ export function usePayments() {
       // Refresh data after refund
       await fetchPayments()
       await fetchStats()
-    } catch {
+    } catch (err) {
       toast.error('Không thể xử lý hoàn tiền')
+      throw err
     } finally {
       setLoading(false)
     }
@@ -99,7 +101,7 @@ export function usePayments() {
     try {
       const response = await apiClient.get('/payments/methods')
       return response.data
-    } catch {
+    } catch (err) {
       return { methods: [] }
     }
   }, [])
@@ -109,7 +111,7 @@ export function usePayments() {
     try {
       const response = await apiClient.get('/payments/status')
       return response.data
-    } catch {
+    } catch (err) {
       return { status: 'unknown' }
     }
   }, [])

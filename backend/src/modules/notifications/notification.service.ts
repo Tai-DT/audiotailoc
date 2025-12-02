@@ -107,12 +107,12 @@ export class NotificationService {
     // SMS implementation would go here
     // For now, just log the attempt
     this.logger.log(`SMS would be sent to ${data.phone}: ${data.message}`);
-
+    
     // In a real implementation, you would integrate with SMS providers like:
     // - Twilio
     // - AWS SNS
     // - Vietnamese SMS providers like VIETGUYS, SPEEDSMS, etc.
-
+    
     return true;
   }
 
@@ -122,12 +122,12 @@ export class NotificationService {
     // Push notification implementation would go here
     // For now, just log the attempt
     this.logger.log(`Push notification would be sent to user ${data.userId}: ${data.message}`);
-
+    
     // In a real implementation, you would integrate with:
     // - Firebase Cloud Messaging (FCM)
     // - Apple Push Notification Service (APNs)
     // - Web Push API
-
+    
     return true;
   }
 
@@ -150,15 +150,12 @@ export class NotificationService {
     }
   }
 
-  private async logNotification(
-    data: NotificationData,
-    results: Record<string, boolean>,
-  ): Promise<void> {
+  private async logNotification(data: NotificationData, results: Record<string, boolean>): Promise<void> {
     try {
       // In a real implementation, you would log to database
       // For now, just log to console
       this.logger.log(`Notification sent - Success: ${JSON.stringify(results)}`);
-
+      
       // Example database logging (commented out as we don't have the table):
       /*
       await this.prisma.notificationLog.create({
@@ -191,7 +188,7 @@ export class NotificationService {
       type: 'ORDER',
       priority: 'HIGH',
       channels: ['EMAIL', 'WEBSOCKET'],
-      data: { orderData, isConfirmation: true },
+      data: { orderData, isConfirmation: true }
     });
   }
 
@@ -204,15 +201,11 @@ export class NotificationService {
       type: 'ORDER',
       priority: 'MEDIUM',
       channels: ['EMAIL', 'WEBSOCKET'],
-      data: { orderData, isConfirmation: false },
+      data: { orderData, isConfirmation: false }
     });
   }
 
-  async sendWelcomeNotification(
-    userId: string,
-    email: string,
-    customerName: string,
-  ): Promise<void> {
+  async sendWelcomeNotification(userId: string, email: string, customerName: string): Promise<void> {
     await this.sendNotification({
       userId,
       email,
@@ -221,7 +214,7 @@ export class NotificationService {
       type: 'WELCOME',
       priority: 'LOW',
       channels: ['EMAIL'],
-      data: { customerName },
+      data: { customerName }
     });
   }
 
@@ -234,30 +227,24 @@ export class NotificationService {
       type: 'PROMOTION',
       priority: 'MEDIUM',
       channels: ['EMAIL', 'WEBSOCKET'],
-      data: { promotion },
+      data: { promotion }
     });
   }
 
-  async sendSystemNotification(
-    message: string,
-    _priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' = 'MEDIUM',
-  ): Promise<void> {
+  async sendSystemNotification(message: string, _priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' = 'MEDIUM'): Promise<void> {
     // Broadcast to all connected users
     // this.websocketGateway.broadcastAnnouncement(message, priority === 'URGENT' ? 'warning' : 'info');
-
+    
     this.logger.log(`System notification would be broadcasted: ${message}`);
   }
 
   // Bulk notification methods
-  async sendBulkNotification(
-    userIds: string[],
-    data: Omit<NotificationData, 'userId'>,
-  ): Promise<void> {
-    const promises = userIds.map(async userId => {
+  async sendBulkNotification(userIds: string[], data: Omit<NotificationData, 'userId'>): Promise<void> {
+    const promises = userIds.map(async (userId) => {
       // Get user email from database
-      const user = await this.prisma.users.findUnique({
+      const user = await this.prisma.users.findUnique({ 
         where: { id: userId },
-        select: { email: true, phone: true },
+        select: { email: true, phone: true }
       });
 
       if (user) {
@@ -265,7 +252,7 @@ export class NotificationService {
           ...data,
           userId,
           email: user.email,
-          phone: user.phone || undefined,
+          phone: user.phone || undefined
         });
       }
     });
@@ -275,14 +262,9 @@ export class NotificationService {
   }
 
   // Marketing email methods
-  async sendMarketingEmail(
-    emails: string[],
-    subject: string,
-    htmlContent: string,
-    textContent?: string,
-  ): Promise<void> {
-    const promises = emails.map(email =>
-      this.mailService.send(email, subject, textContent || htmlContent, htmlContent),
+  async sendMarketingEmail(emails: string[], subject: string, htmlContent: string, textContent?: string): Promise<void> {
+    const promises = emails.map(email => 
+      this.mailService.send(email, subject, textContent || htmlContent, htmlContent)
     );
 
     const results = await Promise.allSettled(promises);
@@ -293,62 +275,31 @@ export class NotificationService {
   }
 
   // === Database-backed helpers expected by unit tests ===
-  async listNotifications(
-    userId: string,
-    options: { read?: boolean; page?: number; limit?: number } = {},
-  ) {
+  async listNotifications(userId: string, options: { read?: boolean; page?: number; limit?: number } = {}) {
     const page = Math.max(1, Math.floor(options.page ?? 1));
     const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 20)));
     const where: any = { userId };
     if (typeof options.read === 'boolean') where.read = options.read;
 
-    try {
-      // Check if notification table exists
-      if (!(this.prisma as any).notification) {
-        // Return empty result if table doesn't exist
-        return {
-          notifications: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
+    const [items, total] = await Promise.all([
+      (this.prisma as any).notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      (this.prisma as any).notification.count({ where }),
+    ]);
 
-      const [items, total] = await Promise.all([
-        (this.prisma as any).notification.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        (this.prisma as any).notification.count({ where }),
-      ]);
-
-      return {
-        notifications: items,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
-    } catch (error) {
-      this.logger.error('Error listing notifications:', error);
-      // Return empty result on error
-      return {
-        notifications: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0,
-        },
-      };
-    }
+    return {
+      notifications: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
   async createNotification(notification: {
     userId: string;
@@ -393,9 +344,7 @@ export class NotificationService {
 
   async getNotificationStats(userId: string) {
     const total = await (this.prisma as any).notification.count({ where: { userId } });
-    const unread = await (this.prisma as any).notification.count({
-      where: { userId, read: false },
-    });
+    const unread = await (this.prisma as any).notification.count({ where: { userId, read: false } });
     const read = await (this.prisma as any).notification.count({ where: { userId, read: true } });
     const unreadPercentage = total > 0 ? Math.round((unread / total) * 100) : 0;
     return { total, unread, read, unreadPercentage };

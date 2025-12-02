@@ -14,14 +14,11 @@ import {
   Package,
   RefreshCw,
   FilePieChart,
-  BarChart3,
-  Share2
+  BarChart3
 } from "lucide-react"
 import { useReports } from "@/hooks/use-reports"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale/vi"
-import { exportReports } from "@/lib/export-utils"
-import { toast } from "sonner"
 
 export default function ReportsPage() {
   const {
@@ -34,19 +31,10 @@ export default function ReportsPage() {
 
   const [selectedPeriod, setSelectedPeriod] = useState("month")
   const [selectedType, setSelectedType] = useState("all")
-  const [exportFormat, setExportFormat] = useState<'pdf' | 'excel' | 'csv'>('pdf')
 
   useEffect(() => {
     fetchReports()
   }, [fetchReports])
-
-  const handleExportReports = () => {
-    if (reports.length === 0) {
-      toast.error('Không có báo cáo để xuất')
-      return
-    }
-    exportReports(reports as unknown as Record<string, unknown>[], exportFormat)
-  }
 
   const reportTypes = [
     {
@@ -115,255 +103,197 @@ export default function ReportsPage() {
     await generateReport({
       type,
       period: selectedPeriod,
-      format: exportFormat
+      format: 'pdf'
     })
-  }
-
-  const handleExportFromBackend = async (type: 'sales' | 'inventory' | 'customers') => {
-    try {
-      toast.loading(`Đang xuất báo cáo ${type}...`)
-
-      let blob: Blob
-      const filename = `bao-cao-${type}-${new Date().toISOString().split('T')[0]}`
-      const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' }
-
-      // Import apiClient dynamically
-      const { apiClient } = await import('@/lib/api-client')
-
-      switch (type) {
-        case 'sales':
-          blob = await apiClient.exportSalesReport(exportFormat)
-          break
-        case 'inventory':
-          blob = await apiClient.exportInventoryReport(exportFormat)
-          break
-        case 'customers':
-          blob = await apiClient.exportCustomersReport(exportFormat)
-          break
-        default:
-          throw new Error('Invalid report type')
-      }
-
-      // Download the file
-      apiClient.downloadBlob(blob, `${filename}.${extensions[exportFormat]}`)
-      toast.dismiss()
-      toast.success(`Xuất báo cáo ${type} thành công`)
-    } catch (error) {
-      toast.dismiss()
-      console.error('Export error:', error)
-      toast.error(`Lỗi khi xuất báo cáo ${type}`)
-    }
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Báo cáo</h1>
-          <p className="text-muted-foreground">
-            Tạo và quản lý các báo cáo kinh doanh
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <select
-            className="px-3 py-2 border rounded-md text-sm"
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as 'pdf' | 'excel' | 'csv')}
-          >
-            <option value="pdf">PDF</option>
-            <option value="excel">Excel</option>
-            <option value="csv">CSV</option>
-          </select>
-          <Button onClick={handleExportReports} variant="default">
-            <FileText className="h-4 w-4 mr-2" />
-            Xuất báo cáo
-          </Button>
-          <Button onClick={fetchReports} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Làm mới
-          </Button>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tạo báo cáo nhanh</CardTitle>
-          <CardDescription>
-            Chọn loại báo cáo và khoảng thời gian để tạo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4 mb-4">
-            <select
-              className="px-3 py-2 border rounded-md"
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-            >
-              <option value="today">Hôm nay</option>
-              <option value="week">Tuần này</option>
-              <option value="month">Tháng này</option>
-              <option value="quarter">Quý này</option>
-              <option value="year">Năm nay</option>
-              <option value="custom">Tùy chỉnh</option>
-            </select>
-
-            <select
-              className="px-3 py-2 border rounded-md"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-            >
-              <option value="all">Tất cả loại</option>
-              <option value="sales">Doanh số</option>
-              <option value="inventory">Tồn kho</option>
-              <option value="customers">Khách hàng</option>
-              <option value="services">Dịch vụ</option>
-              <option value="financial">Tài chính</option>
-            </select>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {reportTypes.map((report) => (
-              <Card key={report.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={report.color}>
-                      {report.icon}
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (['sales', 'inventory', 'customers'].includes(report.id)) {
-                          handleExportFromBackend(report.id as 'sales' | 'inventory' | 'customers')
-                        } else {
-                          handleGenerateReport(report.id)
-                        }
-                      }}
-                    >
-                      <Download className="h-3 w-3 mr-1" />
-                      Xuất báo cáo
-                    </Button>
-                  </div>
-                  <h3 className="font-semibold">{report.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {report.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Reports */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Báo cáo gần đây</CardTitle>
-          <CardDescription>
-            Các báo cáo đã tạo gần đây
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {reports.length > 0 ? (
-              reports.map((report) => (
-                <Card key={report.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-muted-foreground">
-                          {getReportIcon(report.type)}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{report.name}</h4>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(report.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                            </span>
-                            {getFormatBadge(report.format)}
-                            <Badge variant="outline">
-                              {report.period}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => downloadReport(report.id)}
-                        >
-                          <Download className="h-3 w-3 mr-1" />
-                          Tải xuống
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Chưa có báo cáo nào
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Scheduled Reports */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Báo cáo định kỳ</CardTitle>
-          <CardDescription>
-            Cấu hình báo cáo tự động
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Báo cáo doanh số hàng tuần</p>
-                  <p className="text-sm text-muted-foreground">
-                    Gửi mỗi thứ 2 lúc 9:00 sáng
-                  </p>
-                </div>
-              </div>
-              <Badge>Đang hoạt động</Badge>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Báo cáo</h1>
+              <p className="text-muted-foreground">
+                Tạo và quản lý các báo cáo kinh doanh
+              </p>
             </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Báo cáo tồn kho hàng tháng</p>
-                  <p className="text-sm text-muted-foreground">
-                    Gửi vào ngày 1 hàng tháng
-                  </p>
-                </div>
-              </div>
-              <Badge>Đang hoạt động</Badge>
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => scheduleReport({
-                type: 'sales',
-                schedule: 'weekly',
-                recipients: ['admin@audiotailoc.com']
-              })}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Thêm báo cáo định kỳ
+            <Button onClick={fetchReports} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Làm mới
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tạo báo cáo nhanh</CardTitle>
+              <CardDescription>
+                Chọn loại báo cáo và khoảng thời gian để tạo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4 mb-4">
+                <select
+                  className="px-3 py-2 border rounded-md"
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                >
+                  <option value="today">Hôm nay</option>
+                  <option value="week">Tuần này</option>
+                  <option value="month">Tháng này</option>
+                  <option value="quarter">Quý này</option>
+                  <option value="year">Năm nay</option>
+                  <option value="custom">Tùy chỉnh</option>
+                </select>
+                
+                <select
+                  className="px-3 py-2 border rounded-md"
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                >
+                  <option value="all">Tất cả loại</option>
+                  <option value="sales">Doanh số</option>
+                  <option value="inventory">Tồn kho</option>
+                  <option value="customers">Khách hàng</option>
+                  <option value="services">Dịch vụ</option>
+                  <option value="financial">Tài chính</option>
+                </select>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {reportTypes.map((report) => (
+                  <Card key={report.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={report.color}>
+                          {report.icon}
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleGenerateReport(report.id)}
+                        >
+                          Tạo báo cáo
+                        </Button>
+                      </div>
+                      <h3 className="font-semibold">{report.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {report.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Reports */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Báo cáo gần đây</CardTitle>
+              <CardDescription>
+                Các báo cáo đã tạo gần đây
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {reports.length > 0 ? (
+                  reports.map((report) => (
+                    <Card key={report.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="text-muted-foreground">
+                              {getReportIcon(report.type)}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{report.name}</h4>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(report.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                </span>
+                                {getFormatBadge(report.format)}
+                                <Badge variant="outline">
+                                  {report.period}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadReport(report.id)}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Tải xuống
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6 text-center text-muted-foreground">
+                      Chưa có báo cáo nào
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Scheduled Reports */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Báo cáo định kỳ</CardTitle>
+              <CardDescription>
+                Cấu hình báo cáo tự động
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Báo cáo doanh số hàng tuần</p>
+                      <p className="text-sm text-muted-foreground">
+                        Gửi mỗi thứ 2 lúc 9:00 sáng
+                      </p>
+                    </div>
+                  </div>
+                  <Badge>Đang hoạt động</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Báo cáo tồn kho hàng tháng</p>
+                      <p className="text-sm text-muted-foreground">
+                        Gửi vào ngày 1 hàng tháng
+                      </p>
+                    </div>
+                  </div>
+                  <Badge>Đang hoạt động</Badge>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => scheduleReport({
+                    type: 'sales',
+                    schedule: 'weekly',
+                    recipients: ['admin@audiotailoc.com']
+                  })}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Thêm báo cáo định kỳ
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
   )
 }

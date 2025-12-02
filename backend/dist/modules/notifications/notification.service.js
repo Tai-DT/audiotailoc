@@ -129,7 +129,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'ORDER',
             priority: 'HIGH',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { orderData, isConfirmation: true },
+            data: { orderData, isConfirmation: true }
         });
     }
     async sendOrderStatusUpdate(userId, email, orderData) {
@@ -141,7 +141,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'ORDER',
             priority: 'MEDIUM',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { orderData, isConfirmation: false },
+            data: { orderData, isConfirmation: false }
         });
     }
     async sendWelcomeNotification(userId, email, customerName) {
@@ -153,7 +153,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'WELCOME',
             priority: 'LOW',
             channels: ['EMAIL'],
-            data: { customerName },
+            data: { customerName }
         });
     }
     async sendPromotionNotification(userId, email, promotion) {
@@ -165,7 +165,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'PROMOTION',
             priority: 'MEDIUM',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { promotion },
+            data: { promotion }
         });
     }
     async sendSystemNotification(message, _priority = 'MEDIUM') {
@@ -175,14 +175,14 @@ let NotificationService = NotificationService_1 = class NotificationService {
         const promises = userIds.map(async (userId) => {
             const user = await this.prisma.users.findUnique({
                 where: { id: userId },
-                select: { email: true, phone: true },
+                select: { email: true, phone: true }
             });
             if (user) {
                 await this.sendNotification({
                     ...data,
                     userId,
                     email: user.email,
-                    phone: user.phone || undefined,
+                    phone: user.phone || undefined
                 });
             }
         });
@@ -202,49 +202,24 @@ let NotificationService = NotificationService_1 = class NotificationService {
         const where = { userId };
         if (typeof options.read === 'boolean')
             where.read = options.read;
-        try {
-            if (!this.prisma.notification) {
-                return {
-                    notifications: [],
-                    pagination: {
-                        page,
-                        limit,
-                        total: 0,
-                        totalPages: 0,
-                    },
-                };
-            }
-            const [items, total] = await Promise.all([
-                this.prisma.notification.findMany({
-                    where,
-                    orderBy: { createdAt: 'desc' },
-                    skip: (page - 1) * limit,
-                    take: limit,
-                }),
-                this.prisma.notification.count({ where }),
-            ]);
-            return {
-                notifications: items,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit),
-                },
-            };
-        }
-        catch (error) {
-            this.logger.error('Error listing notifications:', error);
-            return {
-                notifications: [],
-                pagination: {
-                    page,
-                    limit,
-                    total: 0,
-                    totalPages: 0,
-                },
-            };
-        }
+        const [items, total] = await Promise.all([
+            this.prisma.notification.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * limit,
+                take: limit,
+            }),
+            this.prisma.notification.count({ where }),
+        ]);
+        return {
+            notifications: items,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
     async createNotification(notification) {
         return this.prisma.notification.create({
@@ -279,9 +254,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
     }
     async getNotificationStats(userId) {
         const total = await this.prisma.notification.count({ where: { userId } });
-        const unread = await this.prisma.notification.count({
-            where: { userId, read: false },
-        });
+        const unread = await this.prisma.notification.count({ where: { userId, read: false } });
         const read = await this.prisma.notification.count({ where: { userId, read: true } });
         const unreadPercentage = total > 0 ? Math.round((unread / total) * 100) : 0;
         return { total, unread, read, unreadPercentage };

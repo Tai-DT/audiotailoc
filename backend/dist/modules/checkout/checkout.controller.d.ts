@@ -1,42 +1,18 @@
 import { CheckoutService } from './checkout.service';
-declare class ShippingAddressDto {
-    fullName: string;
-    phone: string;
-    email: string;
-    address: string;
-    notes?: string;
-    coordinates?: {
-        lat: number;
-        lng: number;
-    };
-    goongPlaceId?: string;
-}
 declare class CheckoutDto {
     promotionCode?: string;
-    shippingAddress: ShippingAddressDto;
-    items?: Array<{
-        productId: string;
-        quantity: number;
-    }>;
 }
 export declare class CheckoutController {
     private readonly checkout;
     constructor(checkout: CheckoutService);
     create(req: any, dto: CheckoutDto): Promise<{
-        id: string;
-        orderNo: string;
-        totalCents: number;
-        status: string;
-        shippingAddress: string;
-    }>;
-    createLegacy(req: any, dto: CheckoutDto): Promise<{
         order: {
             status: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string | null;
+            userId: string;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -44,8 +20,6 @@ export declare class CheckoutController {
             shippingAddress: string | null;
             shippingCoordinates: string | null;
             promotionCode: string | null;
-            isDeleted: boolean;
-            deletedAt: Date | null;
         };
     }>;
     getByOrderNo(req: any, orderNo: string): Promise<{
@@ -55,10 +29,10 @@ export declare class CheckoutController {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
+            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
-            price: bigint;
             unitPrice: bigint | null;
         }[];
         payments: {
@@ -66,12 +40,12 @@ export declare class CheckoutController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            metadata: string | null;
-            orderId: string;
             transactionId: string | null;
-            intentId: string | null;
             provider: string;
             amountCents: number;
+            metadata: string | null;
+            orderId: string;
+            intentId: string | null;
         }[];
     } & {
         status: string;
@@ -79,7 +53,7 @@ export declare class CheckoutController {
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string | null;
+        userId: string;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -87,8 +61,6 @@ export declare class CheckoutController {
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        isDeleted: boolean;
-        deletedAt: Date | null;
     }>;
 }
 export {};

@@ -64,9 +64,8 @@ export function useUpdateProfile() {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       toast.success('Profile updated successfully!');
     },
-    onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } } | undefined;
-      const message = err?.response?.data?.message || 'Failed to update profile';
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to update profile';
       toast.error(message);
     },
   });
@@ -82,9 +81,8 @@ export function useChangePassword() {
     onSuccess: () => {
       toast.success('Password changed successfully!');
     },
-    onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } } | undefined;
-      const message = err?.response?.data?.message || 'Failed to change password';
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to change password';
       toast.error(message);
     },
   });
@@ -113,9 +111,8 @@ export function useExportUserData() {
     onSuccess: () => {
       toast.success('User data exported successfully!');
     },
-    onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } } | undefined;
-      const message = err?.response?.data?.message || 'Failed to export user data';
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to export user data';
       toast.error(message);
     },
   });
@@ -153,9 +150,8 @@ export function useDeleteAccount() {
         window.location.href = '/';
       }, 1500);
     },
-    onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } } | undefined;
-      const message = err?.response?.data?.message || 'Failed to delete account';
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to delete account';
       toast.error(message);
     },
   });

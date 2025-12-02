@@ -14,7 +14,7 @@ const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const cart_service_1 = require("../cart/cart.service");
-const promotions_service_1 = require("../promotions/promotions.service");
+const promotion_service_1 = require("../promotions/promotion.service");
 const mail_service_1 = require("../notifications/mail.service");
 let CheckoutService = class CheckoutService {
     constructor(prisma, cart, promos, mail) {
@@ -24,142 +24,34 @@ let CheckoutService = class CheckoutService {
         this.mail = mail;
     }
     async createOrder(userId, params) {
-        let cart = null;
-        let items = [];
-        let subtotalCents = 0;
-        if (params.items && params.items.length > 0) {
-            for (const item of params.items) {
-                const product = await this.prisma.products.findUnique({
-                    where: { id: item.productId },
-                    select: {
-                        id: true,
-                        name: true,
-                        priceCents: true,
-                        imageUrl: true,
-                        isActive: true,
-                        isDeleted: true,
-                        inventory: {
-                            select: { stock: true, reserved: true },
-                        },
-                    },
-                });
-                if (!product || !product.isActive || product.isDeleted) {
-                    throw new common_1.BadRequestException(`Sản phẩm không còn tồn tại hoặc đã ngừng bán`);
-                }
-                const stock = product.inventory?.stock ?? 0;
-                const reserved = product.inventory?.reserved ?? 0;
-                const available = stock - reserved;
-                if (available < item.quantity) {
-                    throw new common_1.BadRequestException(`Sản phẩm "${product.name}" chỉ còn ${available} sản phẩm trong kho`);
-                }
-                items.push({
-                    productId: product.id,
-                    quantity: item.quantity,
-                    unitPrice: product.priceCents,
-                    products: product,
-                });
-                subtotalCents += Number(product.priceCents) * Number(item.quantity);
-            }
-        }
-        else {
-            const cartData = await this.cart.getCartWithTotals(userId);
-            cart = cartData.cart;
-            items = cartData.items;
-            subtotalCents = cartData.subtotalCents;
-            for (const item of items) {
-                const product = await this.prisma.products.findUnique({
-                    where: { id: item.productId },
-                    select: {
-                        name: true,
-                        isActive: true,
-                        isDeleted: true,
-                        inventory: {
-                            select: { stock: true, reserved: true },
-                        },
-                    },
-                });
-                if (!product || !product.isActive || product.isDeleted) {
-                    throw new common_1.BadRequestException(`Sản phẩm "${item.products?.name}" không còn tồn tại`);
-                }
-                const stock = product.inventory?.stock ?? 0;
-                const reserved = product.inventory?.reserved ?? 0;
-                const available = stock - reserved;
-                if (available < item.quantity) {
-                    throw new common_1.BadRequestException(`Sản phẩm "${product.name}" chỉ còn ${available} sản phẩm trong kho`);
-                }
-            }
-        }
+        const { cart, items, subtotalCents } = await this.cart.getCartWithTotals(userId);
         if (items.length === 0)
             throw new common_1.BadRequestException('Giỏ hàng trống');
-        let discount = 0;
-        let promo = null;
-        let promotionDetails = null;
-        if (params.promotionCode) {
-            const cartItems = items.map(item => ({
-                productId: item.productId,
-                categoryId: item.products?.categoryId,
-                quantity: item.quantity,
-                priceCents: item.unitPrice || item.products?.priceCents,
-            }));
-            const promoResult = await this.promos.applyToCart(params.promotionCode, cartItems);
-            if (promoResult.valid) {
-                discount = promoResult.totalDiscount || 0;
-                promo = promoResult.promotion;
-                promotionDetails = {
-                    code: params.promotionCode,
-                    type: promo?.type,
-                    value: promo?.value,
-                    itemDiscounts: promoResult.itemDiscounts,
-                    applicableItemsCount: promoResult.applicableItemsCount,
-                };
-                if (discount > 0) {
-                    await this.promos.markAsUsed(params.promotionCode).catch(err => {
-                        console.error('Failed to mark promotion as used:', err);
-                    });
-                    console.log('Promotion applied:', {
-                        code: promotionDetails.code,
-                        type: promotionDetails.type,
-                        discount,
-                        applicableItems: promotionDetails.applicableItemsCount,
-                        totalItems: cartItems.length,
-                    });
-                }
-            }
-        }
+        const promo = await this.promos.validate(params.promotionCode);
+        const discount = this.promos.computeDiscount(promo, subtotalCents);
         const shipping = Number(process.env.SHIPPING_FLAT_CENTS ?? '30000');
         const total = Math.max(0, subtotalCents - discount) + shipping;
         const orderNo = 'ATL' + Date.now();
-        const shippingAddressData = params.shippingAddress
-            ? JSON.stringify({
-                fullName: params.shippingAddress.fullName,
-                phone: params.shippingAddress.phone,
-                email: params.shippingAddress.email,
-                address: params.shippingAddress.address,
-                notes: params.shippingAddress.notes || null,
-                coordinates: params.shippingAddress.coordinates,
-                goongPlaceId: params.shippingAddress.goongPlaceId,
-            })
-            : null;
         const result = await this.prisma.$transaction(async (tx) => {
             const order = await tx.orders.create({
                 data: {
                     id: (0, crypto_1.randomUUID)(),
                     orderNo,
-                    userId: userId || null,
+                    userId,
                     status: 'PENDING',
                     subtotalCents: subtotalCents,
                     discountCents: discount,
                     shippingCents: shipping,
                     totalCents: total,
                     promotionCode: promo?.code ?? null,
-                    shippingAddress: shippingAddressData,
-                    updatedAt: new Date(),
+                    shippingAddress: params.shippingAddress ?? null,
+                    updatedAt: new Date()
                 },
             });
             for (const i of items) {
                 const product = await tx.products.findUnique({
                     where: { id: i.productId },
-                    select: { priceCents: true, isActive: true, isDeleted: true },
+                    select: { priceCents: true, isActive: true, isDeleted: true }
                 });
                 if (!product || !product.isActive || product.isDeleted) {
                     throw new common_1.BadRequestException(`Product ${i.products.name} is no longer available`);
@@ -175,34 +67,30 @@ let CheckoutService = class CheckoutService {
                         price: currentPrice,
                         unitPrice: currentPrice,
                         imageUrl: i.products.imageUrl ?? null,
-                        updatedAt: new Date(),
+                        updatedAt: new Date()
                     },
                 });
             }
-            if (cart && cart.id) {
-                await tx.carts.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
-            }
+            await tx.carts.update({ where: { id: cart.id }, data: { status: 'CHECKED_OUT' } });
             return order;
         });
         try {
-            let userEmail = params.shippingAddress?.email;
-            if (!userEmail && result.userId) {
+            if (result.userId) {
                 const user = await this.prisma.users.findUnique({ where: { id: result.userId } });
-                userEmail = user?.email;
-            }
-            if (userEmail) {
-                const orderData = {
-                    orderNo: result.orderNo,
-                    customerName: params.shippingAddress?.fullName || 'Khách hàng',
-                    totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
-                    items: items.map((item) => ({
-                        name: item.products.name || 'Sản phẩm',
-                        quantity: item.quantity,
-                        price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`,
-                    })),
-                    status: result.status,
-                };
-                await this.mail.sendOrderConfirmation(userEmail, orderData);
+                if (user?.email) {
+                    const orderData = {
+                        orderNo: result.orderNo,
+                        customerName: user.name || user.email,
+                        totalAmount: `${(result.totalCents / 100).toLocaleString('vi-VN')} VNĐ`,
+                        items: items.map((item) => ({
+                            name: item.products.name || 'Sản phẩm',
+                            quantity: item.quantity,
+                            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+                        })),
+                        status: result.status
+                    };
+                    await this.mail.sendOrderConfirmation(user.email, orderData);
+                }
             }
         }
         catch (_error) {
@@ -210,10 +98,7 @@ let CheckoutService = class CheckoutService {
         return result;
     }
     async getOrderForUserByNo(userId, orderNo) {
-        const order = await this.prisma.orders.findFirst({
-            where: { orderNo, userId },
-            include: { order_items: true, payments: true },
-        });
+        const order = await this.prisma.orders.findFirst({ where: { orderNo, userId }, include: { order_items: true, payments: true } });
         if (!order)
             throw new Error('Không tìm thấy đơn hàng');
         return order;
@@ -222,9 +107,6 @@ let CheckoutService = class CheckoutService {
 exports.CheckoutService = CheckoutService;
 exports.CheckoutService = CheckoutService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        cart_service_1.CartService,
-        promotions_service_1.PromotionsService,
-        mail_service_1.MailService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, cart_service_1.CartService, promotion_service_1.PromotionService, mail_service_1.MailService])
 ], CheckoutService);
 //# sourceMappingURL=checkout.service.js.map

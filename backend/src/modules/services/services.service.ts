@@ -27,7 +27,7 @@ export class ServicesService {
     }
 
     // Handle price based on type
-    const priceData: any = {
+    let priceData: any = {
       priceType: data.priceType || 'FIXED',
     };
 
@@ -321,13 +321,10 @@ export class ServicesService {
   }
 
   // Service Items Management
-  async addServiceItem(
-    serviceId: string,
-    data: {
-      name: string;
-      priceCents: number;
-    },
-  ) {
+  async addServiceItem(serviceId: string, data: {
+    name: string;
+    priceCents: number;
+  }) {
     await this.getService(serviceId); // Ensure service exists
 
     return this.prisma.service_items.create({
@@ -342,13 +339,10 @@ export class ServicesService {
     });
   }
 
-  async updateServiceItem(
-    itemId: string,
-    data: Partial<{
-      name: string;
-      priceCents: number;
-    }>,
-  ) {
+  async updateServiceItem(itemId: string, data: Partial<{
+    name: string;
+    priceCents: number;
+  }>) {
     const item = await this.prisma.service_items.findUnique({
       where: { id: itemId },
     });
@@ -422,16 +416,16 @@ export class ServicesService {
   }
 
   private async generateSlug(name: string): Promise<string> {
-    const baseSlug = name
+    let baseSlug = name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/\s+/g, '-')      // Replace spaces with hyphens
+      .replace(/--+/g, '-')      // Replace multiple hyphens with single hyphen
       .trim();
 
     // Check if slug already exists
     const existing = await this.prisma.service_types.findFirst({
-      where: { slug: baseSlug },
+      where: { slug: baseSlug }
     });
 
     if (!existing) {
@@ -490,22 +484,17 @@ export class ServicesService {
           select: {
             id: true,
             name: true,
-            slug: true,
-          },
-        },
+            slug: true
+          }
+        }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }
     });
   }
 
   // Service Types Management
-  async createServiceType(data: {
-    name: string;
-    slug?: string;
-    description?: string;
-    isActive?: boolean;
-  }) {
-    const slug = data.slug || (await this.generateSlug(data.name));
+  async createServiceType(data: { name: string; slug?: string; description?: string; isActive?: boolean }) {
+    const slug = data.slug || await this.generateSlug(data.name);
 
     return this.prisma.service_types.create({
       data: {
@@ -520,16 +509,7 @@ export class ServicesService {
     });
   }
 
-  async updateServiceType(
-    id: string,
-    data: {
-      name?: string;
-      slug?: string;
-      description?: string;
-      isActive?: boolean;
-      sortOrder?: number;
-    },
-  ) {
+  async updateServiceType(id: string, data: { name?: string; slug?: string; description?: string; isActive?: boolean; sortOrder?: number }) {
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.slug !== undefined) updateData.slug = data.slug;

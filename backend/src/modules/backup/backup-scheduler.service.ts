@@ -1,7 +1,12 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { BackupService } from './backup.service';
-import { LoggingService } from '../logging/logging.service';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { BackupService } from "./backup.service";
+import { LoggingService } from "../logging/logging.service";
 
 // Optional cron integration; gracefully degrade if not installed
 let CronJobCtor: any = null;
@@ -9,7 +14,7 @@ let isCronAvailable = false;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const cronModule = require('cron');
+  const cronModule = require("cron");
   CronJobCtor = cronModule.CronJob;
   isCronAvailable = true;
 } catch (error) {
@@ -21,7 +26,7 @@ try {
 export interface BackupSchedule {
   id: string;
   name: string;
-  type: 'full' | 'incremental' | 'files';
+  type: "full" | "incremental" | "files";
   cronExpression: string;
   enabled: boolean;
   options: {
@@ -33,7 +38,7 @@ export interface BackupSchedule {
   };
   lastRun?: Date;
   nextRun?: Date;
-  status: 'active' | 'inactive' | 'running' | 'error';
+  status: "active" | "inactive" | "running" | "error";
   errorMessage?: string;
 }
 
@@ -54,13 +59,13 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     // Initialize backup schedules (will work without cron for manual backups)
     await this.initializeDefaultSchedules();
 
-    // Avoid starting cron jobs during tests to prevent Jest open-handle issues.
-    // Only start schedules when cron is available and we are not running tests.
-    if (isCronAvailable && process.env.NODE_ENV !== 'test') {
+    // If cron is available, start schedules. In test environment we don't
+    // want to log warnings about missing optional packages, so guard logs
+    // when NODE_ENV === 'test'.
+    if (isCronAvailable) {
       this.startAllSchedules();
     } else {
-      // Only warn about missing cron package in non-test environments.
-      if (process.env.NODE_ENV !== 'test' && !isCronAvailable) {
+      if (process.env.NODE_ENV !== 'test') {
         this.logger.warn(
           'Cron package not available - backup schedules created but not automatically executed. Install "cron" package to enable automatic scheduling.',
         );
@@ -77,45 +82,46 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
   private async initializeDefaultSchedules() {
     const defaultSchedules: Partial<BackupSchedule>[] = [
       {
-        id: 'full_backup_daily',
-        name: 'Daily Full Backup',
-        type: 'full',
-        cronExpression: '0 2 * * *', // Daily at 2 AM
+        id: "full_backup_daily",
+        name: "Daily Full Backup",
+        type: "full",
+        cronExpression: "0 2 * * *", // Daily at 2 AM
         enabled: true,
         options: {
           includeFiles: true,
           compress: true,
           encrypt: false,
           retentionDays: 30,
-          comment: 'Automated daily full backup',
+          comment: "Automated daily full backup",
         },
       },
       {
-        id: 'incremental_backup_hourly',
-        name: 'Hourly Incremental Backup',
-        type: 'incremental',
-        cronExpression: '0 * * * *', // Every hour
+        id: "incremental_backup_hourly",
+        name: "Hourly Incremental Backup",
+        type: "incremental",
+        cronExpression: "0 * * * *", // Every hour
         enabled: true,
         options: {
           compress: true,
-          comment: 'Automated hourly incremental backup',
+          comment: "Automated hourly incremental backup",
         },
       },
       {
-        id: 'file_backup_weekly',
-        name: 'Weekly File Backup',
-        type: 'files',
-        cronExpression: '0 3 * * 0', // Weekly on Sunday at 3 AM
+        id: "file_backup_weekly",
+        name: "Weekly File Backup",
+        type: "files",
+        cronExpression: "0 3 * * 0", // Weekly on Sunday at 3 AM
         enabled: true,
         options: {
           compress: true,
-          comment: 'Automated weekly file backup',
+          comment: "Automated weekly file backup",
         },
       },
     ];
 
     // Load schedules from configuration or use defaults
-    const configuredSchedules = this.configService.get('BACKUP_SCHEDULES') || defaultSchedules;
+    const configuredSchedules =
+      this.configService.get("BACKUP_SCHEDULES") || defaultSchedules;
 
     for (const schedule of configuredSchedules) {
       await this.createSchedule(schedule);
@@ -125,15 +131,17 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Create a new backup schedule
-  async createSchedule(scheduleData: Partial<BackupSchedule>): Promise<BackupSchedule> {
+  async createSchedule(
+    scheduleData: Partial<BackupSchedule>,
+  ): Promise<BackupSchedule> {
     const schedule: BackupSchedule = {
       id: scheduleData.id || `schedule_${Date.now()}`,
-      name: scheduleData.name || 'Unnamed Schedule',
-      type: scheduleData.type || 'full',
-      cronExpression: scheduleData.cronExpression || '0 2 * * *',
+      name: scheduleData.name || "Unnamed Schedule",
+      type: scheduleData.type || "full",
+      cronExpression: scheduleData.cronExpression || "0 2 * * *",
       enabled: scheduleData.enabled ?? true,
       options: scheduleData.options || {},
-      status: 'inactive',
+      status: "inactive",
     };
 
     // Calculate next run time
@@ -141,18 +149,12 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
     this.schedules.set(schedule.id, schedule);
 
-    // Create cron job if enabled (skip starting cron jobs during tests)
+    // Create cron job if enabled
     if (schedule.enabled) {
-      if (process.env.NODE_ENV !== 'test') {
-        this.createCronJob(schedule);
-      } else {
-        // In test environment, do not start cron jobs to avoid open handles.
-        schedule.status = 'inactive';
-        schedule.errorMessage = 'cron skipped in test';
-      }
+      this.createCronJob(schedule);
     }
 
-    this.loggingService.logBusinessEvent('backup_schedule_created', {
+    this.loggingService.logBusinessEvent("backup_schedule_created", {
       scheduleId: schedule.id,
       scheduleName: schedule.name,
       type: schedule.type,
@@ -188,7 +190,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
       this.createCronJob(schedule);
     }
 
-    this.loggingService.logBusinessEvent('backup_schedule_updated', {
+    this.loggingService.logBusinessEvent("backup_schedule_updated", {
       scheduleId,
       updates,
     });
@@ -206,7 +208,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     await this.stopSchedule(scheduleId);
     this.schedules.delete(scheduleId);
 
-    this.loggingService.logBusinessEvent('backup_schedule_deleted', {
+    this.loggingService.logBusinessEvent("backup_schedule_deleted", {
       scheduleId,
       scheduleName: schedule.name,
     });
@@ -222,10 +224,10 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     }
 
     schedule.enabled = true;
-    schedule.status = 'active';
+    schedule.status = "active";
     this.createCronJob(schedule);
 
-    this.loggingService.logBusinessEvent('backup_schedule_enabled', {
+    this.loggingService.logBusinessEvent("backup_schedule_enabled", {
       scheduleId,
       scheduleName: schedule.name,
     });
@@ -243,7 +245,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     schedule.enabled = false;
     await this.stopSchedule(scheduleId);
 
-    this.loggingService.logBusinessEvent('backup_schedule_disabled', {
+    this.loggingService.logBusinessEvent("backup_schedule_disabled", {
       scheduleId,
       scheduleName: schedule.name,
     });
@@ -268,7 +270,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
         this.createCronJob(schedule);
       }
     }
-    this.logger.log('All backup schedules started');
+    this.logger.log("All backup schedules started");
   }
 
   // Stop all schedules
@@ -276,7 +278,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
     for (const scheduleId of this.schedules.keys()) {
       await this.stopSchedule(scheduleId);
     }
-    this.logger.log('All backup schedules stopped');
+    this.logger.log("All backup schedules stopped");
   }
 
   // Create cron job for a schedule
@@ -290,8 +292,8 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
             `Cron scheduling not available for schedule: ${schedule.name}. Install 'cron' package to enable automatic backups.`,
           );
         }
-        schedule.status = 'inactive';
-        schedule.errorMessage = 'cron package not available';
+        schedule.status = "inactive";
+        schedule.errorMessage = "cron package not available";
         return;
       }
 
@@ -304,20 +306,23 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
         },
         null, // onComplete
         false, // start immediately
-        'UTC', // timezone
+        "UTC", // timezone
       );
 
       this.cronJobs.set(schedule.id, cronJob);
       cronJob.start();
 
-      schedule.status = 'active';
+      schedule.status = "active";
 
       this.logger.log(
         `Created cron job for schedule: ${schedule.name} (${schedule.cronExpression})`,
       );
     } catch (error: any) {
-      this.logger.error(`Failed to create cron job for schedule: ${schedule.name}`, error);
-      schedule.status = 'error';
+      this.logger.error(
+        `Failed to create cron job for schedule: ${schedule.name}`,
+        error,
+      );
+      schedule.status = "error";
       schedule.errorMessage = error.message;
     }
   }
@@ -332,17 +337,17 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
     const schedule = this.schedules.get(scheduleId);
     if (schedule) {
-      schedule.status = 'inactive';
+      schedule.status = "inactive";
     }
   }
 
   // Execute scheduled backup
   private async executeScheduledBackup(schedule: BackupSchedule) {
     const startTime = Date.now();
-    schedule.status = 'running';
+    schedule.status = "running";
 
     try {
-      this.loggingService.logBusinessEvent('scheduled_backup_started', {
+      this.loggingService.logBusinessEvent("scheduled_backup_started", {
         scheduleId: schedule.id,
         scheduleName: schedule.name,
         type: schedule.type,
@@ -350,15 +355,20 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
       let result;
       switch (schedule.type) {
-        case 'full':
+        case "full":
           result = await this.backupService.createFullBackup(schedule.options);
           break;
-        case 'incremental':
-          result = await this.backupService.createIncrementalBackup(schedule.options);
+        case "incremental":
+          result = await this.backupService.createIncrementalBackup(
+            schedule.options,
+          );
           break;
-        case 'files':
+        case "files":
           const backupId = `scheduled_files_${Date.now()}`;
-          result = await this.backupService.createFileBackup(backupId, schedule.options);
+          result = await this.backupService.createFileBackup(
+            backupId,
+            schedule.options,
+          );
           break;
         default:
           throw new Error(`Unknown backup type: ${schedule.type}`);
@@ -366,10 +376,10 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
       schedule.lastRun = new Date();
       schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
-      schedule.status = 'active';
+      schedule.status = "active";
       schedule.errorMessage = undefined;
 
-      this.loggingService.logBusinessEvent('scheduled_backup_completed', {
+      this.loggingService.logBusinessEvent("scheduled_backup_completed", {
         scheduleId: schedule.id,
         scheduleName: schedule.name,
         backupId: result.backupId,
@@ -378,20 +388,20 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
         success: true,
       });
     } catch (error: any) {
-      schedule.status = 'error';
+      schedule.status = "error";
       schedule.errorMessage = error.message;
       schedule.nextRun = this.calculateNextRun(schedule.cronExpression);
 
       this.loggingService.logError(error as any, {
         metadata: {
-          operation: 'scheduled_backup',
+          operation: "scheduled_backup",
           scheduleId: schedule.id,
           scheduleName: schedule.name,
           type: schedule.type,
         },
       });
 
-      this.loggingService.logBusinessEvent('scheduled_backup_failed', {
+      this.loggingService.logBusinessEvent("scheduled_backup_failed", {
         scheduleId: schedule.id,
         scheduleName: schedule.name,
         error: error.message,
@@ -415,7 +425,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
         () => {}, // dummy callback
         null,
         false,
-        'UTC',
+        "UTC",
       );
 
       return cronJob.nextDate().toJSDate();
@@ -427,11 +437,15 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
   // Get scheduler statistics
   getSchedulerStats() {
-    const activeSchedules = Array.from(this.schedules.values()).filter(s => s.enabled);
-    const runningSchedules = Array.from(this.schedules.values()).filter(
-      s => s.status === 'running',
+    const activeSchedules = Array.from(this.schedules.values()).filter(
+      (s) => s.enabled,
     );
-    const errorSchedules = Array.from(this.schedules.values()).filter(s => s.status === 'error');
+    const runningSchedules = Array.from(this.schedules.values()).filter(
+      (s) => s.status === "running",
+    );
+    const errorSchedules = Array.from(this.schedules.values()).filter(
+      (s) => s.status === "error",
+    );
 
     return {
       totalSchedules: this.schedules.size,
@@ -445,21 +459,23 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
 
   // Get next scheduled backup time
   private getNextScheduledBackup(): Date | null {
-    const activeSchedules = Array.from(this.schedules.values()).filter(s => s.enabled);
+    const activeSchedules = Array.from(this.schedules.values()).filter(
+      (s) => s.enabled,
+    );
 
     if (activeSchedules.length === 0) {
       return null;
     }
 
     const nextRuns = activeSchedules
-      .map(s => s.nextRun)
-      .filter(date => date !== undefined) as Date[];
+      .map((s) => s.nextRun)
+      .filter((date) => date !== undefined) as Date[];
 
     if (nextRuns.length === 0) {
       return null;
     }
 
-    return new Date(Math.min(...nextRuns.map(d => d.getTime())));
+    return new Date(Math.min(...nextRuns.map((d) => d.getTime())));
   }
 
   // Force run a schedule immediately
@@ -474,7 +490,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
       this.executeScheduledBackup(schedule);
     });
 
-    this.loggingService.logBusinessEvent('schedule_force_run', {
+    this.loggingService.logBusinessEvent("schedule_force_run", {
       scheduleId,
       scheduleName: schedule.name,
     });
@@ -530,7 +546,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
       ),
       activeCronJobs: cronJobs.length,
       nextBackup: this.getNextScheduledBackup(),
-      schedules: schedules.map(s => ({
+      schedules: schedules.map((s) => ({
         id: s.id,
         name: s.name,
         type: s.type,

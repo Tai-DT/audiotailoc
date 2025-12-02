@@ -96,7 +96,10 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Product image gallery',
         type: [String],
-        example: ['https://example.com/images/product1.jpg', 'https://example.com/images/product2.jpg'],
+        example: [
+            'https://example.com/images/product1.jpg',
+            'https://example.com/images/product2.jpg',
+        ],
     }),
     __metadata("design:type", Array)
 ], ProductSchema.prototype, "images", void 0);

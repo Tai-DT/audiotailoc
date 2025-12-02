@@ -46,11 +46,11 @@ export function Header() {
   const { user, logout } = useAuth()
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
-
+  
   useEffect(() => {
     setMounted(true)
   }, [])
-
+  
   const pageTitle = pageTitles[pathname] || "Dashboard"
 
   return (
@@ -59,7 +59,7 @@ export function Header() {
       <div className="flex items-center gap-4">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-blue-50 dark:hover:bg-gray-700" aria-label="Toggle menu">
+            <Button variant="ghost" size="icon" className="md:hidden hover:bg-blue-50 dark:hover:bg-gray-700">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -96,7 +96,7 @@ export function Header() {
         {mounted && (
           <ThemeSwitcher />
         )}
-
+        
         {/* Notifications */}
         <NotificationDropdown />
 
@@ -105,7 +105,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200">
               <Avatar className="h-8 w-8 ring-2 ring-blue-200 dark:ring-gray-600">
-                <AvatarImage src={user?.avatarUrl || '/avatars/admin.jpg'} alt={user?.name || "User"} />
+                <AvatarImage src="/avatars/admin.jpg" alt={user?.name || "User"} />
                 <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-800 dark:from-slate-500 dark:to-slate-700 text-white font-semibold">
                   {user?.name?.split(' ').map(n => n[0]).join('') || 'AT'}
                 </AvatarFallback>
