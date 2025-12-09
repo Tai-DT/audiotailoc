@@ -38,6 +38,9 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const config = app.get(ConfigService);
 
+  // Enable trust proxy for Heroku (fixes X-Forwarded-For warnings)
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
+
   // Get port early to avoid hoisting issues
   const port = Number(process.env.PORT || config.get('PORT') || 3010);
 

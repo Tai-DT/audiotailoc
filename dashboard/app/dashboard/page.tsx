@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
+import { formatDate, formatRelativeTime, isValidDate } from "@/lib/date-utils"
 import {
   LineChart,
   Line,
@@ -60,6 +61,15 @@ interface Order {
     name?: string
     email: string
   }
+}
+
+interface RecentOrder {
+  id: string
+  customer: string
+  amount: number
+  status: string
+  createdAt: string
+  createdAtFormatted?: string
 }
 
 interface Product {
@@ -96,13 +106,7 @@ interface DashboardStats {
     pending: number
     completed: number
     growth: number
-    recent: Array<{
-      id: string
-      customer: string
-      amount: number
-      status: string
-      createdAt: string
-    }>
+    recent: Array<RecentOrder>
   }
   customers: {
     total: number
@@ -284,10 +288,14 @@ function DashboardPage() {
       // Recent orders
       const recentOrders = orders.slice(0, 5).map((order: Order) => ({
         id: order.id,
-        customer: order.user?.name || 'Khách hàng',
+        customer: order.user?.name || order.customer?.name || 'Khách hàng',
         amount: (order.totalCents || 0) / 100,
         status: order.status || 'PENDING',
-        createdAt: order.createdAt
+        createdAt: order.createdAt,
+        // Ensure createdAt is valid
+        createdAtFormatted: isValidDate(order.createdAt) 
+          ? formatDate(order.createdAt) 
+          : 'N/A'
       }))
 
       const dashboardStats: DashboardStats = {
@@ -363,20 +371,63 @@ function DashboardPage() {
 
   if (loading && !stats) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-32" />
+      <div className="space-y-6 animate-in fade-in-50 duration-500">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-32" />
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i}>
-              <CardHeader>
+            <Card key={i} className="rounded-2xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-8 rounded-xl" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-9 w-32 mb-2" />
                 <Skeleton className="h-4 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Chart Skeleton */}
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full rounded-lg" />
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions Skeleton */}
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i} className="rounded-2xl">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Skeleton className="h-12 w-12 rounded-xl mb-2" />
+                <Skeleton className="h-4 w-24" />
               </CardContent>
             </Card>
           ))}
@@ -435,18 +486,18 @@ function DashboardPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in-50 duration-500">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Xin chào, {user?.name || 'Admin'}!
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="space-y-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+            Xin chào, {user?.name || 'Admin'}! 👋
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
             Dưới đây là tổng quan hoạt động của cửa hàng hôm nay.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -455,15 +506,18 @@ function DashboardPage() {
             className="rounded-xl"
           >
             <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
-            Làm mới
+            <span className="hidden sm:inline">Làm mới</span>
+            <span className="sm:hidden">Refresh</span>
           </Button>
-          <Button variant="outline" className="gap-2 rounded-xl">
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl">
             <Calendar className="h-4 w-4" />
-            Hôm nay
+            <span className="hidden sm:inline">Hôm nay</span>
+            <span className="sm:hidden">Today</span>
           </Button>
-          <Button className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <Button size="sm" className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all">
             <FileText className="h-4 w-4" />
-            Xuất báo cáo
+            <span className="hidden sm:inline">Xuất báo cáo</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
       </div>
@@ -473,22 +527,30 @@ function DashboardPage() {
         {statsCards.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card key={index} className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
+            <Card 
+              key={index} 
+              className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.title}</CardTitle>
-                <div className={cn("p-2.5 rounded-xl", stat.bgColor)}>
+                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {stat.title}
+                </CardTitle>
+                <div className={cn("p-2.5 rounded-xl transition-transform hover:scale-110", stat.bgColor)}>
                   <Icon className={cn("h-4 w-4", stat.color)} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-extrabold tracking-tight">{stat.value}</div>
+                <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{stat.value}</div>
                 <div className="flex items-center gap-1 text-xs mt-1">
                   {stat.trend === "up" ? (
-                    <TrendingUp className="h-3 w-3 text-green-600" />
+                    <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
                   ) : (
-                    <TrendingDown className="h-3 w-3 text-red-600" />
+                    <TrendingDown className="h-3 w-3 text-red-600 dark:text-red-400" />
                   )}
-                  <span className={stat.trend === "up" ? "text-green-600" : "text-red-600"}>
+                  <span className={cn(
+                    "font-medium",
+                    stat.trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                  )}>
                     {stat.change}
                   </span>
                 </div>
@@ -499,8 +561,8 @@ function DashboardPage() {
       </div>
 
       {/* Revenue Chart */}
-      {stats?.revenue.chart && (
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+      {stats?.revenue.chart && stats.revenue.chart.length > 0 ? (
+        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -508,28 +570,73 @@ function DashboardPage() {
                 <CardDescription>Biểu đồ doanh thu theo ngày</CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" variant={selectedPeriod === 'today' ? 'default' : 'outline'} className="rounded-xl" onClick={() => setSelectedPeriod('today')}>Hôm nay</Button>
-                <Button size="sm" variant={selectedPeriod === 'week' ? 'default' : 'outline'} className="rounded-xl" onClick={() => setSelectedPeriod('week')}>7 ngày</Button>
-                <Button size="sm" variant={selectedPeriod === 'month' ? 'default' : 'outline'} className="rounded-xl" onClick={() => setSelectedPeriod('month')}>30 ngày</Button>
+                <Button 
+                  size="sm" 
+                  variant={selectedPeriod === 'today' ? 'default' : 'outline'} 
+                  className="rounded-xl" 
+                  onClick={() => setSelectedPeriod('today')}
+                >
+                  Hôm nay
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={selectedPeriod === 'week' ? 'default' : 'outline'} 
+                  className="rounded-xl" 
+                  onClick={() => setSelectedPeriod('week')}
+                >
+                  7 ngày
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={selectedPeriod === 'month' ? 'default' : 'outline'} 
+                  className="rounded-xl" 
+                  onClick={() => setSelectedPeriod('month')}
+                >
+                  30 ngày
+                </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={stats.revenue.chart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <Tooltip formatter={(value: number | string) => formatCurrency(Number(value))} contentStyle={{ borderRadius: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                  className="dark:text-gray-400"
+                />
+                <YAxis 
+                  tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} 
+                  tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                  className="dark:text-gray-400"
+                />
+                <Tooltip 
+                  formatter={(value: number | string) => formatCurrency(Number(value))} 
+                  contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb' }} 
+                />
                 <Line 
                   type="monotone" 
                   dataKey="value" 
                   stroke="#3B82F6" 
                   strokeWidth={3}
-                  dot={{ fill: '#3B82F6' }}
+                  dot={{ fill: '#3B82F6', r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+          <CardHeader>
+            <CardTitle>Doanh thu 7 ngày qua</CardTitle>
+            <CardDescription>Biểu đồ doanh thu theo ngày</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <p className="text-sm">Chưa có dữ liệu doanh thu</p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -540,9 +647,9 @@ function DashboardPage() {
           const Icon = action.icon
           return (
             <Link key={index} href={action.href}>
-              <Card className="hover:shadow-md transition-all cursor-pointer rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+              <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer rounded-2xl border-gray-200/60 dark:border-gray-700/60 hover:scale-105 hover:border-primary/50">
                 <CardContent className="flex flex-col items-center justify-center p-6">
-                  <div className={cn("p-3 rounded-xl mb-2 shadow-sm", action.color)}>
+                  <div className={cn("p-3 rounded-xl mb-2 shadow-sm transition-transform hover:scale-110", action.color)}>
                     <Icon className="h-6 w-6 text-white" />
                   </div>
                   <span className="text-sm font-medium text-center">{action.title}</span>
@@ -556,7 +663,7 @@ function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Orders */}
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle>Đơn hàng gần đây</CardTitle>
             <CardDescription>
@@ -577,7 +684,7 @@ function DashboardPage() {
                     <div className="text-right">
                       <p className="text-sm font-medium">{formatCurrency(order.amount)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                        {order.createdAtFormatted || formatDate(order.createdAt)}
                       </p>
                     </div>
                     {getStatusBadge(order.status)}
@@ -595,30 +702,39 @@ function DashboardPage() {
         </Card>
         
         {/* Top Products */}
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle>Sản phẩm bán chạy</CardTitle>
             <CardDescription>Top 5 sản phẩm trong tháng</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {stats?.products.topSelling.map((product, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {product.sales} đã bán - Còn {product.stock} trong kho
-                      </p>
+            {stats?.products.topSelling && stats.products.topSelling.length > 0 ? (
+              <div className="space-y-4">
+                {stats.products.topSelling.map((product, index) => (
+                  <div key={index} className="space-y-2 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.sales} đã bán - Còn {product.stock} trong kho
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="text-sm font-medium">{formatCurrency(product.revenue)}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{formatCurrency(product.revenue)}</p>
-                    </div>
+                    <Progress 
+                      value={product.sales > 0 ? Math.min((product.sales / 150) * 100, 100) : 0} 
+                      className="h-2 rounded-full" 
+                    />
                   </div>
-                  <Progress value={(product.sales / 150) * 100} className="h-2 rounded-full" />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">Chưa có dữ liệu sản phẩm bán chạy</p>
+              </div>
+            )}
             <Button variant="outline" className="w-full mt-4 rounded-xl" asChild>
               <Link href="/dashboard/products">
                 Quản lý sản phẩm

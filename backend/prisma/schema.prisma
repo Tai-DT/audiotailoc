@@ -640,6 +640,7 @@ model projects {
   status           String    @default("DRAFT")
   isActive         Boolean   @default(true)
   isFeatured       Boolean   @default(false)
+  featured         Boolean   @default(false)
   displayOrder     Int       @default(0)
   viewCount        Int       @default(0)
   userId           String

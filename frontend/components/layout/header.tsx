@@ -32,6 +32,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { motion } from 'framer-motion';
+import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
@@ -138,33 +145,39 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm transition-all duration-300">
       {/* Top info bar */}
       <div className="hidden lg:block border-b bg-gradient-primary/5">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between text-xs py-1.5 text-muted-foreground">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center space-x-1.5 hover:text-primary transition-colors">
-                <Phone className="h-3.5 w-3.5 text-primary" />
-                <span>Hotline: 0768 426 262</span>
-              </span>
-              <span className="hidden xl:flex items-center space-x-1.5 hover:text-primary transition-colors">
-                <Mail className="h-3.5 w-3.5 text-primary" />
+          <div className="flex items-center justify-between text-xs py-2 text-muted-foreground">
+            <div className="flex items-center space-x-4 lg:space-x-6">
+              <a 
+                href="tel:0768426262" 
+                className="flex items-center space-x-1.5 hover:text-primary transition-colors group"
+              >
+                <Phone className="h-3.5 w-3.5 text-primary group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Hotline: 0768 426 262</span>
+              </a>
+              <a 
+                href="mailto:support@audiotailoc.com"
+                className="hidden xl:flex items-center space-x-1.5 hover:text-primary transition-colors group"
+              >
+                <Mail className="h-3.5 w-3.5 text-primary group-hover:scale-110 transition-transform" />
                 <span>support@audiotailoc.com</span>
-              </span>
-              <span className="hidden xl:flex items-center space-x-1.5 hover:text-accent transition-colors">
+              </a>
+              <span className="hidden xl:flex items-center space-x-1.5 text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 text-accent" />
                 <span>08:00 - 21:00 (T2 - CN)</span>
               </span>
             </div>
-            <div className="flex items-center space-x-3">
-              <Link href="/shipping" className="hover:text-primary hover-audio transition-colors">
+            <div className="flex items-center space-x-4 lg:space-x-6">
+              <Link href="/shipping" className="hover:text-primary transition-colors hover:underline text-xs">
                 Chính sách giao hàng
               </Link>
-              <Link href="/warranty" className="hover:text-primary hover-audio transition-colors">
+              <Link href="/warranty" className="hover:text-primary transition-colors hover:underline text-xs">
                 Bảo hành & đổi trả
               </Link>
-              <Link href="/support" className="hover:text-primary hover-audio transition-colors">
+              <Link href="/support" className="hover:text-primary transition-colors hover:underline text-xs">
                 Hỗ trợ kỹ thuật
               </Link>
             </div>
@@ -175,21 +188,23 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 shrink-0">
-            <div className="relative h-7 w-24 sm:h-8 sm:w-32">
+          <Link href="/" className="flex items-center space-x-3 shrink-0 group">
+            <div className="relative h-8 w-28 sm:h-9 sm:w-36 transition-transform group-hover:scale-105">
               <Image
                 src="/images/logo/logo-light.svg"
                 alt="Audio Tài Lộc"
-                width={128}
-                height={32}
-                className="h-7 w-24 sm:h-8 sm:w-32 object-contain dark:hidden"
+                width={144}
+                height={36}
+                className="h-8 w-28 sm:h-9 sm:w-36 object-contain dark:hidden"
+                priority
               />
               <Image
                 src="/images/logo/logo-dark.svg"
                 alt="Audio Tài Lộc"
-                width={128}
-                height={32}
-                className="hidden h-7 w-24 sm:h-8 sm:w-32 object-contain dark:block"
+                width={144}
+                height={36}
+                className="hidden h-8 w-28 sm:h-9 sm:w-36 object-contain dark:block"
+                priority
               />
             </div>
           </Link>
@@ -388,24 +403,22 @@ export function Header() {
           {/* User Actions */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             <ThemeToggle />
-            {/* Wishlist - Always render wrapper to maintain DOM structure, only show content if authenticated after mount */}
-            <div className="h-9 w-9 sm:h-10 sm:w-10">
-              {isMounted && isAuthenticated && (
-                <Link href="/wishlist" className="relative group block">
-                  <Button variant="ghost" size="icon" className="hover:bg-tertiary hover:text-tertiary-foreground transition-all duration-300 hover-lift h-9 w-9 sm:h-10 sm:w-10">
-                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 group-hover:text-warning transition-colors" />
-                    {wishlistCount?.count && wishlistCount.count > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground hover:bg-warning/90"
-                      >
-                        {wishlistCount.count}
-                      </Badge>
-                    )}
-                  </Button>
-                </Link>
-              )}
-            </div>
+            {/* Wishlist - Only show if authenticated after mount */}
+            {isMounted && isAuthenticated && (
+              <Link href="/wishlist" className="relative group block">
+                <Button variant="ghost" size="icon" className="hover:bg-tertiary hover:text-tertiary-foreground transition-all duration-300 hover-lift h-9 w-9 sm:h-10 sm:w-10">
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 group-hover:text-warning transition-colors" />
+                  {wishlistCount?.count && wishlistCount.count > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground hover:bg-warning/90"
+                    >
+                      {wishlistCount.count}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            )}
 
             {/* Cart - Always render to maintain consistent DOM structure */}
             <Link href="/cart" className="relative group">
@@ -425,14 +438,50 @@ export function Header() {
             {/* User Menu - Always render same structure to prevent hydration mismatch */}
             {!isMounted ? (
               // Server render: always show login/register buttons
-              <div className="hidden sm:flex items-center space-x-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/auth/login">Đăng nhập</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/register">Đăng ký</Link>
-                </Button>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-primary/10">
+                    <User className="h-4 w-4" />
+                    <span className="hidden md:inline">Tài khoản</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="end">
+                  <div className="p-4 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">Chào mừng bạn!</p>
+                      <p className="text-xs text-muted-foreground">Đăng nhập để trải nghiệm đầy đủ</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <ShimmerButton
+                        asChild
+                        className="w-full h-9 text-sm"
+                        shimmerColor="oklch(0.99 0.005 45)"
+                        shimmerSize="0.1em"
+                        borderRadius="0.5rem"
+                        background="oklch(0.58 0.28 20)"
+                      >
+                        <Link href="/auth/login" className="flex items-center justify-center text-white">
+                          <User className="h-4 w-4 mr-2" />
+                          Đăng nhập
+                        </Link>
+                      </ShimmerButton>
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link href="/register" className="flex items-center justify-center">
+                          Đăng ký tài khoản
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="pt-2 border-t text-xs text-muted-foreground">
+                      <p className="mb-1 font-medium text-foreground">Lợi ích khi đăng ký:</p>
+                      <ul className="space-y-0.5">
+                        <li>• Miễn phí vận chuyển từ 500k</li>
+                        <li>• Ưu đãi đặc biệt</li>
+                        <li>• Tư vấn kỹ thuật 24/7</li>
+                      </ul>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             ) : isAuthenticated ? (
               // Client render after mount: show user menu if authenticated
               <DropdownMenu>
@@ -491,14 +540,60 @@ export function Header() {
               </DropdownMenu>
             ) : (
               // Client render after mount: show login/register if not authenticated
-              <div className="hidden sm:flex items-center space-x-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/auth/login">Đăng nhập</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/register">Đăng ký</Link>
-                </Button>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-primary/10 transition-all">
+                      <User className="h-4 w-4" />
+                      <span className="hidden md:inline">Tài khoản</span>
+                    </Button>
+                  </motion.div>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="end">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-4 space-y-3"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">Chào mừng bạn!</p>
+                      <p className="text-xs text-muted-foreground">Đăng nhập để trải nghiệm đầy đủ</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <ShimmerButton
+                        asChild
+                        className="w-full h-9 text-sm"
+                        shimmerColor="oklch(0.99 0.005 45)"
+                        shimmerSize="0.1em"
+                        borderRadius="0.5rem"
+                        background="oklch(0.58 0.28 20)"
+                      >
+                        <Link href="/auth/login" className="flex items-center justify-center text-white">
+                          <User className="h-4 w-4 mr-2" />
+                          Đăng nhập
+                        </Link>
+                      </ShimmerButton>
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link href="/register" className="flex items-center justify-center">
+                          Đăng ký tài khoản
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="pt-2 border-t text-xs text-muted-foreground">
+                      <p className="mb-1 font-medium text-foreground">Lợi ích khi đăng ký:</p>
+                      <ul className="space-y-0.5">
+                        <li>• Miễn phí vận chuyển từ 500k</li>
+                        <li>• Ưu đãi đặc biệt</li>
+                        <li>• Tư vấn kỹ thuật 24/7</li>
+                      </ul>
+                    </div>
+                  </motion.div>
+                </PopoverContent>
+              </Popover>
             )}
 
             {/* Mobile Menu Button - Show when navbar is hidden */}
@@ -516,9 +611,9 @@ export function Header() {
         </div>
 
         {/* Sub navigation - Centered */}
-        <div className="border-t border-muted py-1.5">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
+        <div className="border-t border-muted/50 bg-muted/30 py-2">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
               {([
                 { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
                 { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
@@ -528,10 +623,10 @@ export function Header() {
                  <Link
                    key={item.label}
                    href={item.href}
-                   className="group flex items-center gap-1 sm:gap-1.5 whitespace-nowrap rounded-md border border-transparent bg-muted/60 px-2 sm:px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-300 hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm touch-manipulation"
+                   className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg border border-transparent bg-background/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all duration-300 hover:border-primary/50 hover:bg-gradient-primary/10 hover:text-primary hover:shadow-md hover:-translate-y-0.5 touch-manipulation"
                  >
-                   <item.icon className="h-3 w-3 transition-transform group-hover:scale-110 flex-shrink-0" />
-                   <span className="text-xs">{item.label}</span>
+                   <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:scale-110 group-hover:rotate-3 flex-shrink-0" />
+                   <span>{item.label}</span>
                  </Link>
                ))}
             </div>

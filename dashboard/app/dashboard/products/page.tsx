@@ -249,22 +249,22 @@ export default function ProductsPage() {
 
   return (
     <>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <div className="flex items-center justify-between">
+      <div className="flex-1 space-y-4 p-0 sm:p-4 md:p-8 pt-4 sm:pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight">Quản lý sản phẩm</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Quản lý sản phẩm</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 Quản lý tất cả sản phẩm trong hệ thống
               </p>
             </div>
-            <Button onClick={handleAddProduct}>
+            <Button onClick={handleAddProduct} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Thêm sản phẩm
             </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Tổng sản phẩm</CardTitle>
@@ -333,48 +333,52 @@ export default function ProductsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="relative flex-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 mb-4">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Tìm kiếm theo tên sản phẩm..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
+                    className="pl-8 w-full"
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả danh mục</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="active">Hoạt động</SelectItem>
-                    <SelectItem value="inactive">Không hoạt động</SelectItem>
-                    <SelectItem value="featured">Nổi bật</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Bộ lọc
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Xuất Excel
-                </Button>
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Danh mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả danh mục</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="active">Hoạt động</SelectItem>
+                      <SelectItem value="inactive">Không hoạt động</SelectItem>
+                      <SelectItem value="featured">Nổi bật</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Bộ lọc</span>
+                    <span className="sm:hidden">Lọc</span>
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Xuất Excel</span>
+                    <span className="sm:hidden">Excel</span>
+                  </Button>
+                </div>
               </div>
 
               {/* Bulk Actions */}
@@ -399,8 +403,9 @@ export default function ProductsPage() {
               )}
 
               {/* Products Table */}
-              <div className="rounded-md border">
-                <Table>
+              <div className="rounded-md border overflow-hidden">
+                <div className="table-responsive-wrapper">
+                  <Table className="min-w-[800px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
@@ -638,7 +643,8 @@ export default function ProductsPage() {
                       ))
                     )}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </div>
 
               {/* Pagination */}
