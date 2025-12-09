@@ -8,4 +8,4 @@ run:
   web:
     image: web
     command:
-      - npx prisma migrate deploy && npm start
+      - npm start

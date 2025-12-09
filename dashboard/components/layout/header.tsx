@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Menu, LogOut, User, Settings } from "lucide-react"
+import { Menu, LogOut, User, Settings } from "lucide-react"
 import { ThemeSwitcher } from "@/components/ui/theme-switcher"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
 import { useAuth } from "@/lib/auth-context"
 import { usePathname } from "next/navigation"
@@ -54,21 +54,30 @@ export function Header() {
   const pageTitle = pageTitles[pathname] || "Dashboard"
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm" suppressHydrationWarning>
+    <header className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 md:py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm transition-all duration-200" suppressHydrationWarning>
       {/* Mobile menu button */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-blue-50 dark:hover:bg-gray-700">
+            <Button variant="ghost" size="icon" className="md:hidden hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200 shrink-0">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
+          <SheetContent side="left" className="p-0 w-64">
+            <SheetTitle className="sr-only">Menu điều hướng</SheetTitle>
             <Sidebar />
           </SheetContent>
         </Sheet>
 
-        <div className="hidden md:block">
+        {/* Mobile title */}
+        <div className="md:hidden fade-in min-w-0 flex-1">
+          <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-200 dark:to-slate-100 bg-clip-text text-transparent truncate">
+            {pageTitle}
+          </h1>
+        </div>
+
+        {/* Desktop title */}
+        <div className="hidden md:block fade-in">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-200 dark:to-slate-100 bg-clip-text text-transparent">
             {pageTitle}
           </h1>
@@ -78,20 +87,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="flex-1 max-w-lg mx-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm sản phẩm, đơn hàng, khách hàng..."
-            className="w-full pl-10 pr-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm placeholder:text-gray-400 dark:placeholder:text-gray-500"
-          />
-        </div>
-      </div>
-
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 fade-in shrink-0">
         {/* Theme Toggle */}
         {mounted && (
           <ThemeSwitcher />

@@ -1,133 +1,235 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { DotPattern } from '@/components/ui/dot-pattern';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import { motion } from 'framer-motion';
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-8 sm:py-10 md:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+    <footer className="relative bg-gradient-to-b from-gray-900 via-gray-950 to-gray-900 text-white overflow-hidden">
+      {/* Background Pattern */}
+      <DotPattern
+        className="absolute inset-0 opacity-20"
+        width={20}
+        height={20}
+        cx={1}
+        cy={1}
+        cr={1}
+      />
+      
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent pointer-events-none" />
+      
+      <div className="relative container mx-auto px-4 sm:px-6 py-10 sm:py-12 md:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-12">
           {/* Company Info */}
-          <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
             <div className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold shadow-lg"
+              >
                 AT
-              </div>
-              <span className="font-bold text-xl">Audio Tài Lộc</span>
+              </motion.div>
+              <AnimatedGradientText
+                className="font-bold text-xl"
+                speed={1.5}
+                colorFrom="oklch(0.95 0.05 100)"
+                colorTo="oklch(0.98 0.02 50)"
+              >
+                Audio Tài Lộc
+              </AnimatedGradientText>
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-xs">
               Chuyên cung cấp thiết bị âm thanh chất lượng cao và dịch vụ kỹ thuật chuyên nghiệp.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors touch-manipulation p-2" title="Facebook" aria-label="Facebook">
+              <motion.a
+                whileHover={{ scale: 1.2, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                href="#"
+                className="text-gray-300 hover:text-primary transition-colors touch-manipulation p-2 rounded-lg hover:bg-primary/10"
+                title="Facebook"
+                aria-label="Facebook"
+              >
                 <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors touch-manipulation p-2" title="Instagram" aria-label="Instagram">
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                href="#"
+                className="text-gray-300 hover:text-accent transition-colors touch-manipulation p-2 rounded-lg hover:bg-accent/10"
+                title="Instagram"
+                aria-label="Instagram"
+              >
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors touch-manipulation p-2" title="YouTube" aria-label="YouTube">
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                href="#"
+                className="text-gray-300 hover:text-destructive transition-colors touch-manipulation p-2 rounded-lg hover:bg-destructive/10"
+                title="YouTube"
+                aria-label="YouTube"
+              >
                 <Youtube className="h-5 w-5" />
-              </a>
+              </motion.a>
             </div>
-          </div>
+          </motion.div>
 
           {/* Quick Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-base sm:text-lg">Liên kết nhanh</h3>
-            <nav className="space-y-2">
-              <Link href="/products" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Sản phẩm
-              </Link>
-              <Link href="/services" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Dịch vụ
-              </Link>
-              <Link href="/du-an" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Dự án
-              </Link>
-              <Link href="/about" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Giới thiệu
-              </Link>
-              <Link href="/contact" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Liên hệ
-              </Link>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="space-y-4"
+          >
+            <h3 className="font-semibold text-base sm:text-lg text-white mb-4">Liên kết nhanh</h3>
+            <nav className="space-y-2.5">
+              {[
+                { href: '/products', label: 'Sản phẩm' },
+                { href: '/services', label: 'Dịch vụ' },
+                { href: '/du-an', label: 'Dự án' },
+                { href: '/about', label: 'Giới thiệu' },
+                { href: '/contact', label: 'Liên hệ' },
+              ].map((link, index) => (
+                <motion.div
+                  key={link.href}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+                >
+                  <Link
+                    href={link.href}
+                    className="block text-gray-300 hover:text-primary transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
+              ))}
             </nav>
-          </div>
+          </motion.div>
 
           {/* Categories */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-base sm:text-lg">Danh mục</h3>
-            <nav className="space-y-2">
-                            <Link href="/products?category=amplifiers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Amply
-              </Link>
-              <Link href="/products?category=speakers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Loa
-              </Link>
-              <Link href="/products?category=microphones" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Micro
-              </Link>
-              <Link href="/products?category=mixers" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Mixer
-              </Link>
-              <Link href="/products?category=accessories" className="block text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 touch-manipulation">
-                Phụ kiện
-              </Link>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
+          >
+            <h3 className="font-semibold text-base sm:text-lg text-white mb-4">Danh mục</h3>
+            <nav className="space-y-2.5">
+              {[
+                { href: '/products?category=amplifiers', label: 'Amply' },
+                { href: '/products?category=speakers', label: 'Loa' },
+                { href: '/products?category=microphones', label: 'Micro' },
+                { href: '/products?category=mixers', label: 'Mixer' },
+                { href: '/products?category=accessories', label: 'Phụ kiện' },
+              ].map((link, index) => (
+                <motion.div
+                  key={link.href}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
+                >
+                  <Link
+                    href={link.href}
+                    className="block text-gray-300 hover:text-accent transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
+              ))}
             </nav>
-          </div>
+          </motion.div>
 
           {/* Contact Info */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-base sm:text-lg">Thông tin liên hệ</h3>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-4"
+          >
+            <h3 className="font-semibold text-base sm:text-lg text-white">Thông tin liên hệ</h3>
             <div className="space-y-3">
-              <div className="flex items-start space-x-3 touch-manipulation">
-                <MapPin className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-300 text-sm leading-relaxed">
+              <motion.div
+                whileHover={{ x: 5 }}
+                className="flex items-start space-x-3 touch-manipulation group"
+              >
+                <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 group-hover:text-accent transition-colors" />
+                <span className="text-gray-300 text-sm leading-relaxed group-hover:text-white transition-colors">
                   123 Đường ABC, Quận 1, TP.HCM
                 </span>
-              </div>
-              <a href="tel:02812345678" className="flex items-center space-x-3 touch-manipulation hover:text-white transition-colors">
-                <Phone className="h-5 w-5 text-gray-300 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">
+              </motion.div>
+              <motion.a
+                whileHover={{ x: 5 }}
+                href="tel:02812345678"
+                className="flex items-center space-x-3 touch-manipulation hover:text-primary transition-colors group"
+              >
+                <Phone className="h-5 w-5 text-primary flex-shrink-0 group-hover:text-accent transition-colors" />
+                <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
                   (028) 1234 5678
                 </span>
-              </a>
-              <a href="mailto:info@audiotailoc.com" className="flex items-center space-x-3 touch-manipulation hover:text-white transition-colors">
-                <Mail className="h-5 w-5 text-gray-300 flex-shrink-0" />
-                <span className="text-gray-300 text-sm break-all">
+              </motion.a>
+              <motion.a
+                whileHover={{ x: 5 }}
+                href="mailto:info@audiotailoc.com"
+                className="flex items-center space-x-3 touch-manipulation hover:text-primary transition-colors group"
+              >
+                <Mail className="h-5 w-5 text-primary flex-shrink-0 group-hover:text-accent transition-colors" />
+                <span className="text-gray-300 text-sm break-all group-hover:text-white transition-colors">
                   info@audiotailoc.com
                 </span>
-              </a>
+              </motion.a>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-6 sm:pt-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="border-t border-gray-700/50 mt-10 sm:mt-12 pt-6 sm:pt-8"
+        >
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 gap-4">
             <p className="text-gray-300 text-xs sm:text-sm text-center md:text-left">
               © 2024 Audio Tài Lộc. Tất cả quyền được bảo lưu.
             </p>
             <div className="flex flex-wrap justify-center md:justify-end gap-3 sm:gap-4 md:gap-6">
-              <Link href="/privacy" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap">
-                Chính sách bảo mật
-              </Link>
-              <Link href="/terms" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap">
-                Điều khoản sử dụng
-              </Link>
-              <Link href="/shipping-policy" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap">
-                Chính sách giao hàng
-              </Link>
-              <Link href="/warranty" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap">
-                Chính sách bảo hành
-              </Link>
-              <Link href="/return-policy" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap hidden sm:inline">
-                Chính sách đổi trả
-              </Link>
-              <Link href="/technical-support" className="text-gray-300 hover:text-white text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap hidden sm:inline">
-                Hỗ trợ kỹ thuật
-              </Link>
+              {[
+                { href: '/privacy', label: 'Chính sách bảo mật' },
+                { href: '/terms', label: 'Điều khoản sử dụng' },
+                { href: '/shipping-policy', label: 'Chính sách giao hàng' },
+                { href: '/warranty', label: 'Chính sách bảo hành' },
+                { href: '/return-policy', label: 'Chính sách đổi trả', className: 'hidden sm:inline' },
+                { href: '/technical-support', label: 'Hỗ trợ kỹ thuật', className: 'hidden sm:inline' },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-gray-300 hover:text-primary text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap hover:underline ${link.className || ''}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );
