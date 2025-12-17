@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
+import { format } from "date-fns"
+import { vi } from "date-fns/locale"
 import { apiClient } from "@/lib/api-client"
 
 interface InventoryItem {
@@ -81,15 +83,32 @@ export function useInventory() {
   const fetchInventory = useCallback(async () => {
     setLoading(true)
     try {
-      // Use the dedicated inventory API
-      const inventoryRes = await apiClient.getInventory({ limit: 200 })
-      const inventoryItems = (inventoryRes?.data as { items?: unknown[] })?.items || inventoryRes?.data as unknown[] || []
+      // Fetch with max pageSize (10000) - backend caps pageSize at 10000
+      const inventoryRes = await apiClient.getInventory({ limit: 10000, page: 1 })
 
-      // Map to InventoryItem format
-      const mapped: InventoryItem[] = inventoryItems.map((item: unknown) => {
+      // Response can be either the raw payload { total, items, ... } or wrapped in { data: {...} }
+      const payload = (inventoryRes as any)?.data ?? (inventoryRes as any)?.data?.data ?? inventoryRes ?? {}
+
+      let inventoryItems: unknown[] = []
+      if (Array.isArray(payload)) {
+        inventoryItems = payload
+      } else if (Array.isArray((payload as any)?.items)) {
+        inventoryItems = (payload as any).items
+      } else if (Array.isArray((payload as any)?.data?.items)) {
+        inventoryItems = (payload as any).data.items
+      }
+
+      const totalFromAPI: number | undefined =
+        (payload as any)?.total ??
+        (payload as any)?.data?.total ??
+        (payload as any)?.data?.data?.total ??
+        inventoryItems.length
+
+      // Helper to map raw inventory item to our InventoryItem
+      const mapInventoryItem = (item: unknown): InventoryItem => {
         const inventoryItem = item as Record<string, unknown>
         const product = inventoryItem.product as Record<string, unknown> || {}
-        
+
         // Get category name from the category object or fallback to categoryId
         let categoryName = 'Chưa phân loại';
         if (product.category && typeof product.category === 'object') {
@@ -107,15 +126,20 @@ export function useInventory() {
         }
 
         const stock = (inventoryItem.stock || inventoryItem.stockQuantity || 0) as number
+        const reserved = (inventoryItem.reserved || 0) as number
         const lowStockThreshold = (inventoryItem.lowStockThreshold || 5) as number
-        const available = (inventoryItem.available || (stock - (inventoryItem.reserved as number || 0))) as number
+        const available = (inventoryItem.available !== undefined
+          ? (inventoryItem.available as number)
+          : Math.max(0, stock - reserved)) as number
 
-        // Calculate status based on stock levels
-        let status: InventoryItem['status'] = 'in_stock'
-        if (available <= 0) {
+        // Calculate status based on available stock levels
+        let status: InventoryItem['status']
+        if (stock <= 0 || available <= 0) {
           status = 'out_of_stock'
         } else if (available <= lowStockThreshold) {
           status = 'low_stock'
+        } else {
+          status = 'in_stock'
         }
 
         return {
@@ -125,7 +149,7 @@ export function useInventory() {
           productImage: (product.imageUrl || product.image || inventoryItem.productImage || inventoryItem.image) as string,
           sku: (product.sku || inventoryItem.sku || '') as string,
           stock,
-          reserved: (inventoryItem.reserved || 0) as number,
+          reserved,
           available,
           lowStockThreshold,
           status,
@@ -133,18 +157,74 @@ export function useInventory() {
           category: categoryName,
           price: (product.priceCents ? Math.round((product.priceCents as number) / 100) : (inventoryItem.price || (inventoryItem.priceCents ? Math.round((inventoryItem.priceCents as number) / 100) : undefined))) as number | undefined,
         }
-      })
-
-      setInventory(mapped)
-
-      // Compute stats
-      const newStats: InventoryStats = {
-        totalProducts: mapped.length,
-        inStock: mapped.filter(i => i.status === 'in_stock').length,
-        lowStock: mapped.filter(i => i.status === 'low_stock').length,
-        outOfStock: mapped.filter(i => i.status === 'out_of_stock').length,
-        totalValue: mapped.reduce((sum, i) => sum + (i.stock * (i.price || 0)), 0)
       }
+
+      // Map first page
+      const mappedFirstPage: InventoryItem[] = inventoryItems.map(mapInventoryItem)
+
+      // If API total is larger than items received, fetch additional pages for accurate stats
+      let allItems: InventoryItem[] = mappedFirstPage
+      const totalProducts = totalFromAPI ?? mappedFirstPage.length
+      const pageSize = 10000
+      const totalPages = Math.ceil(totalProducts / pageSize)
+
+      if (totalPages > 1) {
+        const additionalItems: InventoryItem[] = []
+        const maxPages = Math.min(totalPages, 10) // safeguard to avoid too many requests
+
+        for (let page = 2; page <= maxPages; page++) {
+          try {
+            const pageRes = await apiClient.getInventory({ limit: pageSize, page })
+            const pagePayload = (pageRes as any)?.data ?? (pageRes as any)?.data?.data ?? pageRes ?? {}
+            let pageItems: unknown[] = []
+            if (Array.isArray(pagePayload)) {
+              pageItems = pagePayload
+            } else if (Array.isArray((pagePayload as any)?.items)) {
+              pageItems = (pagePayload as any).items
+            } else if (Array.isArray((pagePayload as any)?.data?.items)) {
+              pageItems = (pagePayload as any).data.items
+            }
+            if (pageItems.length === 0) break
+            additionalItems.push(...pageItems.map(mapInventoryItem))
+            if (mappedFirstPage.length + additionalItems.length >= totalProducts) break
+          } catch (err) {
+            console.warn(`Không thể tải trang tồn kho ${page}`, err)
+            break
+          }
+        }
+
+        allItems = [...mappedFirstPage, ...additionalItems]
+      }
+
+      setInventory(allItems)
+
+      const inStockItems = allItems.filter(i => i.status === 'in_stock')
+      const lowStockItems = allItems.filter(i => i.status === 'low_stock')
+      const outOfStockItems = allItems.filter(i => i.status === 'out_of_stock')
+
+      const totalValue = allItems.reduce((sum, i) => sum + (i.stock * (i.price || 0)), 0)
+
+      const newStats: InventoryStats = {
+        totalProducts,
+        inStock: inStockItems.length,
+        lowStock: lowStockItems.length,
+        outOfStock: outOfStockItems.length,
+        totalValue
+      }
+      
+      // Debug log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Inventory Stats:', {
+          totalFromAPI,
+          itemsReceived: inventoryItems.length,
+          totalProducts: newStats.totalProducts,
+          inStock: newStats.inStock,
+          lowStock: newStats.lowStock,
+          outOfStock: newStats.outOfStock,
+          totalValue: newStats.totalValue
+        })
+      }
+      
       setStats(newStats)
     } catch (error) {
       toast.error('Không thể tải dữ liệu tồn kho')
@@ -273,13 +353,13 @@ export function useInventory() {
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       const newMovement: StockMovement = {
         ...movement,
         id: `mov-${Date.now()}`,
         createdAt: new Date()
       }
-      
+
       setMovements(prev => [newMovement, ...prev])
       toast.success("Đã tạo biến động kho")
     } catch {
@@ -290,19 +370,35 @@ export function useInventory() {
   // Export inventory
   const exportInventory = useCallback(async () => {
     try {
-      // Export CSV client-side
-      const headers = ['id','sku','productName','stock','reserved','available'].join(',')
-      const lines = inventory.map(i => [i.productId, i.sku, `"${(i.productName||'').replace(/"/g,'""')}"`, i.stock, i.reserved, i.available].join(','))
-      const csv = [headers, ...lines].join('\n')
+      toast.info('Đang xuất dữ liệu tồn kho...')
+      
+      // Export CSV client-side with all data
+      const headers = ['ID', 'SKU', 'Tên sản phẩm', 'Danh mục', 'Tồn kho', 'Đã đặt', 'Khả dụng', 'Trạng thái', 'Giá', 'Cập nhật'].join(',')
+      const lines = inventory.map(i => [
+        i.productId,
+        i.sku || '',
+        `"${(i.productName || '').replace(/"/g, '""')}"`,
+        `"${(i.category || '').replace(/"/g, '""')}"`,
+        i.stock,
+        i.reserved,
+        i.available,
+        i.status === 'in_stock' ? 'Còn hàng' : i.status === 'low_stock' ? 'Sắp hết' : 'Hết hàng',
+        i.price || 0,
+        format(i.lastUpdated, 'dd/MM/yyyy HH:mm', { locale: vi })
+      ].join(','))
+      
+      // Add BOM for Excel UTF-8 support
+      const csv = '\uFEFF' + [headers, ...lines].join('\n')
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `inventory-${Date.now()}.csv`
+      a.download = `inventory-${format(new Date(), 'yyyy-MM-dd-HHmm')}.csv`
       a.click()
       URL.revokeObjectURL(url)
-      toast.success('Đã xuất báo cáo tồn kho')
-    } catch {
+      toast.success(`Đã xuất ${inventory.length} sản phẩm`)
+    } catch (error) {
+      console.error('Export error:', error)
       toast.error('Không thể xuất báo cáo')
     }
   }, [inventory])
@@ -359,6 +455,23 @@ export function useInventory() {
     fetchAlerts()
   }, [fetchInventory, fetchMovements, fetchAlerts])
 
+  // Sync inventory with products
+  const syncInventoryWithProducts = useCallback(async () => {
+    try {
+      toast.info('Đang đồng bộ dữ liệu tồn kho...')
+      const response = await apiClient.syncInventory()
+      const data = response?.data as { syncedProducts?: number; orphanedInventoriesCount?: number } || {}
+
+      toast.success(`Đã đồng bộ ${data.syncedProducts || 0} sản phẩm mới`)
+
+      // Refresh data after sync
+      await fetchInventory()
+      await fetchMovements()
+    } catch (error) {
+      toast.error('Không thể đồng bộ dữ liệu tồn kho')
+    }
+  }, [fetchInventory, fetchMovements])
+
   // Initial load
   useEffect(() => {
     fetchInventory()
@@ -387,6 +500,7 @@ export function useInventory() {
     createMovement,
     exportInventory,
     importInventory,
-    refreshInventory
+    refreshInventory,
+    syncInventoryWithProducts
   }
 }
