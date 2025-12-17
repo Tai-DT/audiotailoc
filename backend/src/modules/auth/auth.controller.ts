@@ -69,23 +69,30 @@ export class AuthController {
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute for login (increased for development)
   @Post('login')
   async login(@Body() dto: LoginDto) {
-    const tokens = await this.auth.login(dto).catch(() => {
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
-    });
-    const user = await this.users.findById(tokens.userId);
-    // Access token expires in 15 minutes (15 * 60 * 1000 ms)
-    const expiresInMs = 15 * 60 * 1000;
-    return {
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresInMs,
-      user: {
-        id: user?.id,
-        email: user?.email,
-        name: user?.name,
-        role: (user as any)?.role ?? 'USER'
+    try {
+      const tokens = await this.auth.login(dto);
+      const user = await this.users.findById(tokens.userId);
+      // Access token expires in 15 minutes (15 * 60 * 1000 ms)
+      const expiresInMs = 15 * 60 * 1000;
+      return {
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresInMs,
+        user: {
+          id: user?.id,
+          email: user?.email,
+          name: user?.name,
+          role: (user as any)?.role ?? 'USER'
+        }
+      };
+    } catch (error) {
+      // Preserve account lockout messages, but use generic message for invalid credentials
+      if (error instanceof Error && error.message.includes('Account is locked')) {
+        throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
       }
-    };
+      // For security, use generic message for invalid credentials to prevent user enumeration
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute for refresh

@@ -10,11 +10,14 @@ import { Loader2, Eye, EyeOff, Mail, Lock, Copy } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { toast } from "sonner"
+import { useTheme } from "next-themes"
+import Image from "next/image"
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { theme, resolvedTheme } = useTheme()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -22,6 +25,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Determine which logo to use based on theme
+  const logoSrc = mounted && (resolvedTheme === 'dark' || theme === 'dark')
+    ? '/images/logo/logo-dark.svg'
+    : '/images/logo/logo-light.svg'
 
   // Get redirect URL from query params
   const redirectTo = searchParams.get('redirect') || '/dashboard';
@@ -44,11 +57,14 @@ export default function LoginPage() {
       router.push(redirectTo)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
-      setError(errorMessage)
       
-      // Show helpful hint if using wrong password format
-      if (errorMessage.includes('credentials') || errorMessage.includes('password')) {
-        setError('Invalid email or password. Please make sure you are using the correct credentials (Password is case-sensitive).');
+      // Show helpful error messages
+      if (errorMessage.includes('Account is locked')) {
+        setError(errorMessage); // Preserve lockout message
+      } else if (errorMessage.includes('credentials') || errorMessage.includes('Invalid') || errorMessage.includes('password')) {
+        setError('Invalid email or password. Please check your credentials and try again. (Password is case-sensitive)');
+      } else {
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false)
@@ -64,19 +80,32 @@ export default function LoginPage() {
 
   return (
     <ProtectedRoute requireAuth={false}>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4" suppressHydrationWarning>
+        <Card className="w-full max-w-md shadow-xl" suppressHydrationWarning>
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">AT</span>
-              </div>
+              {mounted ? (
+                <div className="relative h-16 w-auto">
+                  <Image
+                    src={logoSrc}
+                    alt="Audio Tài Lộc"
+                    width={200}
+                    height={55}
+                    className="h-16 w-auto object-contain"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">AT</span>
+                </div>
+              )}
             </div>
-            <CardTitle className="text-2xl text-center">Audio Tài Lộc</CardTitle>
+            <CardTitle className="text-2xl text-center">Đăng nhập</CardTitle>
             <CardDescription className="text-center">
-            Đăng nhập vào hệ thống quản lý
-          </CardDescription>
-        </CardHeader>
+              Đăng nhập vào hệ thống quản lý
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
