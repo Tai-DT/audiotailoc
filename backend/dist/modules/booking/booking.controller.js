@@ -23,6 +23,7 @@ const create_payment_dto_1 = require("./dto/create-payment.dto");
 const update_payment_status_dto_1 = require("./dto/update-payment-status.dto");
 const assign_technician_dto_1 = require("./dto/assign-technician.dto");
 const jwt_guard_1 = require("../auth/jwt.guard");
+const admin_guard_1 = require("../auth/admin.guard");
 let BookingController = class BookingController {
     constructor(bookingService) {
         this.bookingService = bookingService;
@@ -37,25 +38,71 @@ let BookingController = class BookingController {
         }
         return this.bookingService.findByUserId(userId);
     }
-    async findOne(id) {
-        return this.bookingService.findOne(id);
+    async findOne(id, req) {
+        const booking = await this.bookingService.findOne(id);
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        const bookingUserId = booking?.userId || booking?.users?.id;
+        if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only view your own bookings');
+        }
+        return booking;
     }
-    async create(createBookingDto) {
+    async create(createBookingDto, req) {
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        if (createBookingDto.userId && !isAdmin && createBookingDto.userId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only create bookings for yourself');
+        }
+        if (!isAdmin) {
+            createBookingDto.userId = authenticatedUserId;
+        }
         return this.bookingService.create(createBookingDto);
     }
-    async update(id, updateBookingDto) {
+    async update(id, updateBookingDto, req) {
+        const booking = await this.bookingService.findOne(id);
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        const bookingUserId = booking?.userId || booking?.users?.id;
+        if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only update your own bookings');
+        }
+        if (updateBookingDto.userId && !isAdmin && updateBookingDto.userId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You cannot assign bookings to other users');
+        }
         return this.bookingService.update(id, updateBookingDto);
     }
-    async delete(id) {
+    async delete(id, req) {
+        const booking = await this.bookingService.findOne(id);
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        const bookingUserId = booking?.userId || booking?.users?.id;
+        if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only delete your own bookings');
+        }
         return this.bookingService.delete(id);
     }
-    async updateStatus(id, updateStatusDto) {
+    async updateStatus(id, updateStatusDto, req) {
+        const booking = await this.bookingService.findOne(id);
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        const bookingUserId = booking?.userId || booking?.users?.id;
+        if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only update status of your own bookings');
+        }
         return this.bookingService.updateStatus(id, updateStatusDto.status);
     }
     async assignTechnician(id, assignDto) {
         return this.bookingService.assignTechnician(id, assignDto.technicianId);
     }
-    async createPayment(createPaymentDto) {
+    async createPayment(createPaymentDto, req) {
+        const booking = await this.bookingService.findOne(createPaymentDto.bookingId || '');
+        const authenticatedUserId = req.user?.sub || req.user?.id;
+        const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+        const bookingUserId = booking?.userId || booking?.users?.id;
+        if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only create payments for your own bookings');
+        }
         return this.bookingService.createPayment(createPaymentDto.bookingId || '', createPaymentDto);
     }
     async updatePaymentStatus(paymentId, updatePaymentDto) {
@@ -65,6 +112,7 @@ let BookingController = class BookingController {
 exports.BookingController = BookingController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -82,43 +130,54 @@ __decorate([
 ], BookingController.prototype, "getMyBookings", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_booking_dto_1.CreateBookingDto]),
+    __metadata("design:paramtypes", [create_booking_dto_1.CreateBookingDto, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
+    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "delete", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_booking_status_dto_1.UpdateBookingStatusDto]),
+    __metadata("design:paramtypes", [String, update_booking_status_dto_1.UpdateBookingStatusDto, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Patch)(':id/assign'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_guard_1.AdminGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Assign technician to booking' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Technician assigned successfully' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Booking or technician not found' }),
@@ -130,13 +189,16 @@ __decorate([
 ], BookingController.prototype, "assignTechnician", null);
 __decorate([
     (0, common_1.Post)('payments'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_payment_dto_1.CreatePaymentDto]),
+    __metadata("design:paramtypes", [create_payment_dto_1.CreatePaymentDto, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "createPayment", null);
 __decorate([
     (0, common_1.Put)('payments/:paymentId/status'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Param)('paymentId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

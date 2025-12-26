@@ -1,14 +1,29 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+Body,
+Controller,
+Get,
+HttpException,
+HttpStatus,
+Post,
+Put,
+Req,
+UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './jwt.guard';
 import { UsersService } from '../users/users.service';
-import { IsEmail, IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength, IsBoolean, Matches } from 'class-validator';
+
+const PASSWORD_REGEX = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
+const PASSWORD_MESSAGE = 'Password is too weak. It must contain at least one uppercase letter, one lowercase letter, one number or special character.';
 
 class RegisterDto {
   @IsEmail() email!: string;
-  @MinLength(6) @IsString() password!: string;
+  @MinLength(8) @IsString()
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
+  password!: string;
   @IsOptional() @IsString() name?: string;
 }
 class LoginDto {
@@ -27,32 +42,40 @@ class ForgotPasswordDto {
 
 class ResetPasswordDto {
   @IsString() token!: string;
-  @MinLength(6) @IsString() newPassword!: string;
+  @MinLength(8) @IsString()
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
+  newPassword!: string;
 }
 
 class ChangePasswordDto {
   @IsString() currentPassword!: string;
-  @MinLength(6) @IsString() newPassword!: string;
+  @MinLength(8) @IsString()
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
+  newPassword!: string;
 }
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService, private readonly users: UsersService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly users: UsersService,
+  ) { }
 
   @Get('status')
   async status() {
     return {
       authenticated: false,
       message: 'Authentication status endpoint',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for registration
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    if (!dto.email || !dto.password) throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
+    if (!dto.email || !dto.password)
+      throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
     const user = await this.auth.register(dto);
     // Auto-login after successful registration
     const tokens = await this.auth.login({ email: dto.email, password: dto.password });
@@ -62,7 +85,7 @@ export class AuthController {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresInMs,
-      user: { id: user.id, email: user.email, name: user.name }
+      user: { id: user.id, email: user.email, name: user.name },
     };
   }
 
@@ -82,8 +105,8 @@ export class AuthController {
           id: user?.id,
           email: user?.email,
           name: user?.name,
-          role: (user as any)?.role ?? 'USER'
-        }
+          role: (user as any)?.role ?? 'USER',
+        },
       };
     } catch (error) {
       // Preserve account lockout messages, but use generic message for invalid credentials
@@ -105,7 +128,7 @@ export class AuthController {
     const expiresInMs = 15 * 60 * 1000;
     return {
       ...tokens,
-      expiresInMs
+      expiresInMs,
     };
   }
 
@@ -113,7 +136,10 @@ export class AuthController {
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     const _result = await this.auth.forgotPassword(dto.email).catch(() => {
-      throw new HttpException('Failed to process forgot password request', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Failed to process forgot password request',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     });
     return { message: 'If the email exists, a password reset link has been sent' };
   }
@@ -134,9 +160,11 @@ export class AuthController {
     const userId = req.user?.sub as string | undefined;
     if (!userId) throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
 
-    const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
-      throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
-    });
+    const _result = await this.auth
+      .changePassword(userId, dto.currentPassword, dto.newPassword)
+      .catch(() => {
+        throw new HttpException('Current password is incorrect', HttpStatus.BAD_REQUEST);
+      });
     return { message: 'Password has been changed successfully' };
   }
 
@@ -183,7 +211,7 @@ export class AuthController {
     if (!userId) {
       throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
     }
-    const updatedUser = await this.users.update(userId, updateData);
+    const updatedUser = await this.users.update(userId, updateData, req.user);
     return {
       id: updatedUser.id,
       email: updatedUser.email,

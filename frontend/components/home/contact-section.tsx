@@ -19,10 +19,10 @@ export function ContactSection() {
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-foreground mb-4">
             Liên Hệ Với Chúng Tôi
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Chúng tôi luôn sẵn sàng hỗ trợ bạn với các giải pháp âm thanh chuyên nghiệp.
             Hãy liên hệ ngay để được tư vấn miễn phí!
           </p>
@@ -33,7 +33,7 @@ export function ContactSection() {
           <Card className="text-center hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Phone className="w-6 h-6 text-blue-600" />
+                <Phone className="w-6 h-6 text-primary" />
               </div>
               <CardTitle className="text-xl">Điện Thoại</CardTitle>
               <CardDescription>
@@ -41,7 +41,7 @@ export function ContactSection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold text-blue-600 mb-4">
+              <p className="text-2xl font-semibold text-primary mb-4">
                 {CONTACT_CONFIG.phone.display}
               </p>
               <Button
@@ -72,7 +72,7 @@ export function ContactSection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold text-blue-600 mb-4">
+              <p className="text-lg font-semibold text-primary mb-4">
                 {CONTACT_CONFIG.zalo.displayName}
               </p>
               <Button className="w-full bg-blue-500 hover:bg-blue-600">
@@ -86,7 +86,7 @@ export function ContactSection() {
           <Card className="text-center hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <Mail className="w-6 h-6 text-green-600" />
+                <Mail className="w-6 h-6 text-success" />
               </div>
               <CardTitle className="text-xl">Email</CardTitle>
               <CardDescription>
@@ -94,7 +94,7 @@ export function ContactSection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold text-green-600 mb-4">
+              <p className="text-lg font-semibold text-success mb-4">
                 {CONTACT_CONFIG.email}
               </p>
               <Button
@@ -114,22 +114,22 @@ export function ContactSection() {
           <Card className="max-w-md mx-auto">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                <Clock className="w-6 h-6 text-orange-600" />
+                <Clock className="w-6 h-6 text-warning" />
               </div>
               <CardTitle>Giờ Làm Việc</CardTitle>
             </CardHeader>
             <CardContent className="text-left">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Thứ 2 - Thứ 6:</span>
+                  <span className="text-muted-foreground">Thứ 2 - Thứ 6:</span>
                   <span className="font-semibold">8:00 - 18:00</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Thứ 7:</span>
+                  <span className="text-muted-foreground">Thứ 7:</span>
                   <span className="font-semibold">8:00 - 16:00</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Chủ Nhật:</span>
+                  <span className="text-muted-foreground">Chủ Nhật:</span>
                   <span className="font-semibold">Đóng cửa</span>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export function ContactSection() {
 
         {/* Address */}
         <div className="mt-8 text-center">
-          <div className="flex items-center justify-center gap-2 text-gray-600">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <MapPin className="w-5 h-5" />
             <span>
               {CONTACT_CONFIG.address.street}, {CONTACT_CONFIG.address.city}, {CONTACT_CONFIG.address.country}

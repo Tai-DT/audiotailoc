@@ -399,7 +399,8 @@ export class PromotionAdvancedService {
 
     // tierBased field does not exist in schema
     // if (promotion.tierBased) {
-    if (false) { // promotion.tierBased
+    if (false) {
+      // promotion.tierBased
       features.push('Tiered Discounts');
     }
 

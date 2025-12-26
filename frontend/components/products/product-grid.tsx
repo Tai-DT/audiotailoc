@@ -23,7 +23,7 @@ export function ProductGrid({
 }: ProductGridProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7">
         {[...Array(8)].map((_, index) => (
           <div key={index} className="space-y-4 animate-pulse">
             <Skeleton className="aspect-square w-full rounded-lg" />
@@ -54,7 +54,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7">
       {products.map((product, index) => (
         <BlurFade key={product.id} delay={0.05 * index} inView>
           <ProductCard

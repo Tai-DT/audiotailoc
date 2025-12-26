@@ -94,27 +94,27 @@ export class HealthController {
   }
 
   @Get('errors')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
-  @ApiOperation({ summary: 'Recent error logs' })
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Recent error logs (Admin only)' })
   @ApiResponse({ status: 200, description: 'Recent errors' })
   async recentErrors(@Query('hours') hours: string = '24') {
     return this.healthService.getRecentErrors(parseInt(hours));
   }
 
   @Get('metrics')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
-  @ApiOperation({ summary: 'Application metrics' })
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Application metrics (Admin only)' })
   @ApiResponse({ status: 200, description: 'Application metrics' })
   async applicationMetrics() {
     return this.healthService.getApplicationMetrics();
   }
 
   @Get('alerts')
-  // @UseGuards(JwtGuard, AdminGuard)
-  // @ApiBearerAuth()
-  @ApiOperation({ summary: 'Active alerts' })
+  @UseGuards(AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Active alerts (Admin only)' })
   @ApiResponse({ status: 200, description: 'Active alerts' })
   async activeAlerts() {
     return this.healthService.getActiveAlerts();

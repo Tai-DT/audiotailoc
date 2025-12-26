@@ -1,4 +1,5 @@
 import React, { ComponentPropsWithoutRef, CSSProperties } from "react"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 
@@ -10,6 +11,7 @@ export interface ShimmerButtonProps extends ComponentPropsWithoutRef<"button"> {
   background?: string
   className?: string
   children?: React.ReactNode
+  asChild?: boolean
 }
 
 export const ShimmerButton = React.forwardRef<
@@ -25,12 +27,14 @@ export const ShimmerButton = React.forwardRef<
       background = "rgba(0, 0, 0, 1)",
       className,
       children,
+      asChild = false,
       ...props
     },
     ref
   ) => {
+    const Comp = asChild ? Slot : "button"
     return (
-      <button
+      <Comp
         style={
           {
             "--spread": "90deg",
@@ -46,8 +50,8 @@ export const ShimmerButton = React.forwardRef<
           "transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px",
           className
         )}
-        ref={ref}
-        {...props}
+        ref={asChild ? undefined : ref}
+        {...(asChild ? {} : props)}
       >
         {/* spark container */}
         <div
@@ -88,7 +92,7 @@ export const ShimmerButton = React.forwardRef<
             "absolute [inset:var(--cut)] -z-20 [border-radius:var(--radius)] [background:var(--bg)]"
           )}
         />
-      </button>
+      </Comp>
     )
   }
 )

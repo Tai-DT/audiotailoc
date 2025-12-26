@@ -1,9 +1,7 @@
 'use client';
 
-import React from 'react';
-import { PageBanner } from '@/components/ui/page-banner';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -19,16 +17,62 @@ import {
 } from 'lucide-react';
 import { ContactSection } from '@/components/home/contact-section';
 import { toast } from 'react-hot-toast';
+import { MagicCard } from '@/components/ui/magic-card';
+import { BorderBeam } from '@/components/ui/border-beam';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { apiClient, handleApiResponse } from '@/lib/api';
+
+interface SiteSettings {
+  general?: {
+    siteName?: string;
+    tagline?: string;
+    logoUrl?: string;
+    primaryEmail?: string;
+    primaryPhone?: string;
+    address?: string;
+    workingHours?: string;
+  };
+  socials?: {
+    facebook?: string;
+    youtube?: string;
+    tiktok?: string;
+    instagram?: string;
+    zalo?: string;
+  };
+  store?: {
+    address?: string;
+    phone?: string;
+    email?: string;
+    workingHours?: string;
+  };
+}
 
 export default function ContactPage() {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     subject: '',
     message: ''
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await apiClient.get('/content/settings');
+      const data = handleApiResponse<SiteSettings>(response);
+      if (data) {
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -43,8 +87,14 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Send to support tickets API
+      await apiClient.post('/support/tickets', {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject || `Liên hệ từ ${formData.name}`,
+        description: `Số điện thoại: ${formData.phone}\n\n${formData.message}`,
+        priority: 'MEDIUM',
+      });
 
       toast.success('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong vòng 24 giờ.');
       setFormData({
@@ -66,25 +116,25 @@ export default function ContactPage() {
     {
       icon: MapPin,
       title: 'Địa chỉ',
-      content: '123 Đường ABC, Quận XYZ, TP.HCM, Việt Nam',
+      content: settings?.general?.address || settings?.store?.address || '123 Đường ABC, Quận 1, TP.HCM',
       details: 'Gần trung tâm thương mại, dễ dàng tiếp cận'
     },
     {
       icon: Phone,
       title: 'Điện thoại',
-      content: '+84 123 456 789',
+      content: settings?.general?.primaryPhone || settings?.store?.phone || '0901 234 567',
       details: 'Hỗ trợ 24/7 cho khách hàng'
     },
     {
       icon: Mail,
       title: 'Email',
-      content: 'info@audiotailoc.com',
+      content: settings?.general?.primaryEmail || settings?.store?.email || 'info@audiotailoc.com',
       details: 'Phản hồi trong vòng 24 giờ'
     },
     {
       icon: Clock,
       title: 'Giờ làm việc',
-      content: '8:00 - 18:00 (Thứ 2 - Thứ 7)',
+      content: settings?.general?.workingHours || settings?.store?.workingHours || 'Thứ 2 - Thứ 7: 8:00 - 20:00',
       details: 'Nghỉ Chủ nhật và các ngày lễ'
     }
   ];
@@ -116,7 +166,7 @@ export default function ContactPage() {
             <div className="max-w-3xl mx-auto text-center">
               <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Liên hệ</div>
               <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                Liên hệ Audio Tài Lộc
+                Liên hệ {settings?.general?.siteName || 'Audio Tài Lộc'}
               </h1>
               <p className="text-sm text-muted-foreground">
                 Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7.
@@ -130,14 +180,23 @@ export default function ContactPage() {
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {contactInfo.map((info, index) => (
-                <Card key={index} className="text-center">
-                  <CardContent className="pt-6">
-                    <info.icon className="h-12 w-12 mx-auto mb-4 text-primary" />
-                    <h3 className="font-semibold mb-2">{info.title}</h3>
-                    <p className="text-primary font-medium mb-1">{info.content}</p>
-                    <p className="text-sm text-muted-foreground">{info.details}</p>
-                  </CardContent>
-                </Card>
+                <MagicCard key={index} gradientColor="oklch(0.97 0.008 45)" className="p-0 border-none shadow-none">
+                  <Card className="text-center border-0 shadow-lg relative overflow-hidden">
+                    <BorderBeam
+                      size={80}
+                      duration={10}
+                      colorFrom="oklch(0.58 0.28 20)"
+                      colorTo="oklch(0.70 0.22 40)"
+                      borderWidth={1.5}
+                    />
+                    <CardContent className="pt-6">
+                      <info.icon className="h-12 w-12 mx-auto mb-4 text-primary" />
+                      <h3 className="font-semibold mb-2">{info.title}</h3>
+                      <p className="text-primary font-medium mb-1">{info.content}</p>
+                      <p className="text-sm text-muted-foreground">{info.details}</p>
+                    </CardContent>
+                  </Card>
+                </MagicCard>
               ))}
             </div>
           </div>
@@ -148,15 +207,23 @@ export default function ContactPage() {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-12">
               {/* Contact Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Gửi tin nhắn</CardTitle>
-                  <p className="text-muted-foreground">
-                    Điền thông tin và chúng tôi sẽ liên hệ lại với bạn trong thời gian sớm nhất.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+              <MagicCard gradientColor="oklch(0.97 0.008 45)" className="p-0 border-none shadow-none">
+                <Card className="border-0 shadow-xl relative overflow-hidden">
+                  <BorderBeam
+                    size={150}
+                    duration={12}
+                    colorFrom="oklch(0.58 0.28 20)"
+                    colorTo="oklch(0.70 0.22 40)"
+                    borderWidth={2}
+                  />
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Gửi tin nhắn</CardTitle>
+                    <p className="text-muted-foreground">
+                      Điền thông tin và chúng tôi sẽ liên hệ lại với bạn trong thời gian sớm nhất.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">Họ tên *</Label>
@@ -220,24 +287,30 @@ export default function ContactPage() {
                       />
                     </div>
 
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        'Đang gửi...'
-                      ) : (
-                        <>
-                          <Send className="mr-2 h-4 w-4" />
-                          Gửi tin nhắn
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                      <ShimmerButton
+                        type="submit"
+                        className="w-full h-12 text-base font-semibold"
+                        disabled={isSubmitting}
+                        shimmerColor="oklch(0.99 0.005 45)"
+                        shimmerSize="0.1em"
+                        borderRadius="0.5rem"
+                        background="oklch(0.58 0.28 20)"
+                      >
+                        {isSubmitting ? (
+                          <span className="flex items-center text-white">
+                            <span className="mr-2">Đang gửi...</span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-white">
+                            <Send className="mr-2 h-4 w-4" />
+                            Gửi tin nhắn
+                          </span>
+                        )}
+                      </ShimmerButton>
+                    </form>
+                  </CardContent>
+                </Card>
+              </MagicCard>
 
               {/* Services & FAQ */}
               <div className="space-y-8">

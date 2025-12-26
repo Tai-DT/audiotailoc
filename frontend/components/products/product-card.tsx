@@ -9,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Product } from '@/lib/types';
+import { parseImages } from '@/lib/utils';
 import { useIsInWishlist, useToggleWishlist } from '@/lib/hooks/use-wishlist';
-import { MagicCard } from '@/components/ui/magic-card';
-import { BorderBeam } from '@/components/ui/border-beam';
 
 interface ProductCardProps {
   product: Product;
@@ -48,33 +47,14 @@ export function ProductCard({
 
   // Get the primary image URL - prefer images array, fallback to imageUrl
   const getProductImage = () => {
-    if (product.images && product.images.length > 0) {
-      return product.images[0];
-    }
-    if (product.imageUrl) {
-      return product.imageUrl;
-    }
-    return '/placeholder-product.svg';
+    const images = parseImages(product.images, product.imageUrl);
+    return images.length > 0 ? images[0] : '/placeholder-product.svg';
   };
 
   return (
-    <MagicCard
-      className="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2"
-      gradientSize={300}
-      gradientColor="oklch(0.58 0.28 20 / 0.3)"
-      gradientFrom="oklch(0.58 0.28 20)"
-      gradientTo="oklch(0.70 0.22 40)"
-    >
-      <Card className="relative overflow-hidden bg-card/90 backdrop-blur-sm border-border/50 h-full flex flex-col transition-all duration-500 group-hover:border-primary/50">
-        <BorderBeam
-          size={150}
-          duration={10}
-          colorFrom="oklch(0.58 0.28 20)"
-          colorTo="oklch(0.70 0.22 40)"
-          borderWidth={2}
-        />
+    <Card className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md ring-1 ring-border/30 shadow-[0_30px_100px_-70px_rgba(0,0,0,0.75)] transition-transform duration-300 hover:-translate-y-2 hover:shadow-[0_40px_120px_-70px_rgba(0,0,0,0.85)]">
       {/* Product Image with AspectRatio for consistent sizing */}
-      <div className="relative overflow-hidden bg-muted/20">
+      <div className="relative overflow-hidden bg-muted/15">
         <AspectRatio ratio={1} className="relative">
           <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
             <Image
@@ -82,16 +62,16 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-all duration-700 group-hover:scale-115 group-hover:brightness-110 group-hover:contrast-105"
+              className="object-cover transition-all duration-700 group-hover:scale-[1.03] group-hover:brightness-[1.05] group-hover:contrast-105"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = '/placeholder-product.svg';
               }}
             />
             {/* Gradient overlay on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            {/* Shine effect on hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Subtle shine */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           </Link>
         </AspectRatio>
 
@@ -143,7 +123,7 @@ export function ProductCard({
                 }
               }}
             >
-              <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+              <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} />
             </Button>
           </div>
         </div>
@@ -163,13 +143,13 @@ export function ProductCard({
               }
             }}
           >
-            <Heart className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+            <Heart className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} />
           </Button>
         </div>
       </div>
 
       {/* Product Info */}
-      <CardContent className="p-3 sm:p-4 transition-all duration-300 group-hover:bg-card/95">
+      <CardContent className="p-4 sm:p-5 transition-colors duration-300 group-hover:bg-card/90">
         {/* Category */}
         {product.category && (
           <Link 
@@ -181,7 +161,7 @@ export function ProductCard({
         )}
 
         {/* Product Name */}
-  <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug}`}>
           <h3 className="font-medium text-xs sm:text-sm mt-1 mb-2 line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem] sm:min-h-[2.8rem]">
             {product.name}
           </h3>
@@ -234,9 +214,9 @@ export function ProductCard({
       </CardContent>
 
       {/* Card Footer */}
-      <CardFooter className="p-3 sm:p-4 pt-0">
+      <CardFooter className="p-4 sm:p-5 pt-0 border-t border-border/50">
         <Button
-          className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 text-xs sm:text-sm h-9 sm:h-10 group/btn"
+          className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20 text-xs sm:text-sm h-9 sm:h-10 group/btn"
           disabled={isOutOfStock}
           onClick={() => onAddToCart?.(product.id)}
         >
@@ -245,6 +225,5 @@ export function ProductCard({
         </Button>
       </CardFooter>
     </Card>
-    </MagicCard>
   );
 }

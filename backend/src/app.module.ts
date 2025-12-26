@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './modules/caching/cache.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     HealthModule,
     AuthModule,
     AnalyticsModule,
+    ReviewsModule,
   ],
   controllers: [],
   providers: [],

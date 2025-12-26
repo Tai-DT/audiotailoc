@@ -7,6 +7,7 @@ import { ServiceGrid } from '@/components/services/service-grid';
 import { ServiceFilters } from '@/components/services/service-filters';
 import { useServices, useServiceTypes } from '@/lib/hooks/use-api';
 import { ServiceFilters as ServiceFiltersType } from '@/lib/types';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 
 function ServicesPageContent() {
   const router = useRouter();
@@ -143,7 +144,16 @@ function ServicesPageContent() {
 
         {/* Compact Header */}
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1">Danh sách dịch vụ</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+            <AnimatedGradientText
+              className="text-2xl sm:text-3xl font-bold"
+              speed={1.2}
+              colorFrom="oklch(0.58 0.28 20)"
+              colorTo="oklch(0.70 0.22 40)"
+            >
+              Danh sách dịch vụ
+            </AnimatedGradientText>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Khám phá các dịch vụ chuyên nghiệp của chúng tôi
           </p>
@@ -152,8 +162,8 @@ function ServicesPageContent() {
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar - Filters */}
           <aside className="lg:col-span-1">
-            <ServiceFilters 
-              filters={filters} 
+            <ServiceFilters
+              filters={filters}
               onFiltersChange={handleFiltersChange}
             />
           </aside>

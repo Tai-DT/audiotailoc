@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Package, TrendingUp, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -190,11 +191,15 @@ export default function CategoriesPage() {
                                 <TableRow key={category.id}>
                                     <TableCell>
                                         {category.imageUrl ? (
-                                            <img
-                                                src={category.imageUrl}
-                                                alt={category.name}
-                                                className="w-10 h-10 object-cover rounded"
-                                            />
+                                            <div className="relative w-10 h-10">
+                                                <Image
+                                                    src={category.imageUrl}
+                                                    alt={category.name}
+                                                    fill
+                                                    className="object-cover rounded"
+                                                    sizes="40px"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
                                                 <ImageIcon className="h-5 w-5 text-muted-foreground" />

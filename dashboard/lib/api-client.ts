@@ -2,7 +2,7 @@
 import { ServiceFormData } from '@/types/service';
 import { CreateBannerDto, UpdateBannerDto } from '@/types/banner';
 import { UpdateSettingsDto } from '@/types/settings';
-const API_BASE_URL: string = (() => {
+export const API_BASE_URL: string = (() => {
   const env = process.env.NEXT_PUBLIC_API_URL;
   if (env && env.trim().length > 0) return env;
   if (typeof window !== 'undefined') {
@@ -37,25 +37,22 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface ApiError extends Error {
+  status?: number;
+  statusCode?: number;
+  message: string;
+  error?: string;
+  timestamp?: string;
+  path?: string;
+  _correlationId?: string;
   response?: {
     data?: {
       message?: string;
     };
   };
-  status?: number;
 }
 
 // Generic data type for request bodies
 export type RequestData = Record<string, unknown> | FormData | string;
-
-export interface ApiError {
-  statusCode: number;
-  message: string;
-  error: string;
-  timestamp: string;
-  path: string;
-  _correlationId?: string;
-}
 
 export interface CreateProductData {
   name: string;
@@ -113,6 +110,11 @@ export interface UpdateProductData {
   isActive?: boolean;
 }
 
+// Debug logger is disabled to avoid noisy network errors during tests (hydration/ERR_EMPTY_RESPONSE).
+const debugLog = (_payload: Record<string, any>) => {
+  return;
+};
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
@@ -164,10 +166,20 @@ class ApiClient {
     let responseText: string;
 
     try {
+      // #region agent log
+      debugLog({ hypothesisId: 'H1', location: 'dashboard/lib/api-client.ts:167', message: 'api.request.start', data: { endpoint, url, method: options.method || 'GET', hasAuth: !!this.token, hasAdminKey: !!(process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY) } });
+      // #endregion
       response = await fetch(url, {
         ...options,
         headers: {
-          ...this.getHeaders(),
+          ...(() => {
+            const headers = this.getHeaders() as Record<string, string>;
+            // If using FormData, allow the browser to set the multipart boundary.
+            if (typeof FormData !== 'undefined' && options.body instanceof FormData) {
+              delete headers['Content-Type'];
+            }
+            return headers;
+          })(),
           ...options.headers,
         },
       });
@@ -179,6 +191,9 @@ class ApiClient {
       try {
         data = responseText ? JSON.parse(responseText) : {};
       } catch {
+        // #region agent log
+        debugLog({ hypothesisId: 'H2', location: 'dashboard/lib/api-client.ts:182', message: 'api.request.invalid_json', data: { endpoint, status: response.status, statusText: response.statusText, bodyPreview: responseText?.slice(0, 200) } });
+        // #endregion
         throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
       }
 
@@ -222,12 +237,18 @@ class ApiClient {
           errorMessage = 'Server Error: Please try again later';
         }
 
+        // #region agent log
+        debugLog({ hypothesisId: 'H3', location: 'dashboard/lib/api-client.ts:226', message: 'api.request.error', data: { endpoint, status: response.status, errorMessage, body: data } });
+        // #endregion
         const error = new Error(errorMessage) as ApiError;
         error.response = { data };
         error.status = response.status;
         throw error;
       }
 
+      // #region agent log
+      debugLog({ hypothesisId: 'H4', location: 'dashboard/lib/api-client.ts:231', message: 'api.request.success', data: { endpoint, status: response.status } });
+      // #endregion
       return data as unknown as ApiResponse<T>;
     } catch (error) {
       // Silent error handling - errors are thrown to be caught by UI components
@@ -294,7 +315,7 @@ class ApiClient {
   async getOrders(params?: { page?: number; limit?: number; status?: string }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.limit) query.append('pageSize', params.limit.toString()); // Backend expects 'pageSize', not 'limit'
     if (params?.status) query.append('status', params.status.toString());
 
     return this.request(`/orders?${query.toString()}`);
@@ -351,12 +372,16 @@ class ApiClient {
   }
 
   // Products endpoints
-  async getProducts(params?: { page?: number; limit?: number; category?: string; search?: string }) {
+  async getProducts(params?: { page?: number; limit?: number; category?: string; search?: string; isActive?: boolean; featured?: boolean; minPrice?: number; maxPrice?: number }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('pageSize', params.limit.toString());
     if (params?.category) query.append('categoryId', params.category.toString());
-    if (params?.search) query.append('search', params.search.toString());
+    if (params?.search) query.append('q', params.search.toString());
+    if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
+    if (params?.featured !== undefined) query.append('featured', params.featured.toString());
+    if (params?.minPrice !== undefined) query.append('minPrice', params.minPrice.toString());
+    if (params?.maxPrice !== undefined) query.append('maxPrice', params.maxPrice.toString());
 
     const queryString = query.toString();
     return this.request(`/catalog/products${queryString ? `?${queryString}` : ''}`);
@@ -545,6 +570,12 @@ class ApiClient {
     return this.request(`/inventory/${productId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    });
+  }
+
+  async syncInventory() {
+    return this.request('/inventory/sync', {
+      method: 'POST',
     });
   }
 
@@ -890,6 +921,10 @@ class ApiClient {
     });
   }
 
+  async getAdminSiteSettings() {
+    return this.request('/admin/settings');
+  }
+
   // Bookings endpoints
   async getBookings(params?: {
     page?: number;
@@ -1193,6 +1228,38 @@ class ApiClient {
         senderType: data.senderType,
         guestToken: data.guestToken,
       }),
+    });
+  }
+
+  // Admin chat endpoints
+  async getAdminChatMessages(
+    conversationId: string,
+    params?: { limit?: number }
+  ) {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', params.limit.toString());
+    const queryString = query.toString();
+    return this.request(`/chat/conversations/${conversationId}/messages${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async sendAdminChatMessage(data: {
+    conversationId: string;
+    content: string;
+    senderType: string;
+  }) {
+    return this.request('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify({
+        conversationId: data.conversationId,
+        content: data.content,
+        senderType: data.senderType,
+      }),
+    });
+  }
+
+  async closeConversation(conversationId: string) {
+    return this.request(`/chat/conversations/${conversationId}/close`, {
+      method: 'POST',
     });
   }
 }

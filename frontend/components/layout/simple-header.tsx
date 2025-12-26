@@ -87,15 +87,9 @@ export function SimpleHeader({
             </Link>
             <Link 
               href="/du-an" 
-              className="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 transition-colors"
+              className="text-foreground hover:text-primary font-medium py-2 px-3 transition-colors"
             >
               Dự án
-            </Link>
-            <Link 
-              href="/about" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Giới thiệu
             </Link>
             <Link 
               href="/contact" 
@@ -259,13 +253,6 @@ export function SimpleHeader({
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dự án
-              </Link>
-              <Link 
-                href="/about" 
-                className="text-sm font-medium transition-colors hover:text-primary"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Giới thiệu
               </Link>
               <Link 
                 href="/contact" 

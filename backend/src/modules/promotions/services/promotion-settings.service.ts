@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Global promotion system settings
@@ -188,8 +189,40 @@ export interface AnalyticsConfig {
 export class PromotionSettingsService {
   private globalSettings: GlobalPromotionSettings | null = null;
 
+  private static readonly KEY_GLOBAL_SETTINGS = 'promotions.globalSettings';
+  private static readonly KEY_ANALYTICS_CONFIG = 'promotions.analyticsConfig';
+  private static readonly KEY_PROMOTION_SETTINGS_PREFIX = 'promotions.promotionSettings.';
+  private static readonly KEY_AB_TEST_PREFIX = 'promotions.abTest.';
+  private static readonly KEY_FRAUD_RULE_PREFIX = 'promotions.fraudRule.';
+
   constructor(private prisma: PrismaService) {
     this.initializeDefaultSettings();
+  }
+
+  private serialize(value: any): string {
+    return JSON.stringify(value);
+  }
+
+  private deserialize<T>(value: string): T {
+    return JSON.parse(value) as T;
+  }
+
+  private normalizeDate(input: any): Date {
+    if (input instanceof Date) return input;
+    const d = new Date(input);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  private toSystemConfigKeyForPromotion(promotionId: string): string {
+    return `${PromotionSettingsService.KEY_PROMOTION_SETTINGS_PREFIX}${promotionId}`;
+  }
+
+  private toSystemConfigKeyForAbTest(testId: string): string {
+    return `${PromotionSettingsService.KEY_AB_TEST_PREFIX}${testId}`;
+  }
+
+  private toSystemConfigKeyForFraudRule(ruleId: string): string {
+    return `${PromotionSettingsService.KEY_FRAUD_RULE_PREFIX}${ruleId}`;
   }
 
   /**
@@ -715,80 +748,274 @@ export class PromotionSettingsService {
    */
 
   private async retrieveGlobalSettings(): Promise<GlobalPromotionSettings | null> {
-    // Retrieve from database (placeholder)
-    return null;
-    // TODO: Implement actual retrieval
+    const config = await this.prisma.system_configs.findUnique({
+      where: { key: PromotionSettingsService.KEY_GLOBAL_SETTINGS },
+    });
+
+    if (!config) return null;
+
+    const parsed = this.deserialize<any>(config.value);
+    return {
+      ...parsed,
+      updatedAt: this.normalizeDate(parsed.updatedAt),
+    } as GlobalPromotionSettings;
   }
 
   private async storeGlobalSettings(settings: GlobalPromotionSettings): Promise<void> {
-    // Store in database (placeholder)
-    console.log('Storing global settings');
-    // TODO: Implement actual storage
+    const key = PromotionSettingsService.KEY_GLOBAL_SETTINGS;
+    const value = this.serialize({
+      ...settings,
+      updatedAt: settings.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+    });
+
+    await this.prisma.system_configs.upsert({
+      where: { key },
+      update: {
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+      create: {
+        id: uuidv4(),
+        key,
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async retrievePromotionSettings(promotionId: string): Promise<PromotionSettings | null> {
-    // Retrieve from database (placeholder)
-    return null;
-    // TODO: Implement actual retrieval
+    const key = this.toSystemConfigKeyForPromotion(promotionId);
+    const config = await this.prisma.system_configs.findUnique({
+      where: { key },
+    });
+
+    if (!config) return null;
+
+    const parsed = this.deserialize<any>(config.value);
+    return {
+      ...parsed,
+      promotionId,
+      updatedAt: this.normalizeDate(parsed.updatedAt),
+    } as PromotionSettings;
   }
 
   private async storePromotionSettings(settings: PromotionSettings): Promise<void> {
-    // Store in database (placeholder)
-    console.log(`Storing settings for promotion: ${settings.promotionId}`);
-    // TODO: Implement actual storage
+    const key = this.toSystemConfigKeyForPromotion(settings.promotionId);
+    const value = this.serialize({
+      ...settings,
+      updatedAt: settings.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+    });
+
+    await this.prisma.system_configs.upsert({
+      where: { key },
+      update: {
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+      create: {
+        id: uuidv4(),
+        key,
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async removePromotionSettings(promotionId: string): Promise<boolean> {
-    // Remove from database (placeholder)
+    const key = this.toSystemConfigKeyForPromotion(promotionId);
+    const existing = await this.prisma.system_configs.findUnique({
+      where: { key },
+      select: { key: true },
+    });
+
+    if (!existing) return false;
+
+    await this.prisma.system_configs.delete({ where: { key } });
     return true;
-    // TODO: Implement actual deletion
   }
 
   private async storeABTest(test: ABTestConfig): Promise<void> {
-    // Store in database (placeholder)
-    console.log(`Storing A/B test: ${test.testId}`);
-    // TODO: Implement actual storage
+    const key = this.toSystemConfigKeyForAbTest(test.testId);
+    const value = this.serialize({
+      ...test,
+      startDate: test.startDate?.toISOString?.() ?? new Date(test.startDate).toISOString(),
+      endDate: test.endDate?.toISOString?.() ?? new Date(test.endDate).toISOString(),
+      createdAt: test.createdAt?.toISOString?.() ?? new Date(test.createdAt).toISOString(),
+      updatedAt: test.updatedAt?.toISOString?.() ?? new Date(test.updatedAt).toISOString(),
+    });
+
+    await this.prisma.system_configs.upsert({
+      where: { key },
+      update: {
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+      create: {
+        id: uuidv4(),
+        key,
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async retrieveABTest(testId: string): Promise<ABTestConfig | null> {
-    // Retrieve from database (placeholder)
-    return null;
-    // TODO: Implement actual retrieval
+    const key = this.toSystemConfigKeyForAbTest(testId);
+    const config = await this.prisma.system_configs.findUnique({
+      where: { key },
+    });
+
+    if (!config) return null;
+    const parsed = this.deserialize<any>(config.value);
+
+    return {
+      ...parsed,
+      testId,
+      startDate: this.normalizeDate(parsed.startDate),
+      endDate: this.normalizeDate(parsed.endDate),
+      createdAt: this.normalizeDate(parsed.createdAt),
+      updatedAt: this.normalizeDate(parsed.updatedAt),
+    } as ABTestConfig;
   }
 
   private async getAllABTests(promotionId: string): Promise<ABTestConfig[]> {
-    // Get from database (placeholder)
-    return [];
-    // TODO: Implement actual retrieval
+    const configs = await this.prisma.system_configs.findMany({
+      where: {
+        key: {
+          startsWith: PromotionSettingsService.KEY_AB_TEST_PREFIX,
+        },
+      },
+    });
+
+    const results: ABTestConfig[] = [];
+    for (const c of configs) {
+      try {
+        const parsed = this.deserialize<any>(c.value);
+        if (parsed.promotionId !== promotionId) continue;
+        results.push({
+          ...parsed,
+          testId: parsed.testId ?? c.key.replace(PromotionSettingsService.KEY_AB_TEST_PREFIX, ''),
+          startDate: this.normalizeDate(parsed.startDate),
+          endDate: this.normalizeDate(parsed.endDate),
+          createdAt: this.normalizeDate(parsed.createdAt),
+          updatedAt: this.normalizeDate(parsed.updatedAt),
+        } as ABTestConfig);
+      } catch {
+        // Skip malformed rows
+      }
+    }
+
+    return results;
   }
 
   private async storeFraudRule(rule: FraudDetectionRule): Promise<void> {
-    // Store in database (placeholder)
-    console.log(`Storing fraud rule: ${rule.ruleId}`);
-    // TODO: Implement actual storage
+    const key = this.toSystemConfigKeyForFraudRule(rule.ruleId);
+    const value = this.serialize({
+      ...rule,
+      updatedAt: rule.updatedAt?.toISOString?.() ?? new Date(rule.updatedAt).toISOString(),
+    });
+
+    await this.prisma.system_configs.upsert({
+      where: { key },
+      update: {
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+      create: {
+        id: uuidv4(),
+        key,
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async retrieveFraudRule(ruleId: string): Promise<FraudDetectionRule | null> {
-    // Retrieve from database (placeholder)
-    return null;
-    // TODO: Implement actual retrieval
+    const key = this.toSystemConfigKeyForFraudRule(ruleId);
+    const config = await this.prisma.system_configs.findUnique({
+      where: { key },
+    });
+
+    if (!config) return null;
+    const parsed = this.deserialize<any>(config.value);
+
+    return {
+      ...parsed,
+      ruleId,
+      updatedAt: this.normalizeDate(parsed.updatedAt),
+    } as FraudDetectionRule;
   }
 
   private async getAllFraudRules(): Promise<FraudDetectionRule[]> {
-    // Get from database (placeholder)
-    return [];
-    // TODO: Implement actual retrieval
+    const configs = await this.prisma.system_configs.findMany({
+      where: {
+        key: {
+          startsWith: PromotionSettingsService.KEY_FRAUD_RULE_PREFIX,
+        },
+      },
+    });
+
+    const results: FraudDetectionRule[] = [];
+    for (const c of configs) {
+      try {
+        const parsed = this.deserialize<any>(c.value);
+        results.push({
+          ...parsed,
+          ruleId:
+            parsed.ruleId ?? c.key.replace(PromotionSettingsService.KEY_FRAUD_RULE_PREFIX, ''),
+          updatedAt: this.normalizeDate(parsed.updatedAt),
+        } as FraudDetectionRule);
+      } catch {
+        // Skip malformed rows
+      }
+    }
+
+    return results;
   }
 
   private async storeAnalyticsConfig(config: AnalyticsConfig): Promise<void> {
-    // Store in database (placeholder)
-    console.log('Storing analytics configuration');
-    // TODO: Implement actual storage
+    const key = PromotionSettingsService.KEY_ANALYTICS_CONFIG;
+    const value = this.serialize({
+      ...config,
+      updatedAt: config.updatedAt?.toISOString?.() ?? new Date(config.updatedAt).toISOString(),
+    });
+
+    await this.prisma.system_configs.upsert({
+      where: { key },
+      update: {
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+      create: {
+        id: uuidv4(),
+        key,
+        value,
+        type: 'JSON',
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async retrieveAnalyticsConfig(): Promise<AnalyticsConfig | null> {
-    // Retrieve from database (placeholder)
-    return null;
-    // TODO: Implement actual retrieval
+    const key = PromotionSettingsService.KEY_ANALYTICS_CONFIG;
+    const config = await this.prisma.system_configs.findUnique({
+      where: { key },
+    });
+
+    if (!config) return null;
+    const parsed = this.deserialize<any>(config.value);
+    return {
+      ...parsed,
+      updatedAt: this.normalizeDate(parsed.updatedAt),
+    } as AnalyticsConfig;
   }
 }

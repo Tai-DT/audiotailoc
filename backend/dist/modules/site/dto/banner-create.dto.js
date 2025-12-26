@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateBannerDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class CreateBannerDto {
     constructor() {
@@ -29,35 +30,40 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "subtitle", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "description", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "imageUrl", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "mobileImageUrl", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "linkUrl", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "buttonLabel", void 0);
@@ -69,6 +75,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "locale", void 0);
@@ -85,12 +92,14 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "startAt", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (value === '' || value === null ? undefined : value)),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "endAt", void 0);

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DataTable } from '@/components/ui/data-table';
 import { useProducts, Product } from '@/lib/hooks/use-products';
+import { parseImages } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,9 +52,10 @@ export function ProductList({
       header: '',
       cell: ({ row }) => {
         const product = row.original;
+        const images = parseImages(product.images, product.imageUrl);
         return (
           <Avatar className="h-10 w-10">
-            <AvatarImage src={product.images && product.images.length > 0 ? product.images[0] : product.imageUrl} alt={product.name} />
+            <AvatarImage src={images.length > 0 ? images[0] : '/placeholder-product.svg'} alt={product.name} />
             <AvatarFallback>
               <Package className="h-4 w-4" />
             </AvatarFallback>
@@ -127,7 +129,7 @@ export function ProductList({
         
         return (
           <div className="flex items-center space-x-2">
-            <span className={isLowStock ? 'text-red-600 font-medium' : ''}>
+            <span className={isLowStock ? 'text-destructive font-medium' : ''}>
               {stockQuantity}
             </span>
             {isLowStock && (

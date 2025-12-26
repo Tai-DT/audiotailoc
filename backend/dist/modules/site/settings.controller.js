@@ -21,10 +21,10 @@ let SettingsController = class SettingsController {
         this.settingsService = settingsService;
     }
     async getSettings() {
-        return this.settingsService.getSettings();
+        return this.settingsService.getPublicSettings();
     }
     async getSection(section) {
-        return this.settingsService.getSection(section);
+        return this.settingsService.getPublicSection(section);
     }
 };
 exports.SettingsController = SettingsController;

@@ -23,7 +23,7 @@ let SeoService = SeoService_1 = class SeoService {
     async getProductSeo(productId, lang = 'vi') {
         const product = await this.prisma.products.findUnique({
             where: { id: productId },
-            include: { categories: true }
+            include: { categories: true },
         });
         if (!product) {
             return this.getDefaultSeo('product', lang);
@@ -51,13 +51,13 @@ let SeoService = SeoService_1 = class SeoService {
             twitterTitle: ogTitle,
             twitterDescription: ogDescription || description || '',
             twitterImage: product.imageUrl || `${this.defaultSiteUrl}/images/default-product.jpg`,
-            structuredData
+            structuredData,
         };
     }
     async getCategorySeo(categoryId, lang = 'vi') {
         const category = await this.prisma.categories.findUnique({
             where: { id: categoryId },
-            include: { products: true }
+            include: { products: true },
         });
         if (!category) {
             return this.getDefaultSeo('category', lang);
@@ -81,12 +81,12 @@ let SeoService = SeoService_1 = class SeoService {
             twitterCard: 'summary_large_image',
             twitterTitle: title,
             twitterDescription: description || '',
-            twitterImage: `${this.defaultSiteUrl}/images/default-category.jpg`
+            twitterImage: `${this.defaultSiteUrl}/images/default-category.jpg`,
         };
     }
     async getPageSeo(slug, lang = 'vi') {
         const page = await this.prisma.pages.findUnique({
-            where: { slug }
+            where: { slug },
         });
         if (!page) {
             return this.getDefaultSeo('page', lang);
@@ -111,12 +111,12 @@ let SeoService = SeoService_1 = class SeoService {
             twitterCard: 'summary_large_image',
             twitterTitle: ogTitle,
             twitterDescription: ogDescription || description || '',
-            twitterImage: `${this.defaultSiteUrl}/images/default-page.jpg`
+            twitterImage: `${this.defaultSiteUrl}/images/default-page.jpg`,
         };
     }
     async getProjectSeo(id, lang = 'vi') {
         const project = await this.prisma.projects.findUnique({
-            where: { id }
+            where: { id },
         });
         if (!project) {
             return this.getDefaultSeo('project', lang);
@@ -141,7 +141,7 @@ let SeoService = SeoService_1 = class SeoService {
             twitterCard: 'summary_large_image',
             twitterTitle: ogTitle,
             twitterDescription: ogDescription || description || '',
-            twitterImage: `${this.defaultSiteUrl}/images/default-project.jpg`
+            twitterImage: `${this.defaultSiteUrl}/images/default-project.jpg`,
         };
     }
     getHomeSeo(lang = 'vi') {
@@ -166,15 +166,18 @@ let SeoService = SeoService_1 = class SeoService {
             twitterCard: 'summary_large_image',
             twitterTitle: title,
             twitterDescription: description,
-            twitterImage: `${this.defaultSiteUrl}/images/og-home.jpg`
+            twitterImage: `${this.defaultSiteUrl}/images/og-home.jpg`,
         };
     }
     async generateSitemap() {
         const [products, categories, pages, projects] = await Promise.all([
             this.prisma.products.findMany({ select: { slug: true, updatedAt: true } }),
             this.prisma.categories.findMany({ select: { slug: true, updatedAt: true } }),
-            this.prisma.pages.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
-            this.prisma.projects.findMany({ select: { id: true, updatedAt: true } })
+            this.prisma.pages.findMany({
+                where: { isPublished: true },
+                select: { slug: true, updatedAt: true },
+            }),
+            this.prisma.projects.findMany({ select: { id: true, updatedAt: true } }),
         ]);
         let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
         sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
@@ -217,20 +220,22 @@ Disallow: /static/`;
             sku: product.id,
             brand: {
                 '@type': 'Brand',
-                name: this.defaultSiteName
+                name: this.defaultSiteName,
             },
             offers: {
                 '@type': 'Offer',
                 price: product.priceCents / 100,
                 priceCurrency: 'VND',
-                availability: product.inventory?.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-                url: `${this.defaultSiteUrl}/products/${product.slug}`
+                availability: product.inventory?.stock > 0
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/OutOfStock',
+                url: `${this.defaultSiteUrl}/products/${product.slug}`,
             },
             aggregateRating: {
                 '@type': 'AggregateRating',
                 ratingValue: 4.5,
-                reviewCount: product.reviews?.length || 0
-            }
+                reviewCount: product.reviews?.length || 0,
+            },
         };
     }
     getDefaultSeo(type, lang) {
@@ -252,7 +257,7 @@ Disallow: /static/`;
             twitterCard: 'summary_large_image',
             twitterTitle: title,
             twitterDescription: title,
-            twitterImage: `${this.defaultSiteUrl}/images/default-og.jpg`
+            twitterImage: `${this.defaultSiteUrl}/images/default-og.jpg`,
         };
     }
 };

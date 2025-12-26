@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSettingsDto = exports.SiteSocialsDto = exports.SiteAboutDto = exports.SiteGeneralDto = void 0;
+exports.UpdateSettingsDto = exports.SecuritySettingsDto = exports.NotificationSettingsDto = exports.EmailSettingsDto = exports.BusinessSettingsDto = exports.StoreSettingsDto = exports.SiteSocialsDto = exports.SiteAboutDto = exports.SiteGeneralDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
@@ -124,6 +124,159 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], SiteSocialsDto.prototype, "github", void 0);
+class StoreSettingsDto {
+}
+exports.StoreSettingsDto = StoreSettingsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StoreSettingsDto.prototype, "storeName", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], StoreSettingsDto.prototype, "storeEmail", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StoreSettingsDto.prototype, "storePhone", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StoreSettingsDto.prototype, "storeAddress", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StoreSettingsDto.prototype, "storeLogo", void 0);
+class BusinessSettingsDto {
+}
+exports.BusinessSettingsDto = BusinessSettingsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BusinessSettingsDto.prototype, "taxCode", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BusinessSettingsDto.prototype, "businessLicense", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BusinessSettingsDto.prototype, "currency", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BusinessSettingsDto.prototype, "timezone", void 0);
+class EmailSettingsDto {
+}
+exports.EmailSettingsDto = EmailSettingsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "emailHost", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "emailPort", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "emailUsername", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "emailPassword", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "emailFrom", void 0);
+class NotificationSettingsDto {
+}
+exports.NotificationSettingsDto = NotificationSettingsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], NotificationSettingsDto.prototype, "orderNotification", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], NotificationSettingsDto.prototype, "paymentNotification", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], NotificationSettingsDto.prototype, "reviewNotification", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], NotificationSettingsDto.prototype, "lowStockNotification", void 0);
+class SecuritySettingsDto {
+}
+exports.SecuritySettingsDto = SecuritySettingsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SecuritySettingsDto.prototype, "twoFactorAuth", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], SecuritySettingsDto.prototype, "sessionTimeout", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], SecuritySettingsDto.prototype, "passwordExpiry", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], SecuritySettingsDto.prototype, "maxLoginAttempts", void 0);
 class UpdateSettingsDto {
 }
 exports.UpdateSettingsDto = UpdateSettingsDto;
@@ -148,4 +301,39 @@ __decorate([
     (0, class_transformer_1.Type)(() => SiteSocialsDto),
     __metadata("design:type", SiteSocialsDto)
 ], UpdateSettingsDto.prototype, "socials", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => StoreSettingsDto),
+    __metadata("design:type", StoreSettingsDto)
+], UpdateSettingsDto.prototype, "store", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => BusinessSettingsDto),
+    __metadata("design:type", BusinessSettingsDto)
+], UpdateSettingsDto.prototype, "business", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => EmailSettingsDto),
+    __metadata("design:type", EmailSettingsDto)
+], UpdateSettingsDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => NotificationSettingsDto),
+    __metadata("design:type", NotificationSettingsDto)
+], UpdateSettingsDto.prototype, "notifications", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => SecuritySettingsDto),
+    __metadata("design:type", SecuritySettingsDto)
+], UpdateSettingsDto.prototype, "security", void 0);
 //# sourceMappingURL=settings-update.dto.js.map

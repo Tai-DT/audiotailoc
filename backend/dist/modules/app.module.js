@@ -32,6 +32,7 @@ const notifications_module_1 = require("./notifications/notifications.module");
 const backup_module_1 = require("./backup/backup.module");
 const marketing_module_1 = require("./marketing/marketing.module");
 const analytics_module_1 = require("./analytics/analytics.module");
+const reports_module_1 = require("./reports/reports.module");
 const files_module_1 = require("./files/files.module");
 const search_module_1 = require("./search/search.module");
 const maps_module_1 = require("./maps/maps.module");
@@ -45,6 +46,9 @@ const site_module_1 = require("./site/site.module");
 const projects_module_1 = require("./projects/projects.module");
 const seo_module_1 = require("./seo/seo.module");
 const blog_module_1 = require("./blog/blog.module");
+const reviews_module_1 = require("./reviews/reviews.module");
+const messages_module_1 = require("./messages/messages.module");
+const chat_module_1 = require("./chat/chat.module");
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
     config_1.ConfigModule.forRoot({ isGlobal: true }),
@@ -65,6 +69,7 @@ const runtimeImports = [
     marketing_module_1.MarketingModule,
     maps_module_1.MapsModule,
     analytics_module_1.AnalyticsModule,
+    reports_module_1.ReportsModule,
     search_module_1.SearchModule,
     realtime_module_1.RealtimeModule,
     ai_module_1.AiModule,
@@ -82,6 +87,9 @@ const runtimeImports = [
     seo_module_1.SeoModule,
     blog_module_1.BlogModule,
     projects_module_1.ProjectsModule,
+    reviews_module_1.ReviewsModule,
+    messages_module_1.MessagesModule,
+    chat_module_1.ChatModule,
 ];
 if (FEATURE_CHECKOUT) {
     runtimeImports.push(cart_module_1.CartModule, promotions_module_1.PromotionsModule, checkout_module_1.CheckoutModule);

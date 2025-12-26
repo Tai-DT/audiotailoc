@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { GoongMapAddressPicker } from '@/components/ui/goong-map-address-picker';
 import { Calendar, Clock, User, Phone, MapPin, Wrench, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface Booking {
   id: string;
@@ -71,6 +73,8 @@ interface BookingFormData {
   notes?: string;
   estimatedCosts?: number | null;
   actualCosts?: number | null;
+  address?: string;
+  addressCoordinates?: { lat: number; lng: number } | null;
 }
 
 const statusColors = {
@@ -87,6 +91,20 @@ const statusLabels = {
   IN_PROGRESS: 'Đang thực hiện',
   COMPLETED: 'Hoàn thành',
   CANCELLED: 'Đã hủy',
+};
+
+// Helper function to safely format date
+const formatDate = (dateValue: string | object | null | undefined): string => {
+  if (!dateValue) return 'N/A';
+  // Check if it's an empty object (API sometimes returns {} for dates)
+  if (typeof dateValue === 'object' && Object.keys(dateValue).length === 0) return 'N/A';
+  try {
+    const date = new Date(dateValue as string);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('vi-VN');
+  } catch {
+    return 'N/A';
+  }
 };
 
 export default function BookingsPage() {
@@ -120,28 +138,31 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/bookings');
       if (response.ok) {
         const data = await response.json();
-        // Handle different response formats from backend
-        if (Array.isArray(data)) {
-          // If backend returns array directly
+
+        // API route already transforms the response to consistent format:
+        // { bookings: [...], total, page, pageSize }
+        if (data && typeof data === 'object') {
           setBookingsData({
-            bookings: data,
-            total: data.length,
-            page: 1,
-            pageSize: 20,
-          });
-        } else if (data && typeof data === 'object') {
-          // If backend returns object with bookings property
-          setBookingsData({
-            bookings: data.bookings || [],
-            total: data.total || (data.bookings ? data.bookings.length : 0),
+            bookings: Array.isArray(data.bookings) ? data.bookings : [],
+            total: data.total || 0,
             page: data.page || 1,
             pageSize: data.pageSize || 20,
           });
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[Bookings] Fetched bookings:', {
+              count: data.bookings?.length || 0,
+              total: data.total,
+              page: data.page,
+              pageSize: data.pageSize,
+            });
+          }
         } else {
-          // Fallback for unexpected response
+          console.warn('[Bookings] Unexpected response format:', data);
           setBookingsData({
             bookings: [],
             total: 0,
@@ -150,7 +171,8 @@ export default function BookingsPage() {
           });
         }
       } else {
-        console.error('Failed to fetch bookings:', response.statusText);
+        const errorText = await response.text();
+        console.error('Failed to fetch bookings:', response.status, response.statusText, errorText);
         setBookingsData({
           bookings: [],
           total: 0,
@@ -173,127 +195,228 @@ export default function BookingsPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services');
+      const response = await fetch('/api/services?limit=100');
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data && data.data.services) {
-          setServices(data.data.services);
-        } else if (data.success && Array.isArray(data.data)) {
-          // Fallback for direct array response
-          setServices(data.data);
-        } else {
-          // Use mock services if API response is unexpected
-          setServices([
-            { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
-            { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
-            { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
-            { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
-          ]);
+        let servicesList: Service[] = [];
+
+        if (data.success && data.data) {
+          if (data.data.services && Array.isArray(data.data.services)) {
+            servicesList = data.data.services;
+          } else if (Array.isArray(data.data)) {
+            servicesList = data.data;
+          } else if (data.data.items && Array.isArray(data.data.items)) {
+            servicesList = data.data.items;
+          } else if (data.data.results && Array.isArray(data.data.results)) {
+            servicesList = data.data.results;
+          }
+        } else if (Array.isArray(data)) {
+          servicesList = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          servicesList = data.data;
+        } else if (data.items && Array.isArray(data.items)) {
+          servicesList = data.items;
+        } else if (data.results && Array.isArray(data.results)) {
+          servicesList = data.results;
+        }
+
+        const validServices = servicesList.filter((service: any) =>
+          service && service.id && service.name
+        ).map((service: any) => ({
+          id: service.id,
+          name: service.name,
+          slug: service.slug || ''
+        }));
+
+        setServices(validServices);
+
+        if (validServices.length === 0 && servicesList.length === 0 && data.success !== false) {
+          if (process.env.NODE_ENV === 'development') {
+            console.info('[Bookings] No services in database. This is normal if no services have been created yet.');
+          }
         }
       } else {
-        console.warn('Failed to fetch services:', response.statusText);
-        // Use mock services as fallback
-        setServices([
-          { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
-          { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
-          { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
-          { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
-        ]);
+        const errorText = await response.text();
+        console.error('Failed to fetch services:', response.status, errorText);
+        setServices([]);
       }
     } catch (error) {
-      console.warn('Error fetching services:', error instanceof Error ? error.message : 'Unknown error');
-      // Use mock services as fallback
-      setServices([
-        { id: 'service-1', name: 'Dịch Vụ Cho Thuê Thiết Bị Karaoke', slug: 'karaoke-rental' },
-        { id: 'service-2', name: 'Dịch Vụ Lắp Đặt Hệ Thống Karaoke', slug: 'karaoke-installation' },
-        { id: 'service-3', name: 'Dịch Vụ Sửa Chữa Âm Thanh', slug: 'audio-repair' },
-        { id: 'service-4', name: 'Dịch Vụ Thanh Lý Thiết Bị', slug: 'equipment-liquidation' }
-      ]);
+      console.error('Error fetching services:', error instanceof Error ? error.message : 'Unknown error');
+      setServices([]);
     }
   };
 
   const fetchTechnicians = async () => {
     try {
-      const response = await fetch('/api/technicians');
+      const response = await fetch('/api/technicians?pageSize=100');
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data && data.data.technicians) {
-          setTechnicians(data.data.technicians);
-        } else if (data.success && Array.isArray(data.data)) {
-          // Fallback for direct array response
-          setTechnicians(data.data);
-        } else {
-          // Use mock technicians if API response is unexpected
-          setTechnicians([
-            { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
-            { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
-            { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
-            { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
-          ]);
+        let techniciansList: Technician[] = [];
+
+        // Debug: Log the response structure
+        if (process.env.NODE_ENV === 'development') {
+          const dataKeys = data.data ? Object.keys(data.data) : [];
+          console.log('[Bookings] Technicians API response:', {
+            hasSuccess: !!data.success,
+            hasData: !!data.data,
+            dataType: typeof data.data,
+            isArray: Array.isArray(data.data),
+            dataKeys: dataKeys,
+            actualDataKeys: dataKeys.join(', '),
+            hasTechniciansAtRoot: !!data.technicians,
+            hasTechniciansInData: !!(data.data && data.data.technicians),
+            techniciansValue: data.data?.technicians,
+            techniciansType: typeof data.data?.technicians,
+            techniciansIsArray: Array.isArray(data.data?.technicians),
+            techniciansCount: Array.isArray(data.data?.technicians) ? data.data.technicians.length : 'N/A',
+            fullDataStructure: JSON.stringify(data, null, 2).substring(0, 500)
+          });
+        }
+
+        // Handle different response formats:
+        // Priority 1: { success: true, data: { technicians: [...] } } or { data: { technicians: [...] } }
+        if (data.data?.technicians && Array.isArray(data.data.technicians)) {
+          techniciansList = data.data.technicians;
+        }
+        // Priority 2: Direct format: { technicians: [...] }
+        else if (data.technicians && Array.isArray(data.technicians)) {
+          techniciansList = data.technicians;
+        }
+        // Priority 3: Wrapped format with array data
+        else if (data.success && data.data && Array.isArray(data.data)) {
+          techniciansList = data.data;
+        }
+        // Priority 4: Other nested formats
+        else if (data.data) {
+          if (data.data.items && Array.isArray(data.data.items)) {
+            techniciansList = data.data.items;
+          } else if (data.data.results && Array.isArray(data.data.results)) {
+            techniciansList = data.data.results;
+          }
+        } else if (Array.isArray(data)) {
+          // Direct array response
+          techniciansList = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          // Format: { data: [...] }
+          techniciansList = data.data;
+        } else if (data.items && Array.isArray(data.items)) {
+          techniciansList = data.items;
+        } else if (data.results && Array.isArray(data.results)) {
+          techniciansList = data.results;
+        }
+
+        const validTechnicians = techniciansList.filter((tech: any) =>
+          tech && tech.id && tech.name
+        ).map((tech: any) => ({
+          id: tech.id,
+          name: tech.name,
+          email: tech.email || ''
+        }));
+
+        setTechnicians(validTechnicians);
+
+        // Log warning only if we couldn't parse technicians from the response (parsing issue, not empty data)
+        if (validTechnicians.length === 0 && techniciansList.length === 0) {
+          // Check if we actually found a technicians array but it was empty (valid state)
+          const foundEmptyArray =
+            (data.success && data.data && data.data.technicians && Array.isArray(data.data.technicians) && data.data.technicians.length === 0) ||
+            (data.technicians && Array.isArray(data.technicians) && data.technicians.length === 0);
+
+          if (!foundEmptyArray && process.env.NODE_ENV === 'development') {
+            console.warn('[Bookings] No technicians found in API response - possible parsing issue', {
+              responseKeys: Object.keys(data),
+              hasTechnicians: !!data.technicians,
+              hasData: !!data.data,
+              hasSuccess: !!data.success,
+              dataDataKeys: data.data ? Object.keys(data.data) : [],
+              techniciansValue: data.data?.technicians,
+              techniciansType: typeof data.data?.technicians,
+              techniciansIsArray: Array.isArray(data.data?.technicians),
+              techniciansLength: Array.isArray(data.data?.technicians) ? data.data.technicians.length : 'N/A',
+              rawResponse: JSON.stringify(data).substring(0, 500)
+            });
+          } else if (foundEmptyArray && process.env.NODE_ENV === 'development') {
+            console.info('[Bookings] No technicians in database. This is normal if no technicians have been created yet.');
+          }
         }
       } else {
-        console.warn('Failed to fetch technicians:', response.statusText);
-        // Use mock technicians as fallback
-        setTechnicians([
-          { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
-          { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
-          { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
-          { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
-        ]);
+        const errorText = await response.text();
+        console.error('Failed to fetch technicians:', response.status, errorText);
+        setTechnicians([]);
       }
     } catch (error) {
-      console.warn('Error fetching technicians:', error instanceof Error ? error.message : 'Unknown error');
-      // Use mock technicians as fallback
-      setTechnicians([
-        { id: 'tech-1', name: 'Nguyễn Văn A', email: 'nguyenvana@audio-tailoc.com' },
-        { id: 'tech-2', name: 'Trần Thị B', email: 'tranthib@audio-tailoc.com' },
-        { id: 'tech-3', name: 'Lê Văn C', email: 'levanc@audio-tailoc.com' },
-        { id: 'tech-4', name: 'Phạm Thị D', email: 'phamthid@audio-tailoc.com' }
-      ]);
+      console.error('Error fetching technicians:', error instanceof Error ? error.message : 'Unknown error');
+      setTechnicians([]);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users?limit=100');
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data && data.data.length > 0) {
-          setUsers(data.data);
-        } else {
-          // Use mock users if API returns empty
-          setUsers([
-            { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
-            { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
-            { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
-            { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
-          ]);
+        // Handle different response formats from backend
+        let usersList: User[] = [];
+
+        if (data.success && data.data) {
+          // Format: { success: true, data: [...] }
+          if (Array.isArray(data.data)) {
+            usersList = data.data;
+          } else if (data.data.users && Array.isArray(data.data.users)) {
+            // Format: { success: true, data: { users: [...] } }
+            usersList = data.data.users;
+          } else if (data.data.data && Array.isArray(data.data.data)) {
+            // Nested format
+            usersList = data.data.data;
+          } else if (data.data.items && Array.isArray(data.data.items)) {
+            usersList = data.data.items;
+          } else if (data.data.results && Array.isArray(data.data.results)) {
+            usersList = data.data.results;
+          }
+        } else if (Array.isArray(data)) {
+          // Direct array response
+          usersList = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          // Format: { data: [...] }
+          usersList = data.data;
+        } else if (data.items && Array.isArray(data.items)) {
+          usersList = data.items;
+        } else if (data.results && Array.isArray(data.results)) {
+          usersList = data.results;
+        }
+
+        // Filter out admin users if needed, or include all users
+        const validUsers = usersList.filter((user: any) =>
+          user && user.id && user.name
+        ).map((user: any) => ({
+          id: user.id,
+          name: user.name || user.fullName || 'Unknown',
+          email: user.email || '',
+          phone: user.phone || user.phoneNumber || '',
+          address: user.address || ''
+        }));
+
+        setUsers(validUsers);
+
+        if (validUsers.length === 0 && usersList.length === 0 && data.success !== false) {
+          if (process.env.NODE_ENV === 'development') {
+            console.info('[Bookings] No users in database. This is normal if no users have been created yet.');
+          }
         }
       } else {
-        // Use mock users if API fails
-        setUsers([
-          { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
-          { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
-          { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
-          { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
-        ]);
+        const errorText = await response.text();
+        console.error('Failed to fetch users:', response.status, errorText);
+        setUsers([]);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Use mock users as fallback
-      setUsers([
-        { id: 'mock-1', name: 'Nguyễn Văn A', email: 'nguyenvana@example.com', phone: '0901234567' },
-        { id: 'mock-2', name: 'Trần Thị B', email: 'tranthib@example.com', phone: '0909876543' },
-        { id: 'mock-3', name: 'Lê Văn C', email: 'levanc@example.com', phone: '0912345678' },
-        { id: 'admin-user', name: 'Administrator', email: 'admin@audiotailoc.com', phone: undefined }
-      ]);
+      setUsers([]);
     }
   };
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {
-      const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010').replace(/\/$/, '');
-      const response = await fetch(`${BACKEND_URL}/api/v1/bookings/${bookingId}/status`, {
+      const response = await fetch(`/api/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -302,13 +425,24 @@ export default function BookingsPage() {
       });
 
       if (response.ok) {
+        const statusLabel = statusLabels[newStatus as keyof typeof statusLabels] || newStatus;
+        toast.success(`Đã cập nhật trạng thái thành: ${statusLabel}`);
         fetchBookings(); // Refresh the list
       } else {
         const errorText = await response.text();
+        let errorMessage = 'Không thể cập nhật trạng thái đặt lịch. Vui lòng thử lại.';
+        try {
+          const errorData = errorText ? JSON.parse(errorText) : {};
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // Keep default error message
+        }
         console.error('Failed to update booking status:', response.status, errorText);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
+      toast.error('Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.');
     }
   };
 
@@ -326,12 +460,22 @@ export default function BookingsPage() {
         fetchBookings();
         setIsEditDialogOpen(false);
         setEditingBooking(null);
+        toast.success('Cập nhật đặt lịch thành công!');
       } else {
         const errorText = await response.text();
+        let errorMessage = 'Không thể cập nhật đặt lịch. Vui lòng thử lại.';
+        try {
+          const errorData = errorText ? JSON.parse(errorText) : {};
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // Keep default error message
+        }
         console.error('Failed to update booking:', response.status, errorText);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error updating booking:', error);
+      toast.error('Đã xảy ra lỗi khi cập nhật đặt lịch. Vui lòng thử lại.');
     }
   };
 
@@ -345,12 +489,22 @@ export default function BookingsPage() {
 
       if (response.ok) {
         fetchBookings();
+        toast.success('Xóa đặt lịch thành công!');
       } else {
         const errorText = await response.text();
+        let errorMessage = 'Không thể xóa đặt lịch. Vui lòng thử lại.';
+        try {
+          const errorData = errorText ? JSON.parse(errorText) : {};
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // Keep default error message
+        }
         console.error('Failed to delete booking:', response.status, errorText);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting booking:', error);
+      toast.error('Đã xảy ra lỗi khi xóa đặt lịch. Vui lòng thử lại.');
     }
   };
 
@@ -367,12 +521,22 @@ export default function BookingsPage() {
       if (response.ok) {
         fetchBookings();
         setIsCreateDialogOpen(false);
+        toast.success('Tạo đặt lịch thành công!');
       } else {
         const errorText = await response.text();
+        let errorMessage = 'Không thể tạo đặt lịch. Vui lòng thử lại.';
+        try {
+          const errorData = errorText ? JSON.parse(errorText) : {};
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // Keep default error message
+        }
         console.error('Failed to create booking:', response.status, errorText);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error creating booking:', error);
+      toast.error('Đã xảy ra lỗi khi tạo đặt lịch. Vui lòng thử lại.');
     }
   };
 
@@ -404,7 +568,7 @@ export default function BookingsPage() {
         <div className="flex gap-4">
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm đặt lịch
               </Button>
@@ -412,6 +576,9 @@ export default function BookingsPage() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Thêm đặt lịch mới</DialogTitle>
+                <DialogDescription>
+                  Điền thông tin để tạo đặt lịch mới cho khách hàng.
+                </DialogDescription>
               </DialogHeader>
               <BookingForm
                 services={services}
@@ -427,6 +594,9 @@ export default function BookingsPage() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Chỉnh sửa đặt lịch</DialogTitle>
+                <DialogDescription>
+                  Cập nhật thông tin đặt lịch cho khách hàng.
+                </DialogDescription>
               </DialogHeader>
               {editingBooking && (
                 <BookingForm
@@ -477,114 +647,122 @@ export default function BookingsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{booking.user.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="h-3 w-3" />
-                        {booking.user.phone || 'N/A'}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-3 w-3" />
-                        {booking.user.address || 'N/A'}
-                      </div>
-                    </div>
+              {filteredBookings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Không có đặt lịch nào
                   </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4" />
-                        {booking.service?.name || 'N/A'}
+                </TableRow>
+              ) : (
+                filteredBookings.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span className="font-medium">{booking.user?.name || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone className="h-3 w-3" />
+                          {booking.user?.phone || 'N/A'}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="h-3 w-3" />
+                          {booking.user?.address || 'N/A'}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {booking.service?.serviceType?.name || 'Dịch vụ'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4" />
+                          {booking.service?.name || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {booking.service?.serviceType?.name || 'Dịch vụ'}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {new Date(booking.scheduledAt).toLocaleDateString('vi-VN')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(booking.scheduledAt)}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="h-3 w-3" />
+                          {booking.scheduledTime || 'N/A'}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="h-3 w-3" />
-                        {booking.scheduledTime}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{booking.technician?.name || 'Chưa phân công'}</TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[booking.status]}>
-                      {statusLabels[booking.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => viewBookingDetail(booking)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openEditDialog(booking)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => deleteBooking(booking.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      {booking.status === 'PENDING' && (
+                    </TableCell>
+                    <TableCell>{booking.technician?.name || 'Chưa phân công'}</TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[booking.status]}>
+                        {statusLabels[booking.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => updateBookingStatus(booking.id, 'CONFIRMED')}
+                          variant="outline"
+                          onClick={() => viewBookingDetail(booking)}
                         >
-                          Xác nhận
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                      {booking.status === 'CONFIRMED' && (
                         <Button
                           size="sm"
-                          onClick={() => updateBookingStatus(booking.id, 'IN_PROGRESS')}
+                          variant="outline"
+                          onClick={() => openEditDialog(booking)}
                         >
-                          Bắt đầu
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
-                      {booking.status === 'IN_PROGRESS' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => updateBookingStatus(booking.id, 'COMPLETED')}
-                        >
-                          Hoàn thành
-                        </Button>
-                      )}
-                      {booking.status !== 'COMPLETED' && booking.status !== 'CANCELLED' && (
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => updateBookingStatus(booking.id, 'CANCELLED')}
+                          onClick={() => deleteBooking(booking.id)}
                         >
-                          Hủy
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        {booking.status === 'PENDING' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateBookingStatus(booking.id, 'CONFIRMED')}
+                          >
+                            Xác nhận
+                          </Button>
+                        )}
+                        {booking.status === 'CONFIRMED' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateBookingStatus(booking.id, 'IN_PROGRESS')}
+                          >
+                            Bắt đầu
+                          </Button>
+                        )}
+                        {booking.status === 'IN_PROGRESS' && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => updateBookingStatus(booking.id, 'COMPLETED')}
+                          >
+                            Hoàn thành
+                          </Button>
+                        )}
+                        {booking.status !== 'COMPLETED' && booking.status !== 'CANCELLED' && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updateBookingStatus(booking.id, 'CANCELLED')}
+                          >
+                            Hủy
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -608,25 +786,75 @@ function BookingForm({
   onSubmit: (data: BookingFormData) => void;
   onCancel: () => void;
 }) {
+  // Safe date parsing helper
+  const parseScheduledAt = (dateStr: string | undefined): string => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
   const [formData, setFormData] = useState({
     userId: booking?.user?.id || '',
     serviceId: booking?.service?.id || '',
     technicianId: booking?.technician?.id || 'unassigned',
-    scheduledAt: booking ? new Date(booking.scheduledAt).toISOString().split('T')[0] : '',
+    scheduledAt: parseScheduledAt(booking?.scheduledAt),
     scheduledTime: booking?.scheduledTime || '',
     status: (booking?.status || 'PENDING') as 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED',
     notes: booking?.notes || '',
     estimatedCosts: booking?.estimatedCosts?.toString() || '',
     actualCosts: booking?.actualCosts?.toString() || '',
+    address: booking?.user?.address || '',
+    addressCoordinates: null as { lat: number; lng: number } | null,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (!formData.userId) {
+      toast.error('Vui lòng chọn khách hàng');
+      return;
+    }
+
+    if (!formData.serviceId) {
+      toast.error('Vui lòng chọn dịch vụ');
+      return;
+    }
+
+    if (!formData.scheduledAt) {
+      toast.error('Vui lòng chọn ngày thực hiện');
+      return;
+    }
+
+    if (!formData.scheduledTime) {
+      toast.error('Vui lòng chọn giờ thực hiện');
+      return;
+    }
+
+    // Format scheduledAt to ISO string if date is provided
+    let scheduledAtISO = formData.scheduledAt;
+    if (formData.scheduledAt) {
+      const date = new Date(formData.scheduledAt);
+      if (isNaN(date.getTime())) {
+        toast.error('Ngày thực hiện không hợp lệ');
+        return;
+      }
+      scheduledAtISO = date.toISOString();
+    }
+
     onSubmit({
       ...formData,
+      scheduledAt: scheduledAtISO,
       technicianId: formData.technicianId === 'unassigned' ? null : formData.technicianId,
       estimatedCosts: formData.estimatedCosts ? parseInt(formData.estimatedCosts as string) : null,
       actualCosts: formData.actualCosts ? parseInt(formData.actualCosts as string) : null,
+      address: formData.address,
+      addressCoordinates: formData.addressCoordinates,
     });
   };
 
@@ -635,39 +863,61 @@ function BookingForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="userId">Khách hàng</Label>
-          <Select value={formData.userId} onValueChange={(value) => setFormData({...formData, userId: value})}>
+          <Select value={formData.userId} onValueChange={(value) => setFormData({ ...formData, userId: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Chọn khách hàng" />
             </SelectTrigger>
             <SelectContent>
-              {(users || []).map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.name} ({user.email})
+              {users && users.length > 0 ? (
+                users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} {user.email ? `(${user.email})` : ''}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="" disabled>
+                  Không có khách hàng nào
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
+          {users && users.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Vui lòng tạo khách hàng trước khi đặt lịch
+            </p>
+          )}
         </div>
 
         <div>
           <Label htmlFor="serviceId">Dịch vụ</Label>
-          <Select value={formData.serviceId} onValueChange={(value) => setFormData({...formData, serviceId: value})}>
+          <Select value={formData.serviceId} onValueChange={(value) => setFormData({ ...formData, serviceId: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Chọn dịch vụ" />
             </SelectTrigger>
             <SelectContent>
-              {(services || []).map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  {service.name}
+              {services && services.length > 0 ? (
+                services.map((service) => (
+                  <SelectItem key={service.id} value={service.id}>
+                    {service.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="" disabled>
+                  Không có dịch vụ nào
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
+          {services && services.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Vui lòng tạo dịch vụ trước khi đặt lịch
+            </p>
+          )}
         </div>
 
         <div>
           <Label htmlFor="technicianId">Kỹ thuật viên</Label>
-          <Select value={formData.technicianId} onValueChange={(value) => setFormData({...formData, technicianId: value})}>
+          <Select value={formData.technicianId} onValueChange={(value) => setFormData({ ...formData, technicianId: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Chọn kỹ thuật viên" />
             </SelectTrigger>
@@ -684,7 +934,7 @@ function BookingForm({
 
         <div>
           <Label htmlFor="status">Trạng thái</Label>
-          <Select value={formData.status} onValueChange={(value: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => setFormData({...formData, status: value})}>
+          <Select value={formData.status} onValueChange={(value: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => setFormData({ ...formData, status: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -704,7 +954,7 @@ function BookingForm({
             id="scheduledAt"
             type="date"
             value={formData.scheduledAt}
-            onChange={(e) => setFormData({...formData, scheduledAt: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
             required
           />
         </div>
@@ -715,7 +965,7 @@ function BookingForm({
             id="scheduledTime"
             type="time"
             value={formData.scheduledTime}
-            onChange={(e) => setFormData({...formData, scheduledTime: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
             required
           />
         </div>
@@ -726,7 +976,7 @@ function BookingForm({
             id="estimatedCosts"
             type="number"
             value={formData.estimatedCosts}
-            onChange={(e) => setFormData({...formData, estimatedCosts: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, estimatedCosts: e.target.value })}
             placeholder="0"
           />
         </div>
@@ -737,8 +987,18 @@ function BookingForm({
             id="actualCosts"
             type="number"
             value={formData.actualCosts}
-            onChange={(e) => setFormData({...formData, actualCosts: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, actualCosts: e.target.value })}
             placeholder="0"
+          />
+        </div>
+
+        <div className="col-span-2">
+          <Label htmlFor="address">Địa chỉ thực hiện dịch vụ</Label>
+          <GoongMapAddressPicker
+            value={formData.address}
+            onChange={(address, coordinates) => setFormData({ ...formData, address: address || '', addressCoordinates: coordinates || null })}
+            placeholder="Nhập địa chỉ thực hiện dịch vụ (số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố)"
+            className="focus-visible:ring-primary/50"
           />
         </div>
       </div>
@@ -748,7 +1008,7 @@ function BookingForm({
         <Textarea
           id="notes"
           value={formData.notes}
-          onChange={(e) => setFormData({...formData, notes: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           placeholder="Nhập ghi chú..."
           rows={3}
         />

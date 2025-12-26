@@ -1,487 +1,705 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth, useUpdateProfile } from '@/lib/hooks/use-auth';
-import { useOrders } from '@/lib/hooks/use-api';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import {
+  useAuth,
+  useUpdateProfile,
+  useChangePassword,
+  useExportUserData,
+  useDeleteAccount,
+  useUserBookings,
+  useUserPayments,
+  useUploadAvatar
+} from '@/lib/hooks/use-auth';
 import { useWishlist } from '@/lib/hooks/use-wishlist';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import Link from 'next/link';
 import {
-  User,
-  Mail,
   Phone,
   MapPin,
   Calendar,
   Edit,
   Save,
-  X,
   Camera,
-  Shield,
   ShoppingBag,
   Heart,
-  Settings
+  Lock,
+  Download,
+  Trash2,
+  Package,
+  CreditCard,
+  Bell,
+  CheckCircle2,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 function ProfilePageContent() {
-  const { data: user } = useAuth();
-  const updateProfileMutation = useUpdateProfile();
-  const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useOrders();
-  const { data: wishlistData, isLoading: wishlistLoading } = useWishlist();
+  const { data: user, isLoading: userLoading } = useAuth();
+  const updateProfile = useUpdateProfile();
+  const changePassword = useChangePassword();
+  const exportData = useExportUserData();
+  const deleteAccount = useDeleteAccount();
+  const uploadAvatar = useUploadAvatar();
+
+  const { data: wishlistData } = useWishlist();
+  const { data: bookings } = useUserBookings();
+  const { data: payments } = useUserPayments();
+
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
-    fullName: '',
-    email: '',
+    name: '',
     phone: '',
     address: '',
     dateOfBirth: '',
-    gender: ''
+    gender: '',
+    emailNotifications: true,
+    smsNotifications: false,
+    promoNotifications: true
   });
 
-  const orders = ordersData?.items || [];
+  const [passwordForm, setPasswordForm] = React.useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = React.useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
+
   const wishlist = wishlistData?.items || [];
 
-  // Initialize form data when user data is available
+  // Initialize form data
   React.useEffect(() => {
     if (user) {
+      // Cast user to include optional notification fields that may come from API
+      const userData = user as typeof user & {
+        emailNotifications?: boolean;
+        smsNotifications?: boolean;
+        promoNotifications?: boolean;
+      };
       setFormData({
-        fullName: user.name || user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: '', // TODO: Add address field to user model
-        dateOfBirth: '', // TODO: Add dateOfBirth field to user model
-        gender: '' // TODO: Add gender field to user model
+        name: userData.name || '',
+        phone: userData.phone || '',
+        address: userData.address || '',
+        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: userData.gender || '',
+        emailNotifications: userData.emailNotifications ?? true,
+        smsNotifications: userData.smsNotifications ?? false,
+        promoNotifications: userData.promoNotifications ?? true
       });
     }
   }, [user]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSaveProfile = async () => {
     try {
-      await updateProfileMutation.mutateAsync({
-        name: formData.fullName,
-        phone: formData.phone
-      });
+      await updateProfile.mutateAsync(formData);
       setIsEditing(false);
-    } catch {
-      // Error handling is managed inside the mutation
+    } catch (_error) {
+      // Error handled by mutation
     }
   };
 
-  const handleCancelEdit = () => {
-    if (user) {
-      setFormData({
-        fullName: user.name || user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: '',
-        dateOfBirth: '',
-        gender: ''
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadAvatar.mutateAsync(file);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Mật khẩu xác nhận không khớp');
+      return;
+    }
+    try {
+      await changePassword.mutateAsync({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
       });
-    }
-    setIsEditing(false);
+      setIsPasswordDialogOpen(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (_error) { }
   };
 
-  if (!user) {
-    return null;
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount.mutateAsync(deleteConfirmPassword);
+      setIsDeleteDialogOpen(false);
+    } catch (_error) { }
+  };
+
+  if (userLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Clock className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   const displayName = user.name || user.email || 'Khách hàng';
   const avatarFallback = (displayName.charAt(0) || '?').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background/50 pb-20">
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-                <div className="relative">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={user.avatar || undefined} alt={displayName} />
-                    <AvatarFallback className="text-2xl">
-                      {avatarFallback}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start space-x-3 mb-2">
-                    <h1 className="text-2xl font-bold">{displayName}</h1>
-                    <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
-                      {user.role === 'ADMIN' ? 'Quản trị viên' : 'Khách hàng'}
-                    </Badge>
+          <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-background border p-8">
+            <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start md:space-x-8">
+              <div className="relative group cursor-pointer mb-6 md:mb-0">
+                <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
+                  <AvatarImage src={user.avatarUrl || user.avatar} alt={displayName} />
+                  <AvatarFallback className="text-4xl bg-primary text-primary-foreground font-bold">
+                    {avatarFallback}
+                  </AvatarFallback>
+                </Avatar>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="w-8 h-8 text-white" />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                </label>
+                {uploadAvatar.isPending && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                    <Clock className="w-8 h-8 animate-spin text-white" />
                   </div>
-                  <p className="text-muted-foreground mb-4">{user.email}</p>
+                )}
+              </div>
 
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>Tham gia {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
+              <div className="flex-1 text-center md:text-left space-y-2">
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                  <h1 className="text-3xl font-bold tracking-tight">{displayName}</h1>
+                  <Badge variant="outline" className="w-fit mx-auto md:mx-0 bg-background/50">
+                    {user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground font-medium">{user.email}</p>
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm pt-4">
+                  <div className="flex items-center text-muted-foreground">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Tham gia: {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
+                  {user.phone && (
+                    <div className="flex items-center text-muted-foreground">
+                      <Phone className="w-4 h-4 mr-2" />
+                      {user.phone}
                     </div>
-                    {user.role === 'ADMIN' && (
-                      <div className="flex items-center space-x-1">
-                        <Shield className="w-4 h-4" />
-                        <span>Quyền quản trị</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Chỉnh sửa
-                    </Button>
-                  ) : (
-                    <>
-                      <Button onClick={handleSaveProfile}>
-                        <Save className="w-4 h-4 mr-2" />
-                        Lưu
-                      </Button>
-                      <Button variant="outline" onClick={handleCancelEdit}>
-                        <X className="w-4 h-4 mr-2" />
-                        Hủy
-                      </Button>
-                    </>
+                  )}
+                  {user.address && (
+                    <div className="flex items-center text-muted-foreground">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {user.address}
+                    </div>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Profile Content */}
-          <div className="w-full space-y-6">
-            <Tabs defaultValue="info" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-auto p-1">
-                <TabsTrigger value="info" className="w-full">Thông tin</TabsTrigger>
-                <TabsTrigger value="orders" className="w-full">Đơn hàng</TabsTrigger>
-                <TabsTrigger value="wishlist" className="w-full">Yêu thích</TabsTrigger>
-                <TabsTrigger value="settings" className="w-full">Cài đặt</TabsTrigger>
-              </TabsList>
+              <div className="mt-8 md:mt-0">
+                {!isEditing ? (
+                  <Button size="lg" onClick={() => setIsEditing(true)} className="rounded-full shadow-lg">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Chỉnh sửa hồ sơ
+                  </Button>
+                ) : (
+                  <div className="flex gap-3">
+                    <Button size="lg" onClick={handleSaveProfile} disabled={updateProfile.isPending} className="rounded-full shadow-lg">
+                      <Save className="w-4 h-4 mr-2" />
+                      {updateProfile.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                    </Button>
+                    <Button size="lg" variant="outline" onClick={() => setIsEditing(false)} className="rounded-full">
+                      Hủy
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
-            {/* Personal Information */}
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="bg-background/50 border backdrop-blur p-1 h-14 rounded-xl flex w-full md:w-fit overflow-x-auto no-scrollbar">
+              <TabsTrigger value="overview" className="rounded-lg px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Tổng quan
+              </TabsTrigger>
+              <TabsTrigger value="info" className="rounded-lg px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Hồ sơ chi tiết
+              </TabsTrigger>
+              <TabsTrigger value="history" className="rounded-lg px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Lịch sử & Đơn hàng
+              </TabsTrigger>
+              <TabsTrigger value="security" className="rounded-lg px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Bảo mật & Cài đặt
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Chào mừng trở lại, {displayName}!</CardTitle>
+                    <CardDescription>Cập nhật những hoạt động gần đây của bạn.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
+                      <Package className="w-8 h-8 text-orange-600 mb-2" />
+                      <div className="text-2xl font-bold">{bookings?.length || 0}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Đơn dịch vụ</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50">
+                      <ShoppingBag className="w-8 h-8 text-blue-600 mb-2" />
+                      <div className="text-2xl font-bold">0</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Đơn hàng</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50">
+                      <Heart className="w-8 h-8 text-red-600 mb-2" />
+                      <div className="text-2xl font-bold">{wishlist.length}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Yêu thích</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/50">
+                      <CreditCard className="w-8 h-8 text-green-600 mb-2" />
+                      <div className="text-2xl font-bold">{payments?.length || 0}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Thanh toán</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Hoàn thành hồ sơ</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-500"
+                        style={{ width: `${(Object.values(formData).filter(Boolean).length / Object.values(formData).length) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Hãy cập nhật đầy đủ thông tin để chúng tôi phục vụ bạn tốt hơn!
+                    </p>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        {user.name ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <AlertCircle className="w-4 h-4 text-muted-foreground" />}
+                        Họ và tên
+                      </li>
+                      <li className="flex items-center gap-2">
+                        {user.phone ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <AlertCircle className="w-4 h-4 text-muted-foreground" />}
+                        Số điện thoại
+                      </li>
+                      <li className="flex items-center gap-2">
+                        {user.avatarUrl || user.avatar ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <AlertCircle className="w-4 h-4 text-muted-foreground" />}
+                        Ảnh đại diện
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Wishlist Overview */}
+                <Card className="md:col-span-3">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Sản phẩm yêu thích</CardTitle>
+                    <Button variant="ghost" asChild>
+                      <Link href="/wishlist">Xem tất cả</Link>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {wishlist.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground italic">
+                        Bạn chưa có sản phẩm yêu thích nào.
+                      </div>
+                    ) : (
+                      <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+                        {wishlist.slice(0, 5).map((item: { id: string; product?: { imageUrl?: string; name?: string; priceCents?: number } }) => (
+                          <div key={item.id} className="min-w-[200px] border rounded-xl p-3 bg-muted/30">
+                            <div className="aspect-square relative rounded-lg overflow-hidden mb-2 bg-white">
+                              <Image
+                                src={item.product?.imageUrl || '/images/placeholder-product.png'}
+                                alt={item.product?.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                            <h5 className="font-semibold line-clamp-1">{item.product?.name}</h5>
+                            <p className="text-primary font-bold">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.product?.priceCents / 100)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
             <TabsContent value="info">
               <Card>
                 <CardHeader>
-                  <CardTitle>Thông tin cá nhân</CardTitle>
+                  <CardTitle>Thông tin chi tiết</CardTitle>
+                  <CardDescription>Các thông tin này được sử dụng cho việc đặt hàng và hỗ trợ khách hàng.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Họ và tên</Label>
-                      {isEditing ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Họ và tên</Label>
                         <Input
-                          id="fullName"
-                          value={formData.fullName}
-                          onChange={(e) => handleInputChange('fullName', e.target.value)}
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          disabled={!isEditing}
+                          placeholder="Nhập họ và tên"
+                          className="h-12"
                         />
-                      ) : (
-                        <div className="flex items-center space-x-2 p-2 border rounded">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span>{user.name}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="flex items-center space-x-2 p-2 border rounded bg-muted">
-                        <Mail className="w-4 h-4 text-muted-foreground" />
-                        <span>{user.email}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Email không thể thay đổi
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Số điện thoại</Label>
-                      {isEditing ? (
+                      <div className="space-y-2">
+                        <Label>Số điện thoại</Label>
                         <Input
-                          id="phone"
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
+                          disabled={!isEditing}
+                          placeholder="Nhập số điện thoại"
+                          className="h-12"
                         />
-                      ) : (
-                        <div className="flex items-center space-x-2 p-2 border rounded">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                          <span>{user.phone || 'Chưa cập nhật'}</span>
-                        </div>
-                      )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email (Bắt buộc)</Label>
+                        <Input value={user.email} disabled className="h-12 bg-muted/50" />
+                        <p className="text-xs text-muted-foreground italic pl-1">Bạn không thể thay đổi địa chỉ email chính.</p>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Địa chỉ</Label>
-                      {isEditing ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Giới tính</Label>
+                        <select
+                          className="w-full h-12 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+                          value={formData.gender}
+                          onChange={(e) => handleInputChange('gender', e.target.value)}
+                          disabled={!isEditing}
+                        >
+                          <option value="">Chọn giới tính</option>
+                          <option value="MALE">Nam</option>
+                          <option value="FEMALE">Nữ</option>
+                          <option value="OTHER">Khác</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Ngày sinh</Label>
                         <Input
-                          id="address"
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                          disabled={!isEditing}
+                          className="h-12"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Địa chỉ</Label>
+                        <Input
                           value={formData.address}
                           onChange={(e) => handleInputChange('address', e.target.value)}
-                          placeholder="Nhập địa chỉ của bạn"
+                          disabled={!isEditing}
+                          placeholder="Địa chỉ giao hàng mặc định"
+                          className="h-12"
                         />
-                      ) : (
-                        <div className="flex items-center space-x-2 p-2 border rounded">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span>{formData.address || 'Chưa cập nhật'}</span>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Orders */}
-            <TabsContent value="orders">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Lịch sử đơn hàng</CardTitle>
-                    {orders.length > 0 && (
-                      <Button variant="outline" asChild>
-                        <Link href="/orders">Xem tất cả</Link>
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {ordersLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">Đang tải đơn hàng...</p>
-                    </div>
-                  ) : ordersError ? (
-                    <div className="text-center py-8">
-                      <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2 text-yellow-600">
-                        {(ordersError as any)?.response?.status === 403 
-                          ? 'Không có quyền truy cập' 
-                          : 'Không thể tải đơn hàng'}
-                      </h3>
-                      <p className="text-muted-foreground mb-4">
-                        {(ordersError as any)?.response?.status === 403
-                          ? 'Bạn không có quyền truy cập vào danh sách đơn hàng.'
-                          : 'Đã xảy ra lỗi khi tải danh sách đơn hàng. Vui lòng thử lại sau.'}
-                      </p>
-                    </div>
-                  ) : orders.length === 0 ? (
-                    <div className="text-center py-8">
-                      <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Chưa có đơn hàng nào</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Bạn chưa đặt đơn hàng nào. Hãy khám phá sản phẩm của chúng tôi!
-                      </p>
-                      <Button asChild>
-                        <Link href="/products">Khám phá sản phẩm</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {orders.slice(0, 5).map((order: any) => {
-                        const orderId = order?.id || '';
-                        const orderNo = order?.orderNo || (orderId ? orderId.slice(0, 8) : 'N/A');
-                        const createdAt = order?.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'N/A';
-                        const totalCents = order?.totalCents || 0;
-                        
-                        return (
-                          <div key={orderId} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                              <p className="font-semibold">Đơn hàng #{orderNo}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {createdAt}
-                              </p>
-                              <p className="text-sm font-medium text-green-600 mt-1">
-                                {new Intl.NumberFormat('vi-VN', {
-                                  style: 'currency',
-                                  currency: 'VND'
-                                }).format(totalCents / 100)}
-                              </p>
+            <TabsContent value="history">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lịch sử đặt lịch kỹ thuật</CardTitle>
+                    <CardDescription>Danh sách các dịch vụ lắp đặt và sửa chữa bạn đã đặt.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {bookings && bookings.length > 0 ? (
+                      <div className="space-y-4">
+                        {bookings.map((booking: { id: string; status: string; createdAt: string; service?: { name?: string } }) => (
+                          <div key={booking.id} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <Clock className="w-6 h-6 text-primary" />
+                              </div>
+                              <div>
+                                <h5 className="font-semibold">{booking.service?.name || 'Dịch vụ kỹ thuật'}</h5>
+                                <p className="text-sm text-muted-foreground">
+                                  Ngày đặt: {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
+                                </p>
+                              </div>
                             </div>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/orders/${orderId}`}>Xem chi tiết</Link>
+                            <Badge variant={booking.status === 'COMPLETED' ? 'default' : 'secondary'}>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h4 className="font-bold">Chưa có bản ghi nào</h4>
+                        <p className="text-muted-foreground">Bạn chưa thực hiện bất kỳ giao dịch nào.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lịch sử thanh toán</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {payments && payments.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b text-left text-sm font-medium text-muted-foreground">
+                              <th className="pb-3 px-2">Ngày</th>
+                              <th className="pb-3 px-2">Mã GD</th>
+                              <th className="pb-3 px-2">Số tiền</th>
+                              <th className="pb-3 px-2">Trạng thái</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {payments.map((payment: { id: string; amountCents: number; status: string; createdAt: string; transactionId?: string }) => (
+                              <tr key={payment.id} className="border-b last:border-0 hover:bg-muted/20 text-sm">
+                                <td className="py-4 px-2">{new Date(payment.createdAt).toLocaleDateString('vi-VN')}</td>
+                                <td className="py-4 px-2 font-mono">{payment.transactionId || payment.id.slice(0, 8)}</td>
+                                <td className="py-4 px-2 font-bold text-primary">
+                                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payment.amountCents / 100)}
+                                </td>
+                                <td className="py-4 px-2">
+                                  <Badge className={payment.status === 'SUCCEEDED' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500'}>
+                                    {payment.status === 'SUCCEEDED' ? 'Thành công' : 'Thất bại'}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground italic">
+                        Không tìm thấy dữ liệu thanh toán.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="security">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Security Content */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Bảo mật tài khoản
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 border rounded-xl flex items-center justify-between">
+                      <div>
+                        <h5 className="font-semibold">Mật khẩu đăng nhập</h5>
+                        <p className="text-sm text-muted-foreground">Thay đổi mật khẩu thường xuyên để bảo vệ tài khoản.</p>
+                      </div>
+                      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">Đổi mật khẩu</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Thay đổi mật khẩu</DialogTitle>
+                            <DialogDescription>Nhập mật khẩu hiện tại và mật khẩu mới của bạn.</DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="current">Mật khẩu hiện tại</Label>
+                              <Input
+                                id="current"
+                                type="password"
+                                value={passwordForm.currentPassword}
+                                onChange={(e) => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="new">Mật khẩu mới</Label>
+                              <Input
+                                id="new"
+                                type="password"
+                                value={passwordForm.newPassword}
+                                onChange={(e) => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="confirm">Xác nhận mật khẩu mới</Label>
+                              <Input
+                                id="confirm"
+                                type="password"
+                                value={passwordForm.confirmPassword}
+                                onChange={(e) => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Hủy</Button>
+                            <Button onClick={handleChangePassword} disabled={changePassword.isPending}>
+                              {changePassword.isPending ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
                             </Button>
-                          </div>
-                        );
-                      })}
-                      {orders.length > 5 && (
-                        <div className="text-center pt-4">
-                          <Button variant="outline" asChild>
-                            <Link href="/orders">Xem tất cả {orders.length} đơn hàng</Link>
-                          </Button>
-                        </div>
-                      )}
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            {/* Wishlist */}
-            <TabsContent value="wishlist">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Danh sách yêu thích</CardTitle>
-                    {wishlist.length > 0 && (
-                      <Button variant="outline" asChild>
-                        <Link href="/wishlist">Xem tất cả</Link>
+                    <div className="p-4 border rounded-xl flex items-center justify-between">
+                      <div>
+                        <h5 className="font-semibold">Dữ liệu cá nhân (GDPR)</h5>
+                        <p className="text-sm text-muted-foreground">Xuất tất cả dữ liệu tài khoản của bạn ra tệp JSON.</p>
+                      </div>
+                      <Button variant="outline" onClick={() => exportData.mutate()} disabled={exportData.isPending}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Xuất dữ liệu
                       </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {wishlistLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">Đang tải danh sách yêu thích...</p>
                     </div>
-                  ) : wishlist.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Danh sách trống</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.
+
+                    <Separator className="my-2" />
+
+                    <div className="pt-4">
+                      <h5 className="font-semibold text-destructive mb-2">Vùng nguy hiểm</h5>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Khi bạn xóa tài khoản, toàn bộ dữ liệu sẽ bị gỡ vĩnh viễn và không thể khôi phục.
                       </p>
-                      <Button asChild>
-                        <Link href="/products">Khám phá sản phẩm</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {wishlist.slice(0, 5).map((item: any) => {
-                        const product = item?.product;
-                        const productSlug = product?.slug;
-                        const productName = product?.name || 'Sản phẩm';
-                        const productImageUrl = product?.imageUrl;
-                        const productPriceCents = product?.priceCents || 0;
-                        
-                        return (
-                          <div key={item?.id || Math.random()} className="flex items-center space-x-4 p-4 border rounded-lg">
-                            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-                              {productImageUrl ? (
-                                <img
-                                  src={productImageUrl}
-                                  alt={productName}
-                                  className="w-full h-full object-cover rounded-lg"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <Heart className="w-8 h-8 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-semibold">{productName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Intl.NumberFormat('vi-VN', {
-                                  style: 'currency',
-                                  currency: 'VND'
-                                }).format(productPriceCents / 100)}
-                              </p>
-                            </div>
-                            {productSlug && (
-                              <Button variant="outline" size="sm" asChild>
-                                <Link href={`/products/${productSlug}`}>Xem</Link>
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {wishlist.length > 5 && (
-                        <div className="text-center pt-4">
-                          <Button variant="outline" asChild>
-                            <Link href="/wishlist">Xem tất cả {wishlist.length} sản phẩm</Link>
+                      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="destructive" className="w-full">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Xóa tài khoản của tôi
                           </Button>
-                        </div>
-                      )}
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle className="text-destructive">Xác nhận xóa tài khoản</DialogTitle>
+                            <DialogDescription>
+                              Hành động này không thể hoàn tác. Vui lòng nhập mật khẩu để xác nhận.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Label htmlFor="confirm-pass">Mật khẩu xác nhận</Label>
+                            <Input
+                              id="confirm-pass"
+                              type="password"
+                              value={deleteConfirmPassword}
+                              onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                              placeholder="Nhập mật khẩu của bạn"
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Hủy</Button>
+                            <Button
+                              variant="destructive"
+                              onClick={handleDeleteAccount}
+                              disabled={!deleteConfirmPassword || deleteAccount.isPending}
+                            >
+                              {deleteAccount.isPending ? 'Đang thực hiện...' : 'Tôi hiểu, hãy xóa tài khoản'}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </CardContent>
+                </Card>
 
-            {/* Settings */}
-            <TabsContent value="settings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cài đặt tài khoản</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Bảo mật</h4>
-                    <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Đổi mật khẩu
+                {/* Notifications Content */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="w-5 h-5" />
+                      Cài đặt thông báo
+                    </CardTitle>
+                    <CardDescription>Tùy chỉnh các loại thông báo bạn muốn nhận.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('emailNotifications', !formData.emailNotifications)}>
+                      <div className="space-y-1">
+                        <Label className="font-semibold cursor-pointer">Thông báo qua Email</Label>
+                        <p className="text-sm text-muted-foreground">Nhận tin nhắn về trạng thái đơn hàng và cập nhật hệ thống.</p>
+                      </div>
+                      <Switch
+                        checked={formData.emailNotifications}
+                        onCheckedChange={(checked) => handleInputChange('emailNotifications', checked)}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('promoNotifications', !formData.promoNotifications)}>
+                      <div className="space-y-1">
+                        <Label className="font-semibold cursor-pointer">Khuyến mãi & Ưu đãi</Label>
+                        <p className="text-sm text-muted-foreground">Nhận thông tin về các chương trình giảm giá và quà tặng mới.</p>
+                      </div>
+                      <Switch
+                        checked={formData.promoNotifications}
+                        onCheckedChange={(checked) => handleInputChange('promoNotifications', checked)}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('smsNotifications', !formData.smsNotifications)}>
+                      <div className="space-y-1">
+                        <Label className="font-semibold cursor-pointer">Thông báo qua SMS</Label>
+                        <p className="text-sm text-muted-foreground">Nhận mã xác thực và thông báo khẩn cấp (có thể tính phí).</p>
+                      </div>
+                      <Switch
+                        checked={formData.smsNotifications}
+                        onCheckedChange={(checked) => handleInputChange('smsNotifications', checked)}
+                      />
+                    </div>
+
+                    <div className="pt-4">
+                      <Button
+                        size="lg"
+                        onClick={handleSaveProfile}
+                        className="w-full"
+                        disabled={updateProfile.isPending}
+                      >
+                        Lưu cài đặt thông báo
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Shield className="w-4 h-4 mr-2" />
-                        Cài đặt bảo mật
-                      </Button>
                     </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Thông báo</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="notify-orders">Email thông báo đơn hàng</Label>
-                        <input 
-                          type="checkbox" 
-                          id="notify-orders"
-                          defaultChecked 
-                          className="rounded"
-                          aria-label="Nhận email thông báo đơn hàng"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="notify-promotions">Khuyến mãi và ưu đãi</Label>
-                        <input 
-                          type="checkbox" 
-                          id="notify-promotions"
-                          defaultChecked 
-                          className="rounded"
-                          aria-label="Nhận thông báo về khuyến mãi và ưu đãi"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="notify-updates">Cập nhật sản phẩm</Label>
-                        <input 
-                          type="checkbox" 
-                          id="notify-updates"
-                          className="rounded"
-                          aria-label="Nhận thông báo về cập nhật sản phẩm mới"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
-            </Tabs>
-          </div>
+          </Tabs>
         </div>
       </main>
     </div>
@@ -489,16 +707,6 @@ function ProfilePageContent() {
 }
 
 export default function ProfilePage() {
-  // #region agent log
-  React.useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('audiotailoc_token') : null;
-    const user = typeof window !== 'undefined' ? localStorage.getItem('audiotailoc_user') : null;
-    const cookies = typeof document !== 'undefined' ? document.cookie : '';
-    const hasTokenCookie = cookies.includes('audiotailoc_token=');
-    fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'profile/page.tsx:456',message:'ProfilePage mounted',data:{pathname:typeof window !== 'undefined' ? window.location.pathname : 'SSR',hasToken:!!token,hasUser:!!user,hasTokenCookie,cookies},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'L'})}).catch(()=>{});
-  }, []);
-  // #endregion
-  
   return (
     <AuthGuard>
       <ProfilePageContent />

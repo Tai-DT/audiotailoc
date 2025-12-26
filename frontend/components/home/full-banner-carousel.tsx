@@ -137,7 +137,7 @@ export function FullBannerCarousel() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
                 {currentBanner.buttonLabel && currentBanner.linkUrl && (
                   <Button asChild size="lg" className="text-lg px-8 py-3">
-                    <Link href={currentBanner.linkUrl}>
+                    <Link href={currentBanner.linkUrl} style={{ position: 'relative', left: 0, top: 0 }}>
                       {currentBanner.buttonLabel}
                     </Link>
                   </Button>
@@ -145,7 +145,7 @@ export function FullBannerCarousel() {
                 
                 {currentBanner.secondaryButtonLabel && currentBanner.secondaryButtonUrl && (
                   <Button asChild variant="outline" size="lg" className="text-lg px-8 py-3 bg-white/10 border-white/30 text-white hover:bg-white/20">
-                    <Link href={currentBanner.secondaryButtonUrl}>
+                    <Link href={currentBanner.secondaryButtonUrl} style={{ position: 'relative', left: 0, top: 0 }}>
                       {currentBanner.secondaryButtonLabel}
                     </Link>
                   </Button>

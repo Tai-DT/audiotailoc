@@ -32,6 +32,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let validationErrors: string[] | undefined;
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
@@ -49,8 +51,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = exception.message;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+      // SECURITY: In production, don't leak raw error messages to the client
+      // Only keep the raw message in development for debugging
+      if (isProduction) {
+        message = 'An unexpected error occurred';
+        error = 'Internal Server Error';
+      } else {
+        message = exception.message;
+        error = exception.name;
+      }
     }
 
     const errorResponse: ErrorResponse = {

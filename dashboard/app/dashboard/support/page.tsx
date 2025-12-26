@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   MessageSquare,
   Search,
@@ -22,6 +23,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
 
 interface SupportTicket {
   id: string
@@ -31,6 +33,8 @@ interface SupportTicket {
   name: string
   status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  assignedTo?: string
+  userId?: string
   createdAt: string
   updatedAt: string
 }
@@ -43,6 +47,7 @@ export default function SupportPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all")
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
   const [showTicketDialog, setShowTicketDialog] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTickets()
@@ -51,33 +56,21 @@ export default function SupportPage() {
   const fetchTickets = async () => {
     try {
       setLoading(true)
-      // Mock data - replace with actual API call
-      const mockTickets: SupportTicket[] = [
-        {
-          id: "1",
-          subject: "Hỏi về sản phẩm loa",
-          description: "Tôi muốn hỏi về thông số kỹ thuật của loa JBL Go 3",
-          email: "customer@example.com",
-          name: "Nguyễn Văn A",
-          status: "OPEN",
-          priority: "MEDIUM",
-          createdAt: "2024-01-15T10:30:00Z",
-          updatedAt: "2024-01-15T10:30:00Z"
-        },
-        {
-          id: "2",
-          subject: "Khiếu nại về đơn hàng",
-          description: "Đơn hàng của tôi bị giao sai sản phẩm",
-          email: "customer2@example.com",
-          name: "Trần Thị B",
-          status: "IN_PROGRESS",
-          priority: "HIGH",
-          createdAt: "2024-01-14T15:20:00Z",
-          updatedAt: "2024-01-15T09:15:00Z"
-        }
-      ]
-      setTickets(mockTickets)
-    } catch {
+      const response = await apiClient.get('/support/tickets')
+      const data: any = response.data
+
+      let list: SupportTicket[] = []
+      if (Array.isArray(data)) {
+        list = data
+      } else if (data.data && Array.isArray(data.data)) {
+        list = data.data
+      } else if (data.items && Array.isArray(data.items)) {
+        list = data.items
+      }
+
+      setTickets(list)
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error)
       toast.error("Không thể tải danh sách ticket")
     } finally {
       setLoading(false)
@@ -86,8 +79,8 @@ export default function SupportPage() {
 
   const updateTicketStatus = async (ticketId: string, newStatus: string) => {
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500))
+      setUpdatingStatus(ticketId)
+      await apiClient.put(`/support/tickets/${ticketId}/status`, { status: newStatus })
 
       setTickets(prev => prev.map(ticket =>
         ticket.id === ticketId
@@ -96,8 +89,11 @@ export default function SupportPage() {
       ))
 
       toast.success("Đã cập nhật trạng thái ticket")
-    } catch {
+    } catch (error) {
+      console.error('Failed to update ticket status:', error)
       toast.error("Không thể cập nhật trạng thái")
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
@@ -137,14 +133,26 @@ export default function SupportPage() {
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.name.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
     const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter
 
     return matchesSearch && matchesStatus && matchesPriority
   })
+
+  if (loading) {
+    return (
+      <div className="space-y-6 p-4 md:p-8">
+        <Skeleton className="h-10 w-64" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -291,60 +299,69 @@ export default function SupportPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTickets.map((ticket) => (
-                <TableRow key={ticket.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{ticket.name}</div>
-                      <div className="text-sm text-muted-foreground">{ticket.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{ticket.subject}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      {ticket.description}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedTicket(ticket)
-                          setShowTicketDialog(true)
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
-                      {ticket.status !== 'CLOSED' && (
-                        <Select
-                          value={ticket.status}
-                          onValueChange={(value) => updateTicketStatus(ticket.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OPEN">Mở</SelectItem>
-                            <SelectItem value="IN_PROGRESS">Đang xử lý</SelectItem>
-                            <SelectItem value="RESOLVED">Đã giải quyết</SelectItem>
-                            <SelectItem value="CLOSED">Đóng</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
+              {filteredTickets.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Chưa có ticket nào
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredTickets.map((ticket) => (
+                  <TableRow key={ticket.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{ticket.name}</div>
+                        <div className="text-sm text-muted-foreground">{ticket.email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{ticket.subject}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-1">
+                        {ticket.description}
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(ticket.status)}</TableCell>
+                    <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTicket(ticket)
+                            setShowTicketDialog(true)
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+
+                        {ticket.status !== 'CLOSED' && (
+                          <Select
+                            value={ticket.status}
+                            onValueChange={(value) => updateTicketStatus(ticket.id, value)}
+                            disabled={updatingStatus === ticket.id}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OPEN">Mở</SelectItem>
+                              <SelectItem value="IN_PROGRESS">Đang xử lý</SelectItem>
+                              <SelectItem value="RESOLVED">Đã giải quyết</SelectItem>
+                              <SelectItem value="CLOSED">Đóng</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

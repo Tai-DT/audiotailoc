@@ -159,13 +159,7 @@ export class DatabaseHealthCheck {
    */
   private async gatherMetrics(): Promise<HealthCheckDetails> {
     try {
-      const [
-        connectionPool,
-        slowQueries,
-        errors,
-        performance,
-        database,
-      ] = await Promise.all([
+      const [connectionPool, slowQueries, errors, performance, database] = await Promise.all([
         this.getConnectionPoolMetrics(),
         this.getSlowQueries(),
         this.getErrorMetrics(),
@@ -193,7 +187,7 @@ export class DatabaseHealthCheck {
     try {
       // Get connection info from database
       const result = await this.prisma.$queryRawUnsafe<any[]>(
-        `SELECT count(*) as connections FROM pg_stat_activity`
+        `SELECT count(*) as connections FROM pg_stat_activity`,
       );
 
       const totalConnections = result[0]?.connections || 0;
@@ -203,7 +197,8 @@ export class DatabaseHealthCheck {
         activeConnections: Math.max(0, totalConnections - 1),
         idleConnections: 1,
         waitingRequests: 0,
-        health: totalConnections < 80 ? 'healthy' : totalConnections < 95 ? 'degraded' : 'exhausted',
+        health:
+          totalConnections < 80 ? 'healthy' : totalConnections < 95 ? 'degraded' : 'exhausted',
       };
     } catch (error) {
       this.logger.debug(`Could not get connection pool metrics: ${error}`);
@@ -232,9 +227,9 @@ export class DatabaseHealthCheck {
 
     return {
       total: this.errorLog.length,
-      connectionErrors: errors.filter((e) => /connection|connect/i.test(e.message)).length,
-      timeoutErrors: errors.filter((e) => /timeout|timed out/i.test(e.message)).length,
-      deadlockErrors: errors.filter((e) => /deadlock|lock/i.test(e.message)).length,
+      connectionErrors: errors.filter(e => /connection|connect/i.test(e.message)).length,
+      timeoutErrors: errors.filter(e => /timeout|timed out/i.test(e.message)).length,
+      deadlockErrors: errors.filter(e => /deadlock|lock/i.test(e.message)).length,
       recentErrors: errors.slice(-5),
     };
   }
@@ -307,7 +302,7 @@ export class DatabaseHealthCheck {
         LIMIT 10
       `);
 
-      return tables.map((t) => ({
+      return tables.map(t => ({
         name: t.tablename,
         rowCount: t.row_count || 0,
         size: 'Unknown',

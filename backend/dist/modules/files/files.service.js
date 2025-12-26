@@ -48,6 +48,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const cloudinary_service_1 = require("./cloudinary.service");
+const file_validator_1 = require("../../common/security/file-validator");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const crypto = __importStar(require("crypto"));
@@ -60,6 +61,21 @@ let FilesService = FilesService_1 = class FilesService {
         this.prisma = prisma;
         this.cloudinary = cloudinary;
         this.logger = new common_1.Logger(FilesService_1.name);
+        this.DANGEROUS_EXTENSIONS = [
+            '.exe', '.bat', '.cmd', '.com', '.scr', '.vbs', '.js', '.jar',
+            '.sh', '.bash', '.zsh', '.fish', '.ps1', '.psm1', '.psd1',
+            '.php', '.phtml', '.php3', '.php4', '.php5', '.phps',
+            '.dll', '.so', '.dylib', '.app', '.deb', '.rpm', '.msi',
+            '.py', '.pyc', '.pyo', '.rb', '.pl', '.perl', '.cgi',
+            '.asp', '.aspx', '.jsp', '.jspx', '.war', '.ear',
+        ];
+        this.DEFAULT_ALLOWED_EXTENSIONS = [
+            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico',
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+            '.txt', '.rtf', '.odt', '.ods', '.odp',
+            '.zip', '.rar', '.7z', '.tar', '.gz',
+            '.csv', '.json', '.xml'
+        ];
         this.uploadDir = this.config.get('UPLOAD_DIR', './uploads');
         this.cdnUrl = this.config.get('CDN_URL', '');
         this.ensureUploadDir();
@@ -77,9 +93,19 @@ let FilesService = FilesService_1 = class FilesService {
     }
     async uploadFile(file, options = {}, metadata = {}) {
         try {
-            await this.validateFile(file, options);
+            const validationOptions = {
+                ...options,
+                allowedExtensions: options.allowedExtensions || this.DEFAULT_ALLOWED_EXTENSIONS,
+            };
             const fileId = crypto.randomUUID();
-            const extension = path.extname(file.originalname);
+            const extension = path.extname(file.originalname).toLowerCase();
+            if (this.DANGEROUS_EXTENSIONS.includes(extension)) {
+                throw new common_1.BadRequestException(`File extension ${extension} is not allowed for security reasons`);
+            }
+            if (!validationOptions.allowedExtensions?.includes(extension)) {
+                throw new common_1.BadRequestException(`File extension ${extension} is not allowed`);
+            }
+            await this.validateFile(file, validationOptions);
             const filename = `${fileId}${extension}`;
             const isImage = file.mimetype.startsWith('image/');
             const subDir = isImage ? 'images' : 'documents';
@@ -117,7 +143,7 @@ let FilesService = FilesService_1 = class FilesService {
                     dimensions: isImage ? await this.getImageDimensions(file.buffer) : null,
                     storage: cloudUrl ? 'cloudinary' : 'local',
                     publicId: cloudPublicId || null,
-                }
+                },
             };
             return {
                 id: fileRecord.id,
@@ -184,7 +210,9 @@ let FilesService = FilesService_1 = class FilesService {
         const result = await this.uploadFile(file, options, metadata);
         await this.prisma.users.update({
             where: { id: userId },
-            data: {},
+            data: {
+                avatarUrl: result.url,
+            },
         });
         return result;
     }
@@ -245,6 +273,18 @@ let FilesService = FilesService_1 = class FilesService {
             const extension = path.extname(file.originalname).toLowerCase();
             if (!options.allowedExtensions.includes(extension)) {
                 throw new common_1.BadRequestException(`File extension ${extension} is not allowed`);
+            }
+        }
+        if (options.allowedMimeTypes && file.buffer) {
+            const isValidContent = file_validator_1.FileValidator.validateFileContent(file.buffer, file.mimetype, options.allowedMimeTypes);
+            if (!isValidContent) {
+                const detectedType = file_validator_1.FileValidator.detectFileType(file.buffer);
+                throw new common_1.BadRequestException(`File content does not match declared type. ` +
+                    `Declared: ${file.mimetype}, ` +
+                    (detectedType ? `Detected: ${detectedType}` : 'Could not detect file type'));
+            }
+            if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed') {
+                await file_validator_1.FileValidator.checkZipBomb(file.buffer, 100 * 1024 * 1024);
             }
         }
         if (file.mimetype.startsWith('image/') && (options.maxWidth || options.maxHeight)) {

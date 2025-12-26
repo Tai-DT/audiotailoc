@@ -94,26 +94,26 @@ export function SEOManager({ entity }: SEOManagerProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+      <h2 className="text-2xl font-bold text-foreground mb-6">
         SEO Management
         {entity && (
-          <span className="text-lg font-normal text-gray-600 ml-2">
+          <span className="text-lg font-normal text-muted-foreground ml-2">
             - {entity.name} ({entity.type})
           </span>
         )}
       </h2>
 
       {!entity ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           <p>Select an entity to manage its SEO settings</p>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Meta Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Meta Title
-              <span className="text-gray-500 font-normal ml-2">
+              <span className="text-muted-foreground font-normal ml-2">
                 ({seoData.title.length}/60 characters recommended)
               </span>
             </label>
@@ -122,26 +122,26 @@ export function SEOManager({ entity }: SEOManagerProps) {
                 type="text"
                 value={seoData.title}
                 onChange={(e) => setSeoData(prev => ({ ...prev, title: e.target.value }))}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Enter meta title..."
               />
               <button
                 onClick={generateTitle}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 Generate
               </button>
             </div>
             {seoData.title.length > 60 && (
-              <p className="text-red-500 text-sm mt-1">Title is too long (over 60 characters)</p>
+              <p className="text-destructive text-sm mt-1">Title is too long (over 60 characters)</p>
             )}
           </div>
 
           {/* Meta Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Meta Description
-              <span className="text-gray-500 font-normal ml-2">
+              <span className="text-muted-foreground font-normal ml-2">
                 ({seoData.description.length}/160 characters recommended)
               </span>
             </label>
@@ -150,26 +150,26 @@ export function SEOManager({ entity }: SEOManagerProps) {
                 value={seoData.description}
                 onChange={(e) => setSeoData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Enter meta description..."
               />
               <button
                 onClick={generateDescription}
-                className="self-start px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="self-start px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 Generate Description
               </button>
             </div>
             {seoData.description.length > 160 && (
-              <p className="text-red-500 text-sm mt-1">Description is too long (over 160 characters)</p>
+              <p className="text-destructive text-sm mt-1">Description is too long (over 160 characters)</p>
             )}
           </div>
 
           {/* Keywords */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Meta Keywords
-              <span className="text-gray-500 font-normal ml-2">
+              <span className="text-muted-foreground font-normal ml-2">
                 (comma-separated)
               </span>
             </label>
@@ -177,14 +177,14 @@ export function SEOManager({ entity }: SEOManagerProps) {
               type="text"
               value={seoData.keywords}
               onChange={(e) => setSeoData(prev => ({ ...prev, keywords: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="keyword1, keyword2, keyword3..."
             />
           </div>
 
           {/* Canonical URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Canonical URL
             </label>
             <div className="flex gap-2">
@@ -192,12 +192,12 @@ export function SEOManager({ entity }: SEOManagerProps) {
                 type="url"
                 value={seoData.canonical}
                 onChange={(e) => setSeoData(prev => ({ ...prev, canonical: e.target.value }))}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="https://audiotailoc.com/..."
               />
               <button
                 onClick={generateCanonical}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 Generate
               </button>
@@ -206,17 +206,17 @@ export function SEOManager({ entity }: SEOManagerProps) {
 
           {/* Preview */}
           <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">SEO Preview</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-3">SEO Preview</h3>
             
             {/* Google Search Preview */}
             <div className="bg-white p-3 rounded border">
-              <div className="text-blue-600 text-lg hover:underline cursor-pointer">
+              <div className="text-primary text-lg hover:underline cursor-pointer">
                 {seoData.title || entity.name}
               </div>
-              <div className="text-green-600 text-sm">
+              <div className="text-success text-sm">
                 {seoData.canonical || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/${entity.type}s/${entity.slug}`}
               </div>
-              <div className="text-gray-600 text-sm mt-1">
+              <div className="text-muted-foreground text-sm mt-1">
                 {seoData.description || `Learn more about ${entity.name} at Audio Tài Lộc.`}
               </div>
             </div>
@@ -237,7 +237,7 @@ export function SEOManager({ entity }: SEOManagerProps) {
                 keywords: entity.currentSEO?.keywords?.join(', ') || '',
                 canonical: entity.currentSEO?.canonical || '',
               })}
-              className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-6 py-2 bg-secondary text-white rounded-md hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               Reset
             </button>

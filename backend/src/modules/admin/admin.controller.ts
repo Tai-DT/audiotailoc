@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Query, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query, Delete, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -26,14 +26,16 @@ export class AdminController {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly loggingService: LoggingService,
-    private readonly activityLogService: ActivityLogService
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get admin dashboard overview' })
   @ApiResponse({ status: 200, description: 'Dashboard data retrieved' })
   async getDashboard(@Query() query: AdminDashboardDto) {
-    const startDate = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const startDate = query.startDate
+      ? new Date(query.startDate)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
 
     // Get counts
@@ -45,27 +47,27 @@ export class AdminController {
       newUsers,
       newOrders,
       pendingOrders,
-      lowStockProducts
+      lowStockProducts,
     ] = await Promise.all([
       this.prisma.users.count(),
       this.prisma.products.count(),
       this.prisma.orders.count(),
       this.prisma.orders.aggregate({
         where: { status: 'COMPLETED' },
-        _sum: { totalCents: true }
+        _sum: { totalCents: true },
       }),
       this.prisma.users.count({
-        where: { createdAt: { gte: startDate, lte: endDate } }
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
       this.prisma.orders.count({
-        where: { createdAt: { gte: startDate, lte: endDate } }
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
       this.prisma.orders.count({
-        where: { status: 'PENDING' }
+        where: { status: 'PENDING' },
       }),
       this.prisma.inventory.count({
-        where: { stock: { lte: 10 } }
-      })
+        where: { stock: { lte: 10 } },
+      }),
     ]);
 
     // Get recent activities
@@ -73,14 +75,14 @@ export class AdminController {
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: {
-        users: { select: { name: true, email: true } }
-      }
+        users: { select: { name: true, email: true } },
+      },
     });
 
     const recentUsers = await this.prisma.users.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, email: true, createdAt: true }
+      select: { id: true, name: true, email: true, createdAt: true },
     });
 
     return {
@@ -94,17 +96,17 @@ export class AdminController {
           newUsers,
           newOrders,
           pendingOrders,
-          lowStockProducts
+          lowStockProducts,
         },
         recentActivities: {
           orders: recentOrders,
-          users: recentUsers
+          users: recentUsers,
         },
         period: {
           startDate,
-          endDate
-        }
-      }
+          endDate,
+        },
+      },
     };
   }
 
@@ -113,24 +115,19 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'User statistics' })
   async getUserStats(@Query('days') days = '30') {
     const daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
-    
-    const [
-      totalUsers,
-      activeUsers,
-      newUsers,
-      usersByRole
-    ] = await Promise.all([
+
+    const [totalUsers, activeUsers, newUsers, usersByRole] = await Promise.all([
       this.prisma.users.count(),
       this.prisma.users.count({
-        where: { updatedAt: { gte: daysAgo } }
+        where: { updatedAt: { gte: daysAgo } },
       }),
       this.prisma.users.count({
-        where: { createdAt: { gte: daysAgo } }
+        where: { createdAt: { gte: daysAgo } },
       }),
       this.prisma.users.groupBy({
         by: ['role'],
-        _count: { role: true }
-      })
+        _count: { role: true },
+      }),
     ]);
 
     return {
@@ -139,11 +136,14 @@ export class AdminController {
         totalUsers,
         activeUsers,
         newUsers,
-        usersByRole: usersByRole.reduce((acc, item) => {
-          acc[item.role] = item._count.role;
-          return acc;
-        }, {} as Record<string, number>)
-      }
+        usersByRole: usersByRole.reduce(
+          (acc, item) => {
+            acc[item.role] = item._count.role;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      },
     };
   }
 
@@ -152,33 +152,33 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Order statistics' })
   async getOrderStats(@Query('days') days = '30') {
     const _daysAgo = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
-    
+
     const [
       totalOrders,
       completedOrders,
       pendingOrders,
       cancelledOrders,
       totalRevenue,
-      ordersByStatus
+      ordersByStatus,
     ] = await Promise.all([
       this.prisma.orders.count(),
       this.prisma.orders.count({
-        where: { status: 'COMPLETED' }
+        where: { status: 'COMPLETED' },
       }),
       this.prisma.orders.count({
-        where: { status: 'PENDING' }
+        where: { status: 'PENDING' },
       }),
       this.prisma.orders.count({
-        where: { status: 'CANCELED' }
+        where: { status: 'CANCELED' },
       }),
       this.prisma.orders.aggregate({
         where: { status: 'COMPLETED' },
-        _sum: { totalCents: true }
+        _sum: { totalCents: true },
       }),
       this.prisma.orders.groupBy({
         by: ['status'],
-        _count: { status: true }
-      })
+        _count: { status: true },
+      }),
     ]);
 
     return {
@@ -189,11 +189,14 @@ export class AdminController {
         pendingOrders,
         cancelledOrders,
         totalRevenue: totalRevenue._sum.totalCents || 0,
-        ordersByStatus: ordersByStatus.reduce((acc, item) => {
-          acc[item.status] = item._count.status;
-          return acc;
-        }, {} as Record<string, number>)
-      }
+        ordersByStatus: ordersByStatus.reduce(
+          (acc, item) => {
+            acc[item.status] = item._count.status;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      },
     };
   }
 
@@ -201,24 +204,21 @@ export class AdminController {
   @ApiOperation({ summary: 'Get product statistics' })
   @ApiResponse({ status: 200, description: 'Product statistics' })
   async getProductStats() {
-    const [
-      totalProducts,
-      activeProducts,
-      lowStockProducts,
-      productsByCategory
-    ] = await Promise.all([
-      this.prisma.products.count(),
-      this.prisma.products.count({
-        where: { featured: true }
-      }),
-      this.prisma.inventory.count({
-        where: { stock: { lte: 10 } }
-      }),
-      this.prisma.products.groupBy({
-        by: ['categoryId'],
-        _count: { categoryId: true }
-      })
-    ]);
+    const [totalProducts, activeProducts, lowStockProducts, productsByCategory] = await Promise.all(
+      [
+        this.prisma.products.count(),
+        this.prisma.products.count({
+          where: { featured: true },
+        }),
+        this.prisma.inventory.count({
+          where: { stock: { lte: 10 } },
+        }),
+        this.prisma.products.groupBy({
+          by: ['categoryId'],
+          _count: { categoryId: true },
+        }),
+      ],
+    );
 
     return {
       success: true,
@@ -226,11 +226,14 @@ export class AdminController {
         totalProducts,
         activeProducts,
         lowStockProducts,
-        productsByCategory: productsByCategory.reduce((acc, item) => {
-          acc[item.categoryId || 'uncategorized'] = item._count.categoryId;
-          return acc;
-        }, {} as Record<string, number>)
-      }
+        productsByCategory: productsByCategory.reduce(
+          (acc, item) => {
+            acc[item.categoryId || 'uncategorized'] = item._count.categoryId;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      },
     };
   }
 
@@ -239,85 +242,102 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Bulk action completed' })
   async performBulkAction(@Body() dto: BulkActionDto) {
     const { action, ids, type } = dto;
-    
+
+    // SECURITY: Limit bulk operations to prevent DoS and mass data loss
+    const MAX_BULK_ITEMS = 100;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException('IDs array is required and cannot be empty');
+    }
+    if (ids.length > MAX_BULK_ITEMS) {
+      throw new BadRequestException(
+        `Too many items. Maximum allowed: ${MAX_BULK_ITEMS}, received: ${ids.length}`,
+      );
+    }
+
+    // SECURITY: Validate IDs are valid UUIDs or valid format
+    const invalidIds = ids.filter(id => !id || typeof id !== 'string' || id.trim().length === 0);
+    if (invalidIds.length > 0) {
+      throw new BadRequestException('Invalid IDs provided');
+    }
+
     let result;
-    
+
     switch (type) {
       case 'users':
         switch (action) {
           case 'delete':
             result = await this.prisma.users.deleteMany({
-              where: { id: { in: ids } }
+              where: { id: { in: ids } },
             });
             break;
           case 'activate':
             result = await this.prisma.users.updateMany({
               where: { id: { in: ids } },
-              data: { role: 'USER' }
+              data: { role: 'USER' },
             });
             break;
           case 'deactivate':
             result = await this.prisma.users.updateMany({
               where: { id: { in: ids } },
-              data: { role: 'USER' }
+              data: { role: 'USER' },
             });
             break;
         }
         break;
-        
+
       case 'products':
         switch (action) {
           case 'delete':
             result = await this.prisma.products.deleteMany({
-              where: { id: { in: ids } }
+              where: { id: { in: ids } },
             });
             break;
           case 'activate':
             result = await this.prisma.products.updateMany({
               where: { id: { in: ids } },
-              data: { featured: true }
+              data: { featured: true },
             });
             break;
           case 'deactivate':
             result = await this.prisma.products.updateMany({
               where: { id: { in: ids } },
-              data: { featured: false }
+              data: { featured: false },
             });
             break;
         }
         break;
-        
+
       case 'orders':
         switch (action) {
           case 'delete':
             result = await this.prisma.orders.deleteMany({
-              where: { id: { in: ids } }
+              where: { id: { in: ids } },
             });
             break;
           case 'activate':
             result = await this.prisma.orders.updateMany({
               where: { id: { in: ids } },
-              data: { status: 'COMPLETED' }
+              data: { status: 'COMPLETED' },
             });
             break;
           case 'deactivate':
             result = await this.prisma.orders.updateMany({
               where: { id: { in: ids } },
-              data: { status: 'CANCELED' }
+              data: { status: 'CANCELED' },
             });
             break;
         }
         break;
     }
-    
+
     return {
       success: true,
       data: {
         action,
         type,
         affectedCount: result?.count || 0,
-        message: `Successfully ${action}ed ${result?.count || 0} ${type}`
-      }
+        message: `Successfully ${action}ed ${result?.count || 0} ${type}`,
+      },
     };
   }
 
@@ -325,16 +345,12 @@ export class AdminController {
   @ApiOperation({ summary: 'Get system status' })
   @ApiResponse({ status: 200, description: 'System status' })
   async getSystemStatus() {
-    const [
-      databaseStatus,
-      redisStatus,
-      maintenanceMode
-    ] = await Promise.all([
+    const [databaseStatus, redisStatus, maintenanceMode] = await Promise.all([
       this.prisma.$queryRaw`SELECT 1 as status`,
       Promise.resolve('OK'), // Placeholder for Redis check
       this.prisma.system_configs.findUnique({
-        where: { key: 'maintenance_mode' }
-      })
+        where: { key: 'maintenance_mode' },
+      }),
     ]);
 
     return {
@@ -345,8 +361,8 @@ export class AdminController {
         maintenanceMode: maintenanceMode?.value === 'true',
         uptime: process.uptime(),
         memoryUsage: process.memoryUsage(),
-        environment: this.configService.get('NODE_ENV', 'development')
-      }
+        environment: this.configService.get('NODE_ENV', 'development'),
+      },
     };
   }
 
@@ -360,7 +376,7 @@ export class AdminController {
     @Query('userId') userId?: string,
     @Query('action') action?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query('endDate') endDate?: string,
   ) {
     try {
       const limitNum = Math.min(parseInt(limit), 1000); // Max 1000 records
@@ -374,21 +390,17 @@ export class AdminController {
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         limit: limitNum,
-        offset: offsetNum
+        offset: offsetNum,
       });
 
       // Log admin activity
-      this.loggingService.logUserActivity(
-        'admin_view_activity_logs',
-        'Viewed activity logs',
-        {
-          resource: 'activity_logs',
-          type: type || 'all',
-          limit: limitNum,
-          offset: offsetNum,
-          filters: { userId, action, startDate, endDate }
-        }
-      );
+      this.loggingService.logUserActivity('admin_view_activity_logs', 'Viewed activity logs', {
+        resource: 'activity_logs',
+        type: type || 'all',
+        limit: limitNum,
+        offset: offsetNum,
+        filters: { userId, action, startDate, endDate },
+      });
 
       return {
         success: true,
@@ -397,8 +409,8 @@ export class AdminController {
           total,
           limit: limitNum,
           offset: offsetNum,
-          type: type || 'all'
-        }
+          type: type || 'all',
+        },
       };
     } catch (error) {
       this.loggingService.error('Failed to retrieve activity logs', {
@@ -409,7 +421,7 @@ export class AdminController {
         userId,
         action,
         startDate,
-        endDate
+        endDate,
       });
 
       return {
@@ -417,8 +429,8 @@ export class AdminController {
         error: {
           code: 'ACTIVITY_LOGS_RETRIEVAL_FAILED',
           message: 'Failed to retrieve activity logs',
-          details: (error as Error).message
-        }
+          details: (error as Error).message,
+        },
       };
     }
   }
@@ -434,8 +446,8 @@ export class AdminController {
           success: false,
           error: {
             code: 'INVALID_CLEANUP_DAYS',
-            message: 'Cleanup days must be at least 7'
-          }
+            message: 'Cleanup days must be at least 7',
+          },
         };
       }
 
@@ -453,8 +465,8 @@ export class AdminController {
           resource: 'activity_logs',
           deletedCount,
           cutoffDate: cutoffDate.toISOString(),
-          days: daysNum
-        }
+          days: daysNum,
+        },
       );
 
       return {
@@ -462,14 +474,14 @@ export class AdminController {
         data: {
           deletedCount,
           cutoffDate: cutoffDate.toISOString(),
-          days: daysNum
+          days: daysNum,
         },
-        message: `Successfully deleted ${deletedCount} old activity logs`
+        message: `Successfully deleted ${deletedCount} old activity logs`,
       };
     } catch (error) {
       this.loggingService.error('Failed to cleanup activity logs', {
         error: error as Error,
-        days
+        days,
       });
 
       return {
@@ -477,8 +489,8 @@ export class AdminController {
         error: {
           code: 'ACTIVITY_LOGS_CLEANUP_FAILED',
           message: 'Failed to cleanup activity logs',
-          details: (error as Error).message
-        }
+          details: (error as Error).message,
+        },
       };
     }
   }

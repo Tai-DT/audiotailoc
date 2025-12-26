@@ -21,11 +21,11 @@ let MonitoringMiddleware = class MonitoringMiddleware {
         const method = req.method;
         const route = this.getRoute(req);
         const originalEnd = res.end;
-        const self = this;
+        const monitoringService = this.monitoringService;
         res.end = function (chunk, encoding) {
             const duration = Date.now() - start;
             const statusCode = res.statusCode;
-            self.monitoringService.recordRequest(method, route, statusCode, duration);
+            monitoringService.recordRequest(method, route, statusCode, duration);
             if (typeof encoding === 'function') {
                 return originalEnd.call(this, chunk, encoding);
             }

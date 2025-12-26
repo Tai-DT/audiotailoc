@@ -5,7 +5,7 @@ export declare class CompleteProductService {
     constructor(prisma: PrismaService);
     createProduct(createProductDto: CreateProductDto): Promise<ProductResponseDto>;
     findProducts(query: ProductListQueryDto): Promise<ProductListResponseDto>;
-    searchProducts(query: string, limit?: number): Promise<ProductListResponseDto>;
+    searchProducts(query: ProductListQueryDto): Promise<ProductListResponseDto>;
     getSearchSuggestions(query: string, limit?: number): Promise<ProductSearchSuggestionDto[]>;
     findProductById(id: string): Promise<ProductResponseDto>;
     findProductBySlug(slug: string): Promise<ProductResponseDto>;

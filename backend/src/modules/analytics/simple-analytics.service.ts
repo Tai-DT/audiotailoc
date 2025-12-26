@@ -24,16 +24,16 @@ export class SimpleAnalyticsService {
           users: { select: { name: true, email: true } },
           order_items: {
             include: {
-              products: { select: { name: true } }
-            }
-          }
-        }
+              products: { select: { name: true } },
+            },
+          },
+        },
       });
 
       // Calculate total revenue
       const totalRevenue = await this.prisma.orders.aggregate({
         _sum: { totalCents: true },
-        where: { status: { not: 'CANCELLED' } }
+        where: { status: { not: 'CANCELLED' } },
       });
 
       // Get top products
@@ -46,29 +46,30 @@ export class SimpleAnalyticsService {
           priceCents: true,
           viewCount: true,
           _count: {
-            select: { order_items: true }
-          }
-        }
+            select: { order_items: true },
+          },
+        },
       });
 
       return {
         sales: {
           totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
           totalOrders: orderCount,
-          averageOrderValue: orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
-          conversionRate: 0.05 // Mock data
+          averageOrderValue:
+            orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
+          conversionRate: 0.05, // Mock data
         },
         customers: {
           totalCustomers: userCount,
           newCustomers: Math.floor(userCount * 0.1), // Mock: 10% new
           returningCustomers: Math.floor(userCount * 0.9), // Mock: 90% returning
-          customerRetention: 0.85 // Mock data
+          customerRetention: 0.85, // Mock data
         },
         inventory: {
           totalProducts: productCount,
           lowStockProducts: 0, // Will implement when inventory module is fixed
           outOfStockProducts: 0,
-          inventoryValue: 0
+          inventoryValue: 0,
         },
         recentOrders: recentOrders.map(order => ({
           id: order.id,
@@ -77,15 +78,15 @@ export class SimpleAnalyticsService {
           totalCents: order.totalCents,
           status: order.status,
           createdAt: order.createdAt,
-          itemCount: order.order_items.length
+          itemCount: order.order_items.length,
         })),
         topProducts: topProducts.map(product => ({
           id: product.id,
           name: product.name,
           priceCents: product.priceCents,
           viewCount: product.viewCount,
-          orderCount: product._count?.order_items || 0
-        }))
+          orderCount: product._count?.order_items || 0,
+        })),
       };
     } catch (error) {
       this.logger.error('Error getting dashboard data:', error);
@@ -97,17 +98,18 @@ export class SimpleAnalyticsService {
     // Simple sales metrics
     const totalRevenue = await this.prisma.orders.aggregate({
       _sum: { totalCents: true },
-      where: { status: { not: 'CANCELLED' } }
+      where: { status: { not: 'CANCELLED' } },
     });
 
     const orderCount = await this.prisma.orders.count({
-      where: { status: { not: 'CANCELLED' } }
+      where: { status: { not: 'CANCELLED' } },
     });
 
     return {
       totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
       totalOrders: orderCount,
-      averageOrderValue: orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0
+      averageOrderValue:
+        orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
     };
   }
 }

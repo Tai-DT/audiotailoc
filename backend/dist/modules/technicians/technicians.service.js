@@ -175,7 +175,9 @@ let TechniciansService = class TechniciansService {
         const [hours, minutes] = params.time.split(':').map(Number);
         const startMinutes = hours * 60 + minutes;
         const endMinutes = startMinutes + duration;
-        const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`;
+        const endTime = `${Math.floor(endMinutes / 60)
+            .toString()
+            .padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`;
         const where = {
             isActive: true,
             technician_schedules: {
@@ -218,21 +220,23 @@ let TechniciansService = class TechniciansService {
             if (params.toDate)
                 where.scheduledAt.lte = params.toDate;
         }
-        const [totalBookings, completedBookings, pendingBookings, totalRevenue,] = await Promise.all([
+        const [totalBookings, completedBookings, pendingBookings, totalRevenue] = await Promise.all([
             this.prisma.service_bookings.count({ where }),
             this.prisma.service_bookings.count({
-                where: { ...where, status: enums_1.ServiceBookingStatus.COMPLETED }
+                where: { ...where, status: enums_1.ServiceBookingStatus.COMPLETED },
             }),
             this.prisma.service_bookings.count({
                 where: {
                     ...where,
-                    status: { in: [
+                    status: {
+                        in: [
                             enums_1.ServiceBookingStatus.PENDING,
                             enums_1.ServiceBookingStatus.CONFIRMED,
                             enums_1.ServiceBookingStatus.ASSIGNED,
                             enums_1.ServiceBookingStatus.IN_PROGRESS,
-                        ] }
-                }
+                        ],
+                    },
+                },
             }),
             this.prisma.service_booking_items.aggregate({
                 where: {
@@ -295,7 +299,7 @@ let TechniciansService = class TechniciansService {
         };
     }
     async getTechnicianStats() {
-        const [totalTechnicians, activeTechnicians, totalBookings, completedBookings,] = await Promise.all([
+        const [totalTechnicians, activeTechnicians, totalBookings, completedBookings] = await Promise.all([
             this.prisma.technicians.count(),
             this.prisma.technicians.count({ where: { isActive: true } }),
             this.prisma.service_bookings.count(),

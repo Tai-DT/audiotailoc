@@ -5,6 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
   FileText,
   Download,
   Calendar,
@@ -20,9 +28,52 @@ import { useReports } from "@/hooks/use-reports"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale/vi"
 
+function toYmdLocal(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function getSalesDateRange(period: string): { startDate?: string; endDate?: string } {
+  const now = new Date()
+  const end = new Date(now)
+
+  switch (period) {
+    case 'today': {
+      const start = new Date(now)
+      return { startDate: toYmdLocal(start), endDate: toYmdLocal(end) }
+    }
+    case 'week': {
+      // Monday as start of week
+      const start = new Date(now)
+      const day = start.getDay() // 0 (Sun) .. 6 (Sat)
+      const diffToMonday = (day + 6) % 7
+      start.setDate(start.getDate() - diffToMonday)
+      return { startDate: toYmdLocal(start), endDate: toYmdLocal(end) }
+    }
+    case 'month': {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1)
+      return { startDate: toYmdLocal(start), endDate: toYmdLocal(end) }
+    }
+    case 'quarter': {
+      const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3
+      const start = new Date(now.getFullYear(), quarterStartMonth, 1)
+      return { startDate: toYmdLocal(start), endDate: toYmdLocal(end) }
+    }
+    case 'year': {
+      const start = new Date(now.getFullYear(), 0, 1)
+      return { startDate: toYmdLocal(start), endDate: toYmdLocal(end) }
+    }
+    default:
+      return {}
+  }
+}
+
 export default function ReportsPage() {
   const {
     reports,
+    loading,
     generateReport,
     downloadReport,
     fetchReports,
@@ -31,6 +82,7 @@ export default function ReportsPage() {
 
   const [selectedPeriod, setSelectedPeriod] = useState("month")
   const [selectedType, setSelectedType] = useState("all")
+  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'excel' | 'csv'>('csv')
 
   useEffect(() => {
     fetchReports()
@@ -38,42 +90,42 @@ export default function ReportsPage() {
 
   const reportTypes = [
     {
-      id: 'sales',
+      id: 'SALES',
       title: 'Báo cáo Doanh số',
       description: 'Tổng hợp doanh số bán hàng',
       icon: <DollarSign className="h-6 w-6" />,
       color: 'text-green-500'
     },
     {
-      id: 'inventory',
+      id: 'INVENTORY',
       title: 'Báo cáo Tồn kho',
       description: 'Tình trạng tồn kho sản phẩm',
       icon: <Package className="h-6 w-6" />,
       color: 'text-blue-500'
     },
     {
-      id: 'customers',
+      id: 'CUSTOMERS',
       title: 'Báo cáo Khách hàng',
       description: 'Thống kê khách hàng',
       icon: <Users className="h-6 w-6" />,
       color: 'text-purple-500'
     },
     {
-      id: 'services',
+      id: 'SERVICES',
       title: 'Báo cáo Dịch vụ',
       description: 'Hiệu suất dịch vụ',
       icon: <TrendingUp className="h-6 w-6" />,
       color: 'text-orange-500'
     },
     {
-      id: 'financial',
+      id: 'PRODUCTS',
       title: 'Báo cáo Tài chính',
       description: 'Tổng hợp tài chính',
       icon: <FilePieChart className="h-6 w-6" />,
       color: 'text-red-500'
     },
     {
-      id: 'analytics',
+      id: 'CUSTOM',
       title: 'Báo cáo Phân tích',
       description: 'Phân tích xu hướng',
       icon: <BarChart3 className="h-6 w-6" />,
@@ -100,10 +152,18 @@ export default function ReportsPage() {
   }
 
   const handleGenerateReport = async (type: string) => {
+    // Currently supported exports: SALES, INVENTORY, CUSTOMERS
+    if (!['SALES', 'INVENTORY', 'CUSTOMERS'].includes(type)) {
+      return
+    }
+
+    const salesRange = type === 'SALES' ? getSalesDateRange(selectedPeriod) : {}
+
     await generateReport({
-      type,
+      type: type as any,
       period: selectedPeriod,
-      format: 'pdf'
+      format: selectedFormat,
+      ...salesRange,
     })
   }
 
@@ -133,31 +193,42 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-4 mb-4">
-                <select
-                  className="px-3 py-2 border rounded-md"
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                >
-                  <option value="today">Hôm nay</option>
-                  <option value="week">Tuần này</option>
-                  <option value="month">Tháng này</option>
-                  <option value="quarter">Quý này</option>
-                  <option value="year">Năm nay</option>
-                  <option value="custom">Tùy chỉnh</option>
-                </select>
-                
-                <select
-                  className="px-3 py-2 border rounded-md"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                >
-                  <option value="all">Tất cả loại</option>
-                  <option value="sales">Doanh số</option>
-                  <option value="inventory">Tồn kho</option>
-                  <option value="customers">Khách hàng</option>
-                  <option value="services">Dịch vụ</option>
-                  <option value="financial">Tài chính</option>
-                </select>
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Khoảng thời gian" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Hôm nay</SelectItem>
+                    <SelectItem value="week">Tuần này</SelectItem>
+                    <SelectItem value="month">Tháng này</SelectItem>
+                    <SelectItem value="quarter">Quý này</SelectItem>
+                    <SelectItem value="year">Năm nay</SelectItem>
+                    <SelectItem value="custom">Tùy chỉnh</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedFormat} onValueChange={(v) => setSelectedFormat(v as any)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Định dạng" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="excel">Excel</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Loại báo cáo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả loại</SelectItem>
+                    <SelectItem value="SALES">Doanh số</SelectItem>
+                    <SelectItem value="INVENTORY">Tồn kho</SelectItem>
+                    <SelectItem value="CUSTOMERS">Khách hàng</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -171,6 +242,7 @@ export default function ReportsPage() {
                         <Button
                           size="sm"
                           onClick={() => handleGenerateReport(report.id)}
+                          disabled={loading || !['SALES', 'INVENTORY', 'CUSTOMERS'].includes(report.id)}
                         >
                           Tạo báo cáo
                         </Button>
@@ -196,8 +268,27 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {reports.length > 0 ? (
-                  reports.map((report) => (
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <Skeleton className="h-5 w-5" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-56" />
+                              <Skeleton className="h-4 w-40" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-9 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : reports.length > 0 ? (
+                  reports
+                    .filter((r) => selectedType === 'all' || r.type === (selectedType as any))
+                    .map((report) => (
                     <Card key={report.id}>
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
@@ -222,7 +313,7 @@ export default function ReportsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => downloadReport(report.id)}
+                              onClick={() => downloadReport(report)}
                             >
                               <Download className="h-3 w-3 mr-1" />
                               Tải xuống

@@ -38,14 +38,14 @@ let AdminBannersController = class AdminBannersController {
     async create(data) {
         return this.bannersService.create(data);
     }
+    async reorder(data) {
+        return this.bannersService.reorder(data.ids);
+    }
     async update(id, data) {
         return this.bannersService.update(id, data);
     }
     async remove(id) {
         return this.bannersService.softDelete(id);
-    }
-    async reorder(data) {
-        return this.bannersService.reorder(data.ids);
     }
 };
 exports.AdminBannersController = AdminBannersController;
@@ -71,14 +71,32 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create new banner' }),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: false,
+    })),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [banner_create_dto_1.CreateBannerDto]),
     __metadata("design:returntype", Promise)
 ], AdminBannersController.prototype, "create", null);
 __decorate([
+    (0, common_1.Patch)('reorder'),
+    (0, swagger_1.ApiOperation)({ summary: 'Reorder banners' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminBannersController.prototype, "reorder", null);
+__decorate([
     (0, common_1.Patch)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update banner' }),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: false,
+    })),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -93,14 +111,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AdminBannersController.prototype, "remove", null);
-__decorate([
-    (0, common_1.Patch)('reorder'),
-    (0, swagger_1.ApiOperation)({ summary: 'Reorder banners' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], AdminBannersController.prototype, "reorder", null);
 exports.AdminBannersController = AdminBannersController = __decorate([
     (0, swagger_1.ApiTags)('Admin - Banners'),
     (0, swagger_1.ApiBearerAuth)(),

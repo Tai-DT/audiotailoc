@@ -61,7 +61,9 @@ export class WebhooksService {
 
       // Check if already processed
       if (paymentIntent.status !== 'PENDING') {
-        this.logger.warn(`Payment intent ${vnp_TxnRef} already processed with status ${paymentIntent.status}`);
+        this.logger.warn(
+          `Payment intent ${vnp_TxnRef} already processed with status ${paymentIntent.status}`,
+        );
         return {
           success: true,
           message: 'Payment already processed',
@@ -80,28 +82,28 @@ export class WebhooksService {
         data: { status: status as any },
       });
 
-              // Create payment record
-        const payment = await this.prisma.payments.create({
-          data: {
-            id: randomUUID(),
-            orderId: paymentIntent.orderId,
-            amountCents: parseInt(vnp_Amount),
-            provider: 'VNPAY',
-            status: status as any,
-            transactionId: vnp_TransactionNo,
-            updatedAt: new Date(),
-            // metadata: {
-            //   responseCode: vnp_ResponseCode,
-            //   orderInfo: vnp_OrderInfo,
-            //   payDate: vnp_PayDate,
-            // },
-          },
-        });
+      // Create payment record
+      const payment = await this.prisma.payments.create({
+        data: {
+          id: randomUUID(),
+          orderId: paymentIntent.orderId,
+          amountCents: parseInt(vnp_Amount),
+          provider: 'VNPAY',
+          status: status as any,
+          transactionId: vnp_TransactionNo,
+          updatedAt: new Date(),
+          // metadata: {
+          //   responseCode: vnp_ResponseCode,
+          //   orderInfo: vnp_OrderInfo,
+          //   payDate: vnp_PayDate,
+          // },
+        },
+      });
 
       // Update order status
       if (isSuccess) {
         await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
-        
+
         // Send notification
         await this.notificationService.sendNotification({
           userId: paymentIntent.orders.userId || undefined,
@@ -140,13 +142,7 @@ export class WebhooksService {
         throw new BadRequestException('Invalid MOMO webhook signature');
       }
 
-      const {
-        orderId,
-        resultCode,
-        amount,
-        transId,
-        message: _message,
-      } = data;
+      const { orderId, resultCode, amount, transId, message: _message } = data;
 
       // Find payment intent
       const paymentIntent = await this.prisma.payment_intents.findUnique({
@@ -172,33 +168,33 @@ export class WebhooksService {
       const isSuccess = resultCode === 0;
       const status = isSuccess ? 'COMPLETED' : 'FAILED';
 
-              // Update payment intent
-        await this.prisma.payment_intents.update({
-          where: { id: orderId },
-          data: { status: status as any },
-        });
+      // Update payment intent
+      await this.prisma.payment_intents.update({
+        where: { id: orderId },
+        data: { status: status as any },
+      });
 
-              // Create payment record
-        const payment = await this.prisma.payments.create({
-          data: {
-            id: randomUUID(),
-            orderId: paymentIntent.orderId,
-            amountCents: parseInt(amount),
-            provider: 'MOMO',
-            status: status as any,
-            transactionId: transId,
-            updatedAt: new Date(),
-            // metadata: {
-            //   resultCode,
-            //   message,
-            // },
-          },
-        });
+      // Create payment record
+      const payment = await this.prisma.payments.create({
+        data: {
+          id: randomUUID(),
+          orderId: paymentIntent.orderId,
+          amountCents: parseInt(amount),
+          provider: 'MOMO',
+          status: status as any,
+          transactionId: transId,
+          updatedAt: new Date(),
+          // metadata: {
+          //   resultCode,
+          //   message,
+          // },
+        },
+      });
 
       // Update order status
       if (isSuccess) {
         await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
-        
+
         // Send notification
         await this.notificationService.sendNotification({
           userId: paymentIntent.orders.userId || undefined,
@@ -228,100 +224,14 @@ export class WebhooksService {
   }
 
   async handlePAYOSWebhook(data: WebhookData): Promise<WebhookResult> {
-    try {
-      this.logger.log('Processing PAYOS webhook:', data);
-
-      // Validate webhook signature
-      const isValidSignature = this.validatePAYOSSignature(data);
-      if (!isValidSignature) {
-        throw new BadRequestException('Invalid PAYOS webhook signature');
-      }
-
-      const {
-        orderCode,
-        status,
-        amount,
-        transactionId,
-        description: _description,
-      } = data;
-
-      // Find payment intent
-      const paymentIntent = await this.prisma.payment_intents.findUnique({
-        where: { id: orderCode },
-        include: { orders: true },
-      });
-
-      if (!paymentIntent) {
-        throw new BadRequestException('Payment intent not found');
-      }
-
-      // Check if already processed
-      if (paymentIntent.status !== 'PENDING') {
-        return {
-          success: true,
-          message: 'Payment already processed',
-          orderId: paymentIntent.orderId,
-          paymentId: paymentIntent.id,
-        };
-      }
-
-      // Process payment result
-      const isSuccess = status === 'PAID';
-      const paymentStatus = isSuccess ? 'COMPLETED' : 'FAILED';
-
-              // Update payment intent
-        await this.prisma.payment_intents.update({
-          where: { id: orderCode },
-          data: { status: paymentStatus as any },
-        });
-
-              // Create payment record
-        const payment = await this.prisma.payments.create({
-          data: {
-            id: randomUUID(),
-            orderId: paymentIntent.orderId,
-            amountCents: parseInt(amount),
-            provider: 'PAYOS',
-            status: paymentStatus as any,
-            transactionId,
-            updatedAt: new Date(),
-            // metadata: {
-            //   status,
-            //   description,
-            // },
-          },
-        });
-
-      // Update order status
-      if (isSuccess) {
-        await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
-        
-        // Send notification
-        await this.notificationService.sendNotification({
-          userId: paymentIntent.orders.userId || undefined,
-          title: 'Thanh toán thành công',
-          message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
-          type: 'PAYMENT',
-          priority: 'HIGH',
-          channels: ['EMAIL', 'PUSH'],
-          data: {
-            orderId: paymentIntent.orderId,
-            paymentId: payment.id,
-            amount: parseInt(amount),
-          },
-        });
-      }
-
-      return {
-        success: true,
-        message: isSuccess ? 'Payment processed successfully' : 'Payment failed',
-        orderId: paymentIntent.orderId,
-        paymentId: payment.id,
-      };
-    } catch (error) {
-      this.logger.error('PAYOS webhook processing failed:', error);
-      throw error;
-    }
+    // PayOS payload format differs from the legacy WebhookData shape.
+    // Delegate to SDK-based PayOS handler inside PaymentsModule.
+    this.logger.log('Processing PAYOS webhook (delegated)');
+    const result = await this.paymentsService.handleWebhook('PAYOS', data);
+    return {
+      success: true,
+      message: (result as any)?.message || 'Processed',
+    };
   }
 
   private validateVNPAYSignature(data: WebhookData): boolean {
@@ -335,10 +245,7 @@ export class WebhooksService {
       .map(key => `${key}=${params[key]}`)
       .join('&');
 
-    const expectedHash = crypto
-      .createHmac('sha256', secret)
-      .update(signData)
-      .digest('hex');
+    const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
 
     return vnp_SecureHash === expectedHash;
   }
@@ -353,27 +260,12 @@ export class WebhooksService {
       .map(key => `${key}=${params[key]}`)
       .join('&');
 
-    const expectedHash = crypto
-      .createHmac('sha256', secret)
-      .update(signData)
-      .digest('hex');
+    const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
 
     return signature === expectedHash;
   }
 
-  private validatePAYOSSignature(data: WebhookData): boolean {
-    const checksumKey = this.config.get<string>('PAYOS_CHECKSUM_KEY');
-    if (!checksumKey) return false;
-
-    const { signature, ...params } = data;
-    const dataStr = JSON.stringify(params);
-    const expectedHash = crypto
-      .createHmac('sha256', checksumKey)
-      .update(dataStr)
-      .digest('hex');
-
-    return signature === expectedHash;
-  }
+  // PAYOS signature validation is handled by PayOSService via PaymentsService
 
   async handleOrderStatusWebhook(data: WebhookData): Promise<WebhookResult> {
     try {
@@ -394,20 +286,20 @@ export class WebhooksService {
         throw new BadRequestException('Order not found');
       }
 
-              // Send notification
-        await this.notificationService.sendNotification({
-          userId: order.userId || undefined,
-          title: `Cập nhật đơn hàng ${order.orderNo}`,
-          message: `Đơn hàng của bạn đã được cập nhật: ${status}`,
-          type: 'ORDER',
-          priority: 'MEDIUM',
-          channels: ['EMAIL', 'PUSH'],
-          data: {
-            orderId,
-            status,
-            reason,
-          },
-        });
+      // Send notification
+      await this.notificationService.sendNotification({
+        userId: order.userId || undefined,
+        title: `Cập nhật đơn hàng ${order.orderNo}`,
+        message: `Đơn hàng của bạn đã được cập nhật: ${status}`,
+        type: 'ORDER',
+        priority: 'MEDIUM',
+        channels: ['EMAIL', 'PUSH'],
+        data: {
+          orderId,
+          status,
+          reason,
+        },
+      });
 
       return {
         success: true,

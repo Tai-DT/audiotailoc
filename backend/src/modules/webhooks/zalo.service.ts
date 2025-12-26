@@ -5,7 +5,10 @@ import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ZaloService {
-  constructor(private readonly cfg: ConfigService, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly cfg: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   private get accessToken() {
     return this.cfg.get<string>('ZALO_OA_ACCESS_TOKEN') || '';
@@ -28,8 +31,8 @@ export class ZaloService {
         question: String(text),
         category: 'ZALO_SUPPORT',
         updatedAt: new Date(),
-        ...(userId && { users: { connect: { id: userId } } })
-      }
+        ...(userId && { users: { connect: { id: userId } } }),
+      },
     });
 
     return customerQuestion.id;
@@ -44,5 +47,3 @@ export class ZaloService {
     }).catch(() => undefined);
   }
 }
-
-

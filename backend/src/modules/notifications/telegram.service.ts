@@ -30,6 +30,7 @@ export class TelegramService {
   private readonly baseUrl: string;
   private readonly enabled: boolean;
   private readonly webhookSecret: string;
+  private readonly dashboardUrl: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -52,6 +53,7 @@ export class TelegramService {
       .map(id => id.trim())
       .filter(Boolean);
     this.webhookSecret = this.configService.get<string>('TELEGRAM_WEBHOOK_SECRET', '');
+    this.dashboardUrl = this.configService.get<string>('DASHBOARD_URL', '');
     this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
     this.enabled = !!this.botToken; // Only check token for enabling bot features
 
@@ -76,6 +78,13 @@ export class TelegramService {
       .replace(/'/g, '&#039;');
   }
 
+  private buildDashboardUrl(path: string): string {
+    const base = (this.dashboardUrl || '').replace(/\/+$/, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    if (!base) return normalizedPath;
+    return `${base}${normalizedPath}`;
+  }
+
   /**
    * Send a text message to Telegram with optional keyboard
    */
@@ -88,6 +97,11 @@ export class TelegramService {
     // Send to specific chat or all configured chats
     const targets = chatId ? [chatId] : this.chatIds;
 
+    if (!chatId && targets.length === 0) {
+      this.logger.warn('Telegram notification skipped: Missing TELEGRAM_CHAT_IDS');
+      return;
+    }
+
     const promises = targets.map(id => this.sendToChat(id, message, replyMarkup));
     await Promise.allSettled(promises);
   }
@@ -97,20 +111,24 @@ export class TelegramService {
    */
   async sendOrderNotification(order: OrderData): Promise<void> {
     const message = this.formatOrderMessage(order);
-    const replyMarkup = {
-      inline_keyboard: [
-        [
-          { text: '✅ Xác nhận', callback_data: `confirm_order:${order.id}` },
-          { text: '❌ Hủy đơn', callback_data: `cancel_order:${order.id}` },
-        ],
-        [
-          {
-            text: '📦 Xem chi tiết',
-            url: `${process.env.DASHBOARD_URL}/dashboard/orders/${order.id}`,
-          },
-        ],
+
+    const inlineKeyboard: any[] = [
+      [
+        { text: '✅ Xác nhận', callback_data: `confirm_order:${order.id}` },
+        { text: '❌ Hủy đơn', callback_data: `cancel_order:${order.id}` },
       ],
-    };
+    ];
+
+    if (this.dashboardUrl) {
+      inlineKeyboard.push([
+        {
+          text: '📦 Xem chi tiết',
+          url: this.buildDashboardUrl(`/dashboard/orders/${order.id}`),
+        },
+      ]);
+    }
+
+    const replyMarkup = { inline_keyboard: inlineKeyboard };
     await this.sendMessage(message, undefined, replyMarkup);
   }
 
@@ -146,7 +164,7 @@ export class TelegramService {
 🏷️ SKU: ${product.sku || 'N/A'}
 📊 Tồn kho: ${stock} (Thấp!)
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/inventory
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/inventory')}
     `.trim();
 
     await this.sendMessage(message);
@@ -182,7 +200,7 @@ ${stars} (${review.rating}/5)
 💬 "${this.escapeHtml(review.comment || review.content)}"
 
 ⏰ ${this.formatDate(review.createdAt)}
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/reviews
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/reviews')}
     `.trim();
 
     await this.sendMessage(message);
@@ -206,7 +224,7 @@ ${stars} (${review.rating}/5)
 💰 Chi phí ước tính: ${booking.estimatedCost ? this.formatMoney(booking.estimatedCost) : 'Chưa xác định'}
 📋 Trạng thái: ${this.translateBookingStatus(booking.status)}
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/bookings
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/bookings')}
     `.trim();
 
     await this.sendMessage(message);
@@ -235,7 +253,7 @@ Trạng thái: ${this.translateBookingStatus(oldStatus)} → ${this.translateBoo
 🔧 Dịch vụ: ${booking.serviceName}
 ⏰ ${this.formatDate(new Date())}
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/bookings
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/bookings')}
     `.trim();
 
     await this.sendMessage(message);
@@ -272,7 +290,7 @@ ${details}
 
 ⚠️ Cần nhập hàng ngay!
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/inventory
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/inventory')}
     `.trim();
 
     await this.sendMessage(message);
@@ -291,7 +309,7 @@ ${details}
 📝 Lý do: ${refund.reason || 'Không có'}
 
 ⏰ ${this.formatDate(refund.createdAt)}
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/payments
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/payments')}
     `.trim();
 
     await this.sendMessage(message);
@@ -311,7 +329,7 @@ ${details}
 📝 Nội dung: "${this.escapeHtml(messageContent)}"
 🆔 ID: <code>${conversationId}</code>
 
-🔗 Trả lời ngay: ${process.env.DASHBOARD_URL}/dashboard/messages?id=${conversationId}
+🔗 Trả lời ngay: ${this.buildDashboardUrl(`/dashboard/messages?id=${conversationId}`)}
 💡 Tip: Reply tin nhắn này hoặc dùng <code>/chat ${conversationId} [nội dung]</code> để trả lời nhanh.
     `.trim();
 
@@ -352,7 +370,7 @@ ${itemsText}${moreItems}
 📍 Địa chỉ: ${order.shippingAddress || 'N/A'}
 ⏰ Thời gian: ${this.formatDate(order.createdAt)}
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/orders
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/orders')}
     `.trim();
   }
 
@@ -382,7 +400,7 @@ Trạng thái: ${this.translateStatus(oldStatus)} → ${this.translateStatus(new
 💰 Tổng tiền: ${this.formatMoney(order.totalAmount)}
 ⏰ ${this.formatDate(new Date())}
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/orders
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/orders')}
     `.trim();
   }
 
@@ -407,7 +425,7 @@ Trạng thái: ${payment.status}
 💳 Phương thức: ${payment.provider}
 ⏰ ${this.formatDate(payment.createdAt)}
 
-🔗 Xem chi tiết: ${process.env.DASHBOARD_URL}/dashboard/payments
+🔗 Xem chi tiết: ${this.buildDashboardUrl('/dashboard/payments')}
     `.trim();
   }
 
@@ -700,7 +718,7 @@ Trạng thái: ${payment.status}
 📅 <b>Hôm nay:</b>
 🔧 Đặt lịch mới: ${bookings.bookingsToday}
 
-🔗 <a href="${process.env.DASHBOARD_URL}">Xem chi tiết Dashboard</a>
+🔗 <a href="${this.buildDashboardUrl('/')}">Xem chi tiết Dashboard</a>
       `.trim();
 
       await this.sendToChat(chatId, message);

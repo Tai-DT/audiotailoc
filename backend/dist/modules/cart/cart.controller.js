@@ -39,7 +39,11 @@ let CartController = class CartController {
     constructor(cartService) {
         this.cartService = cartService;
     }
-    async getCart(cartId, userId) {
+    async getCart(cartId, userId, req) {
+        if (req?.user) {
+            const authenticatedUserId = req.user.sub || req.user.id;
+            return this.cartService.getUserCart(authenticatedUserId);
+        }
         if (cartId) {
             return this.cartService.getGuestCart(cartId);
         }
@@ -49,10 +53,14 @@ let CartController = class CartController {
         return {
             items: [],
             total: 0,
-            message: 'No cart ID provided',
+            message: 'No identification provided',
         };
     }
-    async addToCart(addToCartDto, cartId, userId) {
+    async addToCart(addToCartDto, cartId, userId, req) {
+        if (req?.user) {
+            const authenticatedUserId = req.user.sub || req.user.id;
+            return this.cartService.addToUserCart(authenticatedUserId, addToCartDto.productId, addToCartDto.quantity);
+        }
         if (cartId) {
             return this.cartService.addToGuestCart(cartId, addToCartDto.productId, addToCartDto.quantity);
         }
@@ -61,7 +69,7 @@ let CartController = class CartController {
         }
         return {
             success: false,
-            message: 'No cart ID provided',
+            message: 'No identification provided',
         };
     }
     async createGuestCart() {
@@ -82,22 +90,28 @@ let CartController = class CartController {
     async clearGuestCart(cartId) {
         return this.cartService.clearGuestCart(cartId);
     }
-    async convertGuestCartToUserCart(cartId, userId) {
+    async convertGuestCartToUserCart(cartId, req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.convertGuestCartToUserCart(cartId, userId);
     }
-    async getUserCart(userId) {
+    async getUserCart(req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.getUserCart(userId);
     }
-    async addToUserCart(userId, addToCartDto) {
+    async addToUserCart(addToCartDto, req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.addToUserCart(userId, addToCartDto.productId, addToCartDto.quantity);
     }
-    async updateUserCartItem(userId, productId, updateCartItemDto) {
+    async updateUserCartItem(productId, updateCartItemDto, req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.updateUserCartItem(userId, productId, updateCartItemDto.quantity);
     }
-    async removeFromUserCart(userId, productId) {
+    async removeFromUserCart(productId, req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.removeFromUserCart(userId, productId);
     }
-    async clearUserCart(userId) {
+    async clearUserCart(req) {
+        const userId = req.user.sub || req.user.id;
         return this.cartService.clearUserCart(userId);
     }
 };
@@ -106,8 +120,9 @@ __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('cartId')),
     __param(1, (0, common_1.Query)('userId')),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "getCart", null);
 __decorate([
@@ -115,8 +130,9 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Query)('cartId')),
     __param(2, (0, common_1.Query)('userId')),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [AddToCartDto, String, String]),
+    __metadata("design:paramtypes", [AddToCartDto, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "addToCart", null);
 __decorate([
@@ -165,55 +181,56 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "clearGuestCart", null);
 __decorate([
-    (0, common_1.Post)('guest/:cartId/convert/:userId'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Post)('guest/:cartId/convert'),
     __param(0, (0, common_1.Param)('cartId')),
-    __param(1, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "convertGuestCartToUserCart", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)('user'),
-    __param(0, (0, common_1.Query)('userId')),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "getUserCart", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Post)('user/items'),
-    __param(0, (0, common_1.Query)('userId')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, AddToCartDto]),
+    __metadata("design:paramtypes", [AddToCartDto, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "addToUserCart", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Put)('user/items/:productId'),
-    __param(0, (0, common_1.Query)('userId')),
-    __param(1, (0, common_1.Param)('productId')),
-    __param(2, (0, common_1.Body)()),
+    __param(0, (0, common_1.Param)('productId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, UpdateCartItemDto]),
+    __metadata("design:paramtypes", [String, UpdateCartItemDto, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "updateUserCartItem", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Delete)('user/items/:productId'),
-    __param(0, (0, common_1.Query)('userId')),
-    __param(1, (0, common_1.Param)('productId')),
+    __param(0, (0, common_1.Param)('productId')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "removeFromUserCart", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Delete)('user/clear'),
-    __param(0, (0, common_1.Query)('userId')),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "clearUserCart", null);
 exports.CartController = CartController = __decorate([

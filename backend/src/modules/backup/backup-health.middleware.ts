@@ -46,7 +46,6 @@ export class BackupHealthMiddleware implements NestMiddleware {
       if (status.totalBackups === 0) {
         this.logger.error('No backups found in the system');
       }
-
     } catch (error) {
       this.logger.error('Failed to check backup health:', error);
     }

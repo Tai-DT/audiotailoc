@@ -1,9 +1,9 @@
 'use client';
 
-import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const themes = [
@@ -25,40 +25,24 @@ const themes = [
 ];
 
 export type ThemeSwitcherProps = {
-  value?: 'light' | 'dark' | 'system';
-  onChange?: (theme: 'light' | 'dark' | 'system') => void;
-  defaultValue?: 'light' | 'dark' | 'system';
   className?: string;
 };
 
-export const ThemeSwitcher = ({
-  value,
-  onChange,
-  defaultValue = 'system',
-  className,
-}: ThemeSwitcherProps) => {
-  const [theme, setTheme] = useControllableState({
-    defaultProp: defaultValue,
-    prop: value,
-    onChange,
-  });
+export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-
-  const handleThemeClick = useCallback(
-    (themeKey: 'light' | 'dark' | 'system') => {
-      setTheme(themeKey);
-    },
-    [setTheme]
-  );
 
   // Prevent hydration mismatch
   useEffect(() => {
-    setMounted(true);
+    const timeout = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timeout);
   }, []);
 
   if (!mounted) {
     return null;
   }
+
+  const activeTheme = (theme as 'light' | 'dark' | 'system') ?? 'system';
 
   return (
     <div
@@ -68,29 +52,38 @@ export const ThemeSwitcher = ({
       )}
     >
       {themes.map(({ key, icon: Icon, label }) => {
-        const isActive = theme === key;
+        const isActive = activeTheme === key;
 
-        return (
-          <button
-            aria-label={label}
-            className="relative h-6 w-6 rounded-full"
-            key={key}
-            onClick={() => handleThemeClick(key as 'light' | 'dark' | 'system')}
-            type="button"
-          >
-            {isActive && (
+        if (isActive) {
+          return (
+            <button
+              aria-label={label}
+              aria-pressed="true"
+              className="relative h-6 w-6 rounded-full"
+              key={key}
+              onClick={() => setTheme(key as 'light' | 'dark' | 'system')}
+              type="button"
+            >
               <motion.div
                 className="absolute inset-0 rounded-full bg-secondary"
                 layoutId="activeTheme"
                 transition={{ type: 'spring', duration: 0.5 }}
               />
-            )}
-            <Icon
-              className={cn(
-                'relative z-10 m-auto h-4 w-4',
-                isActive ? 'text-foreground' : 'text-muted-foreground'
-              )}
-            />
+              <Icon className={cn('relative z-10 m-auto h-4 w-4', 'text-foreground')} />
+            </button>
+          );
+        }
+
+        return (
+          <button
+            aria-label={label}
+            aria-pressed="false"
+            className="relative h-6 w-6 rounded-full"
+            key={key}
+            onClick={() => setTheme(key as 'light' | 'dark' | 'system')}
+            type="button"
+          >
+            <Icon className={cn('relative z-10 m-auto h-4 w-4', 'text-muted-foreground')} />
           </button>
         );
       })}

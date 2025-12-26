@@ -1,314 +1,265 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import {
-  Search,
-  Calendar,
-  Tag,
-  Eye,
-  ThumbsUp,
-  MessageCircle,
-  BookOpen,
-  Filter,
-  ChevronRight,
-} from 'lucide-react';
-
+import Link from 'next/link';
+import { Search, Calendar, Eye, Heart, ArrowRight, BookOpen } from 'lucide-react';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useBlogArticles, useBlogCategories } from '@/lib/hooks/use-api';
-import type { BlogArticle, BlogCategory } from '@/lib/types';
-
-const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '');
-
-const getCategoryColor = (category: BlogCategory | undefined) => {
-  const slug = category?.slug;
-  const colors: Record<string, string> = {
-    'huong-dan-mua-hang': 'bg-blue-100 text-blue-800',
-    'chinh-sach': 'bg-green-100 text-green-800',
-    'ky-thuat': 'bg-purple-100 text-purple-800',
-    'thanh-toan': 'bg-orange-100 text-orange-800',
-    'giao-hang': 'bg-cyan-100 text-cyan-800',
-    'bao-hanh': 'bg-red-100 text-red-800',
-  };
-  if (slug && colors[slug]) {
-    return colors[slug];
-  }
-  return 'bg-gray-100 text-gray-800';
-};
+import { Skeleton } from '@/components/ui/skeleton';
+import { useBlogArticles, useBlogCategories } from '@/lib/hooks/use-blog';
+import { formatDate } from '@/lib/utils';
 
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 9;
 
-  const filters = useMemo(
-    () => ({
-      published: true,
-      page: 1,
-      limit: 12,
-      search: searchQuery.trim() ? searchQuery.trim() : undefined,
-      categoryId: selectedCategory || undefined,
-    }),
-    [searchQuery, selectedCategory],
-  );
+  const { data: articlesData, isLoading: articlesLoading } = useBlogArticles({
+    page: currentPage,
+    limit,
+    categoryId: selectedCategory || undefined,
+    search: searchQuery || undefined,
+    published: true,
+  });
 
-  const { data: articlesResponse, isLoading: articlesLoading } = useBlogArticles(filters);
-  const { data: categoriesResponse } = useBlogCategories({ published: true, limit: 100 });
+  const { data: categories, isLoading: categoriesLoading } = useBlogCategories({
+    published: true,
+  });
 
-  const articles = articlesResponse?.data ?? [];
-  const pagination = articlesResponse?.pagination;
-  const categories = categoriesResponse?.data ?? [];
+  const articles = articlesData?.data || [];
+  const pagination = articlesData?.pagination;
 
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentPage(1);
   };
+
+  const handleCategoryFilter = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
+  };
+
+  const displayArticles = articles;
+  const displayCategories = categories || [];
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-4xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Blog & Kiến thức
-              </h1>
-              <p className="text-xl text-muted-foreground mb-8">
-                Khám phá kiến thức âm thanh, hướng dẫn sử dụng,
-                và những thông tin hữu ích từ Audio Tài Lộc.
-              </p>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)),transparent_50%)] blur-3xl"></div>
+        </div>
 
-              {/* Search Bar */}
-              <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-                  <Input
-                    type="text"
-                    placeholder="Tìm kiếm bài viết..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-3 text-lg"
-                  />
-                </div>
-              </form>
+        <div className="container mx-auto px-4 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <BookOpen className="h-4 w-4" />
+              Blog Audio Tài Lộc
             </div>
-          </div>
-        </section>
 
-        {/* Content */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-4 gap-8">
-              {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Filter className="h-5 w-5" />
-                      Danh mục
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      variant={selectedCategory === null ? 'default' : 'ghost'}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedCategory(null)}
-                    >
-                      Tất cả bài viết
-                    </Button>
-                    {categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        variant={selectedCategory === category.id ? 'default' : 'ghost'}
-                        className="w-full justify-start"
-                        onClick={() => setSelectedCategory(category.id)}
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
-                  </CardContent>
-                </Card>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Kiến thức âm thanh
+            </h1>
 
-                {/* Highlighted tags from SEO keywords */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Tag className="h-5 w-5" />
-                      Chủ đề nổi bật
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {(articles
-                        .flatMap((article) => (article.seoKeywords ? article.seoKeywords.split(',') : []))
-                        .map((keyword) => keyword.trim())
-                        .filter((keyword, index, array) => keyword && array.indexOf(keyword) === index)
-                        .slice(0, 8)
-                      ).map((keyword) => (
-                        <Badge key={keyword} variant="secondary" className="capitalize">
-                          {keyword}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-8">
+              Khám phá những bài viết hữu ích về âm thanh, karaoke và thiết bị chuyên nghiệp
+            </p>
 
-              {/* Main Content */}
-              <div className="lg:col-span-3">
-                {articlesLoading ? (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {[...Array(4)].map((_, index) => (
-                      <Card key={index} className="animate-pulse overflow-hidden flex flex-col h-full">
-                        <div className="h-48 bg-muted flex-shrink-0 flex items-center justify-center">
-                          <BookOpen className="h-12 w-12 text-muted-foreground/50" />
-                        </div>
-                        <CardHeader>
-                          <div className="h-6 bg-muted rounded mb-2 w-20"></div>
-                          <div className="h-6 bg-muted rounded mb-2"></div>
-                          <div className="h-4 bg-muted rounded w-3/4"></div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="h-20 bg-muted rounded mb-4"></div>
-                          <div className="flex gap-4">
-                            <div className="h-4 bg-muted rounded w-20"></div>
-                            <div className="h-4 bg-muted rounded w-16"></div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : articles.length > 0 ? (
-                  <>
-                    <div className="mb-6">
-                      <h2 className="text-2xl font-bold mb-2">
-                        {searchQuery.trim() ? `Kết quả cho "${searchQuery.trim()}"` : 'Bài viết mới nhất'}
-                      </h2>
-                      <p className="text-muted-foreground">
-                        {pagination?.total ?? articles.length} bài viết
-                      </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {articles.map((article: BlogArticle) => {
-                        const publishedDate = article.publishedAt ?? article.createdAt;
-                        const summary = article.excerpt || stripHtml(article.content).substring(0, 160);
-
-                        return (
-                          <Card key={article.id} className="hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full">
-                            <div className="relative h-48 w-full flex-shrink-0 bg-muted">
-                              {article.imageUrl ? (
-                                <Image
-                                  src={article.imageUrl}
-                                  alt={article.title}
-                                  fill
-                                  className="object-cover transition-transform hover:scale-105"
-                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full text-muted-foreground">
-                                  <BookOpen className="h-12 w-12" />
-                                </div>
-                              )}
-                            </div>
-                            <CardHeader className="flex-grow">
-                              <div className="flex items-start justify-between mb-2">
-                                <Badge className={getCategoryColor(article.category)}>
-                                  {article.category?.name || 'Chưa phân loại'}
-                                </Badge>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span className="inline-flex items-center gap-1">
-                                    <Eye className="h-3 w-3" />
-                                    {article.viewCount}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1">
-                                    <MessageCircle className="h-3 w-3" />
-                                    {article.commentCount}
-                                  </span>
-                                </div>
-                              </div>
-                              <CardTitle className="text-xl line-clamp-2 hover:text-primary cursor-pointer">
-                                <Link href={`/blog/${article.slug}`}>
-                                  {article.title}
-                                </Link>
-                              </CardTitle>
-                              <CardDescription className="line-clamp-3">
-                                {summary}...
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent className="mt-auto">
-                              <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {format(new Date(publishedDate), 'dd/MM/yyyy', { locale: vi })}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <ThumbsUp className="h-3 w-3" />
-                                  {article.likeCount}
-                                </div>
-                              </div>
-
-                              <Button variant="outline" className="w-full" asChild>
-                                <Link href={`/blog/${article.slug}`}>
-                                  Đọc thêm
-                                  <ChevronRight className="ml-2 h-4 w-4" />
-                                </Link>
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-12">
-                    <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">
-                      {searchQuery ? 'Không tìm thấy bài viết nào' : 'Chưa có bài viết nào'}
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      {searchQuery
-                        ? 'Hãy thử tìm kiếm với từ khóa khác hoặc đổi bộ lọc.'
-                        : 'Chúng tôi đang chuẩn bị nội dung hữu ích cho bạn. Hãy quay lại sau!'}
-                    </p>
-                    {searchQuery && (
-                      <Button onClick={() => setSearchQuery('')}>
-                        Xem tất cả bài viết
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Newsletter Signup */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-2xl mx-auto">
-              <h2 className="text-3xl font-bold mb-4">Theo dõi tin tức mới nhất</h2>
-              <p className="text-muted-foreground mb-8">
-                Đăng ký nhận bản tin để không bỏ lỡ những bài viết hữu ích
-                và ưu đãi đặc biệt từ Audio Tài Lộc.
-              </p>
-              <div className="flex gap-4 max-w-md mx-auto">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="max-w-xl mx-auto">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  type="email"
-                  placeholder="Nhập email của bạn"
-                  className="flex-1"
+                  placeholder="Tìm kiếm bài viết..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-12 text-base"
                 />
-                <Button>Đăng ký</Button>
+                <Button type="submit" className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  Tìm kiếm
+                </Button>
               </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="py-8 border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center gap-3 justify-center">
+            <Button
+              variant={selectedCategory === null ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleCategoryFilter(null)}
+            >
+              Tất cả
+            </Button>
+            {categoriesLoading ? (
+              <>
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-9 w-28" />
+              </>
+            ) : (
+              displayCategories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleCategoryFilter(category.id)}
+                >
+                  {category.name}
+                  {category._count?.articles && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {category._count.articles}
+                    </Badge>
+                  )}
+                </Button>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Articles Grid */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          {articlesLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <CardContent className="p-6">
+                    <Skeleton className="h-6 w-3/4 mb-3" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : displayArticles.length > 0 ? (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {displayArticles.map((article) => (
+                  <Link key={article.id} href={`/blog/${article.slug}`}>
+                    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 h-full">
+                      <div className="relative h-48 overflow-hidden bg-muted">
+                        <Image
+                          src={article.imageUrl || '/placeholder-product.svg'}
+                          alt={article.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {article.category && (
+                          <Badge className="absolute top-3 left-3">
+                            {article.category.name}
+                          </Badge>
+                        )}
+                      </div>
+                      <CardContent className="p-6">
+                        <CardTitle className="text-lg mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                          {article.title}
+                        </CardTitle>
+                        {article.excerpt && (
+                          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                            {article.excerpt}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              {article.viewCount}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" />
+                              {article.likeCount}
+                            </span>
+                          </div>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {article.publishedAt ? formatDate(article.publishedAt) : ''}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-12">
+                  <Button
+                    variant="outline"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                  >
+                    Trước
+                  </Button>
+                  {[...Array(pagination.totalPages)].map((_, i) => (
+                    <Button
+                      key={i}
+                      variant={currentPage === i + 1 ? 'default' : 'outline'}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    disabled={currentPage === pagination.totalPages}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                  >
+                    Sau
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-16">
+              <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Không tìm thấy bài viết</h3>
+              <p className="text-muted-foreground mb-6">
+                Thử tìm kiếm với từ khóa khác hoặc xem tất cả bài viết
+              </p>
+              <Button onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}>
+                Xem tất cả bài viết
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">Cần tư vấn thêm?</h2>
+            <p className="text-muted-foreground mb-8">
+              Liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh phù hợp
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link href="/contact">
+                <Button size="lg">
+                  Liên hệ ngay
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/products">
+                <Button size="lg" variant="outline">
+                  Xem sản phẩm
+                </Button>
+              </Link>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
     </div>
   );
 }

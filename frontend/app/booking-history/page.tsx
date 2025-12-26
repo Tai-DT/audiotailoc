@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
@@ -13,7 +14,9 @@ import {
   AlertCircle,
   Eye,
   Search,
-  Download
+  Download,
+  Loader2,
+  Phone as PhoneIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,85 +26,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-// Mock data - in real app this would come from API
-interface BookingRecord {
-  id: string;
-  serviceId: string;
-  serviceName: string;
-  serviceImage?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  scheduledAt: string;
-  duration: number;
-  location: string;
-  notes?: string;
-  estimatedCosts?: number;
-  actualCosts?: number;
-  technicianName?: string;
-  technicianPhone?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const mockBookings: BookingRecord[] = [
-  {
-    id: '1',
-    serviceId: 'service-1',
-    serviceName: 'Thiết lập hệ thống âm thanh gia đình',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'COMPLETED',
-    scheduledAt: '2024-01-20T14:00:00Z',
-    duration: 120,
-    location: '123 Đường ABC, Quận 1, TP.HCM',
-    notes: 'Khách hàng yêu cầu kiểm tra toàn bộ hệ thống loa và micro',
-    estimatedCosts: 1500000,
-    actualCosts: 1450000,
-    technicianName: 'Nguyễn Văn A',
-    technicianPhone: '0987654321',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-20T16:00:00Z',
-  },
-  {
-    id: '2',
-    serviceId: 'service-2',
-    serviceName: 'Sửa chữa loa Bluetooth',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'CONFIRMED',
-    scheduledAt: '2024-01-25T09:00:00Z',
-    duration: 60,
-    location: '456 Đường XYZ, Quận 2, TP.HCM',
-    notes: 'Loa không kết nối được với điện thoại',
-    estimatedCosts: 300000,
-    technicianName: 'Trần Thị B',
-    technicianPhone: '0987654322',
-    createdAt: '2024-01-18T14:20:00Z',
-    updatedAt: '2024-01-18T14:30:00Z',
-  },
-  {
-    id: '3',
-    serviceId: 'service-3',
-    serviceName: 'Lắp đặt micro karaoke',
-    serviceImage: '/placeholder-service.jpg',
-    status: 'PENDING',
-    scheduledAt: '2024-01-30T16:00:00Z',
-    duration: 90,
-    location: '789 Đường DEF, Quận 3, TP.HCM',
-    notes: 'Cần lắp đặt hệ thống micro cho phòng karaoke gia đình',
-    estimatedCosts: 800000,
-    createdAt: '2024-01-22T11:15:00Z',
-    updatedAt: '2024-01-22T11:15:00Z',
-  }
-];
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useMyBookings } from '@/lib/hooks/use-bookings';
+import { ServiceBooking } from '@/lib/types';
 
 export default function BookingHistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<ServiceBooking | null>(null);
 
-  const filteredBookings = mockBookings.filter(booking => {
-    const matchesSearch = booking.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         booking.location.toLowerCase().includes(searchQuery.toLowerCase());
+  const { data: bookings, isLoading } = useMyBookings();
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Handle error state gracefully? For now just showing empty if error or empty
+  const bookingData = bookings || [];
+
+  const filteredBookings = bookingData.filter(booking => {
+    const serviceName = booking.service?.name || 'Dịch vụ';
+    const _location = ''; // Location is not strictly in ServiceBooking type on frontend yet
+    // Backend ServiceBooking has 'address' field? Let's check types.ts again. 
+    // It seems ServiceBooking in types.ts DOES NOT have address. 
+    // But checking Prisma schema: model service_bookings has 'address', 'coordinates'.
+    // We should probably add address to ServiceBooking type too, but for now let's safely handle missing location.
+
+    // Quick fix: match against service Name
+    const matchesSearch = serviceName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
 
     return matchesSearch && matchesStatus;
@@ -110,7 +66,7 @@ export default function BookingHistoryPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return <Badge className="bg-green-500">Hoàn thành</Badge>;
+        return <Badge className="bg-success">Hoàn thành</Badge>;
       case 'CONFIRMED':
         return <Badge className="bg-blue-500">Đã xác nhận</Badge>;
       case 'IN_PROGRESS':
@@ -127,17 +83,17 @@ export default function BookingHistoryPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'CONFIRMED':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
+        return <CheckCircle className="h-4 w-4 text-primary" />;
       case 'IN_PROGRESS':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       case 'PENDING':
-        return <AlertCircle className="h-4 w-4 text-orange-500" />;
+        return <AlertCircle className="h-4 w-4 text-warning" />;
       case 'CANCELLED':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -149,7 +105,7 @@ export default function BookingHistoryPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Lịch sử đặt lịch</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Theo dõi và quản lý tất cả lịch hẹn dịch vụ của bạn
         </p>
       </div>
@@ -160,10 +116,10 @@ export default function BookingHistoryPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-100 rounded-full">
-                <Calendar className="h-6 w-6 text-blue-600" />
+                <Calendar className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Tổng lịch hẹn</p>
+                <p className="text-sm font-medium text-muted-foreground">Tổng lịch hẹn</p>
                 <p className="text-2xl font-bold">{totalBookings}</p>
               </div>
             </div>
@@ -174,10 +130,10 @@ export default function BookingHistoryPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-100 rounded-full">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+                <CheckCircle className="h-6 w-6 text-success" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Đã hoàn thành</p>
+                <p className="text-sm font-medium text-muted-foreground">Đã hoàn thành</p>
                 <p className="text-2xl font-bold">{completedBookings}</p>
               </div>
             </div>
@@ -188,10 +144,10 @@ export default function BookingHistoryPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-orange-100 rounded-full">
-                <AlertCircle className="h-6 w-6 text-orange-600" />
+                <AlertCircle className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Chờ xử lý</p>
+                <p className="text-sm font-medium text-muted-foreground">Chờ xử lý</p>
                 <p className="text-2xl font-bold">
                   {filteredBookings.filter(b => ['PENDING', 'CONFIRMED'].includes(b.status)).length}
                 </p>
@@ -207,9 +163,9 @@ export default function BookingHistoryPage() {
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Tìm kiếm theo tên dịch vụ hoặc địa điểm..."
+                  placeholder="Tìm kiếm theo tên dịch vụ..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -262,30 +218,34 @@ export default function BookingHistoryPage() {
                   <TableRow key={booking.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                        <div className="w-10 h-10 bg-muted rounded-lg flex-shrink-0 relative overflow-hidden">
+                          {booking.service?.images && booking.service.images.length > 0 && (
+                            <Image src={booking.service.images[0]} alt="" fill className="object-cover" />
+                          )}
+                        </div>
                         <div>
-                          <p className="font-medium line-clamp-1">{booking.serviceName}</p>
-                          <p className="text-sm text-gray-600">{booking.duration} phút</p>
+                          <p className="font-medium line-clamp-1">{booking.service?.name}</p>
+                          <p className="text-sm text-muted-foreground">{booking.service?.duration} phút</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="font-medium">
-                            {format(new Date(booking.scheduledAt), 'dd/MM/yyyy', { locale: vi })}
+                            {booking.scheduledAt ? format(new Date(booking.scheduledAt), 'dd/MM/yyyy', { locale: vi }) : 'Chưa xếp lịch'}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {format(new Date(booking.scheduledAt), 'HH:mm', { locale: vi })}
+                          <p className="text-sm text-muted-foreground">
+                            {booking.scheduledAt ? format(new Date(booking.scheduledAt), 'HH:mm', { locale: vi }) : '--:--'}
                           </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <p className="text-sm line-clamp-2">{booking.location}</p>
+                        <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <p className="text-sm line-clamp-2">{booking.address || 'N/A'}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -299,11 +259,11 @@ export default function BookingHistoryPage() {
                         {booking.actualCosts ? (
                           <p className="font-medium">{booking.actualCosts.toLocaleString('vi-VN')}₫</p>
                         ) : booking.estimatedCosts ? (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             Dự kiến: {booking.estimatedCosts.toLocaleString('vi-VN')}₫
                           </p>
                         ) : (
-                          <p className="text-sm text-gray-600">Chưa cập nhật</p>
+                          <p className="text-sm text-muted-foreground">Chưa cập nhật</p>
                         )}
                       </div>
                     </TableCell>
@@ -325,9 +285,13 @@ export default function BookingHistoryPage() {
                           {selectedBooking && (
                             <div className="space-y-6">
                               <div className="flex items-start gap-4">
-                                <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                                <div className="w-16 h-16 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                                  {selectedBooking.service?.images && selectedBooking.service.images.length > 0 && (
+                                    <Image src={selectedBooking.service.images[0]} alt="" fill className="object-cover" />
+                                  )}
+                                </div>
                                 <div className="flex-1">
-                                  <h3 className="font-semibold text-lg">{selectedBooking.serviceName}</h3>
+                                  <h3 className="font-semibold text-lg">{selectedBooking.service?.name}</h3>
                                   <div className="flex items-center gap-2 mt-2">
                                     {getStatusIcon(selectedBooking.status)}
                                     {getStatusBadge(selectedBooking.status)}
@@ -340,35 +304,45 @@ export default function BookingHistoryPage() {
                               <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                   <div>
-                                    <label className="text-sm font-medium text-gray-600">Thời gian hẹn</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Thời gian hẹn</label>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <Calendar className="h-4 w-4 text-gray-400" />
+                                      <Calendar className="h-4 w-4 text-muted-foreground" />
                                       <span className="font-medium">
-                                        {format(new Date(selectedBooking.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                        {selectedBooking.scheduledAt ? format(new Date(selectedBooking.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'Chưa xác định'}
                                       </span>
                                     </div>
                                   </div>
 
                                   <div>
-                                    <label className="text-sm font-medium text-gray-600">Thời lượng</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Thời lượng</label>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <Clock className="h-4 w-4 text-gray-400" />
-                                      <span>{selectedBooking.duration} phút</span>
+                                      <Clock className="h-4 w-4 text-muted-foreground" />
+                                      <span>{selectedBooking.service?.duration || 60} phút</span>
                                     </div>
                                   </div>
 
                                   <div>
-                                    <label className="text-sm font-medium text-gray-600">Địa điểm</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Địa điểm</label>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <MapPin className="h-4 w-4 text-gray-400" />
-                                      <span className="text-sm">{selectedBooking.location}</span>
+                                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                                      <span className="text-sm">{selectedBooking.address || 'Tại nhà'}</span>
                                     </div>
                                   </div>
+
+                                  {selectedBooking.phoneNumber && (
+                                    <div>
+                                      <label className="text-sm font-medium text-muted-foreground">Số điện thoại liên hệ</label>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <PhoneIcon className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-sm">{selectedBooking.phoneNumber}</span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="space-y-4">
                                   <div>
-                                    <label className="text-sm font-medium text-gray-600">Chi phí dự kiến</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Chi phí dự kiến</label>
                                     <p className="font-medium text-lg mt-1">
                                       {selectedBooking.estimatedCosts?.toLocaleString('vi-VN')}₫
                                     </p>
@@ -376,26 +350,27 @@ export default function BookingHistoryPage() {
 
                                   {selectedBooking.actualCosts && (
                                     <div>
-                                      <label className="text-sm font-medium text-gray-600">Chi phí thực tế</label>
-                                      <p className="font-medium text-lg mt-1 text-green-600">
+                                      <label className="text-sm font-medium text-muted-foreground">Chi phí thực tế</label>
+                                      <p className="font-medium text-lg mt-1 text-success">
                                         {selectedBooking.actualCosts.toLocaleString('vi-VN')}₫
                                       </p>
                                     </div>
                                   )}
 
-                                  {selectedBooking.technicianName && (
+                                  {selectedBooking.technician && (
                                     <div>
-                                      <label className="text-sm font-medium text-gray-600">Kỹ thuật viên</label>
+                                      <label className="text-sm font-medium text-muted-foreground">Kỹ thuật viên</label>
                                       <div className="flex items-center gap-2 mt-1">
                                         <Avatar className="h-8 w-8">
+                                          <AvatarImage src={selectedBooking.technician.avatarUrl} />
                                           <AvatarFallback>
                                             <User className="h-4 w-4" />
                                           </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                          <p className="font-medium">{selectedBooking.technicianName}</p>
-                                          {selectedBooking.technicianPhone && (
-                                            <p className="text-sm text-gray-600">{selectedBooking.technicianPhone}</p>
+                                          <p className="font-medium">{selectedBooking.technician.name}</p>
+                                          {selectedBooking.technician.phone && (
+                                            <p className="text-sm text-muted-foreground">{selectedBooking.technician.phone}</p>
                                           )}
                                         </div>
                                       </div>
@@ -406,14 +381,14 @@ export default function BookingHistoryPage() {
 
                               {selectedBooking.notes && (
                                 <div>
-                                  <label className="text-sm font-medium text-gray-600">Ghi chú</label>
+                                  <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
                                   <p className="mt-1 p-3 bg-gray-50 rounded-md">{selectedBooking.notes}</p>
                                 </div>
                               )}
 
                               <Separator />
 
-                              <div className="flex justify-between items-center text-sm text-gray-600">
+                              <div className="flex justify-between items-center text-sm text-muted-foreground">
                                 <span>Ngày tạo: {format(new Date(selectedBooking.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                                 <span>Cập nhật: {format(new Date(selectedBooking.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                               </div>
@@ -430,9 +405,9 @@ export default function BookingHistoryPage() {
 
           {filteredBookings.length === 0 && (
             <div className="text-center py-12">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Không có lịch hẹn nào</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Bạn chưa có lịch hẹn dịch vụ nào.
               </p>
             </div>

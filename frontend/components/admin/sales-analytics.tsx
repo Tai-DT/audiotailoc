@@ -88,13 +88,13 @@ export function SalesAnalytics() {
               <div className="flex items-center justify-center gap-1 mb-1">
                 <p className="text-sm text-muted-foreground">Tăng trưởng</p>
                 {(analytics?.salesGrowth || 0) >= 0 ? (
-                  <TrendingUp className="h-3 w-3 text-green-600" />
+                  <TrendingUp className="h-3 w-3 text-success" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-red-600" />
+                  <TrendingDown className="h-3 w-3 text-destructive" />
                 )}
               </div>
               <p className={`text-2xl font-bold ${
-                (analytics?.salesGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                (analytics?.salesGrowth || 0) >= 0 ? 'text-success' : 'text-destructive'
               }`}>
                 {analytics?.salesGrowth || 0}%
               </p>

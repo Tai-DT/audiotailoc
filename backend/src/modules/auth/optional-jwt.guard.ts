@@ -1,27 +1,44 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
 
 /**
  * Optional JWT guard: allows unauthenticated requests to proceed,
  * but attaches req.user when a valid Bearer token is present.
  */
 @Injectable()
-export class OptionalJwtGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext) {
+export class OptionalJwtGuard implements CanActivate {
+  private readonly logger = new Logger(OptionalJwtGuard.name);
+
+  constructor(private readonly config: ConfigService) {}
+
+  canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authHeader = req.headers['authorization'] as string | undefined;
-    // No token -> allow through without triggering passport
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const header = req.headers['authorization'] as string | undefined;
+
+    // No token -> allow through.
+    if (!header || !header.startsWith('Bearer ')) {
+      (req as any).user = null;
       return true;
     }
-    return super.canActivate(context) as any;
-  }
 
-  handleRequest(err: unknown, user: any) {
-    if (err) {
-      // If token invalid, treat as unauthenticated instead of throwing
-      return null;
+    const token = header.slice(7);
+    const secret = this.config.get<string>('JWT_ACCESS_SECRET');
+    if (!secret) {
+      // Misconfig should not block public/optional endpoints.
+      this.logger.error('JWT_ACCESS_SECRET is not configured');
+      (req as any).user = null;
+      return true;
     }
-    return user || null;
+
+    try {
+      const payload = jwt.verify(token, secret);
+      (req as any).user = payload;
+    } catch (err) {
+      // Invalid/expired token: treat as unauthenticated.
+      (req as any).user = null;
+    }
+
+    return true;
   }
 }

@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import {
   Package,
@@ -27,7 +33,8 @@ import {
   XCircle,
   Activity,
   CreditCard,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -132,12 +139,20 @@ interface DashboardStats {
   }
 }
 
+const PERIOD_CONFIG = {
+  today: { label: "Hôm nay", short: "Today", days: 1 },
+  week: { label: "7 ngày", short: "7d", days: 7 },
+  month: { label: "30 ngày", short: "30d", days: 30 },
+} as const
+
+type PeriodKey = keyof typeof PERIOD_CONFIG
+
 function DashboardPage() {
-  const { user, token } = useAuth()
+  const { token } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState("today")
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>("today")
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -179,6 +194,7 @@ function DashboardPage() {
       // Calculate stats
       const now = new Date()
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      const days = PERIOD_CONFIG[selectedPeriod].days
 
       // Revenue calculation
       const totalRevenue = orders.reduce((sum: number, order: Order) => 
@@ -193,9 +209,9 @@ function DashboardPage() {
         : 100
 
       // Fetch real revenue chart data from analytics API
-      let revenueChart = Array.from({ length: 7 }, (_, i) => {
+      let revenueChart = Array.from({ length: days }, (_, i) => {
         const date = new Date()
-        date.setDate(date.getDate() - (6 - i))
+        date.setDate(date.getDate() - ((days - 1) - i))
         return {
           date: date.toLocaleDateString('vi-VN', { weekday: 'short' }),
           value: 0
@@ -203,7 +219,7 @@ function DashboardPage() {
       })
 
       try {
-        const revenueChartRes = await apiClient.getRevenueChart(7)
+        const revenueChartRes = await apiClient.getRevenueChart(days)
         const chartData = (revenueChartRes.data as { dates?: string[], values?: number[] })
         if (chartData?.dates && chartData?.values && Array.isArray(chartData.values)) {
           revenueChart = chartData.dates.map((date: string, i: number) => ({
@@ -337,7 +353,7 @@ function DashboardPage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [token])
+  }, [selectedPeriod, token])
 
   useEffect(() => {
     fetchDashboardData()
@@ -348,6 +364,84 @@ function DashboardPage() {
       style: 'currency',
       currency: 'VND'
     }).format(value)
+  }
+
+  const exportDashboardReport = () => {
+    if (!stats) {
+      toast.error("Chưa có dữ liệu để xuất báo cáo")
+      return
+    }
+
+    const escapeCsv = (value: string) => {
+      const needsQuotes = /[",\n\r]/.test(value)
+      const escaped = value.replaceAll('"', '""')
+      return needsQuotes ? `"${escaped}"` : escaped
+    }
+
+    const now = new Date()
+    const datePart = now.toISOString().slice(0, 10)
+    const rows: string[][] = []
+
+    rows.push(["Audio Tài Lộc - Dashboard Report"])
+    rows.push(["Period", PERIOD_CONFIG[selectedPeriod].label])
+    rows.push(["Generated At", now.toISOString()])
+    rows.push([])
+
+    rows.push(["Metric", "Value"])
+    rows.push(["Doanh thu", formatCurrency(stats.revenue.total)])
+    rows.push(["Tăng trưởng doanh thu", `${stats.revenue.growth.toFixed(1)}%`])
+    rows.push(["Tổng đơn hàng", stats.orders.total.toString()])
+    rows.push(["Đơn hàng chờ xử lý", stats.orders.pending.toString()])
+    rows.push(["Đơn hàng hoàn thành", stats.orders.completed.toString()])
+    rows.push(["Tăng trưởng đơn hàng", `${stats.orders.growth.toFixed(1)}%`])
+    rows.push(["Tổng khách hàng", stats.customers.total.toString()])
+    rows.push(["Khách hàng mới", stats.customers.new.toString()])
+    rows.push(["Tăng trưởng khách hàng", `${stats.customers.growth.toFixed(1)}%`])
+    rows.push(["Tổng sản phẩm", stats.products.total.toString()])
+    rows.push(["Sản phẩm hết hàng", stats.products.outOfStock.toString()])
+    rows.push(["Sản phẩm sắp hết", stats.products.lowStock.toString()])
+    rows.push(["Tổng dịch vụ", stats.services.total.toString()])
+    rows.push(["Dịch vụ đang hoạt động", stats.services.active.toString()])
+    rows.push(["Lượt đặt dịch vụ", stats.services.bookings.toString()])
+
+    rows.push([])
+    rows.push(["Revenue Chart"])
+    rows.push(["Date", "Value"])
+    stats.revenue.chart.forEach(point => rows.push([point.date, point.value.toString()]))
+
+    rows.push([])
+    rows.push(["Recent Orders"])
+    rows.push(["Order ID", "Customer", "Amount", "Status", "Created At"])
+    stats.orders.recent.forEach(order => {
+      rows.push([
+        order.id,
+        order.customer,
+        formatCurrency(order.amount),
+        order.status,
+        order.createdAtFormatted || order.createdAt,
+      ])
+    })
+
+    rows.push([])
+    rows.push(["Top Selling Products"])
+    rows.push(["Product", "Sales", "Revenue", "Stock"])
+    stats.products.topSelling.forEach(p => {
+      rows.push([p.name, p.sales.toString(), formatCurrency(p.revenue), p.stock.toString()])
+    })
+
+    const csv = rows.map(r => r.map(cell => escapeCsv(cell ?? "")).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `dashboard-report-${selectedPeriod}-${datePart}.csv`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+
+    toast.success("Đã xuất báo cáo")
   }
 
   const getStatusBadge = (status: string) => {
@@ -371,13 +465,9 @@ function DashboardPage() {
 
   if (loading && !stats) {
     return (
-      <div className="space-y-6 animate-in fade-in-50 duration-500">
+      <div className="space-y-4 animate-in fade-in-50 duration-500">
         {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-9 w-64" />
-            <Skeleton className="h-5 w-96" />
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
           <div className="flex gap-2">
             <Skeleton className="h-10 w-24" />
             <Skeleton className="h-10 w-24" />
@@ -386,9 +476,9 @@ function DashboardPage() {
         </div>
 
         {/* Stats Cards Skeleton */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="rounded-2xl">
+            <Card key={i} className="rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-8 w-8 rounded-xl" />
@@ -402,7 +492,7 @@ function DashboardPage() {
         </div>
 
         {/* Chart Skeleton */}
-        <Card className="rounded-2xl">
+        <Card className="rounded-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-2">
@@ -417,16 +507,16 @@ function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-[300px] w-full rounded-lg" />
+            <Skeleton className="h-[260px] w-full rounded-lg" />
           </CardContent>
         </Card>
 
         {/* Quick Actions Skeleton */}
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="rounded-2xl">
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Skeleton className="h-12 w-12 rounded-xl mb-2" />
+            <Card key={i} className="py-0 gap-0">
+              <CardContent className="flex items-center gap-3 px-3 py-3 sm:px-4">
+                <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
                 <Skeleton className="h-4 w-24" />
               </CardContent>
             </Card>
@@ -476,45 +566,96 @@ function DashboardPage() {
   ]
 
   const quickActions = [
-    { title: "Thêm sản phẩm", icon: Plus, href: "/dashboard/products", color: "bg-blue-500" },
-    { title: "Xem đơn hàng", icon: Eye, href: "/dashboard/orders", color: "bg-green-500" },
-    { title: "Quản lý kho", icon: Package2, href: "/dashboard/inventory", color: "bg-purple-500" },
-    { title: "Tạo khuyến mãi", icon: Target, href: "/dashboard/promotions", color: "bg-orange-500" },
+    {
+      title: "Thêm sản phẩm",
+      icon: Plus,
+      href: "/dashboard/products",
+      iconClassName:
+        "bg-blue-50 text-blue-600 ring-blue-600/10 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-300/10",
+    },
+    {
+      title: "Xem đơn hàng",
+      icon: Eye,
+      href: "/dashboard/orders",
+      iconClassName:
+        "bg-emerald-50 text-emerald-600 ring-emerald-600/10 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-300/10",
+    },
+    {
+      title: "Quản lý kho",
+      icon: Package2,
+      href: "/dashboard/inventory",
+      iconClassName:
+        "bg-purple-50 text-purple-600 ring-purple-600/10 dark:bg-purple-900/20 dark:text-purple-300 dark:ring-purple-300/10",
+    },
+    {
+      title: "Tạo khuyến mãi",
+      icon: Target,
+      href: "/dashboard/promotions",
+      iconClassName:
+        "bg-orange-50 text-orange-600 ring-orange-600/10 dark:bg-orange-900/20 dark:text-orange-300 dark:ring-orange-300/10",
+    },
   ]
 
   // Chart colors
 
+  const revenueChartTitle =
+    selectedPeriod === "today"
+      ? "Doanh thu hôm nay"
+      : `Doanh thu ${PERIOD_CONFIG[selectedPeriod].label} qua`
+
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-500">
+    <div className="space-y-4 animate-in fade-in-50 duration-500">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="space-y-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
-            Xin chào, {user?.name || 'Admin'}! 👋
-          </h1>
-          <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
-            Dưới đây là tổng quan hoạt động của cửa hàng hôm nay.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl p-1 bg-background/70 border border-border/60 backdrop-blur-sm">
           <Button
             variant="outline"
             size="sm"
             onClick={() => fetchDashboardData()}
             disabled={refreshing}
-            className="rounded-xl"
+            className="h-8 rounded-lg"
           >
             <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
             <span className="hidden sm:inline">Làm mới</span>
             <span className="sm:hidden">Refresh</span>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-xl">
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Hôm nay</span>
-            <span className="sm:hidden">Today</span>
-          </Button>
-          <Button size="sm" className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg">
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">{PERIOD_CONFIG[selectedPeriod].label}</span>
+                <span className="sm:hidden">{PERIOD_CONFIG[selectedPeriod].short}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={() => setSelectedPeriod("today")}
+                className={cn(selectedPeriod === "today" && "font-semibold")}
+              >
+                Hôm nay
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSelectedPeriod("week")}
+                className={cn(selectedPeriod === "week" && "font-semibold")}
+              >
+                7 ngày gần đây
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSelectedPeriod("month")}
+                className={cn(selectedPeriod === "month" && "font-semibold")}
+              >
+                30 ngày gần đây
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            onClick={exportDashboardReport}
+            disabled={!stats || refreshing}
+            className="h-8 gap-2 rounded-lg"
+          >
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Xuất báo cáo</span>
             <span className="sm:hidden">Export</span>
@@ -523,24 +664,24 @@ function DashboardPage() {
       </div>
       
       {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon
           return (
             <Card 
               key={index} 
-              className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
+              className="rounded-xl"
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <div className={cn("p-2.5 rounded-xl transition-transform hover:scale-110", stat.bgColor)}>
+                <div className={cn("p-1.5 rounded-lg", stat.bgColor)}>
                   <Icon className={cn("h-4 w-4", stat.color)} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{stat.value}</div>
+                <div className="text-lg sm:text-xl font-semibold tracking-tight">{stat.value}</div>
                 <div className="flex items-center gap-1 text-xs mt-1">
                   {stat.trend === "up" ? (
                     <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
@@ -562,43 +703,17 @@ function DashboardPage() {
 
       {/* Revenue Chart */}
       {stats?.revenue.chart && stats.revenue.chart.length > 0 ? (
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="rounded-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Doanh thu 7 ngày qua</CardTitle>
+                <CardTitle>{revenueChartTitle}</CardTitle>
                 <CardDescription>Biểu đồ doanh thu theo ngày</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant={selectedPeriod === 'today' ? 'default' : 'outline'} 
-                  className="rounded-xl" 
-                  onClick={() => setSelectedPeriod('today')}
-                >
-                  Hôm nay
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={selectedPeriod === 'week' ? 'default' : 'outline'} 
-                  className="rounded-xl" 
-                  onClick={() => setSelectedPeriod('week')}
-                >
-                  7 ngày
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={selectedPeriod === 'month' ? 'default' : 'outline'} 
-                  className="rounded-xl" 
-                  onClick={() => setSelectedPeriod('month')}
-                >
-                  30 ngày
-                </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={stats.revenue.chart}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
                 <XAxis 
@@ -628,13 +743,13 @@ function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+        <Card className="rounded-xl">
           <CardHeader>
-            <CardTitle>Doanh thu 7 ngày qua</CardTitle>
+            <CardTitle>{revenueChartTitle}</CardTitle>
             <CardDescription>Biểu đồ doanh thu theo ngày</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <div className="flex items-center justify-center h-[260px] text-muted-foreground">
               <p className="text-sm">Chưa có dữ liệu doanh thu</p>
             </div>
           </CardContent>
@@ -642,17 +757,26 @@ function DashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
         {quickActions.map((action, index) => {
           const Icon = action.icon
           return (
-            <Link key={index} href={action.href}>
-              <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer rounded-2xl border-gray-200/60 dark:border-gray-700/60 hover:scale-105 hover:border-primary/50">
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <div className={cn("p-3 rounded-xl mb-2 shadow-sm transition-transform hover:scale-110", action.color)}>
-                    <Icon className="h-6 w-6 text-white" />
+            <Link
+              key={index}
+              href={action.href}
+              title={action.title}
+              aria-label={action.title}
+              className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+            >
+              <Card className="py-0 gap-0 hover:bg-muted/30">
+                <CardContent className="flex items-center gap-3 px-3 py-3 sm:px-4">
+                  <div className={cn("grid place-items-center size-9 rounded-lg ring-1 shrink-0", action.iconClassName)}>
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <span className="text-sm font-medium text-center">{action.title}</span>
+                  <span className="text-[13px] sm:text-sm font-medium leading-tight">
+                    {action.title}
+                  </span>
+                  <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hidden sm:block" />
                 </CardContent>
               </Card>
             </Link>
@@ -661,9 +785,9 @@ function DashboardPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Recent Orders */}
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="rounded-xl">
           <CardHeader>
             <CardTitle>Đơn hàng gần đây</CardTitle>
             <CardDescription>
@@ -671,19 +795,17 @@ function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="divide-y divide-border/60">
               {stats?.orders.recent.map((order) => (
-                <div key={order.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="text-sm font-medium">#{order.id.slice(-8)}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer}</p>
-                    </div>
+                <div key={order.id} className="flex items-center justify-between py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">#{order.id.slice(-8)}</p>
+                    <p className="text-[13px] text-muted-foreground truncate">{order.customer}</p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="text-sm font-medium">{formatCurrency(order.amount)}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {order.createdAtFormatted || formatDate(order.createdAt)}
                       </p>
                     </div>
@@ -692,7 +814,7 @@ function DashboardPage() {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4 rounded-xl" asChild>
+            <Button variant="outline" className="w-full mt-4 rounded-lg" asChild>
               <Link href="/dashboard/orders">
                 Xem tất cả đơn hàng
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -702,20 +824,20 @@ function DashboardPage() {
         </Card>
         
         {/* Top Products */}
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="rounded-xl">
           <CardHeader>
             <CardTitle>Sản phẩm bán chạy</CardTitle>
             <CardDescription>Top 5 sản phẩm trong tháng</CardDescription>
           </CardHeader>
           <CardContent>
             {stats?.products.topSelling && stats.products.topSelling.length > 0 ? (
-              <div className="space-y-4">
+              <div className="divide-y divide-border/60">
                 {stats.products.topSelling.map((product, index) => (
-                  <div key={index} className="space-y-2 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div key={index} className="py-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {product.sales} đã bán - Còn {product.stock} trong kho
                         </p>
                       </div>
@@ -725,7 +847,7 @@ function DashboardPage() {
                     </div>
                     <Progress 
                       value={product.sales > 0 ? Math.min((product.sales / 150) * 100, 100) : 0} 
-                      className="h-2 rounded-full" 
+                      className="h-1.5 rounded-full" 
                     />
                   </div>
                 ))}
@@ -735,7 +857,7 @@ function DashboardPage() {
                 <p className="text-sm">Chưa có dữ liệu sản phẩm bán chạy</p>
               </div>
             )}
-            <Button variant="outline" className="w-full mt-4 rounded-xl" asChild>
+            <Button variant="outline" className="w-full mt-4 rounded-lg" asChild>
               <Link href="/dashboard/products">
                 Quản lý sản phẩm
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -746,14 +868,14 @@ function DashboardPage() {
       </div>
 
       {/* Additional Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card className="rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dịch vụ</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Dịch vụ</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.services.total || 0}</div>
+            <div className="text-xl font-semibold">{stats?.services.total || 0}</div>
             <p className="text-xs text-muted-foreground">
               {stats?.services.active || 0} đang hoạt động
             </p>
@@ -763,13 +885,13 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+        <Card className="rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tồn kho</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Tồn kho</CardTitle>
             <Package2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-semibold">
               {stats?.products.lowStock || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -781,13 +903,13 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-gray-200/60 dark:border-gray-700/60">
+        <Card className="rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Thanh toán</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Thanh toán</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-semibold">
               {stats?.orders.completed || 0}
             </div>
             <p className="text-xs text-muted-foreground">

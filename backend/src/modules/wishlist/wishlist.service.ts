@@ -39,10 +39,10 @@ export class WishlistService {
         id: randomUUID(),
         updatedAt: new Date(),
         users: { connect: { id: userId } },
-        products: { connect: { id: productId } }
+        products: { connect: { id: productId } },
       },
       include: {
-        products: true
+        products: true,
       },
     });
 

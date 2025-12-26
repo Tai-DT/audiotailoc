@@ -28,7 +28,7 @@ let ServicesService = class ServicesService {
                 throw new common_1.BadRequestException('Invalid type ID');
             }
         }
-        let priceData = {
+        const priceData = {
             priceType: data.priceType || 'FIXED',
         };
         if (data.priceType === 'RANGE') {
@@ -339,14 +339,14 @@ let ServicesService = class ServicesService {
         return type;
     }
     async generateSlug(name) {
-        let baseSlug = name
+        const baseSlug = name
             .toLowerCase()
             .replace(/[^\w\s-]/g, '')
             .replace(/\s+/g, '-')
             .replace(/--+/g, '-')
             .trim();
         const existing = await this.prisma.service_types.findFirst({
-            where: { slug: baseSlug }
+            where: { slug: baseSlug },
         });
         if (!existing) {
             return baseSlug;
@@ -389,15 +389,15 @@ let ServicesService = class ServicesService {
                     select: {
                         id: true,
                         name: true,
-                        slug: true
-                    }
-                }
+                        slug: true,
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async createServiceType(data) {
-        const slug = data.slug || await this.generateSlug(data.name);
+        const slug = data.slug || (await this.generateSlug(data.name));
         return this.prisma.service_types.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),

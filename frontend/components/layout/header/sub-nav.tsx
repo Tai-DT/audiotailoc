@@ -19,14 +19,14 @@ interface SubNavItem {
 
 export function SubNav() {
   const subNavItems: SubNavItem[] = [
-    { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
-    { label: 'Amply', href: '/products?category=amply', icon: Radio },
-    { label: 'Micro', href: '/products?category=micro', icon: MicIcon },
-    { label: 'Vang Số - Mixer', href: '/products?category=vang-so-mixer', icon: SlidersHorizontal },
+    { label: 'Loa', href: '/products?category=loa-loa-sub', icon: SpeakerIcon },
+    { label: 'Amply', href: '/products?category=amply-cuc-day', icon: Radio },
+    { label: 'Micro', href: '/products?category=micro-karaoke-khong-day', icon: MicIcon },
+    { label: 'Mixer - Vang Số', href: '/products?category=mixer-vang-so', icon: SlidersHorizontal },
     { label: 'Dàn Karaoke', href: '/products?category=dan-karaoke', icon: Disc },
-    { label: 'Dàn Nghe Nhạc', href: '/products?category=dan-nghe-nhac', icon: Music },
-    { label: 'Phụ Kiện', href: '/products?category=phu-kien', icon: Cable },
-    { label: 'Thanh Lý', href: '/products?category=thanh-ly', icon: PackageSearch },
+    { label: 'Đầu Karaoke', href: '/products?category=dau-karaoke-cd', icon: Music },
+    { label: 'Loa Soundbar', href: '/products?category=loa-soundbar', icon: Cable },
+    { label: 'Thanh Lý', href: '/products?category=hang-thanh-ly-hang-cu', icon: PackageSearch },
   ];
 
   return (

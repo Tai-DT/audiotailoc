@@ -50,7 +50,7 @@ export class QueryPatterns {
   async paginate<T>(
     model: any,
     options: PaginationOptions & QueryOptimizeOptions,
-    where?: any
+    where?: any,
   ): Promise<PaginatedResult<T>> {
     const pageSize = options.pageSize || options.take || 20;
     const page = options.page || 1;
@@ -95,7 +95,7 @@ export class QueryPatterns {
   async paginateWithCursor<T>(
     model: any,
     options: PaginationOptions & QueryOptimizeOptions,
-    where?: any
+    where?: any,
   ): Promise<{
     data: T[];
     nextCursor?: string;
@@ -148,20 +148,14 @@ export class QueryPatterns {
   /**
    * Efficient bulk operations
    */
-  async bulkCreate<T>(
-    model: any,
-    items: any[],
-    batchSize: number = 100
-  ): Promise<T[]> {
+  async bulkCreate<T>(model: any, items: any[], batchSize: number = 100): Promise<T[]> {
     const results: T[] = [];
 
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
 
       try {
-        const batchResults = await Promise.all(
-          batch.map((item) => model.create({ data: item }))
-        );
+        const batchResults = await Promise.all(batch.map(item => model.create({ data: item })));
         results.push(...batchResults);
       } catch (error) {
         this.logger.error(`Bulk create failed at batch ${Math.floor(i / batchSize)}: ${error}`);
@@ -178,7 +172,7 @@ export class QueryPatterns {
   async bulkUpdate<T>(
     model: any,
     updates: Array<{ where: any; data: any }>,
-    batchSize: number = 50
+    batchSize: number = 50,
   ): Promise<T[]> {
     const results: T[] = [];
 
@@ -186,9 +180,7 @@ export class QueryPatterns {
       const batch = updates.slice(i, i + batchSize);
 
       try {
-        const batchResults = await Promise.all(
-          batch.map((update) => model.update(update))
-        );
+        const batchResults = await Promise.all(batch.map(update => model.update(update)));
         results.push(...batchResults);
       } catch (error) {
         this.logger.error(`Bulk update failed at batch ${Math.floor(i / batchSize)}: ${error}`);
@@ -206,7 +198,7 @@ export class QueryPatterns {
     model: any,
     where: any[],
     softDelete: boolean = false,
-    batchSize: number = 100
+    batchSize: number = 100,
   ): Promise<number> {
     let deletedCount = 0;
 
@@ -240,7 +232,7 @@ export class QueryPatterns {
     model: any,
     groupBy: string[],
     where?: any,
-    select?: Record<string, any>
+    select?: Record<string, any>,
   ): Promise<T[]> {
     try {
       return await model.groupBy({
@@ -261,12 +253,7 @@ export class QueryPatterns {
   /**
    * Upsert with efficient query
    */
-  async upsert<T>(
-    model: any,
-    where: any,
-    update: any,
-    create: any
-  ): Promise<T> {
+  async upsert<T>(model: any, where: any, update: any, create: any): Promise<T> {
     try {
       return await model.upsert({
         where,
@@ -288,7 +275,7 @@ export class QueryPatterns {
         acc[field] = true;
         return acc;
       },
-      {} as Record<string, boolean>
+      {} as Record<string, boolean>,
     );
   }
 
@@ -322,14 +309,53 @@ export class QueryPatterns {
 
   /**
    * Check query performance
+   * SECURITY: Validates query to prevent SQL injection attacks
+   * Only allows SELECT queries for safety
    */
   async explainQuery(query: string): Promise<Record<string, any>> {
+    if (!query || typeof query !== 'string') {
+      throw new Error('Query must be a non-empty string');
+    }
+
+    // Trim and normalize query
+    const trimmedQuery = query.trim();
+    
+    // Limit query length to prevent DoS
+    if (trimmedQuery.length > 10000) {
+      throw new Error('Query too long. Maximum length is 10000 characters');
+    }
+
+    // Validate query starts with SELECT (case insensitive)
+    const upperQuery = trimmedQuery.toUpperCase();
+    if (!upperQuery.startsWith('SELECT')) {
+      throw new Error('Only SELECT queries are allowed for EXPLAIN');
+    }
+
+    // Block dangerous SQL keywords that could be used for injection
+    const dangerousKeywords = [
+      'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 
+      'TRUNCATE', 'EXEC', 'EXECUTE', 'CALL', 'MERGE', 'REPLACE',
+      'GRANT', 'REVOKE', 'COMMIT', 'ROLLBACK', 'SAVEPOINT',
+      '--', '/*', '*/', ';', 'UNION', 'SCRIPT'
+    ];
+
+    for (const keyword of dangerousKeywords) {
+      if (upperQuery.includes(keyword)) {
+        throw new Error(`Query contains forbidden keyword: ${keyword}`);
+      }
+    }
+
+    // Additional check: ensure no semicolons (prevents multiple statements)
+    if (trimmedQuery.includes(';')) {
+      throw new Error('Query cannot contain semicolons');
+    }
+
     try {
-      const result = await this.prisma.$queryRawUnsafe(`EXPLAIN ANALYZE ${query}`);
+      const result = await this.prisma.$queryRawUnsafe(`EXPLAIN ANALYZE ${trimmedQuery}`);
       return result;
     } catch (error) {
       this.logger.warn(`Query explanation failed: ${error}`);
-      return {};
+      throw error; // Re-throw to let caller handle
     }
   }
 
@@ -340,7 +366,7 @@ export class QueryPatterns {
     model: any,
     n: number = 10,
     where?: any,
-    select?: Record<string, any>
+    select?: Record<string, any>,
   ): Promise<T[]> {
     return await model.findMany({
       where,
@@ -358,7 +384,7 @@ export class QueryPatterns {
     n: number = 10,
     field: string = 'viewCount',
     where?: any,
-    select?: Record<string, any>
+    select?: Record<string, any>,
   ): Promise<T[]> {
     return await model.findMany({
       where,
@@ -377,10 +403,10 @@ export class QueryPatterns {
     searchFields: string[],
     where?: any,
     limit: number = 20,
-    select?: Record<string, any>
+    select?: Record<string, any>,
   ): Promise<T[]> {
     // Build OR conditions for search fields
-    const searchConditions = searchFields.map((field) => ({
+    const searchConditions = searchFields.map(field => ({
       [field]: {
         contains: query,
         mode: 'insensitive',
@@ -410,11 +436,7 @@ export class QueryPatterns {
   /**
    * Get distinct values
    */
-  async distinct<T>(
-    model: any,
-    field: string,
-    where?: any
-  ): Promise<T[]> {
+  async distinct<T>(model: any, field: string, where?: any): Promise<T[]> {
     try {
       return await model.findMany({
         where,
@@ -458,17 +480,14 @@ export const queryHelpers = {
         acc[field] = true;
         return acc;
       },
-      {} as Record<string, boolean>
+      {} as Record<string, boolean>,
     );
   },
 
   /**
    * Build include with select for nested relations
    */
-  buildIncludeWithSelect(
-    relation: string,
-    ...fields: string[]
-  ): Record<string, any> {
+  buildIncludeWithSelect(relation: string, ...fields: string[]): Record<string, any> {
     return {
       [relation]: {
         select: QueryPatterns.prototype.getOptimizedSelect(fields),

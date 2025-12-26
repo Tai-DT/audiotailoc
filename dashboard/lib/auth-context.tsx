@@ -1,7 +1,8 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react'
 import { apiClient } from '@/lib/api-client'
+import { logger } from '@/lib/logger'
 
 interface User {
   id: string
@@ -13,7 +14,7 @@ interface User {
 
 interface AuthTokens {
   accessToken: string
-  refreshToken: string
+  refreshToken?: string | null
 }
 
 interface AuthContextType {
@@ -34,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const isFetchingUser = useRef(false)
+  const lastUserFetch = useRef(0)
 
   const getStoredTokens = (): AuthTokens | null => {
     try {
@@ -41,10 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const refreshToken = localStorage.getItem('refreshToken')
       // Accept cases where only accessToken is present (backend may not return refresh token)
       if (accessToken) {
-        return { accessToken, refreshToken: refreshToken ?? '' }
+        return { accessToken, refreshToken }
       }
     } catch (error) {
-      console.error('Failed to get stored tokens:', error)
+      logger.error('Failed to get stored tokens', error)
     }
     return null
   }
@@ -52,14 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setStoredTokens = (tokens: AuthTokens) => {
     try {
       localStorage.setItem('accessToken', tokens.accessToken)
-      // store refreshToken if provided (may be empty string)
-      if (tokens.refreshToken !== undefined && tokens.refreshToken !== null) {
+      // store refreshToken only if non-empty
+      if (tokens.refreshToken) {
         localStorage.setItem('refreshToken', tokens.refreshToken)
       } else {
         localStorage.removeItem('refreshToken')
       }
     } catch (error) {
-      console.error('Failed to store tokens:', error)
+      logger.error('Failed to store tokens', error)
     }
   }
 
@@ -68,8 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
     } catch (error) {
-      console.error('Failed to clear tokens:', error)
+      logger.error('Failed to clear tokens', error)
     }
+  }
+
+  const getCurrentPath = () => {
+    if (typeof window === 'undefined') return '/dashboard'
+    const { pathname, search } = window.location
+    const fullPath = `${pathname}${search || ''}`
+    // Avoid redirecting back to login endlessly
+    if (pathname === '/login') return '/dashboard'
+    return fullPath || '/dashboard'
   }
 
   const logout = useCallback(() => {
@@ -80,18 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Redirect to login if we're in the browser
     if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      // Only redirect if we're on a protected route
-      if (currentPath.startsWith('/dashboard')) {
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-      }
+      const redirect = encodeURIComponent(getCurrentPath())
+      window.location.href = `/login?redirect=${redirect}`
     }
   }, [])
 
   const refreshToken = useCallback(async () => {
     const storedTokens = getStoredTokens()
     if (!storedTokens?.refreshToken) {
-      throw new Error('No refresh token available')
+      // Some environments only return access tokens (no refresh token).
+      // In that case we cannot refresh proactively; just skip.
+      logger.debug('Skip token refresh: no refresh token available')
+      return
     }
 
     try {
@@ -113,21 +125,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logout])
 
   const refreshUser = async () => {
+    const now = Date.now()
+    // throttle and skip concurrent fetches to avoid rate limits
+    if (isFetchingUser.current || now - lastUserFetch.current < 5000) {
+      return
+    }
+    isFetchingUser.current = true
     try {
       const response = await apiClient.getCurrentUser()
-      const userData = response.data as { userId: string; email: string; role?: string }
+      // Backend response can vary; keep this defensive.
+      const userData = response.data as { userId: string; email: string; role?: string; name?: string }
       
       if (userData.userId && userData.email) {
-        setUser({
-          id: userData.userId,
-          email: userData.email,
-          name: userData.email.split('@')[0],
-          role: userData.role || 'user'
+        setUser((prev) => {
+          const derivedName = userData.email.split("@")[0]
+          const prevName = prev?.email === userData.email ? prev?.name : undefined
+          return {
+            id: userData.userId,
+            email: userData.email,
+            name: userData.name || prevName || derivedName,
+            role: userData.role || prev?.role || 'user',
+          }
         })
       }
     } catch (error) {
-      console.error('Failed to fetch user data:', error)
+       
+      const status = (error as any)?.status ?? (error as any)?.response?.status
+      if (status === 429) {
+        logger.warn('Skipped user refresh due to rate limiting', { status })
+        return
+      }
+      logger.error('Failed to fetch user data', error)
       throw error
+    } finally {
+      lastUserFetch.current = Date.now()
+      isFetchingUser.current = false
     }
   }
 
@@ -145,36 +177,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Format: { data: { data: { data: { token, user } } } }
       const respData = response?.data ?? response
       let accessToken: string | null = null
+      let refreshTokenValue: string | null = null
       let userData: { id: string; email: string; name?: string; role?: string } | null = null
 
       // Extract token from nested structure
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       if ((respData as any)?.data?.data?.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const inner = (respData as any).data.data.data
         accessToken = inner.token
+        refreshTokenValue = inner.refreshToken ?? inner.refresh_token ?? null
         userData = inner.user
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
       } else if ((respData as any)?.data?.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const inner = (respData as any).data.data
         accessToken = inner.token
+        refreshTokenValue = inner.refreshToken ?? inner.refresh_token ?? null
         userData = inner.user
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
       } else if ((respData as any)?.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         accessToken = (respData as any).data.token
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
+        refreshTokenValue = (respData as any).data.refreshToken ?? (respData as any).data.refresh_token ?? null
+         
         userData = (respData as any).data.user
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         accessToken = (respData as any)?.token
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
+        refreshTokenValue = (respData as any)?.refreshToken ?? (respData as any)?.refresh_token ?? null
+         
         userData = (respData as any)?.user
       }
 
       if (!accessToken) {
-        console.error('Invalid tokens in response:', response)
+        logger.error('Invalid tokens in response', undefined, { response: { success: response.success, message: response.message } })
         throw new Error('Invalid login response: Missing access token')
       }
 
@@ -183,14 +222,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store token
       try {
         localStorage.setItem('accessToken', accessToken)
-        localStorage.removeItem('refreshToken') // Backend doesn't return refresh token
+        if (refreshTokenValue) {
+          localStorage.setItem('refreshToken', refreshTokenValue)
+        } else {
+          localStorage.removeItem('refreshToken')
+        }
       } catch (e) {
-        console.error('Failed to store tokens:', e)
+        logger.error('Failed to store tokens', e)
       }
 
       // Set token in API client
       apiClient.setToken(accessToken)
-      console.log('🔐 JWT Token set in ApiClient:', accessToken.substring(0, 30) + '...')
+      logger.debug('JWT Token set in ApiClient', { tokenLength: accessToken.length })
 
       // Set user data if available
       if (userData) {
@@ -205,7 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await refreshUser()
         } catch (error) {
-          console.warn('Could not fetch user data after login:', error)
+          logger.warn('Could not fetch user data after login', { error })
           // Set basic user info from email
           setUser({
             id: 'unknown',
@@ -216,7 +259,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Login error:', error)
+       
+      const status = (error as any)?.status ?? (error as any)?.response?.status
+      if (status === 429) {
+        logger.warn('Login throttled by rate limit', { email })
+        throw new Error('Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.')
+      }
+
+      logger.error('Login error', error, { email })
       if (error instanceof Error) {
         throw error
       }
@@ -236,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             await refreshUser()
           } catch (error) {
-            console.error('Failed to refresh user:', error)
+            logger.error('Failed to refresh user', error)
             clearStoredTokens()
           }
         }
@@ -247,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Set up global 401 handler
     apiClient.setUnauthorizedHandler(() => {
-      console.warn('Unauthorized request detected - logging out')
+      logger.warn('Unauthorized request detected - logging out')
       logout()
     })
 
@@ -258,11 +308,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return
 
+    // Only auto-refresh when a refresh token is available.
+    // If the backend doesn't issue refresh tokens, keep the session simple:
+    // it will expire naturally and the 401 handler will log out.
+    let storedRefreshToken: string | null = null
+    try {
+      storedRefreshToken = localStorage.getItem('refreshToken')
+    } catch (e) {
+      logger.warn('Failed to read refresh token for auto-refresh', { e })
+    }
+    if (!storedRefreshToken) return
+
     const refreshInterval = setInterval(async () => {
       try {
         await refreshToken()
       } catch (error) {
-        console.error('Auto refresh failed:', error)
+        logger.error('Auto refresh failed', error)
       }
     }, 10 * 60 * 1000) // 10 minutes
 

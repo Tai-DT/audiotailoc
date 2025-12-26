@@ -981,6 +981,13 @@ model users {
   createdAt            DateTime               @default(now())
   updatedAt            DateTime
   avatarUrl            String?
+  address              String?
+  dateOfBirth          DateTime?
+  gender               String?
+  isActive             Boolean                @default(true)
+  emailNotifications   Boolean                @default(true)
+  smsNotifications     Boolean                @default(false)
+  promoNotifications   Boolean                @default(true)
   resetExpires         DateTime?
   resetToken           String?
   activity_logs        activity_logs[]
@@ -1197,4 +1204,18 @@ enum ReviewStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model faqs {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String
+  category     String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
 }

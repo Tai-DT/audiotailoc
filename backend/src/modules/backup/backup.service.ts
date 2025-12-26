@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { spawn } from 'child_process';
-import { promises as fs } from 'fs';
+import { promises as fs, existsSync } from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
+import * as zlib from 'zlib';
+import * as os from 'os';
 import archiver from 'archiver';
 import { createWriteStream, createReadStream } from 'fs';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,12 +30,14 @@ export class BackupService {
   }
 
   // Create full database backup
-  async createFullBackup(options: {
-    includeFiles?: boolean;
-    compress?: boolean;
-    encrypt?: boolean;
-    comment?: string;
-  } = {}): Promise<BackupResult> {
+  async createFullBackup(
+    options: {
+      includeFiles?: boolean;
+      compress?: boolean;
+      encrypt?: boolean;
+      comment?: string;
+    } = {},
+  ): Promise<BackupResult> {
     if (this.isBackupInProgress) {
       throw new Error('Backup already in progress');
     }
@@ -112,10 +117,9 @@ export class BackupService {
         backupId,
         path: finalPath,
         size: finalSize,
-        duration: backupMetadata.duration || (Date.now() - startTime),
+        duration: backupMetadata.duration || Date.now() - startTime,
         metadata: backupMetadata,
       };
-
     } catch (error) {
       this.logger.error('Full backup failed', error);
       throw error;
@@ -125,12 +129,14 @@ export class BackupService {
   }
 
   // Create incremental backup
-  async createIncrementalBackup(options: {
-    since?: Date;
-    tables?: string[];
-    compress?: boolean;
-    comment?: string;
-  } = {}): Promise<BackupResult> {
+  async createIncrementalBackup(
+    options: {
+      since?: Date;
+      tables?: string[];
+      compress?: boolean;
+      comment?: string;
+    } = {},
+  ): Promise<BackupResult> {
     const backupId = this.generateBackupId();
     const startTime = Date.now();
 
@@ -138,7 +144,7 @@ export class BackupService {
       this.logger.log(`Starting incremental backup: ${backupId}`);
 
       const since = options.since || new Date(Date.now() - 24 * 60 * 60 * 1000); // Last 24 hours
-      const tables = options.tables || await this.getAllTables();
+      const tables = options.tables || (await this.getAllTables());
 
       const backupPath = path.join(this.backupDir, 'database', `${backupId}_incremental.sql`);
       await fs.mkdir(path.dirname(backupPath), { recursive: true });
@@ -179,10 +185,9 @@ export class BackupService {
         backupId,
         path: finalPath,
         size: backupMetadata.size!,
-        duration: backupMetadata.duration || (Date.now() - startTime),
+        duration: backupMetadata.duration || Date.now() - startTime,
         metadata: backupMetadata,
       };
-
     } catch (error) {
       this.logger.error('Incremental backup failed', error);
       throw error;
@@ -190,20 +195,18 @@ export class BackupService {
   }
 
   // Create file backup
-  async createFileBackup(backupId: string, options: {
-    directories?: string[];
-    excludePatterns?: string[];
-    compress?: boolean;
-  } = {}): Promise<BackupResult> {
+  async createFileBackup(
+    backupId: string,
+    options: {
+      directories?: string[];
+      excludePatterns?: string[];
+      compress?: boolean;
+    } = {},
+  ): Promise<BackupResult> {
     const startTime = Date.now();
 
     try {
-      const defaultDirectories = [
-        './uploads',
-        './logs',
-        './backups/metadata',
-        './public',
-      ];
+      const defaultDirectories = ['./uploads', './logs', './backups/metadata', './public'];
 
       const directories = options.directories || defaultDirectories;
       const excludePatterns = options.excludePatterns || ['*.tmp', '*.log'];
@@ -239,10 +242,9 @@ export class BackupService {
         backupId,
         path: backupPath,
         size: backupSize,
-        duration: backupMetadata.duration || (Date.now() - startTime),
+        duration: backupMetadata.duration || Date.now() - startTime,
         metadata: backupMetadata,
       };
-
     } catch (error) {
       this.logger.error('File backup failed', error);
       throw error;
@@ -250,11 +252,14 @@ export class BackupService {
   }
 
   // Restore from backup
-  async restoreFromBackup(backupId: string, options: {
-    dropExisting?: boolean;
-    verifyBeforeRestore?: boolean;
-    dryRun?: boolean;
-  } = {}): Promise<RestoreResult> {
+  async restoreFromBackup(
+    backupId: string,
+    options: {
+      dropExisting?: boolean;
+      verifyBeforeRestore?: boolean;
+      dryRun?: boolean;
+    } = {},
+  ): Promise<RestoreResult> {
     const startTime = Date.now();
 
     try {
@@ -284,14 +289,37 @@ export class BackupService {
       // Preflight checks
       await this.preflightChecks(['pg_restore', 'tar']);
 
-      // Perform restore based on backup type
-      if (backupMetadata.type === 'full' || backupMetadata.type === 'incremental') {
-        await this.restoreDatabaseBackup(backupMetadata, !!options.dropExisting);
+      let pathToRestore = backupMetadata.path;
+      let isTempFile = false;
+
+      // Handle decryption if needed
+      if (backupMetadata.encrypted) {
+        this.logger.log(`Decrypting backup for restore: ${backupId}`);
+        pathToRestore = await this.decryptBackup(backupMetadata.path);
+        isTempFile = true;
       }
 
-      // Restore files if it's a file backup
-      if (backupMetadata.type === 'files' || backupMetadata.directories) {
-        await this.restoreFileBackup(backupMetadata);
+      try {
+        const metadataToRestore = { ...backupMetadata, path: pathToRestore };
+
+        // Perform restore based on backup type
+        if (backupMetadata.type === 'full' || backupMetadata.type === 'incremental') {
+          await this.restoreDatabaseBackup(metadataToRestore, !!options.dropExisting);
+        }
+
+        // Restore files if it's a file backup
+        if (backupMetadata.type === 'files' || backupMetadata.directories) {
+          await this.restoreFileBackup(metadataToRestore);
+        }
+      } finally {
+        // Clean up temporary decrypted file
+        if (isTempFile && pathToRestore !== backupMetadata.path) {
+          try {
+            await fs.unlink(pathToRestore);
+          } catch (err) {
+            this.logger.warn(`Failed to delete temporary decrypted file: ${pathToRestore}`, err);
+          }
+        }
       }
 
       const duration = Date.now() - startTime;
@@ -304,7 +332,6 @@ export class BackupService {
         duration,
         metadata: backupMetadata,
       };
-
     } catch (error) {
       this.logger.error(`Restore failed: ${backupId}`, error);
       throw error;
@@ -312,10 +339,13 @@ export class BackupService {
   }
 
   // Point-in-time recovery
-  async pointInTimeRecovery(targetTime: Date, options: {
-    dryRun?: boolean;
-    verify?: boolean;
-  } = {}): Promise<RestoreResult> {
+  async pointInTimeRecovery(
+    targetTime: Date,
+    options: {
+      dryRun?: boolean;
+      verify?: boolean;
+    } = {},
+  ): Promise<RestoreResult> {
     const startTime = Date.now();
 
     try {
@@ -355,8 +385,8 @@ export class BackupService {
       await this.restoreFromBackup(latestFullBackup.id, { dropExisting: true });
 
       // Apply incremental backups
-      const incrementalBackups = relevantBackups.filter(b =>
-        b.type === 'incremental' && b.timestamp <= targetTime
+      const incrementalBackups = relevantBackups.filter(
+        b => b.type === 'incremental' && b.timestamp <= targetTime,
       );
 
       for (const backup of incrementalBackups) {
@@ -372,7 +402,6 @@ export class BackupService {
         duration,
         pointInTime: targetTime,
       };
-
     } catch (error) {
       this.logger.error('Point-in-time recovery failed', error);
       throw error;
@@ -388,7 +417,7 @@ export class BackupService {
         backup.timestamp = new Date(backup.timestamp);
       }
     });
-    
+
     const latestBackup = backups
       .filter(b => b.status === 'completed')
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
@@ -407,12 +436,14 @@ export class BackupService {
   }
 
   // List all backups
-  async listBackups(options: {
-    type?: 'full' | 'incremental' | 'files';
-    status?: 'completed' | 'failed' | 'in_progress';
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<BackupMetadata[]> {
+  async listBackups(
+    options: {
+      type?: 'full' | 'incremental' | 'files';
+      status?: 'completed' | 'failed' | 'in_progress';
+      limit?: number;
+      offset?: number;
+    } = {},
+  ): Promise<BackupMetadata[]> {
     try {
       const metadataDir = path.join(this.backupDir, 'metadata');
       await fs.mkdir(metadataDir, { recursive: true });
@@ -426,7 +457,7 @@ export class BackupService {
         try {
           const content = await fs.readFile(path.join(metadataDir, file), 'utf-8');
           const metadata: BackupMetadata = JSON.parse(content);
-          
+
           // Ensure timestamp is a Date object
           if (typeof metadata.timestamp === 'string') {
             metadata.timestamp = new Date(metadata.timestamp);
@@ -434,7 +465,7 @@ export class BackupService {
           if (metadata.sinceTimestamp && typeof metadata.sinceTimestamp === 'string') {
             metadata.sinceTimestamp = new Date(metadata.sinceTimestamp);
           }
-          
+
           backups.push(metadata);
         } catch (error) {
           this.logger.error(`Failed to read backup metadata: ${file}`, error);
@@ -458,7 +489,6 @@ export class BackupService {
       const offset = options.offset || 0;
 
       return backups.slice(offset, offset + limit);
-
     } catch (error) {
       this.logger.error('Failed to list backups', error);
       return [];
@@ -466,17 +496,35 @@ export class BackupService {
   }
 
   // Delete old backups based on retention policy
-  async cleanupOldBackups(): Promise<number> {
+  async cleanupOldBackups(options?: {
+    olderThanDays?: number;
+    keepMinimum?: number;
+  }): Promise<number> {
     try {
+      const olderThanDays =
+        typeof options?.olderThanDays === 'number' && options.olderThanDays > 0
+          ? options.olderThanDays
+          : this.retentionDays;
+
+      const keepMinimum =
+        typeof options?.keepMinimum === 'number' && options.keepMinimum > 0
+          ? options.keepMinimum
+          : 0;
+
       const retentionDate = new Date();
-      retentionDate.setDate(retentionDate.getDate() - this.retentionDays);
+      retentionDate.setDate(retentionDate.getDate() - olderThanDays);
 
       const backups = await this.listBackups();
       let deletedCount = 0;
 
+      // Keep newest N backups regardless of age.
+      const sorted = [...backups].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      const protectedIds = new Set(sorted.slice(0, keepMinimum).map(b => b.id));
+
       for (const backup of backups) {
+        if (protectedIds.has(backup.id)) continue;
         if (backup.timestamp < retentionDate) {
-          await this.deleteBackup(backup.id);
+          await this.deleteBackupById(backup.id);
           deletedCount++;
         }
       }
@@ -486,7 +534,6 @@ export class BackupService {
       }
 
       return deletedCount;
-
     } catch (error) {
       this.logger.error('Backup cleanup failed', error);
       return 0;
@@ -512,11 +559,16 @@ export class BackupService {
 
       const dumpCommand = `pg_dump`;
       const args = [
-        '-h', host,
-        '-p', port,
-        '-U', username,
-        '-d', database,
-        '-f', filePath,
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        username,
+        '-d',
+        database,
+        '-f',
+        filePath,
         '-Fc', // Custom format
         '-v', // Verbose
       ];
@@ -529,11 +581,11 @@ export class BackupService {
       const dumpProcess = spawn(dumpCommand, args, { env });
 
       let stderr = '';
-      dumpProcess.stderr.on('data', (data) => {
+      dumpProcess.stderr.on('data', data => {
         stderr += data.toString();
       });
 
-      dumpProcess.on('close', (code) => {
+      dumpProcess.on('close', code => {
         if (code === 0) {
           resolve();
         } else {
@@ -541,13 +593,17 @@ export class BackupService {
         }
       });
 
-      dumpProcess.on('error', (error) => {
+      dumpProcess.on('error', error => {
         reject(error);
       });
     });
   }
 
-  private async createIncrementalDump(filePath: string, since: Date, tables: string[]): Promise<void> {
+  private async createIncrementalDump(
+    filePath: string,
+    since: Date,
+    tables: string[],
+  ): Promise<void> {
     // This is a simplified implementation
     // In a real scenario, you'd use PostgreSQL's WAL archiving or logical replication
     const sql = `
@@ -563,7 +619,11 @@ export class BackupService {
     await fs.writeFile(filePath, sql, 'utf-8');
   }
 
-  private async createFileArchive(archivePath: string, directories: string[], excludePatterns: string[]): Promise<void> {
+  private async createFileArchive(
+    archivePath: string,
+    directories: string[],
+    excludePatterns: string[],
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const output = createWriteStream(archivePath);
       const archive = archiver('tar', {
@@ -585,7 +645,7 @@ export class BackupService {
       // Add directories to archive
       for (const dir of directories) {
         try {
-          if (require('fs').existsSync(dir)) {
+          if (existsSync(dir)) {
             archive.directory(dir, path.basename(dir));
           }
         } catch (error) {
@@ -603,7 +663,6 @@ export class BackupService {
     return new Promise((resolve, reject) => {
       const input = createReadStream(filePath);
       const output = createWriteStream(compressedPath);
-      const zlib = require('zlib');
 
       input.pipe(zlib.createGzip()).pipe(output);
 
@@ -613,22 +672,90 @@ export class BackupService {
         resolve(compressedPath);
       });
 
-      output.on('error', (error) => {
+      output.on('error', error => {
         reject(error);
       });
     });
   }
 
   private async encryptBackup(filePath: string, backupId: string): Promise<string> {
-    // This is a placeholder for encryption
-    // In a real implementation, you'd use AES-256-GCM or similar
     const encryptedPath = `${filePath}.enc`;
+    const key = this.getEncryptionKey();
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
 
-    // For now, just copy the file
-    await fs.copyFile(filePath, encryptedPath);
-    await fs.unlink(filePath);
+    const input = createReadStream(filePath);
+    const output = createWriteStream(encryptedPath);
 
-    return encryptedPath;
+    return new Promise((resolve, reject) => {
+      output.write(iv);
+
+      input.pipe(cipher).pipe(output);
+
+      output.on('finish', async () => {
+        try {
+          const authTag = cipher.getAuthTag();
+          await fs.appendFile(encryptedPath, authTag);
+          await fs.unlink(filePath);
+          resolve(encryptedPath);
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+      input.on('error', reject);
+      output.on('error', reject);
+      cipher.on('error', reject);
+    });
+  }
+
+  private async decryptBackup(filePath: string): Promise<string> {
+    const decryptedPath = filePath.replace('.enc', '') + '_decrypted';
+    const key = this.getEncryptionKey();
+
+    const stats = await fs.stat(filePath);
+    if (stats.size < 28) { // 12 (IV) + 16 (AuthTag)
+      throw new Error('Encrypted backup file is too small or corrupted');
+    }
+
+    // Read IV (first 12 bytes)
+    const ivBuffer = Buffer.alloc(12);
+    const fd = await fs.open(filePath, 'r');
+    await fd.read(ivBuffer, 0, 12, 0);
+
+    // Read Auth Tag (last 16 bytes)
+    const authTagBuffer = Buffer.alloc(16);
+    await fd.read(authTagBuffer, 0, 16, stats.size - 16);
+    await fd.close();
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, ivBuffer);
+    decipher.setAuthTag(authTagBuffer);
+
+    const input = createReadStream(filePath, { start: 12, end: stats.size - 17 });
+    const output = createWriteStream(decryptedPath);
+
+    return new Promise((resolve, reject) => {
+      input.pipe(decipher).pipe(output);
+
+      output.on('finish', () => resolve(decryptedPath));
+      input.on('error', reject);
+      output.on('error', reject);
+      decipher.on('error', reject);
+    });
+  }
+
+  private getEncryptionKey(): Buffer {
+    const keyString = this.configService.get<string>('BACKUP_ENCRYPTION_KEY');
+    if (!keyString) {
+      throw new Error('BACKUP_ENCRYPTION_KEY environment variable is not set');
+    }
+
+    // Ensure the key is 32 bytes for AES-256
+    if (/^[0-9a-fA-F]{64}$/.test(keyString)) {
+      return Buffer.from(keyString, 'hex');
+    }
+
+    return crypto.scryptSync(keyString, 'audiotailoc-backup-salt', 32);
   }
 
   private async verifyBackupIntegrity(filePath: string): Promise<boolean> {
@@ -673,31 +800,34 @@ export class BackupService {
     // Check disk space
     const disk = await this.getDiskInfo(this.backupDir);
     if (disk.availableBytes < this.minFreeSpaceBytes) {
-      throw new Error(`Not enough free space. Available: ${disk.availableBytes} bytes, required: ${this.minFreeSpaceBytes} bytes`);
+      throw new Error(
+        `Not enough free space. Available: ${disk.availableBytes} bytes, required: ${this.minFreeSpaceBytes} bytes`,
+      );
     }
   }
 
   private async commandExists(cmd: string): Promise<boolean> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const which = process.platform === 'win32' ? 'where' : 'which';
       const p = spawn(which, [cmd]);
-      p.on('close', (code) => resolve(code === 0));
+      p.on('close', code => resolve(code === 0));
       p.on('error', () => resolve(false));
     });
   }
 
-  private async getDiskInfo(targetDir: string): Promise<{ totalBytes: number; availableBytes: number }> {
-    return new Promise((resolve) => {
+  private async getDiskInfo(
+    targetDir: string,
+  ): Promise<{ totalBytes: number; availableBytes: number }> {
+    return new Promise(resolve => {
       const platform = process.platform;
       if (platform === 'win32') {
         // Fallback: use os module
-        const os = require('os');
         resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
         return;
       }
       const df = spawn('df', ['-k', targetDir]);
       let out = '';
-      df.stdout.on('data', (d) => (out += d.toString()));
+      df.stdout.on('data', d => (out += d.toString()));
       df.on('close', () => {
         const lines = out.trim().split('\n');
         if (lines.length >= 2) {
@@ -707,12 +837,10 @@ export class BackupService {
           const availKB = parseInt(parts[3]) || 0;
           resolve({ totalBytes: totalKB * 1024, availableBytes: availKB * 1024 });
         } else {
-          const os = require('os');
           resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
         }
       });
       df.on('error', () => {
-        const os = require('os');
         resolve({ totalBytes: os.totalmem(), availableBytes: os.freemem() });
       });
     });
@@ -746,7 +874,6 @@ export class BackupService {
   }
 
   private async calculateChecksum(filePath: string): Promise<string> {
-    const crypto = require('crypto');
     const fileBuffer = await fs.readFile(filePath);
     return crypto.createHash('sha256').update(fileBuffer).digest('hex');
   }
@@ -771,21 +898,45 @@ export class BackupService {
   }
 
   private async getTotalRecordsCount(): Promise<number> {
-    // This is a simplified implementation
-    // In a real scenario, you'd query each table
     const tables = await this.getAllTables();
     let total = 0;
 
     for (const table of tables) {
       try {
-        const result: any = await this.prisma.$queryRawUnsafe(`SELECT count(*) as count FROM ${table}`);
-        total += parseInt(result[0].count);
+        // SECURITY: Validate table name to prevent SQL injection
+        if (!this.isValidTableName(table)) {
+          this.logger.warn(`Skipping invalid table name: ${table}`);
+          continue;
+        }
+
+        // SECURITY: Use quoted identifier
+        const result: any = await this.prisma.$queryRawUnsafe(
+          `SELECT count(*) as count FROM "${table}"`,
+        );
+
+        if (result && result[0]) {
+          total += parseInt(result[0].count) || 0;
+        }
       } catch (error) {
         // Skip tables that can't be counted
+        this.logger.debug(`Could not count table ${table}: ${error}`);
       }
     }
 
     return total;
+  }
+
+  /**
+   * SECURITY: Validate table name to prevent SQL injection
+   * Only allows alphanumeric characters, underscores, and ensures it starts with letter/underscore
+   */
+  private isValidTableName(tableName: string): boolean {
+    if (!tableName || typeof tableName !== 'string') {
+      return false;
+    }
+    // PostgreSQL identifier rules: start with letter/underscore, then alphanumeric/underscore
+    // Maximum length is 63 characters in PostgreSQL
+    return /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/.test(tableName);
   }
 
   private async getAllTables(): Promise<string[]> {
@@ -812,7 +963,7 @@ export class BackupService {
       const metadataPath = path.join(this.backupDir, 'metadata', `${backupId}.json`);
       const content = await fs.readFile(metadataPath, 'utf-8');
       const metadata: BackupMetadata = JSON.parse(content);
-      
+
       // Ensure timestamp is a Date object
       if (typeof metadata.timestamp === 'string') {
         metadata.timestamp = new Date(metadata.timestamp);
@@ -820,16 +971,16 @@ export class BackupService {
       if (metadata.sinceTimestamp && typeof metadata.sinceTimestamp === 'string') {
         metadata.sinceTimestamp = new Date(metadata.sinceTimestamp);
       }
-      
+
       return metadata;
     } catch {
       return null;
     }
   }
 
-  private async deleteBackup(backupId: string): Promise<void> {
+  async deleteBackupById(backupId: string): Promise<boolean> {
     const backup = await this.getBackupMetadata(backupId);
-    if (!backup) return;
+    if (!backup) return false;
 
     try {
       // Delete backup file
@@ -840,8 +991,10 @@ export class BackupService {
       await fs.unlink(metadataPath);
 
       this.logger.log(`Deleted backup: ${backupId}`);
+      return true;
     } catch (error) {
       this.logger.error(`Failed to delete backup: ${backupId}`, error);
+      return false;
     }
   }
 
@@ -862,7 +1015,10 @@ export class BackupService {
     return `backup_${timestamp}_${random}`;
   }
 
-  private async restoreDatabaseBackup(backup: BackupMetadata, dropExisting: boolean): Promise<void> {
+  private async restoreDatabaseBackup(
+    backup: BackupMetadata,
+    dropExisting: boolean,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const databaseUrl = this.configService.get('DATABASE_URL');
       if (!databaseUrl) {
@@ -878,10 +1034,14 @@ export class BackupService {
 
       const restoreCommand = `pg_restore`;
       const args = [
-        '-h', host,
-        '-p', port,
-        '-U', username,
-        '-d', database,
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        username,
+        '-d',
+        database,
         '-c', // Clean (drop) database objects before recreating
         '-v', // Verbose
         backup.path,
@@ -899,11 +1059,11 @@ export class BackupService {
       const restoreProcess = spawn(restoreCommand, args, { env });
 
       let stderr = '';
-      restoreProcess.stderr.on('data', (data) => {
+      restoreProcess.stderr.on('data', data => {
         stderr += data.toString();
       });
 
-      restoreProcess.on('close', (code) => {
+      restoreProcess.on('close', code => {
         if (code === 0) {
           resolve();
         } else {
@@ -911,29 +1071,89 @@ export class BackupService {
         }
       });
 
-      restoreProcess.on('error', (error) => {
+      restoreProcess.on('error', error => {
         reject(error);
       });
     });
   }
 
+  /**
+   * SECURITY: Validate file path to prevent path traversal attacks
+   */
+  private validateFilePath(filePath: string, baseDir?: string): void {
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('Invalid file path');
+    }
+
+    // Normalize path to handle different separators
+    const normalizedPath = path.normalize(filePath);
+
+    // If baseDir is provided, ensure path is within baseDir
+    if (baseDir) {
+      const resolvedPath = path.resolve(normalizedPath);
+      const resolvedBase = path.resolve(baseDir);
+      const relative = path.relative(resolvedBase, resolvedPath);
+
+      const isOutside = relative.startsWith('..') || path.isAbsolute(relative);
+      if (isOutside) {
+        throw new Error('File path is outside allowed directory');
+      }
+    }
+
+    // Check for explicit path traversal patterns even if baseDir not provided
+    if (normalizedPath.includes('..') || normalizedPath.includes('\0')) {
+      throw new Error('Path traversal or invalid characters detected in file path');
+    }
+
+    // Ensure path is not absolute (unless baseDir is provided)
+    if (!baseDir && path.isAbsolute(normalizedPath)) {
+      throw new Error('Absolute paths are not allowed');
+    }
+  }
+
   private async restoreFileBackup(backup: BackupMetadata): Promise<void> {
     // Extract tar.gz archive into project root while preventing path traversal
     const archivePath = backup.path;
+
+    // SECURITY: Validate archive path
+    if (!archivePath || typeof archivePath !== 'string') {
+      throw new Error('Invalid archive path');
+    }
+
     if (!archivePath.endsWith('.tar.gz')) {
       this.logger.warn(`Unsupported file backup format for restore: ${archivePath}`);
       return;
     }
 
+    // SECURITY: Validate path to prevent path traversal
+    try {
+      this.validateFilePath(archivePath, this.backupDir);
+    } catch (error) {
+      this.logger.error(`Invalid archive path: ${archivePath}`, error);
+      throw new Error(`Invalid archive path: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
+
+    // SECURITY: Ensure archive exists and is within backup directory
+    const resolvedArchivePath = path.resolve(archivePath);
+    const resolvedBackupDir = path.resolve(this.backupDir);
+    if (!resolvedArchivePath.startsWith(resolvedBackupDir)) {
+      throw new Error('Archive path is outside backup directory');
+    }
+
+    // SECURITY: Verify file exists before attempting to extract
+    if (!existsSync(archivePath)) {
+      throw new Error(`Archive file not found: ${archivePath}`);
+    }
+
     await new Promise<void>((resolve, reject) => {
       const tarProc = spawn('tar', ['-xzf', archivePath, '-C', '.']);
       let stderr = '';
-      tarProc.stderr.on('data', (d) => (stderr += d.toString()));
-      tarProc.on('close', (code) => {
+      tarProc.stderr.on('data', d => (stderr += d.toString()));
+      tarProc.on('close', code => {
         if (code === 0) resolve();
         else reject(new Error(`tar extract failed: ${stderr}`));
       });
-      tarProc.on('error', (err) => reject(err));
+      tarProc.on('error', err => reject(err));
     });
     this.logger.log(`File backup restored from ${archivePath}`);
   }

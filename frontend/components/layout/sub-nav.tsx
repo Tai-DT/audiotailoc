@@ -152,21 +152,21 @@ function SubNavContent({
             item.href.includes('category=') && categoryParam && item.href.includes(`category=${categoryParam}`)
           );
           return (
-            <Link
-              key={item.label}
-              role="listitem"
-              href={item.href}
-              className={cn(
-                'group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border bg-muted/60 px-2.5 sm:px-3 py-1.5',
-                'text-xs font-medium transition-all duration-300 touch-manipulation hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-                isActive ? 'border-primary/70 text-primary shadow-sm bg-primary/5' : 'border-transparent text-muted-foreground'
-              )}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />}
-              <span className="text-xs sm:text-sm">{item.label}</span>
-            </Link>
+            <div key={item.label} role="listitem">
+              <Link
+                href={item.href}
+                className={cn(
+                  'group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md border bg-muted/60 px-2.5 sm:px-3 py-1.5',
+                  'text-xs font-medium transition-all duration-300 touch-manipulation hover:border-primary hover:bg-gradient-primary/10 hover:text-primary hover-lift hover:shadow-sm',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                  isActive ? 'border-primary/70 text-primary shadow-sm bg-primary/5' : 'border-transparent text-muted-foreground'
+                )}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {Icon && <Icon className="h-3.5 w-3.5 transition-transform group-hover:scale-110 flex-shrink-0" />}
+                <span className="text-xs sm:text-sm">{item.label}</span>
+              </Link>
+            </div>
           );
         })}
       </div>

@@ -47,7 +47,7 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
             userAgent: request.get('User-Agent'),
         };
         this.loggingService.logRequest(logContext);
-        return next.handle().pipe((0, rxjs_1.tap)((data) => {
+        return next.handle().pipe((0, rxjs_1.tap)(data => {
             const duration = Date.now() - startTime;
             const statusCode = response.statusCode;
             this.loggingService.logResponse({
@@ -59,7 +59,7 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
                 },
             });
             correlation_service_1.CorrelationService.addToHeaders(response.getHeaders());
-        }), (0, rxjs_1.catchError)((error) => {
+        }), (0, rxjs_1.catchError)(error => {
             const duration = Date.now() - startTime;
             this.loggingService.logError(error, {
                 ...logContext,
@@ -77,10 +77,10 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
         }));
     }
     extractUserId(request) {
-        return (request.users?.id ||
-            request.users?.userId ||
-            request.headers['x-user-id'] ||
-            request.query.userId);
+        return (request.user?.sub ||
+            request.user?.id ||
+            request.users?.id ||
+            request.users?.userId);
     }
     getClientIP(request) {
         return (request.ip ||
@@ -88,7 +88,9 @@ let LoggingInterceptor = LoggingInterceptor_1 = class LoggingInterceptor {
             request.socket.remoteAddress ||
             request.headers['x-forwarded-for'] ||
             request.headers['x-real-ip'] ||
-            'unknown').split(',')[0].trim();
+            'unknown')
+            .split(',')[0]
+            .trim();
     }
     getResponseSize(data) {
         try {

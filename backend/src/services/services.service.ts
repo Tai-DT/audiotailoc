@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateServiceTypeDto,
   UpdateServiceTypeDto,
   CreateServiceDto,
-  UpdateServiceDto
+  UpdateServiceDto,
 } from './dto/service.dto';
 
 @Injectable()
@@ -18,9 +23,9 @@ export class ServicesService {
       orderBy: { sortOrder: 'asc' },
       include: {
         services: {
-          select: { id: true, name: true, isActive: true }
-        }
-      }
+          select: { id: true, name: true, isActive: true },
+        },
+      },
     });
   }
 
@@ -29,9 +34,9 @@ export class ServicesService {
       where: { id },
       include: {
         services: {
-          select: { id: true, name: true, isActive: true }
-        }
-      }
+          select: { id: true, name: true, isActive: true },
+        },
+      },
     });
 
     if (!serviceType) {
@@ -43,11 +48,14 @@ export class ServicesService {
 
   async createServiceType(dto: CreateServiceTypeDto) {
     // Generate slug
-    const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = dto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
 
     // Check if slug exists
     const existingType = await this.prisma.service_types.findUnique({
-      where: { slug }
+      where: { slug },
     });
 
     if (existingType) {
@@ -64,8 +72,8 @@ export class ServicesService {
         color: dto.color,
         isActive: dto.isActive ?? true,
         sortOrder: dto.sortOrder ?? 0,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
   }
 
@@ -75,11 +83,14 @@ export class ServicesService {
     // Generate new slug if name changed
     let slug = serviceType.slug;
     if (dto.name && dto.name !== serviceType.name) {
-      slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      
+      slug = dto.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
       // Check if new slug exists
       const existingType = await this.prisma.service_types.findFirst({
-        where: { slug, id: { not: id } }
+        where: { slug, id: { not: id } },
       });
 
       if (existingType) {
@@ -96,8 +107,8 @@ export class ServicesService {
         icon: dto.icon,
         color: dto.color,
         isActive: dto.isActive,
-        sortOrder: dto.sortOrder
-      }
+        sortOrder: dto.sortOrder,
+      },
     });
   }
 
@@ -110,7 +121,7 @@ export class ServicesService {
     }
 
     return this.prisma.service_types.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -120,10 +131,10 @@ export class ServicesService {
       where: { isActive: true },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
-        }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -132,18 +143,18 @@ export class ServicesService {
       where: { id },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
         },
         service_views: {
-          select: { id: true, timestamp: true }
+          select: { id: true, timestamp: true },
         },
         service_bookings: {
-          select: { id: true, status: true, scheduledAt: true }
+          select: { id: true, status: true, scheduledAt: true },
         },
         service_items: {
-          select: { id: true, name: true, price: true, quantity: true }
-        }
-      }
+          select: { id: true, name: true, price: true, quantity: true },
+        },
+      },
     });
 
     if (!service) {
@@ -155,11 +166,14 @@ export class ServicesService {
 
   async createService(dto: CreateServiceDto) {
     // Generate slug
-    const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = dto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
 
     // Check if slug exists
     const existingService = await this.prisma.services.findUnique({
-      where: { slug }
+      where: { slug },
     });
 
     if (existingService) {
@@ -169,7 +183,7 @@ export class ServicesService {
     // Validate service type if provided
     if (dto.typeId) {
       const serviceType = await this.prisma.service_types.findUnique({
-        where: { id: dto.typeId }
+        where: { id: dto.typeId },
       });
 
       if (!serviceType) {
@@ -197,13 +211,13 @@ export class ServicesService {
         features: dto.features,
         requirements: dto.requirements,
         metadata: dto.metadata,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
-        }
-      }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+        },
+      },
     });
   }
 
@@ -213,11 +227,14 @@ export class ServicesService {
     // Generate new slug if name changed
     let slug = service.slug;
     if (dto.name && dto.name !== service.name) {
-      slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      
+      slug = dto.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
       // Check if new slug exists
       const existingService = await this.prisma.services.findFirst({
-        where: { slug, id: { not: id } }
+        where: { slug, id: { not: id } },
       });
 
       if (existingService) {
@@ -228,7 +245,7 @@ export class ServicesService {
     // Validate service type if provided
     if (dto.typeId) {
       const serviceType = await this.prisma.service_types.findUnique({
-        where: { id: dto.typeId }
+        where: { id: dto.typeId },
       });
 
       if (!serviceType) {
@@ -255,13 +272,13 @@ export class ServicesService {
         tags: dto.tags,
         features: dto.features,
         requirements: dto.requirements,
-        metadata: dto.metadata
+        metadata: dto.metadata,
       },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
-        }
-      }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+        },
+      },
     });
   }
 
@@ -270,7 +287,7 @@ export class ServicesService {
 
     // Check if service has active bookings
     const activeBookings = service.service_bookings?.filter(booking =>
-      ['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(booking.status)
+      ['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(booking.status),
     );
 
     if (activeBookings && activeBookings.length > 0) {
@@ -278,7 +295,7 @@ export class ServicesService {
     }
 
     return this.prisma.services.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -288,9 +305,9 @@ export class ServicesService {
       where: { id },
       data: {
         viewCount: {
-          increment: 1
-        }
-      }
+          increment: 1,
+        },
+      },
     });
   }
 
@@ -299,11 +316,11 @@ export class ServicesService {
       where: { isActive: true, isFeatured: true },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
-        }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
-      take: 6
+      take: 6,
     });
   }
 
@@ -312,10 +329,10 @@ export class ServicesService {
       where: { typeId, isActive: true },
       include: {
         service_types: {
-          select: { id: true, name: true, slug: true, icon: true, color: true }
-        }
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

@@ -14,6 +14,7 @@ export interface Project {
   thumbnailImage?: string;
   coverImage?: string;
   images?: string[];
+  youtubeVideoId?: string;
   youtubeVideoUrl?: string;
   liveUrl?: string;
   demoUrl?: string;
@@ -23,9 +24,9 @@ export interface Project {
   duration?: string;
   teamSize?: number;
   budget?: string;
-  technologies?: string;
-  features?: string;
-  tags?: string;
+  technologies?: string[];
+  features?: string[];
+  tags?: string[];
   testimonial?: string;
   results?: string;
   challenges?: string;

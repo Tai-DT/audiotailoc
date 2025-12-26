@@ -57,13 +57,6 @@ export default function ServiceTypesManager() {
     refresh: refreshServiceTypes
   } = useServiceTypes()
 
-  console.log('ServiceTypes Debug:', {
-    serviceTypes,
-    loading,
-    error,
-    serviceTypesLength: serviceTypes?.length || 0
-  })
-
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)

@@ -60,27 +60,41 @@ let FilesController = class FilesController {
         }
         return this.filesService.uploadProductImage(file, productId);
     }
-    async uploadUserAvatar(file) {
+    async uploadUserAvatar(file, req) {
         if (!file) {
             throw new common_1.NotFoundException('No avatar uploaded');
         }
-        const userId = file.req?.user?.id;
+        const userId = req.user?.sub;
         if (!userId) {
             throw new common_1.BadRequestException('User not found in request');
         }
         return this.filesService.uploadUserAvatar(file, userId);
     }
-    async getFileInfo(fileId) {
+    async getFileInfo(fileId, req) {
         const file = await this.filesService.getFileInfo(fileId);
         if (!file) {
             throw new common_1.NotFoundException('File not found');
         }
+        const user = req.user;
+        const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+        if (file.metadata?.userId && !isAdmin && user?.sub !== file.metadata.userId) {
+            throw new common_1.ForbiddenException('You can only view your own files');
+        }
         return file;
     }
-    async listFiles(type, userId, productId, page, limit) {
+    async listFiles(type, userId, productId, page, limit, req) {
+        const user = req.user;
+        const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+        let targetUserId = userId;
+        if (!isAdmin) {
+            if (userId && userId !== user?.sub) {
+                throw new common_1.ForbiddenException('You can only list your own files');
+            }
+            targetUserId = user?.sub;
+        }
         return this.filesService.listFiles({
             type,
-            userId,
+            userId: targetUserId,
             productId,
             page: page ? parseInt(page) : undefined,
             limit: limit ? parseInt(limit) : undefined,
@@ -184,16 +198,20 @@ __decorate([
     }),
     (0, swagger_1.ApiOperation)({ summary: 'Upload user avatar' }),
     __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "uploadUserAvatar", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)(':fileId'),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get file information' }),
     __param(0, (0, common_1.Param)('fileId')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "getFileInfo", null);
 __decorate([
@@ -206,8 +224,9 @@ __decorate([
     __param(2, (0, common_1.Query)('productId')),
     __param(3, (0, common_1.Query)('page')),
     __param(4, (0, common_1.Query)('limit')),
+    __param(5, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "listFiles", null);
 __decorate([

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010';
+// Standardized: Use NEXT_PUBLIC_API_URL (includes /api/v1)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -8,11 +9,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const contentType = request.headers.get('content-type') || 'application/json';
     const bodyText = await request.text();
 
-    const backendUrl = `${BACKEND_URL.replace(/\/$/, '')}/api/v1/bookings/${id}/status`;
-    console.log('Proxying PUT to backend:', backendUrl);
+    const backendUrl = `${API_BASE_URL}/bookings/${id}/status`;
+    console.log('Proxying status update to backend:', backendUrl);
 
+    // Backend uses PATCH, not PUT
     const response = await fetch(backendUrl, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': contentType,
       },

@@ -215,6 +215,7 @@ export default function BackupsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                aria-label="Tải xuống backup"
                                 onClick={() => downloadBackup(backup.id)}
                                 disabled={backup.status !== 'completed'}
                               >
@@ -223,6 +224,7 @@ export default function BackupsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                aria-label="Khôi phục backup"
                                 onClick={() => {
                                   if (confirm('Bạn có chắc chắn muốn khôi phục backup này? Dữ liệu hiện tại sẽ bị thay thế.')) {
                                     restoreBackup(backup.id)
@@ -235,6 +237,7 @@ export default function BackupsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                aria-label="Xóa backup"
                                 onClick={() => {
                                   if (confirm('Bạn có chắc chắn muốn xóa backup này?')) {
                                     deleteBackup(backup.id)

@@ -33,6 +33,12 @@ export class ReviewsService {
         skip,
         take: params.pageSize,
         include: {
+          products: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           users: {
             select: {
               id: true,
@@ -59,6 +65,12 @@ export class ReviewsService {
     const review = await this.prisma.product_reviews.findUnique({
       where: { id },
       include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         users: {
           select: {
             id: true,
@@ -104,6 +116,12 @@ export class ReviewsService {
         updatedAt: new Date(),
       },
       include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         users: {
           select: {
             id: true,
@@ -156,6 +174,12 @@ export class ReviewsService {
         updatedAt: new Date(),
       },
       include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         users: {
           select: {
             id: true,
@@ -180,6 +204,12 @@ export class ReviewsService {
         updatedAt: new Date(),
       },
       include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         users: {
           select: {
             id: true,

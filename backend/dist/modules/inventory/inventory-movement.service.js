@@ -21,24 +21,24 @@ let InventoryMovementService = class InventoryMovementService {
         return this.prisma.inventory_movements.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
-                ...data
+                ...data,
             },
             include: {
                 products: {
                     select: {
                         id: true,
                         name: true,
-                        sku: true
-                    }
+                        sku: true,
+                    },
                 },
                 users: {
                     select: {
                         id: true,
                         name: true,
-                        email: true
-                    }
-                }
-            }
+                        email: true,
+                    },
+                },
+            },
         });
     }
     async findByProduct(productId, params = {}) {
@@ -46,7 +46,7 @@ let InventoryMovementService = class InventoryMovementService {
         const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
         const [total, items] = await this.prisma.$transaction([
             this.prisma.inventory_movements.count({
-                where: { productId }
+                where: { productId },
             }),
             this.prisma.inventory_movements.findMany({
                 where: { productId },
@@ -55,27 +55,27 @@ let InventoryMovementService = class InventoryMovementService {
                         select: {
                             id: true,
                             name: true,
-                            sku: true
-                        }
+                            sku: true,
+                        },
                     },
                     users: {
                         select: {
                             id: true,
                             name: true,
-                            email: true
-                        }
-                    }
+                            email: true,
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
-                take: pageSize
-            })
+                take: pageSize,
+            }),
         ]);
         return {
             total,
             page,
             pageSize,
-            items
+            items,
         };
     }
     async findAll(params = {}) {
@@ -113,29 +113,29 @@ let InventoryMovementService = class InventoryMovementService {
                             categories: {
                                 select: {
                                     id: true,
-                                    name: true
-                                }
-                            }
-                        }
+                                    name: true,
+                                },
+                            },
+                        },
                     },
                     users: {
                         select: {
                             id: true,
                             name: true,
-                            email: true
-                        }
-                    }
+                            email: true,
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
-                take: pageSize
-            })
+                take: pageSize,
+            }),
         ]);
         return {
             total,
             page,
             pageSize,
-            items
+            items,
         };
     }
     async getSummary(productId, startDate, endDate) {
@@ -161,10 +161,10 @@ let InventoryMovementService = class InventoryMovementService {
                 products: {
                     select: {
                         name: true,
-                        sku: true
-                    }
-                }
-            }
+                        sku: true,
+                    },
+                },
+            },
         });
         const summary = {
             totalMovements: movements.length,
@@ -173,7 +173,7 @@ let InventoryMovementService = class InventoryMovementService {
             adjustments: 0,
             reserved: 0,
             released: 0,
-            byProduct: {}
+            byProduct: {},
         };
         for (const movement of movements) {
             const qty = movement.quantity;
@@ -204,7 +204,7 @@ let InventoryMovementService = class InventoryMovementService {
                     stockOut: 0,
                     adjustments: 0,
                     reserved: 0,
-                    released: 0
+                    released: 0,
                 };
             }
             switch (movement.type) {

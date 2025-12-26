@@ -1,19 +1,11 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import {
   CreateServiceTypeDto,
   UpdateServiceTypeDto,
   CreateServiceDto,
-  UpdateServiceDto
+  UpdateServiceDto,
 } from './dto/service.dto';
 
 @ApiTags('Services Management')

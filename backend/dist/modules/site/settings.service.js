@@ -17,14 +17,24 @@ let SettingsService = class SettingsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getSettings() {
-        const configs = await this.prisma.system_configs.findMany({
-            where: {
-                key: {
-                    startsWith: 'site.',
-                },
+    async upsertSection(section, value) {
+        return this.prisma.system_configs.upsert({
+            where: { key: `site.${section}` },
+            update: {
+                value: JSON.stringify(value),
+                type: 'JSON',
+                updatedAt: new Date(),
+            },
+            create: {
+                id: (0, crypto_1.randomUUID)(),
+                key: `site.${section}`,
+                value: JSON.stringify(value),
+                type: 'JSON',
+                updatedAt: new Date(),
             },
         });
+    }
+    buildSettingsObject(configs) {
         const settings = {};
         for (const config of configs) {
             const section = config.key.split('.')[1];
@@ -36,6 +46,31 @@ let SettingsService = class SettingsService {
             }
         }
         return settings;
+    }
+    async getSettings() {
+        const configs = await this.prisma.system_configs.findMany({
+            where: {
+                key: {
+                    startsWith: 'site.',
+                },
+            },
+        });
+        return this.buildSettingsObject(configs);
+    }
+    async getPublicSettings() {
+        const allowedSections = new Set(['general', 'about', 'socials', 'store', 'business']);
+        const configs = await this.prisma.system_configs.findMany({
+            where: {
+                key: {
+                    startsWith: 'site.',
+                },
+            },
+        });
+        const filtered = configs.filter(c => {
+            const section = c.key.split('.')[1];
+            return allowedSections.has(section);
+        });
+        return this.buildSettingsObject(filtered);
     }
     async getSection(section) {
         const config = await this.prisma.system_configs.findUnique({
@@ -53,49 +88,38 @@ let SettingsService = class SettingsService {
             return config.value;
         }
     }
+    async getPublicSection(section) {
+        const allowedSections = new Set(['general', 'about', 'socials', 'store', 'business']);
+        if (!allowedSections.has(section)) {
+            return null;
+        }
+        return this.getSection(section);
+    }
     async updateSettings(data) {
         const updates = [];
         if (data.general) {
-            updates.push(this.prisma.system_configs.upsert({
-                where: { key: 'site.general' },
-                update: {
-                    value: JSON.stringify(data.general),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-                create: { id: (0, crypto_1.randomUUID)(),
-                    key: 'site.general',
-                    value: JSON.stringify(data.general),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-            }));
+            updates.push(this.upsertSection('general', data.general));
         }
         if (data.about) {
-            updates.push(this.prisma.system_configs.upsert({
-                where: { key: 'site.about' },
-                update: {
-                    value: JSON.stringify(data.about),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-                create: { id: (0, crypto_1.randomUUID)(),
-                    key: 'site.about',
-                    value: JSON.stringify(data.about),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-            }));
+            updates.push(this.upsertSection('about', data.about));
         }
         if (data.socials) {
-            updates.push(this.prisma.system_configs.upsert({
-                where: { key: 'site.socials' },
-                update: {
-                    value: JSON.stringify(data.socials),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-                create: { id: (0, crypto_1.randomUUID)(),
-                    key: 'site.socials',
-                    value: JSON.stringify(data.socials),
-                    type: 'JSON', updatedAt: new Date(),
-                },
-            }));
+            updates.push(this.upsertSection('socials', data.socials));
+        }
+        if (data.store) {
+            updates.push(this.upsertSection('store', data.store));
+        }
+        if (data.business) {
+            updates.push(this.upsertSection('business', data.business));
+        }
+        if (data.email) {
+            updates.push(this.upsertSection('email', data.email));
+        }
+        if (data.notifications) {
+            updates.push(this.upsertSection('notifications', data.notifications));
+        }
+        if (data.security) {
+            updates.push(this.upsertSection('security', data.security));
         }
         if (updates.length > 0) {
             await this.prisma.$transaction(updates);

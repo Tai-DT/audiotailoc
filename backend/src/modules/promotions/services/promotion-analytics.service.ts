@@ -204,7 +204,7 @@ export class PromotionAnalyticsService {
         case 'conversions':
           return (b.totalConversions || 0) - (a.totalConversions || 0);
         case 'roi':
-          return ((b.totalRoi || 0) / (b.dataPoints || 1)) - ((a.totalRoi || 0) / (a.dataPoints || 1));
+          return (b.totalRoi || 0) / (b.dataPoints || 1) - (a.totalRoi || 0) / (a.dataPoints || 1);
         default:
           return 0;
       }

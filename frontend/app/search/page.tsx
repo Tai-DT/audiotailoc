@@ -12,118 +12,83 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useProductSearch } from '@/lib/hooks/use-api';
 import { ProductFilters as ProductFiltersType } from '@/lib/types';
-import {
+import
+{
   Search,
   SlidersHorizontal,
   X,
   ArrowLeft
 } from 'lucide-react';
 
-function SearchContent() {
+function SearchContent ()
+{
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [query, setQuery] = React.useState(searchParams.get('q') || '');
-  const [showFilters, setShowFilters] = React.useState(false);
-  const [filters, setFilters] = React.useState<ProductFiltersType>({
+  const [ query, setQuery ] = React.useState( searchParams.get( 'q' ) || '' );
+  const [ showFilters, setShowFilters ] = React.useState( false );
+  const [ filters, setFilters ] = React.useState<ProductFiltersType>( {
+    q: searchParams.get( 'q' ) || '',
     page: 1,
     pageSize: 20,
     sortBy: 'createdAt',
     sortOrder: 'desc'
-  });
+  } );
 
-  const { data: searchResults, isLoading, error } = useProductSearch(query, 50);
+  // Sync q from URL to filters
+  React.useEffect( () =>
+  {
+    const q = searchParams.get( 'q' ) || '';
+    setQuery( q );
+    setFilters( prev => ( { ...prev, q } ) );
+  }, [ searchParams ] );
 
-  const handleSearch = (e: React.FormEvent) => {
+  const { data: searchData, isLoading, error } = useProductSearch( {
+    ...filters,
+    minPrice: filters.minPrice ? filters.minPrice * 100 : undefined,
+    maxPrice: filters.maxPrice ? filters.maxPrice * 100 : undefined,
+  } );
+
+  const searchResults = searchData?.items || [];
+  const totalResults = searchData?.total || 0;
+
+  const handleSearch = ( e: React.FormEvent ) =>
+  {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    if ( query.trim() )
+    {
+      router.push( `/search?q=${ encodeURIComponent( query.trim() ) }` );
     }
   };
 
-  const handleClearSearch = () => {
-    setQuery('');
-    router.push('/search');
+  const handleClearSearch = () =>
+  {
+    setQuery( '' );
+    router.push( '/search' );
   };
 
-  const handleFiltersChange = (newFilters: Partial<ProductFiltersType>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+  const handleFiltersChange = ( newFilters: Partial<ProductFiltersType> ) =>
+  {
+    setFilters( prev => ( { ...prev, ...newFilters, page: 1 } ) );
   };
-
-  const filteredResults = React.useMemo(() => {
-    // Ensure searchResults is an array
-    if (!searchResults || !Array.isArray(searchResults)) return [];
-
-    let results = [...searchResults];
-
-    // Apply category filter
-    if (filters.categoryId) {
-      results = results.filter(product =>
-        product.category?.slug === filters.categoryId ||
-        product.category?.name.toLowerCase().includes(filters.categoryId!.toLowerCase())
-      );
-    }
-
-    // Apply price range filter
-    if (filters.minPrice !== undefined) {
-      results = results.filter(product => product.priceCents >= filters.minPrice! * 100);
-    }
-    if (filters.maxPrice !== undefined) {
-      results = results.filter(product => product.priceCents <= filters.maxPrice! * 100);
-    }
-
-    // Apply brand filter
-    if (filters.brand) {
-      results = results.filter(product =>
-        product.brand?.toLowerCase().includes(filters.brand!.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    results.sort((a, b) => {
-      let aValue: string | number, bValue: string | number;
-
-      switch (filters.sortBy) {
-        case 'price':
-          aValue = a.priceCents;
-          bValue = b.priceCents;
-          break;
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'createdAt':
-        default:
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-          break;
-      }
-
-      if (filters.sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    return results;
-  }, [searchResults, filters]);
 
   const hasActiveFilters = !!(
     filters.categoryId ||
     filters.minPrice ||
     filters.maxPrice ||
     filters.brand ||
-    (filters.sortBy !== 'createdAt') ||
-    (filters.sortOrder !== 'desc')
+    ( filters.sortBy !== 'createdAt' ) ||
+    ( filters.sortOrder !== 'desc' )
   );
 
-  const clearAllFilters = () => {
-    setFilters({
+  const clearAllFilters = () =>
+  {
+    setFilters( {
+      q: query,
       page: 1,
       pageSize: 20,
       sortBy: 'createdAt',
       sortOrder: 'desc'
-    });
+    } );
   };
 
   return (
@@ -150,7 +115,7 @@ function SearchContent() {
                 type="text"
                 placeholder="Tìm kiếm sản phẩm..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={( e ) => setQuery( e.target.value )}
                 className="pl-10"
               />
             </div>
@@ -174,7 +139,7 @@ function SearchContent() {
                   {isLoading ? (
                     'Đang tìm kiếm...'
                   ) : (
-                    `Tìm thấy ${filteredResults.length} sản phẩm cho "${query}"`
+                    `Tìm thấy ${ totalResults } sản phẩm cho "${ query }"`
                   )}
                 </p>
                 {hasActiveFilters && (
@@ -187,7 +152,7 @@ function SearchContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={() => setShowFilters( !showFilters )}
               >
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 Bộ lọc
@@ -230,7 +195,7 @@ function SearchContent() {
           <div className={showFilters ? "lg:col-span-3" : "lg:col-span-4"}>
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
+                {[ ...Array( 8 ) ].map( ( _, i ) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-muted" />
                     <CardContent className="p-4">
@@ -238,7 +203,7 @@ function SearchContent() {
                       <div className="h-4 bg-muted rounded w-2/3" />
                     </CardContent>
                   </Card>
-                ))}
+                ) )}
               </div>
             ) : error ? (
               <div className="text-center py-16">
@@ -259,7 +224,7 @@ function SearchContent() {
                   Nhập từ khóa để tìm kiếm sản phẩm bạn quan tâm.
                 </p>
               </div>
-            ) : filteredResults.length === 0 ? (
+            ) : searchResults.length === 0 ? (
               <div className="text-center py-16">
                 <Search className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">
@@ -281,14 +246,14 @@ function SearchContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredResults.map((product) => (
+                {searchResults.map( ( product ) => (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onAddToCart={(id) => console.log('Add to cart:', id)}
-                    onViewProduct={(id) => console.log('View product:', id)}
+                    onAddToCart={( id ) => console.log( 'Add to cart:', id )}
+                    onViewProduct={( id ) => console.log( 'View product:', id )}
                   />
-                ))}
+                ) )}
               </div>
             )}
           </div>
@@ -310,19 +275,20 @@ function SearchContent() {
                     'Tai nghe gaming',
                     'Mixer âm thanh',
                     'Hệ thống âm thanh gia đình'
-                  ].map((term) => (
+                  ].map( ( term ) => (
                     <Button
                       key={term}
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setQuery(term);
-                        router.push(`/search?q=${encodeURIComponent(term)}`);
+                      onClick={() =>
+                      {
+                        setQuery( term );
+                        router.push( `/search?q=${ encodeURIComponent( term ) }` );
                       }}
                     >
                       {term}
                     </Button>
-                  ))}
+                  ) )}
                 </div>
               </CardContent>
             </Card>
@@ -333,7 +299,8 @@ function SearchContent() {
   );
 }
 
-export default function SearchPage() {
+export default function SearchPage ()
+{
   return (
     <Suspense fallback={<div>Loading search...</div>}>
       <SearchContent />

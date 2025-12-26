@@ -1,4 +1,5 @@
 // Contact information configuration
+// TODO: In production, this should be fetched from /site/contact-info API
 export const CONTACT_CONFIG = {
   // Zalo chat configuration
   zalo: {
@@ -15,17 +16,27 @@ export const CONTACT_CONFIG = {
     hotlineNumber: '0768426262'
   },
 
-  email: 'info@audiotailoc.com',
+  email: 'audiotailoc@gmail.com',
 
   address: {
-    street: '123 Đường ABC',
-    city: 'Hồ Chí Minh',
+    full: '37/9 Đường 44, Phường Linh Đông, TP. Thủ Đức, TP.HCM',
+    street: '37/9 Đường 44',
+    ward: 'Phường Linh Đông',
+    district: 'TP. Thủ Đức',
+    city: 'TP. Hồ Chí Minh',
     country: 'Việt Nam'
   },
 
   social: {
     facebook: 'https://facebook.com/audiotailoc',
     instagram: 'https://instagram.com/audiotailoc',
-    youtube: 'https://youtube.com/audiotailoc'
+    youtube: 'https://youtube.com/audiotailoc',
+    zalo: 'https://zalo.me/0768426262'
+  },
+
+  businessHours: {
+    weekdays: '08:00 - 21:00',
+    weekend: '08:00 - 21:00',
+    display: '08:00 - 21:00 (T2 - CN)'
   }
 } as const;

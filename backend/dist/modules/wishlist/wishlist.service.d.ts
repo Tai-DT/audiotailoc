@@ -12,6 +12,7 @@ export declare class WishlistService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
             slug: string;
             shortDescription: string | null;
             priceCents: bigint;
@@ -35,7 +36,6 @@ export declare class WishlistService {
             metaKeywords: string | null;
             canonicalUrl: string | null;
             featured: boolean;
-            isActive: boolean;
             isDeleted: boolean;
             viewCount: number;
         };
@@ -56,13 +56,13 @@ export declare class WishlistService {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 priceCents: bigint;
                 originalPriceCents: bigint;
                 imageUrl: string;
                 images: string;
                 stockQuantity: number;
-                isActive: boolean;
             };
         } & {
             id: string;

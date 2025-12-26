@@ -1,11 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
-  IsString,
-  IsOptional,
-  IsUrl,
-  IsInt,
   IsBoolean,
   IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
   MinLength,
 } from 'class-validator';
 
@@ -17,30 +18,35 @@ export class CreateBannerDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
   subtitle?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
   description?: string;
 
   @ApiProperty()
-  @IsUrl()
+  @IsString()
   imageUrl!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
   mobileImageUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
   linkUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
   buttonLabel?: string;
 
@@ -50,6 +56,7 @@ export class CreateBannerDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
   locale?: string;
 
@@ -63,11 +70,13 @@ export class CreateBannerDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsDateString()
   startAt?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsDateString()
   endAt?: string;
 }

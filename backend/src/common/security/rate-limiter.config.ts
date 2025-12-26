@@ -271,11 +271,7 @@ export class RateLimiterConfigService {
    * Generate rate limit key for a request
    * Used to identify unique clients for rate limiting
    */
-  generateRateLimitKey(
-    ip: string,
-    userID?: string | number,
-    userAgent?: string
-  ): string {
+  generateRateLimitKey(ip: string, userID?: string | number, userAgent?: string): string {
     const parts: string[] = [];
 
     // Include user ID if available (authenticated requests)
@@ -323,15 +319,15 @@ export class RateLimiterConfigService {
     const config = this.getConfig();
 
     this.logger.log(
-      `Rate Limiter Configuration (Environment: ${this.isDevelopment ? 'development' : 'production'})`
+      `Rate Limiter Configuration (Environment: ${this.isDevelopment ? 'development' : 'production'})`,
     );
-    this.logger.log(`Default Rule: ${config.defaultRule.maxRequests} requests per ${config.defaultRule.windowMs}ms`);
+    this.logger.log(
+      `Default Rule: ${config.defaultRule.maxRequests} requests per ${config.defaultRule.windowMs}ms`,
+    );
     this.logger.log(`Endpoint-specific Rules: ${config.rules.length}`);
 
-    config.rules.forEach((rule) => {
-      this.logger.debug(
-        `  ${rule.pattern}: ${rule.maxRequests} requests per ${rule.windowMs}ms`
-      );
+    config.rules.forEach(rule => {
+      this.logger.debug(`  ${rule.pattern}: ${rule.maxRequests} requests per ${rule.windowMs}ms`);
     });
   }
 }

@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { Banner, CreateBannerDto, UpdateBannerDto } from "@/types/banner"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { ImageUpload } from "@/components/ui/image-upload"
-import {
+import { ImageUpload, getImageUrls, normalizeImages } from "@/components/ui/image-upload"
+import
+{
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,7 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
+import
+{
   Select,
   SelectContent,
   SelectItem,
@@ -24,11 +27,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-interface BannerFormProps {
+interface BannerFormProps
+{
   banner: Banner | null
   open: boolean
   onClose: () => void
-  onSubmit: (data: CreateBannerDto | UpdateBannerDto) => void
+  onSubmit: ( data: CreateBannerDto | UpdateBannerDto ) => void
 }
 
 const pages = [
@@ -39,8 +43,9 @@ const pages = [
   { value: "contact", label: "Liên hệ" },
 ]
 
-export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps) {
-  const [formData, setFormData] = useState({
+export function BannerForm ( { banner, open, onClose, onSubmit }: BannerFormProps )
+{
+  const [ formData, setFormData ] = useState( {
     title: "",
     subtitle: "",
     description: "",
@@ -53,51 +58,75 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
     page: "home",
     position: 0,
     isActive: true,
-  })
+  } )
 
-  useEffect(() => {
-    if (banner) {
-      setFormData({
-        title: banner.title || "",
-        subtitle: banner.subtitle || "",
-        description: banner.description || "",
-        imageUrl: banner.imageUrl || "",
-        mobileImageUrl: banner.mobileImageUrl || "",
-        images: banner.imageUrl ? [banner.imageUrl] : [],
-        mobileImages: banner.mobileImageUrl ? [banner.mobileImageUrl] : [],
-        linkUrl: banner.linkUrl || "",
-        buttonLabel: banner.buttonLabel || "",
-        page: banner.page || "home",
-        position: banner.position || 0,
-        isActive: banner.isActive ?? true,
-      })
-    } else {
-      setFormData({
-        title: "",
-        subtitle: "",
-        description: "",
-        imageUrl: "",
-        mobileImageUrl: "",
-        images: [],
-        mobileImages: [],
-        linkUrl: "",
-        buttonLabel: "",
-        page: "home",
-        position: 0,
-        isActive: true,
-      })
-    }
-  }, [banner])
+  useEffect( () =>
+  {
+    const timeout = setTimeout( () =>
+    {
+      if ( banner )
+      {
+        setFormData( {
+          title: banner.title || "",
+          subtitle: banner.subtitle || "",
+          description: banner.description || "",
+          imageUrl: banner.imageUrl || "",
+          mobileImageUrl: banner.mobileImageUrl || "",
+          images: banner.imageUrl ? [ banner.imageUrl ] : [],
+          mobileImages: banner.mobileImageUrl ? [ banner.mobileImageUrl ] : [],
+          linkUrl: banner.linkUrl || "",
+          buttonLabel: banner.buttonLabel || "",
+          page: banner.page || "home",
+          position: banner.position || 0,
+          isActive: banner.isActive ?? true,
+        } )
+      } else
+      {
+        setFormData( {
+          title: "",
+          subtitle: "",
+          description: "",
+          imageUrl: "",
+          mobileImageUrl: "",
+          images: [],
+          mobileImages: [],
+          linkUrl: "",
+          buttonLabel: "",
+          page: "home",
+          position: 0,
+          isActive: true,
+        } )
+      }
+    }, 0 )
 
-  const handleSubmit = (e: React.FormEvent) => {
+    return () => clearTimeout( timeout )
+  }, [ banner ] )
+
+  const handleSubmit = ( e: React.FormEvent ) =>
+  {
     e.preventDefault()
-    // Convert arrays back to single URLs for backend compatibility
-    const submitData = {
-      ...formData,
-      imageUrl: formData.images.length > 0 ? formData.images[0] : formData.imageUrl,
-      mobileImageUrl: formData.mobileImages.length > 0 ? formData.mobileImages[0] : formData.mobileImageUrl,
+
+    // Create clean payload for backend
+    const payload: CreateBannerDto | UpdateBannerDto = {
+      title: formData.title,
+      subtitle: formData.subtitle || undefined,
+      description: formData.description || undefined,
+      imageUrl: ( formData.images.length > 0 ? formData.images[ 0 ] : formData.imageUrl ) || '',
+      mobileImageUrl: ( formData.mobileImages.length > 0 ? formData.mobileImages[ 0 ] : formData.mobileImageUrl ) || undefined,
+      linkUrl: formData.linkUrl || undefined,
+      buttonLabel: formData.buttonLabel || undefined,
+      page: formData.page,
+      position: Number( formData.position ) || 0,
+      isActive: Boolean( formData.isActive ),
     }
-    onSubmit(submitData)
+
+    if ( !payload.imageUrl )
+    {
+      toast.error( 'Vui lòng chọn hoặc nhập URL hình ảnh' )
+      return
+    }
+
+    onSubmit( payload )
   }
 
   return (
@@ -118,7 +147,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={( e ) => setFormData( { ...formData, title: e.target.value } )}
                 className="col-span-3"
                 required
               />
@@ -130,7 +159,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               <Input
                 id="subtitle"
                 value={formData.subtitle}
-                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                onChange={( e ) => setFormData( { ...formData, subtitle: e.target.value } )}
                 className="col-span-3"
               />
             </div>
@@ -141,7 +170,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={( e ) => setFormData( { ...formData, description: e.target.value } )}
                 className="col-span-3"
               />
             </div>
@@ -151,11 +180,14 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               </Label>
               <div className="col-span-3">
                 <ImageUpload
-                  value={formData.images}
-                  onChange={(urls) => {
-                    setFormData(prev => ({ ...prev, images: urls }))
-                    if (urls.length > 0) {
-                      setFormData(prev => ({ ...prev, imageUrl: urls[0] }))
+                  value={normalizeImages( formData.images )}
+                  onChange={( images ) =>
+                  {
+                    const urls = getImageUrls( images );
+                    setFormData( prev => ( { ...prev, images: urls } ) )
+                    if ( urls.length > 0 )
+                    {
+                      setFormData( prev => ( { ...prev, imageUrl: urls[ 0 ] } ) )
                     }
                   }}
                   folder="banners/desktop"
@@ -171,11 +203,14 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               </Label>
               <div className="col-span-3">
                 <ImageUpload
-                  value={formData.mobileImages}
-                  onChange={(urls) => {
-                    setFormData(prev => ({ ...prev, mobileImages: urls }))
-                    if (urls.length > 0) {
-                      setFormData(prev => ({ ...prev, mobileImageUrl: urls[0] }))
+                  value={normalizeImages( formData.mobileImages )}
+                  onChange={( images ) =>
+                  {
+                    const urls = getImageUrls( images );
+                    setFormData( prev => ( { ...prev, mobileImages: urls } ) )
+                    if ( urls.length > 0 )
+                    {
+                      setFormData( prev => ( { ...prev, mobileImageUrl: urls[ 0 ] } ) )
                     }
                   }}
                   folder="banners/mobile"
@@ -185,17 +220,37 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
                 />
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="linkUrl" className="text-right">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="linkUrl" className="text-right pt-2">
                 Link URL
               </Label>
-              <Input
-                id="linkUrl"
-                type="url"
-                value={formData.linkUrl}
-                onChange={(e) => setFormData({ ...formData, linkUrl: e.target.value })}
-                className="col-span-3"
-              />
+              <div className="col-span-3 space-y-2">
+                <Input
+                  id="linkUrl"
+                  type="text"
+                  placeholder="https://... hoặc /products..."
+                  value={formData.linkUrl}
+                  onChange={( e ) => setFormData( { ...formData, linkUrl: e.target.value } )}
+                />
+                <Select
+                  onValueChange={( value ) => setFormData( { ...formData, linkUrl: value } )}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn liên kết nội bộ..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="/">Trang chủ</SelectItem>
+                    <SelectItem value="/about">Giới thiệu</SelectItem>
+                    <SelectItem value="/products">Sản phẩm</SelectItem>
+                    <SelectItem value="/services">Dịch vụ</SelectItem>
+                    <SelectItem value="/contact">Liên hệ</SelectItem>
+                    <SelectItem value="/blog">Tin tức</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Chọn liên kết có sẵn hoặc nhập đường dẫn thủ công (bắt đầu bằng / cho nội bộ)
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="buttonLabel" className="text-right">
@@ -204,7 +259,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               <Input
                 id="buttonLabel"
                 value={formData.buttonLabel}
-                onChange={(e) => setFormData({ ...formData, buttonLabel: e.target.value })}
+                onChange={( e ) => setFormData( { ...formData, buttonLabel: e.target.value } )}
                 className="col-span-3"
               />
             </div>
@@ -214,17 +269,17 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               </Label>
               <Select
                 value={formData.page}
-                onValueChange={(value) => setFormData({ ...formData, page: value })}
+                onValueChange={( value ) => setFormData( { ...formData, page: value } )}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {pages.map((page) => (
+                  {pages.map( ( page ) => (
                     <SelectItem key={page.value} value={page.value}>
                       {page.label}
                     </SelectItem>
-                  ))}
+                  ) )}
                 </SelectContent>
               </Select>
             </div>
@@ -236,7 +291,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
                 id="position"
                 type="number"
                 value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+                onChange={( e ) => setFormData( { ...formData, position: parseInt( e.target.value ) || 0 } )}
                 className="col-span-3"
               />
             </div>
@@ -247,7 +302,7 @@ export function BannerForm({ banner, open, onClose, onSubmit }: BannerFormProps)
               <Switch
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                onCheckedChange={( checked ) => setFormData( { ...formData, isActive: checked } )}
               />
             </div>
           </div>

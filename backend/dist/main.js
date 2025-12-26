@@ -8,6 +8,7 @@ const core_1 = require("@nestjs/core");
 const app_module_1 = require("./modules/app.module");
 const helmet_1 = __importDefault(require("helmet"));
 const compression_1 = __importDefault(require("compression"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const express_1 = require("express");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
@@ -16,6 +17,7 @@ const http_exception_filter_1 = require("./common/filters/http-exception.filter"
 const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
 const response_transform_interceptor_1 = require("./common/interceptors/response-transform.interceptor");
 const bigint_serialize_interceptor_1 = require("./common/interceptors/bigint-serialize.interceptor");
+const csrf_middleware_1 = require("./common/security/csrf.middleware");
 if (process && process.stdout && typeof process.stdout.on === 'function') {
     process.stdout.on('error', (err) => {
         if (err && (err.code === 'EPIPE' || err.code === 'EIO')) {
@@ -30,16 +32,24 @@ if (process && process.stdout && typeof process.stdout.on === 'function') {
         console.error('Unhandled stderr error:', err);
     });
 }
+process.on('warning', (warning) => {
+    if (warning.name === 'DeprecationWarning' && warning.code === 'DEP0190') {
+        return;
+    }
+});
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { bufferLogs: true });
     const logger = new common_1.Logger('Bootstrap');
     const config = app.get(config_1.ConfigService);
+    const trustProxyCount = config.get('TRUST_PROXY_COUNT') ?? (process.env.NODE_ENV === 'production' ? 1 : false);
+    app.getHttpAdapter().getInstance().set('trust proxy', trustProxyCount);
     const port = Number(process.env.PORT || config.get('PORT') || 3010);
-    const requiredEnvVars = [
-        'DATABASE_URL',
-        'JWT_ACCESS_SECRET',
-        'JWT_REFRESH_SECRET'
-    ];
+    const databaseUrl = config.get('DATABASE_URL');
+    const directDatabaseUrl = config.get('DIRECT_DATABASE_URL');
+    if (!directDatabaseUrl && databaseUrl) {
+        process.env.DIRECT_DATABASE_URL = databaseUrl;
+    }
+    const requiredEnvVars = ['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
     const missingVars = requiredEnvVars.filter(varName => !config.get(varName));
     if (missingVars.length > 0) {
         logger.error(`Missing required environment variables: ${missingVars.join(', ')}`);
@@ -61,11 +71,18 @@ async function bootstrap() {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:", "https:"],
+                imgSrc: ["'self'", 'data:', 'https:'],
             },
         },
+        crossOriginEmbedderPolicy: false,
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        frameguard: { action: 'deny' },
+        referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+        xssFilter: true,
     }));
-    const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
+    const corsOrigins = config.get('CORS_ORIGIN') ||
+        config.get('CORS_ORIGINS') ||
+        'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app';
     const allowedOrigins = corsOrigins.split(',').map((origin) => origin.trim());
     app.enableCors({
         origin: (origin, callback) => {
@@ -73,6 +90,7 @@ async function bootstrap() {
                 if (process.env.NODE_ENV === 'development') {
                     return callback(null, true);
                 }
+                logger.warn('CORS: Request without Origin header in production - consider stricter validation');
                 return callback(null, true);
             }
             if (allowedOrigins.indexOf(origin) !== -1) {
@@ -95,7 +113,13 @@ async function bootstrap() {
         },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'X-Requested-With',
+            'X-Idempotency-Key',
+            'X-Admin-Key',
+        ],
         exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
     });
     app.use((0, express_1.json)({
@@ -104,22 +128,22 @@ async function bootstrap() {
             if (buf.length > 2 * 1024 * 1024) {
                 throw new Error('Request body too large');
             }
-        }
+        },
     }));
     app.use((0, express_1.urlencoded)({
         extended: true,
         limit: '2mb',
-        parameterLimit: 10000
+        parameterLimit: 10000,
     }));
     app.useGlobalPipes(new common_1.ValidationPipe({
-        whitelist: false,
+        whitelist: true,
         forbidNonWhitelisted: false,
         transform: true,
         transformOptions: {
             enableImplicitConversion: true,
         },
         errorHttpStatusCode: common_1.HttpStatus.UNPROCESSABLE_ENTITY,
-        exceptionFactory: (errors) => {
+        exceptionFactory: errors => {
             const messages = errors.map(error => `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`);
             return new common_1.HttpException({
                 statusCode: common_1.HttpStatus.UNPROCESSABLE_ENTITY,
@@ -130,10 +154,13 @@ async function bootstrap() {
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalInterceptors(new bigint_serialize_interceptor_1.BigIntSerializeInterceptor(), new logging_interceptor_1.LoggingInterceptor(), new response_transform_interceptor_1.ResponseTransformInterceptor());
-    const rateLimit = require('express-rate-limit');
-    const limiter = rateLimit({
+    const csrfMiddleware = new csrf_middleware_1.CsrfMiddleware(config);
+    app.use((req, res, next) => {
+        csrfMiddleware.use(req, res, next);
+    });
+    const limiter = (0, express_rate_limit_1.default)({
         windowMs: 15 * 60 * 1000,
-        max: 1000,
+        max: 300,
         message: {
             success: false,
             message: 'Too many requests from this IP, please try again later.',
@@ -227,11 +254,11 @@ async function bootstrap() {
     logger.log(`🚀 Audio Tài Lộc API v1 đang chạy tại: http://localhost:${port}`);
     logger.log(`📚 API v1 Documentation: http://localhost:${port}/docs`);
     logger.log(`🔧 API v1 Tooling: http://localhost:${port}/api/v1/docs`);
-    logger.log(`🏥 Health Check: http://localhost:${port}/api/v1/health`);
+    logger.log(`🏥 Health Check: http://localhost:${port}/health`);
     logger.log(`🌍 Environment: ${config.get('NODE_ENV') || 'development'}`);
     logger.log(`🎯 Current API Version: v1 (Unified Complete Edition)`);
 }
-bootstrap().catch((error) => {
+bootstrap().catch(error => {
     console.error('Failed to start application:', error);
     process.exit(1);
 });

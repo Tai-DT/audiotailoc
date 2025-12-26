@@ -129,24 +129,43 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     total: 0,
     itemCount: 0,
   });
+  const [isInitialized, setIsInitialized] = React.useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('audiotailoc-cart');
-    if (savedCart) {
-      try {
+    try {
+      const savedCart = localStorage.getItem('audiotailoc-cart');
+      if (savedCart) {
         const cartItems = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: cartItems });
-      } catch (error) {
-        console.error('Failed to load cart from localStorage:', error);
+        // Validate cart items before loading
+        if (Array.isArray(cartItems) && cartItems.every(item =>
+          item && typeof item === 'object' &&
+          typeof item.id === 'string' &&
+          typeof item.name === 'string' &&
+          typeof item.price === 'number' &&
+          typeof item.quantity === 'number' &&
+          item.quantity > 0
+        )) {
+          dispatch({ type: 'LOAD_CART', payload: cartItems });
+        } else {
+          // Invalid cart data, clear it
+          localStorage.removeItem('audiotailoc-cart');
+        }
       }
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error);
+      localStorage.removeItem('audiotailoc-cart');
+    } finally {
+      setIsInitialized(true);
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (after initial load)
   useEffect(() => {
-    localStorage.setItem('audiotailoc-cart', JSON.stringify(state.items));
-  }, [state.items]);
+    if (isInitialized) {
+      localStorage.setItem('audiotailoc-cart', JSON.stringify(state.items));
+    }
+  }, [state.items, isInitialized]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
     const normalizedQuantity = Math.max(1, quantity);

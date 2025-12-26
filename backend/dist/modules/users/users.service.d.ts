@@ -1,19 +1,31 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
+import { SecurityService } from '../security/security.service';
 export declare class UsersService {
     private readonly prisma;
     private readonly mailService;
+    private readonly securityService;
     private readonly logger;
-    constructor(prisma: PrismaService, mailService: MailService);
+    constructor(prisma: PrismaService, mailService: MailService, securityService: SecurityService);
     findByEmail(email: string): Promise<{
+        password: string;
         id: string;
         email: string;
-        password: string;
         name: string | null;
         phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
     }>;
     findById(id: string): Promise<{
         orders: {
@@ -22,7 +34,7 @@ export declare class UsersService {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string;
+            userId: string | null;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -35,14 +47,24 @@ export declare class UsersService {
             orders: number;
         };
     } & {
+        password: string;
         id: string;
         email: string;
-        password: string;
         name: string | null;
         phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
     }>;
     findAll(params: {
         page: number;
@@ -96,26 +118,52 @@ export declare class UsersService {
         password: string;
         name?: string | null;
     }): Promise<{
+        password: string;
         id: string;
         email: string;
-        password: string;
         name: string | null;
         phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
     }>;
     update(id: string, updateUserDto: {
         name?: string;
         phone?: string;
         role?: 'USER' | 'ADMIN';
-    }): Promise<{
+        address?: string;
+        dateOfBirth?: Date | string;
+        gender?: string;
+        isActive?: boolean;
+        avatarUrl?: string;
+        emailNotifications?: boolean;
+        smsNotifications?: boolean;
+        promoNotifications?: boolean;
+    }, currentUser?: any): Promise<{
         id: string;
         email: string;
         name: string;
         phone: string;
         role: string;
         updatedAt: Date;
+        avatarUrl: string;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
     }>;
     remove(id: string, currentUser?: any): Promise<{
         message: string;
@@ -158,4 +206,26 @@ export declare class UsersService {
         };
     }>;
     private sendWelcomeEmail;
+    setResetToken(userId: string, token: string, expiry: Date): Promise<void>;
+    findByResetToken(token: string): Promise<{
+        password: string;
+        id: string;
+        email: string;
+        name: string | null;
+        phone: string | null;
+        role: string;
+        createdAt: Date;
+        updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
+    }>;
+    updatePasswordAndClearResetToken(userId: string, passwordHash: string): Promise<void>;
 }

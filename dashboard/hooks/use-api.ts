@@ -40,7 +40,10 @@ export function useApi<T>(
   }, []);
 
   useEffect(() => {
-    execute();
+    const timeout = setTimeout(() => {
+      void execute();
+    }, 0);
+    return () => clearTimeout(timeout);
   }, [execute]);
 
   return {

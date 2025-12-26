@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useArticle } from '@/lib/hooks/use-api';
 import { notFound } from 'next/navigation';
+import { sanitizeProseHtml } from '@/lib/utils/sanitize';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function ArticleDetailPage({ params }: Props) {
-  const { id } = params;
+  const resolvedParams = React.use(params);
+  const { id } = resolvedParams;
   const { data, isLoading, error } = useArticle(id);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function ArticleDetailPage({ params }: Props) {
       <h1>{data.title}</h1>
       <p className="text-xs text-muted-foreground">Chuyên mục: {data.category} • Lượt xem: {data.viewCount}</p>
       <hr />
-      <div dangerouslySetInnerHTML={{ __html: data.content }} />
+      <div dangerouslySetInnerHTML={{ __html: sanitizeProseHtml(data.content) }} />
       {data.tags?.length ? (
         <div className="mt-6 flex flex-wrap gap-2">
           {data.tags.map(tag => (
@@ -53,7 +55,7 @@ export default function ArticleDetailPage({ params }: Props) {
       ) : null}
 
       <hr className="my-8" />
-      
+
       <div className="not-prose">
         <h3 className="text-lg font-semibold mb-3 text-foreground">Bài viết này có hữu ích không?</h3>
         {feedbackSent ? (

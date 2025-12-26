@@ -2,6 +2,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../caching/cache.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { InventoryService } from '../inventory/inventory.service';
 export type ProductDto = {
     id: string;
     slug?: string;
@@ -39,7 +40,8 @@ export type ProductDto = {
 export declare class CatalogService {
     private readonly prisma;
     private readonly cache;
-    constructor(prisma: PrismaService, cache: CacheService);
+    private readonly inventory;
+    constructor(prisma: PrismaService, cache: CacheService, inventory: InventoryService);
     listProducts(params?: {
         page?: number;
         pageSize?: number;
@@ -49,6 +51,8 @@ export declare class CatalogService {
         sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount';
         sortOrder?: 'asc' | 'desc';
         featured?: boolean;
+        categoryId?: string;
+        isActive?: boolean;
     }): Promise<{
         items: ProductDto[];
         total: number;

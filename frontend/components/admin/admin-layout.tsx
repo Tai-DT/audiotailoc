@@ -101,7 +101,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 className={`flex items-center px-3 py-2 rounded-md text-sm font-medium mb-1 ${
                   isActive(item.href)
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    : 'text-foreground hover:bg-muted'
                 }`}
                 onClick={() => setSidebarOpen(false)}
               >
@@ -133,7 +133,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                   isActive(item.href)
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    : 'text-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -150,10 +150,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {user.name}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {user.email}
                 </p>
               </div>
@@ -177,7 +177,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <Menu className="h-5 w-5" />
               </Button>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-foreground">
                   {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}
                 </h1>
               </div>
@@ -202,7 +202,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     {user.name}
                   </p>
                 </div>

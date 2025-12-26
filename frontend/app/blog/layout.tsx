@@ -1,37 +1,20 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Blog & Kiến thức | Audio Tài Lộc',
-  description: 'Khám phá kiến thức âm thanh, hướng dẫn sử dụng, và những thông tin hữu ích từ Audio Tài Lộc. Đọc các bài viết về âm thanh, kỹ thuật, chính sách và nhiều hơn nữa.',
-  keywords: [
-    'blog âm thanh',
-    'kiến thức audio',
-    'hướng dẫn âm thanh',
-    'tai nghe',
-    'loa',
-    'kỹ thuật âm thanh',
-    'chính sách',
-    'bảo hành',
-    'Audio Tài Lộc'
-  ],
-  authors: [{ name: 'Audio Tài Lộc' }],
+  title: 'Blog - Kiến thức âm thanh | Audio Tài Lộc',
+  description: 'Khám phá những bài viết hữu ích về âm thanh, karaoke và thiết bị chuyên nghiệp từ Audio Tài Lộc.',
+  keywords: ['blog âm thanh', 'kiến thức karaoke', 'hướng dẫn loa', 'tin tức audio'],
   openGraph: {
-    title: 'Blog & Kiến thức | Audio Tài Lộc',
-    description: 'Khám phá kiến thức âm thanh, hướng dẫn sử dụng, và những thông tin hữu ích từ Audio Tài Lộc.',
+    title: 'Blog - Kiến thức âm thanh | Audio Tài Lộc',
+    description: 'Khám phá những bài viết hữu ích về âm thanh, karaoke và thiết bị chuyên nghiệp.',
     type: 'website',
-    url: '/blog',
+    locale: 'vi_VN',
     siteName: 'Audio Tài Lộc',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Blog & Kiến thức | Audio Tài Lộc',
-    description: 'Khám phá kiến thức âm thanh, hướng dẫn sử dụng, và những thông tin hữu ích từ Audio Tài Lộc.',
-  },
-  alternates: {
-    canonical: '/blog',
-  },
-  other: {
-    'article:author': 'Audio Tài Lộc',
+    title: 'Blog - Kiến thức âm thanh | Audio Tài Lộc',
+    description: 'Khám phá những bài viết hữu ích về âm thanh, karaoke và thiết bị chuyên nghiệp.',
   },
 };
 

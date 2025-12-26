@@ -45,7 +45,7 @@ let SupportService = class SupportService {
             where.OR = [
                 { title: { contains: params.search, mode: 'insensitive' } },
                 { content: { contains: params.search, mode: 'insensitive' } },
-                { tags: { contains: params.search, mode: 'insensitive' } }
+                { tags: { contains: params.search, mode: 'insensitive' } },
             ];
         }
         if (params.category) {
@@ -56,9 +56,9 @@ let SupportService = class SupportService {
                 where,
                 skip,
                 take: pageSize,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.knowledge_base_entries.count({ where })
+            this.prisma.knowledge_base_entries.count({ where }),
         ]);
         const items = entries.map(e => this.mapEntryToArticle(e));
         const totalPages = Math.ceil(totalCount / pageSize);
@@ -76,9 +76,11 @@ let SupportService = class SupportService {
             throw new Error('Article not found');
         await this.prisma.knowledge_base_entries.update({
             where: { id: entry.id },
-            data: { viewCount: { increment: 1 } }
+            data: { viewCount: { increment: 1 } },
         });
-        const refreshed = await this.prisma.knowledge_base_entries.findUnique({ where: { id: entry.id } });
+        const refreshed = await this.prisma.knowledge_base_entries.findUnique({
+            where: { id: entry.id },
+        });
         return this.mapEntryToArticle(refreshed);
     }
     async updateArticle(id, data) {
@@ -93,7 +95,10 @@ let SupportService = class SupportService {
             updateData.tags = data.tags.join(',');
         if (data.published !== undefined)
             updateData.isActive = data.published;
-        const updated = await this.prisma.knowledge_base_entries.update({ where: { id }, data: updateData });
+        const updated = await this.prisma.knowledge_base_entries.update({
+            where: { id },
+            data: updateData,
+        });
         return this.mapEntryToArticle(updated);
     }
     async deleteArticle(id) {
@@ -104,7 +109,7 @@ let SupportService = class SupportService {
         const updateField = helpful ? 'helpful' : 'notHelpful';
         const updated = await this.prisma.knowledge_base_entries.update({
             where: { id },
-            data: { [updateField]: { increment: 1 } }
+            data: { [updateField]: { increment: 1 } },
         });
         return this.mapEntryToArticle(updated);
     }
@@ -159,9 +164,7 @@ let SupportService = class SupportService {
                 updatedAt: new Date('2024-01-02'),
             },
         ];
-        return category
-            ? mockFAQs.filter(faq => faq.category === category)
-            : mockFAQs;
+        return category ? mockFAQs.filter(faq => faq.category === category) : mockFAQs;
     }
     async createTicket(data) {
         const ticket = {
@@ -226,11 +229,11 @@ let SupportService = class SupportService {
                 OR: [
                     { title: { contains: query, mode: 'insensitive' } },
                     { content: { contains: query, mode: 'insensitive' } },
-                    { tags: { contains: query, mode: 'insensitive' } }
-                ]
+                    { tags: { contains: query, mode: 'insensitive' } },
+                ],
             },
             orderBy: { createdAt: 'desc' },
-            take: 10
+            take: 10,
         });
         return entries.map(entry => ({
             id: entry.id,
@@ -250,7 +253,7 @@ let SupportService = class SupportService {
         const categories = await this.prisma.knowledge_base_entries.findMany({
             where: { isActive: true },
             select: { kind: true },
-            distinct: ['kind']
+            distinct: ['kind'],
         });
         return categories.map(cat => cat.kind);
     }
@@ -264,16 +267,19 @@ let SupportService = class SupportService {
                     {
                         name: 'Test Audio Equipment',
                         quantity: 1,
-                        price: '1.000.000 VNĐ'
-                    }
+                        price: '1.000.000 VNĐ',
+                    },
                 ],
-                status: 'PENDING'
+                status: 'PENDING',
             };
             await this.mailService.sendOrderConfirmation(email, testOrderData);
             return { success: true, message: `Test email sent successfully to ${email}` };
         }
         catch (error) {
-            return { success: false, message: `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}` };
+            return {
+                success: false,
+                message: `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            };
         }
     }
 };

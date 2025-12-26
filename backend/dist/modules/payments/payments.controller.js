@@ -1,43 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -48,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
+const payos_service_1 = require("./payos.service");
 const jwt_guard_1 = require("../auth/jwt.guard");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const class_validator_1 = require("class-validator");
@@ -90,9 +58,10 @@ __decorate([
     __metadata("design:type", String)
 ], CreateRefundDto.prototype, "reason", void 0);
 let PaymentsController = class PaymentsController {
-    constructor(payments, prisma) {
+    constructor(payments, prisma, payos) {
         this.payments = payments;
         this.prisma = prisma;
+        this.payos = payos;
     }
     getPaymentMethods() {
         return {
@@ -102,16 +71,16 @@ let PaymentsController = class PaymentsController {
                     name: 'Thanh toán khi nhận hàng',
                     description: 'Thanh toán bằng tiền mặt khi nhận hàng',
                     logo: '/images/payment/cod.png',
-                    enabled: true
+                    enabled: true,
                 },
                 {
                     id: 'PAYOS',
                     name: 'PayOS',
                     description: 'Thanh toán qua PayOS (Chuyển khoản, QR, Thẻ)',
                     logo: '/images/payment/payos.png',
-                    enabled: true
-                }
-            ]
+                    enabled: true,
+                },
+            ],
         };
     }
     getPaymentStatus() {
@@ -119,7 +88,7 @@ let PaymentsController = class PaymentsController {
             status: 'active',
             message: 'Payment system is operational',
             timestamp: new Date().toISOString(),
-            supportedProviders: ['COD', 'PAYOS']
+            supportedProviders: ['COD', 'PAYOS'],
         };
     }
     async getMyPayments(req) {
@@ -130,8 +99,8 @@ let PaymentsController = class PaymentsController {
         const payments = await this.prisma.payments.findMany({
             where: {
                 orders: {
-                    userId: userId
-                }
+                    userId: userId,
+                },
             },
             include: {
                 orders: {
@@ -140,11 +109,11 @@ let PaymentsController = class PaymentsController {
                         orderNo: true,
                         totalCents: true,
                         status: true,
-                        createdAt: true
-                    }
-                }
+                        createdAt: true,
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
         return payments.map((payment) => ({
             id: payment.id,
@@ -156,7 +125,7 @@ let PaymentsController = class PaymentsController {
             status: payment.status,
             transactionId: payment.id,
             createdAt: payment.createdAt,
-            updatedAt: payment.updatedAt
+            updatedAt: payment.updatedAt,
         }));
     }
     async getPayments(query) {
@@ -173,7 +142,7 @@ let PaymentsController = class PaymentsController {
         if (query.search) {
             where.OR = [
                 { orders: { orderNo: { contains: query.search, mode: 'insensitive' } } },
-                { id: { contains: query.search, mode: 'insensitive' } }
+                { id: { contains: query.search, mode: 'insensitive' } },
             ];
         }
         const [payments, total] = await Promise.all([
@@ -188,17 +157,17 @@ let PaymentsController = class PaymentsController {
                                 select: {
                                     id: true,
                                     name: true,
-                                    email: true
-                                }
-                            }
-                        }
-                    }
+                                    email: true,
+                                },
+                            },
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
-                take: limit
+                take: limit,
             }),
-            this.prisma.payments.count({ where })
+            this.prisma.payments.count({ where }),
         ]);
         return {
             payments: payments.map((payment) => ({
@@ -210,31 +179,31 @@ let PaymentsController = class PaymentsController {
                 status: payment.status,
                 createdAt: payment.createdAt,
                 updatedAt: payment.updatedAt,
-                paidAt: payment.status === 'PAID' ? payment.updatedAt : null,
-                user: payment.orders.user
+                paidAt: payment.status === 'SUCCEEDED' ? payment.updatedAt : null,
+                user: payment.orders.users,
             })),
             pagination: {
                 page,
                 limit,
                 total,
-                totalPages: Math.ceil(total / limit)
-            }
+                totalPages: Math.ceil(total / limit),
+            },
         };
     }
     async getPaymentStats() {
-        const [totalPayments, totalRevenue, pendingPayments, failedPayments, refundedPayments, refundedAmount] = await Promise.all([
+        const [totalPayments, totalRevenue, pendingPayments, failedPayments, refundedPayments, refundedAmount,] = await Promise.all([
             this.prisma.payments.count(),
             this.prisma.payments.aggregate({
-                where: { status: 'PAID' },
-                _sum: { amountCents: true }
+                where: { status: 'SUCCEEDED' },
+                _sum: { amountCents: true },
             }),
             this.prisma.payments.count({ where: { status: 'PENDING' } }),
             this.prisma.payments.count({ where: { status: 'FAILED' } }),
             this.prisma.payments.count({ where: { status: 'REFUNDED' } }),
             this.prisma.payments.aggregate({
                 where: { status: 'REFUNDED' },
-                _sum: { amountCents: true }
-            })
+                _sum: { amountCents: true },
+            }),
         ]);
         return {
             totalPayments,
@@ -242,7 +211,7 @@ let PaymentsController = class PaymentsController {
             pendingPayments,
             failedPayments,
             refundedPayments,
-            refundedAmount: refundedAmount._sum.amountCents || 0
+            refundedAmount: refundedAmount._sum.amountCents || 0,
         };
     }
     createIntent(dto) {
@@ -260,11 +229,8 @@ let PaymentsController = class PaymentsController {
         return { ok: true };
     }
     async payosCallback(orderCode, ref) {
-        const id = String(orderCode || ref || '');
-        if (!id)
-            return { ok: false };
-        await this.payments.markPaid('PAYOS', id);
-        return { ok: true };
+        const _id = String(orderCode || ref || '');
+        return { ok: true, received: !!_id };
     }
     async vnpayWebhook(body) {
         return this.payments.handleWebhook('VNPAY', body);
@@ -273,20 +239,9 @@ let PaymentsController = class PaymentsController {
         return this.payments.handleWebhook('MOMO', body);
     }
     async payosWebhook(req, body, xsig) {
-        try {
-            const checksum = process.env.PAYOS_CHECKSUM_KEY || '';
-            const hmac = await Promise.resolve().then(() => __importStar(require('crypto'))).then((m) => m.createHmac('sha256', checksum));
-            const target = body?.data ? JSON.stringify(body.data) : JSON.stringify(body);
-            const sig = hmac.update(target).digest('hex');
-            const expected = body?.signature || xsig || '';
-            if (expected && expected !== sig) {
-                return { ok: false };
-            }
-            return this.payments.handleWebhook('PAYOS', body);
-        }
-        catch {
-            return { ok: false };
-        }
+        void req;
+        void xsig;
+        return this.payos.handleWebhook(body);
     }
 };
 exports.PaymentsController = PaymentsController;
@@ -389,6 +344,7 @@ __decorate([
 exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        payos_service_1.PayOSService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

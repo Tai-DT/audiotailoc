@@ -31,12 +31,28 @@ let CompleteProductController = CompleteProductController_1 = class CompleteProd
     async findAll(query) {
         return this.catalogService.findProducts(query);
     }
-    async search(query, limit) {
-        this.logger.debug(`search called with q="${query}" limit=${limit}`);
-        return this.catalogService.searchProducts(query, limit);
+    async search(query) {
+        const searchTerm = query.search || query.q;
+        this.logger.debug(`search called with query="${searchTerm}"`);
+        return this.catalogService.searchProducts(query);
     }
     async getSuggestions(query, limit) {
         return this.catalogService.getSearchSuggestions(query, limit);
+    }
+    async getRecentPublic(limit) {
+        return this.catalogService.getRecentProducts(Math.min(limit || 10, 20));
+    }
+    async getTopViewedPublic(limit) {
+        return this.catalogService.getTopViewedProducts(Math.min(limit || 10, 20));
+    }
+    async getOverviewPublic() {
+        const analytics = await this.catalogService.getProductAnalytics();
+        return {
+            totalProducts: analytics.totalProducts,
+            featuredProducts: analytics.featuredProducts,
+            categoriesCount: Object.keys(analytics.productsByCategory || {}).length,
+            recentProducts: await this.catalogService.getRecentProducts(5),
+        };
     }
     async findOne(id) {
         return this.catalogService.findProductById(id);
@@ -79,21 +95,6 @@ let CompleteProductController = CompleteProductController_1 = class CompleteProd
     }
     async importCsv(csvData) {
         return this.catalogService.importProductsFromCsv(csvData);
-    }
-    async getRecentPublic(limit) {
-        return this.catalogService.getRecentProducts(Math.min(limit || 10, 20));
-    }
-    async getTopViewedPublic(limit) {
-        return this.catalogService.getTopViewedProducts(Math.min(limit || 10, 20));
-    }
-    async getOverviewPublic() {
-        const analytics = await this.catalogService.getProductAnalytics();
-        return {
-            totalProducts: analytics.totalProducts,
-            featuredProducts: analytics.featuredProducts,
-            categoriesCount: Object.keys(analytics.productsByCategory || {}).length,
-            recentProducts: await this.catalogService.getRecentProducts(5),
-        };
     }
 };
 exports.CompleteProductController = CompleteProductController;
@@ -232,22 +233,9 @@ __decorate([
         description: 'Search results retrieved successfully',
         type: complete_product_dto_1.ProductListResponseDto,
     }),
-    (0, swagger_1.ApiQuery)({
-        name: 'q',
-        required: true,
-        type: String,
-        description: 'Search query (required)',
-    }),
-    (0, swagger_1.ApiQuery)({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Maximum results (1-50)',
-    }),
-    __param(0, (0, common_1.Query)('q')),
-    __param(1, (0, common_1.Query)('limit')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:paramtypes", [complete_product_dto_1.ProductListQueryDto]),
     __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "search", null);
 __decorate([
@@ -279,6 +267,76 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "getSuggestions", null);
+__decorate([
+    (0, common_1.Get)('recent'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get recently added products (Public)',
+        description: 'Get recently added products for public access',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of products to return (1-20)',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Recent products retrieved successfully',
+        type: [complete_product_dto_1.ProductResponseDto],
+    }),
+    __param(0, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], CompleteProductController.prototype, "getRecentPublic", null);
+__decorate([
+    (0, common_1.Get)('top-viewed'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get top viewed products (Public)',
+        description: 'Get most viewed products for public access',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of products to return (1-20)',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Top viewed products retrieved successfully',
+        type: [complete_product_dto_1.ProductResponseDto],
+    }),
+    __param(0, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], CompleteProductController.prototype, "getTopViewedPublic", null);
+__decorate([
+    (0, common_1.Get)('overview'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get product overview (Public)',
+        description: 'Get basic product overview for public access',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Product overview retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                totalProducts: { type: 'number' },
+                featuredProducts: { type: 'number' },
+                categoriesCount: { type: 'number' },
+                recentProducts: {
+                    type: 'array',
+                    items: { $ref: '#/components/schemas/ProductResponseDto' },
+                },
+            },
+        },
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CompleteProductController.prototype, "getOverviewPublic", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({
@@ -680,73 +738,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CompleteProductController.prototype, "importCsv", null);
-__decorate([
-    (0, common_1.Get)('recent'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Get recently added products (Public)',
-        description: 'Get recently added products for public access',
-    }),
-    (0, swagger_1.ApiQuery)({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Number of products to return (1-20)',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Recent products retrieved successfully',
-        type: [complete_product_dto_1.ProductResponseDto],
-    }),
-    __param(0, (0, common_1.Query)('limit')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", Promise)
-], CompleteProductController.prototype, "getRecentPublic", null);
-__decorate([
-    (0, common_1.Get)('top-viewed'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Get top viewed products (Public)',
-        description: 'Get most viewed products for public access',
-    }),
-    (0, swagger_1.ApiQuery)({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Number of products to return (1-20)',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Top viewed products retrieved successfully',
-        type: [complete_product_dto_1.ProductResponseDto],
-    }),
-    __param(0, (0, common_1.Query)('limit')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", Promise)
-], CompleteProductController.prototype, "getTopViewedPublic", null);
-__decorate([
-    (0, common_1.Get)('overview'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Get product overview (Public)',
-        description: 'Get basic product overview for public access',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Product overview retrieved successfully',
-        schema: {
-            type: 'object',
-            properties: {
-                totalProducts: { type: 'number' },
-                featuredProducts: { type: 'number' },
-                categoriesCount: { type: 'number' },
-                recentProducts: { type: 'array', items: { $ref: '#/components/schemas/ProductResponseDto' } },
-            },
-        },
-    }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], CompleteProductController.prototype, "getOverviewPublic", null);
 exports.CompleteProductController = CompleteProductController = CompleteProductController_1 = __decorate([
     (0, swagger_1.ApiTags)('Products'),
     (0, common_1.Controller)('catalog/products'),

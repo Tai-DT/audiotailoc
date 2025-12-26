@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useMemo } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 
 interface ProtectedRouteProps {
@@ -10,18 +10,26 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, token } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+
+  const redirectTarget = useMemo(() => {
+    // Avoid redirect loops on the login page
+    if (!pathname || pathname === '/login') return '/dashboard'
+    return pathname
+  }, [pathname])
 
   useEffect(() => {
     if (!isLoading) {
       if (requireAuth && !user) {
-        router.push('/login')
+        const redirectParam = encodeURIComponent(redirectTarget)
+        router.replace(`/login?redirect=${redirectParam}`)
       } else if (!requireAuth && user) {
-        router.push('/dashboard')
+        router.replace('/dashboard')
       }
     }
-  }, [user, isLoading, requireAuth, router])
+  }, [user, isLoading, requireAuth, router, redirectTarget])
 
   if (isLoading && requireAuth) {
     return (
@@ -32,7 +40,7 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
     )
   }
 
-  if (requireAuth && !user) {
+  if (requireAuth && (!user || !token)) {
     return null // Will redirect in useEffect
   }
   

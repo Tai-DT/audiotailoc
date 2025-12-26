@@ -1,7 +1,9 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { TelegramService } from '../notifications/telegram.service';
 
 // PayOS SDK type declaration
 type PayOSType = new (
@@ -15,10 +17,21 @@ type PayOSType = new (
 export class PayOSService implements OnModuleInit {
   private readonly logger = new Logger(PayOSService.name);
   private payos: any;
+  private enabled = false;
+
+  private generatePayosOrderCode(): number {
+    // PayOS requires a positive integer orderCode. Keep it well within JS safe integer range.
+    // Use millisecond timestamp * 1000 + random suffix to avoid collisions.
+    const suffix = crypto.randomInt(0, 1000); // 0..999
+    const candidate = Date.now() * 1000 + suffix; // ~1e15, safe
+    return Math.min(Math.max(candidate, 1), 9007199254740990);
+  }
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+    @Optional() private readonly telegramService?: TelegramService,
   ) {}
 
   async onModuleInit() {
@@ -29,13 +42,38 @@ export class PayOSService implements OnModuleInit {
       const { PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_PARTNER_CODE } =
         this.getPayOSConfig();
 
+      // Allow booting without PayOS config (e.g., local dev)
+      if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
+        this.enabled = false;
+        this.logger.warn(
+          'PayOS disabled: Missing PAYOS_CLIENT_ID/PAYOS_API_KEY/PAYOS_CHECKSUM_KEY',
+        );
+        return;
+      }
+
       // PayOS SDK constructor requires clientId, apiKey, checksumKey, and partnerCode
-      this.payos = new PayOS(PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_PARTNER_CODE);
+      this.payos = new PayOS(
+        PAYOS_CLIENT_ID,
+        PAYOS_API_KEY,
+        PAYOS_CHECKSUM_KEY,
+        PAYOS_PARTNER_CODE,
+      );
+
+      this.enabled = true;
 
       this.logger.log('PayOS SDK initialized successfully');
     } catch (error) {
-      this.logger.error('Failed to initialize PayOS SDK', error);
-      throw error;
+      this.enabled = false;
+      this.logger.error('Failed to initialize PayOS SDK (PayOS disabled)', error);
+      // Do not throw: app should still start without PayOS
+    }
+  }
+
+  private assertEnabled() {
+    if (!this.enabled || !this.payos) {
+      throw new Error(
+        'PayOS is not configured. Please set PAYOS_CLIENT_ID/PAYOS_API_KEY/PAYOS_CHECKSUM_KEY.',
+      );
     }
   }
 
@@ -52,196 +90,78 @@ export class PayOSService implements OnModuleInit {
     returnUrl: string;
     cancelUrl: string;
     userId?: string;
+    idempotencyKey?: string;
   }) {
-    // ✅ FIX: Chuyển orderCode thành số nguyên dương với random suffix để tránh duplicate
-    // Khai báo ngoài try để có thể dùng trong catch
-    const baseTimestamp =
-      typeof paymentData.orderCode === 'string'
-        ? parseInt(paymentData.orderCode.replace(/\D/g, ''), 10) || Date.now()
-        : paymentData.orderCode;
-
-    // Thêm random 3 digits (000-999) để tránh duplicate khi nhiều order cùng lúc
-    const randomSuffix = Math.floor(Math.random() * 1000);
-    const orderCodeWithSuffix = parseInt(`${baseTimestamp}${randomSuffix}`);
-
-    // Đảm bảo orderCode là số nguyên dương và không quá lớn
-    const finalOrderCode = Math.min(Math.max(orderCodeWithSuffix, 1), 9007199254740990);
-
-    this.logger.log(`[PayOS] OrderCode mapping: ${paymentData.orderCode} -> ${finalOrderCode}`);
-
-    // Persist a payment_intent mapping before creating the PayOS payment link so webhooks can be resolved
-    // createdIntent will be updated after PayOS returns identifiers
-    let createdIntent: any = null;
-    try {
-      const orderRecord = await this.prisma.orders.findUnique({
-        where: { orderNo: paymentData.orderCode.toString() },
-      });
-
-      if (orderRecord) {
-        try {
-          createdIntent = await this.prisma.payment_intents.create({
-            data: {
-              id: crypto.randomUUID(),
-              provider: 'PAYOS',
-              // amountCents is Int in schema
-              amountCents: Math.round(Number(paymentData.amount) || 0),
-              status: 'PENDING',
-              // required by Prisma schema: updatedAt has no default
-              updatedAt: new Date(),
-              // Store mapping metadata as JSON string so webhook can resolve original orderNo
-              metadata: JSON.stringify({
-                originalOrderNo: paymentData.orderCode,
-                payosOrderCode: finalOrderCode.toString(),
-              }),
-              // Connect relation to existing order
-              orders: {
-                connect: { id: orderRecord.id },
-              },
-            },
-          });
-          this.logger.log(
-            `[PayOS] Created payment_intent ${createdIntent.id} for order ${orderRecord.id}`,
-          );
-        } catch (intentErr) {
-          this.logger.error(
-            `[PayOS] Failed to create payment_intent: ${(intentErr as Error).message}`,
-          );
-          createdIntent = null;
-        }
-      } else {
-        this.logger.warn(
-          `[PayOS] No order found for ${paymentData.orderCode} while creating payment_intent`,
-        );
-      }
-    } catch (e) {
-      this.logger.error(
-        `[PayOS] Error while attempting to persist payment_intent: ${(e as Error).message}`,
-      );
-    }
-
-    try {
-      // Sanitize và giới hạn description để hợp lệ với PayOS (max 25 ký tự)
-      let rawDescription = (paymentData.description || `Thanh toán ${finalOrderCode}`).toString();
+    this.assertEnabled();
+    const makeDescription = (orderCode: number) => {
+      let rawDescription = (paymentData.description || `Thanh toán ${orderCode}`).toString();
       rawDescription = rawDescription
         .replace(/[\r\n\t]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      const description = rawDescription.substring(0, 25);
+      return rawDescription.substring(0, 25);
+    };
 
-      // Sử dụng PayOS SDK để tạo payment link
-      const paymentLinkData = {
-        orderCode: finalOrderCode,
-        amount: paymentData.amount,
-        description,
-        buyerName: paymentData.buyerName,
-        buyerEmail: paymentData.buyerEmail,
-        buyerPhone: paymentData.buyerPhone || '',
-        returnUrl: paymentData.returnUrl,
-        cancelUrl: paymentData.cancelUrl,
-      };
+    const isPayosAlreadyExists = (error: any) => {
+      const errMsg = String(error?.message || '');
+      const errData = error?.response?.data || error?.data || null;
+      const code = errData?.code;
+      return (
+        code === 231 ||
+        errMsg.includes('231') ||
+        errMsg.includes('Đơn thanh toán đã tồn tại') ||
+        String(errData?.desc || '').includes('Đơn thanh toán đã tồn tại')
+      );
+    };
 
-      const result = await this.payos.paymentRequests.create(paymentLinkData);
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const finalOrderCode = this.generatePayosOrderCode();
+      this.logger.log(
+        `[PayOS] Generated orderCode for PayOS: ${finalOrderCode} (attempt ${attempt}/3)`,
+      );
 
-      // If we created a local payment_intent, update it with PayOS identifiers
-      if (createdIntent) {
-        try {
-          // Merge existing metadata (if any) and append PayOS identifiers, storing as JSON string
-          let existingMeta: any = {};
-          try {
-            existingMeta = createdIntent.metadata ? JSON.parse(createdIntent.metadata) : {};
-          } catch {
-            existingMeta = {};
-          }
-          const updatedMeta = {
-            ...existingMeta,
-            payosPaymentRequestId: result.paymentRequestId,
-            payosOrderCode: (result.orderCode || finalOrderCode).toString(),
-          };
-          await this.prisma.payment_intents.update({
-            where: { id: createdIntent.id },
-            data: {
-              status: 'PROCESSING',
-              metadata: JSON.stringify(updatedMeta),
-              // keep updatedAt in sync with update
-              updatedAt: new Date(),
-            },
-          });
-          this.logger.log(
-            `[PayOS] Updated payment_intent ${createdIntent.id} with PayOS identifiers`,
-          );
-        } catch (updateErr) {
-          this.logger.error(
-            `[PayOS] Failed to update payment_intent with PayOS data: ${(updateErr as Error).message}`,
-          );
-        }
-      }
-
-      this.logger.log(`PayOS payment link created: ${result.checkoutUrl}`);
-      return {
-        success: true,
-        checkoutUrl: result.checkoutUrl,
-        paymentRequestId: result.paymentRequestId,
-        orderCode: result.orderCode || finalOrderCode,
-      };
-    } catch (error: any) {
-      // Cố gắng xử lý trường hợp "Đơn thanh toán đã tồn tại (code: 231)" trả về từ PayOS
       try {
-        const errMsg = error?.message || '';
-        const errData = error?.response?.data || error?.data || null;
+        const result = await this.payos.paymentRequests.create({
+          orderCode: finalOrderCode,
+          amount: paymentData.amount,
+          description: makeDescription(finalOrderCode),
+          buyerName: paymentData.buyerName,
+          buyerEmail: paymentData.buyerEmail,
+          buyerPhone: paymentData.buyerPhone || '',
+          returnUrl: paymentData.returnUrl,
+          cancelUrl: paymentData.cancelUrl,
+        });
 
-        this.logger.error(`PayOS payment link creation error: ${errMsg}`);
-        if (errData) this.logger.debug(`PayOS error data: ${JSON.stringify(errData)}`);
-
-        // Nếu API trả về checkoutUrl hoặc paymentRequestId trong payload, re-use nó
-        const possibleCheckoutUrl =
-          errData?.checkoutUrl ||
-          errData?.checkout_url ||
-          errData?.redirectUrl ||
-          errData?.redirect_url;
-        const possiblePaymentRequestId =
-          errData?.paymentRequestId || errData?.payment_request_id || errData?.id;
-
-        if (possibleCheckoutUrl || possiblePaymentRequestId) {
-          this.logger.log(
-            'PayOS create returned existing payment — returning existing checkoutUrl/paymentRequestId',
+        this.logger.log(`PayOS payment link created: ${result.checkoutUrl}`);
+        return {
+          success: true,
+          checkoutUrl: result.checkoutUrl,
+          paymentRequestId: result.paymentRequestId,
+          orderCode: result.orderCode || finalOrderCode,
+          intentId: null,
+        };
+      } catch (error: any) {
+        lastError = error;
+        if (isPayosAlreadyExists(error) && attempt < 3) {
+          this.logger.warn(
+            '[PayOS] orderCode collision on PayOS (code 231). Retrying with a new orderCode.',
           );
-          return {
-            success: true,
-            checkoutUrl: possibleCheckoutUrl,
-            paymentRequestId: possiblePaymentRequestId,
-            orderCode: finalOrderCode,
-          };
+          continue;
         }
-
-        // Heuristic: nếu message chứa mã lỗi 231 (Đơn thanh toán đã tồn tại), trả về thông tin nhẹ cho caller thay vì ném lỗi 500
-        if (
-          (typeof errMsg === 'string' && errMsg.includes('231')) ||
-          (typeof errMsg === 'string' && errMsg.includes('Đơn thanh toán đã tồn tại'))
-        ) {
-          this.logger.log(
-            'PayOS indicates payment already exists (code 231). Returning orderCode for caller to handle.',
-          );
-          return {
-            success: false,
-            message: 'Payment already exists on PayOS (code 231)',
-            orderCode: finalOrderCode,
-          };
-        }
-      } catch (innerErr) {
-        this.logger.error(
-          `Error while handling PayOS create error: ${(innerErr as Error).message}`,
-        );
+        this.logger.error(`PayOS payment link creation error: ${String(error?.message || error)}`);
+        break;
       }
-
-      // Nếu không thể xử lý đặc biệt, forward exception lên caller
-      throw error;
     }
+
+    throw lastError;
   }
 
   /**
    * Kiểm tra trạng thái thanh toán PayOS sử dụng SDK
    */
   async checkPaymentStatus(paymentRequestId: string) {
+    this.assertEnabled();
     try {
       const result = await this.payos.paymentRequests.get(paymentRequestId);
 
@@ -261,6 +181,7 @@ export class PayOSService implements OnModuleInit {
    */
   verifyWebhookSignature(webhookData: any): boolean {
     try {
+      this.assertEnabled();
       // ✅ FIX: Chỉ bypass khi có explicit test flag VÀ env variable cho phép
       const isTestWebhook = webhookData._test === true || webhookData.test === true;
       const allowTestBypass = process.env.PAYOS_ALLOW_TEST_WEBHOOK === 'true';
@@ -299,6 +220,7 @@ export class PayOSService implements OnModuleInit {
    * Xử lý webhook từ PayOS sử dụng SDK
    */
   async handleWebhook(webhookData: any) {
+    this.assertEnabled();
     // ✅ FIX: Log full payload để debug
     this.logger.log(`[PayOS Webhook] Received:`, JSON.stringify(webhookData));
 
@@ -336,85 +258,57 @@ export class PayOSService implements OnModuleInit {
         return { error: 1, message: 'Invalid webhook data: missing code' };
       }
 
-      // Tìm order theo orderCode
-      let order = await this.prisma.orders.findUnique({
-        where: { orderNo: orderCode },
-      });
-
-      // Nếu không tìm thấy order trực tiếp theo orderNo, cố gắng resolve qua payment_intents (paymentRequestId hoặc metadata)
+      // Resolve via payment_intents first (PayOS orderCode is numeric and does not match our orderNo)
       let resolvedIntent: any = null;
-      if (!order) {
-        this.logger.warn(
-          `[PayOS Webhook] Order not found by orderNo: ${orderCode}. Attempting to resolve via payment_intents.`,
+      const paymentRequestIdCandidate =
+        verifiedWebhookData.paymentRequestId ||
+        verifiedWebhookData.data?.paymentRequestId ||
+        transactionId;
+
+      try {
+        // Prefer matching by payosOrderCode stored by PaymentsService
+        resolvedIntent = await this.prisma.payment_intents.findFirst({
+          where: {
+            provider: 'PAYOS',
+            metadata: { contains: `\"payosOrderCode\":\"${orderCodeStr}\"` },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (!resolvedIntent && paymentRequestIdCandidate) {
+          resolvedIntent = await this.prisma.payment_intents.findFirst({
+            where: {
+              provider: 'PAYOS',
+              metadata: { contains: String(paymentRequestIdCandidate) },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+        }
+      } catch (resolveErr) {
+        this.logger.error(
+          `[PayOS Webhook] Error while resolving payment_intent: ${(resolveErr as Error).message}`,
         );
-
-        // Try paymentRequestId present in webhook payload
-        const paymentRequestIdCandidate =
-          verifiedWebhookData.paymentRequestId ||
-          verifiedWebhookData.data?.paymentRequestId ||
-          transactionId;
-
-        try {
-          if (paymentRequestIdCandidate) {
-            resolvedIntent = await this.prisma.payment_intents.findFirst({
-              where: {
-                provider: 'PAYOS',
-                metadata: { contains: String(paymentRequestIdCandidate) },
-              },
-              orderBy: { createdAt: 'desc' },
-            });
-          }
-
-          // If not found by paymentRequestId, look through recent PAYOS intents and match metadata textually
-          if (!resolvedIntent) {
-            const candidates = await this.prisma.payment_intents.findMany({
-              where: { provider: 'PAYOS' },
-              orderBy: { createdAt: 'desc' },
-              take: 50,
-            });
-
-            resolvedIntent =
-              candidates.find((c: any) => {
-                try {
-                  const meta = c.metadata ?? {};
-                  const metaStr = typeof meta === 'string' ? meta : JSON.stringify(meta);
-                  return (
-                    metaStr.includes(String(orderCode)) ||
-                    (paymentRequestIdCandidate &&
-                      metaStr.includes(String(paymentRequestIdCandidate)))
-                  );
-                } catch {
-                  return false;
-                }
-              }) || null;
-          }
-        } catch (resolveErr) {
-          this.logger.error(
-            `[PayOS Webhook] Error while resolving payment_intent: ${(resolveErr as Error).message}`,
-          );
-          resolvedIntent = null;
-        }
-
-        if (!resolvedIntent) {
-          this.logger.error(
-            `[PayOS Webhook] Order not found and no related payment_intent found for orderCode/paymentRequestId: ${orderCode}`,
-          );
-          return { error: 1, message: 'Order not found' };
-        }
-
-        // Resolve order via intent.orderId
-        order = await this.prisma.orders.findUnique({ where: { id: resolvedIntent.orderId } });
-        if (!order) {
-          this.logger.error(
-            `[PayOS Webhook] Order not found for resolved intent ${resolvedIntent.id}`,
-          );
-          return { error: 1, message: 'Order not found' };
-        }
-
-        this.logger.log(
-          `[PayOS Webhook] Resolved order ${order.id} via payment_intent ${resolvedIntent.id}`,
-        );
+        resolvedIntent = null;
       }
+
+      if (!resolvedIntent) {
+        this.logger.error(
+          `[PayOS Webhook] No related payment_intent found for orderCode/paymentRequestId: ${orderCodeStr}`,
+        );
+        return { error: 1, message: 'Order not found' };
+      }
+
+      const order = await this.prisma.orders.findUnique({ where: { id: resolvedIntent.orderId } });
+      if (!order) {
+        this.logger.error(
+          `[PayOS Webhook] Order not found for resolved intent ${resolvedIntent.id}`,
+        );
+        return { error: 1, message: 'Order not found' };
+      }
+
+      this.logger.log(
+        `[PayOS Webhook] Resolved order ${order.id} via payment_intent ${resolvedIntent.id}`,
+      );
 
       // ✅ FIX: Tìm payment intent và validate status (chỉ xử lý intent chưa hoàn thành)
       let intent = null;
@@ -528,15 +422,11 @@ export class PayOSService implements OnModuleInit {
    * Lấy cấu hình PayOS
    */
   private getPayOSConfig() {
-    const clientId = this.config.get<string>('PAYOS_CLIENT_ID');
-    const apiKey = this.config.get<string>('PAYOS_API_KEY');
-    const checksumKey = this.config.get<string>('PAYOS_CHECKSUM_KEY');
-    const partnerCode = this.config.get<string>('PAYOS_PARTNER_CODE');
-    const apiUrl = this.config.get<string>('PAYOS_API_URL');
-
-    if (!clientId || !apiKey || !checksumKey) {
-      throw new Error('PayOS configuration is missing. Please check environment variables.');
-    }
+    const clientId = this.config.get<string>('PAYOS_CLIENT_ID') || '';
+    const apiKey = this.config.get<string>('PAYOS_API_KEY') || '';
+    const checksumKey = this.config.get<string>('PAYOS_CHECKSUM_KEY') || '';
+    const partnerCode = this.config.get<string>('PAYOS_PARTNER_CODE') || '';
+    const apiUrl = this.config.get<string>('PAYOS_API_URL') || '';
 
     return {
       PAYOS_CLIENT_ID: clientId,
@@ -582,6 +472,41 @@ export class PayOSService implements OnModuleInit {
         data: { status: 'SUCCEEDED' },
       });
     });
+
+    // Notifications (best-effort)
+    try {
+      const order = await this.prisma.orders.findUnique({
+        where: { id: intent.orderId },
+        include: { users: true },
+      });
+
+      await this.notificationService.sendNotification({
+        userId: order?.userId || undefined,
+        email: order?.users?.email || undefined,
+        title: 'Thanh toán thành công',
+        message: `Đơn hàng ${order?.orderNo || intent.orderId} đã được thanh toán thành công`,
+        type: 'PAYMENT',
+        priority: 'HIGH',
+        channels: ['EMAIL', 'PUSH'],
+        data: {
+          orderId: intent.orderId,
+          intentId: intent.id,
+          provider: 'PAYOS',
+          amountCents: intent.amountCents,
+          transactionId,
+        },
+      });
+
+      await this.telegramService?.sendPaymentNotification({
+        orderNo: order?.orderNo || intent.orderId,
+        amountCents: intent.amountCents,
+        provider: 'PAYOS',
+        status: 'SUCCEEDED',
+        createdAt: new Date(),
+      });
+    } catch (e) {
+      this.logger.warn(`[PayOS] Notification sending failed: ${(e as Error).message}`);
+    }
 
     this.logger.log(`PayOS payment marked as paid: ${intent.id} - ${transactionId}`);
   }

@@ -21,24 +21,24 @@ export class InventoryMovementService {
     return this.prisma.inventory_movements.create({
       data: {
         id: randomUUID(),
-        ...data
+        ...data,
       },
       include: {
         products: {
           select: {
             id: true,
             name: true,
-            sku: true
-          }
+            sku: true,
+          },
         },
         users: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     });
   }
 
@@ -48,7 +48,7 @@ export class InventoryMovementService {
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.inventory_movements.count({
-        where: { productId }
+        where: { productId },
       }),
       this.prisma.inventory_movements.findMany({
         where: { productId },
@@ -57,40 +57,42 @@ export class InventoryMovementService {
             select: {
               id: true,
               name: true,
-              sku: true
-            }
+              sku: true,
+            },
           },
           users: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
-          }
+              email: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
-        take: pageSize
-      })
+        take: pageSize,
+      }),
     ]);
 
     return {
       total,
       page,
       pageSize,
-      items
+      items,
     };
   }
 
-  async findAll(params: {
-    page?: number;
-    pageSize?: number;
-    productId?: string;
-    type?: string;
-    userId?: string;
-    startDate?: Date;
-    endDate?: Date;
-  } = {}) {
+  async findAll(
+    params: {
+      page?: number;
+      pageSize?: number;
+      productId?: string;
+      type?: string;
+      userId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    } = {},
+  ) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
 
@@ -131,30 +133,30 @@ export class InventoryMovementService {
               categories: {
                 select: {
                   id: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           users: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
-          }
+              email: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
-        take: pageSize
-      })
+        take: pageSize,
+      }),
     ]);
 
     return {
       total,
       page,
       pageSize,
-      items
+      items,
     };
   }
 
@@ -184,10 +186,10 @@ export class InventoryMovementService {
         products: {
           select: {
             name: true,
-            sku: true
-          }
-        }
-      }
+            sku: true,
+          },
+        },
+      },
     });
 
     const summary = {
@@ -197,7 +199,7 @@ export class InventoryMovementService {
       adjustments: 0,
       reserved: 0,
       released: 0,
-      byProduct: {} as Record<string, any>
+      byProduct: {} as Record<string, any>,
     };
 
     for (const movement of movements) {
@@ -231,7 +233,7 @@ export class InventoryMovementService {
           stockOut: 0,
           adjustments: 0,
           reserved: 0,
-          released: 0
+          released: 0,
         };
       }
 

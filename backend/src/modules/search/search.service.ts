@@ -78,20 +78,39 @@ export class SearchService {
         throw new BadRequestException('Search query cannot be empty');
       }
 
-      const normalizedQuery = query.trim().toLowerCase();
+      // SECURITY: Sanitize and validate search query to prevent injection attacks
+      // Limit query length to prevent DoS attacks
+      const MAX_QUERY_LENGTH = 200;
+      const sanitizedQuery = query.trim().substring(0, MAX_QUERY_LENGTH);
+      
+      // Remove potentially dangerous characters for regex/NoSQL injection
+      // Allow alphanumeric, spaces, and common search characters
+      const safeQuery = sanitizedQuery.replace(/[<>{}[\]\\^$|*+?.()]/g, '');
+      
+      if (safeQuery.length === 0) {
+        throw new BadRequestException('Search query contains only invalid characters');
+      }
+
+      const normalizedQuery = safeQuery.toLowerCase();
       const page = Math.max(1, filters.page ?? 1);
-      const pageSize = Math.min(this.maxPageSize, Math.max(1, filters.pageSize ?? this.defaultPageSize));
+      const pageSize = Math.min(
+        this.maxPageSize,
+        Math.max(1, filters.pageSize ?? this.defaultPageSize),
+      );
       const skip = (page - 1) * pageSize;
 
       // Determine search types
-      const searchTypes = filters.type === 'all' || !filters.type
-        ? ['product', 'service', 'blog', 'knowledge']
-        : [filters.type];
+      const searchTypes =
+        filters.type === 'all' || !filters.type
+          ? ['product', 'service', 'blog', 'knowledge']
+          : [filters.type];
 
       // Execute parallel searches
       const [results, facets] = await Promise.all([
         this.executeParallelSearch(normalizedQuery, searchTypes, filters, skip, pageSize),
-        filters.includeFacets ? this.generateFacets(normalizedQuery, searchTypes, filters) : undefined,
+        filters.includeFacets
+          ? this.generateFacets(normalizedQuery, searchTypes, filters)
+          : undefined,
       ]);
 
       // Sort results by relevance
@@ -436,9 +455,7 @@ export class SearchService {
           const categories = await this.prisma.categories.findMany({
             where: {
               id: {
-                in: categoryQuery
-                  .filter(p => p.categoryId)
-                  .map(p => p.categoryId as string),
+                in: categoryQuery.filter(p => p.categoryId).map(p => p.categoryId as string),
               },
             },
             select: { id: true, name: true },
@@ -491,9 +508,7 @@ export class SearchService {
           const types = await this.prisma.service_types.findMany({
             where: {
               id: {
-                in: typeQuery
-                  .filter(s => s.typeId)
-                  .map(s => s.typeId as string),
+                in: typeQuery.filter(s => s.typeId).map(s => s.typeId as string),
               },
             },
             select: { id: true, name: true },
@@ -571,7 +586,11 @@ export class SearchService {
   /**
    * Log search query for analytics
    */
-  async logSearchQuery(_userId: string | null, _query: string, _resultsCount: number): Promise<void> {
+  async logSearchQuery(
+    _userId: string | null,
+    _query: string,
+    _resultsCount: number,
+  ): Promise<void> {
     // Search query logging disabled - model not available
     return;
   }

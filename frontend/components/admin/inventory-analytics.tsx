@@ -58,7 +58,7 @@ export function InventoryAnalytics() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <Package className="h-4 w-4 text-blue-600" />
+                <Package className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">Tổng sản phẩm</p>
               </div>
               <p className="text-2xl font-bold">
@@ -67,19 +67,19 @@ export function InventoryAnalytics() {
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-success" />
                 <p className="text-sm text-muted-foreground">Đang hoạt động</p>
               </div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 {productStats?.activeProducts || 0}
               </p>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertTriangle className="h-4 w-4 text-destructive" />
                 <p className="text-sm text-muted-foreground">Sắp hết hàng</p>
               </div>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-destructive">
                 {productStats?.lowStockProducts || 0}
               </p>
             </div>
@@ -101,7 +101,7 @@ export function InventoryAnalytics() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
                     <span className="text-sm">Hết hàng</span>
                   </div>
                   <Badge variant="destructive" className="text-xs">
@@ -110,7 +110,7 @@ export function InventoryAnalytics() {
                 </div>
                 <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <AlertTriangle className="h-4 w-4 text-warning" />
                     <span className="text-sm">Sắp hết hàng</span>
                   </div>
                   <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
@@ -119,7 +119,7 @@ export function InventoryAnalytics() {
                 </div>
                 <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-success" />
                     <span className="text-sm">Vòng quay kho</span>
                   </div>
                   <span className="font-medium">{analytics?.inventoryTurnover || 0}x</span>

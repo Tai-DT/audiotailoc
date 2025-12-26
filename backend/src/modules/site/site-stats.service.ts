@@ -49,12 +49,7 @@ export class SiteStatsService {
   }
 
   async getSiteStats() {
-    const [
-      totalProducts,
-      totalOrders,
-      totalUsers,
-      totalServices,
-    ] = await Promise.all([
+    const [totalProducts, totalOrders, totalUsers, totalServices] = await Promise.all([
       this.prisma.products.count(),
       this.prisma.orders.count(),
       this.prisma.users.count(),

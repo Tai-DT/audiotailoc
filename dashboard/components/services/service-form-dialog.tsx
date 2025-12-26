@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ImageUpload } from "@/components/ui/image-upload"
+import { ImageUpload, getImageUrls } from "@/components/ui/image-upload"
 import Image from "next/image"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -467,7 +467,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
               ))}
               <ImageUpload
                 value={Array.isArray(formData.images) ? formData.images : []}
-                onChange={(urls) => setFormData(prev => ({ ...prev, images: urls }))}
+                onChange={(images) => setFormData(prev => ({ ...prev, images: getImageUrls(images) }))}
                 onRemove={(index) => removeImage(index)}
                 folder="services"
                 maxFiles={5}

@@ -119,6 +119,12 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
+  const [settings, setSettings] = useState<{
+    general?: {
+      primaryPhone?: string;
+      primaryEmail?: string;
+    };
+  } | null>(null);
 
   // Support ticket form
   const [ticketForm, setTicketForm] = useState({
@@ -131,7 +137,20 @@ export default function SupportPage() {
 
   useEffect(() => {
     fetchSupportData();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await apiClient.get('/content/settings');
+      const data = handleApiResponse<typeof settings>(response);
+      if (data) {
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   const fetchSupportData = async () => {
     try {
@@ -148,8 +167,8 @@ export default function SupportPage() {
       }
 
       try {
-        const blogResponse = await apiClient.get('/blog/articles?published=true');
-        const blogData = handleApiResponse<{ data?: unknown }>(blogResponse);
+        const blogResponse = await apiClient.get('/blog/articles?published=true&limit=6');
+        const blogData = handleApiResponse<{ data: BlogPost[]; pagination: unknown }>(blogResponse);
         if (blogData?.data && Array.isArray(blogData.data)) {
           setBlogPosts(blogData.data);
         }
@@ -176,9 +195,26 @@ export default function SupportPage() {
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual ticket submission
-    // Mock submission
-    alert('Yêu cầu hỗ trợ đã được gửi! Chúng tôi sẽ liên hệ với bạn sớm.');
+    try {
+      await apiClient.post('/support/tickets', {
+        name: ticketForm.name,
+        email: ticketForm.email,
+        subject: ticketForm.subject,
+        description: ticketForm.description,
+        priority: ticketForm.priority,
+      });
+      alert('Yêu cầu hỗ trợ đã được gửi! Chúng tôi sẽ liên hệ với bạn sớm.');
+      setTicketForm({
+        name: '',
+        email: '',
+        subject: '',
+        description: '',
+        priority: 'MEDIUM'
+      });
+    } catch (error) {
+      console.error('Error submitting ticket:', error);
+      alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    }
   };
 
   if (loading) {
@@ -356,7 +392,7 @@ export default function SupportPage() {
                       <Phone className="h-5 w-5 text-primary mt-1" />
                       <div>
                         <h3 className="font-semibold mb-1">Hotline hỗ trợ</h3>
-                        <p className="text-muted-foreground">1900 XXX XXX</p>
+                        <p className="text-muted-foreground">{settings?.general?.primaryPhone || '0901 234 567'}</p>
                       </div>
                     </div>
 
@@ -364,7 +400,7 @@ export default function SupportPage() {
                       <Mail className="h-5 w-5 text-primary mt-1" />
                       <div>
                         <h3 className="font-semibold mb-1">Email hỗ trợ</h3>
-                        <p className="text-muted-foreground">support@audiotailoc.com</p>
+                        <p className="text-muted-foreground">{settings?.general?.primaryEmail || 'support@audiotailoc.com'}</p>
                       </div>
                     </div>
                   </div>

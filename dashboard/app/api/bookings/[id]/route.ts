@@ -9,11 +9,13 @@ export async function GET(
     const { id } = await params;
     const booking = await apiClient.get(`/bookings/${id}`);
     return NextResponse.json(booking);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching booking:', error);
+    const status = error?.status || error?.statusCode || 500;
+    const message = error?.message || 'Failed to fetch booking';
     return NextResponse.json(
-      { error: 'Failed to fetch booking' },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }
@@ -25,13 +27,16 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const updatedBooking = await apiClient.put(`/bookings/${id}`, body);
+    // Backend uses PATCH for updates, not PUT
+    const updatedBooking = await apiClient.patch(`/bookings/${id}`, body);
     return NextResponse.json(updatedBooking);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating booking:', error);
+    const status = error?.status || error?.statusCode || 500;
+    const message = error?.message || 'Failed to update booking';
     return NextResponse.json(
-      { error: 'Failed to update booking' },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }
@@ -44,11 +49,13 @@ export async function DELETE(
     const { id } = await params;
     await apiClient.delete(`/bookings/${id}`);
     return NextResponse.json({ message: 'Booking deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting booking:', error);
+    const status = error?.status || error?.statusCode || 500;
+    const message = error?.message || 'Failed to delete booking';
     return NextResponse.json(
-      { error: 'Failed to delete booking' },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }

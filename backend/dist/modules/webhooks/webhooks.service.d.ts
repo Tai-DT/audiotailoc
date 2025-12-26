@@ -25,7 +25,6 @@ export declare class WebhooksService {
     handlePAYOSWebhook(data: WebhookData): Promise<WebhookResult>;
     private validateVNPAYSignature;
     private validateMOMOSignature;
-    private validatePAYOSSignature;
     handleOrderStatusWebhook(data: WebhookData): Promise<WebhookResult>;
     handleInventoryWebhook(data: WebhookData): Promise<WebhookResult>;
 }

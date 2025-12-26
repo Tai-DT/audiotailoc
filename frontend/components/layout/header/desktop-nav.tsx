@@ -50,7 +50,6 @@ export function DesktopNav({
 
   const primaryLinks: NavLink[] = [
     { href: '/projects', label: 'Dự án' },
-    { href: '/about', label: 'Giới thiệu' },
     { href: '/blog', label: 'Blog' },
     { href: '/support', label: 'Hỗ trợ' },
     { href: '/contact', label: 'Liên hệ' },

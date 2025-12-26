@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "node -e \"const {spawnSync}=require('child_process'); const port=process.env.PORT||'3001'; const bin=process.platform==='win32'?'npx.cmd':'npx'; const r=spawnSync(bin,['next','dev','--webpack','-p',port],{stdio:'inherit'}); process.exit(r.status??0);\"",
     "build": "next build",
     "build:no-lint": "NEXT_TYPESCRIPT_NO_LINT=1 next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -31,12 +32,16 @@
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
     "@types/date-fns": "^2.6.3",
+    "@types/xlsx": "^0.0.36",
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "dompurify": "^3.3.1",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.555.0",
     "motion": "^12.23.25",
     "next": "^16.0.6",
@@ -49,11 +54,14 @@
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4.1.17",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^20.19.25",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",

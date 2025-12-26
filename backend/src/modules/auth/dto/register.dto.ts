@@ -11,7 +11,7 @@ export class RegisterDto {
   @Matches(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
   @Matches(/\d/, { message: 'Password must contain at least one number' })
   @Matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, {
-    message: 'Password must contain at least one special character'
+    message: 'Password must contain at least one special character',
   })
   password!: string;
 

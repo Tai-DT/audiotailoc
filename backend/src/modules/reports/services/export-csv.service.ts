@@ -11,6 +11,12 @@ export interface CSVReportOptions {
 export class ExportCsvService {
   private readonly logger = new Logger(ExportCsvService.name);
 
+  private escapeCsv(value: string): string {
+    // Escape quotes by doubling them.
+    const escaped = value.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
   /**
    * Generate CSV report from data
    */
@@ -18,13 +24,24 @@ export class ExportCsvService {
     try {
       const { data, fields, headers } = options;
 
-      if (!data || data.length === 0) {
+      const safeData = Array.isArray(data) ? data : [];
+
+      // If there is no data, still emit a header row when field definitions exist.
+      if (safeData.length === 0) {
+        if (fields && fields.length > 0) {
+          const headerLabels =
+            headers && headers.length === fields.length
+              ? headers
+              : fields.map(f => this.formatHeader(f));
+          return `${headerLabels.map(h => this.escapeCsv(h)).join(',')}\n`;
+        }
+
         this.logger.warn('No data to export to CSV');
         return '';
       }
 
       // Prepare fields
-      const csvFields = this.prepareFields(data, fields, headers);
+      const csvFields = this.prepareFields(safeData, fields, headers);
 
       // Create parser
       const parser = new Parser({
@@ -35,7 +52,7 @@ export class ExportCsvService {
       });
 
       // Parse data
-      const csv = parser.parse(data);
+      const csv = parser.parse(safeData);
 
       this.logger.log(`CSV report generated with ${data.length} rows`);
       return csv;

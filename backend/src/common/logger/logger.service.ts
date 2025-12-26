@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as winston from 'winston';
-// @ts-ignore - Import style for winston-daily-rotate-file
 import * as DailyRotateFileNamespace from 'winston-daily-rotate-file';
 import { join } from 'path';
 
@@ -62,9 +61,7 @@ export class LoggerService {
         const context = meta.context as any;
         const contextStr = context ? ` [${context.module || 'APP'}]` : '';
         const { context: _, ...otherMeta } = meta;
-        const metaStr = Object.keys(otherMeta).length
-          ? ` ${JSON.stringify(otherMeta)}`
-          : '';
+        const metaStr = Object.keys(otherMeta).length ? ` ${JSON.stringify(otherMeta)}` : '';
         return `${timestamp} [${level}]${contextStr}: ${message}${metaStr}`;
       }),
     );
@@ -203,11 +200,7 @@ export class LoggerService {
   /**
    * Log performance metrics
    */
-  logPerformance(
-    operation: string,
-    duration: number,
-    metadata?: LogMetadata,
-  ): void {
+  logPerformance(operation: string, duration: number, metadata?: LogMetadata): void {
     const level = duration > 5000 ? 'warn' : 'info';
     this.logger.log(level as any, `Performance: ${operation}`, {
       context: { ...this.context, action: `${operation}_performance` },
@@ -219,12 +212,7 @@ export class LoggerService {
   /**
    * Log audit trail for security-relevant operations
    */
-  logAudit(
-    action: string,
-    userId: string,
-    target: string,
-    details?: Record<string, any>,
-  ): void {
+  logAudit(action: string, userId: string, target: string, details?: Record<string, any>): void {
     this.logger.info(`Audit: ${action}`, {
       context: {
         ...this.context,

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 
 const allowedTransitions: Record<string, string[]> = {
   PENDING: ['PROCESSING', 'CANCELLED', 'COMPLETED'],
@@ -24,65 +24,70 @@ export class OrdersService {
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
     const where: any = {};
     if (params.status) where.status = params.status;
-    return this.prisma.$transaction([
-      this.prisma.orders.count({ where }),
-      this.prisma.orders.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          users: {
-            select: {
-              name: true,
-              email: true
-            }
+    return this.prisma
+      .$transaction([
+        this.prisma.orders.count({ where }),
+        this.prisma.orders.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            users: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+            order_items: {
+              include: {
+                products: {
+                  select: {
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
           },
-          order_items: {
-            include: {
-              products: {
-                select: {
-                  name: true,
-                  slug: true
-                }
-              }
-            }
-          }
-        }
-      }),
-    ]).then(([total, items]) => ({
-      total,
-      page,
-      pageSize,
-      items: items.map(order => ({
-        id: order.id,
-        orderNumber: order.orderNo,
-        customerName: order.users?.name || 'N/A',
-        customerEmail: order.users?.email || 'N/A',
-        totalAmount: Number(order.totalCents),
-        status: order.status,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
-        items: order.order_items.map(item => {
-          const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
-          return {
-            id: item.id,
-            productId: item.productId,
-            productSlug: (item as any).products?.slug || null,
-            productName: item.products?.name || item.name || 'Sản phẩm',
-            quantity: item.quantity,
-            price: unitPrice,
-            total: unitPrice * item.quantity
-          };
-        })
-      }))
-    }));
+        }),
+      ])
+      .then(([total, items]) => ({
+        total,
+        page,
+        pageSize,
+        items: items.map(order => ({
+          id: order.id,
+          orderNumber: order.orderNo,
+          customerName: order.users?.name || 'N/A',
+          customerEmail: order.users?.email || 'N/A',
+          totalAmount: Number(order.totalCents),
+          status: order.status,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          items: order.order_items.map(item => {
+            const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
+            return {
+              id: item.id,
+              productId: item.productId,
+              productSlug: (item as any).products?.slug || null,
+              productName: item.products?.name || item.name || 'Sản phẩm',
+              quantity: item.quantity,
+              price: unitPrice,
+              total: unitPrice * item.quantity,
+            };
+          }),
+        })),
+      }));
   }
 
   async get(id: string) {
-    const order = await this.prisma.orders.findUnique({ where: { id }, include: { order_items: true, payments: true } });
+    const order = await this.prisma.orders.findUnique({
+      where: { id },
+      include: { order_items: true, payments: true },
+    });
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
-    
+
     // Serialize BigInt values to numbers
     return {
       ...order,
@@ -102,7 +107,14 @@ export class OrdersService {
     const next = (status || '').toUpperCase();
     const nexts = allowedTransitions[current] || [];
     // Debug logs to help diagnose invalid transitions
-    console.log('[OrdersService.updateStatus] current=', current, 'requested=', next, 'allowed=', nexts);
+    console.log(
+      '[OrdersService.updateStatus] current=',
+      current,
+      'requested=',
+      next,
+      'allowed=',
+      nexts,
+    );
     if (!nexts.includes(next)) throw new BadRequestException('Trạng thái không hợp lệ');
     const updated = await this.prisma.orders.update({ where: { id }, data: { status: next } });
 
@@ -124,13 +136,17 @@ export class OrdersService {
 
           // Try resolve by slug if available
           if (!targetProductId && item.products?.slug) {
-            const bySlug = await this.prisma.products.findUnique({ where: { slug: item.products.slug } });
+            const bySlug = await this.prisma.products.findUnique({
+              where: { slug: item.products.slug },
+            });
             if (bySlug) targetProductId = bySlug.id;
           }
 
           // As a last resort, try by name
           if (!targetProductId && item.products?.name) {
-            const byName = await (this.prisma as any).products.findFirst({ where: { name: item.products.name } });
+            const byName = await (this.prisma as any).products.findFirst({
+              where: { name: item.products.name },
+            });
             if (byName) targetProductId = byName.id;
           }
 
@@ -140,7 +156,9 @@ export class OrdersService {
               data: { stockQuantity: { increment: item.quantity } },
             });
           } else {
-            console.warn('[OrdersService.updateStatus] Could not resolve product for order item during cancel restore. Skipped increment.');
+            console.warn(
+              '[OrdersService.updateStatus] Could not resolve product for order item during cancel restore. Skipped increment.',
+            );
           }
         }
 
@@ -159,7 +177,7 @@ export class OrdersService {
           // Get order with items for email template
           const orderWithItems = await this.prisma.orders.findUnique({
             where: { id: order.id },
-            include: { order_items: true }
+            include: { order_items: true },
           });
 
           if (orderWithItems) {
@@ -170,9 +188,9 @@ export class OrdersService {
               items: orderWithItems.order_items.map((item: any) => ({
                 name: item.name || 'Sản phẩm',
                 quantity: item.quantity,
-                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`
+                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`,
               })),
-              status: status
+              status: status,
             };
 
             await this.mail.sendOrderStatusUpdate(user.email, orderData);
@@ -187,18 +205,28 @@ export class OrdersService {
   }
 
   async create(orderData: any): Promise<any> {
-    console.log('=== SIMPLE CREATE ORDER DEBUG ===');
-    console.log('Input data:', JSON.stringify(orderData, null, 2));
+    // SECURITY: Only log in development mode to prevent information disclosure
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== SIMPLE CREATE ORDER DEBUG ===');
+      // Sanitize sensitive data before logging
+      const sanitizedData = { ...orderData };
+      if (sanitizedData.customerEmail) sanitizedData.customerEmail = '***';
+      if (sanitizedData.customerPhone) sanitizedData.customerPhone = '***';
+      console.log('Input data:', JSON.stringify(sanitizedData, null, 2));
+    }
 
-    // Generate unique order number
+    // SECURITY: Generate unique order number using cryptographically secure random
     const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    const orderNo = `ORD${timestamp}${random}`;
+    const random = randomBytes(2).readUInt16BE(0) % 10000; // 0-9999 range
+    const orderNo = `ORD${timestamp}${random.toString().padStart(4, '0')}`;
 
     // Handle user creation/connection
     let userId = orderData.userId;
     if (!userId) {
-      console.log('Creating guest user...');
+      // SECURITY: Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating guest user...');
+      }
       // Create a guest user if no userId provided
       const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
       const guestUser = await this.prisma.users.create({
@@ -209,23 +237,31 @@ export class OrdersService {
           name: orderData.customerName || 'Khách hàng',
           phone: orderData.customerPhone,
           role: 'USER',
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
       userId = guestUser.id;
-      console.log('Guest user created:', userId);
+      // SECURITY: Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Guest user created:', userId);
+      }
     }
 
     // Simple item processing
     const items = [];
     let subtotalCents = 0;
 
-    for (const item of orderData.order_items || []) {
+    const incomingItems = Array.isArray(orderData.items) ? orderData.items : [];
+    if (incomingItems.length === 0) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một sản phẩm');
+    }
+
+    for (const item of incomingItems) {
       console.log('Processing item:', item);
-      
+
       // Get product
       const product = await this.prisma.products.findUnique({
-        where: { id: item.productId }
+        where: { id: item.productId },
       });
 
       if (!product) {
@@ -237,15 +273,18 @@ export class OrdersService {
         quantity: item.quantity || 1,
         price: Number(product.priceCents),
         unitPrice: Number(product.priceCents),
-        name: product.name
+        name: product.name,
       };
 
       items.push(itemData);
       subtotalCents += itemData.price * itemData.quantity;
     }
 
-    console.log('Processed items:', items);
-    console.log('Subtotal:', subtotalCents);
+    // SECURITY: Only log in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Processed items:', items);
+      console.log('Subtotal:', subtotalCents);
+    }
 
     // Create order and items separately (no transaction for debugging)
     const order = await this.prisma.orders.create({
@@ -257,11 +296,17 @@ export class OrdersService {
         subtotalCents,
         totalCents: subtotalCents,
         shippingAddress: orderData.shippingAddress || null,
-        updatedAt: new Date()
-      }
+        shippingCoordinates: orderData.shippingCoordinates
+          ? JSON.stringify(orderData.shippingCoordinates)
+          : null,
+        updatedAt: new Date(),
+      },
     });
 
-    console.log('Order created:', order.id);
+    // SECURITY: Only log in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Order created:', order.id);
+    }
 
     // Create order items
     for (const itemData of items) {
@@ -270,12 +315,15 @@ export class OrdersService {
           id: randomUUID(),
           orderId: order.id,
           ...itemData,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
     }
 
-    console.log('Order items created');
+    // SECURITY: Only log in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Order items created');
+    }
 
     // Get full order with items
     const fullOrder = await this.prisma.orders.findUnique({
@@ -287,21 +335,31 @@ export class OrdersService {
             id: true,
             name: true,
             email: true,
-            phone: true
-          }
-        }
-      }
+            phone: true,
+          },
+        },
+      },
     });
 
-    console.log('Returning order:', fullOrder?.id);
+    // SECURITY: Only log in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Returning order:', fullOrder?.id);
+    }
     return fullOrder;
   }
 
   async update(id: string, updateData: any): Promise<any> {
-    console.log('=== UPDATE ORDER DEBUG ===');
-    console.log('Order ID:', id);
-    console.log('Update data keys:', Object.keys(updateData));
-    console.log('Update data:', JSON.stringify(updateData, null, 2));
+    // SECURITY: Only log in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== UPDATE ORDER DEBUG ===');
+      console.log('Order ID:', id);
+      console.log('Update data keys:', Object.keys(updateData));
+      // Sanitize sensitive data before logging
+      const sanitizedUpdateData = { ...updateData };
+      if (sanitizedUpdateData.customerEmail) sanitizedUpdateData.customerEmail = '***';
+      if (sanitizedUpdateData.customerPhone) sanitizedUpdateData.customerPhone = '***';
+      console.log('Update data:', JSON.stringify(sanitizedUpdateData, null, 2));
+    }
 
     const order = await this.get(id);
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
@@ -318,16 +376,19 @@ export class OrdersService {
       if (order.userId) {
         await this.prisma.users.update({
           where: { id: order.userId },
-          data: userUpdate
+          data: userUpdate,
         });
       }
     }
 
     // Update order fields
     if (updateData.shippingAddress !== undefined) {
-      updatePayload.shippingAddress = typeof updateData.shippingAddress === 'string'
-        ? updateData.shippingAddress
-        : (updateData.shippingAddress ? JSON.stringify(updateData.shippingAddress) : null);
+      updatePayload.shippingAddress =
+        typeof updateData.shippingAddress === 'string'
+          ? updateData.shippingAddress
+          : updateData.shippingAddress
+            ? JSON.stringify(updateData.shippingAddress)
+            : null;
     }
 
     if (updateData.shippingCoordinates !== undefined) {
@@ -355,18 +416,18 @@ export class OrdersService {
           quantity: item.quantity || 1,
           unitPrice: item.unitPrice || 0,
           price: item.unitPrice || 0, // Required field for compatibility
-          name: item.name || 'Sản phẩm'
+          name: item.name || 'Sản phẩm',
         };
 
         // Try to get product price from database
         try {
           let product = await this.prisma.products.findUnique({
-            where: { id: item.productId }
+            where: { id: item.productId },
           });
 
           if (!product) {
             product = await this.prisma.products.findUnique({
-              where: { slug: item.productId }
+              where: { slug: item.productId },
             });
           }
 
@@ -405,19 +466,19 @@ export class OrdersService {
             products: {
               select: {
                 name: true,
-                slug: true
-              }
-            }
-          }
+                slug: true,
+              },
+            },
+          },
         },
         users: {
           select: {
             name: true,
             email: true,
-            phone: true
-          }
-        }
-      }
+            phone: true,
+          },
+        },
+      },
     });
 
     // Get the full order with all fields for return
@@ -429,19 +490,19 @@ export class OrdersService {
             products: {
               select: {
                 name: true,
-                slug: true
-              }
-            }
-          }
+                slug: true,
+              },
+            },
+          },
         },
         users: {
           select: {
             name: true,
             email: true,
-            phone: true
-          }
-        }
-      }
+            phone: true,
+          },
+        },
+      },
     });
 
     return {
@@ -462,16 +523,16 @@ export class OrdersService {
           productName: item.products?.name || item.name || 'Sản phẩm',
           quantity: item.quantity,
           price: unitPrice,
-          total: unitPrice * item.quantity
+          total: unitPrice * item.quantity,
         };
-      })
+      }),
     };
   }
 
   async delete(id: string) {
     const order = await this.prisma.orders.findUnique({
       where: { id },
-      include: { order_items: true }
+      include: { order_items: true },
     });
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
 
@@ -482,7 +543,7 @@ export class OrdersService {
           if (item.productId) {
             await this.prisma.products.update({
               where: { id: item.productId },
-              data: { stockQuantity: { increment: item.quantity } }
+              data: { stockQuantity: { increment: item.quantity } },
             });
           }
         }

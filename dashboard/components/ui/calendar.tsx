@@ -125,7 +125,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         Root: ({ className, rootRef, ...props }: any) => {
           return (
             <div
@@ -136,7 +136,7 @@ function Calendar({
             />
           )
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         Chevron: ({ className, orientation, ...props }: any) => {
           if (orientation === "left") {
             return (
@@ -158,7 +158,7 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         WeekNumber: ({ children, ...props }: any) => {
           return (
             <td {...props}>

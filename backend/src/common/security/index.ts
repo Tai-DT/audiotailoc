@@ -194,7 +194,7 @@ export function createSecurityEvent(
     userID?: string;
     apiKeyName?: string;
     action?: string;
-  }
+  },
 ): SecurityEvent {
   return {
     timestamp: new Date(),

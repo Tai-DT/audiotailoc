@@ -106,16 +106,16 @@ export class PromotionBackupService {
         type: promotion.type,
         value: Number(promotion.value),
         isActive: promotion.isActive,
-        startsAt: promotion.starts_at,
+        startsAt: promotion.startsAt,
         expiresAt: promotion.expiresAt,
-        minOrderAmount: promotion.min_order_amount ? Number(promotion.min_order_amount) : undefined,
-        maxDiscount: promotion.max_discount ? Number(promotion.max_discount) : undefined,
-        usageCount: promotion.usage_count,
-        usageLimit: promotion.usage_limit,
+        minOrderAmount: promotion.minOrderAmount ? Number(promotion.minOrderAmount) : undefined,
+        maxDiscount: promotion.maxDiscount ? Number(promotion.maxDiscount) : undefined,
+        usageCount: promotion.usageCount,
+        usageLimit: promotion.usageLimit,
         tierBased: (promotion.metadata as any)?.tierBased || false,
         isFirstPurchaseOnly: (promotion.metadata as any)?.isFirstPurchaseOnly || false,
         versionNumber: (promotion.metadata as any)?.versionNumber || 1,
-        createdBy: promotion.created_by || 'system',
+        createdBy: (promotion as any).created_by ?? promotion.createdBy ?? 'system',
         createdAt: promotion.createdAt,
         updatedAt: promotion.updatedAt,
       },
@@ -239,11 +239,11 @@ export class PromotionBackupService {
             type: backup.data.type,
             value: backup.data.value,
             isActive: backup.data.isActive,
-            starts_at: backup.data.startsAt ? new Date(backup.data.startsAt) : undefined,
+            startsAt: backup.data.startsAt ? new Date(backup.data.startsAt) : undefined,
             expiresAt: backup.data.expiresAt ? new Date(backup.data.expiresAt) : undefined,
-            min_order_amount: backup.data.minOrderAmount,
-            max_discount: backup.data.maxDiscount,
-            usage_limit: backup.data.usageLimit,
+            minOrderAmount: backup.data.minOrderAmount,
+            maxDiscount: backup.data.maxDiscount,
+            usageLimit: backup.data.usageLimit,
             updatedAt: new Date(),
           },
         });
@@ -260,19 +260,19 @@ export class PromotionBackupService {
             type: backup.data.type,
             value: Math.round(Number(backup.data.value) || 0),
             isActive: backup.data.isActive,
-            starts_at: backup.data.startsAt ? new Date(backup.data.startsAt) : undefined,
+            startsAt: backup.data.startsAt ? new Date(backup.data.startsAt) : undefined,
             expiresAt: backup.data.expiresAt ? new Date(backup.data.expiresAt) : undefined,
-            min_order_amount: backup.data.minOrderAmount
+            minOrderAmount: backup.data.minOrderAmount
               ? Math.round(Number(backup.data.minOrderAmount))
               : undefined,
-            max_discount: backup.data.maxDiscount
+            maxDiscount: backup.data.maxDiscount
               ? Math.round(Number(backup.data.maxDiscount))
               : undefined,
-            usage_count: 0,
-            usage_limit: backup.data.usageLimit
+            usageCount: 0,
+            usageLimit: backup.data.usageLimit
               ? Math.round(Number(backup.data.usageLimit))
               : undefined,
-            created_by: createdBy || 'system',
+            createdBy: createdBy || 'system',
             createdAt: new Date(),
             updatedAt: new Date(),
             // TODO: These fields don't exist in schema - store in metadata if needed

@@ -96,6 +96,7 @@ let AdminOrKeyGuard = AdminOrKeyGuard_1 = class AdminOrKeyGuard {
 exports.AdminOrKeyGuard = AdminOrKeyGuard;
 exports.AdminOrKeyGuard = AdminOrKeyGuard = AdminOrKeyGuard_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService, admin_guard_1.AdminGuard])
+    __metadata("design:paramtypes", [config_1.ConfigService,
+        admin_guard_1.AdminGuard])
 ], AdminOrKeyGuard);
 //# sourceMappingURL=admin-or-key.guard.js.map

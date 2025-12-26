@@ -53,7 +53,7 @@ export default function BlogNewPage() {
       'Tin tức': 'bg-orange-100 text-orange-800',
       'Sản phẩm': 'bg-red-100 text-red-800',
     };
-    return colors[categoryName as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[categoryName as keyof typeof colors] || 'bg-muted text-foreground';
   };
 
   const truncateText = (text: string, maxLength: number) => {
@@ -67,10 +67,10 @@ export default function BlogNewPage() {
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               Blog & Kiến thức
             </h1>
-            <p className="text-sm text-gray-600 max-w-3xl mx-auto">
+            <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
               Khám phá kiến thức âm thanh, hướng dẫn sử dụng, và những thông tin hữu ích từ Audio Tài Lộc
             </p>
           </div>
@@ -86,7 +86,7 @@ export default function BlogNewPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <form onSubmit={handleSearch} className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       type="text"
                       placeholder="Tìm kiếm bài viết..."
@@ -125,22 +125,22 @@ export default function BlogNewPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
-                    <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                    <div className="h-48 bg-muted rounded-t-lg"></div>
                     <CardContent className="p-6">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : articles.length === 0 ? (
               <div className="text-center py-12">
-                <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   Không tìm thấy bài viết nào
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   Hãy thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác.
                 </p>
               </div>
@@ -159,7 +159,7 @@ export default function BlogNewPage() {
                         />
                       ) : (
                         <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                          <BookOpen className="h-12 w-12 text-gray-400" />
+                          <BookOpen className="h-12 w-12 text-muted-foreground" />
                         </div>
                       )}
                       <div className="absolute top-4 left-4">
@@ -169,17 +169,17 @@ export default function BlogNewPage() {
                       </div>
                     </div>
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      <h3 className="text-xl font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                         <Link href={`/blog-new/${article.slug}`}>
                           {article.title}
                         </Link>
                       </h3>
                       {article.excerpt && (
-                        <p className="text-gray-600 mb-4 line-clamp-3">
+                        <p className="text-muted-foreground mb-4 line-clamp-3">
                           {truncateText(article.excerpt, 120)}
                         </p>
                       )}
-                      <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1">
                             <Eye className="h-4 w-4" />
@@ -200,10 +200,10 @@ export default function BlogNewPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="mt-4 pt-4 border-t border-border">
                         <Link
                           href={`/blog-new/${article.slug}`}
-                          className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                          className="inline-flex items-center text-primary hover:text-primary/80 font-medium"
                         >
                           Đọc thêm
                           <ChevronRight className="ml-1 h-4 w-4" />
@@ -253,7 +253,7 @@ export default function BlogNewPage() {
                     >
                       {category.name}
                       {category._count && (
-                        <span className="ml-auto text-xs text-gray-500">
+                        <span className="ml-auto text-xs text-muted-foreground">
                           ({category._count.articles})
                         </span>
                       )}
@@ -275,7 +275,7 @@ export default function BlogNewPage() {
                 <div className="space-y-4">
                   {articles.slice(0, 5).map((article: BlogArticle) => (
                     <div key={article.id} className="flex gap-3">
-                      <div className="w-16 h-16 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
+                      <div className="w-16 h-16 bg-muted rounded flex-shrink-0 overflow-hidden">
                         {article.imageUrl ? (
                           <Image
                             src={article.imageUrl}
@@ -286,7 +286,7 @@ export default function BlogNewPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="h-6 w-6 text-gray-400" />
+                            <BookOpen className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
                       </div>
@@ -294,12 +294,12 @@ export default function BlogNewPage() {
                         <h4 className="font-medium text-sm line-clamp-2 mb-1">
                           <Link
                             href={`/blog-new/${article.slug}`}
-                            className="hover:text-blue-600 transition-colors"
+                            className="hover:text-primary transition-colors"
                           >
                             {article.title}
                           </Link>
                         </h4>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Eye className="h-3 w-3" />
                           <span>{article.viewCount}</span>
                         </div>

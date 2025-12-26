@@ -7,7 +7,7 @@ import { PrismaService } from './prisma/prisma.service';
 @Controller()
 export class AppController {
   constructor(private readonly prisma: PrismaService) {}
-  
+
   @Get()
   getHello(): string {
     return 'Audio Tài Lộc Backend is running!';
@@ -19,7 +19,7 @@ export class AppController {
       status: 'OK',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: 'SQLite Connected'
+      database: 'SQLite Connected',
     };
   }
 
@@ -32,8 +32,8 @@ export class AppController {
         'SQLite Database',
         'Prisma ORM',
         'Basic Health Check',
-        'Environment Configuration'
-      ]
+        'Environment Configuration',
+      ],
     };
   }
 
@@ -47,18 +47,18 @@ export class AppController {
           email: true,
           name: true,
           role: true,
-          createdAt: true
-        }
+          createdAt: true,
+        },
       });
       return {
         success: true,
         data: users,
-        count: users.length
+        count: users.length,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -69,38 +69,35 @@ export class AppController {
       const products = await this.prisma.products.findMany({
         take: 10,
         include: {
-          categories: true
-        }
+          categories: true,
+        },
       });
       return {
         success: true,
         data: products,
-        count: products.length
+        count: products.length,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
 }
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
   controllers: [AppController],
 })
 export class SimpleAppModule {}
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   try {
     const app = await NestFactory.create(SimpleAppModule);
-    
+
     // Enable CORS
     app.enableCors({
       origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
@@ -109,14 +106,13 @@ async function bootstrap() {
 
     const port = process.env.PORT || 8000;
     await app.listen(port);
-    
+
     logger.log(`🚀 Audio Tài Lộc Backend started successfully`);
     logger.log(`📋 Server running at: http://localhost:${port}`);
     logger.log(`🔍 Health check: http://localhost:${port}/health`);
     logger.log(`🧪 Test API: http://localhost:${port}/api/v1/test`);
     logger.log(`👥 Users API: http://localhost:${port}/api/v1/users`);
     logger.log(`📦 Products API: http://localhost:${port}/api/v1/products`);
-    
   } catch (error) {
     logger.error('❌ Failed to start backend:', error);
     process.exit(1);

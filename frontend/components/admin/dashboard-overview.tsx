@@ -70,25 +70,25 @@ export function DashboardOverview() {
       title: 'Đơn hàng mới',
       value: dashboard?.newOrders || 0,
       icon: ShoppingCart,
-      color: 'text-blue-600'
+      color: 'text-primary'
     },
     {
       title: 'Khách hàng mới',
       value: dashboard?.newUsers || 0,
       icon: Users,
-      color: 'text-green-600'
+      color: 'text-success'
     },
     {
       title: 'Đơn chờ xử lý',
       value: dashboard?.pendingOrders || 0,
       icon: ShoppingCart,
-      color: 'text-orange-600'
+      color: 'text-warning'
     },
     {
       title: 'Sản phẩm sắp hết',
       value: dashboard?.lowStockProducts || 0,
       icon: Package,
-      color: 'text-red-600'
+      color: 'text-destructive'
     }
   ];
 
@@ -129,11 +129,11 @@ export function DashboardOverview() {
               <div className="text-2xl font-bold">{card.value}</div>
               <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                 {card.trend === 'up' ? (
-                  <ArrowUpRight className="h-3 w-3 text-green-600" />
+                  <ArrowUpRight className="h-3 w-3 text-success" />
                 ) : (
-                  <ArrowDownRight className="h-3 w-3 text-red-600" />
+                  <ArrowDownRight className="h-3 w-3 text-destructive" />
                 )}
-                <span className={card.trend === 'up' ? 'text-green-600' : 'text-red-600'}>
+                <span className={card.trend === 'up' ? 'text-success' : 'text-destructive'}>
                   {card.change}
                 </span>
                 <span>{card.description}</span>

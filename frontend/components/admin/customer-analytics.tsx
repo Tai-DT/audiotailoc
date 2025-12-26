@@ -82,7 +82,7 @@ export function CustomerAnalytics() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <Users className="h-4 w-4 text-blue-600" />
+                <Users className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">Tổng khách hàng</p>
               </div>
               <p className="text-2xl font-bold">
@@ -91,16 +91,16 @@ export function CustomerAnalytics() {
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <UserPlus className="h-4 w-4 text-green-600" />
+                <UserPlus className="h-4 w-4 text-success" />
                 <p className="text-sm text-muted-foreground">Khách hàng mới</p>
               </div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 {analytics?.newCustomers || 0}
               </p>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <UserCheck className="h-4 w-4 text-orange-600" />
+                <UserCheck className="h-4 w-4 text-warning" />
                 <p className="text-sm text-muted-foreground">Hoạt động</p>
               </div>
               <p className="text-2xl font-bold">
@@ -126,8 +126,8 @@ export function CustomerAnalytics() {
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm">Tỷ lệ giữ chân</span>
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-600">
+                    <TrendingUp className="h-4 w-4 text-success" />
+                    <span className="font-medium text-success">
                       {analytics?.retentionRate || 85}%
                     </span>
                   </div>
@@ -135,8 +135,8 @@ export function CustomerAnalytics() {
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm">Tỷ lệ rời bỏ</span>
                   <div className="flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-red-600" />
-                    <span className="font-medium text-red-600">
+                    <TrendingDown className="h-4 w-4 text-destructive" />
+                    <span className="font-medium text-destructive">
                       {analytics?.churnRate || 15}%
                     </span>
                   </div>

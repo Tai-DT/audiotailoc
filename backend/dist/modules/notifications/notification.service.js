@@ -129,7 +129,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'ORDER',
             priority: 'HIGH',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { orderData, isConfirmation: true }
+            data: { orderData, isConfirmation: true },
         });
     }
     async sendOrderStatusUpdate(userId, email, orderData) {
@@ -141,7 +141,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'ORDER',
             priority: 'MEDIUM',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { orderData, isConfirmation: false }
+            data: { orderData, isConfirmation: false },
         });
     }
     async sendWelcomeNotification(userId, email, customerName) {
@@ -153,7 +153,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'WELCOME',
             priority: 'LOW',
             channels: ['EMAIL'],
-            data: { customerName }
+            data: { customerName },
         });
     }
     async sendPromotionNotification(userId, email, promotion) {
@@ -165,7 +165,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
             type: 'PROMOTION',
             priority: 'MEDIUM',
             channels: ['EMAIL', 'WEBSOCKET'],
-            data: { promotion }
+            data: { promotion },
         });
     }
     async sendSystemNotification(message, _priority = 'MEDIUM') {
@@ -175,14 +175,14 @@ let NotificationService = NotificationService_1 = class NotificationService {
         const promises = userIds.map(async (userId) => {
             const user = await this.prisma.users.findUnique({
                 where: { id: userId },
-                select: { email: true, phone: true }
+                select: { email: true, phone: true },
             });
             if (user) {
                 await this.sendNotification({
                     ...data,
                     userId,
                     email: user.email,
-                    phone: user.phone || undefined
+                    phone: user.phone || undefined,
                 });
             }
         });
@@ -202,14 +202,22 @@ let NotificationService = NotificationService_1 = class NotificationService {
         const where = { userId };
         if (typeof options.read === 'boolean')
             where.read = options.read;
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            this.logger.error('Prisma notifications model is undefined - returning empty list');
+            return {
+                notifications: [],
+                pagination: { page, limit, total: 0, totalPages: 0 },
+            };
+        }
         const [items, total] = await Promise.all([
-            this.prisma.notification.findMany({
+            notificationsModel.findMany({
                 where,
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
-            this.prisma.notification.count({ where }),
+            notificationsModel.count({ where }),
         ]);
         return {
             notifications: items,
@@ -222,40 +230,64 @@ let NotificationService = NotificationService_1 = class NotificationService {
         };
     }
     async createNotification(notification) {
-        return this.prisma.notification.create({
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            this.logger.error('Prisma notifications model is undefined - cannot create notification');
+            throw new Error('Notifications store unavailable');
+        }
+        return notificationsModel.create({
             data: {
                 userId: notification.userId,
                 type: notification.type,
                 title: notification.title,
                 message: notification.message,
                 data: notification.data,
-                read: false,
+                isRead: false,
+                updatedAt: new Date(),
             },
         });
     }
     async getPendingNotifications(userId) {
-        return this.prisma.notification.findMany({
-            where: { userId, read: false },
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            return [];
+        }
+        return notificationsModel.findMany({
+            where: { userId, isRead: false },
             orderBy: { createdAt: 'desc' },
             take: 50,
         });
     }
     async markAsRead(notificationId, userId) {
-        return this.prisma.notification.updateMany({
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            this.logger.error('Prisma notifications model is undefined - cannot mark as read');
+            return { count: 0 };
+        }
+        return notificationsModel.updateMany({
             where: { id: notificationId, userId },
-            data: { read: true, readAt: new Date() },
+            data: { isRead: true, readAt: new Date(), updatedAt: new Date() },
         });
     }
     async markAllAsRead(userId) {
-        return this.prisma.notification.updateMany({
-            where: { userId, read: false },
-            data: { read: true, readAt: new Date() },
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            this.logger.error('Prisma notifications model is undefined - cannot mark all as read');
+            return { count: 0 };
+        }
+        return notificationsModel.updateMany({
+            where: { userId, isRead: false },
+            data: { isRead: true, readAt: new Date(), updatedAt: new Date() },
         });
     }
     async getNotificationStats(userId) {
-        const total = await this.prisma.notification.count({ where: { userId } });
-        const unread = await this.prisma.notification.count({ where: { userId, read: false } });
-        const read = await this.prisma.notification.count({ where: { userId, read: true } });
+        const notificationsModel = this.prisma.notifications || this.prisma.notification;
+        if (!notificationsModel) {
+            return { total: 0, unread: 0, read: 0, unreadPercentage: 0 };
+        }
+        const total = await notificationsModel.count({ where: { userId } });
+        const unread = await notificationsModel.count({ where: { userId, isRead: false } });
+        const read = await notificationsModel.count({ where: { userId, isRead: true } });
         const unreadPercentage = total > 0 ? Math.round((unread / total) * 100) : 0;
         return { total, unread, read, unreadPercentage };
     }

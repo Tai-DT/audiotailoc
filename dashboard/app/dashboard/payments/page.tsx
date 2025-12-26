@@ -110,15 +110,18 @@ export default function PaymentsManager() {
   // Get status badge variant
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PAID':
+      case 'SUCCEEDED':
         return <Badge className="bg-green-100 text-green-800">Đã thanh toán</Badge>
       case 'PENDING':
         return <Badge className="bg-yellow-100 text-yellow-800">Chờ thanh toán</Badge>
+      case 'PROCESSING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Đang xử lý</Badge>
       case 'FAILED':
         return <Badge className="bg-red-100 text-red-800">Thất bại</Badge>
       case 'REFUNDED':
         return <Badge className="bg-blue-100 text-blue-800">Đã hoàn tiền</Badge>
       case 'CANCELLED':
+      case 'CANCELED':
         return <Badge className="bg-gray-100 text-gray-800">Đã hủy</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
@@ -130,7 +133,8 @@ export default function PaymentsManager() {
     const colors = {
       'VNPAY': 'bg-blue-100 text-blue-800',
       'MOMO': 'bg-pink-100 text-pink-800',
-      'PAYOS': 'bg-purple-100 text-purple-800'
+      'PAYOS': 'bg-purple-100 text-purple-800',
+      'COD': 'bg-gray-100 text-gray-800'
     }
     return <Badge className={colors[provider as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{provider}</Badge>
   }
@@ -243,8 +247,9 @@ export default function PaymentsManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                    <SelectItem value="SUCCEEDED">Đã thanh toán</SelectItem>
                     <SelectItem value="PENDING">Chờ thanh toán</SelectItem>
+                    <SelectItem value="PROCESSING">Đang xử lý</SelectItem>
                     <SelectItem value="FAILED">Thất bại</SelectItem>
                     <SelectItem value="REFUNDED">Đã hoàn tiền</SelectItem>
                     <SelectItem value="CANCELLED">Đã hủy</SelectItem>
@@ -259,6 +264,7 @@ export default function PaymentsManager() {
                     <SelectItem value="VNPAY">VNPAY</SelectItem>
                     <SelectItem value="MOMO">MoMo</SelectItem>
                     <SelectItem value="PAYOS">PayOS</SelectItem>
+                    <SelectItem value="COD">COD</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -332,7 +338,7 @@ export default function PaymentsManager() {
                                   <Eye className="mr-2 h-4 w-4" />
                                   Chi tiết
                                 </DropdownMenuItem>
-                                {payment.status === 'PAID' && (
+                                {payment.status === 'SUCCEEDED' && (
                                   <DropdownMenuItem
                                     onClick={() => {
                                       setSelectedPayment(payment)

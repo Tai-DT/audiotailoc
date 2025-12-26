@@ -172,7 +172,9 @@ __decorate([
 ], HealthController.prototype, "recentLogs", null);
 __decorate([
     (0, common_1.Get)('errors'),
-    (0, swagger_1.ApiOperation)({ summary: 'Recent error logs' }),
+    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Recent error logs (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Recent errors' }),
     __param(0, (0, common_1.Query)('hours')),
     __metadata("design:type", Function),
@@ -181,7 +183,9 @@ __decorate([
 ], HealthController.prototype, "recentErrors", null);
 __decorate([
     (0, common_1.Get)('metrics'),
-    (0, swagger_1.ApiOperation)({ summary: 'Application metrics' }),
+    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Application metrics (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Application metrics' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -189,7 +193,9 @@ __decorate([
 ], HealthController.prototype, "applicationMetrics", null);
 __decorate([
     (0, common_1.Get)('alerts'),
-    (0, swagger_1.ApiOperation)({ summary: 'Active alerts' }),
+    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Active alerts (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Active alerts' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

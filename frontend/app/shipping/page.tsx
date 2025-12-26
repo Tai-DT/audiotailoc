@@ -1,49 +1,59 @@
+'use client';
+
 import React from 'react';
+import { usePolicy } from '@/lib/hooks/use-policies';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
 
 export default function ShippingPage() {
+  const { data: policy, isLoading, error } = usePolicy('shipping');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-10">
+          <Skeleton className="h-10 w-64 mb-6" />
+          <Skeleton className="h-4 w-full mb-4" />
+          <Skeleton className="h-4 w-3/4 mb-8" />
+          <div className="space-y-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-6 w-48 mb-3" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !policy) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-10">
+          <h1 className="text-3xl font-bold mb-6">Chính sách giao hàng & bảo hành</h1>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <AlertCircle className="h-5 w-5" />
+            <p>Không thể tải nội dung. Vui lòng thử lại sau.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold mb-6">Chính sách giao hàng & bảo hành</h1>
-        <p className="text-muted-foreground mb-6">
-          Chúng tôi luôn nỗ lực giao hàng nhanh chóng và hỗ trợ bảo hành tận tâm để mang đến trải nghiệm tốt nhất cho khách hàng.
+        <h1 className="text-3xl font-bold mb-6">{policy.title}</h1>
+        <div
+          className="prose prose-gray dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: policy.content }}
+        />
+        <p className="text-sm text-muted-foreground mt-8">
+          Cập nhật lần cuối: {new Date(policy.updatedAt).toLocaleDateString('vi-VN')}
         </p>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">1. Phí và phạm vi giao hàng</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Miễn phí giao hàng cho đơn hàng từ 1.000.000₫ trong nội thành TP.HCM.</li>
-            <li>Phí giao hàng ngoại thành và tỉnh sẽ được thông báo khi xác nhận đơn hàng.</li>
-            <li>Giao hàng toàn quốc qua các đơn vị vận chuyển uy tín.</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">2. Thời gian giao hàng</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Nội thành TP.HCM: 1–3 ngày làm việc.</li>
-            <li>Các tỉnh thành khác: 3–7 ngày làm việc tùy khu vực.</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">3. Chính sách bảo hành</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Bảo hành chính hãng 12 tháng (nếu không có quy định khác của nhà sản xuất).</li>
-            <li>Hỗ trợ kỹ thuật trọn đời sử dụng sản phẩm.</li>
-            <li>Đổi trả trong 7 ngày nếu sản phẩm lỗi do nhà sản xuất.</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">4. Lưu ý</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Vui lòng kiểm tra tình trạng sản phẩm khi nhận hàng.</li>
-            <li>Giữ lại hóa đơn và phụ kiện đầy đủ để được hỗ trợ bảo hành.</li>
-          </ul>
-        </section>
-
-        <p className="text-sm text-muted-foreground">Cập nhật lần cuối: 25/09/2025</p>
       </main>
     </div>
   );

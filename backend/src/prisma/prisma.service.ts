@@ -1,9 +1,13 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
+  private isConnected = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+
   constructor() {
     super({
       datasources: {
@@ -11,12 +15,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           url: process.env.DATABASE_URL,
         },
       },
-      log: ['error'],
+      log: [
+        { emit: 'event', level: 'error' },
+        { emit: 'event', level: 'warn' },
+      ],
+    });
+
+    // Listen for Prisma errors to handle connection issues
+    (this as any).$on('error', (e: any) => {
+      this.logger.error(`Prisma error: ${e.message}`);
+      this.handleConnectionError();
     });
 
     // Extend with Accelerate for better performance
     // Only use Accelerate in production or when explicitly enabled
-    const useAccelerate = process.env.USE_PRISMA_ACCELERATE === 'true' || process.env.NODE_ENV === 'production';
+    const useAccelerate =
+      process.env.USE_PRISMA_ACCELERATE === 'true' || process.env.NODE_ENV === 'production';
     if (useAccelerate) {
       Object.assign(this, this.$extends(withAccelerate()));
     }
@@ -31,6 +45,65 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
   }
 
+  /**
+   * Handle connection errors with automatic reconnection
+   */
+  private async handleConnectionError() {
+    if (this.reconnectTimer) return; // Already reconnecting
+
+    this.isConnected = false;
+    this.logger.warn('Database connection lost, attempting to reconnect...');
+
+    this.reconnectTimer = setTimeout(async () => {
+      try {
+        await this.$disconnect();
+        await this.$connect();
+        this.isConnected = true;
+        this.logger.log('Database reconnected successfully');
+      } catch (error) {
+        this.logger.error('Failed to reconnect to database:', error);
+      } finally {
+        this.reconnectTimer = null;
+      }
+    }, 1000);
+  }
+
+  /**
+   * Execute a query with retry logic for connection errors
+   */
+  async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3,
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        const isConnectionError =
+          error.message?.includes('Closed') ||
+          error.message?.includes('Connection') ||
+          error.code === 'P1017' ||
+          error.code === 'P1001' ||
+          error.code === 'P1002';
+
+        if (isConnectionError && attempt < maxRetries) {
+          this.logger.warn(
+            `Database operation failed (attempt ${attempt}/${maxRetries}), retrying...`,
+          );
+          await this.handleConnectionError();
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
   // Method to get extended client with Accelerate
   getAcceleratedClient() {
     return this.$extends(withAccelerate());
@@ -40,7 +113,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // Allow skipping DB connect on startup for offline/dev scenarios
     if (process.env.ALLOW_START_WITHOUT_DB === 'true') {
       const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
-      if (logPrisma) console.warn('[Prisma] Skipping DB connect on startup (ALLOW_START_WITHOUT_DB=true)');
+      if (logPrisma)
+        console.warn('[Prisma] Skipping DB connect on startup (ALLOW_START_WITHOUT_DB=true)');
       return;
     }
 
@@ -50,7 +124,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     let attempt = 0;
     // Simple backoff with jitter
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     while (true) {
       try {
@@ -63,11 +137,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         const isLast = attempt >= maxAttempts;
         const message = err?.message || String(err);
         const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
-        if (logPrisma) console.warn(`[Prisma] DB connection attempt ${attempt}/${maxAttempts} failed: ${message}`);
+        if (logPrisma)
+          console.warn(
+            `[Prisma] DB connection attempt ${attempt}/${maxAttempts} failed: ${message}`,
+          );
         if (isLast) {
           // As a last resort, optionally allow app to start without DB
           if (process.env.ALLOW_START_WITHOUT_DB === 'fallback') {
-            if (logPrisma) console.warn('[Prisma] Failed to connect after max attempts; continuing without DB (fallback mode)');
+            if (logPrisma)
+              console.warn(
+                '[Prisma] Failed to connect after max attempts; continuing without DB (fallback mode)',
+              );
             return;
           }
           throw err;

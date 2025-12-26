@@ -1,9 +1,11 @@
+import { parseImages } from '@/lib/utils';
+
 interface Product {
   id: string;
   name: string;
   description: string;
   shortDescription?: string;
-  images?: string[];
+  images?: unknown;
   imageUrl?: string;
   priceCents: number;
   stockQuantity: number;
@@ -19,7 +21,7 @@ interface ProductStructuredDataProps {
 }
 
 export function ProductStructuredData({ product }: ProductStructuredDataProps) {
-  const images = (product.images || [product.imageUrl]).filter(Boolean) as string[];
+  const images = parseImages(product.images, product.imageUrl);
   const priceValue = Number(product.priceCents ?? 0);
   const structuredData = {
     '@context': 'https://schema.org',

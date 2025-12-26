@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './button';
 import { MagicCard } from './magic-card';
-import { BorderBeam } from './border-beam';
-import { MessageCircle, X, Phone } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 interface ZaloChatProps {
   phoneNumber: string;
@@ -20,9 +19,12 @@ export function ZaloChat({
   size = 'medium',
   className = ''
 }: ZaloChatProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  // const [isLoaded, setIsLoaded] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Zalo SDK loading removed to prevent "ERR_BLOCKED_BY_CLIENT" errors 
+  // and because the custom button below handles the chat functionality via window.open
+  /*
   useEffect(() => {
     // Load Zalo SDK if not already loaded
     if (!window.zaloSDK) {
@@ -44,6 +46,7 @@ export function ZaloChat({
       setIsLoaded(true);
     }
   }, [phoneNumber]);
+  */
 
   const handleChatClick = () => {
     // Open Zalo chat with correct URL format
@@ -185,7 +188,7 @@ export function ZaloChat({
                   <MessageCircle className="w-4 h-4 text-[#0068FF]" />
                   <span className="font-semibold">Chat Zalo</span>
                 </div>
-                <div className="text-xs text-gray-300 mt-1">{phoneNumber}</div>
+                <div className="text-xs text-muted-foreground/60 mt-1">{phoneNumber}</div>
                 <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
               </div>
             </motion.div>

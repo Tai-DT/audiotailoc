@@ -248,10 +248,9 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Tồn kho</label>
                     <div className="flex items-center gap-2">
-                      <p className={`font-medium ${
-                        product.stockQuantity === 0 ? 'text-red-600' :
-                        product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
+                      <p className={`font-medium ${product.stockQuantity === 0 ? 'text-red-600' :
+                          product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                        }`}>
                         {product.stockQuantity}
                       </p>
                       {product.stockQuantity === 0 && (
@@ -428,50 +427,108 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
             </>
           )}
 
-          {/* SEO Information */}
-          {(product.metaTitle || product.metaDescription || product.metaKeywords || product.canonicalUrl) && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="text-lg font-medium flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Thông tin SEO
-                </h4>
-                <div className="space-y-3">
-                  {product.metaTitle && (
-                    <div className="p-3 border rounded-md bg-muted/30">
-                      <label className="text-sm font-medium text-muted-foreground">Meta Title</label>
-                      <p className="text-sm mt-1 font-medium">{product.metaTitle}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Độ dài: {product.metaTitle.length}/60 ký tự
-                      </p>
-                    </div>
-                  )}
-                  {product.metaDescription && (
-                    <div className="p-3 border rounded-md bg-muted/30">
-                      <label className="text-sm font-medium text-muted-foreground">Meta Description</label>
-                      <p className="text-sm mt-1">{product.metaDescription}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Độ dài: {product.metaDescription.length}/160 ký tự
-                      </p>
-                    </div>
-                  )}
-                  {product.metaKeywords && (
-                    <div className="p-3 border rounded-md bg-muted/30">
-                      <label className="text-sm font-medium text-muted-foreground">Meta Keywords</label>
-                      <p className="text-sm mt-1">{product.metaKeywords}</p>
-                    </div>
-                  )}
-                  {product.canonicalUrl && (
-                    <div className="p-3 border rounded-md bg-muted/30">
-                      <label className="text-sm font-medium text-muted-foreground">Canonical URL</label>
-                      <p className="text-sm mt-1 font-mono break-all">{product.canonicalUrl}</p>
-                    </div>
-                  )}
+          {/* SEO Information - Always show */}
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <h4 className="text-lg font-medium flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Thông tin SEO
+              </h4>
+
+              {/* SEO Status Summary */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant={product.metaTitle ? "default" : "outline"}>
+                  Meta Title: {product.metaTitle ? '✓' : '✗'}
+                </Badge>
+                <Badge variant={product.metaDescription ? "default" : "outline"}>
+                  Meta Description: {product.metaDescription ? '✓' : '✗'}
+                </Badge>
+                <Badge variant={product.metaKeywords ? "default" : "outline"}>
+                  Keywords: {product.metaKeywords ? '✓' : '✗'}
+                </Badge>
+                <Badge variant={product.slug ? "default" : "outline"}>
+                  Slug: {product.slug ? '✓' : '✗'}
+                </Badge>
+              </div>
+
+              {/* Google Preview */}
+              <div className="p-4 border rounded-lg bg-white">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Xem trước trên Google</label>
+                <div className="mt-2 max-w-lg">
+                  <p className="text-blue-600 text-lg hover:underline cursor-pointer truncate">
+                    {product.metaTitle || product.name || 'Chưa có tiêu đề'}
+                  </p>
+                  <p className="text-green-700 text-sm truncate">
+                    audiotailoc.com/san-pham/{product.slug || 'chua-co-slug'}
+                  </p>
+                  <p className="text-gray-600 text-sm line-clamp-2 mt-1">
+                    {product.metaDescription || product.shortDescription || product.description?.substring(0, 160) || 'Chưa có mô tả SEO'}
+                  </p>
                 </div>
               </div>
-            </>
-          )}
+
+              <div className="grid grid-cols-1 gap-3">
+                {/* Slug */}
+                <div className="p-3 border rounded-md bg-muted/30">
+                  <label className="text-sm font-medium text-muted-foreground">URL Slug</label>
+                  <p className="text-sm mt-1 font-mono">{product.slug || <span className="text-muted-foreground italic">Chưa thiết lập</span>}</p>
+                </div>
+
+                {/* Meta Title */}
+                <div className="p-3 border rounded-md bg-muted/30">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-muted-foreground">Meta Title</label>
+                    {product.metaTitle && (
+                      <Badge variant={product.metaTitle.length <= 60 ? "default" : "destructive"} className="text-xs">
+                        {product.metaTitle.length}/60
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm mt-1">
+                    {product.metaTitle || <span className="text-muted-foreground italic">Chưa thiết lập</span>}
+                  </p>
+                </div>
+
+                {/* Meta Description */}
+                <div className="p-3 border rounded-md bg-muted/30">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-muted-foreground">Meta Description</label>
+                    {product.metaDescription && (
+                      <Badge variant={product.metaDescription.length <= 160 ? "default" : "destructive"} className="text-xs">
+                        {product.metaDescription.length}/160
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm mt-1">
+                    {product.metaDescription || <span className="text-muted-foreground italic">Chưa thiết lập</span>}
+                  </p>
+                </div>
+
+                {/* Meta Keywords */}
+                <div className="p-3 border rounded-md bg-muted/30">
+                  <label className="text-sm font-medium text-muted-foreground">Meta Keywords</label>
+                  {product.metaKeywords ? (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {product.metaKeywords.split(',').map((keyword, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">{keyword.trim()}</Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm mt-1 text-muted-foreground italic">Chưa thiết lập</p>
+                  )}
+                </div>
+
+                {/* Canonical URL */}
+                <div className="p-3 border rounded-md bg-muted/30">
+                  <label className="text-sm font-medium text-muted-foreground">Canonical URL</label>
+                  <p className="text-sm mt-1 font-mono break-all">
+                    {product.canonicalUrl || <span className="text-muted-foreground italic">Chưa thiết lập</span>}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         </div>
       </DialogContent>
     </Dialog>

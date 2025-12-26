@@ -66,7 +66,11 @@ let InventoryController = class InventoryController {
         this.inventory = inventory;
     }
     list(q) {
-        return this.inventory.list({ page: q.page, pageSize: q.pageSize, lowStockOnly: q.lowStockOnly === 'true' });
+        return this.inventory.list({
+            page: q.page,
+            pageSize: q.pageSize,
+            lowStockOnly: q.lowStockOnly === 'true',
+        });
     }
     adjust(productId, dto) {
         return this.inventory.adjust(productId, dto);

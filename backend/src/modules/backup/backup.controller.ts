@@ -9,8 +9,11 @@ import {
   Res,
   HttpStatus,
   HttpException,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 import {
   BackupService,
   BackupResult,
@@ -19,13 +22,18 @@ import {
   BackupMetadata,
 } from './backup.service';
 import { LoggingService } from '../logging/logging.service';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
+import { AdminGuard } from '../auth/admin.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('backup')
+@UseGuards(AdminOrKeyGuard)
+@ApiBearerAuth()
 export class BackupController {
   constructor(
     private readonly backupService: BackupService,
     private readonly loggingService: LoggingService,
-  ) {}
+  ) { }
 
   // Get backup status
   @Get('status')
@@ -222,7 +230,6 @@ export class BackupController {
           error: {
             code: 'FULL_BACKUP_ERROR',
             message: 'Failed to create full backup',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -276,7 +283,6 @@ export class BackupController {
           error: {
             code: 'INCREMENTAL_BACKUP_ERROR',
             message: 'Failed to create incremental backup',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -326,7 +332,6 @@ export class BackupController {
           error: {
             code: 'FILE_BACKUP_ERROR',
             message: 'Failed to create file backup',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -334,8 +339,8 @@ export class BackupController {
     }
   }
 
-  // Restore from backup
   @Post('restore/:backupId')
+  @UseGuards(AdminGuard)
   async restoreFromBackup(
     @Param('backupId') backupId: string,
     @Body()
@@ -377,7 +382,6 @@ export class BackupController {
           error: {
             code: 'BACKUP_RESTORE_ERROR',
             message: 'Failed to restore from backup',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -385,8 +389,8 @@ export class BackupController {
     }
   }
 
-  // Point-in-time recovery
   @Post('restore/point-in-time')
+  @UseGuards(AdminGuard)
   async pointInTimeRecovery(
     @Body()
     options: {
@@ -445,7 +449,6 @@ export class BackupController {
           error: {
             code: 'POINT_IN_TIME_RECOVERY_ERROR',
             message: 'Failed to perform point-in-time recovery',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -498,10 +501,15 @@ export class BackupController {
         size: backup.size,
       });
 
+      const fileStat = fs.statSync(backup.path);
+      const filename = path.basename(backup.path) || `${backupId}.backup`;
+
       // Set response headers
+      // Allow browser JS to read filename from Content-Disposition.
+      response.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
       response.setHeader('Content-Type', 'application/octet-stream');
-      response.setHeader('Content-Disposition', `attachment; filename="${backupId}.backup"`);
-      response.setHeader('Content-Length', backup.size.toString());
+      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      response.setHeader('Content-Length', String(fileStat.size));
 
       // Stream the file
       const readStream = fs.createReadStream(backup.path);
@@ -548,8 +556,8 @@ export class BackupController {
     }
   }
 
-  // Delete backup
   @Delete(':backupId')
+  @UseGuards(AdminGuard)
   async deleteBackup(
     @Param('backupId') backupId: string,
   ): Promise<{ success: boolean; message: string }> {
@@ -571,27 +579,18 @@ export class BackupController {
         );
       }
 
-      // Delete the backup file and metadata
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const fs = require('fs').promises;
-      try {
-        await fs.unlink(backup.path);
-      } catch (error) {
-        // Log but don't fail if file deletion fails
-        this.loggingService.logError(error as any, {
-          metadata: { operation: 'delete_backup_file', backupId, path: backup.path },
-        });
-      }
-
-      // Delete metadata (this would be handled by the service in a real implementation)
-      const metadataPath = `./backups/metadata/${backupId}.json`;
-      try {
-        await fs.unlink(metadataPath);
-      } catch (error) {
-        // Log but don't fail if metadata deletion fails
-        this.loggingService.logError(error as any, {
-          metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath },
-        });
+      const deleted = await this.backupService.deleteBackupById(backupId);
+      if (!deleted) {
+        throw new HttpException(
+          {
+            success: false,
+            error: {
+              code: 'DELETE_BACKUP_ERROR',
+              message: 'Failed to delete backup',
+            },
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       this.loggingService.logBusinessEvent('backup_deleted', {
@@ -619,7 +618,6 @@ export class BackupController {
           error: {
             code: 'DELETE_BACKUP_ERROR',
             message: 'Failed to delete backup',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -627,13 +625,19 @@ export class BackupController {
     }
   }
 
-  // Clean up old backups
   @Post('cleanup')
-  async cleanupOldBackups(): Promise<{ success: boolean; deletedCount: number }> {
+  @UseGuards(AdminGuard)
+  async cleanupOldBackups(
+    @Body()
+    options: {
+      olderThanDays?: number;
+      keepMinimum?: number;
+    } = {},
+  ): Promise<{ success: boolean; deletedCount: number }> {
     try {
       this.loggingService.logBusinessEvent('backup_cleanup_started', {});
 
-      const deletedCount = await this.backupService.cleanupOldBackups();
+      const deletedCount = await this.backupService.cleanupOldBackups(options);
 
       this.loggingService.logBusinessEvent('backup_cleanup_completed', {
         deletedCount,
@@ -654,7 +658,6 @@ export class BackupController {
           error: {
             code: 'BACKUP_CLEANUP_ERROR',
             message: 'Failed to cleanup old backups',
-            details: (error as Error).message,
           },
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -688,14 +691,14 @@ export class BackupController {
         oldestBackup:
           backups.length > 0
             ? backups.reduce((oldest, current) =>
-                current.timestamp < oldest.timestamp ? current : oldest,
-              ).timestamp
+              current.timestamp < oldest.timestamp ? current : oldest,
+            ).timestamp
             : null,
         newestBackup:
           backups.length > 0
             ? backups.reduce((newest, current) =>
-                current.timestamp > newest.timestamp ? current : newest,
-              ).timestamp
+              current.timestamp > newest.timestamp ? current : newest,
+            ).timestamp
             : null,
         successRate:
           backups.length > 0

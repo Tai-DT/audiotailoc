@@ -41,28 +41,28 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("../users/users.service");
 const security_service_1 = require("../security/security.service");
-const password_validator_1 = require("./password-validator");
-const bcrypt = __importStar(require("bcryptjs"));
 const jwt = __importStar(require("jsonwebtoken"));
 const crypto = __importStar(require("crypto"));
 const config_1 = require("@nestjs/config");
-let AuthService = class AuthService {
+let AuthService = AuthService_1 = class AuthService {
     constructor(users, config, securityService) {
         this.users = users;
         this.config = config;
         this.securityService = securityService;
+        this.logger = new common_1.Logger(AuthService_1.name);
     }
     async register(dto) {
-        const passwordValidation = password_validator_1.PasswordValidator.validate(dto.password);
+        const passwordValidation = this.securityService.validatePasswordStrength(dto.password);
         if (!passwordValidation.isValid) {
             throw new common_1.BadRequestException({
                 message: 'Password does not meet security requirements',
-                errors: passwordValidation.errors
+                errors: passwordValidation.errors,
             });
         }
         return this.users.create({ email: dto.email, password: dto.password, name: dto.name ?? '' });
@@ -77,7 +77,7 @@ let AuthService = class AuthService {
             this.securityService.recordLoginAttempt(dto.email, false);
             throw new Error('Invalid email or password');
         }
-        const ok = await bcrypt.compare(dto.password, user.password);
+        const ok = await this.securityService.verifyPassword(dto.password, user.password);
         this.securityService.recordLoginAttempt(dto.email, ok);
         if (!ok) {
             throw new Error('Invalid email or password');
@@ -89,12 +89,17 @@ let AuthService = class AuthService {
         }
         const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role ?? 'USER' }, accessSecret, { expiresIn: '15m' });
         const refreshTokenExpiry = dto.rememberMe ? '30d' : '7d';
-        const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: refreshTokenExpiry });
+        const refreshToken = jwt.sign({ sub: user.id }, refreshSecret, {
+            expiresIn: refreshTokenExpiry,
+        });
         return { accessToken, refreshToken, userId: user.id };
     }
     async refresh(refreshToken) {
         try {
-            const refreshSecret = this.config.get('JWT_REFRESH_SECRET') || 'dev_refresh';
+            const refreshSecret = this.config.get('JWT_REFRESH_SECRET');
+            if (!refreshSecret) {
+                throw new Error('JWT refresh secret is not configured');
+            }
             const payload = jwt.verify(refreshToken, refreshSecret);
             const user = await this.users.findById(payload.sub);
             if (!user)
@@ -123,18 +128,32 @@ let AuthService = class AuthService {
             return { success: true };
         }
         const resetToken = crypto.randomBytes(32).toString('hex');
-        const _resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
-        console.log(`Password reset token for ${email}: ${resetToken}`);
-        console.log(`Reset link: http://localhost:3000/reset-password?token=${resetToken}`);
+        const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+        await this.users.setResetToken(user.id, resetToken, resetTokenExpiry);
+        if (process.env.NODE_ENV === 'development') {
+            this.logger.debug(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
+            this.logger.debug(`[DEV ONLY] Reset link: http://localhost:3000/reset-password?token=${resetToken}`);
+        }
+        else {
+            this.logger.log(`Password reset requested for ${email}`);
+        }
         return { success: true };
     }
     async resetPassword(token, newPassword) {
-        if (!token || token.length !== 64) {
-            throw new Error('Invalid reset token');
+        const passwordValidation = this.securityService.validatePasswordStrength(newPassword);
+        if (!passwordValidation.isValid) {
+            throw new common_1.BadRequestException({
+                message: 'New password does not meet security requirements',
+                errors: passwordValidation.errors,
+            });
         }
-        const mockUserId = 'demo-user-id';
-        const _hashedPassword = await bcrypt.hash(newPassword, 12);
-        console.log(`Password reset for user ${mockUserId} with token ${token}`);
+        const user = await this.users.findByResetToken(token);
+        if (!user) {
+            throw new common_1.BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn');
+        }
+        const hashedPassword = await this.securityService.hashPassword(newPassword);
+        await this.users.updatePasswordAndClearResetToken(user.id, hashedPassword);
+        this.logger.log(`Password reset completed for user ${user.id}`);
         return { success: true };
     }
     async changePassword(userId, currentPassword, newPassword) {
@@ -142,17 +161,24 @@ let AuthService = class AuthService {
         if (!user) {
             throw new Error('User not found');
         }
-        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        const isCurrentPasswordValid = await this.securityService.verifyPassword(currentPassword, user.password);
         if (!isCurrentPasswordValid) {
             throw new Error('Current password is incorrect');
         }
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        const passwordValidation = this.securityService.validatePasswordStrength(newPassword);
+        if (!passwordValidation.isValid) {
+            throw new common_1.BadRequestException({
+                message: 'New password does not meet security requirements',
+                errors: passwordValidation.errors,
+            });
+        }
+        const hashedPassword = await this.securityService.hashPassword(newPassword);
         await this.users.updatePassword(userId, hashedPassword);
         return { success: true };
     }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         config_1.ConfigService,

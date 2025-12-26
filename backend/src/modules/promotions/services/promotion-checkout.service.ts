@@ -224,8 +224,8 @@ export class PromotionCheckoutService {
         description: true,
         type: true,
         value: true,
-        min_order_amount: true,
-        max_discount: true,
+        minOrderAmount: true,
+        maxDiscount: true,
         expiresAt: true,
       },
     });
@@ -234,7 +234,7 @@ export class PromotionCheckoutService {
 
     for (const promotion of promotions) {
       // Check minimum order amount
-      if (promotion.min_order_amount && checkout.subtotalCents / 100 < promotion.min_order_amount) {
+      if (promotion.minOrderAmount && checkout.subtotalCents / 100 < promotion.minOrderAmount) {
         continue;
       }
 
@@ -247,8 +247,8 @@ export class PromotionCheckoutService {
       let potentialDiscount = 0;
       if (promotion.type === 'PERCENTAGE') {
         potentialDiscount = (checkout.subtotalCents * promotion.value) / 100 / 100;
-        if (promotion.max_discount) {
-          potentialDiscount = Math.min(potentialDiscount, promotion.max_discount / 100);
+        if (promotion.maxDiscount) {
+          potentialDiscount = Math.min(potentialDiscount, promotion.maxDiscount / 100);
         }
       } else if (promotion.type === 'FIXED_AMOUNT') {
         potentialDiscount = promotion.value / 100;
@@ -257,8 +257,8 @@ export class PromotionCheckoutService {
       applicable.push({
         ...promotion,
         potentialDiscount,
-        minOrderAmount: promotion.min_order_amount ? promotion.min_order_amount / 100 : null,
-        maxDiscount: promotion.max_discount ? promotion.max_discount / 100 : null,
+        minOrderAmount: promotion.minOrderAmount ? promotion.minOrderAmount / 100 : null,
+        maxDiscount: promotion.maxDiscount ? promotion.maxDiscount / 100 : null,
       });
     }
 
@@ -360,7 +360,7 @@ export class PromotionCheckoutService {
 
     const now = new Date();
 
-    if (promotion.starts_at && promotion.starts_at > now) {
+    if (promotion.startsAt && promotion.startsAt > now) {
       return {
         available: false,
         reason: 'Promotion is not yet active',
@@ -377,7 +377,7 @@ export class PromotionCheckoutService {
     // Check usage limit
     const metadata = (promotion.metadata as any) || {};
     const usageCount = metadata.usageCount || 0;
-    const usageLimit = metadata.usageLimit || promotion.usage_limit;
+    const usageLimit = metadata.usageLimit || promotion.usageLimit;
 
     if (usageLimit && usageCount >= usageLimit) {
       return {
@@ -419,13 +419,13 @@ export class PromotionCheckoutService {
     }
 
     // Bonus if customer meets minimum order
-    if (promotion.min_order_amount && checkout.subtotalCents / 100 >= promotion.min_order_amount) {
+    if (promotion.minOrderAmount && checkout.subtotalCents / 100 >= promotion.minOrderAmount) {
       score += 15;
     }
 
     // Bonus based on discount amount
-    if (promotion.max_discount) {
-      const savingsPotential = promotion.max_discount / 100 / (checkout.subtotalCents / 100);
+    if (promotion.maxDiscount) {
+      const savingsPotential = promotion.maxDiscount / 100 / (checkout.subtotalCents / 100);
       if (savingsPotential > 0.1) {
         // More than 10% savings
         score += 15;

@@ -20,6 +20,11 @@ self.addEventListener('install', (event) => {
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
+  // Skip non-http requests (like extension schemes)
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -27,9 +32,17 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
+        return fetch(event.request).catch((error) => {
+          console.log('Fetch connection failed:', error);
+          // Return a simple offline response or just let it be handled by browser
+          // For now, prevent "Uncaught (in promise)" by returning a 503-like Response
+          return new Response("Offline / Network Error", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: new Headers({ "Content-Type": "text/plain" }),
+          });
+        });
+      })
   );
 });
 

@@ -57,7 +57,12 @@ export default function NotFound() {
               </Link>
               <Link href="/blog" className="block">
                 <Button variant="ghost" className="w-full justify-start">
-                  📰 Tin tức
+                  📰 Blog
+                </Button>
+              </Link>
+              <Link href="/support" className="block">
+                <Button variant="ghost" className="w-full justify-start">
+                  💬 Hỗ trợ
                 </Button>
               </Link>
               <Link href="/contact" className="block">

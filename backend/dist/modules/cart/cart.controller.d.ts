@@ -9,8 +9,8 @@ declare class UpdateCartItemDto {
 export declare class CartController {
     private readonly cartService;
     constructor(cartService: CartService);
-    getCart(cartId?: string, userId?: string): Promise<any>;
-    addToCart(addToCartDto: AddToCartDto, cartId?: string, userId?: string): Promise<any>;
+    getCart(cartId?: string, userId?: string, req?: any): Promise<any>;
+    addToCart(addToCartDto: AddToCartDto, cartId?: string, userId?: string, req?: any): Promise<any>;
     createGuestCart(): Promise<{
         cart_items: ({
             products: {
@@ -24,10 +24,10 @@ export declare class CartController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
     } & {
         status: string;
@@ -43,11 +43,11 @@ export declare class CartController {
     updateGuestCartItem(cartId: string, productId: string, updateCartItemDto: UpdateCartItemDto): Promise<any>;
     removeFromGuestCart(cartId: string, productId: string): Promise<any>;
     clearGuestCart(cartId: string): Promise<any>;
-    convertGuestCartToUserCart(cartId: string, userId: string): Promise<any>;
-    getUserCart(userId: string): Promise<any>;
-    addToUserCart(userId: string, addToCartDto: AddToCartDto): Promise<any>;
-    updateUserCartItem(userId: string, productId: string, updateCartItemDto: UpdateCartItemDto): Promise<any>;
-    removeFromUserCart(userId: string, productId: string): Promise<any>;
-    clearUserCart(userId: string): Promise<any>;
+    convertGuestCartToUserCart(cartId: string, req: any): Promise<any>;
+    getUserCart(req: any): Promise<any>;
+    addToUserCart(addToCartDto: AddToCartDto, req: any): Promise<any>;
+    updateUserCartItem(productId: string, updateCartItemDto: UpdateCartItemDto, req: any): Promise<any>;
+    removeFromUserCart(productId: string, req: any): Promise<any>;
+    clearUserCart(req: any): Promise<any>;
 }
 export {};

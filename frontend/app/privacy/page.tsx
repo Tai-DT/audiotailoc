@@ -1,49 +1,59 @@
+'use client';
+
 import React from 'react';
+import { usePolicy } from '@/lib/hooks/use-policies';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
 
 export default function PrivacyPage() {
+  const { data: policy, isLoading, error } = usePolicy('privacy');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-10">
+          <Skeleton className="h-10 w-64 mb-6" />
+          <Skeleton className="h-4 w-full mb-4" />
+          <Skeleton className="h-4 w-3/4 mb-8" />
+          <div className="space-y-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-6 w-48 mb-3" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !policy) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-10">
+          <h1 className="text-3xl font-bold mb-6">Chính sách bảo mật</h1>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <AlertCircle className="h-5 w-5" />
+            <p>Không thể tải nội dung. Vui lòng thử lại sau.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold mb-6">Chính sách bảo mật</h1>
-        <p className="text-muted-foreground mb-6">
-          Audio Tài Lộc cam kết bảo vệ thông tin cá nhân của khách hàng. Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn.
+        <h1 className="text-3xl font-bold mb-6">{policy.title}</h1>
+        <div
+          className="prose prose-gray dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: policy.content }}
+        />
+        <p className="text-sm text-muted-foreground mt-8">
+          Cập nhật lần cuối: {new Date(policy.updatedAt).toLocaleDateString('vi-VN')}
         </p>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">1. Thông tin chúng tôi thu thập</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Thông tin liên hệ: họ tên, email, số điện thoại, địa chỉ</li>
-            <li>Thông tin tài khoản: tên đăng nhập, mật khẩu (được mã hóa)</li>
-            <li>Thông tin đơn hàng và thanh toán</li>
-            <li>Dữ liệu kỹ thuật: địa chỉ IP, loại trình duyệt, cookie</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">2. Mục đích sử dụng</h2>
-          <ul className="list-disc pl-6 text-muted-foreground">
-            <li>Xử lý đơn hàng và cung cấp dịch vụ hỗ trợ</li>
-            <li>Cải thiện trải nghiệm và cá nhân hóa nội dung</li>
-            <li>Gửi thông báo về khuyến mãi (nếu bạn đồng ý)</li>
-            <li>Đảm bảo an toàn hệ thống và phòng chống gian lận</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">3. Bảo mật và lưu trữ</h2>
-          <p className="text-muted-foreground">
-            Chúng tôi áp dụng các biện pháp bảo mật phù hợp để bảo vệ dữ liệu. Thông tin chỉ được lưu trữ trong thời gian cần thiết cho mục đích đã nêu hoặc theo quy định của pháp luật.
-          </p>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-semibold">4. Quyền của bạn</h2>
-          <p className="text-muted-foreground">
-            Bạn có quyền truy cập, cập nhật, yêu cầu xóa hoặc hạn chế xử lý dữ liệu cá nhân của mình. Vui lòng liên hệ chúng tôi để được hỗ trợ.
-          </p>
-        </section>
-
-        <p className="text-sm text-muted-foreground">Cập nhật lần cuối: 25/09/2025</p>
       </main>
     </div>
   );
