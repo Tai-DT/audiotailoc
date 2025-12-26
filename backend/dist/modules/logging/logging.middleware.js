@@ -49,10 +49,10 @@ let LoggingMiddleware = LoggingMiddleware_1 = class LoggingMiddleware {
             },
         });
         const originalEnd = response.end;
-        const self = this;
+        const loggingService = this.loggingService;
         response.end = function (chunk, encoding) {
             const duration = Date.now() - startTime;
-            self.loggingService.logWithContext(response.statusCode >= 400 ? 'warn' : 'info', `Response ${request.method} ${request.path} - ${response.statusCode}`, {
+            loggingService.logWithContext(response.statusCode >= 400 ? 'warn' : 'info', `Response ${request.method} ${request.path} - ${response.statusCode}`, {
                 correlationId,
                 requestId: correlationContext.requestId,
                 endpoint: request.path,
@@ -81,10 +81,10 @@ let LoggingMiddleware = LoggingMiddleware_1 = class LoggingMiddleware {
         next();
     }
     extractUserId(request) {
-        return (request.users?.id ||
-            request.users?.userId ||
-            request.headers['x-user-id'] ||
-            request.query.userId);
+        return (request.user?.sub ||
+            request.user?.id ||
+            request.users?.id ||
+            request.users?.userId);
     }
     getClientIP(request) {
         return (request.ip ||
@@ -92,7 +92,9 @@ let LoggingMiddleware = LoggingMiddleware_1 = class LoggingMiddleware {
             request.socket.remoteAddress ||
             request.headers['x-forwarded-for'] ||
             request.headers['x-real-ip'] ||
-            'unknown').split(',')[0].trim();
+            'unknown')
+            .split(',')[0]
+            .trim();
     }
     sanitizeHeaders(headers) {
         const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'password'];

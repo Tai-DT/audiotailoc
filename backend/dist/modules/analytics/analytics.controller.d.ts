@@ -78,12 +78,6 @@ export declare class AnalyticsController {
         sessions: number;
         avgSessionDuration: number;
         bounceRate: number;
-        uniqueVisitors: number;
-        returnVisitors: number;
-        topPages: {
-            path: string;
-            views: number;
-        }[];
     }>;
     getSalesMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").SalesMetrics>;
     getCustomerMetrics(query: AnalyticsQueryDto): Promise<import("./analytics.service").CustomerMetrics>;

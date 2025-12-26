@@ -27,6 +27,25 @@ export interface PopularSearch {
   count: number
 }
 
+interface SearchApiResult {
+  id: string
+  type: 'product' | 'service' | 'order' | 'user'
+  name?: string
+  title?: string
+  description?: string
+  price?: number
+  score?: number
+}
+
+interface SearchApiResponse {
+  results: SearchApiResult[]
+}
+
+interface SuggestionItem {
+  query?: string
+  [key: string]: unknown
+}
+
 export function useSearch() {
   const [searchResults, setSearchResults] = useState<{
     all: SearchResult[]
@@ -62,18 +81,18 @@ export function useSearch() {
       setError(null)
       
       // Call backend search API
-      const response = await apiClient.get<{ results: any[] }>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
+      const response = await apiClient.get<SearchApiResponse>(`/search?q=${encodeURIComponent(query)}&type=${type}`)
       const results = response.data?.results || []
       
       // Transform backend results to match SearchResult interface
-      const filtered: SearchResult[] = results.map((item: any) => ({
+      const filtered: SearchResult[] = results.map((item: SearchApiResult) => ({
         id: item.id,
         type: item.type,
-        title: item.name || item.title,
+        title: item.name || item.title || '',
         description: item.description || '',
         price: item.price,
         score: item.score,
-        metadata: item
+        metadata: item as unknown as Record<string, unknown>
       }))
 
       setSearchResults({
@@ -120,11 +139,11 @@ export function useSearch() {
   const fetchPopular = useCallback(async () => {
     try {
       // Call backend API for popular searches
-      const response = await apiClient.get<any[]>('/search/popular', { params: { limit: 10 } })
+      const response = await apiClient.get<PopularSearch[]>('/search/popular', { params: { limit: 10 } })
       const popular = response.data || []
       
       // Transform to match PopularSearch interface
-      const transformed: PopularSearch[] = popular.map((item: any, index: number) => ({
+      const transformed: PopularSearch[] = popular.map((item, index: number) => ({
         id: item.id || index.toString(),
         query: item.query,
         count: item.count || 0
@@ -151,11 +170,11 @@ export function useSearch() {
       }
       
       // Call backend API for search suggestions
-      const response = await apiClient.get<any[]>('/search/suggestions', { params: { q: query, limit: 5 } })
+      const response = await apiClient.get<SuggestionItem[]>('/search/suggestions', { params: { q: query, limit: 5 } })
       const suggestions = response.data || []
       
       // Return array of suggestion strings
-      return suggestions.map((item: any) => item.query || item)
+      return suggestions.map((item) => item.query || String(item))
     } catch (err) {
       return []
     }

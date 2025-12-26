@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { apiClient, handleApiResponse } from '@/lib/api';
+import { parseImages } from '@/lib/utils';
 
 interface Service {
   id: string;
@@ -9,7 +10,7 @@ interface Service {
   metaTitle?: string | null;
   metaDescription?: string | null;
   metaKeywords?: string | null;
-  images?: string[];
+  images?: unknown;
   price?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -46,7 +47,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = service.metaTitle || `${service.name} | Audio Tài Lộc`;
   const description = service.metaDescription || (service.shortDescription || service.description || '').substring(0, 160);
   const keywords = service.metaKeywords || `${service.name}, dịch vụ âm thanh, karaoke, Audio Tài Lộc`;
-  const image = Array.isArray(service.images) && service.images.length > 0 ? service.images[0] : '/og-image.jpg';
+  const images = parseImages(service.images);
+  const image = images.length > 0 ? images[0] : '/og-image.jpg';
 
   return {
     title,

@@ -18,7 +18,7 @@ export function SEODemo({ slug }: SEODemoProps) {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">SEO Data Demo</h1>
+      <h1 className="text-3xl font-bold text-foreground">SEO Data Demo</h1>
       
       {/* Global SEO Settings */}
       <div className="bg-blue-50 p-4 rounded-lg">
@@ -125,7 +125,7 @@ export function SEODemo({ slug }: SEODemoProps) {
       {/* Structured Data Preview */}
       {seoData?.structuredData && (
         <div className="bg-gray-50 p-4 rounded-lg">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">Structured Data (JSON-LD)</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-3">Structured Data (JSON-LD)</h2>
           <pre className="text-xs bg-white p-3 rounded border overflow-x-auto">
             {JSON.stringify(seoData.structuredData, null, 2)}
           </pre>

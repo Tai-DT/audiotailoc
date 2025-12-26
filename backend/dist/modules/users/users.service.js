@@ -1,43 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -48,11 +15,12 @@ const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../notifications/mail.service");
-const bcrypt = __importStar(require("bcryptjs"));
+const security_service_1 = require("../security/security.service");
 let UsersService = UsersService_1 = class UsersService {
-    constructor(prisma, mailService) {
+    constructor(prisma, mailService, securityService) {
         this.prisma = prisma;
         this.mailService = mailService;
+        this.securityService = securityService;
         this.logger = new common_1.Logger(UsersService_1.name);
     }
     async findByEmail(email) {
@@ -64,14 +32,14 @@ let UsersService = UsersService_1 = class UsersService {
             include: {
                 orders: {
                     take: 5,
-                    orderBy: { createdAt: 'desc' }
+                    orderBy: { createdAt: 'desc' },
                 },
                 _count: {
                     select: {
                         orders: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
         if (!user) {
             throw new common_1.NotFoundException('User not found');
@@ -85,7 +53,7 @@ let UsersService = UsersService_1 = class UsersService {
             where.OR = [
                 { email: { contains: params.search, mode: 'insensitive' } },
                 { name: { contains: params.search, mode: 'insensitive' } },
-                { phone: { contains: params.search } }
+                { phone: { contains: params.search } },
             ];
         }
         if (params.role) {
@@ -131,18 +99,18 @@ let UsersService = UsersService_1 = class UsersService {
                     createdAt: true,
                     orders: {
                         select: {
-                            totalCents: true
-                        }
+                            totalCents: true,
+                        },
                     },
                     _count: {
                         select: {
-                            orders: true
-                        }
-                    }
+                            orders: true,
+                        },
+                    },
                 },
-                orderBy
+                orderBy,
             }),
-            this.prisma.users.count({ where })
+            this.prisma.users.count({ where }),
         ]);
         return {
             users,
@@ -150,14 +118,14 @@ let UsersService = UsersService_1 = class UsersService {
                 page: params.page,
                 limit: params.limit,
                 total,
-                pages: Math.ceil(total / params.limit)
-            }
+                pages: Math.ceil(total / params.limit),
+            },
         };
     }
     async create(createUserDto) {
         const existingUser = await this.findByEmail(createUserDto.email);
         if (existingUser) {
-            throw new common_1.BadRequestException('Email already exists');
+            throw new common_1.BadRequestException('Unable to create account. Please try again or contact support.');
         }
         let password = createUserDto.password;
         let generatedPassword = false;
@@ -168,7 +136,7 @@ let UsersService = UsersService_1 = class UsersService {
         if (!password) {
             throw new common_1.BadRequestException('Password is required');
         }
-        const hashedPassword = await bcrypt.hash(password, 12);
+        const hashedPassword = await this.securityService.hashPassword(password);
         const user = await this.prisma.users.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
@@ -177,7 +145,7 @@ let UsersService = UsersService_1 = class UsersService {
                 name: createUserDto.name,
                 phone: createUserDto.phone,
                 role: createUserDto.role || 'USER',
-                updatedAt: new Date()
+                updatedAt: new Date(),
             },
             select: {
                 id: true,
@@ -185,8 +153,8 @@ let UsersService = UsersService_1 = class UsersService {
                 name: true,
                 phone: true,
                 role: true,
-                createdAt: true
-            }
+                createdAt: true,
+            },
         });
         if (generatedPassword) {
             try {
@@ -201,35 +169,53 @@ let UsersService = UsersService_1 = class UsersService {
     async createUser(params) {
         const existingUser = await this.findByEmail(params.email);
         if (existingUser) {
-            throw new common_1.BadRequestException('Email already exists');
+            throw new common_1.BadRequestException('Unable to create account. Please try again or contact support.');
         }
-        const hashedPassword = await bcrypt.hash(params.password, 12);
+        const hashedPassword = await this.securityService.hashPassword(params.password);
         return this.prisma.users.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
                 email: params.email,
                 password: hashedPassword,
                 name: params.name ?? '',
-                updatedAt: new Date()
-            }
+                updatedAt: new Date(),
+            },
         });
     }
-    async update(id, updateUserDto) {
+    async update(id, updateUserDto, currentUser) {
         const user = await this.findById(id);
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
+        const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.email === process.env.ADMIN_EMAIL;
+        const updateData = { ...updateUserDto };
+        if (!isAdmin && updateData.role !== undefined) {
+            delete updateData.role;
+            this.logger.warn(`User ${currentUser?.sub || 'unknown'} attempted to modify role for user ${id}`);
+        }
+        if (!isAdmin && updateData.isActive !== undefined) {
+            delete updateData.isActive;
+            this.logger.warn(`User ${currentUser?.sub || 'unknown'} attempted to modify isActive for user ${id}`);
+        }
         return this.prisma.users.update({
             where: { id },
-            data: updateUserDto,
+            data: updateData,
             select: {
                 id: true,
                 email: true,
                 name: true,
                 phone: true,
                 role: true,
-                updatedAt: true
-            }
+                address: true,
+                dateOfBirth: true,
+                gender: true,
+                isActive: true,
+                avatarUrl: true,
+                emailNotifications: true,
+                smsNotifications: true,
+                promoNotifications: true,
+                updatedAt: true,
+            },
         });
     }
     async remove(id, currentUser) {
@@ -246,15 +232,15 @@ let UsersService = UsersService_1 = class UsersService {
         try {
             const orders = await this.prisma.orders.findMany({
                 where: { userId: id },
-                select: { id: true }
+                select: { id: true },
             });
             for (const order of orders) {
                 await this.prisma.order_items.deleteMany({
-                    where: { orderId: order.id }
+                    where: { orderId: order.id },
                 });
             }
             await this.prisma.orders.deleteMany({
-                where: { userId: id }
+                where: { userId: id },
             });
         }
         catch (_error) {
@@ -262,14 +248,14 @@ let UsersService = UsersService_1 = class UsersService {
         }
         try {
             const cart = await this.prisma.carts.findFirst({
-                where: { userId: id }
+                where: { userId: id },
             });
             if (cart) {
                 await this.prisma.cart_items.deleteMany({
-                    where: { cartId: cart.id }
+                    where: { cartId: cart.id },
                 });
                 await this.prisma.carts.delete({
-                    where: { id: cart.id }
+                    where: { id: cart.id },
                 });
             }
         }
@@ -278,7 +264,7 @@ let UsersService = UsersService_1 = class UsersService {
         }
         await this.prisma.$transaction(async (tx) => {
             await tx.users.delete({
-                where: { id }
+                where: { id },
             });
         });
         return { message: 'User deleted successfully' };
@@ -289,27 +275,27 @@ let UsersService = UsersService_1 = class UsersService {
             this.prisma.users.count({
                 where: {
                     createdAt: {
-                        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-                    }
-                }
+                        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                    },
+                },
             }),
             this.prisma.users.count({
                 where: {
                     orders: {
                         some: {
                             createdAt: {
-                                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-                            }
-                        }
-                    }
-                }
-            })
+                                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            },
+                        },
+                    },
+                },
+            }),
         ]);
         return {
             totalUsers,
             newUsersThisMonth,
             activeUsers,
-            conversionRate: totalUsers > 0 ? (activeUsers / totalUsers * 100).toFixed(2) : 0
+            conversionRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0,
         };
     }
     async getActivityStats(days) {
@@ -318,16 +304,16 @@ let UsersService = UsersService_1 = class UsersService {
             by: ['createdAt'],
             where: {
                 createdAt: {
-                    gte: startDate
-                }
+                    gte: startDate,
+                },
             },
             _count: {
-                id: true
-            }
+                id: true,
+            },
         });
         return dailyStats.map(stat => ({
             date: stat.createdAt.toISOString().split('T')[0],
-            newUsers: stat._count.id
+            newUsers: stat._count.id,
         }));
     }
     async updatePassword(userId, hashedPassword) {
@@ -342,15 +328,17 @@ let UsersService = UsersService_1 = class UsersService {
                 id: true,
                 email: true,
                 name: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
     }
     generateRandomPassword() {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        const passwordLength = 12;
         let password = '';
-        for (let i = 0; i < 12; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        const random = (0, crypto_1.randomBytes)(passwordLength);
+        for (let i = 0; i < passwordLength; i++) {
+            password += chars[random[i] % chars.length];
         }
         return password;
     }
@@ -365,12 +353,12 @@ let UsersService = UsersService_1 = class UsersService {
                                 products: {
                                     select: {
                                         name: true,
-                                        slug: true
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        slug: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 carts: {
                     include: {
@@ -379,14 +367,14 @@ let UsersService = UsersService_1 = class UsersService {
                                 products: {
                                     select: {
                                         name: true,
-                                        slug: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                        slug: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!user) {
             throw new common_1.NotFoundException('User not found');
@@ -401,7 +389,7 @@ let UsersService = UsersService_1 = class UsersService {
                 phone: userData.phone,
                 role: userData.role,
                 createdAt: userData.createdAt,
-                updatedAt: userData.updatedAt
+                updatedAt: userData.updatedAt,
             },
             orders: userData.orders.map((order) => ({
                 id: order.id,
@@ -411,20 +399,22 @@ let UsersService = UsersService_1 = class UsersService {
                 items: order.order_items.map((item) => ({
                     productName: item.products?.name,
                     quantity: item.quantity,
-                    priceCents: item.price
-                }))
+                    priceCents: item.price,
+                })),
             })),
-            cart: userData.carts.length > 0 ? {
-                items: userData.carts[0].cart_items.map((item) => ({
-                    productName: item.products?.name,
-                    quantity: item.quantity,
-                    addedAt: item.createdAt
-                }))
-            } : null,
+            cart: userData.carts.length > 0
+                ? {
+                    items: userData.carts[0].cart_items.map((item) => ({
+                        productName: item.products?.name,
+                        quantity: item.quantity,
+                        addedAt: item.createdAt,
+                    })),
+                }
+                : null,
             statistics: {
                 totalOrders: userData.orders.length,
-                totalSpent: userData.orders.reduce((sum, order) => sum + (order.totalCents || 0), 0) / 100
-            }
+                totalSpent: userData.orders.reduce((sum, order) => sum + (order.totalCents || 0), 0) / 100,
+            },
         };
     }
     async sendWelcomeEmail(email, name, password) {
@@ -456,11 +446,41 @@ let UsersService = UsersService_1 = class UsersService {
     `;
         await this.mailService.send(email, subject, text, html);
     }
+    async setResetToken(userId, token, expiry) {
+        await this.prisma.users.update({
+            where: { id: userId },
+            data: {
+                resetToken: token,
+                resetExpires: expiry,
+            },
+        });
+    }
+    async findByResetToken(token) {
+        return this.prisma.users.findFirst({
+            where: {
+                resetToken: token,
+                resetExpires: {
+                    gt: new Date(),
+                },
+            },
+        });
+    }
+    async updatePasswordAndClearResetToken(userId, passwordHash) {
+        await this.prisma.users.update({
+            where: { id: userId },
+            data: {
+                password: passwordHash,
+                resetToken: null,
+                resetExpires: null,
+            },
+        });
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = UsersService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        security_service_1.SecurityService])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

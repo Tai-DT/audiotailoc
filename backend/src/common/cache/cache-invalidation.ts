@@ -65,7 +65,7 @@ export class CacheInvalidation implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private cacheManager: CacheManager,
-    private eventEmitter: EventEmitter2
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -338,7 +338,7 @@ export class CacheInvalidation implements OnModuleInit, OnModuleDestroy {
   private async invalidateByRegex(pattern: RegExp): Promise<number> {
     // In production, this should use Redis SCAN
     // For now, we'll just invalidate a placeholder
-    let count = 0;
+    const count = 0;
 
     // This is a simplified version
     // Real implementation would need Redis SCAN command
@@ -349,12 +349,10 @@ export class CacheInvalidation implements OnModuleInit, OnModuleDestroy {
 
   private async invalidateByGlobPattern(pattern: string): Promise<number> {
     // In production, this should use Redis SCAN with glob pattern
-    let count = 0;
+    const count = 0;
 
     // Convert glob pattern to regex
-    const regexPattern = pattern
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.');
+    const regexPattern = pattern.replace(/\*/g, '.*').replace(/\?/g, '.');
 
     const _regex = new RegExp(`^${regexPattern}$`);
 
@@ -379,7 +377,7 @@ export class CacheInvalidation implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Cache warming started (interval: ${interval}ms)`);
 
     // Warm caches immediately on startup
-    this.warmAllCaches().catch((error) => {
+    this.warmAllCaches().catch(error => {
       this.logger.error(`Initial cache warming failed: ${error}`);
     });
   }
@@ -394,7 +392,7 @@ export class CacheInvalidation implements OnModuleInit, OnModuleDestroy {
 
   private recordInvalidation(
     type: 'tag' | 'pattern' | 'event' | 'dependency',
-    duration: number
+    duration: number,
   ): void {
     this.stats.totalInvalidations++;
     this.totalInvalidationTime += duration;

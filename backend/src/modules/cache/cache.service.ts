@@ -1,6 +1,8 @@
 // This file is deprecated. Use UpstashCacheService from ../caching/cache.services.ts instead
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Redis = require('ioredis');
 
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
@@ -28,7 +30,6 @@ export class CacheService {
 
   private async initializeRedis() {
     try {
-      const Redis = require('ioredis');
       this.redis = new Redis({
         host: this.config.get('REDIS_HOST', 'localhost'),
         port: this.config.get('REDIS_PORT', 6379),

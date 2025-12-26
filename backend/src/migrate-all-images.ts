@@ -25,10 +25,15 @@ cloudinary.config({
   secure: true,
 });
 
-async function uploadImageFromUrl(url: string, publicId: string, folder: string, transformation?: any) {
+async function uploadImageFromUrl(
+  url: string,
+  publicId: string,
+  folder: string,
+  transformation?: any,
+) {
   try {
     console.log(`    📤 Uploading: ${url.substring(0, 50)}...`);
-    
+
     const result = await cloudinary.uploader.upload(url, {
       public_id: publicId,
       folder: folder,
@@ -36,7 +41,7 @@ async function uploadImageFromUrl(url: string, publicId: string, folder: string,
       overwrite: true,
       transformation: transformation,
     });
-    
+
     console.log(`    ✅ Success: ${result.secure_url}`);
     return result.secure_url;
   } catch (error) {
@@ -51,48 +56,45 @@ async function uploadImageFromUrl(url: string, publicId: string, folder: string,
 async function migrateProductImages() {
   console.log('\n📦 MIGRATING PRODUCT IMAGES...');
   console.log('─'.repeat(50));
-  
+
   const products = await prisma.products.findMany({
-    where: { isActive: true }
+    where: { isActive: true },
   });
-  
+
   let successCount = 0;
   let failureCount = 0;
-  
+
   for (const product of products) {
     const updates: any = {};
-    
+
     // Skip if already on Cloudinary
     if (product.imageUrl?.includes('cloudinary')) {
       continue;
     }
-    
+
     console.log(`\n  🛍️ Product: ${product.name} (${product.id})`);
-    
+
     // Migrate main image
     if (product.imageUrl && !product.imageUrl.includes('cloudinary')) {
       const newUrl = await uploadImageFromUrl(
         product.imageUrl,
         `product-${product.id}`,
         'products/main',
-        [
-          { width: 800, height: 800, crop: 'fill', gravity: 'auto' },
-          { quality: 'auto:good' },
-        ]
+        [{ width: 800, height: 800, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }],
       );
-      
+
       if (newUrl) {
         updates.imageUrl = newUrl;
       }
     }
-    
+
     // Migrate gallery images
     if (product.images) {
       try {
         const images = JSON.parse(product.images as any);
         if (Array.isArray(images)) {
           const newImages: string[] = [];
-          
+
           for (let i = 0; i < images.length; i++) {
             const img = images[i];
             if (!img.includes('cloudinary')) {
@@ -103,9 +105,9 @@ async function migrateProductImages() {
                 [
                   { width: 1200, height: 1200, crop: 'fill', gravity: 'auto' },
                   { quality: 'auto:good' },
-                ]
+                ],
               );
-              
+
               if (newUrl) {
                 newImages.push(newUrl);
               } else {
@@ -115,14 +117,14 @@ async function migrateProductImages() {
               newImages.push(img); // Already on Cloudinary
             }
           }
-          
+
           if (newImages.length > 0) {
             updates.images = JSON.stringify(newImages);
           }
         }
       } catch (e) {}
     }
-    
+
     // Update product if there are changes
     if (Object.keys(updates).length > 0) {
       try {
@@ -138,7 +140,7 @@ async function migrateProductImages() {
       }
     }
   }
-  
+
   console.log(`\n  📊 Products: ${successCount} success, ${failureCount} failed`);
 }
 
@@ -148,31 +150,31 @@ async function migrateProductImages() {
 async function migrateServiceImages() {
   console.log('\n🔧 MIGRATING SERVICE IMAGES...');
   console.log('─'.repeat(50));
-  
+
   const services = await prisma.services.findMany({
-    where: { isActive: true }
+    where: { isActive: true },
   });
-  
+
   let successCount = 0;
   let failureCount = 0;
-  
+
   for (const service of services) {
     // Skip if already on Cloudinary
     if (service.images?.includes('cloudinary')) {
       continue;
     }
-    
+
     console.log(`\n  🔧 Service: ${service.name} (${service.id})`);
-    
+
     const updates: any = {};
-    
+
     // Migrate service images
     if (service.images && !service.images.includes('cloudinary')) {
       try {
         const images = JSON.parse(service.images);
         if (Array.isArray(images)) {
           const newImages: string[] = [];
-          
+
           for (let i = 0; i < images.length; i++) {
             const img = images[i];
             if (!img.includes('cloudinary')) {
@@ -183,9 +185,9 @@ async function migrateServiceImages() {
                 [
                   { width: 1200, height: 800, crop: 'fill', gravity: 'auto' },
                   { quality: 'auto:good' },
-                ]
+                ],
               );
-              
+
               if (newUrl) {
                 newImages.push(newUrl);
               } else {
@@ -195,7 +197,7 @@ async function migrateServiceImages() {
               newImages.push(img);
             }
           }
-          
+
           if (newImages.length > 0) {
             updates.images = JSON.stringify(newImages);
           }
@@ -206,18 +208,15 @@ async function migrateServiceImages() {
           service.images,
           `service-${service.id}`,
           'services',
-          [
-            { width: 1200, height: 800, crop: 'fill', gravity: 'auto' },
-            { quality: 'auto:good' },
-          ]
+          [{ width: 1200, height: 800, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }],
         );
-        
+
         if (newUrl) {
           updates.images = newUrl;
         }
       }
     }
-    
+
     // Update service if there are changes
     if (Object.keys(updates).length > 0) {
       try {
@@ -233,7 +232,7 @@ async function migrateServiceImages() {
       }
     }
   }
-  
+
   console.log(`\n  📊 Services: ${successCount} success, ${failureCount} failed`);
 }
 
@@ -243,59 +242,55 @@ async function migrateServiceImages() {
 async function migrateBannerImages() {
   console.log('\n🎨 MIGRATING BANNER IMAGES...');
   console.log('─'.repeat(50));
-  
+
   const banners = await prisma.banners.findMany({
-    where: { isDeleted: false }
+    where: { isDeleted: false },
   });
-  
+
   let successCount = 0;
   let failureCount = 0;
-  
+
   for (const banner of banners) {
     const updates: any = {};
-    
+
     // Skip if already on Cloudinary
-    if (banner.imageUrl?.includes('cloudinary') && 
-        (!banner.mobileImageUrl || banner.mobileImageUrl.includes('cloudinary'))) {
+    if (
+      banner.imageUrl?.includes('cloudinary') &&
+      (!banner.mobileImageUrl || banner.mobileImageUrl.includes('cloudinary'))
+    ) {
       continue;
     }
-    
+
     console.log(`\n  🎨 Banner: ${banner.title} (${banner.id})`);
-    
+
     // Migrate desktop image
     if (banner.imageUrl && !banner.imageUrl.includes('cloudinary')) {
       const newUrl = await uploadImageFromUrl(
         banner.imageUrl,
         `banner-desktop-${banner.id}`,
         'banners/desktop',
-        [
-          { width: 1920, height: 600, crop: 'fill', gravity: 'auto' },
-          { quality: 'auto:good' },
-        ]
+        [{ width: 1920, height: 600, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }],
       );
-      
+
       if (newUrl) {
         updates.imageUrl = newUrl;
       }
     }
-    
+
     // Migrate mobile image
     if (banner.mobileImageUrl && !banner.mobileImageUrl.includes('cloudinary')) {
       const newUrl = await uploadImageFromUrl(
         banner.mobileImageUrl,
         `banner-mobile-${banner.id}`,
         'banners/mobile',
-        [
-          { width: 768, height: 400, crop: 'fill', gravity: 'auto' },
-          { quality: 'auto:good' },
-        ]
+        [{ width: 768, height: 400, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }],
       );
-      
+
       if (newUrl) {
         updates.mobileImageUrl = newUrl;
       }
     }
-    
+
     // Update banner if there are changes
     if (Object.keys(updates).length > 0) {
       try {
@@ -311,7 +306,7 @@ async function migrateBannerImages() {
       }
     }
   }
-  
+
   console.log(`\n  📊 Banners: ${successCount} success, ${failureCount} failed`);
 }
 
@@ -321,26 +316,26 @@ async function migrateBannerImages() {
 async function migrateRemainingProjectImages() {
   console.log('\n📁 MIGRATING REMAINING PROJECT IMAGES...');
   console.log('─'.repeat(50));
-  
+
   const projects = await prisma.projects.findMany({
-    where: { isActive: true }
+    where: { isActive: true },
   });
-  
+
   let successCount = 0;
   let failureCount = 0;
-  
+
   for (const project of projects) {
     const updates: any = {};
     let hasExternalImages = false;
-    
+
     // Check all image fields
     const imageFields = [
       { field: 'thumbnailImage', prefix: 'thumbnail' },
       { field: 'coverImage', prefix: 'cover' },
       { field: 'clientLogoUrl', prefix: 'client-logo' },
-      { field: 'ogImage', prefix: 'og' }
+      { field: 'ogImage', prefix: 'og' },
     ];
-    
+
     for (const { field } of imageFields) {
       const value = (project as any)[field];
       if (value && !value.includes('cloudinary')) {
@@ -348,7 +343,7 @@ async function migrateRemainingProjectImages() {
         break;
       }
     }
-    
+
     // Check gallery images
     if (project.galleryImages) {
       try {
@@ -363,38 +358,48 @@ async function migrateRemainingProjectImages() {
         }
       } catch (e) {}
     }
-    
+
     if (!hasExternalImages) {
       continue; // Skip if all images are already on Cloudinary
     }
-    
+
     console.log(`\n  📁 Project: ${project.name} (${project.id})`);
-    
+
     // Migrate each image field
     for (const { field, prefix } of imageFields) {
       const value = (project as any)[field];
       if (value && !value.includes('cloudinary')) {
-        const transformation = prefix === 'client-logo' 
-          ? [{ width: 200, height: 200, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }]
-          : prefix === 'thumbnail'
-          ? [{ width: 800, height: 600, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }]
-          : prefix === 'cover'
-          ? [{ width: 1920, height: 800, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }]
-          : [{ width: 1200, height: 630, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }];
-        
+        const transformation =
+          prefix === 'client-logo'
+            ? [{ width: 200, height: 200, crop: 'fill', gravity: 'auto' }, { quality: 'auto:good' }]
+            : prefix === 'thumbnail'
+              ? [
+                  { width: 800, height: 600, crop: 'fill', gravity: 'auto' },
+                  { quality: 'auto:good' },
+                ]
+              : prefix === 'cover'
+                ? [
+                    { width: 1920, height: 800, crop: 'fill', gravity: 'auto' },
+                    { quality: 'auto:good' },
+                  ]
+                : [
+                    { width: 1200, height: 630, crop: 'fill', gravity: 'auto' },
+                    { quality: 'auto:good' },
+                  ];
+
         const newUrl = await uploadImageFromUrl(
           value,
           `project-${prefix}-${project.id}`,
           `projects/${prefix}`,
-          transformation
+          transformation,
         );
-        
+
         if (newUrl) {
           updates[field] = newUrl;
         }
       }
     }
-    
+
     // Migrate gallery images
     if (project.galleryImages) {
       try {
@@ -402,7 +407,7 @@ async function migrateRemainingProjectImages() {
         if (Array.isArray(gallery)) {
           const newGallery: string[] = [];
           let hasChanges = false;
-          
+
           for (let i = 0; i < gallery.length; i++) {
             const img = gallery[i];
             if (!img.includes('cloudinary')) {
@@ -414,9 +419,9 @@ async function migrateRemainingProjectImages() {
                 [
                   { width: 1200, height: 900, crop: 'fill', gravity: 'auto' },
                   { quality: 'auto:good' },
-                ]
+                ],
               );
-              
+
               if (newUrl) {
                 newGallery.push(newUrl);
               } else {
@@ -426,14 +431,14 @@ async function migrateRemainingProjectImages() {
               newGallery.push(img);
             }
           }
-          
+
           if (hasChanges) {
             updates.galleryImages = JSON.stringify(newGallery);
           }
         }
       } catch (e) {}
     }
-    
+
     // Update project if there are changes
     if (Object.keys(updates).length > 0) {
       try {
@@ -449,7 +454,7 @@ async function migrateRemainingProjectImages() {
       }
     }
   }
-  
+
   console.log(`\n  📊 Projects: ${successCount} success, ${failureCount} failed`);
 }
 
@@ -459,54 +464,54 @@ async function migrateRemainingProjectImages() {
 async function main() {
   console.log('🚀 STARTING COMPREHENSIVE IMAGE MIGRATION TO CLOUDINARY');
   console.log('='.repeat(80));
-  
+
   const startTime = Date.now();
-  
+
   try {
     // Run all migrations
     await migrateProductImages();
     await migrateServiceImages();
     await migrateBannerImages();
     await migrateRemainingProjectImages();
-    
+
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    
+
     console.log('\n' + '='.repeat(80));
     console.log('✅ MIGRATION COMPLETED!');
     console.log(`⏱️  Duration: ${duration} seconds`);
     console.log('='.repeat(80));
-    
+
     // Run analysis to verify
     console.log('\n🔍 Running post-migration analysis...\n');
-    
+
     const products = await prisma.products.count({
-      where: { 
+      where: {
         isActive: true,
-        imageUrl: { contains: 'cloudinary' }
-      }
+        imageUrl: { contains: 'cloudinary' },
+      },
     });
-    
+
     const services = await prisma.services.count({
       where: {
         isActive: true,
-        images: { contains: 'cloudinary' }
-      }
+        images: { contains: 'cloudinary' },
+      },
     });
-    
+
     const banners = await prisma.banners.count({
       where: {
         isDeleted: false,
-        imageUrl: { contains: 'cloudinary' }
-      }
+        imageUrl: { contains: 'cloudinary' },
+      },
     });
-    
+
     const projects = await prisma.projects.count({
       where: {
         isActive: true,
-        thumbnailImage: { contains: 'cloudinary' }
-      }
+        thumbnailImage: { contains: 'cloudinary' },
+      },
     });
-    
+
     console.log('📊 CLOUDINARY MIGRATION STATUS:');
     console.log('─'.repeat(40));
     console.log(`  ✅ Products with Cloudinary images: ${products}`);
@@ -514,7 +519,6 @@ async function main() {
     console.log(`  ✅ Banners with Cloudinary images: ${banners}`);
     console.log(`  ✅ Projects with Cloudinary images: ${projects}`);
     console.log('='.repeat(80));
-    
   } catch (error) {
     console.error('❌ Migration failed:', error);
   } finally {

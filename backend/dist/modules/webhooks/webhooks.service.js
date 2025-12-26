@@ -137,7 +137,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             if (!isValidSignature) {
                 throw new common_1.BadRequestException('Invalid MOMO webhook signature');
             }
-            const { orderId, resultCode, amount, transId, message: _message, } = data;
+            const { orderId, resultCode, amount, transId, message: _message } = data;
             const paymentIntent = await this.prisma.payment_intents.findUnique({
                 where: { id: orderId },
                 include: { orders: true },
@@ -199,72 +199,12 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
         }
     }
     async handlePAYOSWebhook(data) {
-        try {
-            this.logger.log('Processing PAYOS webhook:', data);
-            const isValidSignature = this.validatePAYOSSignature(data);
-            if (!isValidSignature) {
-                throw new common_1.BadRequestException('Invalid PAYOS webhook signature');
-            }
-            const { orderCode, status, amount, transactionId, description: _description, } = data;
-            const paymentIntent = await this.prisma.payment_intents.findUnique({
-                where: { id: orderCode },
-                include: { orders: true },
-            });
-            if (!paymentIntent) {
-                throw new common_1.BadRequestException('Payment intent not found');
-            }
-            if (paymentIntent.status !== 'PENDING') {
-                return {
-                    success: true,
-                    message: 'Payment already processed',
-                    orderId: paymentIntent.orderId,
-                    paymentId: paymentIntent.id,
-                };
-            }
-            const isSuccess = status === 'PAID';
-            const paymentStatus = isSuccess ? 'COMPLETED' : 'FAILED';
-            await this.prisma.payment_intents.update({
-                where: { id: orderCode },
-                data: { status: paymentStatus },
-            });
-            const payment = await this.prisma.payments.create({
-                data: {
-                    id: (0, crypto_1.randomUUID)(),
-                    orderId: paymentIntent.orderId,
-                    amountCents: parseInt(amount),
-                    provider: 'PAYOS',
-                    status: paymentStatus,
-                    transactionId,
-                    updatedAt: new Date(),
-                },
-            });
-            if (isSuccess) {
-                await this.ordersService.updateStatus(paymentIntent.orderId, 'PAID');
-                await this.notificationService.sendNotification({
-                    userId: paymentIntent.orders.userId || undefined,
-                    title: 'Thanh toán thành công',
-                    message: `Đơn hàng ${paymentIntent.orders.orderNo} đã được thanh toán thành công`,
-                    type: 'PAYMENT',
-                    priority: 'HIGH',
-                    channels: ['EMAIL', 'PUSH'],
-                    data: {
-                        orderId: paymentIntent.orderId,
-                        paymentId: payment.id,
-                        amount: parseInt(amount),
-                    },
-                });
-            }
-            return {
-                success: true,
-                message: isSuccess ? 'Payment processed successfully' : 'Payment failed',
-                orderId: paymentIntent.orderId,
-                paymentId: payment.id,
-            };
-        }
-        catch (error) {
-            this.logger.error('PAYOS webhook processing failed:', error);
-            throw error;
-        }
+        this.logger.log('Processing PAYOS webhook (delegated)');
+        const result = await this.paymentsService.handleWebhook('PAYOS', data);
+        return {
+            success: true,
+            message: result?.message || 'Processed',
+        };
     }
     validateVNPAYSignature(data) {
         const secret = this.config.get('VNPAY_HASH_SECRET');
@@ -276,10 +216,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             .sort()
             .map(key => `${key}=${params[key]}`)
             .join('&');
-        const expectedHash = crypto
-            .createHmac('sha256', secret)
-            .update(signData)
-            .digest('hex');
+        const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
         return vnp_SecureHash === expectedHash;
     }
     validateMOMOSignature(data) {
@@ -291,22 +228,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             .sort()
             .map(key => `${key}=${params[key]}`)
             .join('&');
-        const expectedHash = crypto
-            .createHmac('sha256', secret)
-            .update(signData)
-            .digest('hex');
-        return signature === expectedHash;
-    }
-    validatePAYOSSignature(data) {
-        const checksumKey = this.config.get('PAYOS_CHECKSUM_KEY');
-        if (!checksumKey)
-            return false;
-        const { signature, ...params } = data;
-        const dataStr = JSON.stringify(params);
-        const expectedHash = crypto
-            .createHmac('sha256', checksumKey)
-            .update(dataStr)
-            .digest('hex');
+        const expectedHash = crypto.createHmac('sha256', secret).update(signData).digest('hex');
         return signature === expectedHash;
     }
     async handleOrderStatusWebhook(data) {

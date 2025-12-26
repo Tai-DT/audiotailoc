@@ -65,8 +65,13 @@ let JwtGuard = JwtGuard_1 = class JwtGuard {
             '/catalog/products',
             '/catalog/categories',
             '/services',
+            '/service-types',
             '/services/types',
-            '/health'
+            '/health',
+            '/testimonials',
+            '/homepage-stats',
+            '/chat/conversations',
+            '/chat/messages',
         ];
         if (publicRoutes.some(route => path.includes(route))) {
             return true;

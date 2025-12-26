@@ -15,11 +15,19 @@ export interface PayOSConfig {
   webhookUrl: string;
 }
 
-// Default configuration for development
+// ⚠️ SECURITY: This file has been refactored to NOT expose sensitive API keys in client bundle.
+// All PayOS API operations should be done through server-side API routes (e.g., /api/payment/process).
+// 
+// This file now only contains:
+// - Non-sensitive configuration (env, URLs)
+// - Utility functions that don't require API keys
+// - Signature verification functions (checksumKey is passed as parameter, not from env)
+
+// SECURITY: Only expose non-sensitive configuration in client bundle
 const defaultConfig: PayOSConfig = {
-  clientId: process.env.NEXT_PUBLIC_PAYOS_CLIENT_ID || '',
-  apiKey: process.env.NEXT_PUBLIC_PAYOS_API_KEY || '',
-  checksumKey: process.env.NEXT_PUBLIC_PAYOS_CHECKSUM_KEY || '',
+  clientId: '', // Not used in client - all operations go through server-side API
+  apiKey: '', // Not used in client - all operations go through server-side API
+  checksumKey: '', // Not used in client - passed as parameter when needed
   env: (process.env.NEXT_PUBLIC_PAYOS_ENV as 'sandbox' | 'production') || 'sandbox',
   returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/order-success`,
   cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout`,
@@ -27,23 +35,29 @@ const defaultConfig: PayOSConfig = {
 };
 
 /**
- * Lấy cấu hình PayOS
+ * Lấy cấu hình PayOS (non-sensitive only)
+ * 
+ * ⚠️ SECURITY NOTE: This function no longer returns sensitive API keys.
+ * All PayOS API operations must be done through server-side API routes.
+ * Use /api/payment/process for creating payments.
  */
 export function getPayOSConfig(): PayOSConfig {
-  // Validate required configuration
-  if (!defaultConfig.clientId || !defaultConfig.apiKey || !defaultConfig.checksumKey) {
-    console.warn('PayOS configuration is missing. Please check environment variables.');
-  }
-
+  // Note: API keys are not exposed in client bundle
+  // All PayOS operations should go through server-side API routes
   return defaultConfig;
 }
 
 /**
  * Kiểm tra xem PayOS có được cấu hình đúng không
+ * 
+ * ⚠️ SECURITY NOTE: This function only checks non-sensitive config.
+ * Actual API key validation should be done server-side.
  */
 export function isPayOSConfigured(): boolean {
+  // SECURITY: Only check non-sensitive config (env, URLs)
+  // API keys are handled server-side
   const config = getPayOSConfig();
-  return !!(config.clientId || config.apiKey || config.checksumKey);
+  return !!(config.env && config.returnUrl && config.cancelUrl);
 }
 
 /**
@@ -58,11 +72,22 @@ export function getPayOSBaseUrl(): string {
 
 /**
  * Tạo order code cho PayOS
+ * 
+ * ⚠️ SECURITY: Uses cryptographically secure random for better uniqueness
  */
 export function generateOrderCode(prefix: string = 'ORDER'): string {
   const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 1000);
-  return `${prefix}${timestamp}${random}`;
+  // SECURITY: Use crypto for better randomness (if available in browser)
+  // Fallback to Math.random() if crypto is not available
+  let random: number;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    random = array[0] % 10000;
+  } else {
+    random = Math.floor(Math.random() * 10000);
+  }
+  return `${prefix}${timestamp}${random.toString().padStart(4, '0')}`;
 }
 
 /**

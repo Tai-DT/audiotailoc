@@ -17,7 +17,7 @@ export declare class CheckoutService {
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
@@ -33,10 +33,10 @@ export declare class CheckoutService {
             createdAt: Date;
             updatedAt: Date;
             imageUrl: string | null;
-            price: bigint;
             orderId: string;
             productId: string;
             quantity: number;
+            price: bigint;
             unitPrice: bigint | null;
         }[];
         payments: {
@@ -44,11 +44,11 @@ export declare class CheckoutService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            metadata: string | null;
+            orderId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
-            metadata: string | null;
-            orderId: string;
             intentId: string | null;
         }[];
     } & {
@@ -57,7 +57,7 @@ export declare class CheckoutService {
         createdAt: Date;
         updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;

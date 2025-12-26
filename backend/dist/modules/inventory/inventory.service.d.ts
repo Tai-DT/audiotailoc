@@ -24,11 +24,11 @@ export declare class InventoryService {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;
-                isActive: boolean;
                 isDeleted: boolean;
             };
             products: {
@@ -39,12 +39,12 @@ export declare class InventoryService {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 priceCents: bigint;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;
-                isActive: boolean;
                 isDeleted: boolean;
             };
             id: string;
@@ -67,6 +67,8 @@ export declare class InventoryService {
         referenceType?: string;
         userId?: string;
         notes?: string;
+    }, options?: {
+        syncToProduct?: boolean;
     }): Promise<{
         products: {
             name: string;
@@ -94,8 +96,8 @@ export declare class InventoryService {
         orphanedInventoriesList: ({
             products: {
                 name: string;
-                sku: string;
                 isActive: boolean;
+                sku: string;
                 isDeleted: boolean;
             };
         } & {

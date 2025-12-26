@@ -8,8 +8,8 @@ export declare class BannersController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            imageUrl: string;
             isActive: boolean;
+            imageUrl: string;
             isDeleted: boolean;
             page: string;
             title: string;
@@ -32,8 +32,8 @@ export declare class BannersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        imageUrl: string;
         isActive: boolean;
+        imageUrl: string;
         isDeleted: boolean;
         page: string;
         title: string;
@@ -51,8 +51,8 @@ export declare class BannersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        imageUrl: string;
         isActive: boolean;
+        imageUrl: string;
         isDeleted: boolean;
         page: string;
         title: string;

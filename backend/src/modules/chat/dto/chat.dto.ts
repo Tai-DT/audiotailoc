@@ -51,6 +51,6 @@ export class SendMessageDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsEnum(['USER', 'ADMIN', 'SYSTEM', 'AI'])
-  senderType?: 'USER' | 'ADMIN' | 'SYSTEM' | 'AI';
+  @IsEnum(['USER', 'ADMIN', 'SYSTEM', 'AI', 'GUEST'])
+  senderType?: 'USER' | 'ADMIN' | 'SYSTEM' | 'AI' | 'GUEST';
 }

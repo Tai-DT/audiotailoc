@@ -116,7 +116,7 @@ export default function CreateServiceReviewForm({
                     className={`h-8 w-8 ${
                       star <= (hoverRating || selectedRating || watchedRating)
                         ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
+                        : 'text-muted-foreground/60'
                     } transition-colors`}
                   />
                 </button>
@@ -126,7 +126,7 @@ export default function CreateServiceReviewForm({
               </span>
             </div>
             {errors.rating && (
-              <p className="text-sm text-red-500">{errors.rating.message}</p>
+              <p className="text-sm text-destructive">{errors.rating.message}</p>
             )}
           </div>
 
@@ -139,7 +139,7 @@ export default function CreateServiceReviewForm({
               placeholder="Tóm tắt trải nghiệm của bạn"
             />
             {errors.title && (
-              <p className="text-sm text-red-500">{errors.title.message}</p>
+              <p className="text-sm text-destructive">{errors.title.message}</p>
             )}
           </div>
 
@@ -153,7 +153,7 @@ export default function CreateServiceReviewForm({
               rows={4}
             />
             {errors.comment && (
-              <p className="text-sm text-red-500">{errors.comment.message}</p>
+              <p className="text-sm text-destructive">{errors.comment.message}</p>
             )}
           </div>
 
@@ -162,7 +162,7 @@ export default function CreateServiceReviewForm({
             <Label>Hình ảnh (tùy chọn)</Label>
             <div className="flex items-center gap-4">
               <Label htmlFor="image-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-md hover:border-border transition-colors">
                   <Upload className="h-4 w-4" />
                   <span className="text-sm">Thêm hình ảnh</span>
                 </div>
@@ -192,7 +192,7 @@ export default function CreateServiceReviewForm({
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </button>

@@ -13,12 +13,13 @@ exports.BannersService = void 0;
 const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let BannersService = class BannersService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async findAll(params) {
-        const { page, isActive, search, skip = 0, take = 20, orderBy = { position: 'asc' }, } = params;
+        const { page, isActive, search, skip = 0, take = 20, orderBy = { position: 'asc' } } = params;
         const where = {
             isDeleted: false,
             ...(page && { page }),
@@ -70,10 +71,54 @@ let BannersService = class BannersService {
         });
     }
     async update(id, data) {
-        return this.prisma.banners.update({
-            where: { id },
-            data,
-        });
+        try {
+            const updateData = {
+                updatedAt: new Date(),
+            };
+            if (data.title !== undefined)
+                updateData.title = data.title;
+            if (data.subtitle !== undefined)
+                updateData.subtitle = data.subtitle;
+            if (data.description !== undefined)
+                updateData.description = data.description;
+            if (data.imageUrl !== undefined)
+                updateData.imageUrl = data.imageUrl;
+            if (data.mobileImageUrl !== undefined)
+                updateData.mobileImageUrl = data.mobileImageUrl;
+            if (data.linkUrl !== undefined)
+                updateData.linkUrl = data.linkUrl;
+            if (data.buttonLabel !== undefined)
+                updateData.buttonLabel = data.buttonLabel;
+            if (data.page !== undefined)
+                updateData.page = data.page;
+            if (data.locale !== undefined)
+                updateData.locale = data.locale;
+            if (data.position !== undefined)
+                updateData.position = data.position;
+            if (data.isActive !== undefined)
+                updateData.isActive = data.isActive;
+            if (data.startAt !== undefined)
+                updateData.startAt = data.startAt;
+            if (data.endAt !== undefined)
+                updateData.endAt = data.endAt;
+            return await this.prisma.banners.update({
+                where: { id },
+                data: updateData,
+            });
+        }
+        catch (error) {
+            console.error('Update Banner Error:', error);
+            if (error?.code === 'P2025') {
+                throw new common_1.NotFoundException('Banner not found');
+            }
+            if (error instanceof client_1.Prisma.PrismaClientValidationError) {
+                throw new common_1.BadRequestException(error.message);
+            }
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                throw new common_1.BadRequestException(error.message);
+            }
+            throw new common_1.InternalServerErrorException('Update banner failed');
+        }
     }
     async softDelete(id) {
         return this.prisma.banners.update({

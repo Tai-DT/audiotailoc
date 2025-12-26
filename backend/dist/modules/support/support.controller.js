@@ -149,9 +149,15 @@ let SupportController = class SupportController {
     createTicket(dto) {
         return this.supportService.createTicket(dto);
     }
-    getTickets(userId, status, priority, assignedTo, page, pageSize) {
+    getTickets(userId, status, priority, assignedTo, page, pageSize, req) {
+        const authenticatedUserId = req?.user?.sub || req?.user?.id;
+        const isAdmin = req?.user?.role === 'ADMIN' || req?.user?.email === process.env.ADMIN_EMAIL;
+        if (userId && !isAdmin && userId !== authenticatedUserId) {
+            throw new common_1.ForbiddenException('You can only view your own support tickets');
+        }
+        const targetUserId = userId || authenticatedUserId;
         return this.supportService.getTickets({
-            userId,
+            userId: targetUserId,
             status,
             priority,
             assignedTo,
@@ -262,8 +268,9 @@ __decorate([
     __param(3, (0, common_1.Query)('assignedTo')),
     __param(4, (0, common_1.Query)('page')),
     __param(5, (0, common_1.Query)('pageSize')),
+    __param(6, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, Object]),
     __metadata("design:returntype", void 0)
 ], SupportController.prototype, "getTickets", null);
 __decorate([

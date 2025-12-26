@@ -39,6 +39,104 @@ export interface ReviewStats {
   }
 }
 
+type BackendReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+type BackendReview = {
+  id: string
+  userId: string
+  productId: string
+  rating: number
+  title?: string | null
+  comment?: string | null
+  images?: string | null
+  response?: string | null
+  status: BackendReviewStatus
+  upvotes: number
+  downvotes: number
+  createdAt: string
+  updatedAt: string
+  users?: {
+    id: string
+    name?: string | null
+    email?: string | null
+  } | null
+  products?: {
+    id: string
+    name?: string | null
+  } | null
+}
+
+type BackendListResponse = {
+  data: BackendReview[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+type BackendStatsResponse = {
+  total: number
+  approved: number
+  pending: number
+  rejected: number
+  averageRating: number
+}
+
+function normalizeImages(images: string | null | undefined): string[] {
+  if (!images) return []
+  const trimmed = images.trim()
+  if (!trimmed) return []
+
+  // JSON array string
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parsed.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  // Comma-separated list
+  if (trimmed.includes(',')) {
+    return trimmed
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+
+  // Single URL/string
+  return [trimmed]
+}
+
+function mapStatus(status: BackendReviewStatus): Review['status'] {
+  switch (status) {
+    case 'APPROVED':
+      return 'approved'
+    case 'REJECTED':
+      return 'rejected'
+    case 'PENDING':
+    default:
+      return 'pending'
+  }
+}
+
+function toBackendStatus(tab: string): BackendReviewStatus | undefined {
+  switch (tab) {
+    case 'approved':
+      return 'APPROVED'
+    case 'rejected':
+      return 'REJECTED'
+    case 'pending':
+      return 'PENDING'
+    case 'all':
+    default:
+      return undefined
+  }
+}
+
 export function useReviews() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState<ReviewStats | null>(null)
@@ -50,66 +148,60 @@ export function useReviews() {
     try {
       setLoading(true)
       setError(null)
-      
-      // Mock data for now - replace with actual API call
-      const mockReviews: Review[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          userName: 'Nguyễn Văn A',
-          productId: 'prod1',
-          productName: 'Loa JBL EON615',
-          rating: 5,
-          comment: 'Sản phẩm rất tốt, âm thanh chất lượng cao. Giao hàng nhanh chóng.',
-          images: ['https://picsum.photos/100/100?random=1'],
-          status: 'pending',
-          helpfulCount: 12,
-          reportCount: 0,
-          createdAt: '2025-09-08T10:00:00Z',
-          updatedAt: '2025-09-08T10:00:00Z'
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          userName: 'Trần Thị B',
-          serviceId: 'serv1',
-          serviceName: 'Lắp đặt hệ thống âm thanh',
-          rating: 4,
-          comment: 'Dịch vụ tốt, nhân viên nhiệt tình. Cần cải thiện thời gian làm việc.',
-          status: 'approved',
-          response: 'Cảm ơn bạn đã sử dụng dịch vụ. Chúng tôi sẽ cải thiện thời gian phục vụ.',
-          helpfulCount: 8,
-          reportCount: 0,
-          createdAt: '2025-09-07T14:30:00Z',
-          updatedAt: '2025-09-07T15:00:00Z'
-        }
-      ]
 
-      // Mock stats
-      const mockStats: ReviewStats = {
-        totalReviews: 156,
-        averageRating: 4.3,
-        pendingReviews: 12,
-        approvedReviews: 138,
-        rejectedReviews: 6,
-        responseRate: 75,
-        ratingDistribution: {
-          1: 3,
-          2: 8,
-          3: 25,
-          4: 52,
-          5: 68
+      const backendStatus = toBackendStatus(status)
+      const query = new URLSearchParams({
+        page: '1',
+        pageSize: '50',
+      })
+      if (backendStatus) query.set('status', backendStatus)
+
+      const [listRes, statsRes] = await Promise.all([
+        apiClient.get<BackendListResponse>(`/reviews?${query.toString()}`),
+        apiClient.get<BackendStatsResponse>('/reviews/stats/summary'),
+      ])
+
+      const mappedReviews: Review[] = (listRes.data?.data || []).map((r) => {
+        const images = normalizeImages(r.images)
+        return {
+          id: r.id,
+          userId: r.userId,
+          userName: r.users?.name || 'Không rõ',
+          productId: r.productId,
+          productName: r.products?.name || undefined,
+          rating: r.rating,
+          comment: r.comment || '',
+          images: images.length > 0 ? images : undefined,
+          status: mapStatus(r.status),
+          response: r.response || undefined,
+          helpfulCount: r.upvotes || 0,
+          reportCount: 0,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
         }
+      })
+
+      // Compute some UI-only stats from the current page (backend doesn't provide these)
+      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as ReviewStats['ratingDistribution']
+      let respondedCount = 0
+      for (const r of mappedReviews) {
+        ratingDistribution[r.rating as 1 | 2 | 3 | 4 | 5] = (ratingDistribution[r.rating as 1 | 2 | 3 | 4 | 5] || 0) + 1
+        if (r.response && r.response.trim().length > 0) respondedCount += 1
       }
 
-      // Filter by status
-      let filtered = mockReviews
-      if (status !== 'all') {
-        filtered = mockReviews.filter(r => r.status === status)
-      }
+      const totalOnPage = mappedReviews.length
+      const responseRate = totalOnPage > 0 ? Math.round((respondedCount / totalOnPage) * 100) : 0
 
-      setReviews(filtered)
-      setStats(mockStats)
+      setReviews(mappedReviews)
+      setStats({
+        totalReviews: statsRes.data?.total || 0,
+        averageRating: statsRes.data?.averageRating || 0,
+        pendingReviews: statsRes.data?.pending || 0,
+        approvedReviews: statsRes.data?.approved || 0,
+        rejectedReviews: statsRes.data?.rejected || 0,
+        responseRate,
+        ratingDistribution,
+      })
     } catch (err) {
       const errorMessage = 'Không thể tải danh sách đánh giá'
       setError(errorMessage)
@@ -123,7 +215,7 @@ export function useReviews() {
   const approveReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.post(`/reviews/${reviewId}/approve`)
+      await apiClient.patch(`/reviews/${reviewId}/status/APPROVED`)
       toast.success('Đã duyệt đánh giá')
       
       // Update local state
@@ -142,7 +234,8 @@ export function useReviews() {
   const rejectReview = useCallback(async (reviewId: string, reason?: string) => {
     try {
       setLoading(true)
-      await apiClient.post(`/reviews/${reviewId}/reject`, { reason })
+      // Backend does not currently accept a reject reason; keep this param for UI compatibility.
+      await apiClient.patch(`/reviews/${reviewId}/status/REJECTED`)
       toast.success('Đã từ chối đánh giá')
       
       // Update local state
@@ -196,7 +289,7 @@ export function useReviews() {
   // Mark review as helpful
   const markHelpful = useCallback(async (reviewId: string) => {
     try {
-      await apiClient.post(`/reviews/${reviewId}/helpful`)
+      await apiClient.patch(`/reviews/${reviewId}/helpful/true`)
       
       // Update local state
       setReviews(prev => prev.map(review => 
@@ -211,19 +304,8 @@ export function useReviews() {
 
   // Report review
   const reportReview = useCallback(async (reviewId: string, reason: string) => {
-    try {
-      await apiClient.post(`/reviews/${reviewId}/report`, { reason })
-      toast.success('Đã báo cáo đánh giá')
-      
-      // Update local state
-      setReviews(prev => prev.map(review => 
-        review.id === reviewId 
-          ? { ...review, reportCount: review.reportCount + 1 } 
-          : review
-      ))
-    } catch (err) {
-      toast.error('Không thể báo cáo đánh giá')
-    }
+    // Backend currently has no report endpoint for reviews.
+    toast.error('Chức năng báo cáo đánh giá chưa được hỗ trợ')
   }, [])
 
   return {

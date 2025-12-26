@@ -103,9 +103,30 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
       // Upload images first if any
       let imageUrls: string[] = [];
       if (images.length > 0) {
-        // In a real app, you would upload images to a cloud storage
-        // For now, we'll just use placeholder URLs
-        imageUrls = images.map((_, index) => `/placeholder-review-image-${index + 1}.jpg`);
+        const uploadPromises = images.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch('/api/upload/review', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+
+          const result = await response.json();
+          return result.url;
+        });
+
+        try {
+          imageUrls = await Promise.all(uploadPromises);
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError);
+          toast.error('Không thể tải lên hình ảnh. Vui lòng thử lại.');
+          return;
+        }
       }
 
       await createReviewMutation.mutateAsync({
@@ -126,6 +147,8 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
       const err = error as { response?: { status?: number } };
       if (err.response?.status === 400) {
         toast.error('Bạn đã đánh giá sản phẩm này rồi');
+      } else if (err.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để đánh giá sản phẩm');
       } else {
         toast.error('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.');
       }
@@ -151,11 +174,10 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
                   className="focus:outline-none"
                 >
                   <Star
-                    className={`h-8 w-8 ${
-                      star <= selectedRating
+                    className={`h-8 w-8 ${star <= selectedRating
                         ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300 hover:text-yellow-400'
-                    } transition-colors`}
+                        : 'text-muted-foreground/60 hover:text-yellow-400'
+                      } transition-colors`}
                   />
                 </button>
               ))}
@@ -164,7 +186,7 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
               </span>
             </div>
             {errors.rating && (
-              <p className="text-sm text-red-500 mt-1">{errors.rating.message}</p>
+              <p className="text-sm text-destructive mt-1">{errors.rating.message}</p>
             )}
           </div>
 
@@ -178,7 +200,7 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
               className="mt-1"
             />
             {errors.title && (
-              <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
+              <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
             )}
           </div>
 
@@ -193,7 +215,7 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
               className="mt-1"
             />
             {errors.comment && (
-              <p className="text-sm text-red-500 mt-1">{errors.comment.message}</p>
+              <p className="text-sm text-destructive mt-1">{errors.comment.message}</p>
             )}
           </div>
 
@@ -210,9 +232,9 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
                 id="image-upload"
               />
               <Label htmlFor="image-upload" className="cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
+                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-border transition-colors">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
                     Nhấp để tải lên hình ảnh (tối đa 5 ảnh, mỗi ảnh ≤ 5MB)
                   </p>
                 </div>
@@ -234,7 +256,7 @@ export default function CreateReviewForm({ productId, onSuccess, onCancel }: Cre
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </button>

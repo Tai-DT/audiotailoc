@@ -55,7 +55,7 @@ export declare class SupportController {
     createFAQ(dto: CreateFAQDto): Promise<import("./support.service").FAQ>;
     getFAQs(category?: string): Promise<import("./support.service").FAQ[]>;
     createTicket(dto: CreateTicketDto): Promise<import("./support.service").SupportTicket>;
-    getTickets(userId?: string, status?: string, priority?: string, assignedTo?: string, page?: string, pageSize?: string): Promise<{
+    getTickets(userId?: string, status?: string, priority?: string, assignedTo?: string, page?: string, pageSize?: string, req?: any): Promise<{
         items: import("./support.service").SupportTicket[];
         totalCount: number;
         page: number;

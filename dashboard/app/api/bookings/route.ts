@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010';
+import { apiClient } from '@/lib/api-client';
+import { randomUUID } from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,92 +9,193 @@ export async function GET(request: NextRequest) {
 
     // If ID is provided, get single booking
     if (id) {
-      const backendUrl = `${BACKEND_URL}/api/v1/bookings/${id}`;
-      console.log('Fetching single booking from backend:', backendUrl);
-
-      const response = await fetch(backendUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Backend response not ok:', response.status, response.statusText);
-        return NextResponse.json(
-          { error: 'Failed to fetch booking from backend' },
-          { status: response.status }
-        );
-      }
-
-      const data = await response.json();
-      return NextResponse.json(data);
+      const booking = await apiClient.getBooking(id);
+      return NextResponse.json(booking);
     }
 
     // Build query parameters for backend
-    const params = new URLSearchParams();
+    const params: any = {};
     const status = searchParams.get('status');
     const technicianId = searchParams.get('technicianId');
     const userId = searchParams.get('userId');
     const serviceId = searchParams.get('serviceId');
     const fromDate = searchParams.get('fromDate');
     const toDate = searchParams.get('toDate');
-    const page = searchParams.get('page') || '1';
-    const pageSize = searchParams.get('pageSize') || '20';
+    const page = Number(searchParams.get('page')) || 1;
+    const pageSize = Number(searchParams.get('pageSize')) || 20;
+    const search = searchParams.get('search');
 
-    params.append('page', page);
-    params.append('pageSize', pageSize);
+    if (page) params.page = page;
+    if (pageSize) params.limit = pageSize; // Backend expects 'limit'
+    if (status) params.status = status;
+    if (technicianId) params.technicianId = technicianId;
+    if (userId) params.userId = userId;
+    if (serviceId) params.serviceId = serviceId; // Note: apiClient.getBookings type definition doesn't include serviceId but backend likely supports it or it was missed in type
+    if (fromDate) params.startDate = fromDate;
+    if (toDate) params.endDate = toDate;
+    if (search) params.search = search;
 
-    if (status) params.append('status', status);
-    if (technicianId) params.append('technicianId', technicianId);
-    if (userId) params.append('userId', userId);
-    if (serviceId) params.append('serviceId', serviceId);
-    if (fromDate) params.append('fromDate', fromDate);
-    if (toDate) params.append('toDate', toDate);
+    // We can use the generic request or the typed getBookings. 
+    // Since getBookings might be missing some fields in its type definition (like serviceId based on my read),
+    // and we want to pass everything, we can key off the type or just use standard getBookings and cast.
+    // However, apiClient.getBookings builds its own query string. Let's use it if mapped correctly, or use generic get.
+    // The previous implementation manually built params. Let's trust apiClient.getBookings but add the missing 'serviceId' if needed by using a direct request if getBookings falls short.
+    // Looking at apiClient.getBookings (lines 908+), it supports many fields but NOT serviceId directly (it has serviceTypeId). 
+    // The previous code supported serviceId. Let's fallback to generic GET to be safe and flexible.
 
-    // Forward request to backend with correct API prefix
-    const backendUrl = `${BACKEND_URL}/api/v1/bookings?${params}`;
-    console.log('Fetching from backend:', backendUrl);
-
-    const response = await fetch(backendUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        query.append(key, String(value));
+      }
     });
 
-    if (!response.ok) {
-      console.error('Backend response not ok:', response.status, response.statusText);
+    // We use the generic 'get' from apiClient to ensure we use the same base URL handling
+    // We pass the endpoint directly with query string because apiClient.get takes options but params handling is simple
+    const response = await apiClient.get(`/bookings?${query.toString()}`);
+
+    // Transform logic (same as before)
+    const data: any = response;
+
+    let bookings: any[] = [];
+    let total = 0;
+    let pageNum = 1;
+    let pageSizeNum = 20;
+
+    // Handle various response formats
+    if (data.success && data.data) {
+      // Wrapped format from backend: { success: true, data: ... }
+      if (Array.isArray(data.data)) {
+        // Backend returns { success: true, data: [...bookings...] }
+        bookings = data.data;
+        total = data.total || bookings.length;
+        pageNum = data.page || 1;
+        pageSizeNum = data.pageSize || 20;
+      } else {
+        // Backend returns { success: true, data: { bookings: [...], total, ... } }
+        bookings = data.data.bookings || data.data.items || [];
+        total = data.data.total || bookings.length;
+        pageNum = data.data.page || 1;
+        pageSizeNum = data.data.pageSize || 20;
+      }
+    } else if (data.bookings && Array.isArray(data.bookings)) {
+      // Direct format with bookings property
+      bookings = data.bookings;
+      total = data.total || bookings.length;
+      pageNum = data.page || 1;
+      pageSizeNum = data.pageSize || 20;
+    } else if (Array.isArray(data)) {
+      // Direct array
+      bookings = data;
+      total = data.length;
+      pageNum = 1;
+      pageSizeNum = 20;
+    } else if (data.data && Array.isArray(data.data)) {
+      // Format: { data: [...] }
+      bookings = data.data;
+      total = data.total || bookings.length;
+      pageNum = data.page || 1;
+      pageSizeNum = data.pageSize || 20;
+    }
+
+    // Helper function to serialize date to ISO string
+    const serializeDate = (dateValue: any): string | null => {
+      if (!dateValue) return null;
+      // Check if it's an empty object
+      if (typeof dateValue === 'object' && Object.keys(dateValue).length === 0) return null;
+      // If it's already a string, return it
+      if (typeof dateValue === 'string') return dateValue;
+      // If it's a Date object or has toISOString
+      if (dateValue instanceof Date || (dateValue && typeof dateValue.toISOString === 'function')) {
+        try {
+          return dateValue.toISOString();
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    };
+
+    const transformedBookings = bookings.map((booking: any) => {
+      const { users, services, technicians, ...rest } = booking;
+      return {
+        ...rest,
+        // Serialize date fields
+        scheduledAt: serializeDate(booking.scheduledAt),
+        createdAt: serializeDate(booking.createdAt),
+        updatedAt: serializeDate(booking.updatedAt),
+        completedAt: serializeDate(booking.completedAt),
+        user: users ? {
+          id: users.id,
+          name: users.name,
+          phone: users.phone,
+          address: booking.address,
+        } : booking.user,
+        service: services ? {
+          id: services.id,
+          name: services.name,
+          serviceType: services.service_types ? {
+            name: services.service_types.name,
+          } : booking.service?.serviceType,
+        } : booking.service,
+        technician: technicians ? {
+          id: technicians.id,
+          name: technicians.name,
+        } : booking.technician,
+      };
+    });
+
+    return NextResponse.json({
+      bookings: transformedBookings,
+      total,
+      page: pageNum,
+      pageSize: pageSizeNum,
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching bookings:', error);
+    const status = error?.status || 500;
+    const message = error?.message || 'Internal server error';
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    if (!body.serviceId) {
       return NextResponse.json(
-        { error: 'Failed to fetch bookings from backend' },
-        { status: response.status }
+        { error: 'serviceId is required' },
+        { status: 400 }
       );
     }
 
-    const data = await response.json();
-    
-    // Transform backend response to match dashboard expectations
-    if (data.success && data.data) {
-      return NextResponse.json({
-        bookings: data.data.bookings || [],
-        total: data.data.total || 0,
-        page: data.data.page || 1,
-        pageSize: data.data.pageSize || 20,
-      });
-    } else {
-      // Fallback for unexpected response format
-      return NextResponse.json({
-        bookings: [],
-        total: 0,
-        page: 1,
-        pageSize: 20,
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching bookings:', error);
+    const bookingData = {
+      id: body.id || randomUUID(),
+      userId: body.userId || null,
+      serviceId: body.serviceId,
+      technicianId: body.technicianId || null,
+      status: body.status || 'PENDING',
+      scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
+      scheduledTime: body.scheduledTime || null,
+      notes: body.notes || null,
+      estimatedCosts: body.estimatedCosts || null,
+      actualCosts: body.actualCosts || null,
+      updatedAt: new Date(),
+    };
+
+    // Use apiClient generic post
+    const response = await apiClient.post('/bookings', bookingData);
+    return NextResponse.json(response);
+
+  } catch (error: any) {
+    console.error('Error creating booking:', error);
+    const status = error?.status || 500;
+    const message = error?.message || 'Failed to create booking';
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: message, message },
+      { status }
     );
   }
 }
@@ -103,7 +204,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Booking ID is required' },
@@ -113,34 +214,18 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    // Forward request to backend with correct API prefix
-    const backendUrl = `${BACKEND_URL}/api/v1/bookings/${id}`;
-    console.log('Updating booking via backend:', backendUrl);
+    // FIXED: Use apiClient.patch instead of PUT, as backend controller expects @Patch(':id')
+    // See backend/src/modules/booking/booking.controller.ts: @Patch(':id') -> update
+    const response = await apiClient.patch(`/bookings/${id}`, body);
 
-    const response = await fetch(backendUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Backend response not ok:', response.status, response.statusText, errorData);
-      return NextResponse.json(
-        { error: 'Failed to update booking' },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
+    return NextResponse.json(response);
+  } catch (error: any) {
     console.error('Error updating booking:', error);
+    const status = error?.status || 500;
+    const message = error?.message || 'Failed to update booking';
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }
@@ -149,7 +234,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Booking ID is required' },
@@ -157,33 +242,15 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Forward request to backend with correct API prefix
-    const backendUrl = `${BACKEND_URL}/api/v1/bookings/${id}`;
-    console.log('Deleting booking via backend:', backendUrl);
-
-    const response = await fetch(backendUrl, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Backend response not ok:', response.status, response.statusText, errorData);
-      return NextResponse.json(
-        { error: 'Failed to delete booking' },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
+    await apiClient.delete(`/bookings/${id}`);
+    return NextResponse.json({ message: 'Booking deleted successfully' });
+  } catch (error: any) {
     console.error('Error deleting booking:', error);
+    const status = error?.status || 500;
+    const message = error?.message || 'Failed to delete booking';
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }

@@ -35,7 +35,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       <Star
         key={i}
         className={`h-4 w-4 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          i < rating ? 'text-yellow-400 fill-current' : 'text-muted-foreground/60'
         }`}
       />
     ));
@@ -61,17 +61,17 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           <Card key={i} className="animate-pulse">
             <CardHeader>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="w-10 h-10 bg-muted rounded-full"></div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-32"></div>
-                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+                  <div className="h-4 bg-muted rounded w-32"></div>
+                  <div className="h-3 bg-muted rounded w-24"></div>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
               </div>
             </CardContent>
           </Card>
@@ -133,7 +133,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     <div key={star} className="flex items-center space-x-1">
                       <span>{star}</span>
                       <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                      <div className="w-12 bg-gray-200 rounded-full h-2">
+                      <div className="w-12 bg-muted rounded-full h-2">
                         <div
                           className="bg-yellow-400 h-2 rounded-full"
                           style={{

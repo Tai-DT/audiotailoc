@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { useBlogArticleBySlug } from '@/lib/hooks/use-api';
 import { BlogArticle } from '@/lib/types';
 import { BlogStructuredData } from '@/components/seo/blog-article-structured-data';
+import { sanitizeProseHtml } from '@/lib/utils/sanitize';
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = React.use(params);
@@ -33,13 +34,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
-            <div className="h-64 bg-gray-200 rounded mb-6"></div>
+            <div className="h-8 bg-muted rounded mb-4"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mb-6"></div>
+            <div className="h-64 bg-muted rounded mb-6"></div>
             <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded w-5/6"></div>
             </div>
           </div>
         </div>
@@ -84,7 +85,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <Link
               href="/blog-new"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
+              className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Quay lại Blog
@@ -99,7 +100,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               <Badge className="bg-blue-100 text-blue-800">
                 {article.category?.name || 'Uncategorized'}
               </Badge>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -124,26 +125,26 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
             </div>
 
-            <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+            <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">
               {article.title}
             </h1>
 
             {article.excerpt && (
-              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
                 {article.excerpt}
               </p>
             )}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-500" />
+                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-foreground">
                     {article.author?.name || 'Audio Tài Lộc'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     {article.author?.name || 'Audio Tài Lộc'}
                   </p>
                 </div>
@@ -173,8 +174,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           {/* Article Content */}
           <div className="prose prose-lg max-w-none mb-12">
             <div
-              dangerouslySetInnerHTML={{ __html: article.content }}
-              className="text-gray-800 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: sanitizeProseHtml(article.content) }}
+              className="text-foreground leading-relaxed"
             />
           </div>
 
@@ -186,7 +187,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           {/* Related Articles */}
           {relatedArticles.length > 0 && (
             <section className="mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-6">
                 Bài viết liên quan
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -203,20 +204,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                         />
                       ) : (
                         <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                          <User className="h-8 w-8 text-gray-400" />
+                          <User className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
                     </div>
                     <CardContent className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
                         <Link
                           href={`/blog-new/${relatedArticle.slug}`}
-                          className="hover:text-blue-600 transition-colors"
+                          className="hover:text-primary transition-colors"
                         >
                           {relatedArticle.title}
                         </Link>
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {relatedArticle.publishedAt
                           ? format(new Date(relatedArticle.publishedAt), 'dd/MM/yyyy', { locale: vi })
                           : format(new Date(relatedArticle.createdAt), 'dd/MM/yyyy', { locale: vi })

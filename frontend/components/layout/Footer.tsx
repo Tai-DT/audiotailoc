@@ -6,13 +6,19 @@ import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react'
 import { DotPattern } from '@/components/ui/dot-pattern';
 import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 import { motion } from 'framer-motion';
+import { useCategories } from '@/lib/hooks/use-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function Footer() {
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  
+  // Get top 5 categories for display
+  const displayCategories = categories?.slice(0, 5) || [];
   return (
-    <footer className="relative bg-gradient-to-b from-gray-900 via-gray-950 to-gray-900 text-white overflow-hidden">
+    <footer className="relative bg-gradient-to-b from-background via-muted/50 to-background dark:from-muted/20 dark:via-background dark:to-muted/20 text-foreground overflow-hidden border-t border-border">
       {/* Background Pattern */}
       <DotPattern
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-10 dark:opacity-20"
         width={20}
         height={20}
         cx={1}
@@ -49,7 +55,7 @@ export function Footer() {
                 Audio Tài Lộc
               </AnimatedGradientText>
             </div>
-            <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-xs">
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-xs">
               Chuyên cung cấp thiết bị âm thanh chất lượng cao và dịch vụ kỹ thuật chuyên nghiệp.
             </p>
             <div className="flex space-x-4">
@@ -57,7 +63,7 @@ export function Footer() {
                 whileHover={{ scale: 1.2, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 href="#"
-                className="text-gray-300 hover:text-primary transition-colors touch-manipulation p-2 rounded-lg hover:bg-primary/10"
+                className="text-muted-foreground hover:text-primary transition-colors touch-manipulation p-2 rounded-lg hover:bg-primary/10"
                 title="Facebook"
                 aria-label="Facebook"
               >
@@ -67,7 +73,7 @@ export function Footer() {
                 whileHover={{ scale: 1.2, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 href="#"
-                className="text-gray-300 hover:text-accent transition-colors touch-manipulation p-2 rounded-lg hover:bg-accent/10"
+                className="text-muted-foreground hover:text-accent transition-colors touch-manipulation p-2 rounded-lg hover:bg-accent/10"
                 title="Instagram"
                 aria-label="Instagram"
               >
@@ -77,7 +83,7 @@ export function Footer() {
                 whileHover={{ scale: 1.2, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 href="#"
-                className="text-gray-300 hover:text-destructive transition-colors touch-manipulation p-2 rounded-lg hover:bg-destructive/10"
+                className="text-muted-foreground hover:text-destructive transition-colors touch-manipulation p-2 rounded-lg hover:bg-destructive/10"
                 title="YouTube"
                 aria-label="YouTube"
               >
@@ -94,13 +100,12 @@ export function Footer() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="space-y-4"
           >
-            <h3 className="font-semibold text-base sm:text-lg text-white mb-4">Liên kết nhanh</h3>
+            <h3 className="font-semibold text-base sm:text-lg text-foreground mb-4">Liên kết nhanh</h3>
             <nav className="space-y-2.5">
               {[
                 { href: '/products', label: 'Sản phẩm' },
                 { href: '/services', label: 'Dịch vụ' },
                 { href: '/du-an', label: 'Dự án' },
-                { href: '/about', label: 'Giới thiệu' },
                 { href: '/contact', label: 'Liên hệ' },
               ].map((link, index) => (
                 <motion.div
@@ -112,7 +117,7 @@ export function Footer() {
                 >
                   <Link
                     href={link.href}
-                    className="block text-gray-300 hover:text-primary transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+                    className="block text-muted-foreground hover:text-primary transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
                   >
                     {link.label}
                   </Link>
@@ -121,7 +126,7 @@ export function Footer() {
             </nav>
           </motion.div>
 
-          {/* Categories */}
+          {/* Categories - Dynamic from API */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -129,30 +134,55 @@ export function Footer() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            <h3 className="font-semibold text-base sm:text-lg text-white mb-4">Danh mục</h3>
+            <h3 className="font-semibold text-base sm:text-lg text-foreground mb-4">Danh mục</h3>
             <nav className="space-y-2.5">
-              {[
-                { href: '/products?category=amplifiers', label: 'Amply' },
-                { href: '/products?category=speakers', label: 'Loa' },
-                { href: '/products?category=microphones', label: 'Micro' },
-                { href: '/products?category=mixers', label: 'Mixer' },
-                { href: '/products?category=accessories', label: 'Phụ kiện' },
-              ].map((link, index) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
-                >
-                  <Link
-                    href={link.href}
-                    className="block text-gray-300 hover:text-accent transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+              {categoriesLoading ? (
+                // Loading skeleton
+                [...Array(5)].map((_, index) => (
+                  <Skeleton key={index} className="h-5 w-24 bg-muted" />
+                ))
+              ) : displayCategories.length > 0 ? (
+                displayCategories.map((category, index) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
                   >
-                    {link.label}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      href={`/products?category=${category.slug}`}
+                      className="block text-muted-foreground hover:text-accent transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+                    >
+                      {category.name}
+                    </Link>
+                  </motion.div>
+                ))
+              ) : (
+                // Fallback to hardcoded if no categories from API
+                [
+                  { href: '/products?category=amply-cuc-day', label: 'Amply' },
+                  { href: '/products?category=loa-loa-sub', label: 'Loa' },
+                  { href: '/products?category=micro-karaoke-khong-day', label: 'Micro' },
+                  { href: '/products?category=mixer-vang-so', label: 'Mixer' },
+                  { href: '/products?category=hang-thanh-ly-hang-cu', label: 'Thanh lý' },
+                ].map((link, index) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
+                  >
+                    <Link
+                      href={link.href}
+                      className="block text-muted-foreground hover:text-accent transition-all text-sm sm:text-base py-1 touch-manipulation hover:translate-x-1 inline-block"
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))
+              )}
             </nav>
           </motion.div>
 
@@ -164,14 +194,14 @@ export function Footer() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="space-y-4"
           >
-            <h3 className="font-semibold text-base sm:text-lg text-white">Thông tin liên hệ</h3>
+            <h3 className="font-semibold text-base sm:text-lg text-foreground">Thông tin liên hệ</h3>
             <div className="space-y-3">
               <motion.div
                 whileHover={{ x: 5 }}
                 className="flex items-start space-x-3 touch-manipulation group"
               >
                 <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 group-hover:text-accent transition-colors" />
-                <span className="text-gray-300 text-sm leading-relaxed group-hover:text-white transition-colors">
+                <span className="text-muted-foreground text-sm leading-relaxed group-hover:text-foreground transition-colors">
                   123 Đường ABC, Quận 1, TP.HCM
                 </span>
               </motion.div>
@@ -181,7 +211,7 @@ export function Footer() {
                 className="flex items-center space-x-3 touch-manipulation hover:text-primary transition-colors group"
               >
                 <Phone className="h-5 w-5 text-primary flex-shrink-0 group-hover:text-accent transition-colors" />
-                <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                <span className="text-muted-foreground text-sm group-hover:text-foreground transition-colors">
                   (028) 1234 5678
                 </span>
               </motion.a>
@@ -191,7 +221,7 @@ export function Footer() {
                 className="flex items-center space-x-3 touch-manipulation hover:text-primary transition-colors group"
               >
                 <Mail className="h-5 w-5 text-primary flex-shrink-0 group-hover:text-accent transition-colors" />
-                <span className="text-gray-300 text-sm break-all group-hover:text-white transition-colors">
+                <span className="text-muted-foreground text-sm break-all group-hover:text-foreground transition-colors">
                   info@audiotailoc.com
                 </span>
               </motion.a>
@@ -204,10 +234,10 @@ export function Footer() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="border-t border-gray-700/50 mt-10 sm:mt-12 pt-6 sm:pt-8"
+          className="border-t border-border mt-10 sm:mt-12 pt-6 sm:pt-8"
         >
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 gap-4">
-            <p className="text-gray-300 text-xs sm:text-sm text-center md:text-left">
+            <p className="text-muted-foreground text-xs sm:text-sm text-center md:text-left">
               © 2024 Audio Tài Lộc. Tất cả quyền được bảo lưu.
             </p>
             <div className="flex flex-wrap justify-center md:justify-end gap-3 sm:gap-4 md:gap-6">
@@ -222,7 +252,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-gray-300 hover:text-primary text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap hover:underline ${link.className || ''}`}
+                  className={`text-muted-foreground hover:text-primary text-xs sm:text-sm transition-colors touch-manipulation whitespace-nowrap hover:underline ${link.className || ''}`}
                 >
                   {link.label}
                 </Link>

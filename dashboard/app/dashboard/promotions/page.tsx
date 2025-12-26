@@ -67,7 +67,8 @@ export default function PromotionsPage() {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null)
   const [newPromotion, setNewPromotion] = useState<Partial<Promotion>>({
     type: "percentage",
-    isActive: true
+    isActive: true,
+    usageLimit: undefined
   })
 
   const filteredPromotions = promotions.filter(promo => {
@@ -532,6 +533,23 @@ export default function PromotionsPage() {
                       placeholder="50"
                     />
                   </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="promo-usage-limit">Giới hạn lượt sử dụng</Label>
+                  <Input
+                    id="promo-usage-limit"
+                    type="number"
+                    min={0}
+                    value={newPromotion.usageLimit ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewPromotion({
+                        ...newPromotion,
+                        usageLimit: val === "" ? undefined : Math.max(0, parseInt(val)),
+                      });
+                    }}
+                    placeholder="Nhập số lượt (để trống = không giới hạn)"
+                  />
+                </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="promo-description">Mô tả</Label>
@@ -589,6 +607,23 @@ export default function PromotionsPage() {
                       value={selectedPromotion.description || ""}
                       onChange={(e) => setSelectedPromotion({...selectedPromotion, description: e.target.value})}
                       rows={3}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-promo-usage-limit">Giới hạn lượt sử dụng</Label>
+                    <Input
+                      id="edit-promo-usage-limit"
+                      type="number"
+                      min={0}
+                      value={selectedPromotion.usageLimit ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedPromotion({
+                          ...selectedPromotion,
+                          usageLimit: val === "" ? undefined : Math.max(0, parseInt(val)),
+                        });
+                      }}
+                      placeholder="Nhập số lượt (để trống = không giới hạn)"
                     />
                   </div>
                 </div>

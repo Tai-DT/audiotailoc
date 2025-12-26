@@ -5,6 +5,60 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizeStringArrayField(value: unknown): string | undefined {
+    if (value === undefined || value === null) return undefined;
+    if (Array.isArray(value)) {
+      const items = value
+        .map(v => (v === null || v === undefined ? '' : String(v).trim()))
+        .filter(v => v && v !== '[' && v !== ']');
+      return items.length ? JSON.stringify(items) : undefined;
+    }
+
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+
+    // Handle stringified JSON arrays
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          const items = parsed
+            .map(v => (v === null || v === undefined ? '' : String(v).trim()))
+            .filter(v => v && v !== '[' && v !== ']');
+          return items.length ? JSON.stringify(items) : undefined;
+        }
+        if (typeof parsed === 'string') {
+          const item = parsed.trim();
+          return item && item !== '[' && item !== ']' ? JSON.stringify([item]) : undefined;
+        }
+      } catch {
+        // Not a valid JSON string starting with [, check if it's actually just "["
+        if (trimmed === '[' || trimmed === '[]') return undefined;
+      }
+    }
+
+    // Handle comma-separated strings
+    const parts = trimmed
+      .split(',')
+      .map(p => p.trim())
+      .filter(p => p && p !== '[' && p !== ']');
+
+    return parts.length ? JSON.stringify(parts) : undefined;
+  }
+
+  private normalizeProjectJsonFields(data: any): void {
+    const jsonFields = ['technologies', 'features', 'images', 'tags', 'galleryImages'];
+    for (const field of jsonFields) {
+      if (data[field] === undefined) continue;
+
+      const normalized = this.normalizeStringArrayField(data[field]);
+      if (normalized !== undefined) {
+        data[field] = normalized;
+      }
+    }
+  }
+
   async findAll(params: {
     page?: number;
     limit?: number;
@@ -23,7 +77,7 @@ export class ProjectsService {
     if (status) {
       where.status = status;
     }
-    
+
     if (category) {
       where.category = category;
     }
@@ -35,9 +89,7 @@ export class ProjectsService {
           where,
           skip,
           take: limit,
-          orderBy: [
-            { createdAt: 'desc' },
-          ],
+          orderBy: [{ createdAt: 'desc' }],
           include: {
             users: {
               select: {
@@ -57,7 +109,12 @@ export class ProjectsService {
         // Try to filter by isFeatured if it exists in the data
         filteredProjects = projects.filter((p: any) => {
           // Check both isFeatured and featured properties
-          const isFeaturedValue = p.isFeatured !== undefined ? p.isFeatured : (p.featured !== undefined ? p.featured : false);
+          const isFeaturedValue =
+            p.isFeatured !== undefined
+              ? p.isFeatured
+              : p.featured !== undefined
+                ? p.featured
+                : false;
           return featured ? isFeaturedValue : !isFeaturedValue;
         });
       }
@@ -79,15 +136,15 @@ export class ProjectsService {
         const safeWhere: any = {
           isActive: true,
         };
-        
+
         if (status) {
           safeWhere.status = status;
         }
-        
+
         if (category) {
           safeWhere.category = category;
         }
-        
+
         const [projects, total] = await Promise.all([
           this.prisma.projects.findMany({
             where: safeWhere,
@@ -120,12 +177,15 @@ export class ProjectsService {
             total: featured !== undefined ? filteredProjects.length : total,
             page,
             limit,
-            totalPages: Math.ceil((featured !== undefined ? filteredProjects.length : total) / limit),
+            totalPages: Math.ceil(
+              (featured !== undefined ? filteredProjects.length : total) / limit,
+            ),
           },
         };
       }
       throw error;
     }
+  }
 
   async findFeatured() {
     try {
@@ -138,14 +198,15 @@ export class ProjectsService {
         orderBy: [{ createdAt: 'desc' }],
         take: 20, // Fetch more to filter in memory
       });
-      
+
       // Filter by isFeatured in memory if column exists in data
       const featuredProjects = projects.filter((p: any) => {
         // Check both isFeatured and featured properties
-        const isFeaturedValue = p.isFeatured !== undefined ? p.isFeatured : (p.featured !== undefined ? p.featured : false);
+        const isFeaturedValue =
+          p.isFeatured !== undefined ? p.isFeatured : p.featured !== undefined ? p.featured : false;
         return isFeaturedValue === true;
       });
-      
+
       // Return top 6 featured projects
       return featuredProjects.slice(0, 6);
     } catch (error: any) {
@@ -218,24 +279,15 @@ export class ProjectsService {
       data.slug = `${data.slug}-${Date.now()}`;
     }
 
-    // Parse JSON fields if provided as strings
-    const jsonFields = ['technologies', 'features', 'images', 'tags'];
-    for (const field of jsonFields) {
-      if (data[field] && typeof data[field] === 'string') {
-        try {
-          data[field] = JSON.stringify(JSON.parse(data[field]));
-        } catch (e) {
-          // If it's not valid JSON, keep as is
-        }
-      } else if (data[field] && Array.isArray(data[field])) {
-        data[field] = JSON.stringify(data[field]);
-      }
-    }
+    // Normalize JSON-like fields to always be a JSON array string
+    this.normalizeProjectJsonFields(data);
 
     // Extract YouTube video ID from URL if provided
     if (data.youtubeVideoUrl) {
       data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
     }
+
+    data.updatedAt = new Date();
 
     return this.prisma.projects.create({
       data,
@@ -263,7 +315,7 @@ export class ProjectsService {
     // Update slug if name changed
     if (data.name && data.name !== project.name && !data.slug) {
       data.slug = this.generateSlug(data.name);
-      
+
       // Ensure slug is unique
       const existingProject = await this.prisma.projects.findFirst({
         where: {
@@ -277,24 +329,15 @@ export class ProjectsService {
       }
     }
 
-    // Parse JSON fields if provided as strings
-    const jsonFields = ['technologies', 'features', 'images', 'tags'];
-    for (const field of jsonFields) {
-      if (data[field] && typeof data[field] === 'string') {
-        try {
-          data[field] = JSON.stringify(JSON.parse(data[field]));
-        } catch (e) {
-          // If it's not valid JSON, keep as is
-        }
-      } else if (data[field] && Array.isArray(data[field])) {
-        data[field] = JSON.stringify(data[field]);
-      }
-    }
+    // Normalize JSON-like fields to always be a JSON array string
+    this.normalizeProjectJsonFields(data);
 
     // Extract YouTube video ID from URL if provided
     if (data.youtubeVideoUrl) {
       data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
     }
+
+    data.updatedAt = new Date();
 
     return this.prisma.projects.update({
       where: { id },
@@ -338,10 +381,13 @@ export class ProjectsService {
 
     try {
       // Try to toggle isFeatured
-      const currentValue = (project as any).isFeatured !== undefined 
-        ? (project as any).isFeatured 
-        : ((project as any).featured !== undefined ? (project as any).featured : false);
-      
+      const currentValue =
+        (project as any).isFeatured !== undefined
+          ? (project as any).isFeatured
+          : (project as any).featured !== undefined
+            ? (project as any).featured
+            : false;
+
       return await this.prisma.projects.update({
         where: { id },
         data: { isFeatured: !currentValue },
@@ -394,16 +440,20 @@ export class ProjectsService {
   }
 
   private extractYouTubeId(url: string): string | null {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex =
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
   }
 
-  async updateImages(id: string, imageData: {
-    thumbnailImage?: string;
-    coverImage?: string;
-    galleryImages?: string;
-  }) {
+  async updateImages(
+    id: string,
+    imageData: {
+      thumbnailImage?: string;
+      coverImage?: string;
+      galleryImages?: string;
+    },
+  ) {
     const project = await this.prisma.projects.findUnique({
       where: { id },
     });

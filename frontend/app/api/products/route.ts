@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DEFAULT_BACKEND_URL = 'http://localhost:3010/api/v1';
 
+// Standardized: Use NEXT_PUBLIC_API_URL as primary, with fallbacks for backward compatibility
 const resolveBackendBaseUrl = (): string => {
   const candidates = [
-    process.env.BACKEND_API_URL,
-    process.env.NEXT_PUBLIC_BACKEND_URL,
-    process.env.NEXT_PUBLIC_API_URL,
+    process.env.NEXT_PUBLIC_API_URL, // Primary: standardized name
+    process.env.BACKEND_API_URL, // Fallback 1: alternative name
+    process.env.NEXT_PUBLIC_BACKEND_URL, // Fallback 2: legacy name (deprecated)
   ];
 
   for (const value of candidates) {

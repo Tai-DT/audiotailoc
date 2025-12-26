@@ -3,8 +3,15 @@
 import { useState, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { X, Image as ImageIcon, Loader2 } from "lucide-react"
+import { X, Image as ImageIcon, Loader2, Pencil } from "lucide-react"
 import Image from "next/image"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 // Declare gtag for TypeScript
 declare global {
@@ -13,24 +20,45 @@ declare global {
   }
 }
 
+// Image with SEO metadata
+export interface ImageWithSEO {
+  url: string;
+  alt?: string;
+  title?: string;
+}
+
+// Helper to normalize images to ImageWithSEO format
+export const normalizeImages = (images: (string | ImageWithSEO)[] | undefined): ImageWithSEO[] => {
+  if (!images) return [];
+  return images.map(img =>
+    typeof img === 'string' ? { url: img } : img
+  );
+};
+
+// Helper to extract URLs from images
+export const getImageUrls = (images: (string | ImageWithSEO)[]): string[] => {
+  return images.map(img => typeof img === 'string' ? img : img.url);
+};
+
 interface ImageUploadProps {
-  value?: string[] // Array of URLs for multiple images
-  onChange: (urls: string[]) => void // Callback with array of URLs
-  onRemove?: (index: number) => void // Remove specific image by index
+  value?: (string | ImageWithSEO)[] // Support both old and new format
+  onChange: (images: ImageWithSEO[]) => void // Always return new format
+  onRemove?: (index: number) => void
   label?: string
   placeholder?: string
   folder?: string
   disabled?: boolean
   className?: string
   accept?: string
-  maxSize?: number // in MB per file
-  maxFiles?: number // Maximum number of files
+  maxSize?: number
+  maxFiles?: number
   width?: number
   height?: number
+  showSEOFields?: boolean // Enable SEO editing
 }
 
 export function ImageUpload({
-  value = [], // Default to empty array
+  value = [],
   onChange,
   onRemove,
   label = "Hình ảnh",
@@ -39,52 +67,54 @@ export function ImageUpload({
   className = "",
   accept = "image/*",
   maxSize = 5,
-  maxFiles = 10 // Default max 10 files
+  maxFiles = 10,
+  showSEOFields = false
 }: ImageUploadProps) {
+  // Normalize value to ImageWithSEO format
+  const normalizedValue = normalizeImages(value);
+
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   // MCP upload function
   const uploadToMCP = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const formData = new FormData()
       formData.append('file', file)
-      
+
       // Use fetch with MCP endpoint
       fetch('/api/upload', {
         method: 'POST',
         body: formData,
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Upload failed')
-        }
-        return response.json()
-      })
-      .then(data => {
-        if (data.url) {
-          resolve(data.url)
-        } else {
-          throw new Error('No URL returned from server')
-        }
-      })
-      .catch(error => {
-        console.error('Upload error:', error)
-        reject(error)
-      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Upload failed')
+          }
+          return response.json()
+        })
+        .then(data => {
+          if (data.url) {
+            resolve(data.url)
+          } else {
+            throw new Error('No URL returned from server')
+          }
+        })
+        .catch(error => {
+          console.error('Upload error:', error)
+          reject(error)
+        })
     })
   }
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-    console.log('Files selected:', files)
 
     if (files.length === 0) {
-      console.log('No files selected')
       return
     }
-    
+
     // Check max files limit
     if (value.length + files.length > maxFiles) {
       const errorMsg = `Không thể upload quá ${maxFiles} file. Hiện tại đã có ${value.length} file.`
@@ -92,14 +122,14 @@ export function ImageUpload({
       setError(errorMsg)
       return
     }
-    
+
     setUploading(true)
     setError(null)
-    
+
     try {
       const uploadedUrls: string[] = []
       const failedFiles: string[] = []
-      
+
       // Upload files in sequence to maintain order
       for (const file of files) {
         try {
@@ -145,13 +175,11 @@ export function ImageUpload({
             }
             continue
           }
-          
-          console.log('Uploading file:', file.name)
-          
+
           // Upload to server API route
           const fileUrl = await uploadToMCP(file)
           uploadedUrls.push(fileUrl)
-          
+
           // Production monitoring - track successful uploads
           if (typeof window !== 'undefined' && window.gtag) {
             window.gtag('event', 'file_upload_success', {
@@ -160,7 +188,7 @@ export function ImageUpload({
               value: Math.round(file.size / 1024) // size in KB
             })
           }
-          
+
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error)
           failedFiles.push(file.name)
@@ -175,12 +203,13 @@ export function ImageUpload({
           }
         }
       }
-      
-      // Update parent component with new URLs
+
+      // Update parent component with new images (as ImageWithSEO)
       if (uploadedUrls.length > 0) {
+        const newImages: ImageWithSEO[] = uploadedUrls.map(url => ({ url }))
         // If maxFiles is 1, replace instead of append
-        const newUrls = maxFiles === 1 ? uploadedUrls : [...value, ...uploadedUrls]
-        onChange(newUrls)
+        const result = maxFiles === 1 ? newImages : [...normalizedValue, ...newImages]
+        onChange(result)
       }
 
       // Show error message if some files failed
@@ -188,7 +217,7 @@ export function ImageUpload({
         const errorMsg = `Upload thất bại cho ${failedFiles.length} file: ${failedFiles.join(', ')}`
         setError(errorMsg)
       }
-      
+
     } catch (error) {
       console.error('Upload error:', error)
       setError(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tải lên')
@@ -202,29 +231,22 @@ export function ImageUpload({
   }
 
   const handleRemove = (index: number) => {
-    const newUrls = value.filter((_, i) => i !== index)
-    onChange(newUrls)
+    const newImages = normalizedValue.filter((_, i) => i !== index)
+    onChange(newImages)
     if (onRemove) onRemove(index)
   }
 
+  // Update SEO fields for a specific image
+  const handleUpdateSEO = (index: number, field: 'alt' | 'title', value: string) => {
+    const newImages = [...normalizedValue]
+    newImages[index] = { ...newImages[index], [field]: value }
+    onChange(newImages)
+  }
+
   const handleClick = () => {
-    console.log('ImageUpload clicked', {
-      disabled,
-      uploading
-    })
-
-    if (disabled) {
-      console.log('Component is disabled')
+    if (disabled || uploading) {
       return
     }
-
-    if (uploading) {
-      console.log('Upload in progress')
-      return
-    }
-
-    // Let the label handle the click - more reliable than programmatic click
-    console.log('Click handled by label element')
   }
 
   return (
@@ -236,21 +258,22 @@ export function ImageUpload({
       <Card className="border-2 border-dashed">
         <CardContent className="p-6">
           {/* Display uploaded images */}
-          {value.length > 0 && (
+          {normalizedValue.length > 0 && (
             <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2">Hình ảnh đã upload ({value.length}/{maxFiles})</h4>
+              <h4 className="text-sm font-medium mb-2">Hình ảnh đã upload ({normalizedValue.length}/{maxFiles})</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {value.map((url, index) => (
+                {normalizedValue.map((img, index) => (
                   <div key={index} className="relative group">
                     <div className="w-full h-24 bg-gray-100 rounded-md border overflow-hidden">
                       <Image
-                        src={url}
-                        alt={`Uploaded image ${index + 1}`}
+                        src={img.url}
+                        alt={img.alt || `Uploaded image ${index + 1}`}
+                        title={img.title}
                         width={200}
                         height={96}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error(`Failed to load image ${index + 1}:`, url)
+                          console.error(`Failed to load image ${index + 1}:`, img.url)
                           e.currentTarget.style.display = 'none'
                           const parent = e.currentTarget.parentElement
                           if (parent) {
@@ -264,18 +287,67 @@ export function ImageUpload({
                             `
                           }
                         }}
-                        onLoad={() => console.log(`Image ${index + 1} loaded successfully:`, url)}
+                        onLoad={() => {}}
                       />
                     </div>
                     {!disabled && (
-                      <button
-                        type="button"
-                        title={`Xóa hình ảnh ${index + 1}`}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemove(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {showSEOFields && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                title="Chỉnh sửa SEO"
+                                className="bg-blue-500 text-white rounded-full p-1 text-xs hover:bg-blue-600"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3" side="left">
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-sm">SEO cho hình ảnh</h4>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`alt-${index}`} className="text-xs">Alt Text</Label>
+                                  <Input
+                                    id={`alt-${index}`}
+                                    value={img.alt || ''}
+                                    onChange={(e) => handleUpdateSEO(index, 'alt', e.target.value)}
+                                    placeholder="Mô tả hình ảnh"
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`title-${index}`} className="text-xs">Title</Label>
+                                  <Input
+                                    id={`title-${index}`}
+                                    value={img.title || ''}
+                                    onChange={(e) => handleUpdateSEO(index, 'title', e.target.value)}
+                                    placeholder="Tiêu đề hình ảnh"
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                {(img.alt || img.title) && (
+                                  <p className="text-xs text-green-600">✓ SEO đã được thiết lập</p>
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                        <button
+                          type="button"
+                          title={`Xóa hình ảnh ${index + 1}`}
+                          className="bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600"
+                          onClick={() => handleRemove(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                    {/* Show SEO indicator */}
+                    {showSEOFields && (img.alt || img.title) && (
+                      <div className="absolute bottom-1 left-1 bg-green-500 text-white rounded px-1 text-[10px]">
+                        SEO ✓
+                      </div>
                     )}
                   </div>
                 ))}
@@ -284,7 +356,7 @@ export function ImageUpload({
           )}
 
           {/* Upload area */}
-          {value.length < maxFiles ? (
+          {normalizedValue.length < maxFiles ? (
             <div
               className={`text-center cursor-pointer ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
               role="button"
@@ -315,7 +387,7 @@ export function ImageUpload({
                           Click để chọn file hoặc kéo thả vào đây
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Có thể chọn nhiều file cùng lúc (tối đa {maxFiles - value.length} file nữa)
+                          Có thể chọn nhiều file cùng lúc (tối đa {maxFiles - normalizedValue.length} file nữa)
                         </p>
                       </div>
                     </>
@@ -332,32 +404,21 @@ export function ImageUpload({
           )}
 
           {/* Alternative upload button */}
-          {value.length < maxFiles && (
+          {normalizedValue.length < maxFiles && (
             <div className="mt-4 text-center">
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Button clicked, triggering file input')
-                  console.log('File input ref exists:', !!fileInputRef.current)
-                  console.log('Component disabled:', disabled)
-                  console.log('Uploading:', uploading)
-
                   if (disabled || uploading) {
-                    console.log('Component is disabled or uploading, not triggering')
                     return
                   }
 
-                  if (fileInputRef.current) {
-                    console.log('Clicking file input via ref')
-                    fileInputRef.current.click()
-                  } else {
-                    console.log('File input ref not found!')
-                  }
+                  fileInputRef.current?.click()
                 }}
                 disabled={disabled || uploading}
                 className="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploading ? 'Đang upload...' : `Chọn file (${value.length}/${maxFiles})`}
+                {uploading ? 'Đang upload...' : `Chọn file (${normalizedValue.length}/${maxFiles})`}
               </button>
             </div>
           )}

@@ -19,6 +19,7 @@ export declare class WishlistController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
             slug: string;
             shortDescription: string | null;
             priceCents: bigint;
@@ -42,7 +43,6 @@ export declare class WishlistController {
             metaKeywords: string | null;
             canonicalUrl: string | null;
             featured: boolean;
-            isActive: boolean;
             isDeleted: boolean;
             viewCount: number;
         };
@@ -63,13 +63,13 @@ export declare class WishlistController {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 priceCents: bigint;
                 originalPriceCents: bigint;
                 imageUrl: string;
                 images: string;
                 stockQuantity: number;
-                isActive: boolean;
             };
         } & {
             id: string;

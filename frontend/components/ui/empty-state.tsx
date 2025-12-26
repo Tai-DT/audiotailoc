@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Search, Package, ShoppingBag, Heart, FileText, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Package } from 'lucide-react';
 
 interface EmptyStateProps {
   icon?: React.ComponentType<{ className?: string }>;
@@ -16,15 +16,6 @@ interface EmptyStateProps {
   };
   className?: string;
 }
-
-const iconMap = {
-  search: Search,
-  products: Package,
-  cart: ShoppingBag,
-  wishlist: Heart,
-  blog: FileText,
-  projects: Briefcase,
-};
 
 export function EmptyState({
   icon: Icon,

@@ -32,18 +32,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         socketInstance.on("connect", () => {
-            console.log("Socket connected");
             setIsConnected(true);
         });
 
         socketInstance.on("disconnect", () => {
-            console.log("Socket disconnected");
             setIsConnected(false);
         });
 
-        setSocket(socketInstance);
+        const timeout = setTimeout(() => setSocket(socketInstance), 0);
 
         return () => {
+            clearTimeout(timeout);
             socketInstance.disconnect();
         };
     }, []);

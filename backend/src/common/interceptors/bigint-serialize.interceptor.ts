@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 /**
- * Recursively serialize BigInt values to numbers/strings for JSON serialization
+ * Recursively serialize BigInt and Date values for JSON serialization
  */
 function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) {
@@ -17,6 +17,15 @@ function serializeBigInt(obj: any): any {
       return num;
     }
     return obj.toString();
+  }
+
+  // Handle Date objects - serialize to ISO string
+  if (obj instanceof Date) {
+    try {
+      return obj.toISOString();
+    } catch {
+      return null;
+    }
   }
 
   if (Array.isArray(obj)) {
@@ -37,8 +46,6 @@ function serializeBigInt(obj: any): any {
 @Injectable()
 export class BigIntSerializeInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(
-      map(data => serializeBigInt(data))
-    );
+    return next.handle().pipe(map(data => serializeBigInt(data)));
   }
 }

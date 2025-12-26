@@ -13,13 +13,13 @@ export class MonitoringMiddleware implements NestMiddleware {
 
     // Override res.end to capture response metrics
     const originalEnd = res.end;
-    const self = this;
+    const monitoringService = this.monitoringService;
     res.end = function (chunk?: any, encoding?: BufferEncoding | (() => void)) {
       const duration = Date.now() - start;
       const statusCode = res.statusCode;
 
       // Record metrics
-      self.monitoringService.recordRequest(method, route, statusCode, duration);
+      monitoringService.recordRequest(method, route, statusCode, duration);
 
       // Call original end method
       if (typeof encoding === 'function') {

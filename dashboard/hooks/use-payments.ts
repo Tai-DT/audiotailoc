@@ -9,8 +9,8 @@ export interface Payment {
   orderId: string
   orderNo: string
   amountCents: number
-  provider: 'VNPAY' | 'MOMO' | 'PAYOS'
-  status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'CANCELLED'
+  provider: 'PAYOS' | 'COD' | 'VNPAY' | 'MOMO'
+  status: 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'CANCELED'
   createdAt: string
   updatedAt: string
   paidAt?: string
@@ -24,7 +24,18 @@ export interface PaymentStats {
   totalRevenue: number
   pendingPayments: number
   failedPayments: number
+  refundedPayments?: number
   refundedAmount: number
+}
+
+interface PaymentsListResponse {
+  payments: Payment[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 export function usePayments() {
@@ -38,8 +49,8 @@ export function usePayments() {
     try {
       setLoading(true)
       setError(null)
-      const response = await apiClient.get('/payments')
-      setPayments((response.data as Payment[]) || [])
+      const response = await apiClient.get<PaymentsListResponse>('/payments')
+      setPayments(response.data?.payments || [])
     } catch (err) {
       const errorMessage = 'Không thể tải danh sách thanh toán'
       setError(errorMessage)
@@ -52,8 +63,8 @@ export function usePayments() {
   // Fetch payment statistics
   const fetchStats = useCallback(async () => {
     try {
-      const response = await apiClient.get('/payments/stats')
-      setStats(response.data as PaymentStats)
+      const response = await apiClient.get<PaymentStats>('/payments/stats')
+      setStats(response.data)
     } catch (err) {
       // Silent error
     }
@@ -62,7 +73,8 @@ export function usePayments() {
   // Create payment intent
   const createPaymentIntent = useCallback(async (data: {
     orderId: string
-    provider: 'VNPAY' | 'MOMO' | 'PAYOS'
+    provider: 'PAYOS' | 'COD'
+    idempotencyKey: string
     returnUrl?: string
   }) => {
     try {

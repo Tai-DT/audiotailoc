@@ -15,11 +15,12 @@ const pickFirstUrl = (candidates: Array<string | undefined | null>) => {
 };
 
 export const getBackendApiBaseUrl = () => {
+  // Standardized: Use NEXT_PUBLIC_API_URL as primary
   const url = pickFirstUrl([
-    process.env.BACKEND_API_URL,
-    process.env.NEXT_PUBLIC_BACKEND_URL,
-    process.env.NEXT_PUBLIC_API_URL,
-    process.env.API_BASE_URL,
+    process.env.NEXT_PUBLIC_API_URL, // Primary: standardized name
+    process.env.BACKEND_API_URL, // Fallback 1: alternative name
+    process.env.API_BASE_URL, // Fallback 2: generic name
+    process.env.NEXT_PUBLIC_BACKEND_URL, // Fallback 3: legacy name (deprecated)
   ]);
   
   if (!url) {

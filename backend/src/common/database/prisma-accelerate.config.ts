@@ -68,13 +68,13 @@ export class PrismaAccelerateManager {
   }
 
   private setupEventListeners(): void {
-    this.prisma.$on('query', (event) => {
+    this.prisma.$on('query', event => {
       if (process.env.NODE_ENV === 'development') {
         this.logger.debug(`Query executed in ${event.duration}ms: ${event.query}`);
       }
     });
 
-    this.prisma.$on('error', (event) => {
+    this.prisma.$on('error', event => {
       this.logger.error(`Prisma error: ${event}`);
     });
   }
@@ -158,13 +158,13 @@ export class PrismaAccelerateManager {
    */
   async executeTransaction<T>(
     callback: (prisma: PrismaClient) => Promise<T>,
-    maxRetries: number = 3
+    maxRetries: number = 3,
   ): Promise<T> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await this.prisma.$transaction(async (tx) => {
+        return await this.prisma.$transaction(async tx => {
           return await callback(tx as any);
         });
       } catch (error) {
@@ -174,34 +174,26 @@ export class PrismaAccelerateManager {
         if (attempt < maxRetries) {
           const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
           this.logger.warn(
-            `Transaction attempt ${attempt} failed, retrying in ${delay}ms: ${lastError.message}`
+            `Transaction attempt ${attempt} failed, retrying in ${delay}ms: ${lastError.message}`,
           );
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    this.logger.error(
-      `Transaction failed after ${maxRetries} attempts: ${lastError?.message}`
-    );
+    this.logger.error(`Transaction failed after ${maxRetries} attempts: ${lastError?.message}`);
     throw lastError;
   }
 
   /**
    * Batch operations for better performance
    */
-  async batchCreate<T>(
-    model: any,
-    data: any[],
-    batchSize: number = 100
-  ): Promise<T[]> {
+  async batchCreate<T>(model: any, data: any[], batchSize: number = 100): Promise<T[]> {
     const results: T[] = [];
 
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map((item) => model.create({ data: item }))
-      );
+      const batchResults = await Promise.all(batch.map(item => model.create({ data: item })));
       results.push(...batchResults);
     }
 

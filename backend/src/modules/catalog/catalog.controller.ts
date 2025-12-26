@@ -1,4 +1,18 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Patch, Delete, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+  Patch,
+  Delete,
+  Query,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsOptional } from 'class-validator';
@@ -10,8 +24,6 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
 
-
-
 class DeleteManyDto {
   @IsOptional()
   ids?: string[];
@@ -21,12 +33,15 @@ class DeleteManyDto {
 @ApiBearerAuth()
 @Controller('catalog')
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService /* , private readonly searchService: SearchService */) {}
+  constructor(
+    private readonly catalog: CatalogService /* , private readonly searchService: SearchService */,
+  ) {}
 
+  /*
   @Get('products')
   @UseGuards() // Temporarily remove authentication for testing
   list(@Query() query: any) {
-    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search } = query;
+    const { page, pageSize, q, minPrice, maxPrice, sortBy, sortOrder, featured, search, categoryId, isActive } = query;
     return this.catalog.listProducts({
       page: parseInt(page) || 1,
       pageSize: parseInt(pageSize) || 20,
@@ -35,9 +50,12 @@ export class CatalogController {
       maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
       sortBy: sortBy || 'createdAt',
       sortOrder: sortOrder || 'desc',
-      featured: featured === 'true' ? true : undefined
+      featured: featured === 'true' ? true : undefined,
+      categoryId: categoryId || undefined,
+      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
     });
   }
+  */
 
   // @Get('search/advanced')
   // async advancedSearch(@Query() query: AdvancedSearchDto) {
@@ -135,6 +153,7 @@ export class CatalogController {
     return this.catalog.deleteCategory(id);
   }
 
+  /*
   @Get('products/search')
   @UseGuards()
   searchProducts(@Query('q') q: string, @Query('limit') limit?: number) {
@@ -147,7 +166,9 @@ export class CatalogController {
       sortOrder: 'desc'
     });
   }
+  */
 
+  /*
   @Get('products/:id')
   @UseGuards() // Temporarily remove authentication for testing
   get(@Param('id') id: string) {
@@ -159,13 +180,11 @@ export class CatalogController {
   getBySlug(@Param('slug') slug: string) {
     return this.catalog.getBySlug(slug);
   }
+  */
 
-    @Get('products/check-sku/:sku')
+  @Get('products/check-sku/:sku')
   @UseGuards(JwtGuard, AdminOrKeyGuard)
-  async checkSkuExists(
-    @Param('sku') sku: string,
-    @Query('excludeId') excludeId?: string,
-  ) {
+  async checkSkuExists(@Param('sku') sku: string, @Query('excludeId') excludeId?: string) {
     return this.catalog.checkSkuExists(sku, excludeId);
   }
 
@@ -181,13 +200,16 @@ export class CatalogController {
   //   throw new Error('Search not available - SearchService disabled');
   // }
 
+  /*
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post('products')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProductDto) {
     return this.catalog.create(dto);
   }
+  */
 
+  /*
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Patch('products/:id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
@@ -205,7 +227,9 @@ export class CatalogController {
   removeMany(@Body() body: DeleteManyDto) {
     return this.catalog.removeMany(body?.ids ?? []);
   }
+  */
 
+  /*
   // Analytics endpoints (public access for frontend)
   @Get('products/analytics/top-viewed')
   @UseGuards() // Remove authentication for public access
@@ -242,4 +266,5 @@ export class CatalogController {
       sortOrder: 'desc'
     });
   }
+  */
 }

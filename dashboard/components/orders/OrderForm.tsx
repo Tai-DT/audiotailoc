@@ -120,8 +120,6 @@ export function OrderForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement order submission
-    console.log('Submitting order:', orderItems);
     
     try {
       // const response = await fetch('/api/orders', {

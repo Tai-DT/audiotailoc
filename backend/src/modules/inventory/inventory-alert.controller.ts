@@ -29,13 +29,16 @@ export class InventoryAlertController {
     status: 201,
     description: 'Alert created successfully',
   })
-  async create(@Body() data: {
-    productId: string;
-    type: string;
-    message: string;
-    threshold?: number;
-    currentStock?: number;
-  }) {
+  async create(
+    @Body()
+    data: {
+      productId: string;
+      type: string;
+      message: string;
+      threshold?: number;
+      currentStock?: number;
+    },
+  ) {
     return this.inventoryAlertService.create(data);
   }
 

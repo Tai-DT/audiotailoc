@@ -1,3 +1,5 @@
+import { parseImages } from '@/lib/utils';
+
 interface Service {
   id: string;
   name: string;
@@ -50,7 +52,7 @@ export function ServiceStructuredData({ service }: ServiceStructuredDataProps) {
     '@type': 'Service',
     name: service.name,
     description: service.shortDescription || service.description,
-    image: Array.isArray(service.images) ? service.images : [],
+    image: parseImages(service.images),
     provider: {
       '@type': 'Organization',
       name: 'Audio Tài Lộc',

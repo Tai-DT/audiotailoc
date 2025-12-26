@@ -38,6 +38,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { BackupModule } from './backup/backup.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ReportsModule } from './reports/reports.module';
 
 // Additional modules - ENABLING STEP BY STEP
 import { FilesModule } from './files/files.module';
@@ -60,68 +61,83 @@ import { SiteModule } from './site/site.module';
 import { ProjectsModule } from './projects/projects.module';
 import { SeoModule } from './seo/seo.module';
 import { BlogModule } from './blog/blog.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { MessagesModule } from './messages/messages.module';
+
+// Chat Module
+import { ChatModule } from './chat/chat.module';
 
 // Test module removed
 // import { TestModule } from './test/test.module';
 
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
-    ConfigModule.forRoot({ isGlobal: true }), 
-    // LoggerModule,
-    CacheModule.forRoot({
-      isGlobal: true,
-    }), // Global cache service
-    PrismaModule, 
-    HealthModule,
-    // TestingModule, // Testing utilities
-    
-    // Authentication - CORE ONLY
-    AuthModule,
-    SharedModule,
-    UsersModule,
-    AdminModule,
-    
-    // Support and File Management - ENABLED
-    SupportModule,
-    WebhooksModule,
-    NotificationsModule,
-    FilesModule,
-    BackupModule,
-    MarketingModule,
-    MapsModule,
-    AnalyticsModule,
+  ConfigModule.forRoot({ isGlobal: true }),
+  // LoggerModule,
+  CacheModule.forRoot({
+    isGlobal: true,
+  }), // Global cache service
+  PrismaModule,
+  HealthModule,
+  // TestingModule, // Testing utilities
 
-    // Advanced Features - ENABLED
-    SearchModule,
-    RealtimeModule,
-    AiModule,
-    
-    // E-commerce modules - ENABLING STEP BY STEP
-    CatalogModule,
-    PaymentsModule,
-    OrdersModule,
-    InventoryModule,
-    WishlistModule,
+  // Authentication - CORE ONLY
+  AuthModule,
+  SharedModule,
+  UsersModule,
+  AdminModule,
 
-    // Complete Product API Module - NEW COMPLETE SYSTEM
-    CompleteProductModule,
+  // Support and File Management - ENABLED
+  SupportModule,
+  WebhooksModule,
+  NotificationsModule,
+  FilesModule,
+  BackupModule,
+  MarketingModule,
+  MapsModule,
+  AnalyticsModule,
+  ReportsModule,
 
-    // Services Management
-    ServicesModule,
-    ServiceTypesModule,
-    BookingModule,
-    TechniciansModule,
+  // Advanced Features - ENABLED
+  SearchModule,
+  RealtimeModule,
+  AiModule,
 
-    // Site Content Management
-    SiteModule,
-    SeoModule,
-    BlogModule,
-    
-    // Portfolio/Projects
-    ProjectsModule,
+  // E-commerce modules - ENABLING STEP BY STEP
+  CatalogModule,
+  PaymentsModule,
+  OrdersModule,
+  InventoryModule,
+  WishlistModule,
 
-    // Test module for payment testing
-    // TestModule, // Removed
+  // Complete Product API Module - NEW COMPLETE SYSTEM
+  CompleteProductModule,
+
+  // Services Management
+  ServicesModule,
+  ServiceTypesModule,
+  BookingModule,
+  TechniciansModule,
+
+  // Site Content Management
+  SiteModule,
+  SeoModule,
+  BlogModule,
+
+  // Portfolio/Projects
+  ProjectsModule,
+
+  // Reviews
+  ReviewsModule,
+
+  // Messages / Notifications support
+  MessagesModule,
+
+  // Chat
+  ChatModule,
+
+  // Test module for payment testing
+  // TestModule, // Removed
 ];
 
 if (FEATURE_CHECKOUT) {
@@ -133,3 +149,4 @@ if (FEATURE_CHECKOUT) {
   controllers: [AppController],
 })
 export class AppModule {}
+// Trigger rebuild for module registration

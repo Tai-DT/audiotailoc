@@ -15,65 +15,75 @@ import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useToast } from "@/components/ui/use-toast"
 import { apiClient } from "@/lib/api-client"
 
-export default function ProfilePage() {
+export default function ProfilePage ()
+{
   const { user, setUser, refreshUser } = useAuth()
   const { toast } = useToast()
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [formData, setFormData] = useState({
+  const [ isEditing, setIsEditing ] = useState( false )
+  const [ isSaving, setIsSaving ] = useState( false )
+  const [ formData, setFormData ] = useState( {
     name: user?.name || '',
     email: user?.email || '',
-  })
+  } )
 
-  const handleSave = async () => {
-    if (!user) return
+  const handleSave = async () =>
+  {
+    if ( !user ) return
 
-    try {
-      setIsSaving(true)
-      await apiClient.updateUser(user.id, {
+    try
+    {
+      setIsSaving( true )
+      await apiClient.updateUser( user.id, {
         name: formData.name,
         // Note: Email update might require re-verification depending on backend logic
         // For now we send it if it changed
-      })
+      } )
 
       // Update local user state
       // We need to refresh the user data from the server to ensure we have the latest state
-      try {
+      try
+      {
         await refreshUser()
-      } catch (error) {
+      } catch ( error )
+      {
         // Fallback if refresh fails
-        if (user) {
-          setUser({ ...user, name: formData.name })
+        if ( user )
+        {
+          setUser( { ...user, name: formData.name } )
         }
       }
 
-      toast({
+      toast( {
         title: "Thành công",
         description: "Thông tin cá nhân đã được cập nhật",
-      })
+      } )
 
-      setIsEditing(false)
-    } catch (error) {
-      console.error('Failed to update profile:', error)
-      toast({
+      setIsEditing( false )
+    } catch ( error )
+    {
+      console.error( 'Failed to update profile:', error )
+      toast( {
         title: "Lỗi",
         description: "Không thể cập nhật thông tin. Vui lòng thử lại.",
         variant: "destructive",
-      })
-    } finally {
-      setIsSaving(false)
+      } )
+    } finally
+    {
+      setIsSaving( false )
     }
   }
 
-  const handleCancel = () => {
-    setFormData({
+  const handleCancel = () =>
+  {
+    setFormData( {
       name: user?.name || '',
       email: user?.email || '',
-    })
-    setIsEditing(false)
+    } )
+    setIsEditing( false )
   }
 
-  if (!user) {
+  if ( !user )
+  {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -94,7 +104,6 @@ export default function ProfilePage() {
                 Quản lý thông tin cá nhân của bạn
               </p>
             </div>
-            <Badge variant="secondary">Bước 5: User Management</Badge>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
@@ -105,7 +114,7 @@ export default function ProfilePage() {
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={user.avatarUrl || '/avatars/admin.jpg'} alt={user.name} />
                     <AvatarFallback className="text-lg">
-                      {user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'}
+                      {user.name ? user.name.split( ' ' ).map( n => n[ 0 ] ).join( '' ).substring( 0, 2 ).toUpperCase() : 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </div>
@@ -128,7 +137,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Tham gia: {new Date().toLocaleDateString('vi-VN')}</span>
+                    <span>Tham gia: {new Date().toLocaleDateString( 'vi-VN' )}</span>
                   </div>
                 </div>
               </CardContent>
@@ -149,7 +158,7 @@ export default function ProfilePage() {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={( e ) => setFormData( prev => ( { ...prev, name: e.target.value } ) )}
                       disabled={!isEditing}
                     />
                   </div>
@@ -159,7 +168,7 @@ export default function ProfilePage() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={( e ) => setFormData( prev => ( { ...prev, email: e.target.value } ) )}
                       disabled={true} // Email update usually requires special flow
                       title="Liên hệ quản trị viên để thay đổi email"
                     />
@@ -171,7 +180,7 @@ export default function ProfilePage() {
 
                 <div className="flex gap-2">
                   {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)}>
+                    <Button onClick={() => setIsEditing( true )}>
                       Chỉnh sửa thông tin
                     </Button>
                   ) : (
@@ -236,7 +245,7 @@ export default function ProfilePage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">Đăng nhập thành công</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date().toLocaleString('vi-VN')}
+                      {new Date().toLocaleString( 'vi-VN' )}
                     </p>
                   </div>
                 </div>
@@ -245,7 +254,7 @@ export default function ProfilePage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">Cập nhật thông tin cá nhân</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(Date.now() - 86400000).toLocaleString('vi-VN')}
+                      {new Date( Date.now() - 86400000 ).toLocaleString( 'vi-VN' )}
                     </p>
                   </div>
                 </div>

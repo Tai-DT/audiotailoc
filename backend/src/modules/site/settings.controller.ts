@@ -10,12 +10,12 @@ export class SettingsController {
   @Get()
   @ApiOperation({ summary: 'Get all site settings (public)' })
   async getSettings() {
-    return this.settingsService.getSettings();
+    return this.settingsService.getPublicSettings();
   }
 
   @Get(':section')
   @ApiOperation({ summary: 'Get specific section of site settings' })
   async getSection(@Param('section') section: string) {
-    return this.settingsService.getSection(section);
+    return this.settingsService.getPublicSection(section);
   }
 }

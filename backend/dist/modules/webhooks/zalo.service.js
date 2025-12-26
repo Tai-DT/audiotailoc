@@ -35,8 +35,8 @@ let ZaloService = class ZaloService {
                 question: String(text),
                 category: 'ZALO_SUPPORT',
                 updatedAt: new Date(),
-                ...(userId && { users: { connect: { id: userId } } })
-            }
+                ...(userId && { users: { connect: { id: userId } } }),
+            },
         });
         return customerQuestion.id;
     }
@@ -53,6 +53,7 @@ let ZaloService = class ZaloService {
 exports.ZaloService = ZaloService;
 exports.ZaloService = ZaloService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService, prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [config_1.ConfigService,
+        prisma_service_1.PrismaService])
 ], ZaloService);
 //# sourceMappingURL=zalo.service.js.map

@@ -6,11 +6,25 @@ declare class CreateUserDto {
     phone?: string;
     role?: 'USER' | 'ADMIN';
     generatePassword?: boolean;
+    address?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    isActive?: boolean;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    promoNotifications?: boolean;
 }
 declare class UpdateUserDto {
     name?: string;
     phone?: string;
     role?: 'USER' | 'ADMIN';
+    address?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    isActive?: boolean;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    promoNotifications?: boolean;
 }
 export declare class UsersController {
     private readonly usersService;
@@ -44,7 +58,7 @@ export declare class UsersController {
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string;
+            userId: string | null;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -57,14 +71,24 @@ export declare class UsersController {
             orders: number;
         };
     } & {
+        password: string;
         id: string;
         email: string;
-        password: string;
         name: string | null;
         phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
     }>;
     exportUserData(req: any): Promise<{
         exportDate: string;
@@ -86,14 +110,14 @@ export declare class UsersController {
             totalSpent: number;
         };
     }>;
-    findOne(id: string): Promise<{
+    findOne(id: string, req: any): Promise<{
         orders: {
             status: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
             orderNo: string;
-            userId: string;
+            userId: string | null;
             subtotalCents: number;
             discountCents: number;
             shippingCents: number;
@@ -106,14 +130,24 @@ export declare class UsersController {
             orders: number;
         };
     } & {
+        password: string;
         id: string;
         email: string;
-        password: string;
         name: string | null;
         phone: string | null;
         role: string;
         createdAt: Date;
         updatedAt: Date;
+        avatarUrl: string | null;
+        address: string | null;
+        dateOfBirth: Date | null;
+        gender: string | null;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
+        resetExpires: Date | null;
+        resetToken: string | null;
     }>;
     create(createUserDto: CreateUserDto): Promise<{
         id: string;
@@ -123,13 +157,21 @@ export declare class UsersController {
         role: string;
         createdAt: Date;
     }>;
-    update(id: string, updateUserDto: UpdateUserDto): Promise<{
+    update(id: string, updateUserDto: UpdateUserDto, req: any): Promise<{
         id: string;
         email: string;
         name: string;
         phone: string;
         role: string;
         updatedAt: Date;
+        avatarUrl: string;
+        address: string;
+        dateOfBirth: Date;
+        gender: string;
+        isActive: boolean;
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        promoNotifications: boolean;
     }>;
     remove(id: string, req: any): Promise<{
         message: string;

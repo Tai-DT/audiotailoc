@@ -48,6 +48,37 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], CreateUserDto.prototype, "generatePassword", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "dateOfBirth", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateUserDto.prototype, "isActive", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateUserDto.prototype, "emailNotifications", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateUserDto.prototype, "smsNotifications", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateUserDto.prototype, "promoNotifications", void 0);
 class UpdateUserDto {
 }
 __decorate([
@@ -65,6 +96,37 @@ __decorate([
     (0, class_validator_1.IsEnum)(['USER', 'ADMIN']),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "role", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "dateOfBirth", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateUserDto.prototype, "isActive", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateUserDto.prototype, "emailNotifications", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateUserDto.prototype, "smsNotifications", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateUserDto.prototype, "promoNotifications", void 0);
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -96,14 +158,24 @@ let UsersController = class UsersController {
         }
         return this.usersService.exportUserData(userId);
     }
-    async findOne(id) {
+    async findOne(id, req) {
+        const user = req.user;
+        const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+        if (!isAdmin && user?.sub !== id) {
+            throw new common_1.ForbiddenException('You can only view your own profile');
+        }
         return this.usersService.findById(id);
     }
     async create(createUserDto) {
         return this.usersService.create(createUserDto);
     }
-    async update(id, updateUserDto) {
-        return this.usersService.update(id, updateUserDto);
+    async update(id, updateUserDto, req) {
+        const user = req.user;
+        const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+        if (!isAdmin && user?.sub !== id) {
+            throw new common_1.ForbiddenException('You can only update your own profile');
+        }
+        return this.usersService.update(id, updateUserDto, user);
     }
     async remove(id, req) {
         return this.usersService.remove(id, req.user);
@@ -152,8 +224,9 @@ __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "findOne", null);
 __decorate([
@@ -169,8 +242,9 @@ __decorate([
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, UpdateUserDto]),
+    __metadata("design:paramtypes", [String, UpdateUserDto, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "update", null);
 __decorate([

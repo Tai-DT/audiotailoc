@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useCallback } from 'react';
+import React, { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useCart } from '@/components/providers/cart-provider';
 
 interface PaymentStatus {
   status: string;
@@ -32,6 +33,8 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { clearCart } = useCart();
+  const cartClearedRef = useRef(false);
 
   const orderId = searchParams.get('orderId');
   const paymentMethod = searchParams.get('method');
@@ -46,6 +49,12 @@ function OrderSuccessContent() {
 
       if (result.success) {
         setPaymentStatus(result.status);
+
+        // Clear cart on successful payment (only once)
+        if ((result.status.status === 'COMPLETED' || paymentMethod === 'cos') && !cartClearedRef.current) {
+          clearCart();
+          cartClearedRef.current = true;
+        }
 
         // Show appropriate message based on status
         if (result.status.status === 'COMPLETED') {
@@ -62,7 +71,7 @@ function OrderSuccessContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [orderId, paymentMethod]);
+  }, [orderId, paymentMethod, clearCart]);
 
   useEffect(() => {
     // If we have orderId and paymentMethod, check payment status
@@ -75,14 +84,14 @@ function OrderSuccessContent() {
     switch (status.toLowerCase()) {
       case 'completed':
       case 'success':
-        return <CheckCircle className="h-8 w-8 text-green-500" />;
+        return <CheckCircle className="h-8 w-8 text-success" />;
       case 'failed':
       case 'error':
-        return <XCircle className="h-8 w-8 text-red-500" />;
+        return <XCircle className="h-8 w-8 text-destructive" />;
       case 'pending':
       case 'processing':
       default:
-        return <Clock className="h-8 w-8 text-yellow-500" />;
+        return <Clock className="h-8 w-8 text-warning" />;
     }
   };
 
@@ -124,7 +133,7 @@ function OrderSuccessContent() {
           <Card className="mb-8">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                {paymentStatus ? getStatusIcon(paymentStatus.status) : <Clock className="h-8 w-8 text-gray-400" />}
+                {paymentStatus ? getStatusIcon(paymentStatus.status) : <Clock className="h-8 w-8 text-muted-foreground" />}
               </div>
               <CardTitle>
                 {paymentMethod === 'cos' ? 'Đặt hàng COD' : 'Thanh toán PayOS'}
@@ -180,21 +189,21 @@ function OrderSuccessContent() {
                   {paymentStatus.status === 'COMPLETED' && (
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <p className="text-green-800 font-medium">🎉 Thanh toán thành công!</p>
-                      <p className="text-green-600 text-sm">Đơn hàng của bạn đã được xử lý thành công.</p>
+                      <p className="text-success text-sm">Đơn hàng của bạn đã được xử lý thành công.</p>
                     </div>
                   )}
 
                   {paymentStatus.status === 'PENDING' && (
                     <div className="text-center p-4 bg-yellow-50 rounded-lg">
                       <p className="text-yellow-800 font-medium">⏳ Đang xử lý</p>
-                      <p className="text-yellow-600 text-sm">Vui lòng đợi trong giây lát...</p>
+                      <p className="text-warning text-sm">Vui lòng đợi trong giây lát...</p>
                     </div>
                   )}
 
                   {paymentStatus.status === 'FAILED' && (
                     <div className="text-center p-4 bg-red-50 rounded-lg">
                       <p className="text-red-800 font-medium">❌ Thanh toán thất bại</p>
-                      <p className="text-red-600 text-sm">Vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
+                      <p className="text-destructive text-sm">Vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
                     </div>
                   )}
                 </>
@@ -202,7 +211,7 @@ function OrderSuccessContent() {
 
               {!paymentStatus && !isLoading && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-gray-600">Không tìm thấy thông tin đơn hàng</p>
+                  <p className="text-muted-foreground">Không tìm thấy thông tin đơn hàng</p>
                 </div>
               )}
 
@@ -246,7 +255,7 @@ function OrderSuccessContent() {
           {/* Additional Information */}
           <div className="mt-8 text-center text-sm text-muted-foreground">
             <p>Nếu có vấn đề với đơn hàng, vui lòng liên hệ:</p>
-            <p>📧 support@audiotailoc.com | 📞 1900-XXXX</p>
+            <p>📧 audiotailoc@gmail.com | 📞 0768 426 262</p>
           </div>
         </div>
       </main>

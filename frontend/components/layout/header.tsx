@@ -130,7 +130,6 @@ export function Header() {
 
   const primaryLinks: NavLink[] = [
     { href: '/projects', label: 'Dự án' },
-    { href: '/about', label: 'Giới thiệu' },
     { href: '/blog', label: 'Blog' },
     { href: '/support', label: 'Hỗ trợ' },
     { href: '/contact', label: 'Liên hệ' },
@@ -453,17 +452,17 @@ export function Header() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <ShimmerButton
-                        asChild
                         className="w-full h-9 text-sm"
                         shimmerColor="oklch(0.99 0.005 45)"
                         shimmerSize="0.1em"
                         borderRadius="0.5rem"
                         background="oklch(0.58 0.28 20)"
+                        onClick={() => window.location.href = '/auth/login'}
                       >
-                        <Link href="/auth/login" className="flex items-center justify-center text-white">
+                        <span className="flex items-center justify-center text-white">
                           <User className="h-4 w-4 mr-2" />
                           Đăng nhập
-                        </Link>
+                        </span>
                       </ShimmerButton>
                       <Button variant="outline" size="sm" asChild className="w-full">
                         <Link href="/register" className="flex items-center justify-center">
@@ -565,17 +564,17 @@ export function Header() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <ShimmerButton
-                        asChild
                         className="w-full h-9 text-sm"
                         shimmerColor="oklch(0.99 0.005 45)"
                         shimmerSize="0.1em"
                         borderRadius="0.5rem"
                         background="oklch(0.58 0.28 20)"
+                        onClick={() => window.location.href = '/auth/login'}
                       >
-                        <Link href="/auth/login" className="flex items-center justify-center text-white">
+                        <span className="flex items-center justify-center text-white">
                           <User className="h-4 w-4 mr-2" />
                           Đăng nhập
-                        </Link>
+                        </span>
                       </ShimmerButton>
                       <Button variant="outline" size="sm" asChild className="w-full">
                         <Link href="/register" className="flex items-center justify-center">
@@ -615,10 +614,10 @@ export function Header() {
           <div className="container mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
               {([
-                { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
-                { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
-                { label: 'Mixer', href: '/products?category=mixer', icon: SlidersHorizontal },
-                { label: 'Thanh Lý', href: '/products?category=thanh-ly', icon: PackageSearch },
+                { label: 'Micro', href: '/products?category=micro-karaoke-khong-day', icon: MicIcon },
+                { label: 'Loa', href: '/products?category=loa-loa-sub', icon: SpeakerIcon },
+                { label: 'Mixer', href: '/products?category=mixer-vang-so', icon: SlidersHorizontal },
+                { label: 'Thanh Lý', href: '/products?category=hang-thanh-ly-hang-cu', icon: PackageSearch },
               ] as SubNavItem[]).map((item: SubNavItem) => (
                  <Link
                    key={item.label}

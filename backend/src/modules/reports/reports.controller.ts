@@ -107,9 +107,9 @@ export class ReportsController {
   @ApiQuery({ name: 'endDate', required: false })
   async exportSalesReport(
     @Param('format') format: 'pdf' | 'excel' | 'csv',
+    @Res() res: Response,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Res() res?: Response,
   ) {
     const buffer = await this.reportsService.exportSalesReport(format, startDate, endDate);
 
@@ -117,7 +117,7 @@ export class ReportsController {
     const mimeTypes = {
       pdf: 'application/pdf',
       excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      csv: 'text/csv',
+      csv: 'text/csv; charset=utf-8',
     };
     const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' };
 
@@ -125,16 +125,20 @@ export class ReportsController {
       'Content-Type': mimeTypes[format],
       'Content-Disposition': `attachment; filename="${filename}.${extensions[format]}"`,
       'Content-Length': buffer.length,
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'Access-Control-Expose-Headers': 'Content-Disposition',
     });
 
-    return new StreamableFile(buffer);
+    res.send(buffer);
   }
 
   @Get('export/inventory/:format')
   @ApiOperation({ summary: 'Export inventory report' })
   async exportInventoryReport(
     @Param('format') format: 'pdf' | 'excel' | 'csv',
-    @Res() res?: Response,
+    @Res() res: Response,
   ) {
     const buffer = await this.reportsService.exportInventoryReport(format);
 
@@ -142,7 +146,7 @@ export class ReportsController {
     const mimeTypes = {
       pdf: 'application/pdf',
       excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      csv: 'text/csv',
+      csv: 'text/csv; charset=utf-8',
     };
     const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' };
 
@@ -150,16 +154,20 @@ export class ReportsController {
       'Content-Type': mimeTypes[format],
       'Content-Disposition': `attachment; filename="${filename}.${extensions[format]}"`,
       'Content-Length': buffer.length,
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'Access-Control-Expose-Headers': 'Content-Disposition',
     });
 
-    return new StreamableFile(buffer);
+    res.send(buffer);
   }
 
   @Get('export/customers/:format')
   @ApiOperation({ summary: 'Export customers report' })
   async exportCustomersReport(
     @Param('format') format: 'pdf' | 'excel' | 'csv',
-    @Res() res?: Response,
+    @Res() res: Response,
   ) {
     const buffer = await this.reportsService.exportCustomersReport(format);
 
@@ -167,7 +175,7 @@ export class ReportsController {
     const mimeTypes = {
       pdf: 'application/pdf',
       excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      csv: 'text/csv',
+      csv: 'text/csv; charset=utf-8',
     };
     const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' };
 
@@ -175,14 +183,18 @@ export class ReportsController {
       'Content-Type': mimeTypes[format],
       'Content-Disposition': `attachment; filename="${filename}.${extensions[format]}"`,
       'Content-Length': buffer.length,
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'Access-Control-Expose-Headers': 'Content-Disposition',
     });
 
-    return new StreamableFile(buffer);
+    res.send(buffer);
   }
 
   @Get('export/comprehensive')
   @ApiOperation({ summary: 'Export comprehensive report (Excel with multiple sheets)' })
-  async exportComprehensiveReport(@Res() res?: Response) {
+  async exportComprehensiveReport(@Res() res: Response) {
     const buffer = await this.reportsService.exportComprehensiveReport('excel');
 
     const filename = `bao-cao-tong-hop-${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -191,8 +203,12 @@ export class ReportsController {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="${filename}"`,
       'Content-Length': buffer.length,
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'Access-Control-Expose-Headers': 'Content-Disposition',
     });
 
-    return new StreamableFile(buffer);
+    res.send(buffer);
   }
 }

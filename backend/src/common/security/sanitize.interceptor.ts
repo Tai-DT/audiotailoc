@@ -38,21 +38,13 @@ export const SANITIZATION_PATTERNS = {
   ],
 
   // Path Traversal patterns
-  pathTraversal: [
-    /\.\.\//g,
-    /\.\.\\/g,
-    /%2e%2e/gi,
-  ],
+  pathTraversal: [/\.\.\//g, /\.\.\\/g, /%2e%2e/gi],
 
   // LDAP Injection patterns
-  ldapInjection: [
-    /[*()\\|&=]/g,
-  ],
+  ldapInjection: [/[*()\\|&=]/g],
 
   // NoSQL Injection patterns
-  noSqlInjection: [
-    /(\$where|\$regex|\$exists|\$gt|\$lt|\$ne|\$and|\$or|\$not)/gi,
-  ],
+  noSqlInjection: [/(\$where|\$regex|\$exists|\$gt|\$lt|\$ne|\$and|\$or|\$not)/gi],
 };
 
 /**
@@ -101,19 +93,19 @@ export class SanitizeInterceptor implements NestInterceptor {
     } catch (error) {
       this.logger.error(
         `Sanitization error: ${error instanceof Error ? error.message : 'unknown'}`,
-        error instanceof Error ? error.stack : ''
+        error instanceof Error ? error.stack : '',
       );
       throw new BadRequestException('Invalid or suspicious request detected');
     }
 
     return next.handle().pipe(
-      map((data) => {
+      map(data => {
         // Optionally sanitize response data if it contains user input
         return data;
       }),
-      catchError((error) => {
+      catchError(error => {
         return throwError(() => error);
-      })
+      }),
     );
   }
 
@@ -145,7 +137,7 @@ export class SanitizeInterceptor implements NestInterceptor {
       if (obj.length > 1000) {
         throw new BadRequestException('Array too large');
       }
-      return obj.map((item) => this.sanitizeObject(item, depth + 1));
+      return obj.map(item => this.sanitizeObject(item, depth + 1));
     }
 
     // Handle objects
@@ -252,9 +244,7 @@ export class SanitizeInterceptor implements NestInterceptor {
     ];
 
     const lowerKey = key.toLowerCase();
-    return dangerousKeys.some((dangerous) =>
-      lowerKey.includes(dangerous.toLowerCase())
-    );
+    return dangerousKeys.some(dangerous => lowerKey.includes(dangerous.toLowerCase()));
   }
 
   /**
@@ -316,22 +306,62 @@ export function sanitizeInput(input: string): string {
 
 /**
  * Utility function to sanitize HTML input (for rich text fields)
+ * Uses DOMPurify for comprehensive XSS protection
  */
 export function sanitizeHtml(html: string): string {
-  // This is a basic implementation. For production, use a library like DOMPurify
-  let sanitized = html;
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
 
-  // Remove script tags and content
-  sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '');
+  try {
+    // Use isomorphic-dompurify for server-side sanitization
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const createDOMPurify = require('isomorphic-dompurify');
+    const DOMPurify = createDOMPurify();
 
-  // Remove event handlers
-  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-  sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+    // Default allowed tags for rich text content
+    const allowedTags = [
+      'p', 'br', 'strong', 'em', 'u', 's', 'strike',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+      'a', 'img',
+      'blockquote', 'pre', 'code', 'kbd', 'samp',
+      'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+      'div', 'span', 'hr',
+      'abbr', 'cite', 'q', 'sub', 'sup', 'time',
+      'mark', 'del', 'ins'
+    ];
 
-  // Remove dangerous attributes
-  sanitized = sanitized.replace(/\s*(?:javascript|data|vbscript):/gi, '');
+    // Default allowed attributes
+    const allowedAttributes: Record<string, string[]> = {
+      a: ['href', 'title', 'target', 'rel', 'class'],
+      img: ['src', 'alt', 'title', 'width', 'height', 'class', 'loading'],
+      code: ['class'],
+      pre: ['class'],
+      '*': ['class', 'id']
+    };
 
-  return sanitized;
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: allowedTags,
+      ALLOWED_ATTR: Object.values(allowedAttributes).flat(),
+      ALLOW_DATA_ATTR: false,
+      ALLOW_ARIA_ATTR: true,
+      // Prevent XSS via event handlers
+      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+      // Remove dangerous protocols
+      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
+  } catch (error) {
+    // Fallback to basic sanitization if DOMPurify fails
+    let sanitized = html;
+    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '');
+    sanitized = sanitized.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+    sanitized = sanitized.replace(/javascript:/gi, '');
+    sanitized = sanitized.replace(/data:text\/html/gi, '');
+    return sanitized;
+  }
 }
 
 /**
@@ -346,7 +376,7 @@ export function escapeHtml(text: string): string {
     "'": '&#039;',
   };
 
-  return text.replace(/[&<>"']/g, (char) => map[char]);
+  return text.replace(/[&<>"']/g, char => map[char]);
 }
 
 /**

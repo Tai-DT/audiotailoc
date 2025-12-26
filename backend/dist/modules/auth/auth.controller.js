@@ -20,6 +20,8 @@ const auth_service_1 = require("./auth.service");
 const jwt_guard_1 = require("./jwt.guard");
 const users_service_1 = require("../users/users.service");
 const class_validator_1 = require("class-validator");
+const PASSWORD_REGEX = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
+const PASSWORD_MESSAGE = 'Password is too weak. It must contain at least one uppercase letter, one lowercase letter, one number or special character.';
 class RegisterDto {
 }
 __decorate([
@@ -27,8 +29,9 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterDto.prototype, "email", void 0);
 __decorate([
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(8),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(PASSWORD_REGEX, { message: PASSWORD_MESSAGE }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "password", void 0);
 __decorate([
@@ -70,8 +73,9 @@ __decorate([
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "token", void 0);
 __decorate([
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(8),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(PASSWORD_REGEX, { message: PASSWORD_MESSAGE }),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "newPassword", void 0);
 class ChangePasswordDto {
@@ -81,8 +85,9 @@ __decorate([
     __metadata("design:type", String)
 ], ChangePasswordDto.prototype, "currentPassword", void 0);
 __decorate([
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(8),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(PASSWORD_REGEX, { message: PASSWORD_MESSAGE }),
     __metadata("design:type", String)
 ], ChangePasswordDto.prototype, "newPassword", void 0);
 let AuthController = class AuthController {
@@ -94,7 +99,7 @@ let AuthController = class AuthController {
         return {
             authenticated: false,
             message: 'Authentication status endpoint',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
     }
     async register(dto) {
@@ -107,26 +112,32 @@ let AuthController = class AuthController {
             token: tokens.accessToken,
             refreshToken: tokens.refreshToken,
             expiresInMs,
-            user: { id: user.id, email: user.email, name: user.name }
+            user: { id: user.id, email: user.email, name: user.name },
         };
     }
     async login(dto) {
-        const tokens = await this.auth.login(dto).catch(() => {
-            throw new common_1.HttpException('Invalid credentials', common_1.HttpStatus.UNAUTHORIZED);
-        });
-        const user = await this.users.findById(tokens.userId);
-        const expiresInMs = 15 * 60 * 1000;
-        return {
-            token: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
-            expiresInMs,
-            user: {
-                id: user?.id,
-                email: user?.email,
-                name: user?.name,
-                role: user?.role ?? 'USER'
+        try {
+            const tokens = await this.auth.login(dto);
+            const user = await this.users.findById(tokens.userId);
+            const expiresInMs = 15 * 60 * 1000;
+            return {
+                token: tokens.accessToken,
+                refreshToken: tokens.refreshToken,
+                expiresInMs,
+                user: {
+                    id: user?.id,
+                    email: user?.email,
+                    name: user?.name,
+                    role: user?.role ?? 'USER',
+                },
+            };
+        }
+        catch (error) {
+            if (error instanceof Error && error.message.includes('Account is locked')) {
+                throw new common_1.HttpException(error.message, common_1.HttpStatus.UNAUTHORIZED);
             }
-        };
+            throw new common_1.HttpException('Invalid credentials', common_1.HttpStatus.UNAUTHORIZED);
+        }
     }
     async refresh(dto) {
         const tokens = await this.auth.refresh(dto.refreshToken).catch(() => {
@@ -135,7 +146,7 @@ let AuthController = class AuthController {
         const expiresInMs = 15 * 60 * 1000;
         return {
             ...tokens,
-            expiresInMs
+            expiresInMs,
         };
     }
     async forgotPassword(dto) {
@@ -154,7 +165,9 @@ let AuthController = class AuthController {
         const userId = req.user?.sub;
         if (!userId)
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
-        const _result = await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword).catch(() => {
+        const _result = await this.auth
+            .changePassword(userId, dto.currentPassword, dto.newPassword)
+            .catch(() => {
             throw new common_1.HttpException('Current password is incorrect', common_1.HttpStatus.BAD_REQUEST);
         });
         return { message: 'Password has been changed successfully' };
@@ -192,7 +205,7 @@ let AuthController = class AuthController {
         if (!userId) {
             throw new common_1.HttpException('User not authenticated', common_1.HttpStatus.UNAUTHORIZED);
         }
-        const updatedUser = await this.users.update(userId, updateData);
+        const updatedUser = await this.users.update(userId, updateData, req.user);
         return {
             id: updatedUser.id,
             email: updatedUser.email,
@@ -294,6 +307,7 @@ __decorate([
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService, users_service_1.UsersService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        users_service_1.UsersService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

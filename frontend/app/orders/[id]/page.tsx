@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -35,8 +34,8 @@ interface OrderDetailPageProps {
 const statusConfig = {
   PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-500', icon: AlertCircle },
   PROCESSING: { label: 'Đang xử lý', color: 'bg-blue-500', icon: Package },
-  COMPLETED: { label: 'Đã hoàn thành', color: 'bg-green-500', icon: CheckCircle },
-  CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
+  COMPLETED: { label: 'Đã hoàn thành', color: 'bg-success', icon: CheckCircle },
+  CANCELLED: { label: 'Đã hủy', color: 'bg-destructive', icon: XCircle },
 };
 
 function OrderDetailPageContent({ params }: OrderDetailPageProps) {
@@ -111,10 +110,10 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <StatusIcon className="h-5 w-5" />
-              <Badge className={statusConfig[order.status]?.color || 'bg-gray-500'}>
+              <Badge className={statusConfig[order.status]?.color || 'bg-muted-foreground'}>
                 {statusConfig[order.status]?.label || order.status}
               </Badge>
             </div>
@@ -199,7 +198,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
                     <span>Tạm tính:</span>
                     <span>{formatPrice(order.subtotalCents / 100)}</span>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <span>Phí vận chuyển:</span>
                     <span>
@@ -208,14 +207,14 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
                   </div>
 
                   {order.discountCents > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-success">
                       <span>Giảm giá:</span>
                       <span>-{formatPrice(order.discountCents / 100)}</span>
                     </div>
                   )}
 
                   <Separator />
-                  
+
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Tổng cộng:</span>
                     <span>{formatPrice(order.totalCents / 100)}</span>
@@ -238,7 +237,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
                       {order.payments?.[0]?.provider || 'Chưa xác định'}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <span>Trạng thái:</span>
                     <span className="font-medium">
@@ -298,21 +297,21 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
                   <p className="text-sm text-muted-foreground">
                     Liên hệ với chúng tôi nếu bạn có thắc mắc về đơn hàng này.
                   </p>
-                  
+
                   <div className="flex flex-col gap-2">
-                    <a 
-                      href="tel:+84123456789" 
+                    <a
+                      href="tel:0768426262"
                       className="flex items-center gap-2 text-sm hover:text-primary"
                     >
                       <Phone className="h-4 w-4" />
-                      0123 456 789
+                      0768 426 262
                     </a>
-                    <a 
-                      href="mailto:support@audiotailoc.vn" 
+                    <a
+                      href="mailto:audiotailoc@gmail.com"
                       className="flex items-center gap-2 text-sm hover:text-primary"
                     >
                       <Mail className="h-4 w-4" />
-                      support@audiotailoc.vn
+                      audiotailoc@gmail.com
                     </a>
                   </div>
                 </CardContent>

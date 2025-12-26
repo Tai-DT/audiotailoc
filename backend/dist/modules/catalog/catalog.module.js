@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CatalogModule = void 0;
+const inventory_module_1 = require("../inventory/inventory.module");
 const common_1 = require("@nestjs/common");
 const catalog_service_1 = require("./catalog.service");
 const catalog_controller_1 = require("./catalog.controller");
@@ -18,7 +19,7 @@ exports.CatalogModule = CatalogModule = __decorate([
     (0, common_1.Module)({
         controllers: [catalog_controller_1.CatalogController],
         providers: [catalog_service_1.CatalogService],
-        imports: [auth_module_1.AuthModule],
+        imports: [auth_module_1.AuthModule, inventory_module_1.InventoryModule],
     })
 ], CatalogModule);
 //# sourceMappingURL=catalog.module.js.map

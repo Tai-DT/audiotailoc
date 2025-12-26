@@ -31,10 +31,16 @@ export interface AddToCartData {
   quantity: number;
 }
 
+// Query keys
+export const cartQueryKeys = {
+  all: ['cart'] as const,
+  get: () => [...cartQueryKeys.all] as const,
+};
+
 // Hooks
 export function useCart() {
   return useQuery({
-    queryKey: ['cart'],
+    queryKey: cartQueryKeys.get(),
     queryFn: async () => {
       const response = await apiClient.get(API_ENDPOINTS.CART.GET);
       return handleApiResponse<Cart>(response);
@@ -53,7 +59,7 @@ export function useAddToCart() {
       return handleApiResponse<CartItem>(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
       toast.success('Đã thêm sản phẩm vào giỏ hàng!');
     },
     onError: (error: { message?: string }) => {
@@ -71,7 +77,7 @@ export function useUpdateCartItem() {
       return handleApiResponse<CartItem>(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: cartQueryKeys.get() });
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng');

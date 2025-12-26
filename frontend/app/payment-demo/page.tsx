@@ -77,7 +77,7 @@ export default function PaymentDemoPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin thanh toán...</p>
+          <p className="text-muted-foreground">Đang tải thông tin thanh toán...</p>
         </div>
       </div>
     );
@@ -113,9 +113,9 @@ export default function PaymentDemoPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
-            <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Thông tin thanh toán không hợp lệ</h2>
-            <p className="text-gray-600 mb-4">Không thể tìm thấy thông tin đơn hàng.</p>
+            <p className="text-muted-foreground mb-4">Không thể tìm thấy thông tin đơn hàng.</p>
             <Link href="/checkout">
               <Button>Quay lại thanh toán</Button>
             </Link>
@@ -139,7 +139,7 @@ export default function PaymentDemoPage() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold mb-2">Thanh toán PayOS</h1>
-            <p className="text-gray-600">Chọn phương thức thanh toán</p>
+            <p className="text-muted-foreground">Chọn phương thức thanh toán</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -153,29 +153,29 @@ export default function PaymentDemoPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Mã đơn hàng:</span>
+                  <span className="text-muted-foreground">Mã đơn hàng:</span>
                   <span className="font-medium">{paymentData.orderCode}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Khách hàng:</span>
+                  <span className="text-muted-foreground">Khách hàng:</span>
                   <span className="font-medium">{paymentData.buyerName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
+                  <span className="text-muted-foreground">Email:</span>
                   <span className="font-medium">{paymentData.buyerEmail}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Số điện thoại:</span>
+                  <span className="text-muted-foreground">Số điện thoại:</span>
                   <span className="font-medium">{paymentData.buyerPhone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Mô tả:</span>
+                  <span className="text-muted-foreground">Mô tả:</span>
                   <span className="font-medium">{paymentData.description}</span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Tổng tiền:</span>
-                    <span className="text-green-600">{paymentData.amount.toLocaleString('vi-VN')}₫</span>
+                    <span className="text-success">{paymentData.amount.toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
               </CardContent>
@@ -194,11 +194,11 @@ export default function PaymentDemoPage() {
                 <div className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Smartphone className="h-6 w-6 text-blue-600" />
+                      <Smartphone className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">QR Code (VNPay)</h3>
-                      <p className="text-sm text-gray-600">Quét mã QR để thanh toán</p>
+                      <p className="text-sm text-muted-foreground">Quét mã QR để thanh toán</p>
                     </div>
                   </div>
                   <Button
@@ -222,11 +222,11 @@ export default function PaymentDemoPage() {
                 <div className="border rounded-lg p-4 hover:border-green-500 cursor-pointer transition-colors">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <CreditCard className="h-6 w-6 text-green-600" />
+                      <CreditCard className="h-6 w-6 text-success" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">Chuyển khoản ngân hàng</h3>
-                      <p className="text-sm text-gray-600">Thanh toán qua ngân hàng</p>
+                      <p className="text-sm text-muted-foreground">Thanh toán qua ngân hàng</p>
                     </div>
                   </div>
                   <Button
@@ -247,9 +247,9 @@ export default function PaymentDemoPage() {
                 </div>
 
                 {/* Security Notice */}
-                <div className="text-center text-sm text-gray-600">
+                <div className="text-center text-sm text-muted-foreground">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Shield className="h-4 w-4 text-green-500" />
+                    <Shield className="h-4 w-4 text-success" />
                     <span>Thanh toán an toàn</span>
                   </div>
                   <p>Được bảo vệ bởi PayOS và VNPay</p>

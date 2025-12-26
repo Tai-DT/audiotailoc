@@ -24,7 +24,13 @@ let OrdersController = class OrdersController {
     list(page = '1', pageSize = '20', status) {
         return this.orders.list({ page: Number(page), pageSize: Number(pageSize), status });
     }
-    create(createOrderDto) {
+    create(createOrderDto, req) {
+        if (req?.user) {
+            createOrderDto.userId = req.user.sub || req.user.id;
+        }
+        else {
+            delete createOrderDto.userId;
+        }
         return this.orders.create(createOrderDto);
     }
     async getStats() {
@@ -32,11 +38,25 @@ let OrdersController = class OrdersController {
         return {
             totalOrders: totalOrders.total || 0,
             pendingOrders: totalOrders.total || 0,
-            completedOrders: 0
+            completedOrders: 0,
         };
     }
-    get(id) {
-        return this.orders.get(id);
+    async get(id, req) {
+        const adminKey = req.headers['x-admin-key'];
+        const isAdminByKey = adminKey && adminKey === process.env.ADMIN_API_KEY;
+        const order = await this.orders.get(id);
+        if (req?.user) {
+            const userId = req.user.sub || req.user.id;
+            const isAdminByRole = req.user.role === 'ADMIN' || req.user.email === process.env.ADMIN_EMAIL;
+            if (isAdminByRole || isAdminByKey || order.userId === userId) {
+                return order;
+            }
+            throw new common_1.ForbiddenException('You do not have permission to view this order');
+        }
+        if (isAdminByKey) {
+            return order;
+        }
+        throw new common_1.ForbiddenException('Unauthorized access to order details');
     }
     updateStatus(id, status) {
         return this.orders.updateStatus(id, status);
@@ -62,8 +82,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "create", null);
 __decorate([
@@ -74,12 +95,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], OrdersController.prototype, "getStats", null);
 __decorate([
-    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
 ], OrdersController.prototype, "get", null);
 __decorate([
     (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -388,7 +389,7 @@ export default function OrdersPage() {
       fetchOrders() // Refresh the list
     } catch (error) {
       console.error('Failed to delete order:', error)
-      // TODO: Show error toast
+      toast.error('Không thể xóa đơn hàng')
     }
   }
 
@@ -404,7 +405,7 @@ export default function OrdersPage() {
       fetchProducts()
     } catch (error) {
       console.error('Failed to update order status:', error)
-      // TODO: Show error toast
+      toast.error('Không thể cập nhật trạng thái đơn hàng')
     }
   }
 
@@ -457,7 +458,7 @@ export default function OrdersPage() {
       fetchProducts() // Refresh products to update stockQuantity in UI
     } catch (error) {
       console.error('Failed to create order:', error)
-      // TODO: Show error toast
+      toast.error('Không thể tạo đơn hàng')
     }
   }
 
@@ -509,13 +510,20 @@ export default function OrdersPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (error) {
+      return 'Invalid Date'
+    }
   }
 
   const totalPages = Math.ceil(totalOrders / pageSize)

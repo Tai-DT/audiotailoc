@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { PageBanner } from '@/components/ui/page-banner';
 import { usePromotions } from '@/lib/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +90,7 @@ export default function PromotionsPage() {
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-500 mb-4">
+            <h1 className="text-2xl font-bold text-destructive mb-4">
               Có lỗi xảy ra khi tải khuyến mãi
             </h1>
             <p className="text-muted-foreground">
@@ -290,7 +289,7 @@ export default function PromotionsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-blue-500" />
+                      <Clock className="h-5 w-5 text-primary" />
                       Thời hạn sử dụng
                     </CardTitle>
                   </CardHeader>
@@ -305,7 +304,7 @@ export default function PromotionsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Gift className="h-5 w-5 text-green-500" />
+                      <Gift className="h-5 w-5 text-success" />
                       Quyền lợi khách hàng
                     </CardTitle>
                   </CardHeader>

@@ -31,13 +31,13 @@ export default function ServiceOrdersPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'CANCELLED':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       case 'IN_PROGRESS':
-        return <Wrench className="h-4 w-4 text-blue-500" />;
+        return <Wrench className="h-4 w-4 text-primary" />;
       default:
-        return <PendingIcon className="h-4 w-4 text-yellow-500" />;
+        return <PendingIcon className="h-4 w-4 text-warning" />;
     }
   };
 

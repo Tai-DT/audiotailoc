@@ -1,5 +1,32 @@
 import type { NextConfig } from "next";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+const backendBase = apiUrl.replace(/\/api\/v1\/?$/, '');
+
+let backendImagePattern:
+  | {
+      protocol: 'http' | 'https';
+      hostname: string;
+      port: string;
+      pathname: string;
+    }
+  | undefined;
+
+try {
+  const backendUrl = new URL(backendBase);
+  const protocol = backendUrl.protocol.replace(':', '');
+  if (protocol === 'http' || protocol === 'https') {
+    backendImagePattern = {
+      protocol,
+      hostname: backendUrl.hostname,
+      port: backendUrl.port,
+      pathname: '/**',
+    };
+  }
+} catch {
+  // ignore invalid NEXT_PUBLIC_API_URL
+}
+
 const nextConfig: NextConfig = {
   // Turbopack configuration removed - not compatible with outputFileTracingRoot
   
@@ -91,13 +118,14 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // Only use rewrites in development to proxy API requests to backend
     if (process.env.NODE_ENV === 'development') {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
-      // Remove /api/v1 suffix if present to get base backend URL
-      const backendBase = backendUrl.replace(/\/api\/v1\/?$/, '');
       return [
         {
           source: '/api/v1/:path*',
           destination: `${backendBase}/api/v1/:path*`,
+        },
+        {
+          source: '/uploads/:path*',
+          destination: `${backendBase}/uploads/:path*`,
         },
       ];
     }
@@ -108,6 +136,19 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['axios'],
   images: {
     remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3010',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3010',
+        pathname: '/**',
+      },
+      ...(backendImagePattern ? [backendImagePattern] : []),
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',

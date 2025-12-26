@@ -9,7 +9,7 @@ export class CartService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
   ) {}
 
   // Guest Cart Management
@@ -31,12 +31,11 @@ export class CartService {
                 priceCents: true,
                 images: true,
                 imageUrl: true,
-
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
     this.logger.log(`Guest cart created: ${guestCart.id}`);
@@ -48,7 +47,7 @@ export class CartService {
       where: {
         id: cartId,
         userId: null, // Guest cart
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       include: {
         cart_items: {
@@ -60,12 +59,11 @@ export class CartService {
                 priceCents: true,
                 images: true,
                 imageUrl: true,
-
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!cart) {
@@ -77,12 +75,12 @@ export class CartService {
 
   async addToGuestCart(cartId: string, productId: string, quantity: number = 1) {
     // Check if guest cart exists
-    let cart = await this.prisma.carts.findFirst({
+    const cart = await this.prisma.carts.findFirst({
       where: {
         id: cartId,
         userId: null,
-        status: 'ACTIVE'
-      }
+        status: 'ACTIVE',
+      },
     });
 
     if (!cart) {
@@ -91,7 +89,7 @@ export class CartService {
 
     // Check if product exists and is available
     const product = await this.prisma.products.findUnique({
-      where: { id: productId }
+      where: { id: productId },
     });
 
     if (!product) {
@@ -100,7 +98,7 @@ export class CartService {
 
     // Check inventory stock availability
     const inventory = await this.prisma.inventory.findUnique({
-      where: { productId: productId }
+      where: { productId: productId },
     });
 
     if (!inventory) {
@@ -108,7 +106,9 @@ export class CartService {
     } else {
       const availableStock = inventory.stock - inventory.reserved;
       if (availableStock < quantity) {
-        throw new NotFoundException(`Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`);
+        throw new NotFoundException(
+          `Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`,
+        );
       }
     }
 
@@ -116,15 +116,15 @@ export class CartService {
     const existingItem = await this.prisma.cart_items.findFirst({
       where: {
         cartId: cart.id,
-        productId
-      }
+        productId,
+      },
     });
 
     if (existingItem) {
       // Update quantity
       await this.prisma.cart_items.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity }
+        data: { quantity: existingItem.quantity + quantity },
       });
     } else {
       // Add new item
@@ -135,8 +135,8 @@ export class CartService {
           carts: { connect: { id: cart.id } },
           products: { connect: { id: productId } },
           quantity,
-          price: product.priceCents
-        }
+          price: product.priceCents,
+        },
       });
     }
 
@@ -146,7 +146,7 @@ export class CartService {
 
   async updateGuestCartItem(cartId: string, productId: string, quantity: number) {
     const cart = await this.prisma.carts.findFirst({
-      where: { id: cartId, userId: null, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -156,8 +156,8 @@ export class CartService {
     const cartItem = await this.prisma.cart_items.findFirst({
       where: {
         cartId: cart.id,
-        productId
-      }
+        productId,
+      },
     });
 
     if (!cartItem) {
@@ -173,13 +173,13 @@ export class CartService {
     if (quantity <= 0) {
       // Remove item
       await this.prisma.cart_items.delete({
-        where: { id: cartItem.id }
+        where: { id: cartItem.id },
       });
     } else {
       // Update quantity
       await this.prisma.cart_items.update({
         where: { id: cartItem.id },
-        data: { quantity }
+        data: { quantity },
       });
     }
 
@@ -188,7 +188,7 @@ export class CartService {
 
   async removeFromGuestCart(cartId: string, productId: string) {
     const cart = await this.prisma.carts.findFirst({
-      where: { id: cartId, userId: null, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -207,7 +207,7 @@ export class CartService {
 
   async clearGuestCart(cartId: string) {
     const cart = await this.prisma.carts.findFirst({
-      where: { id: cartId, userId: null, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -227,7 +227,7 @@ export class CartService {
   // Convert guest cart to user cart
   async convertGuestCartToUserCart(cartId: string, userId: string) {
     const guestCart = await this.prisma.carts.findFirst({
-      where: { id: cartId, userId: null, status: 'ACTIVE' }
+      where: { id: cartId, userId: null, status: 'ACTIVE' },
     });
 
     if (!guestCart) {
@@ -236,28 +236,28 @@ export class CartService {
 
     // Check if user already has an active cart
     const existingUserCart = await this.prisma.carts.findFirst({
-      where: { userId, status: 'ACTIVE' }
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (existingUserCart) {
       // Merge guest cart items into existing user cart
       const guestItems = await this.prisma.cart_items.findMany({
-        where: { cartId: guestCart.id }
+        where: { cartId: guestCart.id },
       });
 
       for (const item of guestItems) {
         const existingItem = await this.prisma.cart_items.findFirst({
           where: {
             cartId: existingUserCart.id,
-            productId: item.productId
-          }
+            productId: item.productId,
+          },
         });
 
         if (existingItem) {
           // Update quantity
           await this.prisma.cart_items.update({
             where: { id: existingItem.id },
-            data: { quantity: existingItem.quantity + item.quantity }
+            data: { quantity: existingItem.quantity + item.quantity },
           });
         } else {
           // Add new item
@@ -268,15 +268,15 @@ export class CartService {
               carts: { connect: { id: existingUserCart.id } },
               products: { connect: { id: item.productId } },
               quantity: item.quantity,
-              price: item.price
-            }
+              price: item.price,
+            },
           });
         }
       }
 
       // Delete guest cart
       await this.prisma.carts.delete({
-        where: { id: guestCart.id }
+        where: { id: guestCart.id },
       });
 
       return this.getUserCart(userId);
@@ -285,8 +285,8 @@ export class CartService {
       await this.prisma.carts.update({
         where: { id: guestCart.id },
         data: {
-          userId
-        }
+          userId,
+        },
       });
 
       return this.getUserCart(userId);
@@ -298,7 +298,7 @@ export class CartService {
     const cart = await this.prisma.carts.findFirst({
       where: {
         userId,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       include: {
         cart_items: {
@@ -310,11 +310,11 @@ export class CartService {
                 priceCents: true,
                 images: true,
                 // inventory: { select: { stock: true } }, // Removed as not in schema
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!cart) {
@@ -331,7 +331,7 @@ export class CartService {
         id: randomUUID(),
         updatedAt: new Date(),
         userId,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       include: {
         cart_items: {
@@ -343,11 +343,11 @@ export class CartService {
                 priceCents: true,
                 images: true,
                 // inventory: { select: { stock: true } }, // Removed as not in schema
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
     this.logger.log(`User cart created: ${userId}`);
@@ -356,7 +356,7 @@ export class CartService {
 
   async addToUserCart(userId: string, productId: string, quantity: number = 1) {
     let cart = await this.prisma.carts.findFirst({
-      where: { userId, status: 'ACTIVE' }
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -368,7 +368,7 @@ export class CartService {
     }
 
     const product = await this.prisma.products.findUnique({
-      where: { id: productId }
+      where: { id: productId },
     });
 
     if (!product) {
@@ -381,14 +381,14 @@ export class CartService {
     const existingItem = await this.prisma.cart_items.findFirst({
       where: {
         cartId: cart.id,
-        productId
-      }
+        productId,
+      },
     });
 
     if (existingItem) {
       await this.prisma.cart_items.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity }
+        data: { quantity: existingItem.quantity + quantity },
       });
     } else {
       await this.prisma.cart_items.create({
@@ -398,8 +398,8 @@ export class CartService {
           carts: { connect: { id: cart.id } },
           products: { connect: { id: productId } },
           quantity,
-          price: product.priceCents
-        }
+          price: product.priceCents,
+        },
       });
     }
 
@@ -408,7 +408,7 @@ export class CartService {
 
   async updateUserCartItem(userId: string, productId: string, quantity: number) {
     const cart = await this.prisma.carts.findFirst({
-      where: { userId, status: 'ACTIVE' }
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -418,8 +418,8 @@ export class CartService {
     const cartItem = await this.prisma.cart_items.findFirst({
       where: {
         cartId: cart.id,
-        productId
-      }
+        productId,
+      },
     });
 
     if (!cartItem) {
@@ -434,12 +434,12 @@ export class CartService {
 
     if (quantity <= 0) {
       await this.prisma.cart_items.delete({
-        where: { id: cartItem.id }
+        where: { id: cartItem.id },
       });
-      } else {
+    } else {
       await this.prisma.cart_items.update({
         where: { id: cartItem.id },
-        data: { quantity }
+        data: { quantity },
       });
     }
 
@@ -448,7 +448,7 @@ export class CartService {
 
   async removeFromUserCart(userId: string, productId: string) {
     const cart = await this.prisma.carts.findFirst({
-      where: { userId, status: 'ACTIVE' }
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -467,7 +467,7 @@ export class CartService {
 
   async clearUserCart(userId: string) {
     const cart = await this.prisma.carts.findFirst({
-      where: { userId, status: 'ACTIVE' }
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!cart) {
@@ -487,7 +487,7 @@ export class CartService {
   // Helper method to calculate cart totals
   private calculateCartTotals(cart: any) {
     const subtotal = cart.items.reduce((sum: number, item: any) => {
-      return sum + ((item.price ?? item.products?.priceCents ?? 0) * item.quantity);
+      return sum + (item.price ?? item.products?.priceCents ?? 0) * item.quantity;
     }, 0);
 
     const itemCount = cart.items.reduce((sum: number, item: any) => {
@@ -502,7 +502,7 @@ export class CartService {
       tax: Math.round(subtotal * 0.1),
       // Add shipping calculation (free shipping for orders > 500k VND)
       shipping: subtotal > 500000 ? 0 : 30000,
-      total: subtotal + Math.round(subtotal * 0.1) + (subtotal > 500000 ? 0 : 30000)
+      total: subtotal + Math.round(subtotal * 0.1) + (subtotal > 500000 ? 0 : 30000),
     };
   }
 
@@ -513,14 +513,14 @@ export class CartService {
       where: {
         userId: null, // Guest carts
         createdAt: { lt: sevenDaysAgo },
-        status: 'ACTIVE'
-      }
+        status: 'ACTIVE',
+      },
     });
 
     for (const cart of expiredCarts) {
       await this.prisma.carts.update({
         where: { id: cart.id },
-        data: { status: 'ABANDONED' }
+        data: { status: 'ABANDONED' },
       });
     }
 
@@ -539,7 +539,10 @@ export class CartService {
       where: { cartId: cart.id },
       include: { products: true },
     });
-    const subtotalCents = items.reduce((sum, i) => sum + Number(i.price || i.products.priceCents) * i.quantity, 0);
+    const subtotalCents = items.reduce(
+      (sum, i) => sum + Number(i.price || i.products.priceCents) * i.quantity,
+      0,
+    );
     return { cart, items, subtotalCents };
   }
 }

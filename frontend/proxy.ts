@@ -22,6 +22,15 @@ export function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl
 
+    // Handle malformed requests like `/[` (observed from some embedded browsers/tools)
+    // Redirect to home to avoid noisy 404s.
+    if (pathname === '/[') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      url.search = ''
+      return NextResponse.redirect(url, 308)
+    }
+
     const tokenCookie = request.cookies.get('audiotailoc_token')
     const authHeader = request.headers.get('Authorization')
     const token = tokenCookie?.value || (authHeader ? authHeader.replace('Bearer ', '') : undefined)
@@ -54,40 +63,13 @@ export function proxy(request: NextRequest) {
         isAuthenticated,
         tokenLength: token?.length || 0
       })
-      // #region agent log
-      // Note: Server-side logging - cannot use fetch, use console.log only
-      // Logs will appear in server console
-      // #endregion
     }
 
     if (isProtectedRoute && !isAuthenticated) {
       const url = new URL('/auth/login', request.url)
       url.searchParams.set('redirect', pathname)
-      // #region agent log
-      console.log('[Proxy] Redirecting to login:', {
-        pathname,
-        redirectUrl: url.toString(),
-        hasToken: !!token,
-        hasUser: !!user,
-        tokenCookie: tokenCookie?.value ? 'present' : 'missing',
-        userCookie: userCookie?.value ? 'present' : 'missing',
-        allCookies: request.cookies.getAll().map(c => c.name)
-      })
-      // #endregion
       return NextResponse.redirect(url)
     }
-
-    // #region agent log
-    if (isProtectedRoute && isAuthenticated) {
-      console.log('[Proxy] Allowing access to protected route:', {
-        pathname,
-        hasToken: !!token,
-        hasUser: !!user,
-        tokenLength: token?.length || 0,
-        userRole: user?.role
-      })
-    }
-    // #endregion
 
     if (isAdminRoute && !isAuthenticated) {
       const url = new URL('/auth/login', request.url)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,38 +41,53 @@ export default function EmailTemplatesPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview')
 
-  useEffect(() => {
-    fetchTemplates()
-  }, [])
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get<EmailTemplate[]>('/email/templates')
+      const response = await apiClient.get<unknown>('/email/templates')
       if (response.success) {
-        setTemplates(response.data)
-        // Select first template by default
-        if (response.data.length > 0 && !selectedTemplate) {
-          handleSelectTemplate(response.data[0].id)
-        }
+        const data = response.data as unknown
+        const list =
+          Array.isArray(data) ? data :
+          Array.isArray((data as any)?.templates) ? (data as any).templates :
+          Array.isArray((data as any)?.items) ? (data as any).items :
+          []
+
+        setTemplates(list as EmailTemplate[])
+        // Select first template by default - handled separately
+        return list
       }
+      return []
     } catch (error) {
       toast({
         title: "Lỗi",
         description: "Không thể tải danh sách mẫu email",
         variant: "destructive",
       })
+      return []
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast])
 
-  const handleSelectTemplate = async (id: string) => {
+  const handleSelectTemplate = useCallback(async (id: string) => {
     try {
       setIsPreviewLoading(true)
-      const response = await apiClient.get<TemplateDetail>(`/email/templates/${id}`)
+      const response = await apiClient.get<unknown>(`/email/templates/${id}`)
       if (response.success) {
-        setSelectedTemplate(response.data)
+        const raw = response.data as Record<string, unknown>
+        if (raw && typeof raw === "object") {
+          setSelectedTemplate({
+            id: (raw.id as string) ?? id,
+            name: (raw.name as string) ?? "Email Template",
+            type: (raw.type as string) ?? "system",
+            category: (raw.category as string) ?? "general",
+            subject: (raw.subject as string) ?? "",
+            lastModified: (raw.lastModified as string) ?? new Date().toISOString(),
+            isActive: (raw.isActive as boolean) ?? true,
+            htmlContent: (raw.htmlContent as string) ?? (raw.html as string) ?? "<p>(Không có nội dung)</p>",
+          })
+        }
       }
     } catch (error) {
       toast({
@@ -83,7 +98,18 @@ export default function EmailTemplatesPage() {
     } finally {
       setIsPreviewLoading(false)
     }
-  }
+  }, [toast])
+
+  // Load templates on mount
+  useEffect(() => {
+    fetchTemplates().then((list) => {
+      // Select first template by default after loading
+      if (Array.isArray(list) && list.length > 0) {
+        const firstId = (list[0] as EmailTemplate).id
+        void handleSelectTemplate(firstId)
+      }
+    })
+  }, [fetchTemplates, handleSelectTemplate])
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

@@ -13,7 +13,6 @@ import {
   Eye,
   Trash2,
   ShoppingBag,
-  Star,
   Package
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -71,7 +70,7 @@ function WishlistPageContent() {
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4 text-red-600">Có lỗi xảy ra</h1>
+            <h1 className="text-2xl font-bold mb-4 text-destructive">Có lỗi xảy ra</h1>
             <p className="text-muted-foreground">Không thể tải danh sách yêu thích</p>
           </div>
         </main>
@@ -128,102 +127,97 @@ function WishlistPageContent() {
                 const productPriceCents = product?.priceCents || 0;
                 const productOriginalPriceCents = product?.originalPriceCents;
                 const productStockQuantity = product?.stockQuantity || 0;
-                
-                return (
-                <Card key={itemId} className="group hover:shadow-lg transition-shadow">
-                  <CardContent className="p-0">
-                    {/* Product Image */}
-                    <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                      <Image
-                        src={productImageUrl || '/placeholder-product.svg'}
-                        alt={productName}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/placeholder-product.svg';
-                        }}
-                      />
-                      <div className="absolute top-3 right-3">
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="w-8 h-8 rounded-full"
-                          onClick={() => handleRemoveFromWishlist(productId)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
 
-                    {/* Product Info */}
-                    <div className="p-4">
-                      {productSlug ? (
-                        <Link href={`/products/${productSlug}`}>
-                          <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
+                return (
+                  <Card key={itemId} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-0">
+                      {/* Product Image */}
+                      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                        <Image
+                          src={productImageUrl || '/placeholder-product.svg'}
+                          alt={productName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-product.svg';
+                          }}
+                        />
+                        <div className="absolute top-3 right-3">
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="w-8 h-8 rounded-full"
+                            onClick={() => handleRemoveFromWishlist(productId)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="p-4">
+                        {productSlug ? (
+                          <Link href={`/products/${productSlug}`}>
+                            <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
+                              {productName}
+                            </h3>
+                          </Link>
+                        ) : (
+                          <h3 className="font-semibold text-lg mb-2 line-clamp-2">
                             {productName}
                           </h3>
-                        </Link>
-                      ) : (
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                          {productName}
-                        </h3>
-                      )}
+                        )}
 
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-muted-foreground">
-                            4.5
-                          </span>
-                        </div>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-sm text-muted-foreground">
-                          0 đánh giá
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex flex-col">
-                          <span className="text-lg font-bold text-green-600">
-                            {formatPrice((productPriceCents || 0) / 100)}
-                          </span>
-                          {productOriginalPriceCents && productPriceCents && productOriginalPriceCents > productPriceCents && (
-                            <span className="text-sm text-muted-foreground line-through">
-                              {formatPrice(productOriginalPriceCents / 100)}
-                            </span>
+                        <div className="flex items-center space-x-2 mb-3">
+                          {product?.category?.name && (
+                            <Badge variant="outline" className="text-xs">
+                              {product.category.name}
+                            </Badge>
                           )}
                         </div>
-                        {productStockQuantity > 0 ? (
-                          <Badge variant="secondary" className="text-green-600">
-                            <Package className="w-3 h-3 mr-1" />
-                            Còn hàng
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive">
-                            Hết hàng
-                          </Badge>
-                        )}
-                      </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex space-x-2">
-                        <Button
-                          className="flex-1"
-                          onClick={() => handleAddToCart(productId)}
-                          disabled={productStockQuantity === 0}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          Thêm vào giỏ
-                        </Button>
-                        {productSlug && (
-                          <Button variant="outline" size="icon" asChild>
-                            <Link href={`/products/${productSlug}`}>
-                              <Eye className="w-4 h-4" />
-                            </Link>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex flex-col">
+                            <span className="text-lg font-bold text-success">
+                              {formatPrice((productPriceCents || 0) / 100)}
+                            </span>
+                            {productOriginalPriceCents && productPriceCents && productOriginalPriceCents > productPriceCents && (
+                              <span className="text-sm text-muted-foreground line-through">
+                                {formatPrice(productOriginalPriceCents / 100)}
+                              </span>
+                            )}
+                          </div>
+                          {productStockQuantity > 0 ? (
+                            <Badge variant="secondary" className="text-success">
+                              <Package className="w-3 h-3 mr-1" />
+                              Còn hàng
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive">
+                              Hết hàng
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2">
+                          <Button
+                            className="flex-1"
+                            onClick={() => handleAddToCart(productId)}
+                            disabled={productStockQuantity === 0}
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Thêm vào giỏ
                           </Button>
-                        )}
-                      </div>
+                          {productSlug && (
+                            <Button variant="outline" size="icon" asChild>
+                              <Link href={`/products/${productSlug}`}>
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

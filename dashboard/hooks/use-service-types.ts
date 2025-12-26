@@ -25,7 +25,6 @@ export function useServiceTypes() {
       setLoading(true)
       setError(null)
       const response = await apiClient.get<ServiceType[]>('/service-types')
-      console.log('[useServiceTypes] GET /service-types response:', response)
       setServiceTypes(response.data || [])
     } catch (err) {
       setError('Không thể tải danh sách loại dịch vụ')
@@ -38,7 +37,6 @@ export function useServiceTypes() {
   const createServiceType = async (data: Omit<ServiceType, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const response = await apiClient.post<ServiceType>('/service-types', data)
-      console.log('[useServiceTypes] POST /service-types response:', response)
       setServiceTypes(prev => [...prev, response.data])
       toast.success('Tạo loại dịch vụ thành công')
       return response.data
@@ -54,7 +52,6 @@ export function useServiceTypes() {
   const updateServiceType = async (id: string, data: Partial<ServiceType>) => {
     try {
       const response = await apiClient.patch<ServiceType>(`/service-types/${id}`, data)
-      console.log('[useServiceTypes] PATCH /service-types/:id response:', response)
       setServiceTypes(prev => prev.map(type => type.id === id ? response.data : type))
       toast.success('Cập nhật loại dịch vụ thành công')
       return response.data
@@ -84,7 +81,6 @@ export function useServiceTypes() {
       const response = await apiClient.patch<ServiceType>(`/service-types/${id}`, {
         isActive: !isActive
       })
-      console.log('[useServiceTypes] PATCH /service-types/:id response:', response)
       setServiceTypes(prev => prev.map(type => type.id === id ? response.data : type))
       toast.success(`Loại dịch vụ đã ${!isActive ? 'kích hoạt' : 'ngừng hoạt động'}`)
       return response.data

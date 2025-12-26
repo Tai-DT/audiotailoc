@@ -213,7 +213,7 @@ export class ExportPdfService {
   private addPageNumbers(doc: PDFKit.PDFDocument): void {
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
-      doc.switchToPage(i);
+      doc.switchToPage(range.start + i);
       doc
         .fontSize(8)
         .text(`Trang ${i + 1} / ${range.count}`, 50, doc.page.height - 30, { align: 'right' });

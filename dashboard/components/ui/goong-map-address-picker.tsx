@@ -14,9 +14,9 @@ interface GoongMapAddressPickerProps {
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     goongjs: any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     GoongGeocoder: any
   }
 }
@@ -42,11 +42,11 @@ export function GoongMapAddressPicker({
 
     try {
       const response = await apiClient.geocodeAddress(query)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const data = response.data as any
 
       if (data?.predictions) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         setSuggestions(data.predictions.map((item: any) => ({
           description: item.description,
           place_id: item.place_id

@@ -28,6 +28,8 @@ export declare class FilesService {
     private readonly cdnUrl;
     constructor(config: ConfigService, prisma: PrismaService, cloudinary: CloudinaryService);
     private ensureUploadDir;
+    private readonly DANGEROUS_EXTENSIONS;
+    private readonly DEFAULT_ALLOWED_EXTENSIONS;
     uploadFile(file: Express.Multer.File, options?: FileValidationOptions, metadata?: Record<string, any>): Promise<FileUploadResult>;
     uploadMultipleFiles(files: Express.Multer.File[], options?: FileValidationOptions, metadata?: Record<string, any>): Promise<FileUploadResult[]>;
     uploadProductImage(file: Express.Multer.File, productId: string): Promise<FileUploadResult>;

@@ -19,6 +19,7 @@ export declare class SecurityService {
     private readonly logger;
     private readonly loginAttempts;
     private readonly securityConfig;
+    private readonly disableLoginLockout;
     constructor(config: ConfigService);
     hashPassword(password: string): Promise<string>;
     verifyPassword(password: string, hash: string): Promise<boolean>;

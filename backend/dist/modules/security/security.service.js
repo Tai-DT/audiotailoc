@@ -53,6 +53,11 @@ let SecurityService = SecurityService_1 = class SecurityService {
         this.config = config;
         this.logger = new common_1.Logger(SecurityService_1.name);
         this.loginAttempts = new Map();
+        const nodeEnv = (this.config.get('NODE_ENV') || 'development').toLowerCase();
+        const disableLoginLockoutEnv = (this.config.get('DISABLE_LOGIN_LOCKOUT') || '').toLowerCase();
+        this.disableLoginLockout =
+            disableLoginLockoutEnv === 'true' ||
+                (nodeEnv === 'development' && disableLoginLockoutEnv !== 'false');
         this.securityConfig = {
             maxLoginAttempts: this.config.get('MAX_LOGIN_ATTEMPTS') || 5,
             lockoutDuration: this.config.get('LOCKOUT_DURATION') || 15,
@@ -114,6 +119,11 @@ let SecurityService = SecurityService_1 = class SecurityService {
         };
     }
     recordLoginAttempt(identifier, success) {
+        if (this.disableLoginLockout) {
+            if (this.loginAttempts.has(identifier))
+                this.loginAttempts.delete(identifier);
+            return true;
+        }
         const now = new Date();
         const attempt = this.loginAttempts.get(identifier);
         if (!attempt) {
@@ -144,6 +154,8 @@ let SecurityService = SecurityService_1 = class SecurityService {
         return true;
     }
     isAccountLocked(identifier) {
+        if (this.disableLoginLockout)
+            return false;
         const attempt = this.loginAttempts.get(identifier);
         if (!attempt)
             return false;
@@ -156,6 +168,8 @@ let SecurityService = SecurityService_1 = class SecurityService {
         return attempt.count >= this.securityConfig.maxLoginAttempts;
     }
     getRemainingLockoutTime(identifier) {
+        if (this.disableLoginLockout)
+            return 0;
         const attempt = this.loginAttempts.get(identifier);
         if (!attempt)
             return 0;

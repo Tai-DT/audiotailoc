@@ -12,40 +12,54 @@ import { ArrowLeft, Calendar, Clock, User, Phone, MapPin, Wrench, FileText } fro
 
 interface Booking {
   id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  service: {
+  userId: string;
+  serviceId: string;
+  technicianId?: string | null;
+  users: {
+    id: string;
     name: string;
-    serviceType: {
+    email?: string;
+    phone?: string | null;
+  };
+  services: {
+    id: string;
+    name: string;
+    slug: string;
+    basePriceCents?: number;
+    type?: {
       name: string;
-    };
+    } | null;
   };
-  technician?: {
+  technicians?: {
+    id: string;
     name: string;
-  };
-  scheduledDate: string;
+  } | null;
+  scheduledAt: string;
   scheduledTime: string;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
-  notes?: string;
+  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  notes?: string | null;
+  address?: string | null;
+  coordinates?: { lat: number; lng: number } | null;
+  estimatedCosts?: number | null;
+  actualCosts?: number | null;
   createdAt: string;
   updatedAt: string;
 }
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-orange-100 text-orange-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  CONFIRMED: 'bg-blue-100 text-blue-800',
+  IN_PROGRESS: 'bg-orange-100 text-orange-800',
+  COMPLETED: 'bg-green-100 text-green-800',
+  CANCELLED: 'bg-red-100 text-red-800',
 };
 
 const statusLabels = {
-  pending: 'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  in_progress: 'Đang thực hiện',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
+  PENDING: 'Chờ xác nhận',
+  CONFIRMED: 'Đã xác nhận',
+  IN_PROGRESS: 'Đang thực hiện',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
 };
 
 export default function BookingDetailPage() {
@@ -60,7 +74,9 @@ export default function BookingDetailPage() {
     try {
       const response = await fetch(`/api/bookings/${params.id}`);
       if (response.ok) {
-        const data = await response.json();
+        const json = await response.json();
+        // Handle wrapped response { success, data } or direct data
+        const data = json.data || json;
         setBooking(data);
         setNotes(data.notes || '');
       }
@@ -173,23 +189,25 @@ export default function BookingDetailPage() {
                   <Label className="text-sm font-medium">Thời gian đặt lịch</Label>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(booking.scheduledDate).toLocaleDateString('vi-VN')}
+                    {booking.scheduledAt ? new Date(booking.scheduledAt).toLocaleDateString('vi-VN') : 'N/A'}
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    {booking.scheduledTime}
+                    {booking.scheduledTime || 'N/A'}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Loại dịch vụ</Label>
+                  <Label className="text-sm font-medium">Dịch vụ</Label>
                   <div className="flex items-center gap-2">
                     <Wrench className="h-4 w-4" />
-                    {booking.service?.serviceType?.name || 'N/A'}
+                    {booking.services?.name || 'N/A'}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    Dịch vụ: {booking.service?.name}
-                  </div>
+                  {booking.services?.type?.name && (
+                    <div className="text-sm text-gray-600">
+                      Loại: {booking.services.type.name}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -199,7 +217,7 @@ export default function BookingDetailPage() {
                 <Label className="text-sm font-medium">Kỹ thuật viên</Label>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {booking.technician?.name || 'Chưa phân công'}
+                  {booking.technicians?.name || 'Chưa phân công'}
                 </div>
               </div>
             </CardContent>
@@ -215,7 +233,7 @@ export default function BookingDetailPage() {
                 <Label className="text-sm font-medium">Tên khách hàng</Label>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {booking.customerName}
+                  {booking.users?.name || 'N/A'}
                 </div>
               </div>
 
@@ -223,7 +241,7 @@ export default function BookingDetailPage() {
                 <Label className="text-sm font-medium">Số điện thoại</Label>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  {booking.customerPhone}
+                  {booking.users?.phone || 'N/A'}
                 </div>
               </div>
 
@@ -231,7 +249,7 @@ export default function BookingDetailPage() {
                 <Label className="text-sm font-medium">Địa chỉ</Label>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  {booking.customerAddress}
+                  {booking.address || 'N/A'}
                 </div>
               </div>
             </CardContent>
@@ -270,9 +288,9 @@ export default function BookingDetailPage() {
               <CardTitle>Thao tác</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {booking.status === 'pending' && (
+              {booking.status === 'PENDING' && (
                 <Button
-                  onClick={() => updateBookingStatus('confirmed')}
+                  onClick={() => updateBookingStatus('CONFIRMED')}
                   disabled={updating}
                   className="w-full"
                 >
@@ -280,9 +298,9 @@ export default function BookingDetailPage() {
                 </Button>
               )}
 
-              {booking.status === 'confirmed' && (
+              {booking.status === 'CONFIRMED' && (
                 <Button
-                  onClick={() => updateBookingStatus('in_progress')}
+                  onClick={() => updateBookingStatus('IN_PROGRESS')}
                   disabled={updating}
                   className="w-full"
                 >
@@ -290,9 +308,9 @@ export default function BookingDetailPage() {
                 </Button>
               )}
 
-              {booking.status === 'in_progress' && (
+              {booking.status === 'IN_PROGRESS' && (
                 <Button
-                  onClick={() => updateBookingStatus('completed')}
+                  onClick={() => updateBookingStatus('COMPLETED')}
                   disabled={updating}
                   className="w-full"
                   variant="default"
@@ -301,9 +319,9 @@ export default function BookingDetailPage() {
                 </Button>
               )}
 
-              {booking.status !== 'completed' && booking.status !== 'cancelled' && (
+              {booking.status !== 'COMPLETED' && booking.status !== 'CANCELLED' && (
                 <Button
-                  onClick={() => updateBookingStatus('cancelled')}
+                  onClick={() => updateBookingStatus('CANCELLED')}
                   disabled={updating}
                   variant="destructive"
                   className="w-full"

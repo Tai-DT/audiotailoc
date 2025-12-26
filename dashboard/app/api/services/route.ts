@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3010'
+// Standardized: Use NEXT_PUBLIC_API_URL (includes /api/v1)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,15 +11,16 @@ export async function GET(request: NextRequest) {
       if (v) query.append(k, v)
     }
 
-    const backendUrl = `${BACKEND_URL}/api/v1/services${query.toString() ? `?${query.toString()}` : ''}`
+    const backendUrl = `${API_BASE_URL}/services${query.toString() ? `?${query.toString()}` : ''}`
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     // Forward Authorization header if present
     const auth = request.headers.get('Authorization')
     if (auth) headers['Authorization'] = auth
 
+    // SECURITY: Prefer server-side only ADMIN_API_KEY over NEXT_PUBLIC_* to avoid exposing in client bundle
     // Forward admin key from env if present
-    const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY
+    const adminKey = process.env.ADMIN_API_KEY || process.env.NEXT_PUBLIC_ADMIN_API_KEY
     if (adminKey) headers['X-Admin-Key'] = adminKey
 
     const response = await fetch(backendUrl, { headers })

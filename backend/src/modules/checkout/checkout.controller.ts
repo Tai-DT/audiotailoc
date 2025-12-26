@@ -4,7 +4,8 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { IsOptional, IsString } from 'class-validator';
 
 class CheckoutDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   promotionCode?: string;
 
   // shippingAddress will be any JSON from frontend
@@ -17,7 +18,9 @@ export class CheckoutController {
 
   @Post('create-order')
   async create(@Request() req: any, @Body() dto: CheckoutDto) {
-    const order = await this.checkout.createOrder(req.user?.sub, { promotionCode: dto.promotionCode });
+    const order = await this.checkout.createOrder(req.user?.sub, {
+      promotionCode: dto.promotionCode,
+    });
     return { order };
   }
 

@@ -16,6 +16,56 @@ let ProjectsService = class ProjectsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    normalizeStringArrayField(value) {
+        if (value === undefined || value === null)
+            return undefined;
+        if (Array.isArray(value)) {
+            const items = value
+                .map(v => (v === null || v === undefined ? '' : String(v).trim()))
+                .filter(v => v && v !== '[' && v !== ']');
+            return items.length ? JSON.stringify(items) : undefined;
+        }
+        if (typeof value !== 'string')
+            return undefined;
+        const trimmed = value.trim();
+        if (!trimmed)
+            return undefined;
+        if (trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    const items = parsed
+                        .map(v => (v === null || v === undefined ? '' : String(v).trim()))
+                        .filter(v => v && v !== '[' && v !== ']');
+                    return items.length ? JSON.stringify(items) : undefined;
+                }
+                if (typeof parsed === 'string') {
+                    const item = parsed.trim();
+                    return item && item !== '[' && item !== ']' ? JSON.stringify([item]) : undefined;
+                }
+            }
+            catch {
+                if (trimmed === '[' || trimmed === '[]')
+                    return undefined;
+            }
+        }
+        const parts = trimmed
+            .split(',')
+            .map(p => p.trim())
+            .filter(p => p && p !== '[' && p !== ']');
+        return parts.length ? JSON.stringify(parts) : undefined;
+    }
+    normalizeProjectJsonFields(data) {
+        const jsonFields = ['technologies', 'features', 'images', 'tags', 'galleryImages'];
+        for (const field of jsonFields) {
+            if (data[field] === undefined)
+                continue;
+            const normalized = this.normalizeStringArrayField(data[field]);
+            if (normalized !== undefined) {
+                data[field] = normalized;
+            }
+        }
+    }
     async findAll(params) {
         const { page = 1, limit = 10, status, featured, category } = params;
         const skip = (page - 1) * limit;
@@ -25,59 +75,113 @@ let ProjectsService = class ProjectsService {
         if (status) {
             where.status = status;
         }
-        if (featured !== undefined) {
-            where.isFeatured = featured;
-        }
         if (category) {
             where.category = category;
         }
-        const [projects, total] = await Promise.all([
-            this.prisma.projects.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: [
-                    { displayOrder: 'asc' },
-                    { createdAt: 'desc' },
-                ],
-                include: {
-                    users: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
+        try {
+            const [projects, total] = await Promise.all([
+                this.prisma.projects.findMany({
+                    where,
+                    skip,
+                    take: limit,
+                    orderBy: [{ createdAt: 'desc' }],
+                    include: {
+                        users: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                            },
                         },
                     },
+                }),
+                this.prisma.projects.count({ where }),
+            ]);
+            let filteredProjects = projects;
+            if (featured !== undefined) {
+                filteredProjects = projects.filter((p) => {
+                    const isFeaturedValue = p.isFeatured !== undefined
+                        ? p.isFeatured
+                        : p.featured !== undefined
+                            ? p.featured
+                            : false;
+                    return featured ? isFeaturedValue : !isFeaturedValue;
+                });
+            }
+            return {
+                data: filteredProjects,
+                meta: {
+                    total: featured !== undefined ? filteredProjects.length : total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil((featured !== undefined ? filteredProjects.length : total) / limit),
                 },
-            }),
-            this.prisma.projects.count({ where }),
-        ]);
-        return {
-            data: projects,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+            };
+        }
+        catch (error) {
+            if (error.message?.includes('does not exist') || error.message?.includes('featured')) {
+                console.warn('Column error detected, retrying without problematic filters:', error.message);
+                const safeWhere = {
+                    isActive: true,
+                };
+                if (status) {
+                    safeWhere.status = status;
+                }
+                if (category) {
+                    safeWhere.category = category;
+                }
+                const [projects, total] = await Promise.all([
+                    this.prisma.projects.findMany({
+                        where: safeWhere,
+                        skip,
+                        take: limit,
+                        orderBy: [{ createdAt: 'desc' }],
+                        include: {
+                            users: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    }),
+                    this.prisma.projects.count({ where: safeWhere }),
+                ]);
+                let filteredProjects = projects;
+                if (featured !== undefined) {
+                    filteredProjects = featured ? [] : projects;
+                }
+                return {
+                    data: filteredProjects,
+                    meta: {
+                        total: featured !== undefined ? filteredProjects.length : total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil((featured !== undefined ? filteredProjects.length : total) / limit),
+                    },
+                };
+            }
+            throw error;
+        }
     }
     async findFeatured() {
         try {
-            return await this.prisma.projects.findMany({
+            const projects = await this.prisma.projects.findMany({
                 where: {
                     isActive: true,
-                    isFeatured: true,
                 },
-                orderBy: [
-                    { displayOrder: 'asc' },
-                    { createdAt: 'desc' },
-                ],
-                take: 6,
+                orderBy: [{ createdAt: 'desc' }],
+                take: 20,
             });
+            const featuredProjects = projects.filter((p) => {
+                const isFeaturedValue = p.isFeatured !== undefined ? p.isFeatured : p.featured !== undefined ? p.featured : false;
+                return isFeaturedValue === true;
+            });
+            return featuredProjects.slice(0, 6);
         }
         catch (error) {
-            console.error('Error fetching featured projects:', error);
+            console.warn('Error fetching featured projects, returning empty array:', error.message);
             return [];
         }
     }
@@ -131,22 +235,11 @@ let ProjectsService = class ProjectsService {
         if (existingProject) {
             data.slug = `${data.slug}-${Date.now()}`;
         }
-        const jsonFields = ['technologies', 'features', 'images', 'tags'];
-        for (const field of jsonFields) {
-            if (data[field] && typeof data[field] === 'string') {
-                try {
-                    data[field] = JSON.stringify(JSON.parse(data[field]));
-                }
-                catch (e) {
-                }
-            }
-            else if (data[field] && Array.isArray(data[field])) {
-                data[field] = JSON.stringify(data[field]);
-            }
-        }
+        this.normalizeProjectJsonFields(data);
         if (data.youtubeVideoUrl) {
             data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
         }
+        data.updatedAt = new Date();
         return this.prisma.projects.create({
             data,
             include: {
@@ -179,22 +272,11 @@ let ProjectsService = class ProjectsService {
                 data.slug = `${data.slug}-${Date.now()}`;
             }
         }
-        const jsonFields = ['technologies', 'features', 'images', 'tags'];
-        for (const field of jsonFields) {
-            if (data[field] && typeof data[field] === 'string') {
-                try {
-                    data[field] = JSON.stringify(JSON.parse(data[field]));
-                }
-                catch (e) {
-                }
-            }
-            else if (data[field] && Array.isArray(data[field])) {
-                data[field] = JSON.stringify(data[field]);
-            }
-        }
+        this.normalizeProjectJsonFields(data);
         if (data.youtubeVideoUrl) {
             data.youtubeVideoId = this.extractYouTubeId(data.youtubeVideoUrl);
         }
+        data.updatedAt = new Date();
         return this.prisma.projects.update({
             where: { id },
             data,
@@ -228,10 +310,24 @@ let ProjectsService = class ProjectsService {
         if (!project) {
             throw new common_1.NotFoundException('Project not found');
         }
-        return this.prisma.projects.update({
-            where: { id },
-            data: { isFeatured: !project.isFeatured },
-        });
+        try {
+            const currentValue = project.isFeatured !== undefined
+                ? project.isFeatured
+                : project.featured !== undefined
+                    ? project.featured
+                    : false;
+            return await this.prisma.projects.update({
+                where: { id },
+                data: { isFeatured: !currentValue },
+            });
+        }
+        catch (error) {
+            if (error.message?.includes('does not exist') || error.message?.includes('featured')) {
+                console.warn('isFeatured column not available, cannot toggle featured status');
+                return project;
+            }
+            throw error;
+        }
     }
     async toggleActive(id) {
         const project = await this.prisma.projects.findUnique({

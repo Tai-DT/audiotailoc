@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -14,8 +47,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BackupController = void 0;
 const common_1 = require("@nestjs/common");
+const path = __importStar(require("path"));
 const backup_service_1 = require("./backup.service");
 const logging_service_1 = require("../logging/logging.service");
+const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
+const admin_guard_1 = require("../auth/admin.guard");
+const swagger_1 = require("@nestjs/swagger");
 let BackupController = class BackupController {
     constructor(backupService, loggingService) {
         this.backupService = backupService;
@@ -160,7 +197,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'FULL_BACKUP_ERROR',
                     message: 'Failed to create full backup',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -196,7 +232,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'INCREMENTAL_BACKUP_ERROR',
                     message: 'Failed to create incremental backup',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -229,7 +264,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'FILE_BACKUP_ERROR',
                     message: 'Failed to create file backup',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -263,7 +297,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'BACKUP_RESTORE_ERROR',
                     message: 'Failed to restore from backup',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -309,7 +342,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'POINT_IN_TIME_RECOVERY_ERROR',
                     message: 'Failed to perform point-in-time recovery',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -342,9 +374,12 @@ let BackupController = class BackupController {
                 backupType: backup.type,
                 size: backup.size,
             });
+            const fileStat = fs.statSync(backup.path);
+            const filename = path.basename(backup.path) || `${backupId}.backup`;
+            response.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
             response.setHeader('Content-Type', 'application/octet-stream');
-            response.setHeader('Content-Disposition', `attachment; filename="${backupId}.backup"`);
-            response.setHeader('Content-Length', backup.size.toString());
+            response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            response.setHeader('Content-Length', String(fileStat.size));
             const readStream = fs.createReadStream(backup.path);
             readStream.pipe(response);
             readStream.on('end', () => {
@@ -395,23 +430,15 @@ let BackupController = class BackupController {
                     },
                 }, common_1.HttpStatus.NOT_FOUND);
             }
-            const fs = require('fs').promises;
-            try {
-                await fs.unlink(backup.path);
-            }
-            catch (error) {
-                this.loggingService.logError(error, {
-                    metadata: { operation: 'delete_backup_file', backupId, path: backup.path },
-                });
-            }
-            const metadataPath = `./backups/metadata/${backupId}.json`;
-            try {
-                await fs.unlink(metadataPath);
-            }
-            catch (error) {
-                this.loggingService.logError(error, {
-                    metadata: { operation: 'delete_backup_metadata', backupId, path: metadataPath },
-                });
+            const deleted = await this.backupService.deleteBackupById(backupId);
+            if (!deleted) {
+                throw new common_1.HttpException({
+                    success: false,
+                    error: {
+                        code: 'DELETE_BACKUP_ERROR',
+                        message: 'Failed to delete backup',
+                    },
+                }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
             }
             this.loggingService.logBusinessEvent('backup_deleted', {
                 backupId,
@@ -435,15 +462,14 @@ let BackupController = class BackupController {
                 error: {
                     code: 'DELETE_BACKUP_ERROR',
                     message: 'Failed to delete backup',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async cleanupOldBackups() {
+    async cleanupOldBackups(options = {}) {
         try {
             this.loggingService.logBusinessEvent('backup_cleanup_started', {});
-            const deletedCount = await this.backupService.cleanupOldBackups();
+            const deletedCount = await this.backupService.cleanupOldBackups(options);
             this.loggingService.logBusinessEvent('backup_cleanup_completed', {
                 deletedCount,
             });
@@ -461,7 +487,6 @@ let BackupController = class BackupController {
                 error: {
                     code: 'BACKUP_CLEANUP_ERROR',
                     message: 'Failed to cleanup old backups',
-                    details: error.message,
                 },
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -572,6 +597,7 @@ __decorate([
 ], BackupController.prototype, "createFileBackup", null);
 __decorate([
     (0, common_1.Post)('restore/:backupId'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Param)('backupId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -580,6 +606,7 @@ __decorate([
 ], BackupController.prototype, "restoreFromBackup", null);
 __decorate([
     (0, common_1.Post)('restore/point-in-time'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -595,6 +622,7 @@ __decorate([
 ], BackupController.prototype, "downloadBackup", null);
 __decorate([
     (0, common_1.Delete)(':backupId'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Param)('backupId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -602,8 +630,10 @@ __decorate([
 ], BackupController.prototype, "deleteBackup", null);
 __decorate([
     (0, common_1.Post)('cleanup'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], BackupController.prototype, "cleanupOldBackups", null);
 __decorate([
@@ -614,6 +644,8 @@ __decorate([
 ], BackupController.prototype, "getBackupAnalytics", null);
 exports.BackupController = BackupController = __decorate([
     (0, common_1.Controller)('backup'),
+    (0, common_1.UseGuards)(admin_or_key_guard_1.AdminOrKeyGuard),
+    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [backup_service_1.BackupService,
         logging_service_1.LoggingService])
 ], BackupController);

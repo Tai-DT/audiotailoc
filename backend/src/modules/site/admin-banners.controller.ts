@@ -1,13 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Query,
   Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
@@ -47,12 +49,32 @@ export class AdminBannersController {
 
   @Post()
   @ApiOperation({ summary: 'Create new banner' })
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  )
   async create(@Body() data: CreateBannerDto) {
     return this.bannersService.create(data);
   }
 
+  @Patch('reorder')
+  @ApiOperation({ summary: 'Reorder banners' })
+  async reorder(@Body() data: { ids: string[] }) {
+    return this.bannersService.reorder(data.ids);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update banner' })
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  )
   async update(@Param('id') id: string, @Body() data: UpdateBannerDto) {
     return this.bannersService.update(id, data);
   }
@@ -61,11 +83,5 @@ export class AdminBannersController {
   @ApiOperation({ summary: 'Soft delete banner' })
   async remove(@Param('id') id: string) {
     return this.bannersService.softDelete(id);
-  }
-
-  @Patch('reorder')
-  @ApiOperation({ summary: 'Reorder banners' })
-  async reorder(@Body() data: { ids: string[] }) {
-    return this.bannersService.reorder(data.ids);
   }
 }

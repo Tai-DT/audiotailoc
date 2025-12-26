@@ -9,6 +9,7 @@ import {
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { MonitoringService } from '../../modules/monitoring/monitoring.service';
+import * as crypto from 'crypto';
 
 export interface ErrorResponse {
   success: false;
@@ -89,7 +90,9 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
   }
 
   private generateCorrelationId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // SECURITY: Use cryptographically secure random for correlation IDs
+    const randomBytes = crypto.randomBytes(6).toString('hex');
+    return `req_${Date.now()}_${randomBytes}`;
   }
 
   private getClientIP(request: Request): string {
@@ -191,9 +194,11 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
   }
 
   private shouldIncludeStack(status: number): boolean {
-    // Only include stack trace in development or for server errors
+    // SECURITY: Never include stack traces in production to prevent information leakage
+    // Stack traces can reveal file paths, internal structure, and implementation details
     const isDevelopment = this.configService.get('NODE_ENV') !== 'production';
-    return isDevelopment || status >= 500;
+    // Only include stack trace in development mode
+    return isDevelopment;
   }
 
   private logError(exception: any, context: any) {

@@ -479,7 +479,7 @@ export class PromotionReportingService {
     // Check for unused promotions
     const unusedPromos = await this.prisma.promotions.findMany({
       where: {
-        usage_count: 0,
+        usageCount: 0,
         isActive: true,
       },
     });

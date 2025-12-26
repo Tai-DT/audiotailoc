@@ -43,7 +43,8 @@ export interface AIAnalysis {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly geminiApiKey: string;
-  private readonly geminiApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private readonly geminiApiUrl =
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
   private readonly maxTokens = 1000;
 
   constructor(
@@ -128,7 +129,9 @@ export class AiService {
           relevanceScore: product.score,
         }));
 
-      this.logger.log(`Generated ${recommendations.length} product recommendations for user ${userId || 'anonymous'}`);
+      this.logger.log(
+        `Generated ${recommendations.length} product recommendations for user ${userId || 'anonymous'}`,
+      );
       return recommendations;
     } catch (error) {
       this.logger.error('Error generating product recommendations:', error);
@@ -139,10 +142,7 @@ export class AiService {
   /**
    * Get AI-powered search suggestions
    */
-  async getSearchSuggestions(
-    query: string,
-    limit: number = 5,
-  ): Promise<SearchSuggestion[]> {
+  async getSearchSuggestions(query: string, limit: number = 5): Promise<SearchSuggestion[]> {
     try {
       if (!query || query.trim().length === 0) {
         return [];
@@ -179,6 +179,32 @@ export class AiService {
     try {
       if (!userMessage || userMessage.trim().length === 0) {
         throw new BadRequestException('Message cannot be empty');
+      }
+
+      // SECURITY: Validate input length to prevent DoS attacks
+      const MAX_MESSAGE_LENGTH = 5000; // Maximum message length in characters
+      if (userMessage.length > MAX_MESSAGE_LENGTH) {
+        throw new BadRequestException(
+          `Message is too long. Maximum allowed length is ${MAX_MESSAGE_LENGTH} characters.`,
+        );
+      }
+
+      // SECURITY: Validate conversation history length
+      if (conversationHistory && conversationHistory.length > 50) {
+        throw new BadRequestException(
+          'Conversation history is too long. Maximum allowed is 50 messages.',
+        );
+      }
+
+      // SECURITY: Validate individual history message lengths
+      if (conversationHistory) {
+        for (const msg of conversationHistory) {
+          if (msg.content && msg.content.length > MAX_MESSAGE_LENGTH) {
+            throw new BadRequestException(
+              `Conversation history contains a message that is too long. Maximum allowed length is ${MAX_MESSAGE_LENGTH} characters.`,
+            );
+          }
+        }
       }
 
       // Analyze user message
@@ -272,10 +298,7 @@ You help customers find products, answer questions about audio equipment, servic
 Keep responses concise and friendly. If the user asks about specific products or services,
 recommend products from the store when relevant.`;
 
-      const messages = [
-        ...(conversationHistory || []),
-        { role: 'user', content: userMessage },
-      ];
+      const messages = [...(conversationHistory || []), { role: 'user', content: userMessage }];
 
       const response = await axios.post(
         `${this.geminiApiUrl}?key=${this.geminiApiKey}`,
@@ -297,7 +320,9 @@ recommend products from the store when relevant.`;
         { timeout: 10000 },
       );
 
-      const content = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'I could not generate a response.';
+      const content =
+        response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        'I could not generate a response.';
 
       return {
         message: content,
@@ -321,15 +346,19 @@ recommend products from the store when relevant.`;
     if (/(hello|hi|hey)/.test(lowerMessage)) {
       message = 'Hello! Welcome to our audio equipment store. How can I help you today?';
     } else if (/(recommend|suggestion|what.*buy)/.test(lowerMessage)) {
-      message = 'I can help you find the perfect audio equipment. Could you tell me more about your needs? What type of equipment are you interested in?';
+      message =
+        'I can help you find the perfect audio equipment. Could you tell me more about your needs? What type of equipment are you interested in?';
     } else if (/(price|cost|how much)/.test(lowerMessage)) {
-      message = 'Our products range from budget-friendly options to premium equipment. Could you specify what type of product you are looking for?';
+      message =
+        'Our products range from budget-friendly options to premium equipment. Could you specify what type of product you are looking for?';
     } else if (/(shipping|delivery|when)/.test(lowerMessage)) {
-      message = 'We offer fast shipping for most orders. For specific delivery times, please contact our support team.';
+      message =
+        'We offer fast shipping for most orders. For specific delivery times, please contact our support team.';
     } else if (/(contact|support|help)/.test(lowerMessage)) {
       message = 'You can reach our support team through our website or email. We are here to help!';
     } else {
-      message = 'Thank you for your message. I can help you find products, answer questions about our services, or assist with your order. What would you like to know?';
+      message =
+        'Thank you for your message. I can help you find products, answer questions about our services, or assist with your order. What would you like to know?';
     }
 
     return {
@@ -386,7 +415,10 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
   /**
    * Generate database-based suggestions (fallback)
    */
-  private async generateDatabaseSuggestions(query: string, limit: number): Promise<SearchSuggestion[]> {
+  private async generateDatabaseSuggestions(
+    query: string,
+    limit: number,
+  ): Promise<SearchSuggestion[]> {
     try {
       // Get products matching query
       const products = await this.prisma.products.findMany({
@@ -416,10 +448,7 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
   /**
    * Calculate product score for recommendations
    */
-  private calculateProductScore(
-    product: any,
-    searchHistory: string[],
-  ): number {
+  private calculateProductScore(product: any, searchHistory: string[]): number {
     let score = 0;
 
     // View count score (0-30)
@@ -427,7 +456,8 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
 
     // Review rating score (0-30)
     if (product.reviews && product.reviews.length > 0) {
-      const avgRating = product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length;
+      const avgRating =
+        product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length;
       score += avgRating * 6; // Max 30 points
     }
 
@@ -458,7 +488,8 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
     }
 
     if (product.reviews && product.reviews.length > 0) {
-      const avgRating = product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length;
+      const avgRating =
+        product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length;
       if (avgRating >= 4.5) {
         reasons.push('Highly rated');
       }
@@ -500,9 +531,7 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
       'were',
     ]);
 
-    return words
-      .filter(word => word.length > 3 && !stopWords.has(word))
-      .slice(0, 5);
+    return words.filter(word => word.length > 3 && !stopWords.has(word)).slice(0, 5);
   }
 
   /**

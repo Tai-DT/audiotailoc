@@ -14,7 +14,7 @@ export function TopBar() {
             </span>
             <span className="hidden xl:flex items-center space-x-1.5 hover:text-primary transition-colors">
               <Mail className="h-3.5 w-3.5 text-primary" />
-              <span>support@audiotailoc.com</span>
+              <span>audiotailoc@gmail.com</span>
             </span>
             <span className="hidden xl:flex items-center space-x-1.5 hover:text-accent transition-colors">
               <Clock className="h-3.5 w-3.5 text-accent" />

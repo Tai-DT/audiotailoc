@@ -6,8 +6,16 @@ export declare class CompleteProductController {
     constructor(catalogService: CompleteProductService);
     create(createProductDto: CreateProductDto): Promise<ProductResponseDto>;
     findAll(query: ProductListQueryDto): Promise<ProductListResponseDto>;
-    search(query: string, limit?: number): Promise<ProductListResponseDto>;
+    search(query: ProductListQueryDto): Promise<ProductListResponseDto>;
     getSuggestions(query: string, limit?: number): Promise<ProductSearchSuggestionDto[]>;
+    getRecentPublic(limit?: number): Promise<ProductResponseDto[]>;
+    getTopViewedPublic(limit?: number): Promise<ProductResponseDto[]>;
+    getOverviewPublic(): Promise<{
+        totalProducts: number;
+        featuredProducts: number;
+        categoriesCount: number;
+        recentProducts: ProductResponseDto[];
+    }>;
     findOne(id: string): Promise<ProductResponseDto>;
     findBySlug(slug: string): Promise<ProductResponseDto>;
     update(id: string, updateProductDto: UpdateProductDto): Promise<ProductResponseDto>;
@@ -33,13 +41,5 @@ export declare class CompleteProductController {
     importCsv(csvData: string): Promise<{
         imported: number;
         errors: string[];
-    }>;
-    getRecentPublic(limit?: number): Promise<ProductResponseDto[]>;
-    getTopViewedPublic(limit?: number): Promise<ProductResponseDto[]>;
-    getOverviewPublic(): Promise<{
-        totalProducts: number;
-        featuredProducts: number;
-        categoriesCount: number;
-        recentProducts: ProductResponseDto[];
     }>;
 }

@@ -28,22 +28,6 @@ let ServiceTypesController = class ServiceTypesController {
         console.log('[ServiceTypesController] Creating service type:', createServiceTypeDto);
         return this.serviceTypesService.create(createServiceTypeDto);
     }
-    testCreate(createServiceTypeDto) {
-        console.log('[ServiceTypesController] Test creating service type:', createServiceTypeDto);
-        return this.serviceTypesService.create(createServiceTypeDto);
-    }
-    debug() {
-        console.log('[ServiceTypesController] Debug endpoint called');
-        return { message: 'Debug endpoint working', timestamp: new Date().toISOString() };
-    }
-    testEndpoint() {
-        console.log('[ServiceTypesController] Test endpoint called');
-        return { message: 'Test endpoint working', timestamp: new Date().toISOString() };
-    }
-    simpleTest() {
-        console.log('[ServiceTypesController] Simple test called');
-        return { status: 'ok', message: 'Simple test working' };
-    }
     findAll() {
         console.log('[ServiceTypesController] GET /service-types called');
         console.log('[ServiceTypesController] About to call service.findAll()');
@@ -77,35 +61,6 @@ __decorate([
     __metadata("design:paramtypes", [create_service_type_dto_1.CreateServiceTypeDto]),
     __metadata("design:returntype", void 0)
 ], ServiceTypesController.prototype, "create", null);
-__decorate([
-    (0, common_1.Post)('test'),
-    (0, swagger_1.ApiOperation)({ summary: 'Test create service type without auth' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_service_type_dto_1.CreateServiceTypeDto]),
-    __metadata("design:returntype", void 0)
-], ServiceTypesController.prototype, "testCreate", null);
-__decorate([
-    (0, common_1.Get)('debug'),
-    (0, swagger_1.ApiOperation)({ summary: 'Debug endpoint to test service' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ServiceTypesController.prototype, "debug", null);
-__decorate([
-    (0, common_1.Get)('test-endpoint'),
-    (0, swagger_1.ApiOperation)({ summary: 'Test endpoint' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ServiceTypesController.prototype, "testEndpoint", null);
-__decorate([
-    (0, common_1.Get)('simple-test'),
-    (0, swagger_1.ApiOperation)({ summary: 'Simple test endpoint' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ServiceTypesController.prototype, "simpleTest", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get all active service types' }),

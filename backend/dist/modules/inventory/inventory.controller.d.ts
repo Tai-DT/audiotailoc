@@ -28,11 +28,11 @@ export declare class InventoryController {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;
-                isActive: boolean;
                 isDeleted: boolean;
             };
             products: {
@@ -43,12 +43,12 @@ export declare class InventoryController {
                 };
                 id: string;
                 name: string;
+                isActive: boolean;
                 slug: string;
                 priceCents: bigint;
                 imageUrl: string;
                 categoryId: string;
                 sku: string;
-                isActive: boolean;
                 isDeleted: boolean;
             };
             id: string;
@@ -87,8 +87,8 @@ export declare class InventoryController {
         orphanedInventoriesList: ({
             products: {
                 name: string;
-                sku: string;
                 isActive: boolean;
+                sku: string;
                 isDeleted: boolean;
             };
         } & {

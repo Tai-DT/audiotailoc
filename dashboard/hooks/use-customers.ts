@@ -32,8 +32,10 @@ export function useCustomers() {
       })
       
       // Transform backend user data to customer format
-      const responseData = response.data as { items?: unknown[] }
-      const customers: Customer[] = responseData?.items?.map((user: unknown) => {
+      // Backend returns { users: [...], pagination: {...} }
+      const responseData = response as { users?: unknown[], data?: { users?: unknown[] } }
+      const usersArray = responseData?.users || responseData?.data?.users || []
+      const customers: Customer[] = usersArray.map((user: unknown) => {
         const userData = user as {
           id: string;
           name?: string;
@@ -43,8 +45,12 @@ export function useCustomers() {
           createdAt?: string;
           updatedAt?: string;
           orders?: { totalCents?: number }[];
+          _count?: { orders?: number };
           loyaltyAccount?: { points?: number };
         };
+        // Backend returns _count.orders for order count and orders array for revenue calculation
+        const orderCount = userData._count?.orders || userData.orders?.length || 0;
+        const totalSpentCents = userData.orders?.reduce((sum: number, order: { totalCents?: number }) => sum + (order.totalCents || 0), 0) ?? 0;
         return {
           id: userData.id,
           name: userData.name || 'Chưa có tên',
@@ -53,11 +59,11 @@ export function useCustomers() {
           role: userData.role || 'USER',
           createdAt: userData.createdAt,
           updatedAt: userData.updatedAt,
-          totalOrders: userData.orders?.length || 0,
-          totalSpent: (userData.orders?.reduce((sum: number, order: { totalCents?: number }) => sum + (order.totalCents || 0), 0) ?? 0) / 100 || 0,
+          totalOrders: orderCount,
+          totalSpent: totalSpentCents / 100,
           loyaltyPoints: userData.loyaltyAccount?.points || 0
         };
-      }) || []
+      })
       
       setCustomers(customers)
       

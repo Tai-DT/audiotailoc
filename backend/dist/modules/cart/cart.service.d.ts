@@ -18,10 +18,10 @@ export declare class CartService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
     } & {
         status: string;
@@ -69,6 +69,7 @@ export declare class CartService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                isActive: boolean;
                 slug: string;
                 shortDescription: string | null;
                 priceCents: bigint;
@@ -92,7 +93,6 @@ export declare class CartService {
                 metaKeywords: string | null;
                 canonicalUrl: string | null;
                 featured: boolean;
-                isActive: boolean;
                 isDeleted: boolean;
                 viewCount: number;
             };
@@ -100,10 +100,10 @@ export declare class CartService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            price: bigint;
             productId: string;
-            cartId: string;
             quantity: number;
+            price: bigint;
+            cartId: string;
         })[];
         subtotalCents: number;
     }>;

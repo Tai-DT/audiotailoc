@@ -26,13 +26,13 @@ let MarketingService = MarketingService_1 = class MarketingService {
         const where = status ? { status } : {};
         const campaigns = await this.prisma.campaigns.findMany({
             where,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
         return campaigns;
     }
     async getCampaign(id) {
         const campaign = await this.prisma.campaigns.findUnique({
-            where: { id }
+            where: { id },
         });
         if (!campaign) {
             throw new common_1.NotFoundException('Campaign not found');
@@ -52,8 +52,8 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 startDate: data.startDate ? new Date(data.startDate) : null,
                 endDate: data.endDate ? new Date(data.endDate) : null,
                 status: client_1.CampaignStatus.DRAFT,
-                updatedAt: new Date()
-            }
+                updatedAt: new Date(),
+            },
         });
         this.logger.log(`Campaign created: ${campaign.id}`);
         return campaign;
@@ -65,7 +65,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 ...data,
                 startDate: data.startDate ? new Date(data.startDate) : undefined,
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
-            }
+            },
         });
         this.logger.log(`Campaign updated: ${id}`);
         return campaign;
@@ -94,7 +94,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
         }
         await this.prisma.campaigns.update({
             where: { id },
-            data: { status: client_1.CampaignStatus.SENT, sentAt: new Date() }
+            data: { status: client_1.CampaignStatus.SENT, sentAt: new Date() },
         });
         this.logger.log(`Campaign sent: ${id} to ${recipients.length} recipients`);
         return { message: 'Campaign sent successfully', recipientCount: recipients.length };
@@ -107,7 +107,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
             totalClicks: 0,
             openRate: 0,
             clickRate: 0,
-            conversionRate: 0
+            conversionRate: 0,
         };
         return stats;
     }
@@ -118,7 +118,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 await this.mailService.sendEmail({
                     to: recipient,
                     subject: data.subject,
-                    html: data.content
+                    html: data.content,
                 });
                 results.push({ email: recipient, status: 'sent' });
             }
@@ -131,7 +131,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
             total: data.recipients.length,
             sent: results.filter(r => r.status === 'sent').length,
             failed: results.filter(r => r.status === 'failed').length,
-            results
+            results,
         };
     }
     async getEmailTemplates() {
@@ -140,20 +140,20 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 id: 'welcome',
                 name: 'Welcome Email',
                 subject: 'Welcome to Audio Tài Lộc!',
-                content: '<h1>Welcome!</h1><p>Thank you for joining us.</p>'
+                content: '<h1>Welcome!</h1><p>Thank you for joining us.</p>',
             },
             {
                 id: 'promotion',
                 name: 'Promotion Email',
                 subject: 'Special Offer Just for You!',
-                content: '<h1>Special Offer</h1><p>Get 20% off your next purchase!</p>'
+                content: '<h1>Special Offer</h1><p>Get 20% off your next purchase!</p>',
             },
             {
                 id: 'order-confirmation',
                 name: 'Order Confirmation',
                 subject: 'Your Order Confirmation',
-                content: '<h1>Order Confirmed</h1><p>Thank you for your order.</p>'
-            }
+                content: '<h1>Order Confirmed</h1><p>Thank you for your order.</p>',
+            },
         ];
     }
     async getEmailStats(startDate, endDate) {
@@ -168,13 +168,13 @@ let MarketingService = MarketingService_1 = class MarketingService {
         const [totalEmails, sentEmails, failedEmails] = await Promise.all([
             this.prisma.email_logs.count({ where }),
             this.prisma.email_logs.count({ where: { ...where, status: 'SENT' } }),
-            this.prisma.email_logs.count({ where: { ...where, status: 'FAILED' } })
+            this.prisma.email_logs.count({ where: { ...where, status: 'FAILED' } }),
         ]);
         return {
             totalEmails,
             sentEmails,
             failedEmails,
-            successRate: totalEmails > 0 ? (sentEmails / totalEmails * 100).toFixed(2) : 0
+            successRate: totalEmails > 0 ? ((sentEmails / totalEmails) * 100).toFixed(2) : 0,
         };
     }
     async getAudienceSegments() {
@@ -183,26 +183,26 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 id: 'new-customers',
                 name: 'New Customers',
                 description: 'Customers who registered in the last 30 days',
-                count: 150
+                count: 150,
             },
             {
                 id: 'returning-customers',
                 name: 'Returning Customers',
                 description: 'Customers with more than 1 order',
-                count: 320
+                count: 320,
             },
             {
                 id: 'high-value',
                 name: 'High Value Customers',
                 description: 'Customers who spent more than 5M VND',
-                count: 85
+                count: 85,
             },
             {
                 id: 'inactive',
                 name: 'Inactive Customers',
                 description: 'Customers with no activity in 90 days',
-                count: 200
-            }
+                count: 200,
+            },
         ];
     }
     async getAudienceSegment(id) {
@@ -219,7 +219,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
             name: data.name,
             criteria: data.criteria,
             count: 0,
-            createdAt: new Date()
+            createdAt: new Date(),
         };
         this.logger.log(`Audience segment created: ${segment.id}`);
         return segment;
@@ -240,7 +240,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
             campaigns: 12,
             averageROI: 350,
             topPerformingCampaign: 'Summer Sale 2024',
-            topPerformingChannel: 'Email Marketing'
+            topPerformingChannel: 'Email Marketing',
         };
     }
     async getConversionFunnel(_startDate, _endDate) {
@@ -253,15 +253,15 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 visitorToLead: 15,
                 leadToProspect: 50,
                 prospectToCustomer: 40,
-                overall: 3
-            }
+                overall: 3,
+            },
         };
     }
     async getTargetAudience(targetAudience) {
         if (!targetAudience) {
             return this.prisma.users.findMany({
                 where: { role: 'USER' },
-                select: { email: true, name: true }
+                select: { email: true, name: true },
             });
         }
         switch (targetAudience) {
@@ -270,20 +270,20 @@ let MarketingService = MarketingService_1 = class MarketingService {
                     where: {
                         role: 'USER',
                         createdAt: {
-                            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-                        }
+                            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                        },
                     },
-                    select: { email: true, name: true }
+                    select: { email: true, name: true },
                 });
             case 'returning-customers':
                 return this.prisma.users.findMany({
                     where: {
                         role: 'USER',
                         orders: {
-                            some: {}
-                        }
+                            some: {},
+                        },
                     },
-                    select: { email: true, name: true }
+                    select: { email: true, name: true },
                 });
             default:
                 return [];
@@ -295,7 +295,7 @@ let MarketingService = MarketingService_1 = class MarketingService {
                 await this.mailService.sendEmail({
                     to: recipient.email,
                     subject: campaign.name,
-                    html: campaign.description
+                    html: campaign.description,
                 });
                 await this.prisma.email_logs.create({
                     data: {
@@ -304,8 +304,8 @@ let MarketingService = MarketingService_1 = class MarketingService {
                         recipientEmail: recipient.email,
                         subject: campaign.name,
                         status: 'SENT',
-                        sentAt: new Date()
-                    }
+                        sentAt: new Date(),
+                    },
                 });
             }
             catch (error) {
@@ -317,8 +317,8 @@ let MarketingService = MarketingService_1 = class MarketingService {
                         recipientEmail: recipient.email,
                         subject: campaign.name,
                         status: 'FAILED',
-                        error: error.message
-                    }
+                        error: error.message,
+                    },
                 });
             }
         }

@@ -19,11 +19,11 @@ export class InventoryReportService {
     if (filters?.lowStockOnly) {
       where.inventory = {
         lowStockThreshold: {
-          not: null
+          not: null,
         },
         stockQuantity: {
-          lte: this.prisma.inventory.fields.lowStockThreshold
-        }
+          lte: this.prisma.inventory.fields.lowStockThreshold,
+        },
       };
     }
 
@@ -43,25 +43,21 @@ export class InventoryReportService {
         categories: {
           select: {
             id: true,
-            name: true
-          }
-        }
+            name: true,
+          },
+        },
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: 'asc',
+      },
     });
 
     const report = {
       totalProducts: products.length,
       totalStockValue: products.reduce((sum, product) => sum + product.stockQuantity, 0),
-      lowStockProducts: products.filter(p =>
-        p.maxStock && p.stockQuantity <= p.maxStock
-      ).length,
+      lowStockProducts: products.filter(p => p.maxStock && p.stockQuantity <= p.maxStock).length,
       outOfStockProducts: products.filter(p => p.stockQuantity === 0).length,
-      overstockProducts: products.filter(p =>
-        p.maxStock && p.stockQuantity >= p.maxStock
-      ).length,
+      overstockProducts: products.filter(p => p.maxStock && p.stockQuantity >= p.maxStock).length,
       products: products.map(product => ({
         id: product.id,
         name: product.name,
@@ -70,8 +66,8 @@ export class InventoryReportService {
         lowStockThreshold: null,
         maxStock: product.maxStock,
         category: product.categories?.name,
-        status: this.getStockStatus(product)
-      }))
+        status: this.getStockStatus(product),
+      })),
     };
 
     return report;
@@ -125,20 +121,20 @@ export class InventoryReportService {
           select: {
             id: true,
             name: true,
-            sku: true
-          }
+            sku: true,
+          },
         },
         users: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
 
     const summary = {
@@ -150,7 +146,7 @@ export class InventoryReportService {
         .filter(m => m.type === 'STOCK_OUT' || m.type === 'ADJUSTMENT_OUT' || m.type === 'SALE')
         .reduce((sum, m) => sum + m.quantity, 0),
       movementsByType: this.groupMovementsByType(movements),
-      movements: movements
+      movements: movements,
     };
 
     return summary;
@@ -198,13 +194,13 @@ export class InventoryReportService {
           select: {
             id: true,
             name: true,
-            sku: true
-          }
-        }
+            sku: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
 
     const summary = {
@@ -212,7 +208,7 @@ export class InventoryReportService {
       activeAlerts: alerts.filter(a => !a.isResolved).length,
       resolvedAlerts: alerts.filter(a => a.isResolved).length,
       alertsByType: this.groupAlertsByType(alerts),
-      alerts: alerts
+      alerts: alerts,
     };
 
     return summary;

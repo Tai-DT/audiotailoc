@@ -21,7 +21,13 @@ export const useProductReviews = (productId: string, params: { page?: number; pa
   return useQuery({
     queryKey: [...reviewQueryKeys.product(productId), params],
     queryFn: async () => {
-      const response = await apiClient.get(`/products/${productId}/reviews`, { params });
+      const response = await apiClient.get('/reviews', { 
+        params: { 
+          productId,
+          status: 'APPROVED',
+          ...params 
+        } 
+      });
       return handleApiResponse<PaginatedResponse<ProductReview>>(response);
     },
     enabled: !!productId,

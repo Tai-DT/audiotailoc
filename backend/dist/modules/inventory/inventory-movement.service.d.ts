@@ -25,18 +25,18 @@ export declare class InventoryMovementService {
             name: string;
         };
     } & {
-        type: string;
         id: string;
         createdAt: Date;
         userId: string | null;
-        reason: string | null;
+        type: string;
         productId: string;
         quantity: number;
+        notes: string | null;
         previousStock: number;
         newStock: number;
+        reason: string | null;
         referenceId: string | null;
         referenceType: string | null;
-        notes: string | null;
     }>;
     findByProduct(productId: string, params?: {
         page?: number;
@@ -57,18 +57,18 @@ export declare class InventoryMovementService {
                 name: string;
             };
         } & {
-            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            reason: string | null;
+            type: string;
             productId: string;
             quantity: number;
+            notes: string | null;
             previousStock: number;
             newStock: number;
+            reason: string | null;
             referenceId: string | null;
             referenceType: string | null;
-            notes: string | null;
         })[];
     }>;
     findAll(params?: {
@@ -99,18 +99,18 @@ export declare class InventoryMovementService {
                 name: string;
             };
         } & {
-            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            reason: string | null;
+            type: string;
             productId: string;
             quantity: number;
+            notes: string | null;
             previousStock: number;
             newStock: number;
+            reason: string | null;
             referenceId: string | null;
             referenceType: string | null;
-            notes: string | null;
         })[];
     }>;
     getSummary(productId?: string, startDate?: Date, endDate?: Date): Promise<{

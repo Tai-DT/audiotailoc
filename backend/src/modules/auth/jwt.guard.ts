@@ -1,11 +1,17 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   private readonly logger = new Logger(JwtGuard.name);
-  
+
   constructor(private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -23,8 +29,13 @@ export class JwtGuard implements CanActivate {
       '/catalog/products',
       '/catalog/categories',
       '/services',
+      '/service-types',
       '/services/types',
-      '/health'
+      '/health',
+      '/testimonials',
+      '/homepage-stats',
+      '/chat/conversations',
+      '/chat/messages',
     ];
 
     if (publicRoutes.some(route => path.includes(route))) {
@@ -37,7 +48,7 @@ export class JwtGuard implements CanActivate {
       throw new UnauthorizedException('Missing bearer token');
     }
     const token = header.slice(7);
-    
+
     try {
       const secret = this.config.get<string>('JWT_ACCESS_SECRET');
       if (!secret) {
@@ -60,5 +71,3 @@ export class JwtGuard implements CanActivate {
     }
   }
 }
-
-

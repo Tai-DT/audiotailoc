@@ -53,6 +53,7 @@ const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const jwt_guard_1 = require("../auth/jwt.guard");
 const projects_service_1 = require("./projects.service");
 const cloudinary_service_1 = require("../files/cloudinary.service");
+const url_validator_1 = require("../../common/security/url-validator");
 const multer_1 = require("multer");
 const path_1 = require("path");
 const fs = __importStar(require("fs/promises"));
@@ -213,7 +214,11 @@ let ProjectsUploadController = class ProjectsUploadController {
         const results = {};
         try {
             if (body.thumbnailUrl) {
-                const response = await fetch(body.thumbnailUrl);
+                const { url: validatedUrl, fetchOptions } = url_validator_1.UrlValidator.validateUrlForFetch(body.thumbnailUrl, undefined, 10000, 10 * 1024 * 1024);
+                const response = await fetch(validatedUrl.toString(), fetchOptions);
+                if (!response.ok) {
+                    throw new common_1.BadRequestException(`Failed to fetch thumbnail image: ${response.statusText}`);
+                }
                 const buffer = Buffer.from(await response.arrayBuffer());
                 const result = await this.cloudinaryService.uploadImage(buffer, `project-thumbnail-${id}-${Date.now()}`, 'projects/thumbnails', {
                     transformation: [
@@ -225,7 +230,11 @@ let ProjectsUploadController = class ProjectsUploadController {
                 results.thumbnail = result.secure_url;
             }
             if (body.coverUrl) {
-                const response = await fetch(body.coverUrl);
+                const { url: validatedUrl, fetchOptions } = url_validator_1.UrlValidator.validateUrlForFetch(body.coverUrl, undefined, 10000, 10 * 1024 * 1024);
+                const response = await fetch(validatedUrl.toString(), fetchOptions);
+                if (!response.ok) {
+                    throw new common_1.BadRequestException(`Failed to fetch cover image: ${response.statusText}`);
+                }
                 const buffer = Buffer.from(await response.arrayBuffer());
                 const result = await this.cloudinaryService.uploadImage(buffer, `project-cover-${id}-${Date.now()}`, 'projects/covers', {
                     transformation: [
@@ -239,7 +248,11 @@ let ProjectsUploadController = class ProjectsUploadController {
             if (body.galleryUrls && body.galleryUrls.length > 0) {
                 const uploadedGalleryUrls = [];
                 for (const url of body.galleryUrls) {
-                    const response = await fetch(url);
+                    const { url: validatedUrl, fetchOptions } = url_validator_1.UrlValidator.validateUrlForFetch(url, undefined, 10000, 10 * 1024 * 1024);
+                    const response = await fetch(validatedUrl.toString(), fetchOptions);
+                    if (!response.ok) {
+                        throw new common_1.BadRequestException(`Failed to fetch gallery image: ${response.statusText}`);
+                    }
                     const buffer = Buffer.from(await response.arrayBuffer());
                     const result = await this.cloudinaryService.uploadImage(buffer, `project-gallery-${id}-${Date.now()}-${Math.random().toString(36).substring(7)}`, 'projects/gallery', {
                         transformation: [
@@ -439,7 +452,7 @@ __decorate([
                 galleryUrls: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'URLs of gallery images'
+                    description: 'URLs of gallery images',
                 },
             },
         },

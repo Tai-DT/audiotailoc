@@ -70,6 +70,20 @@ export function useAnalytics() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const normalizeOverview = (raw: unknown): AnalyticsOverview => {
+    const data = raw as Partial<AnalyticsOverview> | null | undefined
+    return {
+      totalRevenue: Number(data?.totalRevenue ?? 0),
+      totalOrders: Number(data?.totalOrders ?? 0),
+      totalCustomers: Number(data?.totalCustomers ?? 0),
+      newCustomers: Number(data?.newCustomers ?? 0),
+      conversionRate: Number(data?.conversionRate ?? 0),
+      revenueGrowth: Number(data?.revenueGrowth ?? 0),
+      ordersGrowth: Number(data?.ordersGrowth ?? 0),
+      customersGrowth: Number(data?.customersGrowth ?? 0),
+    }
+  }
+
   // Fetch overview statistics
   const fetchOverview = useCallback(async (dateRange: string = '7days') => {
     try {
@@ -78,9 +92,7 @@ export function useAnalytics() {
       
       const response = await apiClient.get(`/analytics/overview?range=${dateRange}`)
       
-      if (response.data) {
-        setOverview(response.data as AnalyticsOverview)
-      }
+      setOverview(normalizeOverview(response.data))
     } catch (err) {
       const errorMessage = 'Không thể tải dữ liệu tổng quan'
       setError(errorMessage)
@@ -95,9 +107,8 @@ export function useAnalytics() {
     try {
       const response = await apiClient.get(`/analytics/trends?range=${dateRange}`)
       
-      if (response.data) {
-        setTrends(response.data as AnalyticsTrend[])
-      }
+      const data = response.data as unknown
+      setTrends(Array.isArray(data) ? (data as AnalyticsTrend[]) : [])
     } catch (err) {
       toast.error('Không thể tải dữ liệu xu hướng')
     }
@@ -108,9 +119,8 @@ export function useAnalytics() {
     try {
       const response = await apiClient.get('/analytics/top-services?limit=5')
       
-      if (response.data) {
-        setTopServices(response.data as TopService[])
-      }
+      const data = response.data as unknown
+      setTopServices(Array.isArray(data) ? (data as TopService[]) : [])
     } catch (err) {
       toast.error('Không thể tải dữ liệu dịch vụ')
     }
@@ -121,9 +131,8 @@ export function useAnalytics() {
     try {
       const response = await apiClient.get('/analytics/top-products?limit=5')
       
-      if (response.data) {
-        setTopProducts(response.data as TopProduct[])
-      }
+      const data = response.data as unknown
+      setTopProducts(Array.isArray(data) ? (data as TopProduct[]) : [])
     } catch (err) {
       toast.error('Không thể tải dữ liệu sản phẩm')
     }
@@ -134,8 +143,16 @@ export function useAnalytics() {
     try {
       const response = await apiClient.get(`/analytics/user-activity?range=${dateRange}`)
       
-      if (response.data) {
-        setUserActivity(response.data as UserActivity)
+      const raw = response.data as Partial<UserActivity> | null
+      if (raw && typeof raw === 'object') {
+        setUserActivity({
+          pageViews: Number(raw.pageViews ?? 0),
+          sessions: Number(raw.sessions ?? 0),
+          avgSessionDuration: Number(raw.avgSessionDuration ?? 0),
+          bounceRate: Number(raw.bounceRate ?? 0),
+        })
+      } else {
+        setUserActivity(null)
       }
     } catch (err) {
       toast.error('Không thể tải dữ liệu hoạt động người dùng')

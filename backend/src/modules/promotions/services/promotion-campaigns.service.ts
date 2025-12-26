@@ -432,7 +432,8 @@ export class PromotionCampaignsService {
         throw new NotFoundException('Campaign not found');
       }
 
-      if (campaign.status !== CampaignStatus.CANCELLED) { // PAUSED does not exist
+      if (campaign.status !== CampaignStatus.CANCELLED) {
+        // PAUSED does not exist
         throw new BadRequestException('Only paused campaigns can be resumed');
       }
 

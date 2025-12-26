@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+/**
+ * Simple Settings Controller
+ * 
+ * ⚠️ NOTE: This is a placeholder controller for future implementation.
+ * All endpoints are currently protected with AdminOrKeyGuard to prevent
+ * unauthorized access even if implementation is added later.
+ */
 @Controller('simple-settings')
+@UseGuards(AdminOrKeyGuard)
+@ApiBearerAuth()
 export class SimpleSettingsController {
   @Get()
   findAll() {

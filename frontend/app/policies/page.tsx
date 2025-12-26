@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { apiClient, handleApiResponse, handleApiError } from '@/lib/api';
+import { sanitizeProseHtml } from '@/lib/utils/sanitize';
 
 interface Policy {
   id: string;
@@ -80,7 +81,7 @@ export default function PoliciesPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 mb-4">Không thể tải chính sách: {error}</p>
+          <p className="text-destructive mb-4">Không thể tải chính sách: {error}</p>
           <Button onClick={() => window.location.reload()}>
             Thử lại
           </Button>
@@ -189,7 +190,7 @@ export default function PoliciesPage() {
                           <div className="border-t border-border/50 pt-6">
                             <div
                               className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-li:text-foreground/90"
-                              dangerouslySetInnerHTML={{ __html: policy.contentHtml }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeProseHtml(policy.contentHtml) }}
                             />
                             <div className="mt-8 flex items-center justify-between pt-6 border-t border-border/50">
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">

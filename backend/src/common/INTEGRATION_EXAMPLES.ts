@@ -14,12 +14,7 @@ import {
   getPrismaClient,
 } from '@common/database';
 
-import {
-  CacheManager,
-  CacheInvalidation,
-  CacheKeyBuilder,
-  CACHE_PRESETS,
-} from '@common/cache';
+import { CacheManager, CacheInvalidation, CacheKeyBuilder, CACHE_PRESETS } from '@common/cache';
 
 /**
  * Example 1: Product Service with Full Optimization
@@ -35,7 +30,7 @@ export class OptimizedProductService {
     private cacheManager: CacheManager,
     private cacheInvalidation: CacheInvalidation,
     private eventEmitter: EventEmitter2,
-    private healthCheck: DatabaseHealthCheck
+    private healthCheck: DatabaseHealthCheck,
   ) {
     this.queryPatterns = new QueryPatterns(prisma);
     this.transactionManager = new TransactionManager(prisma);
@@ -66,7 +61,7 @@ export class OptimizedProductService {
             reviews: { take: 5, orderBy: { createdAt: 'desc' } },
           },
         }),
-      { ttl: 3600000, tags: ['products'] }
+      { ttl: 3600000, tags: ['products'] },
     );
   }
 
@@ -92,9 +87,9 @@ export class OptimizedProductService {
               imageUrl: true,
             },
           },
-          this.buildWhereClause(filters)
+          this.buildWhereClause(filters),
         ),
-      { ttl: 1800000, tags: ['products', 'product-list'] }
+      { ttl: 1800000, tags: ['products', 'product-list'] },
     );
   }
 
@@ -112,9 +107,9 @@ export class OptimizedProductService {
           query,
           ['name', 'description', 'tags'],
           { isActive: true },
-          limit: 20
+          20,
         ),
-      { ttl: 600000, tags: ['search'] }
+      { ttl: 600000, tags: ['search'] },
     );
   }
 
@@ -127,13 +122,11 @@ export class OptimizedProductService {
     return this.cacheManager.getOrCompute(
       cacheKey,
       () =>
-        this.queryPatterns.getPopular(
-          this.prisma.product,
-          10,
-          'viewCount',
-          { featured: true, isActive: true }
-        ),
-      { ttl: 3600000, tags: ['products', 'featured'] }
+        this.queryPatterns.getPopular(this.prisma.product, 10, 'viewCount', {
+          featured: true,
+          isActive: true,
+        }),
+      { ttl: 3600000, tags: ['products', 'featured'] },
     );
   }
 
@@ -142,7 +135,7 @@ export class OptimizedProductService {
    */
   async updateProduct(id: string, data: any) {
     const result = await this.transactionManager.execute(
-      async (tx) => {
+      async tx => {
         // Update product
         const product = await tx.products.update({
           where: { id },
@@ -156,7 +149,7 @@ export class OptimizedProductService {
 
         return product;
       },
-      { maxRetries: 3, name: 'updateProduct' }
+      { maxRetries: 3, name: 'updateProduct' },
     );
 
     if (result.success) {
@@ -177,18 +170,14 @@ export class OptimizedProductService {
    * Bulk update products efficiently
    */
   async bulkUpdateProducts(updates: Array<{ id: string; data: any }>) {
-    const updateData = updates.map((u) => ({
+    const updateData = updates.map(u => ({
       where: { id: u.id },
       data: u.data,
     }));
 
     // Execute in transaction
-    await this.transactionManager.execute(async (tx) => {
-      await this.queryPatterns.bulkUpdate(
-        tx.product,
-        updateData,
-        batchSize: 100
-      );
+    await this.transactionManager.execute(async tx => {
+      await this.queryPatterns.bulkUpdate(tx.product, updateData, 100);
     });
 
     // Invalidate all product caches
@@ -200,7 +189,7 @@ export class OptimizedProductService {
    * Create product with transaction
    */
   async createProduct(data: any) {
-    const result = await this.transactionManager.execute(async (tx) => {
+    const result = await this.transactionManager.execute(async tx => {
       return tx.products.create({
         data: {
           ...data,
@@ -247,7 +236,7 @@ export class OptimizedProductService {
           sales: sales._sum.quantity,
         };
       },
-      { ttl: 1800000, tags: ['analytics'] }
+      { ttl: 1800000, tags: ['analytics'] },
     );
   }
 
@@ -301,7 +290,7 @@ export class OptimizedOrderService {
   constructor(
     private prisma: PrismaClient,
     private cacheManager: CacheManager,
-    private cacheInvalidation: CacheInvalidation
+    private cacheInvalidation: CacheInvalidation,
   ) {
     this.transactionManager = new TransactionManager(prisma);
   }
@@ -311,7 +300,7 @@ export class OptimizedOrderService {
    */
   async createOrder(userId: string, items: Array<{ productId: string; quantity: number }>) {
     const result = await this.transactionManager.execute(
-      async (tx) => {
+      async tx => {
         // Create order
         const order = await tx.orders.create({
           data: {
@@ -363,7 +352,7 @@ export class OptimizedOrderService {
           data: { totalCents: total },
         });
       },
-      { maxRetries: 5, timeout: 30000, name: 'createOrder' }
+      { maxRetries: 5, timeout: 30000, name: 'createOrder' },
     );
 
     if (result.success) {
@@ -390,7 +379,7 @@ export class OptimizedOrderService {
           orderBy: { createdAt: 'desc' },
           take: 50,
         }),
-      { ttl: 1800000, tags: [`user:${userId}:orders`] }
+      { ttl: 1800000, tags: [`user:${userId}:orders`] },
     );
   }
 }
@@ -404,7 +393,7 @@ export class AdminDashboardService {
   constructor(
     private prisma: PrismaClient,
     private cacheManager: CacheManager,
-    private healthCheck: DatabaseHealthCheck
+    private healthCheck: DatabaseHealthCheck,
   ) {}
 
   /**
@@ -431,7 +420,7 @@ export class AdminDashboardService {
           timestamp: new Date(),
         };
       },
-      { ttl: 300000, tags: ['admin'] }
+      { ttl: 300000, tags: ['admin'] },
     );
   }
 
@@ -497,7 +486,7 @@ export class OptimizedServiceBookingService {
 
   constructor(
     private prisma: PrismaClient,
-    private cacheManager: CacheManager
+    private cacheManager: CacheManager,
   ) {
     this.transactionManager = new TransactionManager(prisma);
   }
@@ -507,7 +496,7 @@ export class OptimizedServiceBookingService {
    */
   async createBooking(userId: string, serviceId: string, scheduledAt: Date) {
     const result = await this.transactionManager.execute(
-      async (tx) => {
+      async tx => {
         // Get service details
         const service = await tx.services.findUnique({
           where: { id: serviceId },
@@ -544,7 +533,7 @@ export class OptimizedServiceBookingService {
 
         return booking;
       },
-      { maxRetries: 3, name: 'createServiceBooking' }
+      { maxRetries: 3, name: 'createServiceBooking' },
     );
 
     if (result.success) {
@@ -568,7 +557,7 @@ export class OptimizedServiceBookingService {
           include: { service: true, technician: true },
           orderBy: { scheduledAt: 'desc' },
         }),
-      { ttl: 1800000, tags: [`user:${userId}:bookings`] }
+      { ttl: 1800000, tags: [`user:${userId}:bookings`] },
     );
   }
 }
@@ -580,7 +569,7 @@ export class ExampleController {
   constructor(
     private productService: OptimizedProductService,
     private orderService: OptimizedOrderService,
-    private adminService: AdminDashboardService
+    private adminService: AdminDashboardService,
   ) {}
 
   // GET /products/:id

@@ -11,32 +11,32 @@ export declare class ServicesController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
             isActive: boolean;
+            slug: string;
             sortOrder: number;
-            icon: string | null;
             color: string | null;
+            icon: string | null;
         };
     } & {
         tags: string | null;
         description: string | null;
-        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         slug: string;
         shortDescription: string | null;
         images: string | null;
         features: string | null;
-        isActive: boolean;
         viewCount: number;
+        type: string | null;
+        metadata: string | null;
         duration: number;
         price: number;
+        basePriceCents: number;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
         priceType: string;
         typeId: string | null;
         isFeatured: boolean;
@@ -63,8 +63,8 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        price: number;
         quantity: number;
+        price: number;
         serviceId: string;
     })[]>;
     getServiceTypes(): Promise<{
@@ -85,11 +85,11 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        slug: string;
         isActive: boolean;
+        slug: string;
         sortOrder: number;
-        icon: string | null;
         color: string | null;
+        icon: string | null;
     }>;
     createServiceType(data: {
         name: string;
@@ -102,11 +102,11 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        slug: string;
         isActive: boolean;
+        slug: string;
         sortOrder: number;
-        icon: string | null;
         color: string | null;
+        icon: string | null;
     }>;
     updateServiceType(id: string, data: {
         name?: string;
@@ -120,11 +120,11 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        slug: string;
         isActive: boolean;
+        slug: string;
         sortOrder: number;
-        icon: string | null;
         color: string | null;
+        icon: string | null;
     }>;
     deleteServiceType(id: string): Promise<{
         description: string | null;
@@ -132,11 +132,11 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        slug: string;
         isActive: boolean;
+        slug: string;
         sortOrder: number;
-        icon: string | null;
         color: string | null;
+        icon: string | null;
     }>;
     getServiceStats(): Promise<{
         totalServices: number;
@@ -158,19 +158,19 @@ export declare class ServicesController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
             isActive: boolean;
+            slug: string;
             sortOrder: number;
-            icon: string | null;
             color: string | null;
+            icon: string | null;
         };
         service_items: {
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            price: number;
             quantity: number;
+            price: number;
             serviceId: string;
         }[];
         service_types: {
@@ -179,11 +179,11 @@ export declare class ServicesController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
             isActive: boolean;
+            slug: string;
             sortOrder: number;
-            icon: string | null;
             color: string | null;
+            icon: string | null;
         };
         tags: string | null;
         description: string | null;
@@ -191,17 +191,17 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         slug: string;
         shortDescription: string | null;
         images: string | null;
         features: string | null;
-        isActive: boolean;
         viewCount: number;
+        metadata: string | null;
         duration: number;
+        basePriceCents: number;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
         priceType: string;
         typeId: string | null;
         isFeatured: boolean;
@@ -212,23 +212,23 @@ export declare class ServicesController {
     deleteService(id: string): Promise<{
         tags: string | null;
         description: string | null;
-        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         slug: string;
         shortDescription: string | null;
         images: string | null;
         features: string | null;
-        isActive: boolean;
         viewCount: number;
+        type: string | null;
+        metadata: string | null;
         duration: number;
         price: number;
+        basePriceCents: number;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
         priceType: string;
         typeId: string | null;
         isFeatured: boolean;
@@ -246,19 +246,19 @@ export declare class ServicesController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
             isActive: boolean;
+            slug: string;
             sortOrder: number;
-            icon: string | null;
             color: string | null;
+            icon: string | null;
         };
         service_items: {
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            price: number;
             quantity: number;
+            price: number;
             serviceId: string;
         }[];
         service_types: {
@@ -267,11 +267,11 @@ export declare class ServicesController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
             isActive: boolean;
+            slug: string;
             sortOrder: number;
-            icon: string | null;
             color: string | null;
+            icon: string | null;
         };
         tags: string | null;
         description: string | null;
@@ -279,17 +279,17 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         slug: string;
         shortDescription: string | null;
         images: string | null;
         features: string | null;
-        isActive: boolean;
         viewCount: number;
+        metadata: string | null;
         duration: number;
+        basePriceCents: number;
         minPrice: number | null;
         maxPrice: number | null;
-        metadata: string | null;
-        basePriceCents: number;
         priceType: string;
         typeId: string | null;
         isFeatured: boolean;
@@ -305,8 +305,8 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        price: number;
         quantity: number;
+        price: number;
         serviceId: string;
     }>;
     updateServiceItem(itemId: string, updateItemDto: {
@@ -317,8 +317,8 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        price: number;
         quantity: number;
+        price: number;
         serviceId: string;
     }>;
     deleteServiceItem(itemId: string): Promise<{
@@ -326,8 +326,8 @@ export declare class ServicesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        price: number;
         quantity: number;
+        price: number;
         serviceId: string;
     }>;
 }

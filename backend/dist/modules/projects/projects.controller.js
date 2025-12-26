@@ -18,6 +18,8 @@ const projects_service_1 = require("./projects.service");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const jwt_guard_1 = require("../auth/jwt.guard");
 const swagger_1 = require("@nestjs/swagger");
+const create_project_dto_1 = require("./dto/create-project.dto");
+const update_project_dto_1 = require("./dto/update-project.dto");
 let ProjectsController = class ProjectsController {
     constructor(projectsService) {
         this.projectsService = projectsService;
@@ -27,7 +29,7 @@ let ProjectsController = class ProjectsController {
             page,
             limit,
             status,
-            featured: featured === 'true',
+            featured: featured !== undefined ? featured === 'true' : undefined,
             category,
         });
     }
@@ -49,10 +51,31 @@ let ProjectsController = class ProjectsController {
     async create(data) {
         return this.projectsService.create(data);
     }
-    async update(id, data) {
+    async update(id, data, req) {
+        if (req?.user) {
+            const project = await this.projectsService.findById(id);
+            const authenticatedUserId = req.user?.sub || req.user?.id;
+            const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+            const projectUserId = project?.userId || project?.users?.id;
+            if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
+                throw new common_1.ForbiddenException('You can only update your own projects');
+            }
+            if (data.userId && !isAdmin && data.userId !== authenticatedUserId) {
+                throw new common_1.ForbiddenException('You cannot assign projects to other users');
+            }
+        }
         return this.projectsService.update(id, data);
     }
-    async remove(id) {
+    async remove(id, req) {
+        if (req?.user) {
+            const project = await this.projectsService.findById(id);
+            const authenticatedUserId = req.user?.sub || req.user?.id;
+            const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+            const projectUserId = project?.userId || project?.users?.id;
+            if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
+                throw new common_1.ForbiddenException('You can only delete your own projects');
+            }
+        }
         return this.projectsService.remove(id);
     }
     async toggleFeatured(id) {
@@ -105,19 +128,22 @@ __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create new project' }),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false })),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_project_dto_1.CreateProjectDto]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "create", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_or_key_guard_1.AdminOrKeyGuard),
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update project' }),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false })),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, update_project_dto_1.UpdateProjectDto, Object]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "update", null);
 __decorate([
@@ -125,8 +151,9 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete project' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "remove", null);
 __decorate([

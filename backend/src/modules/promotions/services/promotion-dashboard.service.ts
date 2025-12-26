@@ -242,7 +242,7 @@ export class PromotionDashboardService {
         type: true,
         value: true,
         isActive: true,
-        starts_at: true,
+        startsAt: true,
         expiresAt: true,
       },
       orderBy: sortConfig,
@@ -263,7 +263,7 @@ export class PromotionDashboardService {
           type: promo.type,
           value: Number(promo.value),
           isActive: promo.isActive,
-          startsAt: promo.starts_at,
+          startsAt: promo.startsAt,
           expiresAt: promo.expiresAt,
           estimatedSavings: metrics.totalDiscountGiven,
           applicableProductCount: 0, // Would need products join
@@ -314,7 +314,7 @@ export class PromotionDashboardService {
       type: promotion.type,
       value: Number(promotion.value),
       isActive: promotion.isActive,
-      startsAt: promotion.starts_at,
+      startsAt: promotion.startsAt,
       expiresAt: promotion.expiresAt,
       estimatedSavings: metrics.totalDiscountGiven,
       applicableProductCount: 0, // TODO: Add products relation if needed
@@ -396,9 +396,16 @@ export class PromotionDashboardService {
     try {
       for (const promotionId of promotionIds) {
         try {
+          // SECURITY: Explicit field whitelist to prevent mass assignment
+          // Only allow specific fields to be updated via bulk operation
+          const ALLOWED_UPDATE_FIELDS = [
+            'type', 'value', 'isActive', 'expiresAt', 'name', 
+            'description', 'code', 'minOrderAmount', 'maxDiscount'
+          ];
+          
           const updateData: any = {};
 
-          // Map changes to database fields
+          // Map changes to database fields (only allowed fields)
           if (changes.type !== undefined) updateData.type = changes.type;
           if (changes.value !== undefined) updateData.value = Math.round(Number(changes.value));
           if (changes.isActive !== undefined) updateData.isActive = changes.isActive;
@@ -412,6 +419,16 @@ export class PromotionDashboardService {
             updateData.minOrderAmount = Math.round(Number(changes.minOrderAmount));
           if (changes.maxDiscount !== undefined)
             updateData.maxDiscount = Math.round(Number(changes.maxDiscount));
+
+          // SECURITY: Validate that we're only updating allowed fields
+          const updateFields = Object.keys(updateData);
+          const invalidFields = updateFields.filter(field => !ALLOWED_UPDATE_FIELDS.includes(field));
+          if (invalidFields.length > 0) {
+            throw new Error(
+              `Invalid fields in bulk update: ${invalidFields.join(', ')}. ` +
+              `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`
+            );
+          }
 
           updateData.updatedAt = new Date();
 

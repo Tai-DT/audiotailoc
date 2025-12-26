@@ -201,7 +201,9 @@ export class RealtimeService {
         });
       }
 
-      this.logger.log(`Inventory alert for ${product.name}: ${currentStock} units (threshold: ${alertThreshold})`);
+      this.logger.log(
+        `Inventory alert for ${product.name}: ${currentStock} units (threshold: ${alertThreshold})`,
+      );
     } catch (error) {
       this.logger.error(`Failed to notify inventory alert for ${productId}:`, error);
     }

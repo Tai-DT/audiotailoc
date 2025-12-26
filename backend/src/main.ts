@@ -3,7 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './modules/app.module';
 import helmet from 'helmet';
 import compression from 'compression';
-import type { Request } from 'express';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import rateLimit from 'express-rate-limit';
+import type { Request, Response, NextFunction } from 'express';
 import { json, urlencoded } from 'express';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +14,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 import { BigIntSerializeInterceptor } from './common/interceptors/bigint-serialize.interceptor';
+import { CsrfMiddleware } from './common/security/csrf.middleware';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -33,23 +36,42 @@ if (process && process.stdout && typeof process.stdout.on === 'function') {
   });
 }
 
+// Suppress DEP0190 deprecation warning from cron package
+// The cron package uses child_process with shell: true, which triggers this warning
+// This is a known issue in the cron package and doesn't affect functionality
+process.on('warning', (warning: Error & { name?: string; code?: string }) => {
+  // Suppress only DEP0190 warnings (child process shell option)
+  // By handling the warning event, we prevent the default console output
+  if (warning.name === 'DeprecationWarning' && warning.code === 'DEP0190') {
+    return; // Suppress this specific warning - don't log it
+  }
+  // Other warnings will still be logged by default Node.js behavior
+});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = new Logger('Bootstrap');
   const config = app.get(ConfigService);
 
-  // Enable trust proxy for Heroku (fixes X-Forwarded-For warnings)
-  app.getHttpAdapter().getInstance().set('trust proxy', true);
+  // Enable trust proxy for Heroku/reverse proxy (fixes X-Forwarded-For warnings)
+  // Use number instead of true to avoid rate limiting bypass vulnerability
+  // 1 = trust first proxy (for single reverse proxy like Heroku, nginx)
+  const trustProxyCount = config.get<number>('TRUST_PROXY_COUNT') ?? (process.env.NODE_ENV === 'production' ? 1 : false);
+  app.getHttpAdapter().getInstance().set('trust proxy', trustProxyCount);
 
   // Get port early to avoid hoisting issues
   const port = Number(process.env.PORT || config.get('PORT') || 3010);
 
+  // Prisma directUrl fallback: allow setups that only provide DATABASE_URL.
+  // If DIRECT_DATABASE_URL is not explicitly set, default it to DATABASE_URL.
+  const databaseUrl = config.get<string>('DATABASE_URL');
+  const directDatabaseUrl = config.get<string>('DIRECT_DATABASE_URL');
+  if (!directDatabaseUrl && databaseUrl) {
+    process.env.DIRECT_DATABASE_URL = databaseUrl;
+  }
+
   // Validate required environment variables
-  const requiredEnvVars = [
-    'DATABASE_URL',
-    'JWT_ACCESS_SECRET',
-    'JWT_REFRESH_SECRET'
-  ];
+  const requiredEnvVars = ['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
 
   const missingVars = requiredEnvVars.filter(varName => !config.get(varName));
   if (missingVars.length > 0) {
@@ -58,47 +80,61 @@ async function bootstrap() {
   }
 
   // Performance middleware
-  app.use(compression({
-    level: 6, // Good balance between compression and performance
-    threshold: 1024, // Only compress responses larger than 1KB
-    // Use any to avoid conflicts between different @types/express packages (e.g., multer vs express)
-    filter: (req: any, res: any) => {
-      // Don't compress responses with this request header
-      if (req && req.headers && req.headers['x-no-compression']) {
-        return false;
-      }
-      // Use compression filter function - cast to any to avoid incompatible Request types
-      return (compression as any).filter(req, res);
-    },
-  }));
+  app.use(
+    compression({
+      level: 6, // Good balance between compression and performance
+      threshold: 1024, // Only compress responses larger than 1KB
+      // Use any to avoid conflicts between different @types/express packages (e.g., multer vs express)
+      filter: (req: any, res: any) => {
+        // Don't compress responses with this request header
+        if (req && req.headers && req.headers['x-no-compression']) {
+          return false;
+        }
+        // Use compression filter function - cast to any to avoid incompatible Request types
+        return (compression as any).filter(req, res);
+      },
+    }),
+  );
 
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-  }));
+      crossOriginEmbedderPolicy: false, // For development/third-party image compat
+      crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin images
+      frameguard: { action: 'deny' }, // X-Frame-Options: DENY
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' }, // Better privacy/security
+      xssFilter: true, // X-XSS-Protection
+    }),
+  );
 
   // Enhanced CORS configuration
-  const corsOrigins = config.get('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app');
+  // Support both CORS_ORIGIN and CORS_ORIGINS to avoid env mismatch across deployments.
+  const corsOrigins =
+    config.get('CORS_ORIGIN') ||
+    config.get('CORS_ORIGINS') ||
+    'http://localhost:3000,http://localhost:3001,http://localhost:3002,https://*.vercel.app';
   const allowedOrigins = corsOrigins.split(',').map((origin: string) => origin.trim());
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow health checks without origin header
-      // Allow requests with no origin (like mobile apps or curl requests)
-      // Only allow specific origins for production security
+      // SECURITY: Stricter CORS handling for production
       if (!origin) {
         // In development, allow localhost without origin (like Postman)
         if (process.env.NODE_ENV === 'development') {
           return callback(null, true);
         }
-        // In production, allow health checks without origin
+        // In production, allow requests without origin but log warning
+        // Note: Some legitimate clients (mobile apps, curl) may not send Origin header
+        // Consider implementing additional middleware to validate these requests
+        logger.warn('CORS: Request without Origin header in production - consider stricter validation');
         return callback(null, true);
       }
 
@@ -107,14 +143,16 @@ async function bootstrap() {
         callback(null, true);
       }
       // Check wildcard patterns for Vercel domains
-      else if (allowedOrigins.some(allowedOrigin => {
-        if (allowedOrigin.includes('*')) {
-          const pattern = allowedOrigin.replace('*', '.*');
-          const regex = new RegExp(pattern);
-          return regex.test(origin);
-        }
-        return false;
-      })) {
+      else if (
+        allowedOrigins.some(allowedOrigin => {
+          if (allowedOrigin.includes('*')) {
+            const pattern = allowedOrigin.replace('*', '.*');
+            const regex = new RegExp(pattern);
+            return regex.test(origin);
+          }
+          return false;
+        })
+      ) {
         callback(null, true);
       } else {
         logger.warn(`CORS blocked request from: ${origin}`);
@@ -124,45 +162,58 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     // Include custom admin header to support dashboard admin requests from browser
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Idempotency-Key', 'X-Admin-Key'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Idempotency-Key',
+      'X-Admin-Key',
+    ],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
   });
 
   // Body parsing with optimized limits
-  app.use(json({
-    limit: '2mb',
-    verify: (req: any, res, buf) => {
-      // Verify request body size for security
-      if (buf.length > 2 * 1024 * 1024) {
-        throw new Error('Request body too large');
-      }
-    }
-  }));
-  app.use(urlencoded({
-    extended: true,
-    limit: '2mb',
-    parameterLimit: 10000 // Limit number of parameters
-  }));
+  app.use(
+    json({
+      limit: '2mb',
+      verify: (req: any, res, buf) => {
+        // Verify request body size for security
+        if (buf.length > 2 * 1024 * 1024) {
+          throw new Error('Request body too large');
+        }
+      },
+    }),
+  );
+  app.use(
+    urlencoded({
+      extended: true,
+      limit: '2mb',
+      parameterLimit: 10000, // Limit number of parameters
+    }),
+  );
 
   // Global pipes with enhanced validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: false,
-      forbidNonWhitelisted: false,
+      whitelist: true, // Drop properties not defined in the DTO
+      forbidNonWhitelisted: false, // Drop instead of error (safer for migration)
       transform: true,
       transformOptions: {
         enableImplicitConversion: true,
       },
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-      exceptionFactory: (errors) => {
-        const messages = errors.map(error =>
-          `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`
+      exceptionFactory: errors => {
+        const messages = errors.map(
+          error => `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`,
         );
-        return new HttpException({
-          statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-          message: 'Validation failed',
-          errors: messages,
-        }, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new HttpException(
+          {
+            statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+            message: 'Validation failed',
+            errors: messages,
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       },
     }),
   );
@@ -177,11 +228,24 @@ async function bootstrap() {
 
   // Note: ApiVersioningInterceptor is registered in the ApiVersioningModule
 
+  // CSRF Protection middleware
+  // Protects against Cross-Site Request Forgery attacks
+  const csrfMiddleware = new CsrfMiddleware(config);
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    csrfMiddleware.use(req, res, next);
+  });
+
   // Rate limiting middleware
-  const rateLimit = require('express-rate-limit');
+  // Note: express-rate-limit automatically uses Express's 'trust proxy' setting
+  // By setting trust proxy to a number (not true), we avoid the bypass vulnerability
+  // 
+  // SECURITY: Global rate limiting as baseline protection
+  // - Per-endpoint rate limits are configured in controllers using @Throttle decorator
+  // - Auth endpoints have stricter limits (see auth.controller.ts)
+  // - This global limiter provides defense-in-depth for all endpoints
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // limit each IP to 1000 requests per windowMs
+    max: 300, // limit each IP to 300 requests per windowMs (hardened baseline)
     message: {
       success: false,
       message: 'Too many requests from this IP, please try again later.',
@@ -293,12 +357,12 @@ async function bootstrap() {
   logger.log(`🚀 Audio Tài Lộc API v1 đang chạy tại: http://localhost:${port}`);
   logger.log(`📚 API v1 Documentation: http://localhost:${port}/docs`);
   logger.log(`🔧 API v1 Tooling: http://localhost:${port}/api/v1/docs`);
-  logger.log(`🏥 Health Check: http://localhost:${port}/api/v1/health`);
+  logger.log(`🏥 Health Check: http://localhost:${port}/health`);
   logger.log(`🌍 Environment: ${config.get('NODE_ENV') || 'development'}`);
   logger.log(`🎯 Current API Version: v1 (Unified Complete Edition)`);
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch(error => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });

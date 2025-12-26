@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PageBanner } from '@/components/ui/page-banner';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Search, Grid, List, Clock, Users } from 'lucide-react';
@@ -54,7 +53,7 @@ export default function CategoriesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <Link href={`/services/${service.slug}`}>
-                      <h3 className="font-semibold text-lg hover:text-blue-600 transition-colors">
+                      <h3 className="font-semibold text-lg hover:text-primary transition-colors">
                         {service.name}
                       </h3>
                     </Link>
@@ -65,7 +64,7 @@ export default function CategoriesPage() {
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-green-600">
+                    <div className="text-lg font-bold text-success">
                       {service.priceType === 'FIXED'
                         ? `${service.price.toLocaleString('vi-VN')}₫`
                         : service.priceType === 'RANGE'
@@ -73,7 +72,7 @@ export default function CategoriesPage() {
                         : 'Liên hệ'
                       }
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       {service.priceType === 'FIXED' ? 'Giá cố định' :
                        service.priceType === 'RANGE' ? 'Giá theo yêu cầu' :
                        'Giá thương lượng'}
@@ -81,11 +80,11 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                <p className="text-gray-600 text-sm line-clamp-2">
+                <p className="text-muted-foreground text-sm line-clamp-2">
                   {service.shortDescription || service.description}
                 </p>
 
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
                     <span>{service.duration} phút</span>
@@ -136,7 +135,7 @@ export default function CategoriesPage() {
           <div className="space-y-3">
             <div>
               <Link href={`/services/${service.slug}`}>
-                <h3 className="font-semibold text-lg hover:text-blue-600 transition-colors line-clamp-2">
+                <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2">
                   {service.name}
                 </h3>
               </Link>
@@ -147,17 +146,17 @@ export default function CategoriesPage() {
               )}
             </div>
 
-            <p className="text-gray-600 text-sm line-clamp-2">
+            <p className="text-muted-foreground text-sm line-clamp-2">
               {service.shortDescription || service.description}
             </p>
 
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{service.duration} phút</span>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold text-green-600">
+              <div className="text-lg font-bold text-success">
                 {service.priceType === 'FIXED'
                   ? `${service.price.toLocaleString('vi-VN')}₫`
                   : service.priceType === 'RANGE'
@@ -189,10 +188,10 @@ export default function CategoriesPage() {
         </div>
         <div className="container mx-auto px-4 py-6">
           <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-4"></div>
+            <div className="h-6 bg-muted rounded mb-4"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+                <div key={i} className="h-48 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -226,7 +225,7 @@ export default function CategoriesPage() {
               {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Tìm kiếm dịch vụ..."
                     value={searchQuery}
@@ -286,7 +285,7 @@ export default function CategoriesPage() {
 
           {/* Results Count */}
           <div className="mb-6">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Hiển thị {filteredServices.length} dịch vụ
               {selectedType !== 'all' && serviceTypes?.find(t => t.id === selectedType) &&
                 ` trong danh mục ${serviceTypes.find(t => t.id === selectedType)?.name}`
@@ -305,11 +304,11 @@ export default function CategoriesPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
+              <div className="text-muted-foreground mb-4">
                 <Search className="h-12 w-12 mx-auto" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Không tìm thấy dịch vụ</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
               </p>
             </div>
@@ -327,7 +326,7 @@ export default function CategoriesPage() {
                       <CardContent className="p-4 text-center">
                         <div className="text-2xl mb-2">{type.icon || '🎵'}</div>
                         <h3 className="font-semibold mb-1">{type.name}</h3>
-                        <p className="text-sm text-gray-600">{typeServices.length} dịch vụ</p>
+                        <p className="text-sm text-muted-foreground">{typeServices.length} dịch vụ</p>
                       </CardContent>
                     </Card>
                   );

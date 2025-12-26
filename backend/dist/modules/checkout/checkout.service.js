@@ -45,13 +45,13 @@ let CheckoutService = class CheckoutService {
                     totalCents: total,
                     promotionCode: promo?.code ?? null,
                     shippingAddress: params.shippingAddress ?? null,
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
                 },
             });
             for (const i of items) {
                 const product = await tx.products.findUnique({
                     where: { id: i.productId },
-                    select: { priceCents: true, isActive: true, isDeleted: true }
+                    select: { priceCents: true, isActive: true, isDeleted: true },
                 });
                 if (!product || !product.isActive || product.isDeleted) {
                     throw new common_1.BadRequestException(`Product ${i.products.name} is no longer available`);
@@ -67,7 +67,7 @@ let CheckoutService = class CheckoutService {
                         price: currentPrice,
                         unitPrice: currentPrice,
                         imageUrl: i.products.imageUrl ?? null,
-                        updatedAt: new Date()
+                        updatedAt: new Date(),
                     },
                 });
             }
@@ -85,9 +85,9 @@ let CheckoutService = class CheckoutService {
                         items: items.map((item) => ({
                             name: item.products.name || 'Sản phẩm',
                             quantity: item.quantity,
-                            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+                            price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`,
                         })),
-                        status: result.status
+                        status: result.status,
                     };
                     await this.mail.sendOrderConfirmation(user.email, orderData);
                 }
@@ -98,7 +98,10 @@ let CheckoutService = class CheckoutService {
         return result;
     }
     async getOrderForUserByNo(userId, orderNo) {
-        const order = await this.prisma.orders.findFirst({ where: { orderNo, userId }, include: { order_items: true, payments: true } });
+        const order = await this.prisma.orders.findFirst({
+            where: { orderNo, userId },
+            include: { order_items: true, payments: true },
+        });
         if (!order)
             throw new Error('Không tìm thấy đơn hàng');
         return order;
@@ -107,6 +110,9 @@ let CheckoutService = class CheckoutService {
 exports.CheckoutService = CheckoutService;
 exports.CheckoutService = CheckoutService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService, cart_service_1.CartService, promotion_service_1.PromotionService, mail_service_1.MailService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        cart_service_1.CartService,
+        promotion_service_1.PromotionService,
+        mail_service_1.MailService])
 ], CheckoutService);
 //# sourceMappingURL=checkout.service.js.map

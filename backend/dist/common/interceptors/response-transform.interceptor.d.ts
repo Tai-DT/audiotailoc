@@ -8,7 +8,7 @@ export interface Response<T> {
     path: string;
     method: string;
 }
-export declare class ResponseTransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-    intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>>;
+export declare class ResponseTransformInterceptor<T> implements NestInterceptor<T, any> {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
     private getSuccessMessage;
 }

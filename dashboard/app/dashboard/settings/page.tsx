@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,8 +17,13 @@ import {
   Save
 } from "lucide-react"
 import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
+
+type SettingsSection = "store" | "business" | "email" | "notifications" | "security"
 
 export default function SettingsPage() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [savingSection, setSavingSection] = useState<SettingsSection | null>(null)
   const [settings, setSettings] = useState({
     // Store settings
     storeName: "Audio Tài Lộc",
@@ -65,13 +70,98 @@ export default function SettingsPage() {
     itemsPerPage: 20
   })
 
-  const handleSave = async (section: string) => {
+  useEffect(() => {
+    let isMounted = true
+
+    const load = async () => {
+      try {
+        const res = await apiClient.getAdminSiteSettings()
+        const data = (res?.data || {}) as any
+
+        if (!isMounted) return
+
+        setSettings((prev) => ({
+          ...prev,
+          ...(data.store || {}),
+          ...(data.business || {}),
+          ...(data.email || {}),
+          ...(data.notifications || {}),
+          ...(data.security || {}),
+        }))
+      } catch (err: any) {
+        toast.error(err?.message || "Không thể tải cài đặt")
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const toPayload = (section: SettingsSection) => {
+    switch (section) {
+      case "store":
+        return {
+          store: {
+            storeName: settings.storeName,
+            storeEmail: settings.storeEmail,
+            storePhone: settings.storePhone,
+            storeAddress: settings.storeAddress,
+            storeLogo: settings.storeLogo,
+          },
+        }
+      case "business":
+        return {
+          business: {
+            taxCode: settings.taxCode,
+            businessLicense: settings.businessLicense,
+            currency: settings.currency,
+            timezone: settings.timezone,
+          },
+        }
+      case "email":
+        return {
+          email: {
+            emailHost: settings.emailHost,
+            emailPort: settings.emailPort,
+            emailUsername: settings.emailUsername,
+            emailPassword: settings.emailPassword,
+            emailFrom: settings.emailFrom,
+          },
+        }
+      case "notifications":
+        return {
+          notifications: {
+            orderNotification: settings.orderNotification,
+            paymentNotification: settings.paymentNotification,
+            reviewNotification: settings.reviewNotification,
+            lowStockNotification: settings.lowStockNotification,
+          },
+        }
+      case "security":
+        return {
+          security: {
+            twoFactorAuth: settings.twoFactorAuth,
+            sessionTimeout: settings.sessionTimeout,
+            passwordExpiry: settings.passwordExpiry,
+            maxLoginAttempts: settings.maxLoginAttempts,
+          },
+        }
+    }
+  }
+
+  const handleSave = async (section: SettingsSection) => {
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success(`Đã lưu cài đặt ${section}`)
+      setSavingSection(section)
+      await apiClient.updateSiteSettings(toPayload(section) as any)
+      toast.success("Đã lưu cài đặt")
     } catch {
       toast.error("Không thể lưu cài đặt")
+    } finally {
+      setSavingSection(null)
     }
   }
 
@@ -157,7 +247,10 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <Button onClick={() => handleSave("cửa hàng")}>
+              <Button
+                onClick={() => handleSave("store")}
+                disabled={isLoading || savingSection === "store"}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Lưu thay đổi
               </Button>
@@ -225,7 +318,10 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button onClick={() => handleSave("kinh doanh")}>
+              <Button
+                onClick={() => handleSave("business")}
+                disabled={isLoading || savingSection === "business"}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Lưu thay đổi
               </Button>
@@ -296,7 +392,10 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <Button onClick={() => handleSave("email")}>
+              <Button
+                onClick={() => handleSave("email")}
+                disabled={isLoading || savingSection === "email"}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Lưu thay đổi
               </Button>
@@ -364,7 +463,10 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button onClick={() => handleSave("thông báo")}>
+              <Button
+                onClick={() => handleSave("notifications")}
+                disabled={isLoading || savingSection === "notifications"}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Lưu thay đổi
               </Button>
@@ -430,7 +532,10 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <Button onClick={() => handleSave("bảo mật")}>
+              <Button
+                onClick={() => handleSave("security")}
+                disabled={isLoading || savingSection === "security"}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Lưu thay đổi
               </Button>

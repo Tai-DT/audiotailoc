@@ -27,18 +27,21 @@ export class InventoryMovementController {
     status: 201,
     description: 'Movement created successfully',
   })
-  async create(@Body() data: {
-    productId: string;
-    type: string;
-    quantity: number;
-    previousStock: number;
-    newStock: number;
-    reason?: string;
-    referenceId?: string;
-    referenceType?: string;
-    userId?: string;
-    notes?: string;
-  }) {
+  async create(
+    @Body()
+    data: {
+      productId: string;
+      type: string;
+      quantity: number;
+      previousStock: number;
+      newStock: number;
+      reason?: string;
+      referenceId?: string;
+      referenceType?: string;
+      userId?: string;
+      notes?: string;
+    },
+  ) {
     return this.inventoryMovementService.create(data);
   }
 

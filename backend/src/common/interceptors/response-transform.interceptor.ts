@@ -1,4 +1,10 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  StreamableFile,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -12,20 +18,27 @@ export interface Response<T> {
 }
 
 @Injectable()
-export class ResponseTransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+export class ResponseTransformInterceptor<T> implements NestInterceptor<T, any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const _response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
-      map(data => ({
-        success: true,
-        data,
-        message: this.getSuccessMessage(request.method, request.url),
-        timestamp: new Date().toISOString(),
-        path: request.url,
-        method: request.method,
-      })),
+      map((data: any) => {
+        // Do not wrap file downloads / streaming responses.
+        if (data instanceof StreamableFile) {
+          return data;
+        }
+
+        return {
+          success: true,
+          data,
+          message: this.getSuccessMessage(request.method, request.url),
+          timestamp: new Date().toISOString(),
+          path: request.url,
+          method: request.method,
+        };
+      }),
     );
   }
 

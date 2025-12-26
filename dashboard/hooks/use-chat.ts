@@ -47,7 +47,7 @@ export function useChat() {
     const fetchConversations = useCallback(async () => {
         try {
             const response = await apiClient.getConversations({ limit: 50 });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const responseData = response.data as any;
             if (responseData && Array.isArray(responseData.data)) {
                 setConversations(responseData.data);
@@ -64,7 +64,7 @@ export function useChat() {
         try {
             setLoading(true);
             const response = await apiClient.getChatMessages(conversationId, { limit: 50 });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const responseData = response.data as any;
             if (responseData && Array.isArray(responseData.data)) {
                 setMessages(responseData.data);

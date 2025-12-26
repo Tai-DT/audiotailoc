@@ -7,9 +7,10 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
-import { ZaloChatWidget } from "@/components/ui/zalo-chat-widget";
+import { ChatWidget } from "@/components/ui/chat-widget";
 import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
@@ -62,6 +63,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
             <CartProvider>
+              <ScrollProgress />
               <Header />
               {children}
               <Footer />
@@ -81,7 +83,7 @@ export default function RootLayout({
                   },
                 }}
               />
-              <ZaloChatWidget phoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
+              <ChatWidget zaloPhoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>

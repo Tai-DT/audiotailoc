@@ -1,17 +1,22 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { format } from "date-fns"
 import { toast } from "react-hot-toast"
 import { apiClient, API_ENDPOINTS } from "@/lib/api"
 import { CONTACT_CONFIG } from "@/lib/contact-config"
-import { useSocket } from "@/components/providers/socket-provider"
+import { io, Socket } from "socket.io-client"
+import { MagicCard } from "@/components/ui/magic-card"
+import { BorderBeam } from "@/components/ui/border-beam"
+import { AnimatedGradientText } from "@/components/ui/animated-gradient-text"
+import { ShimmerButton } from "@/components/ui/shimmer-button"
+import { Send, MessageCircle, User, Phone as PhoneIcon, Loader2 } from "lucide-react"
 
 interface ConversationState {
   id: string
@@ -53,8 +58,42 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const { socket, isConnected } = useSocket()
+  const [socket, setSocket] = useState<Socket | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Create chat socket connection
+  const createChatSocket = useCallback((conv: ConversationState) => {
+    let socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010"
+    socketUrl = socketUrl.replace(/\/api\/v1\/?$/, "").replace(/\/api\/?$/, "")
+    if (socketUrl.endsWith("/")) {
+      socketUrl = socketUrl.slice(0, -1)
+    }
+
+    const newSocket = io(`${socketUrl}/api/v1/chat`, {
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      auth: {
+        guestId: conv.guestId,
+        guestToken: conv.guestToken,
+      },
+    })
+
+    newSocket.on("connect", () => {
+      console.log("[Chat] Socket connected")
+      newSocket.emit("join_conversation", { conversationId: conv.id })
+    })
+
+    newSocket.on("disconnect", () => {
+      console.log("[Chat] Socket disconnected")
+    })
+
+    newSocket.on("connect_error", (err) => {
+      console.error("[Chat] Socket error:", err.message)
+    })
+
+    return newSocket
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem(LOCAL_KEY)
@@ -63,11 +102,20 @@ export default function ChatPage() {
         const parsed = JSON.parse(saved) as ConversationState
         setConversation(parsed)
         fetchMessages(parsed)
+        
+        // Create socket for existing conversation
+        const sock = createChatSocket(parsed)
+        setSocket(sock)
+        
+        return () => {
+          sock.emit("leave_conversation", { conversationId: parsed.id })
+          sock.disconnect()
+        }
       } catch {
         // ignore
       }
     }
-  }, [])
+  }, [createChatSocket])
 
   useEffect(() => {
     if (!socket || !conversation) return
@@ -149,6 +197,11 @@ export default function ChatPage() {
         localStorage.setItem(LOCAL_KEY, JSON.stringify(state))
         setMessages(data.messages || [])
         setInitialMessage("")
+        
+        // Create socket for new conversation
+        const sock = createChatSocket(state)
+        setSocket(sock)
+        
         toast.success("Đã bắt đầu chat")
       } else {
         throw new Error('Thiếu thông tin hội thoại')
@@ -200,87 +253,226 @@ export default function ChatPage() {
   const isConversationReady = !!conversation
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-slate-100 dark:from-slate-950 dark:via-background dark:to-slate-900 py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Trò chuyện với Audio Tài Lộc</CardTitle>
-            <CardDescription>Chọn chat trực tiếp hoặc dùng Zalo ở góc màn hình.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-3">
-            <div className="space-y-3 md:col-span-1">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Họ tên</label>
-                <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nguyễn Văn A" disabled={isConversationReady} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Số điện thoại</label>
-                <Input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="09xx" disabled={isConversationReady} />
-              </div>
-              {!isConversationReady && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tin nhắn đầu tiên</label>
-                  <Textarea value={initialMessage} onChange={(e) => setInitialMessage(e.target.value)} rows={4} placeholder="Mình cần tư vấn..." />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <MagicCard
+            className="overflow-hidden"
+            gradientSize={400}
+            gradientColor="oklch(0.58 0.28 20 / 0.1)"
+            gradientFrom="oklch(0.58 0.28 20)"
+            gradientTo="oklch(0.70 0.22 40)"
+          >
+            <Card className="relative border-0 shadow-xl">
+              <BorderBeam
+                size={150}
+                duration={12}
+                colorFrom="oklch(0.58 0.28 20)"
+                colorTo="oklch(0.70 0.22 40)"
+                borderWidth={2}
+              />
+              <CardHeader className="bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gradient-to-br from-primary to-accent">
+                    <MessageCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">
+                      <AnimatedGradientText
+                        className="text-2xl font-bold"
+                        speed={1.2}
+                        colorFrom="oklch(0.58 0.28 20)"
+                        colorTo="oklch(0.70 0.22 40)"
+                      >
+                        Trò chuyện với Audio Tài Lộc
+                      </AnimatedGradientText>
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Chọn chat trực tiếp hoặc dùng Zalo ở góc màn hình.
+                    </CardDescription>
+                  </div>
                 </div>
-              )}
-              {!isConversationReady && (
-                <Button className="w-full" onClick={startConversation} disabled={loading}>
-                  {loading ? "Đang tạo..." : "Bắt đầu chat"}
-                </Button>
-              )}
-              {isConversationReady && (
-                <div className="text-xs text-muted-foreground">
-                  Mã khách: <span className="font-semibold">{conversation?.guestId}</span>
-                </div>
-              )}
-            </div>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-3 p-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="space-y-4 md:col-span-1"
+                >
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      Họ tên
+                    </label>
+                    <Input
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="Nguyễn Văn A"
+                      disabled={isConversationReady}
+                      className="transition-all focus:border-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <PhoneIcon className="w-4 h-4 text-primary" />
+                      Số điện thoại
+                    </label>
+                    <Input
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      placeholder="09xx"
+                      disabled={isConversationReady}
+                      className="transition-all focus:border-primary"
+                    />
+                  </div>
+                  {!isConversationReady && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="space-y-2"
+                    >
+                      <label className="text-sm font-medium">Tin nhắn đầu tiên</label>
+                      <Textarea
+                        value={initialMessage}
+                        onChange={(e) => setInitialMessage(e.target.value)}
+                        rows={4}
+                        placeholder="Mình cần tư vấn..."
+                        className="transition-all focus:border-primary"
+                      />
+                    </motion.div>
+                  )}
+                  {!isConversationReady && (
+                    <ShimmerButton
+                      className="w-full"
+                      onClick={startConversation}
+                      disabled={loading}
+                      shimmerColor="oklch(0.70 0.22 40)"
+                      background="oklch(0.58 0.28 20)"
+                      borderRadius="0.5rem"
+                    >
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Đang tạo...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4" />
+                          Bắt đầu chat
+                        </span>
+                      )}
+                    </ShimmerButton>
+                  )}
+                  {isConversationReady && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-3 rounded-lg bg-primary/10 border border-primary/20"
+                    >
+                      <div className="text-xs text-muted-foreground">
+                        Mã khách: <span className="font-semibold text-primary">{conversation?.guestId}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
 
-            <Separator className="md:hidden" />
+                <Separator className="md:hidden" />
 
-            <div className="md:col-span-2 flex flex-col h-[520px] border rounded-lg overflow-hidden bg-white dark:bg-slate-950">
-              <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-[440px] p-4">
-                  {loading ? (
-                    <p className="text-sm text-muted-foreground">Đang tải tin nhắn...</p>
-                  ) : messages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Chưa có tin nhắn.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {messages.map((m) => (
-                        <div key={m.id} className={`flex ${m.senderType === 'ADMIN' ? 'justify-start' : 'justify-end'}`}>
-                          <div className={`max-w-[70%] p-3 rounded-lg text-sm ${m.senderType === 'ADMIN' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' : 'bg-blue-600 text-white'}`}>
-                            <div>{m.content}</div>
-                            <div className="text-[10px] opacity-70 mt-1 text-right">{format(new Date(m.createdAt), 'HH:mm dd/MM')}</div>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="md:col-span-2 flex flex-col h-[520px] border rounded-xl overflow-hidden bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 shadow-lg"
+                >
+                  <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-[440px] p-4">
+                      {loading ? (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center space-y-2">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                            <p className="text-sm text-muted-foreground">Đang tải tin nhắn...</p>
                           </div>
                         </div>
-                      ))}
-                      <div ref={scrollRef} />
+                      ) : messages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center space-y-2">
+                            <MessageCircle className="w-12 h-12 text-muted-foreground/30 mx-auto" />
+                            <p className="text-sm text-muted-foreground">Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <AnimatePresence>
+                            {messages.map((m, index) => (
+                              <motion.div
+                                key={m.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ delay: index * 0.05 }}
+                                className={`flex ${m.senderType === 'ADMIN' ? 'justify-start' : 'justify-end'}`}
+                              >
+                                <div
+                                  className={`max-w-[70%] p-4 rounded-2xl text-sm shadow-md ${
+                                    m.senderType === 'ADMIN'
+                                      ? 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-900 dark:text-slate-100 rounded-tl-none'
+                                      : 'bg-gradient-to-br from-primary to-primary/80 text-white rounded-tr-none'
+                                  }`}
+                                >
+                                  <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                                  <div className={`text-[10px] opacity-70 mt-2 ${m.senderType === 'ADMIN' ? 'text-left' : 'text-right'}`}>
+                                    {format(new Date(m.createdAt), 'HH:mm dd/MM')}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                          <div ref={scrollRef} />
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                  <div className="p-4 border-t bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+                    <div className="flex gap-2">
+                      <Input
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder={isConversationReady ? "Nhập tin nhắn..." : "Bắt đầu cuộc trò chuyện trước"}
+                        disabled={!isConversationReady || sending}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            sendMessage()
+                          }
+                        }}
+                        className="flex-1 transition-all focus:border-primary"
+                      />
+                      <ShimmerButton
+                        onClick={sendMessage}
+                        disabled={!isConversationReady || sending || !message.trim()}
+                        shimmerColor="oklch(0.70 0.22 40)"
+                        background="oklch(0.58 0.28 20)"
+                        borderRadius="0.5rem"
+                        className="px-6"
+                      >
+                        {sending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </ShimmerButton>
                     </div>
-                  )}
-                </ScrollArea>
-              </div>
-              <div className="p-4 border-t bg-slate-50 dark:bg-slate-900">
-                <div className="flex gap-2">
-                  <Input
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder={isConversationReady ? "Nhập tin nhắn" : "Bắt đầu cuộc trò chuyện trước"}
-                    disabled={!isConversationReady || sending}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        sendMessage()
-                      }
-                    }}
-                  />
-                  <Button onClick={sendMessage} disabled={!isConversationReady || sending || !message.trim()}>
-                    {sending ? "Đang gửi..." : "Gửi"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  </div>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </MagicCard>
+        </motion.div>
       </div>
     </div>
   )

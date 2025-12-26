@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/lib/hooks/use-auth';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import {
   ShoppingBag,
@@ -30,8 +29,8 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: ty
   CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-500', icon: Package },
   PROCESSING: { label: 'Đang xử lý', color: 'bg-orange-500', icon: Package },
   SHIPPED: { label: 'Đang giao', color: 'bg-purple-500', icon: Truck },
-  DELIVERED: { label: 'Đã giao', color: 'bg-green-500', icon: CheckCircle },
-  CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', icon: XCircle },
+  DELIVERED: { label: 'Đã giao', color: 'bg-success', icon: CheckCircle },
+  CANCELLED: { label: 'Đã hủy', color: 'bg-destructive', icon: XCircle },
 };
 
 function OrdersPageContent() {
@@ -75,13 +74,14 @@ function OrdersPageContent() {
 
   if (error) {
     // Check if it's a 403 Forbidden error (user doesn't have permission)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isForbidden = (error as any)?.response?.status === 403;
     
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4 text-red-600">
+            <h1 className="text-2xl font-bold mb-4 text-destructive">
               {isForbidden ? 'Không có quyền truy cập' : 'Có lỗi xảy ra'}
             </h1>
             <p className="text-muted-foreground mb-4">
@@ -163,7 +163,7 @@ function OrdersPageContent() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-semibold text-green-600">
+                          <div className="text-lg font-semibold text-success">
                             {formatPrice(orderTotalCents / 100)}
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -239,7 +239,7 @@ function OrdersPageContent() {
                             </Button>
                           )}
                           {order.status && ['PENDING', 'PROCESSING'].includes(order.status) && (
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-red-700">
                               Hủy đơn
                             </Button>
                           )}
@@ -257,21 +257,21 @@ function OrdersPageContent() {
             <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{orders.items.length}</div>
+                  <div className="text-2xl font-bold text-primary">{orders.items.length}</div>
                   <div className="text-sm text-muted-foreground">Tổng đơn hàng</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {orders.items.filter((o: Order) => o?.status === 'COMPLETED' || o?.status === 'DELIVERED').length}
+                  <div className="text-2xl font-bold text-success">
+                    {orders.items.filter((o: Order) => o?.status === 'COMPLETED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã giao</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-2xl font-bold text-warning">
                     {orders.items.filter((o: Order) => o?.status && ['PENDING', 'PROCESSING', 'CONFIRMED'].includes(o.status)).length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đang xử lý</div>
@@ -279,7 +279,7 @@ function OrdersPageContent() {
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-2xl font-bold text-destructive">
                     {orders.items.filter((o: Order) => o?.status === 'CANCELLED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Đã hủy</div>

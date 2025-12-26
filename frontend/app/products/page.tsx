@@ -2,12 +2,12 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useProducts } from '@/lib/hooks/use-api';
+import { useProducts, useCategories } from '@/lib/hooks/use-api';
 import { ProductFilters } from '@/lib/types';
 import { ProductGrid } from '@/components/products/product-grid';
 import { toast } from 'react-hot-toast';
 import { useCart } from '@/components/providers/cart-provider';
-import { useCategories } from '@/lib/hooks/use-api';
+import { parseImages } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, X } from 'lucide-react';
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
@@ -70,11 +71,12 @@ function ProductsPageContent() {
     }
 
     try {
+      const images = parseImages(product.images, product.imageUrl);
       addCartItem({
         id: product.id,
         name: product.name,
         price: product.priceCents / 100, // Convert cents to VND
-        image: product.imageUrl || '',
+        image: images[0] || '/placeholder-product.svg',
         category: product.category?.name || 'Uncategorized',
         description: product.shortDescription || product.description,
       }, 1);
@@ -118,7 +120,14 @@ function ProductsPageContent() {
           <div className="max-w-3xl">
             <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sản phẩm</div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              {currentCategory ? currentCategory.name : "Tất cả sản phẩm"}
+              <AnimatedGradientText
+                className="text-2xl sm:text-3xl font-bold"
+                speed={1.2}
+                colorFrom="oklch(0.58 0.28 20)"
+                colorTo="oklch(0.70 0.22 40)"
+              >
+                {currentCategory ? currentCategory.name : "Tất cả sản phẩm"}
+              </AnimatedGradientText>
             </h1>
             {currentCategory?.description && (
               <p className="text-sm text-muted-foreground line-clamp-2">
@@ -271,7 +280,7 @@ function ProductsPageContent() {
               </span>
             </div>
           )}
-          
+
           <ProductGrid
             products={data?.items || []}
             loading={isLoading || categoriesLoading}

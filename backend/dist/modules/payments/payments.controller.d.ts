@@ -1,4 +1,5 @@
 import { PaymentsService } from './payments.service';
+import { PayOSService } from './payos.service';
 import { PrismaService } from '../../prisma/prisma.service';
 declare class CreateIntentDto {
     orderId: string;
@@ -14,7 +15,8 @@ declare class CreateRefundDto {
 export declare class PaymentsController {
     private readonly payments;
     private readonly prisma;
-    constructor(payments: PaymentsService, prisma: PrismaService);
+    private readonly payos;
+    constructor(payments: PaymentsService, prisma: PrismaService, payos: PayOSService);
     getPaymentMethods(): {
         methods: {
             id: string;
@@ -76,7 +78,7 @@ export declare class PaymentsController {
         paymentMethod: string;
     } | {
         intentId: string;
-        redirectUrl: string;
+        redirectUrl: any;
         paymentMethod?: undefined;
     }>;
     createRefund(dto: CreateRefundDto): Promise<{
@@ -91,38 +93,31 @@ export declare class PaymentsController {
     }>;
     payosCallback(orderCode?: string, ref?: string): Promise<{
         ok: boolean;
+        received: boolean;
     }>;
     vnpayWebhook(body: any): Promise<{
+        error: number;
+        message: string;
+    } | {
         RspCode: string;
         Message: string;
     } | {
         resultCode: number;
-        message: string;
-    } | {
-        error: number;
         message: string;
     }>;
     momoWebhook(body: any): Promise<{
+        error: number;
+        message: string;
+    } | {
         RspCode: string;
         Message: string;
     } | {
         resultCode: number;
-        message: string;
-    } | {
-        error: number;
         message: string;
     }>;
     payosWebhook(req: any, body: any, xsig?: string): Promise<{
-        RspCode: string;
-        Message: string;
-    } | {
-        resultCode: number;
-        message: string;
-    } | {
         error: number;
         message: string;
-    } | {
-        ok: boolean;
     }>;
 }
 export {};

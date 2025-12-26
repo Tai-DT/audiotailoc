@@ -5,9 +5,9 @@ export declare class FilesController {
     uploadFile(file: Express.Multer.File): Promise<import("./files.service").FileUploadResult>;
     uploadMultipleFiles(files: Express.Multer.File[]): Promise<import("./files.service").FileUploadResult[]>;
     uploadProductImage(productId: string, file: Express.Multer.File): Promise<import("./files.service").FileUploadResult>;
-    uploadUserAvatar(file: Express.Multer.File): Promise<import("./files.service").FileUploadResult>;
-    getFileInfo(fileId: string): Promise<import("./files.service").FileUploadResult>;
-    listFiles(type?: string, userId?: string, productId?: string, page?: string, limit?: string): Promise<{
+    uploadUserAvatar(file: Express.Multer.File, req: any): Promise<import("./files.service").FileUploadResult>;
+    getFileInfo(fileId: string, req: any): Promise<import("./files.service").FileUploadResult>;
+    listFiles(type?: string, userId?: string, productId?: string, page?: string, limit?: string, req?: any): Promise<{
         files: import("./files.service").FileUploadResult[];
         total: number;
         page: number;

@@ -18,7 +18,7 @@ export default function KienThucPage() {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Kiến thức & Hướng dẫn</h1>
-        <div className="text-red-600">Lỗi tải dữ liệu: {error instanceof Error ? error.message : 'Không xác định'}</div>
+        <div className="text-destructive">Lỗi tải dữ liệu: {error instanceof Error ? error.message : 'Không xác định'}</div>
       </div>
     );
   }

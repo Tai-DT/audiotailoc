@@ -461,7 +461,7 @@ export class PromotionAnalyticsCacheService {
     ]);
 
     // TODO: 'ACTIVE' status does not exist in CampaignStatus enum
-    const activeCampaigns = campaigns.filter(c => c.status === 'SENT' as any).length;
+    const activeCampaigns = campaigns.filter(c => c.status === ('SENT' as any)).length;
 
     const totalImpressions = metrics.reduce((sum, m) => sum + m.impressions, 0);
     const totalClicks = metrics.reduce((sum, m) => sum + m.clicks, 0);

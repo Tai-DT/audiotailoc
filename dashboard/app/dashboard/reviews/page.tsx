@@ -174,6 +174,7 @@ export default function ReviewsPage() {
                 <div className="flex items-center space-x-2">
                   <select
                     className="px-3 py-1 border rounded-md text-sm"
+                    aria-label="Lọc theo số sao"
                     value={filterRating}
                     onChange={(e) => setFilterRating(e.target.value)}
                   >

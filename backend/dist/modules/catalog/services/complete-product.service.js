@@ -79,18 +79,19 @@ let CompleteProductService = class CompleteProductService {
         return this.mapToProductResponse(product);
     }
     async findProducts(query) {
-        const { page = 1, pageSize = 20, sortBy = complete_product_dto_1.ProductSortBy.CREATED_AT, sortOrder = complete_product_dto_1.SortOrder.DESC, search, minPrice, maxPrice, categoryId, featured, isActive, } = query;
+        const { page = 1, pageSize = 20, sortBy = complete_product_dto_1.ProductSortBy.CREATED_AT, sortOrder = complete_product_dto_1.SortOrder.DESC, search, q, minPrice, maxPrice, categoryId, brand, featured, isActive, inStock, } = query;
+        const searchTerm = search || q;
         const skip = (page - 1) * pageSize;
         const where = {
             isDeleted: false,
         };
-        if (search) {
+        if (searchTerm) {
             where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { tags: { contains: search, mode: 'insensitive' } },
-                { brand: { contains: search, mode: 'insensitive' } },
-                { model: { contains: search, mode: 'insensitive' } },
+                { name: { contains: searchTerm, mode: 'insensitive' } },
+                { description: { contains: searchTerm, mode: 'insensitive' } },
+                { tags: { contains: searchTerm, mode: 'insensitive' } },
+                { brand: { contains: searchTerm, mode: 'insensitive' } },
+                { model: { contains: searchTerm, mode: 'insensitive' } },
             ];
         }
         if (minPrice !== undefined) {
@@ -107,6 +108,12 @@ let CompleteProductService = class CompleteProductService {
         }
         if (isActive !== undefined) {
             where.isActive = isActive;
+        }
+        if (brand) {
+            where.brand = { contains: brand, mode: 'insensitive' };
+        }
+        if (query.inStock === true) {
+            where.stockQuantity = { gt: 0 };
         }
         const orderBy = {};
         orderBy[sortBy] = sortOrder;
@@ -139,44 +146,11 @@ let CompleteProductService = class CompleteProductService {
             hasPrev: page > 1,
         };
     }
-    async searchProducts(query, limit = 20) {
-        return {
-            items: [{
-                    id: 'test-id',
-                    slug: 'test-product',
-                    name: 'Test Product',
-                    description: 'Test description',
-                    shortDescription: 'Test short description',
-                    priceCents: 100000,
-                    originalPriceCents: undefined,
-                    images: undefined,
-                    category: { id: 'test-cat', name: 'Test Category', slug: 'test-category' },
-                    brand: 'Test Brand',
-                    model: 'Test Model',
-                    sku: 'TEST-001',
-                    specifications: undefined,
-                    features: 'Test features',
-                    warranty: '1 year',
-                    minOrderQuantity: 1,
-                    maxOrderQuantity: 5,
-                    tags: 'test,tag',
-                    metaTitle: 'Test Product',
-                    metaDescription: 'Test description',
-                    metaKeywords: 'test,product',
-                    canonicalUrl: 'https://test.com/product',
-                    featured: false,
-                    isActive: true,
-                    viewCount: 0,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                }],
-            total: 1,
-            page: 1,
-            pageSize: limit,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-        };
+    async searchProducts(query) {
+        return this.findProducts({
+            ...query,
+            isActive: query.isActive !== undefined ? query.isActive : true,
+        });
     }
     async getSearchSuggestions(query, limit = 10) {
         const searchLimit = Math.min(Math.max(limit, 1), 20);
@@ -330,9 +304,9 @@ let CompleteProductService = class CompleteProductService {
                     id: true,
                     name: true,
                     _count: {
-                        select: { order_items: true }
-                    }
-                }
+                        select: { order_items: true },
+                    },
+                },
             });
             if (!product) {
                 return { deleted: false, message: 'Product not found' };
@@ -340,7 +314,7 @@ let CompleteProductService = class CompleteProductService {
             if (product._count.order_items > 0) {
                 return {
                     deleted: false,
-                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
+                    message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
                 };
             }
             await this.prisma.products.update({
@@ -355,8 +329,12 @@ let CompleteProductService = class CompleteProductService {
         }
     }
     async bulkDeleteProducts(ids) {
+        const MAX_BULK_ITEMS = 100;
         if (!ids.length) {
             throw new common_1.BadRequestException('No product IDs provided');
+        }
+        if (ids.length > MAX_BULK_ITEMS) {
+            throw new common_1.BadRequestException(`Too many items. Maximum allowed: ${MAX_BULK_ITEMS}, received: ${ids.length}`);
         }
         const products = await this.prisma.products.findMany({
             where: {
@@ -376,8 +354,12 @@ let CompleteProductService = class CompleteProductService {
     }
     async bulkUpdateProducts(bulkUpdateDto) {
         const { productIds, categoryId, isActive, featured, addTags, removeTags } = bulkUpdateDto;
+        const MAX_BULK_ITEMS = 100;
         if (!productIds.length) {
             throw new common_1.BadRequestException('No product IDs provided');
+        }
+        if (productIds.length > MAX_BULK_ITEMS) {
+            throw new common_1.BadRequestException(`Too many items. Maximum allowed: ${MAX_BULK_ITEMS}, received: ${productIds.length}`);
         }
         if (categoryId) {
             const category = await this.prisma.categories.findUnique({
@@ -387,6 +369,7 @@ let CompleteProductService = class CompleteProductService {
                 throw new common_1.NotFoundException(`Category with ID '${categoryId}' not found`);
             }
         }
+        const ALLOWED_UPDATE_FIELDS = ['categoryId', 'isActive', 'featured', 'tags'];
         const updateData = {};
         if (categoryId) {
             updateData.categoryId = categoryId;
@@ -396,6 +379,12 @@ let CompleteProductService = class CompleteProductService {
         }
         if (featured !== undefined) {
             updateData.featured = featured;
+        }
+        const updateFields = Object.keys(updateData);
+        const invalidFields = updateFields.filter(field => !ALLOWED_UPDATE_FIELDS.includes(field));
+        if (invalidFields.length > 0) {
+            throw new common_1.BadRequestException(`Invalid fields in bulk update: ${invalidFields.join(', ')}. ` +
+                `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`);
         }
         if (addTags || removeTags) {
             const products = await this.prisma.products.findMany({
@@ -468,7 +457,9 @@ let CompleteProductService = class CompleteProductService {
                 model: product.model,
                 weight: product.weight,
                 dimensions: product.dimensions,
-                specifications: product.specifications ? JSON.parse(JSON.stringify(product.specifications)) : null,
+                specifications: product.specifications
+                    ? JSON.parse(JSON.stringify(product.specifications))
+                    : null,
                 images: product.images ? JSON.parse(JSON.stringify(product.images)) : null,
                 isActive: false,
                 featured: false,
@@ -790,9 +781,9 @@ let CompleteProductService = class CompleteProductService {
                     id: true,
                     name: true,
                     _count: {
-                        select: { order_items: true }
-                    }
-                }
+                        select: { order_items: true },
+                    },
+                },
             });
             if (!product) {
                 return { canDelete: false, message: 'Product not found', associatedOrdersCount: 0 };
@@ -802,18 +793,22 @@ let CompleteProductService = class CompleteProductService {
                 return {
                     canDelete: false,
                     message: `Cannot delete product "${product.name}" because it has ${associatedOrdersCount} associated order(s). Please remove or update the orders first.`,
-                    associatedOrdersCount
+                    associatedOrdersCount,
                 };
             }
             return {
                 canDelete: true,
                 message: 'Product can be safely deleted',
-                associatedOrdersCount: 0
+                associatedOrdersCount: 0,
             };
         }
         catch (error) {
             console.error('Error checking product deletable status:', error);
-            return { canDelete: false, message: 'An error occurred while checking deletion status', associatedOrdersCount: 0 };
+            return {
+                canDelete: false,
+                message: 'An error occurred while checking deletion status',
+                associatedOrdersCount: 0,
+            };
         }
     }
 };

@@ -25,8 +25,19 @@ export class SecurityService {
   private readonly logger = new Logger(SecurityService.name);
   private readonly loginAttempts = new Map<string, { count: number; lastAttempt: Date }>();
   private readonly securityConfig: SecurityConfig;
+  private readonly disableLoginLockout: boolean;
 
   constructor(private readonly config: ConfigService) {
+    const nodeEnv = (this.config.get<string>('NODE_ENV') || 'development').toLowerCase();
+    const disableLoginLockoutEnv = (
+      this.config.get<string>('DISABLE_LOGIN_LOCKOUT') || ''
+    ).toLowerCase();
+    // Default: disable lockout in development to avoid dev UX issues.
+    // Override: set DISABLE_LOGIN_LOCKOUT=false to re-enable even in development.
+    this.disableLoginLockout =
+      disableLoginLockoutEnv === 'true' ||
+      (nodeEnv === 'development' && disableLoginLockoutEnv !== 'false');
+
     this.securityConfig = {
       maxLoginAttempts: this.config.get<number>('MAX_LOGIN_ATTEMPTS') || 5,
       lockoutDuration: this.config.get<number>('LOCKOUT_DURATION') || 15,
@@ -110,6 +121,12 @@ export class SecurityService {
 
   // Login attempt tracking
   recordLoginAttempt(identifier: string, success: boolean): boolean {
+    if (this.disableLoginLockout) {
+      // Don't track attempts in development when lockout is disabled.
+      if (this.loginAttempts.has(identifier)) this.loginAttempts.delete(identifier);
+      return true;
+    }
+
     const now = new Date();
     const attempt = this.loginAttempts.get(identifier);
 
@@ -151,6 +168,8 @@ export class SecurityService {
   }
 
   isAccountLocked(identifier: string): boolean {
+    if (this.disableLoginLockout) return false;
+
     const attempt = this.loginAttempts.get(identifier);
     if (!attempt) return false;
 
@@ -168,6 +187,8 @@ export class SecurityService {
   }
 
   getRemainingLockoutTime(identifier: string): number {
+    if (this.disableLoginLockout) return 0;
+
     const attempt = this.loginAttempts.get(identifier);
     if (!attempt) return 0;
 

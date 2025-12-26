@@ -41,10 +41,10 @@ let WishlistService = class WishlistService {
                 id: (0, crypto_1.randomUUID)(),
                 updatedAt: new Date(),
                 users: { connect: { id: userId } },
-                products: { connect: { id: productId } }
+                products: { connect: { id: productId } },
             },
             include: {
-                products: true
+                products: true,
             },
         });
         return wishlistItem;

@@ -1,9 +1,10 @@
- import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../caching/cache.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { InventoryService } from '../inventory/inventory.service';
 
 export type ProductDto = {
   id: string;
@@ -42,13 +43,29 @@ export type ProductDto = {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService, /* private readonly search: SearchService, */ private readonly cache: CacheService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    /* private readonly search: SearchService, */
+    private readonly cache: CacheService,
+    private readonly inventory: InventoryService,
+  ) {}
 
   async listProducts(
-    params: { page?: number; pageSize?: number; q?: string; minPrice?: number; maxPrice?: number; sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount'; sortOrder?: 'asc' | 'desc'; featured?: boolean } = {},
+    params: {
+      page?: number;
+      pageSize?: number;
+      q?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount';
+      sortOrder?: 'asc' | 'desc';
+      featured?: boolean;
+      categoryId?: string;
+      isActive?: boolean;
+    } = {},
   ): Promise<{ items: ProductDto[]; total: number; page: number; pageSize: number }> {
     const page = Math.max(1, Math.floor(params.page ?? 1));
-    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
+    const pageSize = Math.min(10000, Math.max(1, Math.floor(params.pageSize ?? 20)));
 
     // Use a loose type to match tests that work with mocked Prisma shapes
     const where: any = {};
@@ -59,15 +76,29 @@ export class CatalogService {
       ];
     }
     // Tests expect priceCents filter values to be used directly
-    if (typeof params.minPrice === 'number') where.priceCents = { ...(where.priceCents || {}), gte: params.minPrice };
-    if (typeof params.maxPrice === 'number') where.priceCents = { ...(where.priceCents || {}), lte: params.maxPrice };
+    if (typeof params.minPrice === 'number')
+      where.priceCents = { ...(where.priceCents || {}), gte: params.minPrice };
+    if (typeof params.maxPrice === 'number')
+      where.priceCents = { ...(where.priceCents || {}), lte: params.maxPrice };
     if (typeof params.featured === 'boolean') where.featured = params.featured; // Used by unit tests
+    if (params.categoryId) where.categoryId = params.categoryId; // Filter by category
+    if (typeof params.isActive === 'boolean') where.isActive = params.isActive; // Filter by active status
 
-    const orderByField = (params.sortBy === 'price' ? 'priceCents' : params.sortBy === 'viewCount' ? 'viewCount' : params.sortBy) ?? 'createdAt';
+    const orderByField =
+      (params.sortBy === 'price'
+        ? 'priceCents'
+        : params.sortBy === 'viewCount'
+          ? 'viewCount'
+          : params.sortBy) ?? 'createdAt';
     const orderDirection = params.sortOrder ?? 'desc';
 
     const cacheKey = `products:list:${JSON.stringify({ where, page, pageSize, orderByField, orderDirection })}`;
-    const cached = await this.cache.get<{ items: ProductDto[]; total: number; page: number; pageSize: number }>(cacheKey);
+    const cached = await this.cache.get<{
+      items: ProductDto[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }>(cacheKey);
     if (cached) return cached;
 
     // Build orderBy object with type safety
@@ -97,8 +128,11 @@ export class CatalogService {
       ...item,
       priceCents: Number(item.priceCents),
       originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
-      images: (typeof item.images === 'string') ? JSON.parse(item.images) : item.images,
-      specifications: (typeof item.specifications === 'string') ? JSON.parse(item.specifications) : item.specifications,
+      images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
+      specifications:
+        typeof item.specifications === 'string'
+          ? JSON.parse(item.specifications)
+          : item.specifications,
     }));
 
     const result = { items, total, page, pageSize };
@@ -148,8 +182,11 @@ export class CatalogService {
       ...product,
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
-      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
+      specifications:
+        typeof product.specifications === 'string'
+          ? JSON.parse(product.specifications)
+          : product.specifications,
     };
   }
 
@@ -163,14 +200,19 @@ export class CatalogService {
   }
 
   async generateUniqueSku(baseName?: string): Promise<string> {
-    const base = baseName ? baseName.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8) : 'PROD';
+    const base = baseName
+      ? baseName
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, '')
+          .substring(0, 8)
+      : 'PROD';
     let sku = base;
     let counter = 1;
 
     while (await this.checkSkuExists(sku)) {
       sku = `${base}-${counter.toString().padStart(3, '0')}`;
       counter++;
-      
+
       // Prevent infinite loop
       if (counter > 999) {
         sku = `${base}-${Date.now().toString().slice(-6)}`;
@@ -222,9 +264,25 @@ export class CatalogService {
       canonicalUrl: data.canonicalUrl,
       featured: data.featured || false,
       isActive: data.isActive ?? true,
+      id: randomUUID(),
+      updatedAt: new Date(),
     };
 
     const product = await this.prisma.products.create({ data: productData });
+
+    // Sync to inventory if stock is provided or default 0
+    try {
+      await this.inventory.adjust(
+        product.id,
+        {
+          stock: product.stockQuantity,
+          reason: 'Initial product creation',
+        },
+        { syncToProduct: false },
+      );
+    } catch (error) {
+      console.error(`Failed to create inventory for product ${product.id}`, error);
+    }
 
     // Clear cache
     await this.cache.deletePattern('products:list:*');
@@ -234,8 +292,11 @@ export class CatalogService {
       ...product,
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
-      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
+      specifications:
+        typeof product.specifications === 'string'
+          ? JSON.parse(product.specifications)
+          : product.specifications,
     };
   }
 
@@ -255,7 +316,8 @@ export class CatalogService {
       updateData.shortDescription = data.description?.substring(0, 200);
     }
     if (data.priceCents !== undefined) updateData.priceCents = data.priceCents;
-    if (data.originalPriceCents !== undefined) updateData.originalPriceCents = data.originalPriceCents;
+    if (data.originalPriceCents !== undefined)
+      updateData.originalPriceCents = data.originalPriceCents;
     if (data.images !== undefined) {
       updateData.imageUrl = data.images?.[0] || null;
       updateData.images = data.images ? JSON.stringify(data.images) : null;
@@ -293,8 +355,24 @@ export class CatalogService {
 
     const product = await this.prisma.products.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
+
+    // Sync to inventory if stockQuantity is updated
+    if (data.stockQuantity !== undefined) {
+      try {
+        await this.inventory.adjust(
+          id,
+          {
+            stock: data.stockQuantity,
+            reason: 'Product update from catalog',
+          },
+          { syncToProduct: false },
+        );
+      } catch (error) {
+        console.error(`Failed to update inventory for product ${id}`, error);
+      }
+    }
 
     // Clear cache
     await this.cache.deletePattern('products:list:*');
@@ -304,8 +382,11 @@ export class CatalogService {
       ...product,
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: (typeof product.images === 'string') ? JSON.parse(product.images) : product.images,
-      specifications: (typeof product.specifications === 'string') ? JSON.parse(product.specifications) : product.specifications,
+      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
+      specifications:
+        typeof product.specifications === 'string'
+          ? JSON.parse(product.specifications)
+          : product.specifications,
     };
   }
 
@@ -318,9 +399,9 @@ export class CatalogService {
           id: true,
           name: true,
           _count: {
-            select: { order_items: true }
-          }
-        }
+            select: { order_items: true },
+          },
+        },
       });
 
       if (!product) {
@@ -331,13 +412,13 @@ export class CatalogService {
       if (product._count.order_items > 0) {
         return {
           deleted: false,
-          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`
+          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
         };
       }
 
       // Delete associated inventory first to avoid foreign key constraint
       await this.prisma.inventory.deleteMany({
-        where: { productId: id }
+        where: { productId: id },
       });
 
       // Safe to delete
@@ -350,39 +431,59 @@ export class CatalogService {
     }
   }
 
-  async listCategories(): Promise<{ id: string; slug: string; name: string; parentId: string | null }[]> {
+  async listCategories(): Promise<
+    { id: string; slug: string; name: string; parentId: string | null }[]
+  > {
     const key = 'categories:list';
-    const cached = await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null }[]>(key);
+    const cached =
+      await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null }[]>(
+        key,
+      );
     if (cached) return cached;
     const items = await this.prisma.categories.findMany({ orderBy: { name: 'asc' } });
     await this.cache.set(key, items, { ttl: 300 });
     return items;
   }
 
-  async getCategoryBySlug(slug: string): Promise<{ id: string; slug: string; name: string; parentId: string | null; isActive: boolean }> {
+  async getCategoryBySlug(slug: string): Promise<{
+    id: string;
+    slug: string;
+    name: string;
+    parentId: string | null;
+    isActive: boolean;
+  }> {
     const key = `categories:slug:${slug}`;
-    const cached = await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null; isActive: boolean }>(key);
+    const cached = await this.cache.get<{
+      id: string;
+      slug: string;
+      name: string;
+      parentId: string | null;
+      isActive: boolean;
+    }>(key);
     if (cached) return cached;
-    
-    const category = await this.prisma.categories.findUnique({ 
+
+    const category = await this.prisma.categories.findUnique({
       where: { slug },
-      select: { id: true, slug: true, name: true, parentId: true, isActive: true }
+      select: { id: true, slug: true, name: true, parentId: true, isActive: true },
     });
-    
+
     if (!category) {
       throw new NotFoundException(`Category with slug '${slug}' not found`);
     }
-    
+
     await this.cache.set(key, category, { ttl: 300 });
     return category;
   }
 
-  async getProductsByCategory(slug: string, params: { page?: number; limit?: number }): Promise<{ items: any[]; total: number; page: number; pageSize: number; totalPages: number }> {
+  async getProductsByCategory(
+    slug: string,
+    params: { page?: number; limit?: number },
+  ): Promise<{ items: any[]; total: number; page: number; pageSize: number; totalPages: number }> {
     // First get category by slug
     const category = await this.getCategoryBySlug(slug);
-    
+
     const page = Math.max(1, params.page || 1);
-    const limit = Math.min(100, Math.max(1, params.limit || 10));
+    const limit = Math.min(10000, Math.max(1, params.limit || 10));
     const offset = (page - 1) * limit;
 
     const where = {
@@ -411,7 +512,7 @@ export class CatalogService {
     ]);
 
     const totalPages = Math.ceil(total / limit);
-    
+
     const mappedItems = items.map(item => ({
       id: item.id,
       slug: item.slug,
@@ -421,12 +522,14 @@ export class CatalogService {
       priceCents: Number(item.priceCents),
       originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
       imageUrl: item.imageUrl,
-      images: Array.isArray(item.images) ? item.images as string[] : [],
-      category: item.categories ? {
-        id: item.categories.id,
-        name: item.categories.name,
-        slug: item.categories.slug,
-      } : undefined,
+      images: Array.isArray(item.images) ? (item.images as string[]) : [],
+      category: item.categories
+        ? {
+            id: item.categories.id,
+            name: item.categories.name,
+            slug: item.categories.slug,
+          }
+        : undefined,
       isActive: item.isActive,
       featured: item.featured,
       stockQuantity: item.stockQuantity,
@@ -443,7 +546,12 @@ export class CatalogService {
     };
   }
 
-  async createCategory(data: { name: string; slug: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
+  async createCategory(data: {
+    name: string;
+    slug: string;
+    parentId?: string;
+    isActive?: boolean;
+  }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
     // Check if slug already exists
     const existing = await this.prisma.categories.findUnique({ where: { slug: data.slug } });
     if (existing) {
@@ -472,7 +580,10 @@ export class CatalogService {
     };
   }
 
-  async updateCategory(id: string, data: { name?: string; slug?: string; parentId?: string; isActive?: boolean }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
+  async updateCategory(
+    id: string,
+    data: { name?: string; slug?: string; parentId?: string; isActive?: boolean },
+  ): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
     // Check if slug already exists (excluding current category)
     if (data.slug) {
       const existing = await this.prisma.categories.findFirst({
@@ -512,7 +623,9 @@ export class CatalogService {
       });
 
       if (productCount > 0) {
-        throw new Error(`Cannot delete category because it has ${productCount} associated product(s). Please remove or reassign the products first.`);
+        throw new Error(
+          `Cannot delete category because it has ${productCount} associated product(s). Please remove or reassign the products first.`,
+        );
       }
 
       // Check if category has subcategories
@@ -521,7 +634,9 @@ export class CatalogService {
       });
 
       if (subcategoryCount > 0) {
-        throw new Error(`Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`);
+        throw new Error(
+          `Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`,
+        );
       }
 
       await this.prisma.categories.delete({ where: { id } });
@@ -532,7 +647,11 @@ export class CatalogService {
       return { deleted: true };
     } catch (error) {
       console.error('Error deleting category:', error);
-      return { deleted: false, message: error instanceof Error ? error.message : 'An error occurred while deleting the category' };
+      return {
+        deleted: false,
+        message:
+          error instanceof Error ? error.message : 'An error occurred while deleting the category',
+      };
     }
   }
 

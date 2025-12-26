@@ -1,8 +1,26 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
+  UsePipes,
+  ValidationPipe,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -23,7 +41,7 @@ export class ProjectsController {
       page,
       limit,
       status,
-      featured: featured === 'true',
+      featured: featured !== undefined ? featured === 'true' : undefined,
       category,
     });
   }
@@ -56,21 +74,55 @@ export class ProjectsController {
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Post()
   @ApiOperation({ summary: 'Create new project' })
-  async create(@Body() data: any) {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }))
+  async create(@Body() data: CreateProjectDto) {
     return this.projectsService.create(data);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id')
   @ApiOperation({ summary: 'Update project' })
-  async update(@Param('id') id: string, @Body() data: any) {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }))
+  async update(@Param('id') id: string, @Body() data: UpdateProjectDto, @Req() req?: any) {
+    // SECURITY: Prevent IDOR - verify ownership before update
+    // Note: Projects are admin-only for create/update/delete, but we still verify ownership for defense in depth
+    if (req?.user) {
+      const project = await this.projectsService.findById(id);
+      const authenticatedUserId = req.user?.sub || req.user?.id;
+      const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+      
+      const projectUserId = (project as any)?.userId || (project as any)?.users?.id;
+      // Only enforce ownership check if project has a userId and user is not admin
+      // Admin can update any project
+      if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
+        throw new ForbiddenException('You can only update your own projects');
+      }
+      
+      // Prevent users from modifying userId to another user's ID
+      if (data.userId && !isAdmin && data.userId !== authenticatedUserId) {
+        throw new ForbiddenException('You cannot assign projects to other users');
+      }
+    }
+    
     return this.projectsService.update(id, data);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete project' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Req() req?: any) {
+    // SECURITY: Prevent IDOR - verify ownership before delete
+    if (req?.user) {
+      const project = await this.projectsService.findById(id);
+      const authenticatedUserId = req.user?.sub || req.user?.id;
+      const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+      
+      const projectUserId = (project as any)?.userId || (project as any)?.users?.id;
+      if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
+        throw new ForbiddenException('You can only delete your own projects');
+      }
+    }
+    
     return this.projectsService.remove(id);
   }
 
@@ -91,10 +143,7 @@ export class ProjectsController {
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Put(':id/reorder')
   @ApiOperation({ summary: 'Update project display order' })
-  async updateOrder(
-    @Param('id') id: string,
-    @Body('displayOrder') displayOrder: number,
-  ) {
+  async updateOrder(@Param('id') id: string, @Body('displayOrder') displayOrder: number) {
     return this.projectsService.updateDisplayOrder(id, displayOrder);
   }
 }

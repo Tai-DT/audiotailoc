@@ -54,7 +54,7 @@ export const useCreateOrder = () => {
 
   return useMutation({
     mutationFn: async (data: CreateOrderData) => {
-      const response = await apiClient.post('/orders/create', {
+      const response = await apiClient.post('/orders', {
         ...data,
         items: data.items.map((item) => ({
           productId: item.productId,

@@ -11,9 +11,11 @@ import { useCart } from '@/components/providers/cart-provider';
 import { apiClient, handleApiResponse } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { Product, Category } from '@/lib/types';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import { parseImages } from '@/lib/utils';
 
 interface CategoryPageProps {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // Hooks for API calls
@@ -48,9 +50,8 @@ function useCategoryProducts(slug: string, page: number = 1, limit: number = 12)
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
-  // Handle both Promise params (new pattern) and direct object
-  const isPromise = typeof (params as unknown as { then?: unknown }).then === 'function';
-  const resolvedParams = isPromise ? React.use(params as Promise<{ slug: string }>) : (params as { slug: string });
+  // Use React.use() to resolve the Promise params (Next.js 15 pattern)
+  const resolvedParams = React.use(params);
   const slug = resolvedParams.slug;
 
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -68,11 +69,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     }
 
     try {
+      const images = parseImages(product.images, product.imageUrl);
       addCartItem({
         id: product.id,
         name: product.name,
         price: product.priceCents ?? 0,
-        image: product.images?.[0] ?? product.imageUrl ?? '/placeholder-product.svg',
+        image: images[0] || '/placeholder-product.svg',
         category: product.category?.name ?? 'Sản phẩm',
         description: product.shortDescription ?? undefined,
       });
@@ -97,11 +99,11 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-96 mb-8"></div>
+            <div className="h-8 bg-muted rounded w-64 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-96 mb-8"></div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-gray-200 aspect-square rounded-lg"></div>
+                <div key={i} className="bg-muted aspect-square rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -129,12 +131,16 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">{category.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <AnimatedGradientText className="text-3xl md:text-4xl font-bold p-0">
+                {category.name}
+              </AnimatedGradientText>
+            </h1>
             <p className="text-muted-foreground">
               {productsData ? `${productsData.total} sản phẩm` : 'Đang tải...'}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm">
               <Filter className="mr-2 h-4 w-4" />
@@ -168,7 +174,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               <ChevronLeft className="h-4 w-4" />
               Trước
             </Button>
-            
+
             {Array.from({ length: productsData.totalPages }, (_, i) => i + 1).map((page) => (
               <Button
                 key={page}
@@ -178,7 +184,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 {page}
               </Button>
             ))}
-            
+
             <Button
               variant="outline"
               disabled={currentPage >= productsData.totalPages}

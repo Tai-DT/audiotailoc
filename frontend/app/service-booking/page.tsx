@@ -246,12 +246,12 @@ export default function ServiceBookingPage() {
 
                             <div className="space-y-2 mb-4">
                               <div className="flex items-center gap-2 text-sm">
-                                <Clock className="h-4 w-4 text-blue-500" />
+                                <Clock className="h-4 w-4 text-primary" />
                                 <span>Thời gian: {service.duration} phút</span>
                               </div>
                               {service.features && service.features.length > 0 && (
                                 <div className="flex items-start gap-2 text-sm">
-                                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                                  <CheckCircle className="h-4 w-4 text-success mt-0.5" />
                                   <div>
                                     <span className="font-medium">Tính năng:</span>
                                     <ul className="list-disc list-inside ml-2 mt-1">
@@ -353,7 +353,7 @@ export default function ServiceBookingPage() {
                         ))}
                       </select>
                       {errors.serviceId && (
-                        <p className="text-red-500 text-sm mt-1">{errors.serviceId.message}</p>
+                        <p className="text-destructive text-sm mt-1">{errors.serviceId.message}</p>
                       )}
                     </div>
 
@@ -366,7 +366,7 @@ export default function ServiceBookingPage() {
                           placeholder="Nhập họ tên đầy đủ"
                         />
                         {errors.customerName && (
-                          <p className="text-red-500 text-sm mt-1">{errors.customerName.message}</p>
+                          <p className="text-destructive text-sm mt-1">{errors.customerName.message}</p>
                         )}
                       </div>
                       <div>
@@ -376,7 +376,7 @@ export default function ServiceBookingPage() {
                           placeholder="Ví dụ: 0987654321"
                         />
                         {errors.customerPhone && (
-                          <p className="text-red-500 text-sm mt-1">{errors.customerPhone.message}</p>
+                          <p className="text-destructive text-sm mt-1">{errors.customerPhone.message}</p>
                         )}
                       </div>
                     </div>
@@ -389,7 +389,7 @@ export default function ServiceBookingPage() {
                         placeholder="example@email.com"
                       />
                       {errors.customerEmail && (
-                        <p className="text-red-500 text-sm mt-1">{errors.customerEmail.message}</p>
+                        <p className="text-destructive text-sm mt-1">{errors.customerEmail.message}</p>
                       )}
                     </div>
 
@@ -401,7 +401,7 @@ export default function ServiceBookingPage() {
                         rows={3}
                       />
                       {errors.customerAddress && (
-                        <p className="text-red-500 text-sm mt-1">{errors.customerAddress.message}</p>
+                        <p className="text-destructive text-sm mt-1">{errors.customerAddress.message}</p>
                       )}
                     </div>
 
@@ -415,7 +415,7 @@ export default function ServiceBookingPage() {
                           min={format(new Date(), 'yyyy-MM-dd')}
                         />
                         {errors.scheduledDate && (
-                          <p className="text-red-500 text-sm mt-1">{errors.scheduledDate.message}</p>
+                          <p className="text-destructive text-sm mt-1">{errors.scheduledDate.message}</p>
                         )}
                       </div>
                       <div>
@@ -436,7 +436,7 @@ export default function ServiceBookingPage() {
                           <option value="17:00">17:00</option>
                         </select>
                         {errors.scheduledTime && (
-                          <p className="text-red-500 text-sm mt-1">{errors.scheduledTime.message}</p>
+                          <p className="text-destructive text-sm mt-1">{errors.scheduledTime.message}</p>
                         )}
                       </div>
                     </div>

@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ToastProvider } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { DebugRuntimeProbe } from "@/components/debug-runtime-probe";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
             <div suppressHydrationWarning>
               <TooltipProvider>
                 <ToastProvider>
+                  <DebugRuntimeProbe />
                   {children}
                 </ToastProvider>
               </TooltipProvider>

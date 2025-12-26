@@ -36,31 +36,27 @@ export class LoggingMiddleware implements NestMiddleware {
     CorrelationService.addMetadata('params', JSON.stringify(request.params));
 
     // Log incoming request
-    this.loggingService.logWithContext(
-      'info',
-      `Incoming ${request.method} ${request.path}`,
-      {
-        correlationId,
-        requestId: correlationContext.requestId,
-        endpoint: request.path,
-        method: request.method,
-        ip: this.getClientIP(request),
-        userAgent: request.get('User-Agent'),
-        metadata: {
-          query: request.query,
-          headers: this.sanitizeHeaders(request.headers),
-        },
-      }
-    );
+    this.loggingService.logWithContext('info', `Incoming ${request.method} ${request.path}`, {
+      correlationId,
+      requestId: correlationContext.requestId,
+      endpoint: request.path,
+      method: request.method,
+      ip: this.getClientIP(request),
+      userAgent: request.get('User-Agent'),
+      metadata: {
+        query: request.query,
+        headers: this.sanitizeHeaders(request.headers),
+      },
+    });
 
     // Override response.end to log response
     const originalEnd = response.end;
-    const self = this;
-    response.end = function(chunk?: any, encoding?: BufferEncoding | (() => void)) {
+    const loggingService = this.loggingService;
+    response.end = function (chunk?: any, encoding?: BufferEncoding | (() => void)) {
       const duration = Date.now() - startTime;
 
       // Log response
-      self.loggingService.logWithContext(
+      loggingService.logWithContext(
         response.statusCode >= 400 ? 'warn' : 'info',
         `Response ${request.method} ${request.path} - ${response.statusCode}`,
         {
@@ -73,7 +69,7 @@ export class LoggingMiddleware implements NestMiddleware {
           metadata: {
             responseSize: chunk ? chunk.length : 0,
           },
-        }
+        },
       );
 
       // Add correlation headers
@@ -89,7 +85,7 @@ export class LoggingMiddleware implements NestMiddleware {
 
     // Override response.json to capture response data
     const originalJson = response.json;
-    response.json = function(data: any) {
+    response.json = function (data: any) {
       // Add correlation ID to response
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         data._correlationId = correlationId;
@@ -102,12 +98,15 @@ export class LoggingMiddleware implements NestMiddleware {
   }
 
   private extractUserId(request: Request): string | undefined {
-    // Try to get user ID from various sources
+    // SECURITY: Only trust user ID from authenticated sources (JWT token, session)
+    // Do not trust query parameters or headers that can be spoofed
+    // Priority: JWT payload > session > trusted headers (if any)
     return (
-      (request as any).users?.id ||
-      (request as any).users?.userId ||
-      request.headers['x-user-id'] as string ||
-      request.query.userId as string
+      (request as any).user?.sub || // From JWT guard
+      (request as any).user?.id || // Alternative JWT field
+      (request as any).users?.id || // Legacy support
+      (request as any).users?.userId // Legacy support
+      // Removed: query.userId and x-user-id header (can be spoofed)
     );
   }
 
@@ -116,10 +115,12 @@ export class LoggingMiddleware implements NestMiddleware {
       request.ip ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
-      request.headers['x-forwarded-for'] as string ||
-      request.headers['x-real-ip'] as string ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
       'unknown'
-    ).split(',')[0].trim();
+    )
+      .split(',')[0]
+      .trim();
   }
 
   private sanitizeHeaders(headers: Record<string, any>): Record<string, any> {

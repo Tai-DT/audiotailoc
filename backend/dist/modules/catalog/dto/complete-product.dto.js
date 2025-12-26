@@ -643,6 +643,15 @@ __decorate([
 ], ProductListQueryDto.prototype, "search", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
+        description: 'Search query (alias for search)',
+        example: 'wireless speaker',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ProductListQueryDto.prototype, "q", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
         description: 'Category ID filter',
         example: '550e8400-e29b-41d4-a716-446655440000',
     }),
@@ -692,6 +701,25 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], ProductListQueryDto.prototype, "maxPrice", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by brand',
+        example: 'Sony',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ProductListQueryDto.prototype, "brand", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by stock availability',
+        example: true,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_transformer_1.Type)(() => Boolean),
+    __metadata("design:type", Boolean)
+], ProductListQueryDto.prototype, "inStock", void 0);
 class ProductResponseDto {
 }
 exports.ProductResponseDto = ProductResponseDto;

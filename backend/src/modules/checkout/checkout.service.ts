@@ -7,7 +7,12 @@ import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class CheckoutService {
-  constructor(private readonly prisma: PrismaService, private readonly cart: CartService, private readonly promos: PromotionService, private readonly mail: MailService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cart: CartService,
+    private readonly promos: PromotionService,
+    private readonly mail: MailService,
+  ) {}
 
   async createOrder(userId: string, params: { promotionCode?: string; shippingAddress?: any }) {
     const { cart, items, subtotalCents } = await this.cart.getCartWithTotals(userId);
@@ -18,7 +23,7 @@ export class CheckoutService {
     const total = Math.max(0, subtotalCents - discount) + shipping;
 
     const orderNo = 'ATL' + Date.now();
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async tx => {
       // Create order
       const order = await tx.orders.create({
         data: {
@@ -32,7 +37,7 @@ export class CheckoutService {
           totalCents: total,
           promotionCode: promo?.code ?? null,
           shippingAddress: params.shippingAddress ?? null,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
       });
       // Copy items and validate prices from database
@@ -40,7 +45,7 @@ export class CheckoutService {
         // SECURITY: Re-fetch product price from database to prevent tampering
         const product = await tx.products.findUnique({
           where: { id: i.productId },
-          select: { priceCents: true, isActive: true, isDeleted: true }
+          select: { priceCents: true, isActive: true, isDeleted: true },
         });
 
         if (!product || !product.isActive || product.isDeleted) {
@@ -60,7 +65,7 @@ export class CheckoutService {
             price: currentPrice,
             unitPrice: currentPrice,
             imageUrl: i.products.imageUrl ?? null,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
         });
 
@@ -85,9 +90,9 @@ export class CheckoutService {
             items: items.map((item: any) => ({
               name: item.products.name || 'Sản phẩm',
               quantity: item.quantity,
-              price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`
+              price: `${((item.unitPrice || item.products.priceCents) / 100).toLocaleString('vi-VN')} VNĐ`,
             })),
-            status: result.status
+            status: result.status,
           };
 
           await this.mail.sendOrderConfirmation(user.email, orderData);
@@ -100,7 +105,10 @@ export class CheckoutService {
   }
 
   async getOrderForUserByNo(userId: string, orderNo: string) {
-    const order = await this.prisma.orders.findFirst({ where: { orderNo, userId }, include: { order_items: true, payments: true } });
+    const order = await this.prisma.orders.findFirst({
+      where: { orderNo, userId },
+      include: { order_items: true, payments: true },
+    });
     if (!order) throw new Error('Không tìm thấy đơn hàng');
     return order;
   }

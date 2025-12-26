@@ -15,4 +15,3 @@ import { UsersModule } from '../users/users.module';
   exports: [InventoryService, InventoryMovementService, InventoryAlertService],
 })
 export class InventoryModule {}
-

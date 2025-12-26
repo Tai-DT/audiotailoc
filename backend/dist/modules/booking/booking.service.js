@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -12,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const crypto = __importStar(require("crypto"));
 let BookingService = class BookingService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -61,21 +95,21 @@ let BookingService = class BookingService {
                         id: true,
                         name: true,
                         slug: true,
-                    }
+                    },
                 },
                 technicians: {
                     select: {
                         id: true,
                         name: true,
                         phone: true,
-                    }
+                    },
                 },
                 service_booking_items: {
                     include: {
                         service_items: {
                             select: {
                                 name: true,
-                            }
+                            },
                         },
                     },
                 },
@@ -84,7 +118,7 @@ let BookingService = class BookingService {
                         id: true,
                         status: true,
                         createdAt: true,
-                    }
+                    },
                 },
             },
             orderBy: { createdAt: 'desc' },
@@ -96,7 +130,7 @@ let BookingService = class BookingService {
             throw new common_1.NotFoundException('Service ID is required');
         }
         const service = await this.prisma.services.findUnique({
-            where: { id: bookingData.serviceId }
+            where: { id: bookingData.serviceId },
         });
         if (!service) {
             throw new common_1.NotFoundException('Service not found');
@@ -107,41 +141,26 @@ let BookingService = class BookingService {
         if (items?.length) {
             for (const item of items) {
                 const serviceItem = await this.prisma.service_items.findUnique({
-                    where: { id: item.itemId }
+                    where: { id: item.itemId },
                 });
                 if (!serviceItem) {
                     throw new common_1.NotFoundException(`Service item not found: ${item.itemId}`);
                 }
             }
         }
-        let userId = bookingData.userId;
+        const userId = bookingData.userId;
         if (!userId) {
-            const availableUser = await this.prisma.users.findFirst({
-                where: {
-                    role: 'USER'
-                },
-                orderBy: {
-                    createdAt: 'asc'
-                }
-            });
-            if (availableUser) {
-                userId = availableUser.id;
-            }
-            else {
-                const adminUser = await this.prisma.users.findFirst({
-                    where: {
-                        role: 'ADMIN'
-                    }
-                });
-                if (!adminUser) {
-                    throw new common_1.NotFoundException('No user available for booking');
-                }
-                userId = adminUser.id;
-            }
+            throw new common_1.BadRequestException('User ID is required for booking');
+        }
+        const user = await this.prisma.users.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
         }
         if (bookingData.technicianId) {
             const technician = await this.prisma.technicians.findUnique({
-                where: { id: bookingData.technicianId }
+                where: { id: bookingData.technicianId },
             });
             if (!technician) {
                 throw new common_1.NotFoundException('Technician not found');
@@ -149,7 +168,7 @@ let BookingService = class BookingService {
         }
         const booking = await this.prisma.service_bookings.create({
             data: {
-                id: bookingData.id || require('crypto').randomUUID(),
+                id: bookingData.id || crypto.randomUUID(),
                 serviceId: bookingData.serviceId,
                 userId: userId,
                 technicianId: bookingData.technicianId || null,
@@ -159,15 +178,17 @@ let BookingService = class BookingService {
                 notes: bookingData.notes || null,
                 estimatedCosts: bookingData.estimatedCosts || 0,
                 updatedAt: new Date(),
-                service_booking_items: items?.length ? {
-                    create: items.map((item) => ({
-                        id: require('crypto').randomUUID(),
-                        serviceItemId: item.itemId,
-                        quantity: item.quantity,
-                        price: item.price || 0,
-                        updatedAt: new Date(),
-                    })),
-                } : undefined,
+                service_booking_items: items?.length
+                    ? {
+                        create: items.map((item) => ({
+                            id: crypto.randomUUID(),
+                            serviceItemId: item.itemId,
+                            quantity: item.quantity,
+                            price: item.price || 0,
+                            updatedAt: new Date(),
+                        })),
+                    }
+                    : undefined,
             },
             include: {
                 services: true,

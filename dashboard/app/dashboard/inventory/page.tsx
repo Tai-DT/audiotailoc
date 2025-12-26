@@ -90,19 +90,30 @@ export default function InventoryPage() {
   const totalPages = Math.max(1, Math.ceil(filteredInventory.length / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const paginatedInventory = filteredInventory.slice(startIndex, endIndex)
   
-  // Ensure currentPage is within valid range
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
+  // Ensure currentPage is within valid range (use useMemo to avoid setState in effect)
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
+  
+  const paginatedInventory = filteredInventory.slice(
+    (validCurrentPage - 1) * itemsPerPage,
+    validCurrentPage * itemsPerPage
+  )
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
+  // Reset to page 1 when filters change - but use callback to avoid cascading renders
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
     setCurrentPage(1)
-  }, [searchQuery, selectedCategory, selectedStatus])
+  }
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value)
+    setCurrentPage(1)
+  }
+
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value)
+    setCurrentPage(1)
+  }
 
 
   const getStatusBadge = (status: string) => {
@@ -292,13 +303,13 @@ export default function InventoryPage() {
                   <Input
                     placeholder="Tìm kiếm sản phẩm, SKU..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-9"
                   />
                 </div>
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="px-3 py-2 border rounded-md"
                   title="Lọc theo danh mục sản phẩm"
                 >
@@ -315,7 +326,7 @@ export default function InventoryPage() {
                 </select>
                 <select
                   value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  onChange={(e) => handleStatusChange(e.target.value)}
                   className="px-3 py-2 border rounded-md"
                   title="Lọc theo trạng thái tồn kho"
                 >

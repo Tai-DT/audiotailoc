@@ -1,4 +1,6 @@
 import { ProjectsService } from './projects.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 export declare class ProjectsController {
     private readonly projectsService;
     constructor(projectsService: ProjectsService);
@@ -19,6 +21,7 @@ export declare class ProjectsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
             userId: string;
             slug: string;
             shortDescription: string | null;
@@ -29,19 +32,19 @@ export declare class ProjectsController {
             metaKeywords: string | null;
             canonicalUrl: string | null;
             featured: boolean;
-            isActive: boolean;
             isDeleted: boolean;
             viewCount: number;
             startDate: Date | null;
             endDate: Date | null;
             duration: string | null;
+            isFeatured: boolean;
             category: string | null;
             budget: string | null;
-            isFeatured: boolean;
             results: string | null;
             displayOrder: number;
-            clientLogo: string | null;
             technologies: string | null;
+            galleryImages: string | null;
+            clientLogo: string | null;
             thumbnailImage: string | null;
             coverImage: string | null;
             youtubeVideoId: string | null;
@@ -57,10 +60,10 @@ export declare class ProjectsController {
             ogDescription: string | null;
             ogImage: string | null;
             structuredData: string | null;
-            galleryImages: string | null;
             clientLogoUrl: string | null;
             projectDate: Date | null;
             completionDate: Date | null;
+            deletedAt: Date | null;
         })[];
         meta: {
             total: number;
@@ -79,6 +82,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -89,19 +93,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -117,10 +121,10 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }[]>;
     getBySlug(slug: string): Promise<{
         users: {
@@ -138,6 +142,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -148,19 +153,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -176,10 +181,10 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
     getById(id: string): Promise<{
         users: {
@@ -197,6 +202,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -207,19 +213,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -235,12 +241,12 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
-    create(data: any): Promise<{
+    create(data: CreateProjectDto): Promise<{
         users: {
             id: string;
             email: string;
@@ -256,6 +262,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -266,19 +273,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -294,12 +301,12 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
-    update(id: string, data: any): Promise<{
+    update(id: string, data: UpdateProjectDto, req?: any): Promise<{
         users: {
             id: string;
             email: string;
@@ -315,6 +322,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -325,19 +333,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -353,12 +361,12 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
-    remove(id: string): Promise<{
+    remove(id: string, req?: any): Promise<{
         message: string;
     }>;
     toggleFeatured(id: string): Promise<{
@@ -371,6 +379,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -381,19 +390,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -409,10 +418,10 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
     toggleActive(id: string): Promise<{
         client: string | null;
@@ -424,6 +433,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -434,19 +444,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -462,10 +472,10 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
     updateOrder(id: string, displayOrder: number): Promise<{
         client: string | null;
@@ -477,6 +487,7 @@ export declare class ProjectsController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
         userId: string;
         slug: string;
         shortDescription: string | null;
@@ -487,19 +498,19 @@ export declare class ProjectsController {
         metaKeywords: string | null;
         canonicalUrl: string | null;
         featured: boolean;
-        isActive: boolean;
         isDeleted: boolean;
         viewCount: number;
         startDate: Date | null;
         endDate: Date | null;
         duration: string | null;
+        isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        isFeatured: boolean;
         results: string | null;
         displayOrder: number;
-        clientLogo: string | null;
         technologies: string | null;
+        galleryImages: string | null;
+        clientLogo: string | null;
         thumbnailImage: string | null;
         coverImage: string | null;
         youtubeVideoId: string | null;
@@ -515,9 +526,9 @@ export declare class ProjectsController {
         ogDescription: string | null;
         ogImage: string | null;
         structuredData: string | null;
-        galleryImages: string | null;
         clientLogoUrl: string | null;
         projectDate: Date | null;
         completionDate: Date | null;
+        deletedAt: Date | null;
     }>;
 }

@@ -10,7 +10,16 @@ export interface User {
   email: string;
   name?: string;
   phone?: string;
-  role: 'USER' | 'ADMIN' | 'MODERATOR';
+  role: 'USER' | 'ADMIN' | 'MODERATOR' | 'DISABLED';
+  avatar?: string;
+  avatarUrl?: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  isActive: boolean;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  promoNotifications?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,7 +91,7 @@ export interface Cart {
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   items: CartItem[];
 }
 
@@ -110,7 +119,7 @@ export interface Order {
   promotionCode?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   user: User;
   items: OrderItem[];
   payments?: Payment[];
@@ -127,7 +136,7 @@ export interface OrderItem {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   product: Product;
 }
 
@@ -163,7 +172,7 @@ export interface Service {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
-  
+
   // SEO properties
   seoTitle?: string;
   metaTitle?: string;
@@ -171,7 +180,7 @@ export interface Service {
   metaDescription?: string;
   metaKeywords?: string;
   canonicalUrl?: string;
-  
+
   serviceType?: ServiceType;
 }
 
@@ -186,7 +195,7 @@ export interface ServiceType {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
-  
+
   services?: Service[];
 }
 
@@ -197,14 +206,18 @@ export interface ServiceBooking {
   technicianId?: string;
   status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   scheduledAt?: string;
+  scheduledTime?: string;
   notes?: string;
+  address?: string;
+  phoneNumber?: string;
   estimatedCosts?: number;
   actualCosts?: number;
   createdAt: string;
   updatedAt: string;
-  
+
   user: User;
   service: Service;
+  technician?: Technician;
 }
 
 export interface ProductReview {
@@ -541,7 +554,10 @@ export interface ServiceForm {
 export interface ServiceBookingForm {
   serviceId: string;
   scheduledAt?: string;
+  scheduledTime?: string;
   notes?: string;
+  address?: string;
+  phoneNumber?: string;
   estimatedCosts?: number;
 }
 
@@ -585,4 +601,17 @@ export interface ServiceFilters {
   page?: number;
   pageSize?: number;
 }
+
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  specialties?: string | string[];
+  isActive: boolean;
+  avatarUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 

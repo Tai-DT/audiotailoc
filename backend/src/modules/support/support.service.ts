@@ -46,7 +46,7 @@ export interface SupportTicket {
 export class SupportService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
   ) {}
 
   // Knowledge Base Management
@@ -92,16 +92,16 @@ export class SupportService {
 
     // Build where clause
     const where: any = {};
-    
+
     if (params.published !== undefined) {
       where.isActive = params.published;
     }
-    
+
     if (params.search) {
       where.OR = [
         { title: { contains: params.search, mode: 'insensitive' } },
         { content: { contains: params.search, mode: 'insensitive' } },
-        { tags: { contains: params.search, mode: 'insensitive' } }
+        { tags: { contains: params.search, mode: 'insensitive' } },
       ];
     }
 
@@ -114,9 +114,9 @@ export class SupportService {
         where,
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.knowledge_base_entries.count({ where })
+      this.prisma.knowledge_base_entries.count({ where }),
     ]);
 
     const items: KnowledgeBaseArticle[] = entries.map(e => this.mapEntryToArticle(e));
@@ -138,28 +138,36 @@ export class SupportService {
     // increment view count
     await this.prisma.knowledge_base_entries.update({
       where: { id: entry.id },
-      data: { viewCount: { increment: 1 } }
+      data: { viewCount: { increment: 1 } },
     });
-    const refreshed = await this.prisma.knowledge_base_entries.findUnique({ where: { id: entry.id } });
+    const refreshed = await this.prisma.knowledge_base_entries.findUnique({
+      where: { id: entry.id },
+    });
     return this.mapEntryToArticle(refreshed!);
   }
 
-  async updateArticle(id: string, data: {
-    title?: string;
-    content?: string;
-    category?: string;
-    tags?: string[];
-    published?: boolean;
-    slug?: string;
-  }): Promise<KnowledgeBaseArticle> {
+  async updateArticle(
+    id: string,
+    data: {
+      title?: string;
+      content?: string;
+      category?: string;
+      tags?: string[];
+      published?: boolean;
+      slug?: string;
+    },
+  ): Promise<KnowledgeBaseArticle> {
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
     if (data.content !== undefined) updateData.content = data.content;
     if (data.category !== undefined) updateData.kind = data.category;
     if (data.tags !== undefined) updateData.tags = data.tags.join(',');
     if (data.published !== undefined) updateData.isActive = data.published;
-  // slug not yet enforced in persistence step (pending migration / generation)
-    const updated = await this.prisma.knowledge_base_entries.update({ where: { id }, data: updateData });
+    // slug not yet enforced in persistence step (pending migration / generation)
+    const updated = await this.prisma.knowledge_base_entries.update({
+      where: { id },
+      data: updateData,
+    });
     return this.mapEntryToArticle(updated);
   }
 
@@ -172,7 +180,7 @@ export class SupportService {
     const updateField = helpful ? 'helpful' : 'notHelpful';
     const updated = await this.prisma.knowledge_base_entries.update({
       where: { id },
-      data: { [updateField]: { increment: 1 } }
+      data: { [updateField]: { increment: 1 } },
     });
     return this.mapEntryToArticle(updated);
   }
@@ -240,9 +248,7 @@ export class SupportService {
       },
     ];
 
-    return category 
-      ? mockFAQs.filter(faq => faq.category === category)
-      : mockFAQs;
+    return category ? mockFAQs.filter(faq => faq.category === category) : mockFAQs;
   }
 
   // Support Ticket Management
@@ -259,7 +265,7 @@ export class SupportService {
       subject: data.subject,
       description: data.description,
       status: 'OPEN' as const,
-      priority: data.priority || 'MEDIUM' as const,
+      priority: data.priority || ('MEDIUM' as const),
       userId: data.userId,
       email: data.email,
       name: data.name,
@@ -315,9 +321,9 @@ export class SupportService {
   }
 
   async updateTicketStatus(
-    id: string, 
+    id: string,
     status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED',
-    assignedTo?: string
+    assignedTo?: string,
   ): Promise<SupportTicket> {
     // Mock implementation
     const ticket: SupportTicket = {
@@ -344,11 +350,11 @@ export class SupportService {
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { content: { contains: query, mode: 'insensitive' } },
-          { tags: { contains: query, mode: 'insensitive' } }
-        ]
+          { tags: { contains: query, mode: 'insensitive' } },
+        ],
       },
       orderBy: { createdAt: 'desc' },
-      take: 10 // Limit search results
+      take: 10, // Limit search results
     });
 
     return entries.map(entry => ({
@@ -370,7 +376,7 @@ export class SupportService {
     const categories = await this.prisma.knowledge_base_entries.findMany({
       where: { isActive: true },
       select: { kind: true },
-      distinct: ['kind']
+      distinct: ['kind'],
     });
 
     return categories.map(cat => cat.kind);
@@ -386,16 +392,19 @@ export class SupportService {
           {
             name: 'Test Audio Equipment',
             quantity: 1,
-            price: '1.000.000 VNĐ'
-          }
+            price: '1.000.000 VNĐ',
+          },
         ],
-        status: 'PENDING'
+        status: 'PENDING',
       };
 
       await this.mailService.sendOrderConfirmation(email, testOrderData);
       return { success: true, message: `Test email sent successfully to ${email}` };
     } catch (error) {
-      return { success: false, message: `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}` };
+      return {
+        success: false,
+        message: `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
     }
   }
 }

@@ -40,65 +40,66 @@ export declare class OrdersController {
         customerPhone?: string;
         customerEmail?: string;
         notes?: string;
-    }): Promise<any>;
+        userId?: string;
+    }, req?: any): Promise<any>;
     getStats(): Promise<{
         totalOrders: number;
         pendingOrders: number;
         completedOrders: number;
     }>;
-    get(id: string): Promise<{
+    get(id: string, req: any): Promise<{
         totalCents: number;
         subtotalCents: number;
         order_items: {
             price: number;
             unitPrice: number;
             id: string;
+            name: string | null;
             createdAt: Date;
             updatedAt: Date;
-            name: string | null;
             imageUrl: string | null;
             orderId: string;
             productId: string;
             quantity: number;
         }[];
         payments: {
-            id: string;
             status: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
+            metadata: string | null;
             orderId: string;
-            intentId: string | null;
+            transactionId: string | null;
             provider: string;
             amountCents: number;
-            transactionId: string | null;
-            metadata: string | null;
+            intentId: string | null;
         }[];
+        status: string;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         discountCents: number;
         shippingCents: number;
-        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     updateStatus(id: string, status: string): Promise<{
+        status: string;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         orderNo: string;
-        userId: string;
+        userId: string | null;
         subtotalCents: number;
         discountCents: number;
         shippingCents: number;
         totalCents: number;
-        status: string;
         shippingAddress: string | null;
         shippingCoordinates: string | null;
         promotionCode: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, updateOrderDto: {
         customerName?: string;

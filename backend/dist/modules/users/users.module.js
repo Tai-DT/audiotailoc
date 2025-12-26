@@ -13,12 +13,13 @@ const users_service_1 = require("./users.service");
 const users_controller_1 = require("./users.controller");
 const notifications_module_1 = require("../notifications/notifications.module");
 const shared_module_1 = require("../shared/shared.module");
+const security_module_1 = require("../security/security.module");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
 exports.UsersModule = UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, notifications_module_1.NotificationsModule, shared_module_1.SharedModule],
+        imports: [prisma_module_1.PrismaModule, notifications_module_1.NotificationsModule, shared_module_1.SharedModule, security_module_1.SecurityModule],
         providers: [users_service_1.UsersService],
         controllers: [users_controller_1.UsersController],
         exports: [users_service_1.UsersService],

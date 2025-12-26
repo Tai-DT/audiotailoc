@@ -1,14 +1,38 @@
 "use client"
 
+import { useChat } from "@/hooks/use-chat"
+import { ChatSidebar } from "@/components/chat/ChatSidebar"
+import { ChatWindow } from "@/components/chat/ChatWindow"
+
 export default function MessagesPage() {
+  const {
+    conversations,
+    activeConversation,
+    messages,
+    loading,
+    sending,
+    messagesEndRef,
+    selectConversation,
+    sendMessage
+  } = useChat()
+
   return (
-    <div className="p-8">
-      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-sm p-8 text-center">
-        <div className="text-5xl mb-4">💬</div>
-        <h1 className="text-2xl font-bold mb-2">Tính năng nhắn tin đã được gỡ bỏ</h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Hệ thống hiện sử dụng Zalo để hỗ trợ khách hàng. Vui lòng liên hệ qua Zalo nếu bạn cần hỗ trợ.
-        </p>
+    <div className="p-4 h-[calc(100vh-80px)]">
+      <div className="flex h-full overflow-hidden bg-background rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <ChatSidebar
+          conversations={conversations}
+          activeId={activeConversation?.id}
+          onSelect={selectConversation}
+        />
+
+        <ChatWindow
+          conversation={activeConversation}
+          messages={messages}
+          loading={loading}
+          sending={sending}
+          messagesEndRef={messagesEndRef}
+          onSendMessage={sendMessage}
+        />
       </div>
     </div>
   )

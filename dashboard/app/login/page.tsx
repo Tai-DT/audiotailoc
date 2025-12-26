@@ -57,7 +57,7 @@ export default function LoginPage() {
       router.push(redirectTo)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
-      
+
       // Show helpful error messages
       if (errorMessage.includes('Account is locked')) {
         setError(errorMessage); // Preserve lockout message
@@ -106,122 +106,125 @@ export default function LoginPage() {
               Đăng nhập vào hệ thống quản lý
             </CardDescription>
           </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="admin@audiotailoc.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang đăng nhập...
-                </>
-              ) : (
-                'Đăng nhập'
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p className="font-semibold mb-2">Demo credentials:</p>
-            <div className="space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <p className="font-mono text-xs">Email: admin@audiotailoc.com</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => {
-                    navigator.clipboard.writeText('admin@audiotailoc.com');
-                    toast.success('Email copied to clipboard');
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="admin@audiotailoc.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <p className="font-mono text-xs">Password: Admin1234</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => {
-                    navigator.clipboard.writeText('Admin1234');
-                    toast.success('Password copied to clipboard');
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
+
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Mật khẩu
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Nhập mật khẩu"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="pl-10 pr-10"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang đăng nhập...
+                  </>
+                ) : (
+                  'Đăng nhập'
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              <p className="font-semibold mb-2">Demo credentials:</p>
+              {/* <div className="space-y-1">
+                <div className="flex items-center justify-center gap-2">
+                  <p className="font-mono text-xs">Email: admin@audiotailoc.com</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText('admin@audiotailoc.com');
+                      toast.success('Email copied to clipboard');
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <p className="font-mono text-xs">Password: admin123</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText('admin123');
+                      toast.success('Password copied to clipboard');
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div> */}
+              <p className="text-xs text-muted-foreground mt-2">
+                Please contact administrator for access.
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                ⚠️ Password is case-sensitive
+              </p>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
-              ⚠️ Password is case-sensitive
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
     </ProtectedRoute>
   )
 }

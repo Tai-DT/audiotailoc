@@ -31,7 +31,9 @@ export class AdminGuard implements CanActivate {
     if (adminEmails && user.email) {
       const allowedEmails = adminEmails.split(',').map(email => email.trim().toLowerCase());
       const isAllowed = allowedEmails.includes(user.email.toLowerCase());
-      this.logger.debug(`AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`);
+      this.logger.debug(
+        `AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`,
+      );
       return isAllowed;
     }
 

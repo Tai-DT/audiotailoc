@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { Request, Response } from 'express';
 import { LoggingService, LogContext } from './logging.service';
@@ -57,7 +51,7 @@ export class LoggingInterceptor implements NestInterceptor {
     this.loggingService.logRequest(logContext);
 
     return next.handle().pipe(
-      tap((data) => {
+      tap(data => {
         // Log successful response
         const duration = Date.now() - startTime;
         const statusCode = response.statusCode;
@@ -74,7 +68,7 @@ export class LoggingInterceptor implements NestInterceptor {
         // Add correlation headers to response
         CorrelationService.addToHeaders(response.getHeaders());
       }),
-      catchError((error) => {
+      catchError(error => {
         // Log error response
         const duration = Date.now() - startTime;
 
@@ -99,12 +93,15 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   private extractUserId(request: Request): string | undefined {
-    // Try to get user ID from various sources
+    // SECURITY: Only trust user ID from authenticated sources (JWT token, session)
+    // Do not trust query parameters or headers that can be spoofed
+    // Priority: JWT payload > session > trusted headers (if any)
     return (
-      (request as any).users?.id ||
-      (request as any).users?.userId ||
-      request.headers['x-user-id'] as string ||
-      request.query.userId as string
+      (request as any).user?.sub || // From JWT guard
+      (request as any).user?.id || // Alternative JWT field
+      (request as any).users?.id || // Legacy support
+      (request as any).users?.userId // Legacy support
+      // Removed: query.userId and x-user-id header (can be spoofed)
     );
   }
 
@@ -113,10 +110,12 @@ export class LoggingInterceptor implements NestInterceptor {
       request.ip ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
-      request.headers['x-forwarded-for'] as string ||
-      request.headers['x-real-ip'] as string ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
       'unknown'
-    ).split(',')[0].trim();
+    )
+      .split(',')[0]
+      .trim();
   }
 
   private getResponseSize(data: any): number {

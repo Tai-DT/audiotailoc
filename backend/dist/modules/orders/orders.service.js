@@ -33,7 +33,8 @@ let OrdersService = class OrdersService {
         const where = {};
         if (params.status)
             where.status = params.status;
-        return this.prisma.$transaction([
+        return this.prisma
+            .$transaction([
             this.prisma.orders.count({ where }),
             this.prisma.orders.findMany({
                 where,
@@ -44,22 +45,23 @@ let OrdersService = class OrdersService {
                     users: {
                         select: {
                             name: true,
-                            email: true
-                        }
+                            email: true,
+                        },
                     },
                     order_items: {
                         include: {
                             products: {
                                 select: {
                                     name: true,
-                                    slug: true
-                                }
-                            }
-                        }
-                    }
-                }
+                                    slug: true,
+                                },
+                            },
+                        },
+                    },
+                },
             }),
-        ]).then(([total, items]) => ({
+        ])
+            .then(([total, items]) => ({
             total,
             page,
             pageSize,
@@ -81,14 +83,17 @@ let OrdersService = class OrdersService {
                         productName: item.products?.name || item.name || 'Sản phẩm',
                         quantity: item.quantity,
                         price: unitPrice,
-                        total: unitPrice * item.quantity
+                        total: unitPrice * item.quantity,
                     };
-                })
-            }))
+                }),
+            })),
         }));
     }
     async get(id) {
-        const order = await this.prisma.orders.findUnique({ where: { id }, include: { order_items: true, payments: true } });
+        const order = await this.prisma.orders.findUnique({
+            where: { id },
+            include: { order_items: true, payments: true },
+        });
         if (!order)
             throw new common_1.NotFoundException('Không tìm thấy đơn hàng');
         return {
@@ -123,12 +128,16 @@ let OrdersService = class OrdersService {
                         targetProductId = item.products.id;
                     }
                     if (!targetProductId && item.products?.slug) {
-                        const bySlug = await this.prisma.products.findUnique({ where: { slug: item.products.slug } });
+                        const bySlug = await this.prisma.products.findUnique({
+                            where: { slug: item.products.slug },
+                        });
                         if (bySlug)
                             targetProductId = bySlug.id;
                     }
                     if (!targetProductId && item.products?.name) {
-                        const byName = await this.prisma.products.findFirst({ where: { name: item.products.name } });
+                        const byName = await this.prisma.products.findFirst({
+                            where: { name: item.products.name },
+                        });
                         if (byName)
                             targetProductId = byName.id;
                     }
@@ -154,7 +163,7 @@ let OrdersService = class OrdersService {
                 if (user?.email) {
                     const orderWithItems = await this.prisma.orders.findUnique({
                         where: { id: order.id },
-                        include: { order_items: true }
+                        include: { order_items: true },
                     });
                     if (orderWithItems) {
                         const orderData = {
@@ -164,9 +173,9 @@ let OrdersService = class OrdersService {
                             items: orderWithItems.order_items.map((item) => ({
                                 name: item.name || 'Sản phẩm',
                                 quantity: item.quantity,
-                                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`
+                                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`,
                             })),
-                            status: status
+                            status: status,
                         };
                         await this.mail.sendOrderStatusUpdate(user.email, orderData);
                     }
@@ -179,14 +188,23 @@ let OrdersService = class OrdersService {
         return updated;
     }
     async create(orderData) {
-        console.log('=== SIMPLE CREATE ORDER DEBUG ===');
-        console.log('Input data:', JSON.stringify(orderData, null, 2));
+        if (process.env.NODE_ENV === 'development') {
+            console.log('=== SIMPLE CREATE ORDER DEBUG ===');
+            const sanitizedData = { ...orderData };
+            if (sanitizedData.customerEmail)
+                sanitizedData.customerEmail = '***';
+            if (sanitizedData.customerPhone)
+                sanitizedData.customerPhone = '***';
+            console.log('Input data:', JSON.stringify(sanitizedData, null, 2));
+        }
         const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        const orderNo = `ORD${timestamp}${random}`;
+        const random = (0, crypto_1.randomBytes)(2).readUInt16BE(0) % 10000;
+        const orderNo = `ORD${timestamp}${random.toString().padStart(4, '0')}`;
         let userId = orderData.userId;
         if (!userId) {
-            console.log('Creating guest user...');
+            if (process.env.NODE_ENV === 'development') {
+                console.log('Creating guest user...');
+            }
             const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
             const guestUser = await this.prisma.users.create({
                 data: {
@@ -196,18 +214,24 @@ let OrdersService = class OrdersService {
                     name: orderData.customerName || 'Khách hàng',
                     phone: orderData.customerPhone,
                     role: 'USER',
-                    updatedAt: new Date()
-                }
+                    updatedAt: new Date(),
+                },
             });
             userId = guestUser.id;
-            console.log('Guest user created:', userId);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('Guest user created:', userId);
+            }
         }
         const items = [];
         let subtotalCents = 0;
-        for (const item of orderData.order_items || []) {
+        const incomingItems = Array.isArray(orderData.items) ? orderData.items : [];
+        if (incomingItems.length === 0) {
+            throw new common_1.BadRequestException('Vui lòng chọn ít nhất một sản phẩm');
+        }
+        for (const item of incomingItems) {
             console.log('Processing item:', item);
             const product = await this.prisma.products.findUnique({
-                where: { id: item.productId }
+                where: { id: item.productId },
             });
             if (!product) {
                 throw new common_1.BadRequestException(`Product not found: ${item.productId}`);
@@ -217,13 +241,15 @@ let OrdersService = class OrdersService {
                 quantity: item.quantity || 1,
                 price: Number(product.priceCents),
                 unitPrice: Number(product.priceCents),
-                name: product.name
+                name: product.name,
             };
             items.push(itemData);
             subtotalCents += itemData.price * itemData.quantity;
         }
-        console.log('Processed items:', items);
-        console.log('Subtotal:', subtotalCents);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Processed items:', items);
+            console.log('Subtotal:', subtotalCents);
+        }
         const order = await this.prisma.orders.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
@@ -233,21 +259,28 @@ let OrdersService = class OrdersService {
                 subtotalCents,
                 totalCents: subtotalCents,
                 shippingAddress: orderData.shippingAddress || null,
-                updatedAt: new Date()
-            }
+                shippingCoordinates: orderData.shippingCoordinates
+                    ? JSON.stringify(orderData.shippingCoordinates)
+                    : null,
+                updatedAt: new Date(),
+            },
         });
-        console.log('Order created:', order.id);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Order created:', order.id);
+        }
         for (const itemData of items) {
             await this.prisma.order_items.create({
                 data: {
                     id: (0, crypto_1.randomUUID)(),
                     orderId: order.id,
                     ...itemData,
-                    updatedAt: new Date()
-                }
+                    updatedAt: new Date(),
+                },
             });
         }
-        console.log('Order items created');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Order items created');
+        }
         const fullOrder = await this.prisma.orders.findUnique({
             where: { id: order.id },
             include: {
@@ -257,19 +290,28 @@ let OrdersService = class OrdersService {
                         id: true,
                         name: true,
                         email: true,
-                        phone: true
-                    }
-                }
-            }
+                        phone: true,
+                    },
+                },
+            },
         });
-        console.log('Returning order:', fullOrder?.id);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Returning order:', fullOrder?.id);
+        }
         return fullOrder;
     }
     async update(id, updateData) {
-        console.log('=== UPDATE ORDER DEBUG ===');
-        console.log('Order ID:', id);
-        console.log('Update data keys:', Object.keys(updateData));
-        console.log('Update data:', JSON.stringify(updateData, null, 2));
+        if (process.env.NODE_ENV === 'development') {
+            console.log('=== UPDATE ORDER DEBUG ===');
+            console.log('Order ID:', id);
+            console.log('Update data keys:', Object.keys(updateData));
+            const sanitizedUpdateData = { ...updateData };
+            if (sanitizedUpdateData.customerEmail)
+                sanitizedUpdateData.customerEmail = '***';
+            if (sanitizedUpdateData.customerPhone)
+                sanitizedUpdateData.customerPhone = '***';
+            console.log('Update data:', JSON.stringify(sanitizedUpdateData, null, 2));
+        }
         const order = await this.get(id);
         if (!order)
             throw new common_1.NotFoundException('Không tìm thấy đơn hàng');
@@ -285,14 +327,17 @@ let OrdersService = class OrdersService {
             if (order.userId) {
                 await this.prisma.users.update({
                     where: { id: order.userId },
-                    data: userUpdate
+                    data: userUpdate,
                 });
             }
         }
         if (updateData.shippingAddress !== undefined) {
-            updatePayload.shippingAddress = typeof updateData.shippingAddress === 'string'
-                ? updateData.shippingAddress
-                : (updateData.shippingAddress ? JSON.stringify(updateData.shippingAddress) : null);
+            updatePayload.shippingAddress =
+                typeof updateData.shippingAddress === 'string'
+                    ? updateData.shippingAddress
+                    : updateData.shippingAddress
+                        ? JSON.stringify(updateData.shippingAddress)
+                        : null;
         }
         if (updateData.shippingCoordinates !== undefined) {
             updatePayload.shippingCoordinates = updateData.shippingCoordinates
@@ -311,15 +356,15 @@ let OrdersService = class OrdersService {
                     quantity: item.quantity || 1,
                     unitPrice: item.unitPrice || 0,
                     price: item.unitPrice || 0,
-                    name: item.name || 'Sản phẩm'
+                    name: item.name || 'Sản phẩm',
                 };
                 try {
                     let product = await this.prisma.products.findUnique({
-                        where: { id: item.productId }
+                        where: { id: item.productId },
                     });
                     if (!product) {
                         product = await this.prisma.products.findUnique({
-                            where: { slug: item.productId }
+                            where: { slug: item.productId },
                         });
                     }
                     if (product) {
@@ -353,19 +398,19 @@ let OrdersService = class OrdersService {
                         products: {
                             select: {
                                 name: true,
-                                slug: true
-                            }
-                        }
-                    }
+                                slug: true,
+                            },
+                        },
+                    },
                 },
                 users: {
                     select: {
                         name: true,
                         email: true,
-                        phone: true
-                    }
-                }
-            }
+                        phone: true,
+                    },
+                },
+            },
         });
         const fullOrder = await this.prisma.orders.findUnique({
             where: { id },
@@ -375,19 +420,19 @@ let OrdersService = class OrdersService {
                         products: {
                             select: {
                                 name: true,
-                                slug: true
-                            }
-                        }
-                    }
+                                slug: true,
+                            },
+                        },
+                    },
                 },
                 users: {
                     select: {
                         name: true,
                         email: true,
-                        phone: true
-                    }
-                }
-            }
+                        phone: true,
+                    },
+                },
+            },
         });
         return {
             id: fullOrder.id,
@@ -407,15 +452,15 @@ let OrdersService = class OrdersService {
                     productName: item.products?.name || item.name || 'Sản phẩm',
                     quantity: item.quantity,
                     price: unitPrice,
-                    total: unitPrice * item.quantity
+                    total: unitPrice * item.quantity,
                 };
-            })
+            }),
         };
     }
     async delete(id) {
         const order = await this.prisma.orders.findUnique({
             where: { id },
-            include: { order_items: true }
+            include: { order_items: true },
         });
         if (!order)
             throw new common_1.NotFoundException('Không tìm thấy đơn hàng');
@@ -425,7 +470,7 @@ let OrdersService = class OrdersService {
                     if (item.productId) {
                         await this.prisma.products.update({
                             where: { id: item.productId },
-                            data: { stockQuantity: { increment: item.quantity } }
+                            data: { stockQuantity: { increment: item.quantity } },
                         });
                     }
                 }

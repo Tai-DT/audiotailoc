@@ -5,6 +5,7 @@ export declare class AuthService {
     private readonly users;
     private readonly config;
     private readonly securityService;
+    private readonly logger;
     constructor(users: UsersService, config: ConfigService, securityService: SecurityService);
     register(dto: {
         email: string;

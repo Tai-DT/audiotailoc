@@ -13,8 +13,11 @@ export interface User {
   name: string;
   role: 'USER' | 'ADMIN' | 'MODERATOR' | 'DISABLED';
   avatar?: string;
+  avatarUrl?: string;
   phone?: string;
   address?: string;
+  dateOfBirth?: string;
+  gender?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -52,7 +55,7 @@ export function useAuth() {
   // Check for token on mount and when storage changes
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const checkToken = () => {
       const token = authStorage.getAccessToken();
       const wasEnabled = hasToken;
@@ -62,10 +65,10 @@ export function useAuth() {
         setHasToken(nowEnabled);
       }
     };
-    
+
     // Initial check (in case token was set before component mounted)
     checkToken();
-    
+
     // Listen for storage changes (including from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'audiotailoc_token') {
@@ -73,12 +76,12 @@ export function useAuth() {
         checkToken();
       }
     };
-    
+
     const handleSessionUpdated = () => {
       console.log('[DEBUG] Session updated event');
       checkToken();
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(AUTH_EVENTS.SESSION_UPDATED, handleSessionUpdated);
     window.addEventListener(AUTH_EVENTS.LOGOUT, checkToken);
@@ -115,31 +118,17 @@ export function useAuth() {
     queryKey: ['auth', 'profile'],
     queryFn: async () => {
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:101',message:'useAuth queryFn started',data:{hasToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         // Double check token exists before making request
         const token = authStorage.getAccessToken();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:105',message:'Token check in queryFn',data:{hasToken:!!token,tokenLength:token?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         if (!token) {
           return null;
         }
-        
+
         const response = await apiClient.get(API_ENDPOINTS.AUTH.PROFILE);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:110',message:'Profile API response',data:{status:response.status,hasUser:!!response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const user = handleApiResponse<User>(response);
         authStorage.setUser(user as unknown as StoredUser);
         return user;
       } catch (error) {
-        // #region agent log
-        const errorStatus = (error as any)?.response?.status;
-        console.error('[DEBUG] Profile API error', { status: errorStatus, error });
-        fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:114',message:'Profile API error',data:{status:errorStatus,errorMessage:(error as Error)?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const { status } = handleApiError(error as { response?: { status?: number }; message?: string });
         if (status === 401 || status === 403) {
           authStorage.clearSession();
@@ -154,14 +143,8 @@ export function useAuth() {
     initialData: () => {
       if (typeof window === 'undefined') return null;
       const token = authStorage.getAccessToken();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:125',message:'initialData check',data:{hasToken:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       if (!token) return null;
       const storedUser = authStorage.getUser<User>();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:129',message:'initialData result',data:{hasStoredUser:!!storedUser,storedUserId:storedUser?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return storedUser || undefined;
     },
   });
@@ -170,25 +153,13 @@ export function useAuth() {
 // Mutations
 export function useLogin() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: LoginData) => {
-      // #region agent log
-      console.log('[DEBUG] Login mutation started', { email: data.email, hasPassword: !!data.password, rememberMe: data.rememberMe });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:139',message:'Login mutation started',data:{email:data.email,hasPassword:!!data.password,rememberMe:data.rememberMe},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const response = await apiClient.post(API_ENDPOINTS.AUTH.LOGIN, data);
-      // #region agent log
-      console.log('[DEBUG] Login API response', { status: response.status, data: response.data });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:142',message:'Login API response received',data:{status:response.status,hasToken:!!response.data?.token,hasAccessToken:!!response.data?.accessToken,hasRefreshToken:!!response.data?.refreshToken,hasUser:!!response.data?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       return handleApiResponse<AuthResponse>(response);
     },
     onSuccess: (data, variables) => {
-      // #region agent log
-      console.log('[DEBUG] Login onSuccess started', { userRole: data.user?.role, hasToken: !!data.token, hasAccessToken: !!data.accessToken, hasRefreshToken: !!data.refreshToken, userId: data.user?.id });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:145',message:'Login onSuccess started',data:{userRole:data.user?.role,hasToken:!!data.token,hasAccessToken:!!data.accessToken,hasRefreshToken:!!data.refreshToken,userId:data.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       if (data.user.role === 'DISABLED') {
         toast.error('Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.');
         authStorage.clearSession();
@@ -196,10 +167,6 @@ export function useLogin() {
       }
 
       const accessToken = data.token ?? data.accessToken;
-      // #region agent log
-      console.log('[DEBUG] Token extracted', { accessTokenLength: accessToken?.length || 0, hasAccessToken: !!accessToken, token: data.token, accessToken: data.accessToken });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:153',message:'Token extracted',data:{accessTokenLength:accessToken?.length||0,hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       if (!accessToken) {
         console.error('[DEBUG] No access token received!', { data });
         toast.error('Không nhận được mã phiên đăng nhập');
@@ -213,31 +180,20 @@ export function useLogin() {
         rememberMe: variables.rememberMe,
         expiresInMs: data.expiresInMs,
       });
-      // #region agent log
-      const storedToken = authStorage.getAccessToken();
-      const storedUser = authStorage.getUser();
-      console.log('[DEBUG] Session stored', { storedTokenLength: storedToken?.length || 0, hasStoredToken: !!storedToken, hasStoredUser: !!storedUser, storedUserId: storedUser?.id });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:163',message:'Session stored',data:{storedTokenLength:storedToken?.length||0,hasStoredToken:!!storedToken,hasStoredUser:!!storedUser,storedUserId:storedUser?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-
       // Update query cache with user data
       queryClient.setQueryData(['auth', 'profile'], data.user);
       // Invalidate to ensure all components using useAuth get the updated data
-      queryClient.invalidateQueries({ queryKey: ['auth', 'profile'], refetchType: 'active' }).catch(() => {});
-      // #region agent log
-      const cachedUser = queryClient.getQueryData(['auth', 'profile']);
-      console.log('[DEBUG] Query cache updated and invalidated', { hasCachedUser: !!cachedUser, cachedUserId: cachedUser?.id });
-      fetch('http://127.0.0.1:7242/ingest/62068610-8d6c-4e16-aeca-25fb5b062aef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'use-auth.ts:165',message:'Query cache updated',data:{hasCachedUser:!!cachedUser,cachedUserId:cachedUser?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
+      queryClient.invalidateQueries({ queryKey: ['auth', 'profile'], refetchType: 'active' }).catch(() => { });
       toast.success(`Chào mừng ${data.user.name}!`);
     },
     onError: (error: unknown) => {
       console.error('[DEBUG] Login error', error);
       const { message, status } = handleApiError(error as { response?: { data?: { message?: string; retryAfter?: number }; status?: number }; message?: string });
       console.log('[DEBUG] Login error handled', { message, status });
-      
+
       // Handle rate limiting (429) with specific message
       if (status === 429) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const retryAfter = (error as any)?.response?.data?.retryAfter;
         if (retryAfter) {
           const retryMinutes = Math.ceil(retryAfter / 60);
@@ -258,7 +214,7 @@ export function useLogin() {
 
 export function useRegister() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: RegisterData) => {
       const response = await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, data);
@@ -296,15 +252,15 @@ export function useRegister() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async () => {
       authStorage.clearSession();
-      
+
       // Clear query cache
       queryClient.removeQueries({ queryKey: ['auth', 'profile'] });
       queryClient.removeQueries({ queryKey: ['wishlist'] });
-      
+
       return Promise.resolve();
     },
     onSuccess: () => {
@@ -316,10 +272,16 @@ export function useLogout() {
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Partial<User>) => {
-      const response = await apiClient.put(API_ENDPOINTS.AUTH.PROFILE, data);
+      // Get current user to get their ID if needed for generic update
+      const currentProfile = queryClient.getQueryData<User>(['auth', 'profile']);
+      const endpoint = currentProfile?.id
+        ? API_ENDPOINTS.USERS.UPDATE(currentProfile.id)
+        : API_ENDPOINTS.AUTH.PROFILE;
+
+      const response = await apiClient.put(endpoint, data);
       return handleApiResponse<User>(response);
     },
     onSuccess: (data) => {
@@ -329,6 +291,124 @@ export function useUpdateProfile() {
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const response = await apiClient.put(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
+      return handleApiResponse<{ success: boolean }>(response);
+    },
+    onSuccess: () => {
+      toast.success('Đổi mật khẩu thành công!');
+    },
+    onError: (error: { response?: { data?: { message?: string } }; message?: string }) => {
+      const { message } = handleApiError(error);
+      toast.error(message || 'Đổi mật khẩu thất bại');
+    },
+  });
+}
+
+export function useExportUserData() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.get(API_ENDPOINTS.USERS.EXPORT, {
+        responseType: 'blob',
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user-data-${new Date().toISOString()}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Dữ liệu đã được xuất thành công!');
+    },
+    onError: () => {
+      toast.error('Xuất dữ liệu thất bại');
+    },
+  });
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const user = queryClient.getQueryData<User>(['auth', 'profile']);
+      if (!user?.id) throw new Error('User not found');
+
+      const response = await apiClient.delete(API_ENDPOINTS.USERS.DELETE(user.id), {
+        data: { password },
+      });
+      return handleApiResponse<{ success: boolean }>(response);
+    },
+    onSuccess: () => {
+      toast.success('Tài khoản đã được xóa. Tạm biệt!');
+      authStorage.clearSession();
+      queryClient.clear();
+      setTimeout(() => (window.location.href = '/'), 1500);
+    },
+    onError: (error: { response?: { data?: { message?: string } }; message?: string }) => {
+      const { message } = handleApiError(error);
+      toast.error(message || 'Xóa tài khoản thất bại');
+    },
+  });
+}
+
+export function useUserBookings() {
+  return useQuery({
+    queryKey: ['user', 'bookings'],
+    queryFn: async () => {
+      const response = await apiClient.get(API_ENDPOINTS.USERS.BOOKINGS);
+      return handleApiResponse<{ id: string; serviceId: string; status: string; createdAt: string }[]>(response);
+    },
+    retry: 1,
+  });
+}
+
+export function useUserPayments() {
+  return useQuery({
+    queryKey: ['user', 'payments'],
+    queryFn: async () => {
+      const response = await apiClient.get(API_ENDPOINTS.USERS.PAYMENTS);
+      return handleApiResponse<{ id: string; amountCents: number; status: string; createdAt: string; transactionId?: string }[]>(response);
+    },
+    retry: 1,
+  });
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await apiClient.post(API_ENDPOINTS.USERS.AVATAR, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return handleApiResponse<{ avatarUrl: string }>(response);
+    },
+    onSuccess: (_data) => {
+      // Refetch profile to get new avatarUrl
+      queryClient.invalidateQueries({ queryKey: ['auth', 'profile'] });
+      toast.success('Cập nhật ảnh đại diện thành công!');
+    },
+    onError: () => {
+      toast.error('Tải ảnh lên thất bại');
     },
   });
 }

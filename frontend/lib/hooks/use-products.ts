@@ -50,6 +50,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   search?: string;
+  q?: string;
   page?: number;
   limit?: number;
   sortBy?: 'name' | 'price' | 'createdAt';
@@ -149,16 +150,19 @@ export function useProduct(idOrSlug: string) {
   });
 }
 
-export function useProductSearch(query: string) {
+export function useProductSearch(filtersOrQuery: string | ProductFilters) {
+  const filters: ProductFilters = typeof filtersOrQuery === 'string' ? { q: filtersOrQuery } : filtersOrQuery;
+  const searchQuery = filters.q ?? filters.search ?? '';
+
   return useQuery({
-    queryKey: ['products', 'search', query],
+    queryKey: ['products', 'search', filters],
     queryFn: async () => {
       const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.SEARCH, {
-        params: { q: query },
+        params: filters,
       });
-      return handleApiResponse<Product[]>(response);
+      return handleApiResponse<{ products: Product[]; total: number }>(response);
     },
-    enabled: query.length > 2,
+    enabled: searchQuery.length > 2,
   });
 }
 
@@ -208,7 +212,7 @@ export function useProductAnalytics() {
 // Mutations
 export function useCreateProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (product: Partial<Product>) => {
       const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.CREATE, product);
@@ -226,7 +230,7 @@ export function useCreateProduct() {
 
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, ...product }: Partial<Product> & { id: string }) => {
       const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.UPDATE(id), product);
@@ -245,7 +249,7 @@ export function useUpdateProduct() {
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));

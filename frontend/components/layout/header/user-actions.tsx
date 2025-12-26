@@ -21,9 +21,11 @@ import { ThemeToggle } from '@/components/layout/theme-toggle';
 
 export function UserActions() {
   const { itemCount } = useCart();
-  const { user } = useAuth();
+  const authQuery = useAuth();
+  const user = authQuery.data ?? null;
   const isAuthenticated = !!user;
-  const wishlistCount = useWishlistCount();
+  const wishlistCountQuery = useWishlistCount();
+  const wishlistCount = wishlistCountQuery.data?.count ?? 0;
   const logoutMutation = useLogout();
 
   const handleLogout = (): void => {

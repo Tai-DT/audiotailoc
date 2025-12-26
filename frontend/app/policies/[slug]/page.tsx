@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { apiClient, handleApiResponse, handleApiError } from '@/lib/api';
+import { sanitizeProseHtml } from '@/lib/utils/sanitize';
 
 interface Policy {
   id: string;
@@ -96,7 +97,7 @@ export default function PolicyDetailPage() {
               Quay lại danh sách chính sách
             </Link>
           </div>
-          <p className="text-red-500">
+          <p className="text-destructive">
             {error || 'Không tìm thấy chính sách này.'}
           </p>
         </div>
@@ -157,7 +158,7 @@ export default function PolicyDetailPage() {
                 <CardContent className="p-8">
                   <div
                     className="prose prose-xl max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-li:text-foreground/90"
-                    dangerouslySetInnerHTML={{ __html: policy.contentHtml }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeProseHtml(policy.contentHtml) }}
                   />
                 </CardContent>
               </Card>

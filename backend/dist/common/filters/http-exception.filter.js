@@ -21,6 +21,7 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
         let message = 'Internal server error';
         let error = 'Internal Server Error';
         let validationErrors;
+        const isProduction = process.env.NODE_ENV === 'production';
         if (exception instanceof common_1.HttpException) {
             status = exception.getStatus();
             const exceptionResponse = exception.getResponse();
@@ -38,8 +39,14 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
             }
         }
         else if (exception instanceof Error) {
-            message = exception.message;
-            error = exception.name;
+            if (isProduction) {
+                message = 'An unexpected error occurred';
+                error = 'Internal Server Error';
+            }
+            else {
+                message = exception.message;
+                error = exception.name;
+            }
         }
         const errorResponse = {
             statusCode: status,

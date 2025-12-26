@@ -21,6 +21,7 @@ import {
   Eye
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { parseImages } from '@/lib/utils';
 
 const parseStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -110,22 +111,22 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const images = parseStringArray(project.images);
+  const images = parseImages(project.images);
   const technologies = parseStringArray(project.technologies);
   const features = parseStringArray(project.features);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'IN_PROGRESS':
         return 'bg-blue-500';
       case 'ON_HOLD':
         return 'bg-yellow-500';
       case 'DRAFT':
-        return 'bg-gray-500';
+        return 'bg-muted-foreground';
       default:
-        return 'bg-gray-500';
+        return 'bg-muted-foreground';
     }
   };
 
@@ -177,7 +178,7 @@ export default function ProjectDetailPage() {
                   priority
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   Không có hình ảnh
                 </div>
               )}
@@ -189,6 +190,7 @@ export default function ProjectDetailPage() {
                 {images.map((image, index) => (
                   <button
                     key={index}
+                    title={`Xem ảnh ${index + 1}`}
                     onClick={() => {
                       // In a real implementation, you would update the main image
                       toast.success('Tính năng xem ảnh chi tiết sẽ được cập nhật');
@@ -395,7 +397,7 @@ export default function ProjectDetailPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     {features.map((feature, index) => (
                       <div key={index} className="flex items-start gap-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </div>
                     ))}

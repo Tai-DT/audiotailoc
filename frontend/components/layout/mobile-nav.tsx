@@ -18,6 +18,7 @@ import {
   BookOpen,
   Mail,
   Home,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,10 +72,10 @@ interface MobileNavProps {
 }
 
 const quickCategories = [
-  { label: 'Mic', href: '/products?category=mic', icon: MicIcon },
-  { label: 'Loa', href: '/products?category=loa', icon: SpeakerIcon },
-  { label: 'Mixer', href: '/products?category=mixer', icon: SlidersHorizontal },
-  { label: 'Thanh Lý', href: '/products?category=thanh-ly', icon: PackageSearch },
+  { label: 'Micro', href: '/products?category=micro-karaoke-khong-day', icon: MicIcon },
+  { label: 'Loa', href: '/products?category=loa-loa-sub', icon: SpeakerIcon },
+  { label: 'Mixer', href: '/products?category=mixer-vang-so', icon: SlidersHorizontal },
+  { label: 'Thanh Lý', href: '/products?category=hang-thanh-ly-hang-cu', icon: PackageSearch },
 ];
 
 export function MobileNav({
@@ -270,12 +271,12 @@ export function MobileNav({
                 {/* Other Navigation Links */}
                 <SheetClose asChild>
                   <Link
-                    href="/about"
+                    href="/blog"
                     className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <div className="flex items-center gap-3">
-                      <Info className="h-4 w-4" />
-                      <span>Giới thiệu</span>
+                      <BookOpen className="h-4 w-4" />
+                      <span>Blog</span>
                     </div>
                     <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -283,12 +284,12 @@ export function MobileNav({
 
                 <SheetClose asChild>
                   <Link
-                    href="/blog"
+                    href="/support"
                     className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <div className="flex items-center gap-3">
-                      <BookOpen className="h-4 w-4" />
-                      <span>Blog</span>
+                      <HelpCircle className="h-4 w-4" />
+                      <span>Hỗ trợ</span>
                     </div>
                     <ChevronRight className="h-4 w-4" />
                   </Link>

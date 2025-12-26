@@ -75,11 +75,14 @@ export declare class ProductListQueryDto {
     sortBy?: ProductSortBy;
     sortOrder?: SortOrder;
     search?: string;
+    q?: string;
     categoryId?: string;
     isActive?: boolean;
     featured?: boolean;
     minPrice?: number;
     maxPrice?: number;
+    brand?: string;
+    inStock?: boolean;
 }
 export declare class ProductResponseDto {
     id: string;

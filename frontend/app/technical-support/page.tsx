@@ -6,30 +6,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useContactInfo } from '@/lib/hooks/use-contact-info';
 
 export default function TechnicalSupportPage() {
+  const { data: contactInfo } = useContactInfo();
+
   const supportChannels = [
     {
       icon: Phone,
       title: 'Hotline kỹ thuật',
-      description: 'Hỗ trợ trực tiếp 24/7',
-      contact: '1900 XXX XXX',
-      availability: '24/7',
+      description: 'Hỗ trợ trực tiếp',
+      contact: contactInfo?.phone?.display || '0768 426 262',
+      availability: contactInfo?.businessHours?.display || '08:00 - 21:00',
       response: 'Ngay lập tức'
     },
     {
       icon: MessageCircle,
       title: 'Chat trực tuyến',
       description: 'Hỗ trợ qua Zalo, Facebook',
-      contact: 'Zalo: 0987 654 321',
-      availability: '8:00 - 22:00',
+      contact: `Zalo: ${contactInfo?.zalo?.phoneNumber || contactInfo?.phone?.display || '0768 426 262'}`,
+      availability: contactInfo?.businessHours?.display || '08:00 - 21:00',
       response: '< 5 phút'
     },
     {
       icon: Mail,
       title: 'Email hỗ trợ',
       description: 'Gửi yêu cầu chi tiết',
-      contact: 'support@audiotailoc.vn',
+      contact: contactInfo?.email || 'audiotailoc@gmail.com',
       availability: '24/7',
       response: '< 24 giờ'
     }
@@ -125,7 +128,7 @@ export default function TechnicalSupportPage() {
               </h1>
               <p className="text-xl text-muted-foreground">
                 Đội ngũ kỹ thuật chuyên nghiệp của Audio Tài Lộc luôn sẵn sàng
-                hỗ trợ bạn 24/7 với các giải pháp tối ưu nhất.
+                hỗ trợ bạn với các giải pháp tối ưu nhất.
               </p>
             </div>
           </div>
@@ -160,7 +163,7 @@ export default function TechnicalSupportPage() {
                           {channel.availability}
                         </span>
                         <span className="flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3 text-green-500" />
+                          <CheckCircle className="h-3 w-3 text-success" />
                           {channel.response}
                         </span>
                       </div>
@@ -196,7 +199,7 @@ export default function TechnicalSupportPage() {
                     <ul className="space-y-2">
                       {service.items.map((item, itemIndex) => (
                         <li key={itemIndex} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="h-3 w-3 text-green-500 mt-1 flex-shrink-0" />
+                          <CheckCircle className="h-3 w-3 text-success mt-1 flex-shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -223,7 +226,7 @@ export default function TechnicalSupportPage() {
                 <Card key={index}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      <AlertCircle className="h-5 w-5 text-warning" />
                       {category.category}
                     </CardTitle>
                   </CardHeader>
@@ -285,7 +288,7 @@ export default function TechnicalSupportPage() {
               <div className="grid md:grid-cols-2 gap-8">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-green-600">
+                    <CardTitle className="flex items-center gap-2 text-success">
                       <CheckCircle className="h-5 w-5" />
                       Có thể hỗ trợ từ xa
                     </CardTitle>
@@ -301,7 +304,7 @@ export default function TechnicalSupportPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-blue-600">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                       <Headphones className="h-5 w-5" />
                       Cần hỗ trợ tại chỗ
                     </CardTitle>
@@ -334,9 +337,9 @@ export default function TechnicalSupportPage() {
                   Liên hệ hỗ trợ
                 </Button>
               </Link>
-              <Link href="tel:1900XXXXXX">
+              <Link href={`tel:${contactInfo?.phone?.hotline || '0768426262'}`}>
                 <Button variant="outline" size="lg">
-                  Hotline: 1900 XXX XXX
+                  Hotline: {contactInfo?.phone?.display || '0768 426 262'}
                 </Button>
               </Link>
             </div>
