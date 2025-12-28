@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { AnalyticsService, AnalyticsFilters } from './analytics.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { IsOptional, IsDateString, IsArray, IsString } from 'class-validator';

@@ -51,104 +51,65 @@ export async function GET(request: NextRequest) {
 
 async function checkPayOSStatus(orderId: string) {
   try {
-    // Check if we have real PayOS credentials
-    const hasRealCredentials = process.env.PAYOS_PARTNER_CODE &&
-                              process.env.PAYOS_API_KEY &&
-                              process.env.PAYOS_CHECKSUM_KEY &&
-                              process.env.PAYOS_PARTNER_CODE !== 'demo_partner_code';
-
-    if (hasRealCredentials) {
-      // Use real PayOS API
-      return await checkRealPayOSStatus(orderId);
-    } else {
-      // Use demo mode
-      return await checkDemoPayOSStatus();
-    }
-
-  } catch (error) {
-    console.error('PayOS status check error:', error);
-    throw new Error('Failed to check PayOS payment status');
-  }
-}
-
-async function checkRealPayOSStatus(orderId: string) {
-  try {
-    // Call PayOS API to get payment status
-    const verifyUrl = process.env.PAYOS_VERIFY_PAYMENT_URL!.replace('{orderCode}', orderId);
-
-    const response = await fetch(verifyUrl, {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+    
+    // Fetch order from backend (which includes payments)
+    const response = await fetch(`${backendUrl}/orders/${orderId}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.PAYOS_API_KEY!,
-        'x-partner-code': process.env.PAYOS_PARTNER_CODE!,
-      },
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    if (!response.ok) {
-      throw new Error(`PayOS API error: ${response.status} ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error('Failed to fetch order status from backend');
+    const order = await response.json();
 
-    const result = await response.json();
-
-    if (result.code === '00') {
-      const paymentData = result.data;
-
-      // Map PayOS status to our format
-      let status = 'PENDING';
-      if (paymentData.status === 'PAID') {
-        status = 'COMPLETED';
-      } else if (paymentData.status === 'CANCELLED') {
+    // Map backend order/payment status to frontend format
+    let status = 'PENDING';
+    if (order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'COMPLETED') {
+        const hasPaid = order.payments?.some((p: any) => p.status === 'SUCCEEDED');
+        if (hasPaid) status = 'COMPLETED';
+    } else if (order.status === 'CANCELLED') {
         status = 'FAILED';
-      } else if (paymentData.status === 'PENDING') {
-        status = 'PENDING';
-      }
-
-      return {
-        status: status,
-        transactionId: paymentData.reference || `PAYOS-${orderId}`,
-        amount: paymentData.amount,
-        currency: 'VND',
-        createdAt: new Date(paymentData.createdAt * 1000).toISOString(),
-        completedAt: paymentData.paidAt ? new Date(paymentData.paidAt * 1000).toISOString() : null,
-        description: paymentData.description,
-        paymentMethod: 'PayOS',
-      };
-    } else {
-      throw new Error(`PayOS error: ${result.desc || 'Unknown error'}`);
     }
 
+    const latestPayment = order.payments?.[order.payments.length - 1];
+
+    return {
+      status: status,
+      transactionId: latestPayment?.transactionId || latestPayment?.id || null,
+      amount: order.totalCents / 100,
+      currency: 'VND',
+      createdAt: order.createdAt,
+      completedAt: latestPayment?.updatedAt || null,
+      description: `Payment for order ${order.orderNo}`,
+      paymentMethod: 'PayOS',
+    };
   } catch (error) {
-    console.error('PayOS real status check error:', error);
-    throw new Error('Failed to check real PayOS payment status');
+    console.error('PayOS status check error:', error);
+    throw error;
   }
-}
-
-async function checkDemoPayOSStatus() {
-  // Demo mode - simulate random status
-  const statuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
-  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-  return {
-    status: randomStatus,
-    transactionId: `DEMO-${Date.now()}`,
-    amount: 1500000, // Mock amount
-    currency: 'VND',
-    createdAt: new Date().toISOString(),
-    completedAt: randomStatus === 'COMPLETED' ? new Date().toISOString() : null,
-    description: 'Audio Tai Loc Order (Demo)',
-    paymentMethod: 'PayOS (Demo)',
-  };
 }
 
 async function checkCODStatus(orderId: string) {
-  // Mock COD status check - in real implementation, check database
-  // Possible statuses: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+    
+    // Fetch order from backend
+    const response = await fetch(`${backendUrl}/orders/${orderId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-  return {
-    status: 'PENDING',
-    orderId,
-    createdAt: new Date().toISOString(),
-    estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-  };
+    if (!response.ok) throw new Error('Failed to fetch order status from backend');
+    const order = await response.json();
+
+    return {
+      status: order.status === 'CANCELLED' ? 'FAILED' : 'PENDING',
+      orderId: order.orderNo,
+      createdAt: order.createdAt,
+      estimatedDelivery: new Date(new Date(order.createdAt).getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+    };
+  } catch (error) {
+    console.error('COD status check error:', error);
+    throw error;
+  }
 }

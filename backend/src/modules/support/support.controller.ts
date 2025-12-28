@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, Query, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { SupportService } from './support.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
@@ -181,15 +193,15 @@ export class SupportController {
     // SECURITY: Prevent IDOR - users can only view their own tickets unless they're admin
     const authenticatedUserId = req?.user?.sub || req?.user?.id;
     const isAdmin = req?.user?.role === 'ADMIN' || req?.user?.email === process.env.ADMIN_EMAIL;
-    
+
     // If userId is provided and user is not admin, verify it matches authenticated user
     if (userId && !isAdmin && userId !== authenticatedUserId) {
       throw new ForbiddenException('You can only view your own support tickets');
     }
-    
+
     // Use authenticated user's ID if userId not provided
     const targetUserId = userId || authenticatedUserId;
-    
+
     return this.supportService.getTickets({
       userId: targetUserId,
       status,

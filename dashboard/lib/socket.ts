@@ -66,15 +66,18 @@ class SocketManager {
 
       // Create socket connection using Manager
       const manager = new Manager(this.url, {
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'], // Start with polling for better compatibility
         reconnection: this.config.reconnection,
         reconnectionDelay: this.config.reconnectionDelay,
-        reconnectionAttempts: this.config.reconnectionAttempts,
+        reconnectionAttempts: 10, // Increase attempts
         path: '/socket.io',
+        withCredentials: true,
         extraHeaders: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
       });
 
-      this.socket = manager.socket('/');
+      // Connect to the common realtime namespace if not root
+      const namespace = this.url.includes('/api/v1') ? '/api/v1/realtime' : '/';
+      this.socket = manager.socket(namespace);
 
       // Set up event handlers
       this.setupEventHandlers();
@@ -82,20 +85,20 @@ class SocketManager {
       // Wait for connection
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('Connection timeout'));
-        }, 10000);
+          reject(new Error(`Connection timeout to ${this.url} (${namespace})`));
+        }, 15000);
 
         this.socket!.once('connect', () => {
           clearTimeout(timeout);
           this.isConnecting = false;
-          console.log('WebSocket connected');
+          console.log(`WebSocket connected to ${namespace}`);
           resolve();
         });
 
         this.socket!.once('connect_error', (error) => {
           clearTimeout(timeout);
           this.isConnecting = false;
-          console.error('WebSocket connection error:', error);
+          console.error(`WebSocket connection error to ${this.url} (${namespace}):`, error.message);
           reject(error);
         });
       });

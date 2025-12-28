@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-[0_20px_60px_-28px_rgba(0,0,0,0.45)] hover:from-primary/90 hover:to-accent/90",
+          "bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_20px_60px_-28px_rgba(0,0,0,0.45)] hover:from-primary/90 hover:to-accent/90 border-none",
         destructive:
           "bg-destructive text-destructive-foreground border-destructive/50 shadow-[0_10px_40px_-24px_rgba(0,0,0,0.6)] hover:bg-destructive/90 focus-visible:ring-destructive/30",
         outline:
@@ -23,7 +23,7 @@ const buttonVariants = cva(
       size: {
         default: "h-11 px-5 text-sm rounded-xl has-[>svg]:px-4",
         sm: "h-9 rounded-lg gap-1.5 px-3 text-sm has-[>svg]:px-2.5",
-        lg: "h-12 px-6 text-base rounded-xl has-[>svg]:px-4",
+        lg: "h-12 px-6 text-base rounded-2xl has-[>svg]:px-4",
         icon: "size-10 rounded-xl",
       },
     },

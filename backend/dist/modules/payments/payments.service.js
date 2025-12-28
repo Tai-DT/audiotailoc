@@ -20,11 +20,13 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const config_1 = require("@nestjs/config");
 const crypto_2 = __importDefault(require("crypto"));
 const payos_service_1 = require("./payos.service");
+const mail_service_1 = require("../notifications/mail.service");
 let PaymentsService = PaymentsService_1 = class PaymentsService {
-    constructor(prisma, config, payos) {
+    constructor(prisma, config, payos, mailService) {
         this.prisma = prisma;
         this.config = config;
         this.payos = payos;
+        this.mailService = mailService;
         this.logger = new common_1.Logger(PaymentsService_1.name);
     }
     async createIntent(params) {
@@ -334,6 +336,23 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             });
             this.logger.log(`Refund processed: ${refund.id} - ${refundResult.success ? 'SUCCESS' : 'FAILED'}`);
             if (payment.orderId) {
+                try {
+                    const order = await this.prisma.orders.findUnique({
+                        where: { id: payment.orderId },
+                        include: { users: true },
+                    });
+                    if (order?.users?.email) {
+                        await this.mailService.send(order.users.email, `Hoàn tiền cho đơn hàng #${order.orderNo}`, `Chúng tôi đã thực hiện hoàn tiền ${amountCents / 100} cho đơn hàng #${order.orderNo}.`, `<h1>Thông báo hoàn tiền</h1>
+               <p>Xin chào ${order.users.name || 'quý khách'},</p>
+               <p>Chúng tôi đã thực hiện hoàn tiền cho đơn hàng <strong>#${order.orderNo}</strong>.</p>
+               <p>Số tiền: <strong>${(amountCents / 100).toLocaleString('vi-VN')} VND</strong></p>
+               <p>Lý do: ${reason || 'Yêu cầu từ khách hàng'}</p>
+               <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.</p>`);
+                    }
+                }
+                catch (mailError) {
+                    this.logger.error(`Failed to send refund notification: ${mailError.message}`);
+                }
                 this.logger.log(`Refund notification sent for order ${payment.orderId}`);
             }
             return { refundId: refund.id, success: refundResult.success };
@@ -520,7 +539,10 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         const { orderId, resultCode, transId, amount, signature } = payload;
         const secretKey = this.config.get('MOMO_SECRET_KEY') || '';
         const rawSignature = `accessKey=${this.config.get('MOMO_ACCESS_KEY')}&amount=${amount}&extraData=${payload.extraData || ''}&message=${payload.message || ''}&orderId=${orderId}&orderInfo=${payload.orderInfo || ''}&orderType=${payload.orderType || ''}&partnerCode=${payload.partnerCode || ''}&payType=${payload.payType || ''}&requestId=${payload.requestId || ''}&responseTime=${payload.responseTime || ''}&resultCode=${resultCode}&transId=${transId}`;
-        const calculatedSignature = crypto_2.default.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+        const calculatedSignature = crypto_2.default
+            .createHmac('sha256', secretKey)
+            .update(rawSignature)
+            .digest('hex');
         if (calculatedSignature !== signature) {
             this.logger.error(`MOMO webhook: invalid signature. Expected ${calculatedSignature}, got ${signature}`);
             throw new common_1.BadRequestException('Invalid signature');
@@ -571,6 +593,7 @@ exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         config_1.ConfigService,
-        payos_service_1.PayOSService])
+        payos_service_1.PayOSService,
+        mail_service_1.MailService])
 ], PaymentsService);
 //# sourceMappingURL=payments.service.js.map

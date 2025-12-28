@@ -1,25 +1,23 @@
-import
-  {
-    IsString,
-    IsNumber,
-    IsOptional,
-    IsBoolean,
-    Min,
-    IsArray,
-    IsUrl,
-    Length,
-    Matches,
-    ArrayMaxSize,
-    ValidateNested,
-    IsEnum,
-    Allow,
-  } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  Min,
+  IsArray,
+  IsUrl,
+  Length,
+  Matches,
+  ArrayMaxSize,
+  ValidateNested,
+  IsEnum,
+  Allow,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
 // Enums
-export enum ProductSortBy
-{
+export enum ProductSortBy {
   CREATED_AT = 'createdAt',
   NAME = 'name',
   PRICE = 'price',
@@ -27,997 +25,986 @@ export enum ProductSortBy
   VIEW_COUNT = 'viewCount',
 }
 
-export enum SortOrder
-{
+export enum SortOrder {
   ASC = 'asc',
   DESC = 'desc',
 }
 
-export class ProductSpecificationDto
-{
-  @ApiProperty( {
+export class ProductSpecificationDto {
+  @ApiProperty({
     description: 'Specification key',
     example: 'Power Output',
-  } )
+  })
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   key!: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Specification value',
     example: '100W RMS',
-  } )
+  })
   @IsString()
-  @Length( 1, 500 )
+  @Length(1, 500)
   value!: string;
 }
 
-export class CreateProductDto
-{
-  @ApiProperty( {
+export class CreateProductDto {
+  @ApiProperty({
     description: 'Product name',
     example: 'Premium Audio Cable',
-  } )
+  })
   @IsString()
-  @Length( 1, 255 )
+  @Length(1, 255)
   name!: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product slug (auto-generated if not provided)',
     example: 'premium-audio-cable',
-  } )
+  })
   @IsOptional()
-  @Transform( ( { value } ) => ( value === null ? undefined : value ) )
+  @Transform(({ value }) => (value === null ? undefined : value))
   @IsString()
-  @Matches( /^[a-z0-9-]+$/, {
+  @Matches(/^[a-z0-9-]+$/, {
     message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  } )
+  })
   slug?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product description',
     example: 'High-quality audio cable for professional use',
-  } )
+  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Short description',
     example: 'Premium quality audio cable',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 500 )
+  @Length(1, 500)
   shortDescription?: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Product price in cents',
     example: 299000,
-  } )
+  })
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   priceCents!: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Original price in cents (for discounts)',
     example: 399000,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   originalPriceCents?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'SKU (Stock Keeping Unit)',
     example: 'AUDIO-CABLE-001',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   sku?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Warranty information',
     example: '12 months',
-  } )
+  })
   @IsOptional()
   @IsString()
   warranty?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product features (comma-separated)',
     example: 'High quality, Durable, Warranty included',
-  } )
+  })
   @IsOptional()
   @IsString()
   features?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Minimum order quantity',
     example: 1,
     default: 1,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   minOrderQuantity?: number = 1;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Maximum order quantity',
     example: 10,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   maxOrderQuantity?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product tags (comma-separated)',
     example: 'audio,cable,premium',
-  } )
+  })
   @IsOptional()
   @IsString()
   tags?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Category ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
-  } )
+  })
   @IsOptional()
   @Allow()
   categoryId?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Brand name',
     example: 'AudioTech',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   brand?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product model',
     example: 'AT-1000',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   model?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product weight in grams',
     example: 500,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   weight?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product dimensions (LxWxH)',
     example: '20x10x5 cm',
-  } )
+  })
   @IsOptional()
   @IsString()
   dimensions?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product specifications',
-    type: [ ProductSpecificationDto ],
-  } )
+    type: [ProductSpecificationDto],
+  })
   @IsOptional()
   @IsArray()
-  @ValidateNested( { each: true } )
-  @Type( () => ProductSpecificationDto )
+  @ValidateNested({ each: true })
+  @Type(() => ProductSpecificationDto)
   specifications?: ProductSpecificationDto[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product images URLs',
-    type: [ String ],
-  } )
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
-  @IsString( { each: true } )
-  @ArrayMaxSize( 10 )
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
   images?: string[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Is product active',
     example: true,
     default: true,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   isActive?: boolean = true;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Is product featured',
     example: false,
     default: false,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   featured?: boolean = false;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta title for SEO',
     example: 'Premium Audio Cable - High Quality Audio Equipment',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 255 )
+  @Length(1, 255)
   metaTitle?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta description for SEO',
     example:
       'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 500 )
+  @Length(1, 500)
   metaDescription?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta keywords for SEO',
     example: 'audio cable, premium audio, professional equipment',
-  } )
+  })
   @IsOptional()
   @IsString()
   metaKeywords?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Canonical URL',
     example: 'https://audiotailoc.com/products/premium-audio-cable',
-  } )
+  })
   @IsOptional()
   @IsUrl()
   canonicalUrl?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Stock quantity',
     example: 100,
     minimum: 0,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   stockQuantity?: number;
 }
 
-export class UpdateProductDto
-{
-  @ApiPropertyOptional( {
+export class UpdateProductDto {
+  @ApiPropertyOptional({
     description: 'Product name',
     example: 'Premium Audio Cable',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 255 )
+  @Length(1, 255)
   name?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product slug',
     example: 'premium-audio-cable',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Matches( /^[a-z0-9-]+$/, {
+  @Matches(/^[a-z0-9-]+$/, {
     message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  } )
+  })
   slug?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product description',
     example: 'High-quality audio cable for professional use',
-  } )
+  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Short description',
     example: 'Premium quality audio cable',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 500 )
+  @Length(1, 500)
   shortDescription?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product price in cents',
     example: 299000,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   priceCents?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Original price in cents (for discounts)',
     example: 399000,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   originalPriceCents?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'SKU (Stock Keeping Unit)',
     example: 'AUDIO-CABLE-001',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   sku?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Warranty information',
     example: '12 months',
-  } )
+  })
   @IsOptional()
   @IsString()
   warranty?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product features (comma-separated)',
     example: 'High quality, Durable, Warranty included',
-  } )
+  })
   @IsOptional()
   @IsString()
   features?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Minimum order quantity',
     example: 1,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   minOrderQuantity?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Maximum order quantity',
     example: 10,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   maxOrderQuantity?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product tags (comma-separated)',
     example: 'audio,cable,premium',
-  } )
+  })
   @IsOptional()
   @IsString()
   tags?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Category ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
-  } )
+  })
   @IsOptional()
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Brand name',
     example: 'AudioTech',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   brand?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product model',
     example: 'AT-1000',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 100 )
+  @Length(1, 100)
   model?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product weight in grams',
     example: 500,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   weight?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product dimensions (LxWxH)',
     example: '20x10x5 cm',
-  } )
+  })
   @IsOptional()
   @IsString()
   dimensions?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product specifications',
-    type: [ ProductSpecificationDto ],
-  } )
+    type: [ProductSpecificationDto],
+  })
   @IsOptional()
   @IsArray()
-  @ValidateNested( { each: true } )
-  @Type( () => ProductSpecificationDto )
+  @ValidateNested({ each: true })
+  @Type(() => ProductSpecificationDto)
   specifications?: ProductSpecificationDto[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product images URLs',
-    type: [ String ],
-  } )
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
-  @IsString( { each: true } )
-  @ArrayMaxSize( 10 )
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
   images?: string[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Is product active',
     example: true,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   isActive?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Is product featured',
     example: false,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   featured?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta title for SEO',
     example: 'Premium Audio Cable - High Quality Audio Equipment',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 255 )
+  @Length(1, 255)
   metaTitle?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta description for SEO',
     example:
       'Buy premium audio cable for professional audio equipment. High quality, durable, and affordable.',
-  } )
+  })
   @IsOptional()
   @IsString()
-  @Length( 1, 500 )
+  @Length(1, 500)
   metaDescription?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta keywords for SEO',
     example: 'audio cable, premium audio, professional equipment',
-  } )
+  })
   @IsOptional()
   @IsString()
   metaKeywords?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Canonical URL',
     example: 'https://audiotailoc.com/products/premium-audio-cable',
-  } )
+  })
   @IsOptional()
   @IsUrl()
   canonicalUrl?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Stock quantity',
     example: 100,
     minimum: 0,
-  } )
+  })
   @IsOptional()
   @IsNumber()
-  @Min( 0 )
+  @Min(0)
   stockQuantity?: number;
 }
 
-export class ProductListQueryDto
-{
-  @ApiPropertyOptional( {
+export class ProductListQueryDto {
+  @ApiPropertyOptional({
     description: 'Page number (starts from 1)',
     example: 1,
     minimum: 1,
     default: 1,
-  } )
+  })
   @IsOptional()
-  @Type( () => Number )
+  @Type(() => Number)
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Number of items per page',
     example: 20,
     minimum: 1,
     maximum: 100,
     default: 20,
-  } )
+  })
   @IsOptional()
-  @Type( () => Number )
+  @Type(() => Number)
   @IsNumber()
-  @Min( 1 )
+  @Min(1)
   pageSize?: number = 20;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Sort by field',
     example: 'createdAt',
     enum: ProductSortBy,
     default: ProductSortBy.CREATED_AT,
-  } )
+  })
   @IsOptional()
-  @IsEnum( ProductSortBy )
+  @IsEnum(ProductSortBy)
   sortBy?: ProductSortBy = ProductSortBy.CREATED_AT;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Sort order',
     example: 'desc',
     enum: SortOrder,
     default: SortOrder.DESC,
-  } )
+  })
   @IsOptional()
-  @IsEnum( SortOrder )
+  @IsEnum(SortOrder)
   sortOrder?: SortOrder = SortOrder.DESC;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Search query',
     example: 'wireless speaker',
-  } )
+  })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Search query (alias for search)',
     example: 'wireless speaker',
-  } )
+  })
   @IsOptional()
   @IsString()
   q?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Category ID filter',
     example: '550e8400-e29b-41d4-a716-446655440000',
-  } )
+  })
   @IsOptional()
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Filter by active status',
     example: true,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   isActive?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Filter by featured status',
     example: false,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   featured?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Minimum price in cents',
     example: 100000,
     minimum: 0,
-  } )
+  })
   @IsOptional()
-  @Type( () => Number )
-  @Min( 0 )
+  @Type(() => Number)
+  @Min(0)
   minPrice?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Maximum price in cents',
     example: 500000,
     minimum: 0,
-  } )
+  })
   @IsOptional()
-  @Type( () => Number )
-  @Min( 0 )
+  @Type(() => Number)
+  @Min(0)
   maxPrice?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Filter by brand',
     example: 'Sony',
-  } )
+  })
   @IsOptional()
   @IsString()
   brand?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Filter by stock availability',
     example: true,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   inStock?: boolean;
 }
 
-export class ProductResponseDto
-{
-  @ApiProperty( {
+export class ProductResponseDto {
+  @ApiProperty({
     description: 'Product ID',
     example: 'product-uuid',
-  } )
+  })
   id!: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Product slug',
     example: 'premium-audio-cable',
-  } )
+  })
   slug!: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Product name',
     example: 'Premium Audio Cable',
-  } )
+  })
   name!: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product description',
     example: 'High-quality audio cable for professional use',
-  } )
+  })
   description?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Short description',
     example: 'Premium quality audio cable',
-  } )
+  })
   shortDescription?: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Product price in cents',
     example: 299000,
-  } )
+  })
   priceCents!: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Original price in cents',
     example: 399000,
-  } )
+  })
   originalPriceCents?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'SKU',
     example: 'AUDIO-CABLE-001',
-  } )
+  })
   sku?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Warranty',
     example: '12 months',
-  } )
+  })
   warranty?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Features',
     example: 'High quality, Durable, Warranty included',
-  } )
+  })
   features?: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Minimum order quantity',
     example: 1,
-  } )
+  })
   minOrderQuantity!: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Maximum order quantity',
     example: 10,
-  } )
+  })
   maxOrderQuantity?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Tags',
     example: 'audio,cable,premium',
-  } )
+  })
   tags?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Category information',
     type: Object,
-  } )
+  })
   category?: any;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Brand',
     example: 'AudioTech',
-  } )
+  })
   brand?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Model',
     example: 'AT-1000',
-  } )
+  })
   model?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Weight in grams',
     example: 500,
-  } )
+  })
   weight?: number;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Dimensions',
     example: '20x10x5 cm',
-  } )
+  })
   dimensions?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Specifications',
-    type: [ ProductSpecificationDto ],
-  } )
+    type: [ProductSpecificationDto],
+  })
   specifications?: ProductSpecificationDto[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Images URLs',
-    type: [ String ],
-  } )
+    type: [String],
+  })
   images?: string[];
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Is active',
     example: true,
-  } )
+  })
   isActive!: boolean;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Is featured',
     example: false,
-  } )
+  })
   featured!: boolean;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'View count',
     example: 150,
-  } )
+  })
   viewCount!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Created at',
     example: '2024-01-01T00:00:00Z',
-  } )
+  })
   createdAt!: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Updated at',
     example: '2024-01-01T00:00:00Z',
-  } )
+  })
   updatedAt!: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta title',
     example: 'Premium Audio Cable - High Quality Audio Equipment',
-  } )
+  })
   metaTitle?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta description',
     example: 'Buy premium audio cable for professional audio equipment',
-  } )
+  })
   metaDescription?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Meta keywords',
     example: 'audio cable, premium audio, professional equipment',
-  } )
+  })
   metaKeywords?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Canonical URL',
     example: 'https://audiotailoc.com/products/premium-audio-cable',
-  } )
+  })
   canonicalUrl?: string;
 }
 
-export class ProductListResponseDto
-{
-  @ApiProperty( {
+export class ProductListResponseDto {
+  @ApiProperty({
     description: 'List of products',
-    type: [ ProductResponseDto ],
-  } )
+    type: [ProductResponseDto],
+  })
   items!: ProductResponseDto[];
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Total number of products',
     example: 150,
-  } )
+  })
   total!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Current page',
     example: 1,
-  } )
+  })
   page!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Page size',
     example: 20,
-  } )
+  })
   pageSize!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Total pages',
     example: 8,
-  } )
+  })
   totalPages!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Has next page',
     example: true,
-  } )
+  })
   hasNext!: boolean;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Has previous page',
     example: false,
-  } )
+  })
   hasPrev!: boolean;
 }
 
-export class ProductAnalyticsDto
-{
-  @ApiProperty( {
+export class ProductAnalyticsDto {
+  @ApiProperty({
     description: 'Total number of products',
     example: 150,
-  } )
+  })
   totalProducts!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Number of active products',
     example: 120,
-  } )
+  })
   activeProducts!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Number of featured products',
     example: 15,
-  } )
+  })
   featuredProducts!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Number of out of stock products',
     example: 5,
-  } )
+  })
   outOfStockProducts!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Total view count',
     example: 15420,
-  } )
+  })
   totalViews!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Average price',
     example: 250000,
-  } )
+  })
   averagePrice!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Products by category',
     example: { 'audio-cables': 25, speakers: 30 },
-  } )
+  })
   productsByCategory!: Record<string, number>;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Top viewed products',
-    type: [ ProductResponseDto ],
-  } )
+    type: [ProductResponseDto],
+  })
   topViewedProducts!: ProductResponseDto[];
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Recent products',
-    type: [ ProductResponseDto ],
-  } )
+    type: [ProductResponseDto],
+  })
   recentProducts!: ProductResponseDto[];
 }
 
-export class BulkUpdateProductsDto
-{
-  @ApiProperty( {
+export class BulkUpdateProductsDto {
+  @ApiProperty({
     description: 'Product IDs to update',
-    type: [ String ],
-    example: [ 'product-id-1', 'product-id-2' ],
-  } )
+    type: [String],
+    example: ['product-id-1', 'product-id-2'],
+  })
   @IsArray()
-  @IsString( { each: true } )
+  @IsString({ each: true })
   productIds!: string[];
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Update active status',
     example: true,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   isActive?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Update featured status',
     example: false,
-  } )
+  })
   @IsOptional()
   @IsBoolean()
-  @Type( () => Boolean )
+  @Type(() => Boolean)
   featured?: boolean;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Add tags (comma-separated)',
     example: 'new-tag,another-tag',
-  } )
+  })
   @IsOptional()
   @IsString()
   addTags?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Remove tags (comma-separated)',
     example: 'old-tag',
-  } )
+  })
   @IsOptional()
   @IsString()
   removeTags?: string;
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Update category ID',
     example: 'new-category-id',
-  } )
+  })
   @IsOptional()
   @IsString()
   categoryId?: string;
 }
 
-export class ProductSearchSuggestionDto
-{
-  @ApiProperty( {
+export class ProductSearchSuggestionDto {
+  @ApiProperty({
     description: 'Suggestion text',
     example: 'Wireless Speaker',
-  } )
+  })
   text!: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Suggestion type',
-    enum: [ 'product', 'category', 'brand' ],
+    enum: ['product', 'category', 'brand'],
     example: 'product',
-  } )
+  })
   type!: 'product' | 'category' | 'brand';
 
-  @ApiPropertyOptional( {
+  @ApiPropertyOptional({
     description: 'Product count for this suggestion',
     example: 25,
-  } )
+  })
   count?: number;
 }
 
-export class ImportResultDto
-{
-  @ApiProperty( {
+export class ImportResultDto {
+  @ApiProperty({
     description: 'Number of products imported',
     example: 10,
-  } )
+  })
   imported!: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Import errors',
-    type: [ String ],
-    example: [ 'Row 2: Missing name', 'Row 5: Invalid price' ],
-  } )
+    type: [String],
+    example: ['Row 2: Missing name', 'Row 5: Invalid price'],
+  })
   errors!: string[];
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { TechniciansService } from './technicians.service';
 import { ServiceCategory } from '../../common/enums';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

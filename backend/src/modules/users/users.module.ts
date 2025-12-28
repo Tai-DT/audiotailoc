@@ -6,10 +6,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { SharedModule } from '../shared/shared.module';
 import { SecurityModule } from '../security/security.module';
 
-@Module( {
-  imports: [ PrismaModule, NotificationsModule, SharedModule, SecurityModule ],
-  providers: [ UsersService ],
-  controllers: [ UsersController ],
-  exports: [ UsersService ],
-} )
-export class UsersModule { }
+@Module({
+  imports: [PrismaModule, NotificationsModule, SharedModule, SecurityModule],
+  providers: [UsersService],
+  controllers: [UsersController],
+  exports: [UsersService],
+})
+export class UsersModule {}

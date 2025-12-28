@@ -166,6 +166,10 @@ let BookingService = class BookingService {
                 throw new common_1.NotFoundException('Technician not found');
             }
         }
+        const scheduledDate = bookingData.scheduledAt || bookingData.scheduledDate;
+        if (!scheduledDate) {
+            throw new common_1.BadRequestException('Scheduled date is required');
+        }
         const booking = await this.prisma.service_bookings.create({
             data: {
                 id: bookingData.id || crypto.randomUUID(),
@@ -173,10 +177,14 @@ let BookingService = class BookingService {
                 userId: userId,
                 technicianId: bookingData.technicianId || null,
                 status: bookingData.status || 'PENDING',
-                scheduledAt: new Date(bookingData.scheduledAt),
+                scheduledAt: new Date(scheduledDate),
                 scheduledTime: bookingData.scheduledTime,
                 notes: bookingData.notes || null,
-                estimatedCosts: bookingData.estimatedCosts || 0,
+                address: bookingData.address || null,
+                customerName: bookingData.customerName || user.name || null,
+                customerPhone: bookingData.customerPhone || user.phone || null,
+                customerEmail: bookingData.customerEmail || user.email || null,
+                estimatedCosts: bookingData.estimatedCosts || service.price || 0,
                 updatedAt: new Date(),
                 service_booking_items: items?.length
                     ? {
@@ -199,6 +207,39 @@ let BookingService = class BookingService {
                         service_items: true,
                     },
                 },
+            },
+        });
+        return booking;
+    }
+    async createGuestBooking(guestBookingData) {
+        const service = await this.prisma.services.findUnique({
+            where: { id: guestBookingData.serviceId },
+        });
+        if (!service) {
+            throw new common_1.NotFoundException('Service not found');
+        }
+        if (!service.isActive) {
+            throw new common_1.NotFoundException('Service is not available');
+        }
+        const booking = await this.prisma.service_bookings.create({
+            data: {
+                id: crypto.randomUUID(),
+                serviceId: guestBookingData.serviceId,
+                userId: null,
+                technicianId: null,
+                status: 'PENDING',
+                scheduledAt: new Date(guestBookingData.scheduledDate),
+                scheduledTime: guestBookingData.scheduledTime,
+                notes: guestBookingData.notes || null,
+                address: guestBookingData.customerAddress || null,
+                customerName: guestBookingData.customerName,
+                customerPhone: guestBookingData.customerPhone,
+                customerEmail: guestBookingData.customerEmail || null,
+                estimatedCosts: service.price || 0,
+                updatedAt: new Date(),
+            },
+            include: {
+                services: true,
             },
         });
         return booking;

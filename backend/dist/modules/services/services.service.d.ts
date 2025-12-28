@@ -6,6 +6,8 @@ export declare class ServicesService {
     private readonly prisma;
     private readonly cache;
     constructor(prisma: PrismaService, cache: CacheService);
+    private parseJsonFields;
+    private parseJsonField;
     createService(data: CreateServiceDto): Promise<{
         service_types: {
             description: string | null;
@@ -22,6 +24,7 @@ export declare class ServicesService {
     } & {
         tags: string | null;
         description: string | null;
+        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -32,7 +35,6 @@ export declare class ServicesService {
         images: string | null;
         features: string | null;
         viewCount: number;
-        type: string | null;
         metadata: string | null;
         duration: number;
         price: number;
@@ -56,131 +58,12 @@ export declare class ServicesService {
     }): Promise<any>;
     getService(id: string): Promise<any>;
     getServiceBySlug(slug: string): Promise<any>;
-    updateService(id: string, data: UpdateServiceDto): Promise<{
-        price: number;
-        minPriceDisplay: number;
-        maxPriceDisplay: number;
-        type: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        service_items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            quantity: number;
-            price: number;
-            serviceId: string;
-        }[];
-        service_types: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        tags: string | null;
-        description: string | null;
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        viewCount: number;
-        metadata: string | null;
-        duration: number;
-        basePriceCents: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
-    updateServiceImage(id: string, imagePath: string): Promise<{
-        price: number;
-        minPriceDisplay: number;
-        maxPriceDisplay: number;
-        type: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        service_items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            quantity: number;
-            price: number;
-            serviceId: string;
-        }[];
-        service_types: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        tags: string | null;
-        description: string | null;
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        viewCount: number;
-        metadata: string | null;
-        duration: number;
-        basePriceCents: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
+    updateService(id: string, data: UpdateServiceDto): Promise<any>;
+    updateServiceImage(id: string, imagePath: string): Promise<any>;
     deleteService(id: string): Promise<{
         tags: string | null;
         description: string | null;
+        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -191,7 +74,6 @@ export declare class ServicesService {
         images: string | null;
         features: string | null;
         viewCount: number;
-        type: string | null;
         metadata: string | null;
         duration: number;
         price: number;

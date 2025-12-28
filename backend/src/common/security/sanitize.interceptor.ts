@@ -321,15 +321,52 @@ export function sanitizeHtml(html: string): string {
 
     // Default allowed tags for rich text content
     const allowedTags = [
-      'p', 'br', 'strong', 'em', 'u', 's', 'strike',
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-      'a', 'img',
-      'blockquote', 'pre', 'code', 'kbd', 'samp',
-      'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
-      'div', 'span', 'hr',
-      'abbr', 'cite', 'q', 'sub', 'sup', 'time',
-      'mark', 'del', 'ins'
+      'p',
+      'br',
+      'strong',
+      'em',
+      'u',
+      's',
+      'strike',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'ul',
+      'ol',
+      'li',
+      'dl',
+      'dt',
+      'dd',
+      'a',
+      'img',
+      'blockquote',
+      'pre',
+      'code',
+      'kbd',
+      'samp',
+      'table',
+      'thead',
+      'tbody',
+      'tfoot',
+      'tr',
+      'th',
+      'td',
+      'caption',
+      'div',
+      'span',
+      'hr',
+      'abbr',
+      'cite',
+      'q',
+      'sub',
+      'sup',
+      'time',
+      'mark',
+      'del',
+      'ins',
     ];
 
     // Default allowed attributes
@@ -338,7 +375,7 @@ export function sanitizeHtml(html: string): string {
       img: ['src', 'alt', 'title', 'width', 'height', 'class', 'loading'],
       code: ['class'],
       pre: ['class'],
-      '*': ['class', 'id']
+      '*': ['class', 'id'],
     };
 
     return DOMPurify.sanitize(html, {
@@ -349,7 +386,8 @@ export function sanitizeHtml(html: string): string {
       // Prevent XSS via event handlers
       FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
       // Remove dangerous protocols
-      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     });
   } catch (error) {
     // Fallback to basic sanitization if DOMPurify fails

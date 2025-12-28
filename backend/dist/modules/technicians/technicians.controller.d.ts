@@ -98,6 +98,7 @@ export declare class TechniciansController {
             services: {
                 tags: string | null;
                 description: string | null;
+                type: string | null;
                 id: string;
                 name: string;
                 createdAt: Date;
@@ -108,7 +109,6 @@ export declare class TechniciansController {
                 images: string | null;
                 features: string | null;
                 viewCount: number;
-                type: string | null;
                 metadata: string | null;
                 duration: number;
                 price: number;
@@ -129,9 +129,10 @@ export declare class TechniciansController {
             updatedAt: Date;
             address: string | null;
             userId: string | null;
+            customerName: string | null;
             scheduledAt: Date | null;
-            technicianId: string | null;
             serviceId: string;
+            technicianId: string | null;
             scheduledTime: string | null;
             completedAt: Date | null;
             notes: string | null;
@@ -139,6 +140,8 @@ export declare class TechniciansController {
             actualCosts: number | null;
             coordinates: string | null;
             goongPlaceId: string | null;
+            customerPhone: string | null;
+            customerEmail: string | null;
         })[];
         technician_schedules: {
             id: string;

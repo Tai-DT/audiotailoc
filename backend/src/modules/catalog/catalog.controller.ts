@@ -10,21 +10,17 @@ import {
   Patch,
   Delete,
   Query,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IsOptional } from 'class-validator';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 // import { SearchService } from '../search/search.service'; // Disabled due to module not enabled
 
-class DeleteManyDto {
+class _DeleteManyDto {
   @IsOptional()
   ids?: string[];
 }

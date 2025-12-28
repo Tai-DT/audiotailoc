@@ -46,8 +46,8 @@ export declare class ProjectsService {
             isFeatured: boolean;
             category: string | null;
             budget: string | null;
-            results: string | null;
             displayOrder: number;
+            results: string | null;
             technologies: string | null;
             galleryImages: string | null;
             clientLogo: string | null;
@@ -107,8 +107,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -167,8 +167,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -227,8 +227,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -287,8 +287,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -347,8 +347,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -404,8 +404,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -458,8 +458,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -512,8 +512,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;
@@ -578,8 +578,8 @@ export declare class ProjectsService {
         isFeatured: boolean;
         category: string | null;
         budget: string | null;
-        results: string | null;
         displayOrder: number;
+        results: string | null;
         technologies: string | null;
         galleryImages: string | null;
         clientLogo: string | null;

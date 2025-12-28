@@ -12,11 +12,11 @@ async function main() {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@audiotailoc.com';
     // SECURITY: Require ADMIN_PASSWORD to be set explicitly - no default weak password
     const adminPassword = process.env.ADMIN_PASSWORD;
-    
+
     if (!adminPassword) {
       throw new Error(
         'ADMIN_PASSWORD environment variable is required. ' +
-        'Please set a strong password for the admin account.'
+          'Please set a strong password for the admin account.',
       );
     }
 

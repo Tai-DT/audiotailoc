@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsDateString, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsDateString, IsNumber, IsEmail } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateBookingDto {
@@ -19,8 +19,14 @@ export class CreateBookingDto {
   @IsString()
   status?: string;
 
+  @IsOptional()
   @IsDateString()
-  scheduledAt!: string;
+  scheduledAt?: string;
+
+  // Alias for scheduledAt - frontend uses this name
+  @IsOptional()
+  @IsDateString()
+  scheduledDate?: string;
 
   @IsString()
   scheduledTime!: string;
@@ -37,4 +43,21 @@ export class CreateBookingDto {
   @IsOptional()
   @IsArray()
   items?: Array<{ itemId: string; quantity: number; price?: number }>;
+
+  // Customer information fields (for storing with authenticated bookings too)
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  customerEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
 }

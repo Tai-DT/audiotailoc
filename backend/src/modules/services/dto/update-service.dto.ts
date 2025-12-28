@@ -55,6 +55,13 @@ export class UpdateServiceDto {
   @Max(1440)
   estimatedDuration?: number;
 
+  // Alias for estimatedDuration - frontend uses this
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(1440)
+  duration?: number;
+
   @IsOptional()
   @IsString()
   imageUrl?: string;

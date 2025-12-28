@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const booking_service_1 = require("./booking.service");
 const swagger_1 = require("@nestjs/swagger");
 const create_booking_dto_1 = require("./dto/create-booking.dto");
+const create_guest_booking_dto_1 = require("./dto/create-guest-booking.dto");
 const update_booking_dto_1 = require("./dto/update-booking.dto");
 const update_booking_status_dto_1 = require("./dto/update-booking-status.dto");
 const create_payment_dto_1 = require("./dto/create-payment.dto");
@@ -58,6 +59,9 @@ let BookingController = class BookingController {
             createBookingDto.userId = authenticatedUserId;
         }
         return this.bookingService.create(createBookingDto);
+    }
+    async createGuestBooking(guestBookingDto) {
+        return this.bookingService.createGuestBooking(guestBookingDto);
     }
     async update(id, updateBookingDto, req) {
         const booking = await this.bookingService.findOne(id);
@@ -146,6 +150,17 @@ __decorate([
     __metadata("design:paramtypes", [create_booking_dto_1.CreateBookingDto, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('guest'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a booking as a guest (no authentication required)' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Guest booking created successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid input data' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Service not found' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_guest_booking_dto_1.CreateGuestBookingDto]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "createGuestBooking", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),

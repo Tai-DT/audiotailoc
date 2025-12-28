@@ -310,7 +310,7 @@ export default function PoliciesPage() {
                             {policies.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                        Chưa có chính sách nào. Nhấn "Thêm chính sách" để tạo mới.
+                                        Chưa có chính sách nào. Nhấn &quot;Thêm chính sách&quot; để tạo mới.
                                     </TableCell>
                                 </TableRow>
                             )}

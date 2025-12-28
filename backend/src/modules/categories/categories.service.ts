@@ -177,7 +177,7 @@ export class CategoriesService {
   }
 
   async updateStatus(id: string, isActive: boolean) {
-    const category = await this.findById(id);
+    const _category = await this.findById(id);
 
     const updated = await this.prisma.categories.update({
       where: { id },
@@ -192,7 +192,7 @@ export class CategoriesService {
   }
 
   async delete(id: string) {
-    const category = await this.findById(id);
+    const _category = await this.findById(id);
 
     // Check if category has products
     const productCount = await this.prisma.products.count({

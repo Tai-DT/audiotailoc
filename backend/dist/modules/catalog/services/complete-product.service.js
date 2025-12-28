@@ -79,7 +79,7 @@ let CompleteProductService = class CompleteProductService {
         return this.mapToProductResponse(product);
     }
     async findProducts(query) {
-        const { page = 1, pageSize = 20, sortBy = complete_product_dto_1.ProductSortBy.CREATED_AT, sortOrder = complete_product_dto_1.SortOrder.DESC, search, q, minPrice, maxPrice, categoryId, brand, featured, isActive, inStock, } = query;
+        const { page = 1, pageSize = 20, sortBy = complete_product_dto_1.ProductSortBy.CREATED_AT, sortOrder = complete_product_dto_1.SortOrder.DESC, search, q, minPrice, maxPrice, categoryId, brand, featured, isActive, inStock: _inStock, } = query;
         const searchTerm = search || q;
         const skip = (page - 1) * pageSize;
         const where = {

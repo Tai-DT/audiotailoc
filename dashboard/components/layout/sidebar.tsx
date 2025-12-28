@@ -40,7 +40,8 @@ import {
   Star,
   HelpCircle,
   ShieldCheck,
-  Info
+  Info,
+  Bot
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -197,6 +198,12 @@ const sidebarGroups = [
   {
     title: "Hệ thống",
     items: [
+      {
+        title: "AI Assistant",
+        href: "/dashboard/ai",
+        icon: Bot,
+        badge: "New",
+      },
       {
         title: "Thông tin Web",
         href: "/dashboard/contact-info",

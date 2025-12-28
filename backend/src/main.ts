@@ -56,7 +56,8 @@ async function bootstrap() {
   // Enable trust proxy for Heroku/reverse proxy (fixes X-Forwarded-For warnings)
   // Use number instead of true to avoid rate limiting bypass vulnerability
   // 1 = trust first proxy (for single reverse proxy like Heroku, nginx)
-  const trustProxyCount = config.get<number>('TRUST_PROXY_COUNT') ?? (process.env.NODE_ENV === 'production' ? 1 : false);
+  const trustProxyCount =
+    config.get<number>('TRUST_PROXY_COUNT') ?? (process.env.NODE_ENV === 'production' ? 1 : false);
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxyCount);
 
   // Get port early to avoid hoisting issues
@@ -134,7 +135,9 @@ async function bootstrap() {
         // In production, allow requests without origin but log warning
         // Note: Some legitimate clients (mobile apps, curl) may not send Origin header
         // Consider implementing additional middleware to validate these requests
-        logger.warn('CORS: Request without Origin header in production - consider stricter validation');
+        logger.warn(
+          'CORS: Request without Origin header in production - consider stricter validation',
+        );
         return callback(null, true);
       }
 
@@ -238,7 +241,7 @@ async function bootstrap() {
   // Rate limiting middleware
   // Note: express-rate-limit automatically uses Express's 'trust proxy' setting
   // By setting trust proxy to a number (not true), we avoid the bypass vulnerability
-  // 
+  //
   // SECURITY: Global rate limiting as baseline protection
   // - Per-endpoint rate limits are configured in controllers using @Throttle decorator
   // - Auth endpoints have stricter limits (see auth.controller.ts)

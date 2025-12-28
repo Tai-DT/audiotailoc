@@ -186,8 +186,8 @@ export class PromotionAnalyticsCacheService {
    * Generate pre-computed reports
    */
   async generatePreComputedReport(
-    campaignId: string,
-    dateRange: {
+    _campaignId: string,
+    _dateRange: {
       startDate: Date;
       endDate: Date;
     },
@@ -285,8 +285,8 @@ export class PromotionAnalyticsCacheService {
     },
   ): Promise<string | Buffer> {
     try {
-      const startDate = dateRange?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const endDate = dateRange?.endDate || new Date();
+      const _startDate = dateRange?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const _endDate = dateRange?.endDate || new Date();
 
       // TODO: campaign_metrics table does not exist
       const metrics: any[] = []; // await this.prisma.campaign_metrics.findMany({
@@ -400,7 +400,7 @@ export class PromotionAnalyticsCacheService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private async calculateCampaignMetrics(campaignId: string): Promise<{
+  private async calculateCampaignMetrics(_campaignId: string): Promise<{
     impressions: number;
     clicks: number;
     conversions: number;

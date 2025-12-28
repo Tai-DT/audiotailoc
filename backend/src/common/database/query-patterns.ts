@@ -319,7 +319,7 @@ export class QueryPatterns {
 
     // Trim and normalize query
     const trimmedQuery = query.trim();
-    
+
     // Limit query length to prevent DoS
     if (trimmedQuery.length > 10000) {
       throw new Error('Query too long. Maximum length is 10000 characters');
@@ -333,10 +333,29 @@ export class QueryPatterns {
 
     // Block dangerous SQL keywords that could be used for injection
     const dangerousKeywords = [
-      'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 
-      'TRUNCATE', 'EXEC', 'EXECUTE', 'CALL', 'MERGE', 'REPLACE',
-      'GRANT', 'REVOKE', 'COMMIT', 'ROLLBACK', 'SAVEPOINT',
-      '--', '/*', '*/', ';', 'UNION', 'SCRIPT'
+      'INSERT',
+      'UPDATE',
+      'DELETE',
+      'DROP',
+      'CREATE',
+      'ALTER',
+      'TRUNCATE',
+      'EXEC',
+      'EXECUTE',
+      'CALL',
+      'MERGE',
+      'REPLACE',
+      'GRANT',
+      'REVOKE',
+      'COMMIT',
+      'ROLLBACK',
+      'SAVEPOINT',
+      '--',
+      '/*',
+      '*/',
+      ';',
+      'UNION',
+      'SCRIPT',
     ];
 
     for (const keyword of dangerousKeywords) {

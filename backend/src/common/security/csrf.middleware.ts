@@ -4,12 +4,12 @@ import { ConfigService } from '@nestjs/config';
 
 /**
  * CSRF Protection Middleware
- * 
+ *
  * Protects against Cross-Site Request Forgery (CSRF) attacks by:
  * 1. Verifying Origin header for state-changing requests (POST, PUT, DELETE, PATCH)
  * 2. Checking Referer header as fallback
  * 3. Allowing same-origin requests
- * 
+ *
  * Note: This is a basic implementation. For production, consider using
  * csurf package or implementing proper CSRF tokens.
  */
@@ -38,7 +38,12 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Skip CSRF check for health checks and public endpoints
-    const publicPaths = ['/health', '/api/v1/health', '/api/v1/auth/login', '/api/v1/auth/register'];
+    const publicPaths = [
+      '/health',
+      '/api/v1/health',
+      '/api/v1/auth/login',
+      '/api/v1/auth/register',
+    ];
     if (publicPaths.some(path => req.path.startsWith(path))) {
       return next();
     }
@@ -70,7 +75,9 @@ export class CsrfMiddleware implements NestMiddleware {
         this.logger.warn('Request without Origin/Referer header in development mode');
         return next();
       }
-      this.logger.warn(`CSRF check failed: No Origin or Referer header for ${req.method} ${req.path}`);
+      this.logger.warn(
+        `CSRF check failed: No Origin or Referer header for ${req.method} ${req.path}`,
+      );
       throw new BadRequestException('Missing Origin header. CSRF protection enabled.');
     }
 
@@ -78,7 +85,9 @@ export class CsrfMiddleware implements NestMiddleware {
     const isAllowed = this.isOriginAllowed(requestOrigin);
 
     if (!isAllowed) {
-      this.logger.warn(`CSRF check failed: Origin ${requestOrigin} not allowed for ${req.method} ${req.path}`);
+      this.logger.warn(
+        `CSRF check failed: Origin ${requestOrigin} not allowed for ${req.method} ${req.path}`,
+      );
       throw new BadRequestException('Origin not allowed. CSRF protection enabled.');
     }
 

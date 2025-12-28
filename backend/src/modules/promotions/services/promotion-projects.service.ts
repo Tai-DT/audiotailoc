@@ -595,7 +595,7 @@ export class PromotionProjectsService {
     // TODO: Implement actual removal
   }
 
-  private async getAllProjectPromotions(projectId: string): Promise<ProjectPromotion[]> {
+  private async getAllProjectPromotions(_projectId: string): Promise<ProjectPromotion[]> {
     // Get from database (placeholder)
     return [];
     // TODO: Implement actual retrieval
@@ -607,22 +607,22 @@ export class PromotionProjectsService {
     // TODO: Implement actual storage when promotion_reviews table is added
   }
 
-  private async getAllProjectReviews(projectId: string): Promise<ProjectPromotionReview[]> {
+  private async getAllProjectReviews(_projectId: string): Promise<ProjectPromotionReview[]> {
     // Get from database (placeholder)
     return [];
     // TODO: Implement actual retrieval
   }
 
   private async getAllPromotionReviews(
-    projectId: string,
-    promotionId: string,
+    _projectId: string,
+    _promotionId: string,
   ): Promise<ProjectPromotionReview[]> {
     // Get from database (placeholder)
     return [];
     // TODO: Implement actual retrieval
   }
 
-  private async retrievePromotionReview(reviewId: string): Promise<ProjectPromotionReview | null> {
+  private async retrievePromotionReview(_reviewId: string): Promise<ProjectPromotionReview | null> {
     // Get from database (placeholder)
     return null;
     // TODO: Implement actual retrieval

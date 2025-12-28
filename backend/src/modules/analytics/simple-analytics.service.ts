@@ -51,25 +51,63 @@ export class SimpleAnalyticsService {
         },
       });
 
+      // Calculate conversion rate from actual data
+      const productViews = await this.prisma.product_views.count();
+      const conversionRate = productViews > 0 ? orderCount / productViews : 0;
+
+      // Calculate new vs returning customers from actual data (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const newCustomers = await this.prisma.users.count({
+        where: { role: 'USER', createdAt: { gte: thirtyDaysAgo } },
+      });
+
+      // Returning customers: users with more than 1 order
+      const returningCustomers = await this.prisma.users.count({
+        where: {
+          role: 'USER',
+          orders: { some: {} },
+        },
+      });
+
+      // Customer retention: returning / total customers
+      const customerRetention = userCount > 0 ? returningCustomers / userCount : 0;
+
+      // Get inventory stats
+      const [lowStockProducts, outOfStockProducts, inventoryValueData] = await Promise.all([
+        this.prisma.inventory.count({ where: { stock: { gt: 0, lt: 10 } } }),
+        this.prisma.inventory.count({ where: { stock: { lte: 0 } } }),
+        this.prisma.inventory.findMany({
+          include: { products: { select: { priceCents: true } } },
+        }),
+      ]);
+
+      const inventoryValue =
+        inventoryValueData.reduce(
+          (sum, inv) => sum + Number(inv.products?.priceCents || 0) * inv.stock,
+          0,
+        ) / 100;
+
       return {
         sales: {
           totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
           totalOrders: orderCount,
           averageOrderValue:
             orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
-          conversionRate: 0.05, // Mock data
+          conversionRate: Math.round(conversionRate * 10000) / 100, // Percentage
         },
         customers: {
           totalCustomers: userCount,
-          newCustomers: Math.floor(userCount * 0.1), // Mock: 10% new
-          returningCustomers: Math.floor(userCount * 0.9), // Mock: 90% returning
-          customerRetention: 0.85, // Mock data
+          newCustomers,
+          returningCustomers,
+          customerRetention: Math.round(customerRetention * 100) / 100,
         },
         inventory: {
           totalProducts: productCount,
-          lowStockProducts: 0, // Will implement when inventory module is fixed
-          outOfStockProducts: 0,
-          inventoryValue: 0,
+          lowStockProducts,
+          outOfStockProducts,
+          inventoryValue,
         },
         recentOrders: recentOrders.map(order => ({
           id: order.id,

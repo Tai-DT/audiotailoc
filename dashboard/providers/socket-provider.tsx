@@ -27,19 +27,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         const socketInstance = io(socketUrl, {
             path: "/socket.io",
-            transports: ["websocket"],
+            transports: ["polling", "websocket"],
             autoConnect: true,
+            reconnection: true,
+            reconnectionAttempts: 10,
         });
 
         socketInstance.on("connect", () => {
+            console.log("[SocketProvider] Connected to:", socketUrl);
             setIsConnected(true);
+        });
+
+        socketInstance.on("connect_error", (error) => {
+            console.error("[SocketProvider] Connection error:", error.message);
+            setIsConnected(false);
         });
 
         socketInstance.on("disconnect", () => {
             setIsConnected(false);
         });
 
-        const timeout = setTimeout(() => setSocket(socketInstance), 0);
+        // Small delay to ensure clean startup
+        const timeout = setTimeout(() => setSocket(socketInstance), 100);
 
         return () => {
             clearTimeout(timeout);

@@ -1,5 +1,6 @@
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateGuestBookingDto } from './dto/create-guest-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -22,24 +23,25 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
-            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
+            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -50,7 +52,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -100,9 +101,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -110,6 +112,8 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     })[]>;
     getMyBookings(req: any): Promise<({
         service_booking_items: ({
@@ -119,9 +123,9 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
@@ -146,9 +150,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -156,6 +161,8 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     })[]>;
     findOne(id: string, req: any): Promise<{
         service_booking_items: ({
@@ -171,24 +178,25 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
-            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
+            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -199,7 +207,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -249,9 +256,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -259,6 +267,8 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     create(createBookingDto: CreateBookingDto, req: any): Promise<{
         service_booking_items: ({
@@ -274,14 +284,15 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -292,7 +303,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -342,9 +352,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -352,6 +363,57 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
+    }>;
+    createGuestBooking(guestBookingDto: CreateGuestBookingDto): Promise<{
+        services: {
+            tags: string | null;
+            description: string | null;
+            type: string | null;
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            slug: string;
+            shortDescription: string | null;
+            images: string | null;
+            features: string | null;
+            viewCount: number;
+            metadata: string | null;
+            duration: number;
+            price: number;
+            basePriceCents: number;
+            minPrice: number | null;
+            maxPrice: number | null;
+            priceType: string;
+            typeId: string | null;
+            isFeatured: boolean;
+            seoTitle: string | null;
+            seoDescription: string | null;
+            requirements: string | null;
+        };
+    } & {
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        address: string | null;
+        userId: string | null;
+        customerName: string | null;
+        scheduledAt: Date | null;
+        serviceId: string;
+        technicianId: string | null;
+        scheduledTime: string | null;
+        completedAt: Date | null;
+        notes: string | null;
+        estimatedCosts: number | null;
+        actualCosts: number | null;
+        coordinates: string | null;
+        goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     update(id: string, updateBookingDto: UpdateBookingDto, req: any): Promise<{
         service_booking_items: ({
@@ -367,14 +429,15 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -385,7 +448,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -435,9 +497,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -445,6 +508,8 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     delete(id: string, req: any): Promise<{
         success: boolean;
@@ -454,6 +519,7 @@ export declare class BookingController {
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -464,7 +530,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -514,9 +579,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -524,6 +590,8 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     assignTechnician(id: string, assignDto: AssignTechnicianDto): Promise<{
         service_booking_items: ({
@@ -539,14 +607,15 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -557,7 +626,6 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -607,9 +675,10 @@ export declare class BookingController {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -617,25 +686,27 @@ export declare class BookingController {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     createPayment(createPaymentDto: CreatePaymentDto, req: any): Promise<{
         status: string;
         id: string;
         createdAt: Date;
-        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
+        bookingId: string;
     }>;
     updatePaymentStatus(paymentId: string, updatePaymentDto: UpdatePaymentStatusDto): Promise<{
         status: string;
         id: string;
         createdAt: Date;
-        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
+        bookingId: string;
     }>;
 }

@@ -102,8 +102,8 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
         "'self'",
         // Add trusted CDNs for third-party scripts if needed
         // 'https://cdn.jsdelivr.net',
-        // Allow unsafe-inline only in development for hot module replacement
-        ...(this.isDevelopment ? ["'unsafe-inline'"] : []),
+        // Allow unsafe-inline and unsafe-eval only in development for hot module replacement and libraries like Recharts
+        ...(this.isDevelopment ? ["'unsafe-inline'", "'unsafe-eval'"] : []),
         // Allow hashes for specific inline scripts (alternative to unsafe-inline)
         // 'sha256-...',
       ],
@@ -213,7 +213,7 @@ export interface SecurityHeaderOptions {
  * Factory function to create a configured instance of the middleware
  */
 export function createSecurityHeadersMiddleware(
-  options: SecurityHeaderOptions = {},
+  _options: SecurityHeaderOptions = {},
 ): SecurityHeadersMiddleware {
   // Could extend the middleware class to accept options
   return new SecurityHeadersMiddleware();

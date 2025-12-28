@@ -20,6 +20,7 @@ export declare class ServicesController {
     } & {
         tags: string | null;
         description: string | null;
+        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -30,7 +31,6 @@ export declare class ServicesController {
         images: string | null;
         features: string | null;
         viewCount: number;
-        type: string | null;
         metadata: string | null;
         duration: number;
         price: number;
@@ -148,133 +148,11 @@ export declare class ServicesController {
     }>;
     getService(id: string): Promise<any>;
     getServiceBySlug(slug: string): Promise<any>;
-    updateService(id: string, updateServiceDto: UpdateServiceDto): Promise<{
-        price: number;
-        minPriceDisplay: number;
-        maxPriceDisplay: number;
-        type: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        service_items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            quantity: number;
-            price: number;
-            serviceId: string;
-        }[];
-        service_types: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        tags: string | null;
-        description: string | null;
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        viewCount: number;
-        metadata: string | null;
-        duration: number;
-        basePriceCents: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
+    updateService(id: string, updateServiceDto: UpdateServiceDto): Promise<any>;
     deleteService(id: string): Promise<{
         tags: string | null;
         description: string | null;
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        slug: string;
-        shortDescription: string | null;
-        images: string | null;
-        features: string | null;
-        viewCount: number;
         type: string | null;
-        metadata: string | null;
-        duration: number;
-        price: number;
-        basePriceCents: number;
-        minPrice: number | null;
-        maxPrice: number | null;
-        priceType: string;
-        typeId: string | null;
-        isFeatured: boolean;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        requirements: string | null;
-    }>;
-    uploadServiceImage(id: string, file: Express.Multer.File): Promise<{
-        price: number;
-        minPriceDisplay: number;
-        maxPriceDisplay: number;
-        type: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        service_items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            quantity: number;
-            price: number;
-            serviceId: string;
-        }[];
-        service_types: {
-            description: string | null;
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
-            slug: string;
-            sortOrder: number;
-            color: string | null;
-            icon: string | null;
-        };
-        tags: string | null;
-        description: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -287,6 +165,7 @@ export declare class ServicesController {
         viewCount: number;
         metadata: string | null;
         duration: number;
+        price: number;
         basePriceCents: number;
         minPrice: number | null;
         maxPrice: number | null;
@@ -297,6 +176,7 @@ export declare class ServicesController {
         seoDescription: string | null;
         requirements: string | null;
     }>;
+    uploadServiceImage(id: string, file: Express.Multer.File): Promise<any>;
     addServiceItem(serviceId: string, createItemDto: {
         name: string;
         priceCents: number;

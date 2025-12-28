@@ -1,4 +1,15 @@
-import { Controller, Get, Query, Post, Body, Param, UseGuards, Req, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SearchService, SearchFilters, SearchResponse } from './search.service';
 import { AdminGuard } from '../auth/admin.guard';
@@ -85,9 +96,15 @@ export class SearchController {
       }
 
       // SECURITY: Sanitize filter parameters to prevent injection
-      const sanitizedCategory = category ? category.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100) : undefined;
-      const sanitizedBrand = brand ? brand.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100) : undefined;
-      const sanitizedServiceType = serviceType ? serviceType.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100) : undefined;
+      const sanitizedCategory = category
+        ? category.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100)
+        : undefined;
+      const sanitizedBrand = brand
+        ? brand.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100)
+        : undefined;
+      const sanitizedServiceType = serviceType
+        ? serviceType.replace(/[<>{}[\]\\^$|*+?.()]/g, '').substring(0, 100)
+        : undefined;
 
       const filters: SearchFilters = {
         type: (type as any) || 'all',

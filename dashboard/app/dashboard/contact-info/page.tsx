@@ -74,7 +74,7 @@ export default function ContactInfoPage() {
         try {
             setLoading(true)
             const response = await apiClient.get('/site/contact-info')
-            setContactInfo(response.data)
+            setContactInfo(response.data as ContactInfo)
         } catch (error) {
             console.error('Failed to fetch contact info:', error)
             setContactInfo(DEFAULT_CONTACT)
@@ -86,7 +86,7 @@ export default function ContactInfoPage() {
     const handleSave = async () => {
         try {
             setSaving(true)
-            await apiClient.patch('/site/contact-info', contactInfo)
+            await apiClient.patch('/site/contact-info', contactInfo as unknown as Record<string, unknown>)
             toast.success("Đã lưu thông tin liên hệ")
         } catch (error) {
             console.error('Failed to save contact info:', error)

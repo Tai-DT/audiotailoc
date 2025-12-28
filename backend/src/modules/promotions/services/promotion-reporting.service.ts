@@ -393,7 +393,7 @@ export class PromotionReportingService {
 
     for (let i = 11; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const _monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
       // TODO: promotion_analytics table does not exist in schema
       const analytics: any[] = [];

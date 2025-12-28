@@ -84,7 +84,7 @@ let BackupService = BackupService_1 = class BackupService {
             this.logger.log(`Starting full database backup: ${backupId}`);
             await this.preflightChecks(['pg_dump']);
             await this.createDatabaseDump(fullPath);
-            const backupSize = await this.getFileSize(fullPath);
+            const _backupSize = await this.getFileSize(fullPath);
             await this.verifyBackupIntegrity(fullPath);
             let compressedPath = null;
             if (options.compress) {
@@ -146,7 +146,7 @@ let BackupService = BackupService_1 = class BackupService {
             const backupPath = path.join(this.backupDir, 'database', `${backupId}_incremental.sql`);
             await fs_1.promises.mkdir(path.dirname(backupPath), { recursive: true });
             await this.createIncrementalDump(backupPath, since, tables);
-            const backupSize = await this.getFileSize(backupPath);
+            const _backupSize = await this.getFileSize(backupPath);
             await this.verifyBackupIntegrity(backupPath);
             let finalPath = backupPath;
             if (options.compress) {
@@ -481,7 +481,7 @@ let BackupService = BackupService_1 = class BackupService {
     `;
         await fs_1.promises.writeFile(filePath, sql, 'utf-8');
     }
-    async createFileArchive(archivePath, directories, excludePatterns) {
+    async createFileArchive(archivePath, directories, _excludePatterns) {
         return new Promise((resolve, reject) => {
             const output = (0, fs_2.createWriteStream)(archivePath);
             const archive = (0, archiver_1.default)('tar', {
@@ -509,7 +509,7 @@ let BackupService = BackupService_1 = class BackupService {
             archive.finalize();
         });
     }
-    async compressBackup(filePath, backupId) {
+    async compressBackup(filePath, _backupId) {
         const compressedPath = `${filePath}.gz`;
         return new Promise((resolve, reject) => {
             const input = (0, fs_2.createReadStream)(filePath);
@@ -524,7 +524,7 @@ let BackupService = BackupService_1 = class BackupService {
             });
         });
     }
-    async encryptBackup(filePath, backupId) {
+    async encryptBackup(filePath, _backupId) {
         const encryptedPath = `${filePath}.enc`;
         const key = this.getEncryptionKey();
         const iv = crypto.randomBytes(12);

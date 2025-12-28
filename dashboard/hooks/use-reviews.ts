@@ -142,12 +142,14 @@ export function useReviews() {
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reviewType, setReviewType] = useState<'product' | 'service'>('product')
 
   // Fetch reviews
-  const fetchReviews = useCallback(async (status: string = 'all') => {
+  const fetchReviews = useCallback(async (status: string = 'all', type: 'product' | 'service' = reviewType) => {
     try {
       setLoading(true)
       setError(null)
+      setReviewType(type)
 
       const backendStatus = toBackendStatus(status)
       const query = new URLSearchParams({
@@ -156,19 +158,25 @@ export function useReviews() {
       })
       if (backendStatus) query.set('status', backendStatus)
 
+      const endpoint = type === 'product' ? '/reviews' : '/service-reviews'
+      const statsEndpoint = type === 'product' ? '/reviews/stats/summary' : '/service-reviews/stats/summary'
+
       const [listRes, statsRes] = await Promise.all([
-        apiClient.get<BackendListResponse>(`/reviews?${query.toString()}`),
-        apiClient.get<BackendStatsResponse>('/reviews/stats/summary'),
+        apiClient.get<BackendListResponse>(`${endpoint}?${query.toString()}`),
+        apiClient.get<BackendStatsResponse>(statsEndpoint),
       ])
 
-      const mappedReviews: Review[] = (listRes.data?.data || []).map((r) => {
+      const items = listRes.data?.items || listRes.data?.data || []
+      const mappedReviews: Review[] = items.map((r: any) => {
         const images = normalizeImages(r.images)
         return {
           id: r.id,
           userId: r.userId,
-          userName: r.users?.name || 'Không rõ',
+          userName: r.users?.name || r.user?.name || 'Không rõ',
           productId: r.productId,
-          productName: r.products?.name || undefined,
+          productName: r.products?.name || r.product?.name || undefined,
+          serviceId: r.serviceId,
+          serviceName: r.services?.name || r.service?.name || undefined,
           rating: r.rating,
           comment: r.comment || '',
           images: images.length > 0 ? images : undefined,
@@ -209,13 +217,14 @@ export function useReviews() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [reviewType])
 
   // Approve review
   const approveReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.patch(`/reviews/${reviewId}/status/APPROVED`)
+      const endpoint = reviewType === 'product' ? '/reviews' : '/service-reviews'
+      await apiClient.patch(`${endpoint}/${reviewId}/status/APPROVED`)
       toast.success('Đã duyệt đánh giá')
       
       // Update local state
@@ -228,14 +237,14 @@ export function useReviews() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [reviewType])
 
   // Reject review
   const rejectReview = useCallback(async (reviewId: string, reason?: string) => {
     try {
       setLoading(true)
-      // Backend does not currently accept a reject reason; keep this param for UI compatibility.
-      await apiClient.patch(`/reviews/${reviewId}/status/REJECTED`)
+      const endpoint = reviewType === 'product' ? '/reviews' : '/service-reviews'
+      await apiClient.patch(`${endpoint}/${reviewId}/status/REJECTED`)
       toast.success('Đã từ chối đánh giá')
       
       // Update local state
@@ -248,13 +257,18 @@ export function useReviews() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [reviewType])
 
   // Respond to review
   const respondToReview = useCallback(async (reviewId: string, response: string) => {
     try {
       setLoading(true)
-      await apiClient.put(`/reviews/${reviewId}`, { response })
+      if (reviewType === 'product') {
+        await apiClient.put(`/reviews/${reviewId}`, { response })
+      } else {
+        // Service reviews use PATCH /service-reviews/:id/response
+        await apiClient.patch(`/service-reviews/${reviewId}/response`, { response })
+      }
       toast.success('Đã phản hồi đánh giá')
       
       // Update local state
@@ -267,13 +281,14 @@ export function useReviews() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [reviewType])
 
   // Delete review
   const deleteReview = useCallback(async (reviewId: string) => {
     try {
       setLoading(true)
-      await apiClient.delete(`/reviews/${reviewId}`)
+      const endpoint = reviewType === 'product' ? '/reviews' : '/service-reviews'
+      await apiClient.delete(`${endpoint}/${reviewId}`)
       toast.success('Đã xóa đánh giá')
       
       // Remove from local state
@@ -284,12 +299,13 @@ export function useReviews() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [reviewType])
 
   // Mark review as helpful
   const markHelpful = useCallback(async (reviewId: string) => {
     try {
-      await apiClient.patch(`/reviews/${reviewId}/helpful/true`)
+      const endpoint = reviewType === 'product' ? '/reviews' : '/service-reviews'
+      await apiClient.patch(`${endpoint}/${reviewId}/helpful/true`)
       
       // Update local state
       setReviews(prev => prev.map(review => 
@@ -300,7 +316,7 @@ export function useReviews() {
     } catch (err) {
       // Silent error
     }
-  }, [])
+  }, [reviewType])
 
   // Report review
   const reportReview = useCallback(async (reviewId: string, reason: string) => {
@@ -314,9 +330,11 @@ export function useReviews() {
     stats,
     loading,
     error,
+    reviewType,
 
     // Actions
     fetchReviews,
+    setReviewType,
     approveReview,
     rejectReview,
     respondToReview,
@@ -328,3 +346,4 @@ export function useReviews() {
     refresh: fetchReviews
   }
 }
+

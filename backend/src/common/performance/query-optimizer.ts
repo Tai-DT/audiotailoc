@@ -116,7 +116,7 @@ export class QueryOptimizer {
   /**
    * Optimize select query - add only needed fields
    */
-  static optimizeSelect<T>(
+  static optimizeSelect<_T>(
     baseSelect: Record<string, boolean | object>,
     includeRelations: boolean = false,
   ): Record<string, boolean | object> {
@@ -175,7 +175,7 @@ export class QueryOptimizer {
   /**
    * Add common fields selection
    */
-  static getDefaultSelect<T extends Record<string, any>>(
+  static getDefaultSelect<_T extends Record<string, any>>(
     excludeFields: string[] = ['password', 'refreshToken'],
   ): Record<string, boolean> {
     const defaultSelect: Record<string, boolean> = {};
@@ -441,7 +441,7 @@ export class IndexOptimizer {
   /**
    * Suggest indexes based on query patterns
    */
-  static suggestIndexes(queries: QueryMetrics[]): Array<{
+  static suggestIndexes(_queries: QueryMetrics[]): Array<{
     model: string;
     field: string;
     reason: string;

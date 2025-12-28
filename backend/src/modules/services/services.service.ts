@@ -13,6 +13,30 @@ export class ServicesService {
     private readonly cache: CacheService,
   ) {}
 
+  // Helper function to parse JSON string fields back to arrays
+  private parseJsonFields(service: any): any {
+    if (!service) return service;
+    return {
+      ...service,
+      images: this.parseJsonField(service.images),
+      tags: this.parseJsonField(service.tags),
+      features: this.parseJsonField(service.features),
+      requirements: this.parseJsonField(service.requirements),
+    };
+  }
+
+  private parseJsonField(value: string | null | undefined): string[] | null {
+    if (!value) return null;
+    if (Array.isArray(value)) return value;
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      // If it's not valid JSON, return null or the original value as single-item array
+      return value ? [value] : null;
+    }
+  }
+
   // Service Management
   async createService(data: CreateServiceDto) {
     // Generate slug if not provided
@@ -54,17 +78,32 @@ export class ServicesService {
       priceData.maxPrice = null;
     }
 
+    // Handle images - can be array from frontend or single string
+    let imagesValue: string | null = null;
+    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+      imagesValue = JSON.stringify(data.images);
+    } else if (data.imageUrl) {
+      imagesValue = data.imageUrl;
+    }
+
     const service = await this.prisma.services.create({
       data: {
         id: randomUUID(),
         name: data.name,
         slug,
         description: data.description,
+        shortDescription: data.shortDescription,
         typeId: data.typeId,
         ...priceData,
-        duration: data.estimatedDuration || 60,
-        images: data.imageUrl,
+        duration: data.duration || data.estimatedDuration || 60,
+        images: imagesValue,
+        tags: data.tags ? JSON.stringify(data.tags) : null,
+        features: data.features ? JSON.stringify(data.features) : null,
+        requirements: data.requirements ? JSON.stringify(data.requirements) : null,
+        seoTitle: data.seoTitle,
+        seoDescription: data.seoDescription,
         isActive: data.isActive ?? true,
+        isFeatured: data.isFeatured ?? false,
         updatedAt: new Date(),
       },
       include: {
@@ -122,8 +161,8 @@ export class ServicesService {
       }),
     ]);
 
-    // Map services to include computed price field
-    const mappedServices = services.map(service => ({
+    // Map services to include computed price field and parse JSON fields
+    const mappedServices = services.map(service => this.parseJsonFields({
       ...service,
       price: Number(service.basePriceCents) / 100,
       minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
@@ -159,13 +198,13 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    const result = {
+    const result = this.parseJsonFields({
       ...service,
       price: Number(service.basePriceCents) / 100,
       minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
       maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
       type: service.service_types,
-    };
+    });
 
     // Cache for 10 minutes
     await this.cache.set(cacheKey, result, { ttl: 600 });
@@ -193,11 +232,11 @@ export class ServicesService {
       throw new NotFoundException('Không tìm thấy dịch vụ');
     }
 
-    const result = {
+    const result = this.parseJsonFields({
       ...service,
       price: Number(service.basePriceCents) / 100,
       type: service.service_types,
-    };
+    });
 
     // Cache for 10 minutes
     await this.cache.set(cacheKey, result, { ttl: 600 });
@@ -259,8 +298,37 @@ export class ServicesService {
       }
     }
 
-    if (data.estimatedDuration !== undefined) updateData.duration = data.estimatedDuration;
-    if (data.imageUrl !== undefined) updateData.images = data.imageUrl;
+    if (data.duration !== undefined) updateData.duration = data.duration;
+    else if (data.estimatedDuration !== undefined) updateData.duration = data.estimatedDuration;
+    
+    // Handle images - can be array from frontend or single string
+    if (data.images !== undefined) {
+      if (Array.isArray(data.images) && data.images.length > 0) {
+        updateData.images = JSON.stringify(data.images);
+      } else if (typeof data.images === 'string') {
+        updateData.images = data.images;
+      } else {
+        updateData.images = null;
+      }
+    } else if (data.imageUrl !== undefined) {
+      updateData.images = data.imageUrl;
+    }
+    
+    // Handle other array fields
+    if (data.tags !== undefined) {
+      updateData.tags = Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags;
+    }
+    if (data.features !== undefined) {
+      updateData.features = Array.isArray(data.features) ? JSON.stringify(data.features) : data.features;
+    }
+    if (data.requirements !== undefined) {
+      updateData.requirements = Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : data.requirements;
+    }
+    if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription;
+    if (data.seoTitle !== undefined) updateData.seoTitle = data.seoTitle;
+    if (data.seoDescription !== undefined) updateData.seoDescription = data.seoDescription;
+    if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
+    
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     const updated = await this.prisma.services.update({
@@ -279,13 +347,13 @@ export class ServicesService {
       this.cache.del('services:list:*'),
     ]);
 
-    return {
+    return this.parseJsonFields({
       ...updated,
       price: updated.basePriceCents / 100,
       minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
       maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
       type: updated.service_types,
-    };
+    });
   }
 
   async updateServiceImage(id: string, imagePath: string) {

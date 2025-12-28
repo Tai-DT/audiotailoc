@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f1f33;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="50" cy="50" r="80" fill="#f59e0b" opacity="0.05"/>
+  <circle cx="350" cy="250" r="100" fill="#f59e0b" opacity="0.05"/>
+  
+  <!-- Service icon (wrench and screwdriver) -->
+  <g transform="translate(160, 100)">
+    <!-- Wrench -->
+    <path d="M20 0 L25 20 L35 20 L40 0 Q30 -5 20 0 Z M25 20 L25 55 L35 55 L35 20 Z" 
+          fill="url(#iconGradient)" opacity="0.9"/>
+    <!-- Screwdriver -->
+    <path d="M55 5 L60 5 L60 15 L70 15 L70 20 L60 20 L60 55 L55 55 L55 20 L45 20 L45 15 L55 15 Z" 
+          fill="url(#iconGradient)" opacity="0.7" transform="rotate(15, 57, 30)"/>
+  </g>
+  
+  <!-- Audio wave decoration -->
+  <g transform="translate(120, 180)" opacity="0.3">
+    <rect x="0" y="10" width="4" height="20" rx="2" fill="#f59e0b"/>
+    <rect x="12" y="5" width="4" height="30" rx="2" fill="#f59e0b"/>
+    <rect x="24" y="0" width="4" height="40" rx="2" fill="#f59e0b"/>
+    <rect x="36" y="5" width="4" height="30" rx="2" fill="#f59e0b"/>
+    <rect x="48" y="10" width="4" height="20" rx="2" fill="#f59e0b"/>
+    
+    <rect x="108" y="10" width="4" height="20" rx="2" fill="#f59e0b"/>
+    <rect x="120" y="5" width="4" height="30" rx="2" fill="#f59e0b"/>
+    <rect x="132" y="0" width="4" height="40" rx="2" fill="#f59e0b"/>
+    <rect x="144" y="5" width="4" height="30" rx="2" fill="#f59e0b"/>
+    <rect x="156" y="10" width="4" height="20" rx="2" fill="#f59e0b"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="260" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" 
+        font-size="14" font-weight="500" fill="#94a3b8">
+    Dịch Vụ Audio
+  </text>
+</svg>

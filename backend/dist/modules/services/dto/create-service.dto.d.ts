@@ -11,6 +11,7 @@ export declare class CreateServiceDto {
     price?: number;
     priceCurrency?: string;
     estimatedDuration: number;
+    duration?: number;
     imageUrl?: string;
     images?: string[];
     seoTitle?: string;

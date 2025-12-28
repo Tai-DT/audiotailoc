@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface ProjectPromotionReview {
   id: string;
@@ -94,7 +93,7 @@ export class PromotionProjectReviewsService {
   /**
    * Get review by ID
    */
-  async getReviewById(reviewId: string): Promise<ProjectPromotionReview | null> {
+  async getReviewById(_reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
       return null;
@@ -129,8 +128,8 @@ export class PromotionProjectReviewsService {
     ratingDistribution: Record<number, number>;
   }> {
     try {
-      const skip = filters?.skip || 0;
-      const take = filters?.take || 20;
+      const _skip = filters?.skip || 0;
+      const _take = filters?.take || 20;
 
       const whereCondition: any = {
         projectId,
@@ -214,8 +213,8 @@ export class PromotionProjectReviewsService {
     total: number;
   }> {
     try {
-      const skip = filters?.skip || 0;
-      const take = filters?.take || 20;
+      const _skip = filters?.skip || 0;
+      const _take = filters?.take || 20;
 
       const whereCondition: any = { projectId };
 
@@ -249,8 +248,8 @@ export class PromotionProjectReviewsService {
    * Update review
    */
   async updateReview(
-    reviewId: string,
-    updates: UpdateProjectPromotionReviewDto,
+    _reviewId: string,
+    _updates: UpdateProjectPromotionReviewDto,
   ): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
@@ -286,7 +285,7 @@ export class PromotionProjectReviewsService {
   /**
    * Delete review
    */
-  async deleteReview(reviewId: string): Promise<boolean> {
+  async deleteReview(_reviewId: string): Promise<boolean> {
     try {
       // TODO: project_promotion_reviews table does not exist
       throw new NotFoundException('project_promotion_reviews table does not exist');
@@ -311,7 +310,7 @@ export class PromotionProjectReviewsService {
   /**
    * Approve review
    */
-  async approveReview(reviewId: string): Promise<ProjectPromotionReview | null> {
+  async approveReview(_reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
       throw new NotFoundException('project_promotion_reviews table does not exist');
@@ -337,7 +336,7 @@ export class PromotionProjectReviewsService {
   /**
    * Reject review
    */
-  async rejectReview(reviewId: string): Promise<ProjectPromotionReview | null> {
+  async rejectReview(_reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
       throw new NotFoundException('project_promotion_reviews table does not exist');
@@ -363,7 +362,7 @@ export class PromotionProjectReviewsService {
   /**
    * Mark review as helpful
    */
-  async markAsHelpful(reviewId: string): Promise<ProjectPromotionReview | null> {
+  async markAsHelpful(_reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
       throw new NotFoundException('project_promotion_reviews table does not exist');
@@ -394,8 +393,8 @@ export class PromotionProjectReviewsService {
    * Get review summary for a project-promotion pair
    */
   async getReviewSummary(
-    projectId: string,
-    promotionId: string,
+    _projectId: string,
+    _promotionId: string,
   ): Promise<{
     totalReviews: number;
     approvedReviews: number;
@@ -466,8 +465,8 @@ export class PromotionProjectReviewsService {
     total: number;
   }> {
     try {
-      const skip = filters?.skip || 0;
-      const take = filters?.take || 20;
+      const _skip = filters?.skip || 0;
+      const _take = filters?.take || 20;
 
       const whereCondition: any = {
         status: 'PENDING',
@@ -508,7 +507,7 @@ export class PromotionProjectReviewsService {
   /**
    * Verify review (mark as verified purchase)
    */
-  async verifyReview(reviewId: string): Promise<ProjectPromotionReview | null> {
+  async verifyReview(_reviewId: string): Promise<ProjectPromotionReview | null> {
     try {
       // TODO: project_promotion_reviews table does not exist
       throw new NotFoundException('project_promotion_reviews table does not exist');
@@ -545,8 +544,8 @@ export class PromotionProjectReviewsService {
     total: number;
   }> {
     try {
-      const skip = filters?.skip || 0;
-      const take = filters?.take || 20;
+      const _skip = filters?.skip || 0;
+      const _take = filters?.take || 20;
 
       const [reviews, total] = await Promise.all([
         // TODO: project_promotion_reviews table does not exist
@@ -573,7 +572,7 @@ export class PromotionProjectReviewsService {
   /**
    * Bulk approve reviews
    */
-  async bulkApproveReviews(reviewIds: string[]): Promise<number> {
+  async bulkApproveReviews(_reviewIds: string[]): Promise<number> {
     try {
       // TODO: project_promotion_reviews table does not exist
       return 0;
@@ -594,7 +593,7 @@ export class PromotionProjectReviewsService {
   /**
    * Bulk reject reviews
    */
-  async bulkRejectReviews(reviewIds: string[]): Promise<number> {
+  async bulkRejectReviews(_reviewIds: string[]): Promise<number> {
     try {
       // TODO: project_promotion_reviews table does not exist
       return 0;

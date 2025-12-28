@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface CustomerPromotionUsage {
   promotionId: string;
@@ -18,7 +17,7 @@ export class PromotionCustomerService {
   /**
    * Record a customer's promotion usage
    */
-  async recordUsage(data: CustomerPromotionUsage) {
+  async recordUsage(_data: CustomerPromotionUsage) {
     // TODO: customer_promotions table does not exist in schema
     throw new Error('customer_promotions table does not exist in schema');
     // return this.prisma.customer_promotions.create({
@@ -49,7 +48,7 @@ export class PromotionCustomerService {
   /**
    * Check if a customer has already used a promotion
    */
-  async hasCustomerUsedPromotion(promotionId: string, userId: string): Promise<boolean> {
+  async hasCustomerUsedPromotion(_promotionId: string, _userId: string): Promise<boolean> {
     // TODO: customer_promotions table does not exist
     return false;
     // const usage = await this.prisma.customer_promotions.findFirst({
@@ -243,7 +242,7 @@ export class PromotionCustomerService {
   /**
    * Get customer promotion statistics
    */
-  async getCustomerStats(userId: string) {
+  async getCustomerStats(_userId: string) {
     // TODO: customer_promotions table does not exist
     const totalPromotionsUsed = 0;
     const totalSavings = { _sum: { discountApplied: 0 } };
@@ -305,7 +304,7 @@ export class PromotionCustomerService {
   /**
    * Reverse a promotion usage (for returns/cancellations)
    */
-  async reverseUsage(customerPromotionId: string, reason?: string) {
+  async reverseUsage(_customerPromotionId: string, _reason?: string) {
     // TODO: customer_promotions table does not exist
     throw new Error('customer_promotions table does not exist');
     // return this.prisma.customer_promotions.update({
@@ -323,7 +322,7 @@ export class PromotionCustomerService {
   /**
    * Get promotion adoption rate
    */
-  async getAdoptionRate(promotionId: string) {
+  async getAdoptionRate(_promotionId: string) {
     const totalUsers = await this.prisma.users.count({
       where: { role: 'USER' },
     });

@@ -222,7 +222,8 @@ let PerformanceService = PerformanceService_1 = class PerformanceService {
         }
     }
     getActiveRequestCount() {
-        return 0;
+        const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+        return this.requestMetrics.filter(r => r.timestamp >= thirtySecondsAgo).length;
     }
     cleanupMetrics() {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);

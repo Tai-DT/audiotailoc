@@ -90,8 +90,10 @@ let OrdersService = class OrdersService {
         }));
     }
     async get(id) {
-        const order = await this.prisma.orders.findUnique({
-            where: { id },
+        const order = await this.prisma.orders.findFirst({
+            where: {
+                OR: [{ id: id }, { orderNo: id }],
+            },
             include: { order_items: true, payments: true },
         });
         if (!order)

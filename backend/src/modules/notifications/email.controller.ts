@@ -44,7 +44,7 @@ export class EmailController {
 
   @Get('templates')
   async getEmailTemplates(
-    @Query() query: { type?: string; category?: string; page?: string; limit?: string },
+    @Query() _query: { type?: string; category?: string; page?: string; limit?: string },
   ) {
     try {
       // Real templates from our template files

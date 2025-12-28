@@ -193,7 +193,7 @@ export class EnhancedExceptionFilter implements ExceptionFilter {
     return status >= 400 && status < 500;
   }
 
-  private shouldIncludeStack(status: number): boolean {
+  private shouldIncludeStack(_status: number): boolean {
     // SECURITY: Never include stack traces in production to prevent information leakage
     // Stack traces can reveal file paths, internal structure, and implementation details
     const isDevelopment = this.configService.get('NODE_ENV') !== 'production';

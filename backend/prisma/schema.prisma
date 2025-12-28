@@ -561,6 +561,32 @@ model product_views {
   users     users?   @relation(fields: [userId], references: [id])
 }
 
+// Service Reviews - Đánh giá dịch vụ
+model service_reviews {
+  id         String       @id
+  userId     String
+  serviceId  String
+  bookingId  String?      // Liên kết với booking đã hoàn thành (nếu có)
+  rating     Int          // 1-5 sao
+  title      String?
+  comment    String?
+  images     String?      // JSON array of image URLs
+  isVerified Boolean      @default(false) // Đã sử dụng dịch vụ
+  status     ReviewStatus @default(APPROVED)
+  upvotes    Int          @default(0)
+  downvotes  Int          @default(0)
+  response   String?      // Phản hồi từ admin
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  services   services     @relation(fields: [serviceId], references: [id])
+  users      users        @relation(fields: [userId], references: [id])
+
+  @@index([serviceId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model products {
   id                     String                   @id
   slug                   String                   @unique
@@ -774,6 +800,10 @@ model service_bookings {
   address                String?
   coordinates            String?
   goongPlaceId           String?
+  // Guest booking customer info
+  customerName           String?
+  customerPhone          String?
+  customerEmail          String?
   service_booking_items  service_booking_items[]
   services               services                 @relation(fields: [serviceId], references: [id])
   technicians            technicians?             @relation(fields: [technicianId], references: [id])
@@ -872,6 +902,7 @@ model services {
   updatedAt        DateTime
   service_bookings service_bookings[]
   service_items    service_items[]
+  service_reviews  service_reviews[]
   service_views    service_views[]
   service_types    service_types?     @relation(fields: [typeId], references: [id])
 
@@ -1010,6 +1041,7 @@ model users {
   promotions           promotions[]
   search_queries       search_queries[]
   service_bookings     service_bookings[]
+  service_reviews      service_reviews[]
   service_views        service_views[]
   support_tickets      support_tickets[]
   wishlist_items       wishlist_items[]

@@ -64,7 +64,7 @@ export class BackupService {
       await this.createDatabaseDump(fullPath);
 
       // Verify backup
-      const backupSize = await this.getFileSize(fullPath);
+      const _backupSize = await this.getFileSize(fullPath);
       await this.verifyBackupIntegrity(fullPath);
 
       let compressedPath: string | null = null;
@@ -152,7 +152,7 @@ export class BackupService {
       // Create incremental dump based on timestamp
       await this.createIncrementalDump(backupPath, since, tables);
 
-      const backupSize = await this.getFileSize(backupPath);
+      const _backupSize = await this.getFileSize(backupPath);
       await this.verifyBackupIntegrity(backupPath);
 
       let finalPath = backupPath;
@@ -622,7 +622,7 @@ export class BackupService {
   private async createFileArchive(
     archivePath: string,
     directories: string[],
-    excludePatterns: string[],
+    _excludePatterns: string[],
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const output = createWriteStream(archivePath);
@@ -657,7 +657,7 @@ export class BackupService {
     });
   }
 
-  private async compressBackup(filePath: string, backupId: string): Promise<string> {
+  private async compressBackup(filePath: string, _backupId: string): Promise<string> {
     const compressedPath = `${filePath}.gz`;
 
     return new Promise((resolve, reject) => {
@@ -678,7 +678,7 @@ export class BackupService {
     });
   }
 
-  private async encryptBackup(filePath: string, backupId: string): Promise<string> {
+  private async encryptBackup(filePath: string, _backupId: string): Promise<string> {
     const encryptedPath = `${filePath}.enc`;
     const key = this.getEncryptionKey();
     const iv = crypto.randomBytes(12);
@@ -714,7 +714,8 @@ export class BackupService {
     const key = this.getEncryptionKey();
 
     const stats = await fs.stat(filePath);
-    if (stats.size < 28) { // 12 (IV) + 16 (AuthTag)
+    if (stats.size < 28) {
+      // 12 (IV) + 16 (AuthTag)
       throw new Error('Encrypted backup file is too small or corrupted');
     }
 
@@ -1130,7 +1131,9 @@ export class BackupService {
       this.validateFilePath(archivePath, this.backupDir);
     } catch (error) {
       this.logger.error(`Invalid archive path: ${archivePath}`, error);
-      throw new Error(`Invalid archive path: ${error instanceof Error ? error.message : 'unknown error'}`);
+      throw new Error(
+        `Invalid archive path: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
     }
 
     // SECURITY: Ensure archive exists and is within backup directory

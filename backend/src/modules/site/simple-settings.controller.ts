@@ -4,7 +4,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 
 /**
  * Simple Settings Controller
- * 
+ *
  * ⚠️ NOTE: This is a placeholder controller for future implementation.
  * All endpoints are currently protected with AdminOrKeyGuard to prevent
  * unauthorized access even if implementation is added later.

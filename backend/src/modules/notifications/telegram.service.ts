@@ -579,7 +579,7 @@ Trạng thái: ${payment.status}
   private async handleCallbackQuery(callbackQuery: any): Promise<void> {
     const chatId = callbackQuery.message.chat.id.toString();
     const data = callbackQuery.data;
-    const messageId = callbackQuery.message.message_id;
+    const _messageId = callbackQuery.message.message_id;
 
     // Verify auth
     if (this.chatIds.length > 0 && !this.chatIds.includes(chatId)) {
@@ -652,7 +652,7 @@ Trạng thái: ${payment.status}
     chatId: string,
     command: string,
     args: string[],
-    originalMessage: any,
+    _originalMessage: any,
   ): Promise<void> {
     switch (command) {
       case '/start':
@@ -803,7 +803,7 @@ Trạng thái: ${payment.status}
   private async handleReply(chatId: string, replyToMessage: any, text: string): Promise<void> {
     // Try to extract conversation ID from the replied message text if possible
     // We look for "ID: <code>UUID</code>" pattern we added in sendChatMessageNotification
-    const entities = replyToMessage.entities || [];
+    const _entities = replyToMessage.entities || [];
     let conversationId: string | null = null;
 
     // Check entities for code blocks which might contain the ID
@@ -834,7 +834,7 @@ Trạng thái: ${payment.status}
   private async processReply(
     chatId: string,
     conversationId: string,
-    content: string,
+    _content: string,
   ): Promise<void> {
     try {
       // TODO: ChatService does not exist

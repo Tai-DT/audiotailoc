@@ -246,7 +246,9 @@ export class ApiKeyGuard implements CanActivate {
           active: true,
           createdAt: new Date(),
         });
-        this.logger.warn('⚠️ Development API key is enabled. This should NEVER be used in production!');
+        this.logger.warn(
+          '⚠️ Development API key is enabled. This should NEVER be used in production!',
+        );
       } else {
         this.logger.debug('Development API key not configured. Set DEV_API_KEY to enable.');
       }
@@ -370,7 +372,7 @@ export class ApiKeyGuard implements CanActivate {
     // In production, use Redis or similar for distributed rate limiting
     // For now, we'll use a simple in-memory implementation
 
-    const cacheKey = `api_key_rate_limit:${apiKey}`;
+    const _cacheKey = `api_key_rate_limit:${apiKey}`;
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
 

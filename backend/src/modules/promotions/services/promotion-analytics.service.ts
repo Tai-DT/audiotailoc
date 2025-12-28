@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export interface AnalyticsData {
   promotionId: string;

@@ -173,7 +173,7 @@ let EnhancedExceptionFilter = EnhancedExceptionFilter_1 = class EnhancedExceptio
     shouldIncludeDetails(status) {
         return status >= 400 && status < 500;
     }
-    shouldIncludeStack(status) {
+    shouldIncludeStack(_status) {
         const isDevelopment = this.configService.get('NODE_ENV') !== 'production';
         return isDevelopment;
     }

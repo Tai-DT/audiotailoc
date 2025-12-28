@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCreateReview } from '@/lib/hooks/use-api';
+import { useCreateServiceReview } from '@/lib/hooks/use-api';
 import { toast } from 'react-hot-toast';
 
 const createServiceReviewSchema = z.object({
@@ -37,7 +37,7 @@ export default function CreateServiceReviewForm({
   const [hoverRating, setHoverRating] = useState(0);
   const [images, setImages] = useState<string[]>([]);
 
-  const createReviewMutation = useCreateReview();
+  const createReviewMutation = useCreateServiceReview();
 
   const {
     register,
@@ -78,7 +78,7 @@ export default function CreateServiceReviewForm({
   const onSubmit = async (data: CreateServiceReviewFormData) => {
     try {
       await createReviewMutation.mutateAsync({
-        productId: serviceId, // Using productId field for service reviews for now
+        serviceId: serviceId,
         rating: data.rating,
         title: data.title,
         comment: data.comment,

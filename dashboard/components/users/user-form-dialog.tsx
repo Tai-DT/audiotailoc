@@ -6,19 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-Dialog,
-DialogContent,
-DialogDescription,
-DialogFooter,
-DialogHeader,
-DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import {
-Select,
-SelectContent,
-SelectItem,
-SelectTrigger,
-SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
@@ -128,7 +128,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
           emailNotifications: formData.emailNotifications,
           smsNotifications: formData.smsNotifications,
           promoNotifications: formData.promoNotifications
-        })
+        } as Parameters<typeof apiClient.updateUser>[1])
         toast.success('Cập nhật người dùng thành công')
       } else {
         // Create user
@@ -154,7 +154,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: UserForm
             emailNotifications: formData.emailNotifications,
             smsNotifications: formData.smsNotifications,
             promoNotifications: formData.promoNotifications
-          })
+          } as Parameters<typeof apiClient.createUser>[0])
         }
         toast.success('Tạo người dùng mới thành công')
       }

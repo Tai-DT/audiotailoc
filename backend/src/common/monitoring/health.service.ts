@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -100,7 +100,7 @@ export class HealthService {
       });
     }
 
-    const responseTime = Date.now() - startTime;
+    const _responseTime = Date.now() - startTime;
     const overallStatus = this.determineOverallStatus(checks);
     const memUsage = process.memoryUsage();
 

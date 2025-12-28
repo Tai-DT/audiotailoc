@@ -94,12 +94,12 @@ export class MessagesController {
     // SECURITY: Prevent IDOR - users can only view their own messages unless they're admin
     const user = req.user;
     const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
-    
+
     // Allow admin to view any user's messages, or user to view their own messages
     if (!isAdmin && user?.sub !== userId) {
       throw new ForbiddenException('You can only view your own messages');
     }
-    
+
     return this.messagesService.findByUserId(userId, Number(page), Number(pageSize));
   }
 }

@@ -20,6 +20,30 @@ let ServicesService = class ServicesService {
         this.prisma = prisma;
         this.cache = cache;
     }
+    parseJsonFields(service) {
+        if (!service)
+            return service;
+        return {
+            ...service,
+            images: this.parseJsonField(service.images),
+            tags: this.parseJsonField(service.tags),
+            features: this.parseJsonField(service.features),
+            requirements: this.parseJsonField(service.requirements),
+        };
+    }
+    parseJsonField(value) {
+        if (!value)
+            return null;
+        if (Array.isArray(value))
+            return value;
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : null;
+        }
+        catch {
+            return value ? [value] : null;
+        }
+    }
     async createService(data) {
         const slug = data.slug || this.generateSlug(data.name);
         if (data.typeId) {
@@ -50,17 +74,31 @@ let ServicesService = class ServicesService {
             priceData.minPrice = null;
             priceData.maxPrice = null;
         }
+        let imagesValue = null;
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+            imagesValue = JSON.stringify(data.images);
+        }
+        else if (data.imageUrl) {
+            imagesValue = data.imageUrl;
+        }
         const service = await this.prisma.services.create({
             data: {
                 id: (0, crypto_1.randomUUID)(),
                 name: data.name,
                 slug,
                 description: data.description,
+                shortDescription: data.shortDescription,
                 typeId: data.typeId,
                 ...priceData,
-                duration: data.estimatedDuration || 60,
-                images: data.imageUrl,
+                duration: data.duration || data.estimatedDuration || 60,
+                images: imagesValue,
+                tags: data.tags ? JSON.stringify(data.tags) : null,
+                features: data.features ? JSON.stringify(data.features) : null,
+                requirements: data.requirements ? JSON.stringify(data.requirements) : null,
+                seoTitle: data.seoTitle,
+                seoDescription: data.seoDescription,
                 isActive: data.isActive ?? true,
+                isFeatured: data.isFeatured ?? false,
                 updatedAt: new Date(),
             },
             include: {
@@ -103,7 +141,7 @@ let ServicesService = class ServicesService {
                 take: pageSize,
             }),
         ]);
-        const mappedServices = services.map(service => ({
+        const mappedServices = services.map(service => this.parseJsonFields({
             ...service,
             price: Number(service.basePriceCents) / 100,
             minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
@@ -130,13 +168,13 @@ let ServicesService = class ServicesService {
         if (!service) {
             throw new common_1.NotFoundException('Không tìm thấy dịch vụ');
         }
-        const result = {
+        const result = this.parseJsonFields({
             ...service,
             price: Number(service.basePriceCents) / 100,
             minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
             maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
             type: service.service_types,
-        };
+        });
         await this.cache.set(cacheKey, result, { ttl: 600 });
         return result;
     }
@@ -156,11 +194,11 @@ let ServicesService = class ServicesService {
         if (!service) {
             throw new common_1.NotFoundException('Không tìm thấy dịch vụ');
         }
-        const result = {
+        const result = this.parseJsonFields({
             ...service,
             price: Number(service.basePriceCents) / 100,
             type: service.service_types,
-        };
+        });
         await this.cache.set(cacheKey, result, { ttl: 600 });
         return result;
     }
@@ -217,10 +255,41 @@ let ServicesService = class ServicesService {
                 updateData.maxPrice = null;
             }
         }
-        if (data.estimatedDuration !== undefined)
+        if (data.duration !== undefined)
+            updateData.duration = data.duration;
+        else if (data.estimatedDuration !== undefined)
             updateData.duration = data.estimatedDuration;
-        if (data.imageUrl !== undefined)
+        if (data.images !== undefined) {
+            if (Array.isArray(data.images) && data.images.length > 0) {
+                updateData.images = JSON.stringify(data.images);
+            }
+            else if (typeof data.images === 'string') {
+                updateData.images = data.images;
+            }
+            else {
+                updateData.images = null;
+            }
+        }
+        else if (data.imageUrl !== undefined) {
             updateData.images = data.imageUrl;
+        }
+        if (data.tags !== undefined) {
+            updateData.tags = Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags;
+        }
+        if (data.features !== undefined) {
+            updateData.features = Array.isArray(data.features) ? JSON.stringify(data.features) : data.features;
+        }
+        if (data.requirements !== undefined) {
+            updateData.requirements = Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : data.requirements;
+        }
+        if (data.shortDescription !== undefined)
+            updateData.shortDescription = data.shortDescription;
+        if (data.seoTitle !== undefined)
+            updateData.seoTitle = data.seoTitle;
+        if (data.seoDescription !== undefined)
+            updateData.seoDescription = data.seoDescription;
+        if (data.isFeatured !== undefined)
+            updateData.isFeatured = data.isFeatured;
         if (data.isActive !== undefined)
             updateData.isActive = data.isActive;
         const updated = await this.prisma.services.update({
@@ -236,13 +305,13 @@ let ServicesService = class ServicesService {
             this.cache.del(`service:slug:${existingService.slug}`),
             this.cache.del('services:list:*'),
         ]);
-        return {
+        return this.parseJsonFields({
             ...updated,
             price: updated.basePriceCents / 100,
             minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
             maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
             type: updated.service_types,
-        };
+        });
     }
     async updateServiceImage(id, imagePath) {
         return this.updateService(id, { imageUrl: imagePath });

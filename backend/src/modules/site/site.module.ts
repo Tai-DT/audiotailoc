@@ -28,4 +28,4 @@ import { ContactInfoController } from './contact-info.controller';
   providers: [BannersService, SettingsService, SiteStatsService, TestimonialsService],
   exports: [BannersService, SettingsService, SiteStatsService, TestimonialsService],
 })
-export class SiteModule { }
+export class SiteModule {}

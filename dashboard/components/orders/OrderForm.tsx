@@ -29,22 +29,30 @@ export function OrderForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch products (you'll need to implement this)
+  // Fetch products from API
   useEffect(() => {
-    // TODO: Replace with actual API call
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        // const response = await fetch('/api/products');
-        // const data = await response.json();
-        // setProducts(data);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
+        const response = await fetch(`${API_URL}/catalog/products?limit=100`);
         
-        // Mock data for demonstration
-        setProducts([
-          { id: '1', name: 'Sản phẩm A', price: 150000, stock: 10 },
-          { id: '2', name: 'Sản phẩm B', price: 250000, stock: 5 },
-          { id: '3', name: 'Sản phẩm C', price: 350000, stock: 8 },
-        ]);
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        
+        const result = await response.json();
+        const productList = result.data?.items || result.data || [];
+        
+        // Transform API data to match component interface
+        const transformedProducts: Product[] = productList.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: typeof p.priceCents === 'number' ? p.priceCents / 100 : Number(p.priceCents) / 100 || 0,
+          stock: p.stockQuantity || p.inventory?.stock || 0,
+        }));
+        
+        setProducts(transformedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast({

@@ -267,14 +267,35 @@ export class ErrorTrackingService {
   }
 
   // Get error trends
-  getErrorTrends(_timeRange: 'hour' | 'day' | 'week' = 'day'): Array<{
+  getErrorTrends(timeRange: 'hour' | 'day' | 'week' = 'day'): Array<{
     timestamp: Date;
     errorCount: number;
     newErrorCount: number;
   }> {
-    // This would analyze error trends over time
-    // For now, return mock data
-    return [];
+    const now = new Date();
+    const timeRangeMs = this.getTimeRangeMs(timeRange);
+    const intervalMs = timeRangeMs / 10; // 10 data points
+    const trends: Array<{ timestamp: Date; errorCount: number; newErrorCount: number }> = [];
+
+    for (let i = 0; i < 10; i++) {
+      const intervalEnd = new Date(now.getTime() - i * intervalMs);
+      const intervalStart = new Date(now.getTime() - (i + 1) * intervalMs);
+
+      const errorsInInterval = Array.from(this.errors.values()).filter(
+        e => e.lastSeen >= intervalStart && e.lastSeen < intervalEnd,
+      );
+      const newErrorsInInterval = errorsInInterval.filter(
+        e => e.firstSeen >= intervalStart && e.firstSeen < intervalEnd,
+      );
+
+      trends.push({
+        timestamp: intervalStart,
+        errorCount: errorsInInterval.reduce((sum, e) => sum + e.count, 0),
+        newErrorCount: newErrorsInInterval.length,
+      });
+    }
+
+    return trends.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
   private generateErrorId(): string {

@@ -82,8 +82,10 @@ export class OrdersService {
   }
 
   async get(id: string) {
-    const order = await this.prisma.orders.findUnique({
-      where: { id },
+    const order = await this.prisma.orders.findFirst({
+      where: {
+        OR: [{ id: id }, { orderNo: id }],
+      },
       include: { order_items: true, payments: true },
     });
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');

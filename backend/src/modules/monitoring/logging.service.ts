@@ -344,7 +344,7 @@ export class LoggingService {
   }
 
   // Log aggregation and analysis
-  async getLogStats(_timeRange: 'hour' | 'day' | 'week' = 'hour'): Promise<{
+  async getLogStats(timeRange: 'hour' | 'day' | 'week' = 'hour'): Promise<{
     totalLogs: number;
     errorCount: number;
     warnCount: number;
@@ -352,16 +352,77 @@ export class LoggingService {
     topEndpoints: Array<{ endpoint: string; count: number; avgDuration: number }>;
     userActivity: Array<{ userId: string; actionCount: number }>;
   }> {
-    // This would typically query a log aggregation service like ELK stack
-    // For now, return mock data
-    return {
-      totalLogs: 0,
-      errorCount: 0,
-      warnCount: 0,
-      topErrors: [],
-      topEndpoints: [],
-      userActivity: [],
-    };
+    const timeRangeMs = this.getTimeRangeMs(timeRange);
+    const startDate = new Date(Date.now() - timeRangeMs);
+
+    const [totalLogs, errorCount, warnCount, logs] = await Promise.all([
+      this.prisma.activity_logs.count({ where: { createdAt: { gte: startDate } } }),
+      this.prisma.activity_logs.count({
+        where: { severity: 'error', createdAt: { gte: startDate } },
+      }),
+      this.prisma.activity_logs.count({
+        where: { severity: 'warn', createdAt: { gte: startDate } },
+      }),
+      this.prisma.activity_logs.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { action: true, url: true, duration: true, userId: true, severity: true },
+      }),
+    ]);
+
+    // Aggregate errors
+    const errorMap = new Map<string, number>();
+    const endpointMap = new Map<string, { count: number; totalDuration: number }>();
+    const userMap = new Map<string, number>();
+
+    logs.forEach(log => {
+      if (log.severity === 'error') {
+        errorMap.set(log.action, (errorMap.get(log.action) || 0) + 1);
+      }
+      if (log.url) {
+        const key = log.url;
+        const stats = endpointMap.get(key) || { count: 0, totalDuration: 0 };
+        stats.count++;
+        stats.totalDuration += log.duration || 0;
+        endpointMap.set(key, stats);
+      }
+      if (log.userId) {
+        userMap.set(log.userId, (userMap.get(log.userId) || 0) + 1);
+      }
+    });
+
+    const topErrors = Array.from(errorMap.entries())
+      .map(([message, count]) => ({ message, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const topEndpoints = Array.from(endpointMap.entries())
+      .map(([endpoint, stats]) => ({
+        endpoint,
+        count: stats.count,
+        avgDuration: stats.totalDuration / stats.count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const userActivity = Array.from(userMap.entries())
+      .map(([userId, actionCount]) => ({ userId, actionCount }))
+      .sort((a, b) => b.actionCount - a.actionCount)
+      .slice(0, 10);
+
+    return { totalLogs, errorCount, warnCount, topErrors, topEndpoints, userActivity };
+  }
+
+  private getTimeRangeMs(timeRange: 'hour' | 'day' | 'week'): number {
+    switch (timeRange) {
+      case 'hour':
+        return 60 * 60 * 1000;
+      case 'day':
+        return 24 * 60 * 60 * 1000;
+      case 'week':
+        return 7 * 24 * 60 * 60 * 1000;
+      default:
+        return 60 * 60 * 1000;
+    }
   }
 
   private formatContext(context?: LogContext): any {

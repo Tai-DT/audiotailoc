@@ -25,10 +25,10 @@ export declare class InventoryMovementService {
             name: string;
         };
     } & {
+        type: string;
         id: string;
         createdAt: Date;
         userId: string | null;
-        type: string;
         productId: string;
         quantity: number;
         notes: string | null;
@@ -57,10 +57,10 @@ export declare class InventoryMovementService {
                 name: string;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            type: string;
             productId: string;
             quantity: number;
             notes: string | null;
@@ -99,10 +99,10 @@ export declare class InventoryMovementService {
                 name: string;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
             userId: string | null;
-            type: string;
             productId: string;
             quantity: number;
             notes: string | null;

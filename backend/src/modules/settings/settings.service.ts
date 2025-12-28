@@ -81,15 +81,18 @@ export class SettingsService {
   }
 
   async findAll() {
-    // Mock implementation
-    return {
+    const settings = await this.prisma.site_settings.findMany();
+
+    // Group settings by category or just return as is
+    // Default values if not found in DB
+    const result: any = {
       general: {
         siteName: 'Audio Tai Loc',
         siteDescription: 'Professional Audio Equipment',
         contactEmail: 'contact@audiotailoc.com',
       },
       email: {
-        smtpHost: 'smtp.example.com',
+        smtpHost: '',
         smtpPort: 587,
       },
       notifications: {
@@ -97,14 +100,55 @@ export class SettingsService {
         enablePushNotifications: false,
       },
     };
+
+    settings.forEach(s => {
+      const parts = s.key.split('.');
+      if (parts.length === 2) {
+        const [category, key] = parts;
+        if (!result[category]) result[category] = {};
+
+        // Try to parse JSON if it looks like a number or boolean
+        let val: any = s.value;
+        if (val === 'true') val = true;
+        else if (val === 'false') val = false;
+        else if (!isNaN(Number(val))) val = Number(val);
+
+        result[category][key] = val;
+      }
+    });
+
+    return result;
   }
 
   async update(settings: any) {
-    // Mock implementation
+    const promises = [];
+
+    for (const category in settings) {
+      if (typeof settings[category] === 'object') {
+        for (const key in settings[category]) {
+          const fullKey = `${category}.${key}`;
+          const value = String(settings[category][key]);
+
+          promises.push(
+            this.prisma.site_settings.upsert({
+              where: { key: fullKey },
+              update: { value, updatedAt: new Date() },
+              create: {
+                id: crypto.randomUUID(),
+                key: fullKey,
+                value,
+                updatedAt: new Date(),
+              },
+            }),
+          );
+        }
+      }
+    }
+
+    await Promise.all(promises);
     return {
       success: true,
       message: 'Settings updated successfully',
-      data: settings,
     };
   }
 }

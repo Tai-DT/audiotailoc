@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -370,7 +370,7 @@ export class PromotionNotificationService {
   /**
    * Get notification history for user
    */
-  async getNotificationHistory(userId: string, limit: number = 50): Promise<any[]> {
+  async getNotificationHistory(_userId: string, _limit: number = 50): Promise<any[]> {
     // This would query from a notifications table if it exists
     // For now, returning a placeholder
     return [];
@@ -381,7 +381,7 @@ export class PromotionNotificationService {
    */
   async updateNotificationPreferences(
     userId: string,
-    preferences: {
+    _preferences: {
       emailNotifications?: boolean;
       smsNotifications?: boolean;
       pushNotifications?: boolean;
@@ -466,8 +466,8 @@ export class PromotionNotificationService {
 
   private async sendInAppNotification(
     user: any,
-    promotion: any,
-    template: NotificationTemplate,
+    _promotion: any,
+    _template: NotificationTemplate,
   ): Promise<boolean> {
     // Store in-app notification in database
     // Placeholder implementation

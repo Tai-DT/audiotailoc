@@ -40,7 +40,7 @@ export declare class LoggingService {
     private saveActivityLog;
     logPayment(transactionId: string, amount: number, status: string, context?: LogContext): void;
     logSystemHealth(component: string, status: 'healthy' | 'degraded' | 'unhealthy', details?: any): void;
-    getLogStats(_timeRange?: 'hour' | 'day' | 'week'): Promise<{
+    getLogStats(timeRange?: 'hour' | 'day' | 'week'): Promise<{
         totalLogs: number;
         errorCount: number;
         warnCount: number;
@@ -58,6 +58,7 @@ export declare class LoggingService {
             actionCount: number;
         }>;
     }>;
+    private getTimeRangeMs;
     private formatContext;
     private formatErrorContext;
     private sanitizeQuery;

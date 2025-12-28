@@ -27,7 +27,7 @@ import { AdminGuard } from '../auth/admin.guard';
  */
 
 @ApiTags('AI')
-@Controller('api/v1/ai')
+@Controller('ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
@@ -87,6 +87,9 @@ export class AiController {
       return { success: true, data: recommendations };
     } catch (error) {
       this.logger.error('Error getting recommendations:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Failed to get recommendations', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -124,6 +127,9 @@ export class AiController {
       return { success: true, data: suggestions };
     } catch (error) {
       this.logger.error('Error getting search suggestions:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Failed to get suggestions', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -235,6 +241,9 @@ export class AiController {
       return { success: true, data: analysis };
     } catch (error) {
       this.logger.error('Error analyzing message:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Analysis failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -381,6 +390,9 @@ export class AiController {
       };
     } catch (error) {
       this.logger.error('Conversation error:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Conversation failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

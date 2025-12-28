@@ -149,7 +149,11 @@ export declare class UsersService {
         emailNotifications?: boolean;
         smsNotifications?: boolean;
         promoNotifications?: boolean;
-    }, currentUser?: any): Promise<{
+    }, currentUser?: {
+        role?: string;
+        sub?: string;
+        email?: string;
+    }): Promise<{
         id: string;
         email: string;
         name: string;
@@ -165,7 +169,9 @@ export declare class UsersService {
         smsNotifications: boolean;
         promoNotifications: boolean;
     }>;
-    remove(id: string, currentUser?: any): Promise<{
+    remove(id: string, currentUser?: {
+        role?: string;
+    }): Promise<{
         message: string;
     }>;
     getStats(): Promise<{

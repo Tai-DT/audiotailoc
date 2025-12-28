@@ -82,11 +82,11 @@ export class SearchService {
       // Limit query length to prevent DoS attacks
       const MAX_QUERY_LENGTH = 200;
       const sanitizedQuery = query.trim().substring(0, MAX_QUERY_LENGTH);
-      
+
       // Remove potentially dangerous characters for regex/NoSQL injection
       // Allow alphanumeric, spaces, and common search characters
       const safeQuery = sanitizedQuery.replace(/[<>{}[\]\\^$|*+?.()]/g, '');
-      
+
       if (safeQuery.length === 0) {
         throw new BadRequestException('Search query contains only invalid characters');
       }

@@ -90,20 +90,20 @@ export class ProjectsController {
       const project = await this.projectsService.findById(id);
       const authenticatedUserId = req.user?.sub || req.user?.id;
       const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
-      
+
       const projectUserId = (project as any)?.userId || (project as any)?.users?.id;
       // Only enforce ownership check if project has a userId and user is not admin
       // Admin can update any project
       if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
         throw new ForbiddenException('You can only update your own projects');
       }
-      
+
       // Prevent users from modifying userId to another user's ID
       if (data.userId && !isAdmin && data.userId !== authenticatedUserId) {
         throw new ForbiddenException('You cannot assign projects to other users');
       }
     }
-    
+
     return this.projectsService.update(id, data);
   }
 
@@ -116,13 +116,13 @@ export class ProjectsController {
       const project = await this.projectsService.findById(id);
       const authenticatedUserId = req.user?.sub || req.user?.id;
       const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
-      
+
       const projectUserId = (project as any)?.userId || (project as any)?.users?.id;
       if (!isAdmin && projectUserId && projectUserId !== authenticatedUserId) {
         throw new ForbiddenException('You can only delete your own projects');
       }
     }
-    
+
     return this.projectsService.remove(id);
   }
 

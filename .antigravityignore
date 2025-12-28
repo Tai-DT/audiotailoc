@@ -1,0 +1,15 @@
+node_modules/
+.git/
+.next/
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+*.log
+*.tsbuildinfo
+.DS_Store
+uploads/
+backups/
+test-results/
+playwright-report/

@@ -89,7 +89,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             const status = isSuccess ? 'COMPLETED' : 'FAILED';
             await this.prisma.payment_intents.update({
                 where: { id: vnp_TxnRef },
-                data: { status: status },
+                data: { status },
             });
             const payment = await this.prisma.payments.create({
                 data: {
@@ -97,7 +97,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                     orderId: paymentIntent.orderId,
                     amountCents: parseInt(vnp_Amount),
                     provider: 'VNPAY',
-                    status: status,
+                    status,
                     transactionId: vnp_TransactionNo,
                     updatedAt: new Date(),
                 },
@@ -157,7 +157,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
             const status = isSuccess ? 'COMPLETED' : 'FAILED';
             await this.prisma.payment_intents.update({
                 where: { id: orderId },
-                data: { status: status },
+                data: { status },
             });
             const payment = await this.prisma.payments.create({
                 data: {
@@ -165,7 +165,7 @@ let WebhooksService = WebhooksService_1 = class WebhooksService {
                     orderId: paymentIntent.orderId,
                     amountCents: parseInt(amount),
                     provider: 'MOMO',
-                    status: status,
+                    status,
                     transactionId: transId,
                     updatedAt: new Date(),
                 },

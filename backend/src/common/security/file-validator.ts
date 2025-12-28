@@ -1,4 +1,4 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 /**
  * File Validator for Enhanced Security
@@ -155,7 +155,7 @@ export class FileValidator {
   ): Promise<boolean> {
     // Basic check: if compressed size is very small but file is large, it might be a zip bomb
     // This is a simplified check - for production, you should actually decompress and check
-    
+
     // For now, we'll just check if it's a valid ZIP and log a warning if compressed size is suspiciously small
     if (buffer.length < 4) {
       return false;

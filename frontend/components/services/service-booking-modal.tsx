@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateServiceBooking } from '@/lib/hooks/use-api';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { Service } from '@/lib/types';
-import { CalendarIcon, Clock, User } from 'lucide-react';
+import { CalendarIcon, Clock, User, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface ServiceBookingModalProps {
@@ -23,6 +24,8 @@ const timeSlots = [
 ];
 
 export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBookingModalProps) {
+  const { user, isAuthenticated } = useAuth();
+  
   const [formData, setFormData] = useState({
     customerName: '',
     phone: '',
@@ -32,6 +35,19 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
     preferredTime: '',
     notes: ''
   });
+
+  // Auto-fill user info when logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        customerName: user.name || prev.customerName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        address: user.address || prev.address
+      }));
+    }
+  }, [isAuthenticated, user, isOpen]);
 
   const createBooking = useCreateServiceBooking();
 
@@ -67,7 +83,9 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
         customerAddress: formData.address || '',
         scheduledDate: formData.preferredDate,
         scheduledTime: formData.preferredTime,
-        notes: formData.notes
+        notes: formData.notes,
+        // Include userId if user is authenticated - this links booking to their account
+        userId: isAuthenticated && user?.id ? user.id : undefined
       });
 
       toast.success('Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.');

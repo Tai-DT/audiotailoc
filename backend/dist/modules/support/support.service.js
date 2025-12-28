@@ -142,29 +142,24 @@ let SupportService = class SupportService {
         return faq;
     }
     async getFAQs(category) {
-        const mockFAQs = [
-            {
-                id: 'faq_1',
-                question: 'Làm thế nào để đặt hàng?',
-                answer: 'Bạn có thể đặt hàng bằng cách thêm sản phẩm vào giỏ hàng và tiến hành thanh toán.',
-                category: 'Đặt hàng',
-                order: 1,
-                published: true,
-                createdAt: new Date('2024-01-01'),
-                updatedAt: new Date('2024-01-01'),
-            },
-            {
-                id: 'faq_2',
-                question: 'Thời gian giao hàng là bao lâu?',
-                answer: 'Thời gian giao hàng thông thường là 2-3 ngày làm việc trong nội thành.',
-                category: 'Giao hàng',
-                order: 1,
-                published: true,
-                createdAt: new Date('2024-01-02'),
-                updatedAt: new Date('2024-01-02'),
-            },
-        ];
-        return category ? mockFAQs.filter(faq => faq.category === category) : mockFAQs;
+        const where = { isActive: true };
+        if (category) {
+            where.category = category;
+        }
+        const faqs = await this.prisma.faqs.findMany({
+            where,
+            orderBy: { displayOrder: 'asc' },
+        });
+        return faqs.map(faq => ({
+            id: faq.id,
+            question: faq.question,
+            answer: faq.answer,
+            category: faq.category || 'General',
+            order: faq.displayOrder,
+            published: faq.isActive,
+            createdAt: faq.createdAt,
+            updatedAt: faq.updatedAt,
+        }));
     }
     async createTicket(data) {
         const ticket = {
@@ -182,25 +177,43 @@ let SupportService = class SupportService {
         return ticket;
     }
     async getTickets(params) {
-        const mockTickets = [
-            {
-                id: 'ticket_1',
-                subject: 'Sản phẩm bị lỗi',
-                description: 'Tai nghe bị hỏng sau 1 tuần sử dụng',
-                status: 'OPEN',
-                priority: 'HIGH',
-                email: 'customer@example.com',
-                name: 'Nguyễn Văn A',
-                createdAt: new Date('2024-01-01'),
-                updatedAt: new Date('2024-01-01'),
-            },
-        ];
         const page = params.page || 1;
         const pageSize = params.pageSize || 10;
-        const totalCount = mockTickets.length;
+        const skip = (page - 1) * pageSize;
+        const where = {};
+        if (params.userId)
+            where.userId = params.userId;
+        if (params.status)
+            where.status = params.status;
+        if (params.priority)
+            where.priority = params.priority;
+        if (params.assignedTo)
+            where.assignedTo = params.assignedTo;
+        const [tickets, totalCount] = await Promise.all([
+            this.prisma.support_tickets.findMany({
+                where,
+                skip,
+                take: pageSize,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.support_tickets.count({ where }),
+        ]);
+        const items = tickets.map(t => ({
+            id: t.id,
+            subject: t.subject,
+            description: t.description,
+            status: t.status,
+            priority: t.priority,
+            userId: t.userId || undefined,
+            email: t.email,
+            name: t.name,
+            assignedTo: t.assignedTo || undefined,
+            createdAt: t.createdAt,
+            updatedAt: t.updatedAt,
+        }));
         const totalPages = Math.ceil(totalCount / pageSize);
         return {
-            items: mockTickets,
+            items,
             totalCount,
             page,
             pageSize,
@@ -208,19 +221,27 @@ let SupportService = class SupportService {
         };
     }
     async updateTicketStatus(id, status, assignedTo) {
-        const ticket = {
-            id,
-            subject: 'Sản phẩm bị lỗi',
-            description: 'Tai nghe bị hỏng sau 1 tuần sử dụng',
-            status,
-            priority: 'HIGH',
-            email: 'customer@example.com',
-            name: 'Nguyễn Văn A',
-            assignedTo,
-            createdAt: new Date('2024-01-01'),
-            updatedAt: new Date(),
+        const updateData = { status, updatedAt: new Date() };
+        if (assignedTo !== undefined) {
+            updateData.assignedTo = assignedTo;
+        }
+        const updated = await this.prisma.support_tickets.update({
+            where: { id },
+            data: updateData,
+        });
+        return {
+            id: updated.id,
+            subject: updated.subject,
+            description: updated.description,
+            status: updated.status,
+            priority: updated.priority,
+            userId: updated.userId || undefined,
+            email: updated.email,
+            name: updated.name,
+            assignedTo: updated.assignedTo || undefined,
+            createdAt: updated.createdAt,
+            updatedAt: updated.updatedAt,
         };
-        return ticket;
     }
     async searchKnowledgeBase(query) {
         const entries = await this.prisma.knowledge_base_entries.findMany({

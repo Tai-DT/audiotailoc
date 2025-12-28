@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface AuditLogEntry {
   promotionId: string;
@@ -20,7 +19,7 @@ export class PromotionAuditService {
   /**
    * Create an audit log entry
    */
-  async log(entry: AuditLogEntry): Promise<void> {
+  async log(_entry: AuditLogEntry): Promise<void> {
     // TODO: promotion_audit_logs table does not exist
     return; // await this.prisma.promotion_audit_logs.create({
     //   data: {
@@ -146,8 +145,8 @@ export class PromotionAuditService {
   /**
    * Get recent actions across all promotions
    */
-  async getRecentActions(limit: number = 50, action?: string) {
-    const where = action ? { action } : {};
+  async getRecentActions(_limit: number = 50, action?: string) {
+    const _where = action ? { action } : {};
 
     // TODO: promotion_audit_logs table does not exist
     return []; // return this.prisma.promotion_audit_logs.findMany({

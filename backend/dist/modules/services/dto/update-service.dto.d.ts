@@ -11,6 +11,7 @@ export declare class UpdateServiceDto {
     price?: number;
     priceCurrency?: string;
     estimatedDuration?: number;
+    duration?: number;
     imageUrl?: string;
     images?: string[];
     seoTitle?: string;

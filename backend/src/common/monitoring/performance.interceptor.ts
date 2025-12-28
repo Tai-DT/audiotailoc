@@ -1,5 +1,5 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
-import { Observable, tap, throwError } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { MetricsService } from './metrics.service';
 
 /**
@@ -21,7 +21,7 @@ export class PerformanceTrackingInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse();
 
     const { method, url, ip, headers } = request;
-    const userAgent = headers['user-agent'] || 'unknown';
+    const _userAgent = headers['user-agent'] || 'unknown';
     const requestId = this.generateRequestId();
 
     // Clean up the URL path for better metrics aggregation

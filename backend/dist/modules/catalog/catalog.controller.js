@@ -21,12 +21,12 @@ const jwt_guard_1 = require("../auth/jwt.guard");
 const admin_or_key_guard_1 = require("../auth/admin-or-key.guard");
 const create_category_dto_1 = require("./dto/create-category.dto");
 const update_category_dto_1 = require("./dto/update-category.dto");
-class DeleteManyDto {
+class _DeleteManyDto {
 }
 __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
-], DeleteManyDto.prototype, "ids", void 0);
+], _DeleteManyDto.prototype, "ids", void 0);
 let CatalogController = class CatalogController {
     constructor(catalog) {
         this.catalog = catalog;

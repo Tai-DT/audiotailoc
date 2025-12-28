@@ -148,7 +148,7 @@ export class MessagesService {
   }
 
   async updateStatus(id: string, status: string) {
-    const message = await this.findById(id);
+    const _message = await this.findById(id);
 
     const updated = await this.prisma.notifications.update({
       where: { id },
@@ -162,7 +162,7 @@ export class MessagesService {
   }
 
   async markAsRead(id: string) {
-    const message = await this.findById(id);
+    const _message = await this.findById(id);
 
     const updated = await this.prisma.notifications.update({
       where: { id },

@@ -1,14 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsDateString,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUrl,
-  MinLength,
-} from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateBannerDto {
   @ApiProperty()

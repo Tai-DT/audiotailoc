@@ -8,6 +8,7 @@ import * as crypto from 'crypto';
 import { randomUUID } from 'crypto';
 
 export interface WebhookData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -79,7 +80,7 @@ export class WebhooksService {
       // Update payment intent
       await this.prisma.payment_intents.update({
         where: { id: vnp_TxnRef },
-        data: { status: status as any },
+        data: { status },
       });
 
       // Create payment record
@@ -89,7 +90,7 @@ export class WebhooksService {
           orderId: paymentIntent.orderId,
           amountCents: parseInt(vnp_Amount),
           provider: 'VNPAY',
-          status: status as any,
+          status,
           transactionId: vnp_TransactionNo,
           updatedAt: new Date(),
           // metadata: {
@@ -171,7 +172,7 @@ export class WebhooksService {
       // Update payment intent
       await this.prisma.payment_intents.update({
         where: { id: orderId },
-        data: { status: status as any },
+        data: { status },
       });
 
       // Create payment record
@@ -181,7 +182,7 @@ export class WebhooksService {
           orderId: paymentIntent.orderId,
           amountCents: parseInt(amount),
           provider: 'MOMO',
-          status: status as any,
+          status,
           transactionId: transId,
           updatedAt: new Date(),
           // metadata: {
@@ -230,7 +231,7 @@ export class WebhooksService {
     const result = await this.paymentsService.handleWebhook('PAYOS', data);
     return {
       success: true,
-      message: (result as any)?.message || 'Processed',
+      message: (result as { message?: string })?.message || 'Processed',
     };
   }
 

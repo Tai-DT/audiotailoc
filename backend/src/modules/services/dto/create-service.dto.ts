@@ -53,6 +53,13 @@ export class CreateServiceDto {
   @Max(1440) // Max 24 hours
   estimatedDuration!: number;
 
+  // Alias for estimatedDuration - frontend uses this
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(1440)
+  duration?: number;
+
   @IsOptional()
   @IsString()
   imageUrl?: string;

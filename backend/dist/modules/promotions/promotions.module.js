@@ -10,6 +10,7 @@ exports.PromotionsModule = void 0;
 const common_1 = require("@nestjs/common");
 const promotions_controller_1 = require("./promotions.controller");
 const promotions_service_1 = require("./promotions.service");
+const promotion_service_1 = require("./promotion.service");
 const promotion_audit_service_1 = require("./services/promotion-audit.service");
 const promotion_analytics_service_1 = require("./services/promotion-analytics.service");
 const promotion_customer_service_1 = require("./services/promotion-customer.service");
@@ -32,6 +33,7 @@ exports.PromotionsModule = PromotionsModule = __decorate([
         controllers: [promotions_controller_1.PromotionsController],
         providers: [
             promotions_service_1.PromotionsService,
+            promotion_service_1.PromotionService,
             promotion_audit_service_1.PromotionAuditService,
             promotion_analytics_service_1.PromotionAnalyticsService,
             promotion_customer_service_1.PromotionCustomerService,
@@ -47,6 +49,7 @@ exports.PromotionsModule = PromotionsModule = __decorate([
         ],
         exports: [
             promotions_service_1.PromotionsService,
+            promotion_service_1.PromotionService,
             promotion_audit_service_1.PromotionAuditService,
             promotion_analytics_service_1.PromotionAnalyticsService,
             promotion_customer_service_1.PromotionCustomerService,

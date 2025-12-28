@@ -30,11 +30,11 @@ async function main() {
     const adminPassword =
       // SECURITY: Require ADMIN_PASSWORD to be set explicitly - no default weak password
       process.env.ADMIN_PASSWORD;
-    
+
     if (!adminPassword) {
       throw new Error(
         'ADMIN_PASSWORD environment variable is required. ' +
-        'Please set a strong password for the admin account.'
+          'Please set a strong password for the admin account.',
       );
     }
 

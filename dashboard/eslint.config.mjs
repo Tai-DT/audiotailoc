@@ -2,7 +2,7 @@ import next from "eslint-config-next";
 
 const config = Array.isArray(next) ? next : [next];
 
-export default [
+const eslintConfig = [
   {
     ignores: [
       "node_modules/**",
@@ -16,3 +16,5 @@ export default [
   },
   ...config,
 ];
+
+export default eslintConfig;

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PromotionsController } from './promotions.controller';
 import { PromotionsService } from './promotions.service';
+import { PromotionService } from './promotion.service';
 import { PromotionAuditService } from './services/promotion-audit.service';
 import { PromotionAnalyticsService } from './services/promotion-analytics.service';
 import { PromotionCustomerService } from './services/promotion-customer.service';
@@ -20,6 +21,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
   controllers: [PromotionsController],
   providers: [
     PromotionsService,
+    PromotionService,
     PromotionAuditService,
     PromotionAnalyticsService,
     PromotionCustomerService,
@@ -35,6 +37,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
   ],
   exports: [
     PromotionsService,
+    PromotionService,
     PromotionAuditService,
     PromotionAnalyticsService,
     PromotionCustomerService,

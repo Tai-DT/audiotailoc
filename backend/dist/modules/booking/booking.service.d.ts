@@ -16,24 +16,25 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
-            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
+            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -44,7 +45,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -94,9 +94,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -104,6 +105,8 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     })[]>;
     findOne(id: string): Promise<{
         service_booking_items: ({
@@ -119,24 +122,25 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
-            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
+            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -147,7 +151,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -197,9 +200,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -207,6 +211,8 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     findByUserId(userId: string): Promise<({
         service_booking_items: ({
@@ -216,9 +222,9 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
@@ -243,9 +249,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -253,6 +260,8 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     })[]>;
     create(createBookingDto: any): Promise<{
         service_booking_items: ({
@@ -268,14 +277,15 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -286,7 +296,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -336,9 +345,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -346,6 +356,66 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
+    }>;
+    createGuestBooking(guestBookingData: {
+        serviceId: string;
+        customerName: string;
+        customerPhone: string;
+        customerEmail?: string;
+        customerAddress?: string;
+        scheduledDate: string;
+        scheduledTime: string;
+        notes?: string;
+    }): Promise<{
+        services: {
+            tags: string | null;
+            description: string | null;
+            type: string | null;
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            slug: string;
+            shortDescription: string | null;
+            images: string | null;
+            features: string | null;
+            viewCount: number;
+            metadata: string | null;
+            duration: number;
+            price: number;
+            basePriceCents: number;
+            minPrice: number | null;
+            maxPrice: number | null;
+            priceType: string;
+            typeId: string | null;
+            isFeatured: boolean;
+            seoTitle: string | null;
+            seoDescription: string | null;
+            requirements: string | null;
+        };
+    } & {
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        address: string | null;
+        userId: string | null;
+        customerName: string | null;
+        scheduledAt: Date | null;
+        serviceId: string;
+        technicianId: string | null;
+        scheduledTime: string | null;
+        completedAt: Date | null;
+        notes: string | null;
+        estimatedCosts: number | null;
+        actualCosts: number | null;
+        coordinates: string | null;
+        goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     update(id: string, updateBookingDto: any): Promise<{
         service_booking_items: ({
@@ -361,14 +431,15 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -379,7 +450,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -429,9 +499,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -439,6 +510,8 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     delete(id: string): Promise<{
         success: boolean;
@@ -448,6 +521,7 @@ export declare class BookingService {
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -458,7 +532,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -508,9 +581,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -518,6 +592,8 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     assignTechnician(id: string, technicianId: string): Promise<{
         service_booking_items: ({
@@ -533,14 +609,15 @@ export declare class BookingService {
         } & {
             id: string;
             createdAt: Date;
-            bookingId: string;
             quantity: number;
             price: number;
+            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
+            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -551,7 +628,6 @@ export declare class BookingService {
             images: string | null;
             features: string | null;
             viewCount: number;
-            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -601,9 +677,10 @@ export declare class BookingService {
         updatedAt: Date;
         address: string | null;
         userId: string | null;
+        customerName: string | null;
         scheduledAt: Date | null;
-        technicianId: string | null;
         serviceId: string;
+        technicianId: string | null;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -611,25 +688,27 @@ export declare class BookingService {
         actualCosts: number | null;
         coordinates: string | null;
         goongPlaceId: string | null;
+        customerPhone: string | null;
+        customerEmail: string | null;
     }>;
     createPayment(bookingId: string, paymentData: any): Promise<{
         status: string;
         id: string;
         createdAt: Date;
-        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
+        bookingId: string;
     }>;
     updatePaymentStatus(id: string, status: string): Promise<{
         status: string;
         id: string;
         createdAt: Date;
-        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
+        bookingId: string;
     }>;
 }

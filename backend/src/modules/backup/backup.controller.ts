@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import * as path from 'path';
-import * as fs from 'fs';
 import {
   BackupService,
   BackupResult,
@@ -33,7 +32,7 @@ export class BackupController {
   constructor(
     private readonly backupService: BackupService,
     private readonly loggingService: LoggingService,
-  ) { }
+  ) {}
 
   // Get backup status
   @Get('status')
@@ -691,14 +690,14 @@ export class BackupController {
         oldestBackup:
           backups.length > 0
             ? backups.reduce((oldest, current) =>
-              current.timestamp < oldest.timestamp ? current : oldest,
-            ).timestamp
+                current.timestamp < oldest.timestamp ? current : oldest,
+              ).timestamp
             : null,
         newestBackup:
           backups.length > 0
             ? backups.reduce((newest, current) =>
-              current.timestamp > newest.timestamp ? current : newest,
-            ).timestamp
+                current.timestamp > newest.timestamp ? current : newest,
+              ).timestamp
             : null,
         successRate:
           backups.length > 0

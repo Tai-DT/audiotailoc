@@ -33,149 +33,7 @@ interface CampaignStats {
   conversionRate: number
 }
 
-// Mock data
-const mockCampaigns: Campaign[] = [
-  {
-    id: "1",
-    name: "Flash Sale Black Friday",
-    description: "Khuyến mãi đặc biệt dịp Black Friday với giảm giá lên tới 70%",
-    type: "email",
-    status: "sent",
-    targetAudience: "Tất cả khách hàng",
-    subject: "🔥 Flash Sale 70% - Chỉ còn 24 giờ!",
-    content: "Đừng bỏ lỡ cơ hội sở hữu thiết bị âm thanh cao cấp với giá ưu đãi nhất năm! Flash Sale Black Friday với giảm giá lên tới 70% cho tất cả sản phẩm.",
-    sentAt: new Date("2024-11-29T08:00:00"),
-    createdAt: new Date("2024-11-28T10:00:00"),
-    createdBy: "admin",
-    recipients: 25430,
-    opens: 12850,
-    clicks: 3420,
-    conversions: 156,
-    revenue: 485200000
-  },
-  {
-    id: "2",
-    name: "Welcome Series - New Users",
-    description: "Chuỗi email chào mừng khách hàng mới đăng ký",
-    type: "email",
-    status: "sent",
-    targetAudience: "Khách hàng mới",
-    subject: "Chào mừng bạn đến với Audio Tài Lộc! 🎵",
-    content: "Cảm ơn bạn đã tham gia cộng đồng yêu âm thanh của Audio Tài Lộc. Khám phá ngay những sản phẩm audio chất lượng cao và nhận ngay voucher 200K cho đơn hàng đầu tiên!",
-    sentAt: new Date("2024-11-25T09:00:00"),
-    createdAt: new Date("2024-11-20T14:00:00"),
-    createdBy: "marketing",
-    recipients: 1850,
-    opens: 1295,
-    clicks: 425,
-    conversions: 89,
-    revenue: 125600000
-  },
-  {
-    id: "3",
-    name: "Product Review Request",
-    description: "Yêu cầu đánh giá sản phẩm từ khách hàng đã mua",
-    type: "email",
-    status: "sent",
-    targetAudience: "Khách hàng đã mua hàng",
-    subject: "Chia sẻ trải nghiệm của bạn - Nhận ngay 100K",
-    content: "Bạn đã sử dụng sản phẩm được một tuần. Hãy chia sẻ trải nghiệm và nhận ngay voucher 100K cho lần mua tiếp theo!",
-    sentAt: new Date("2024-11-20T15:30:00"),
-    createdAt: new Date("2024-11-19T09:00:00"),
-    createdBy: "customer-service",
-    recipients: 3240,
-    opens: 1850,
-    clicks: 680,
-    conversions: 245,
-    revenue: 45200000
-  },
-  {
-    id: "4",
-    name: "VIP Customer Exclusive",
-    description: "Ưu đãi độc quyền dành cho khách hàng VIP",
-    type: "email",
-    status: "draft",
-    targetAudience: "Khách hàng VIP",
-    subject: "Ưu đãi VIP - Sản phẩm mới độc quyền",
-    content: "Dành riêng cho khách hàng VIP: Trải nghiệm sớm dòng tai nghe cao cấp mới nhất với ưu đãi 30% trước khi ra mắt chính thức.",
-    createdAt: new Date("2024-11-30T10:00:00"),
-    createdBy: "marketing",
-    recipients: 0,
-    opens: 0,
-    clicks: 0,
-    conversions: 0,
-    revenue: 0
-  },
-  {
-    id: "5",
-    name: "Cart Abandonment Reminder",
-    description: "Nhắc nhở khách hàng hoàn thành đơn hàng bỏ quên",
-    type: "email",
-    status: "sent",
-    targetAudience: "Giỏ hàng bỏ quên",
-    subject: "Bạn quên điều gì đó trong giỏ hàng 🛒",
-    content: "Sản phẩm bạn quan tâm vẫn đang chờ bạn! Hoàn thành đơn hàng ngay và nhận thêm 5% giảm giá.",
-    sentAt: new Date("2024-11-22T16:00:00"),
-    createdAt: new Date("2024-11-22T10:00:00"),
-    createdBy: "automation",
-    recipients: 890,
-    opens: 425,
-    clicks: 156,
-    conversions: 34,
-    revenue: 28500000
-  },
-  {
-    id: "6",
-    name: "Birthday Special Offer",
-    description: "Ưu đãi sinh nhật khách hàng",
-    type: "sms",
-    status: "sent",
-    targetAudience: "Sinh nhật tháng này",
-    content: "Chúc mừng sinh nhật! 🎂 Nhận ngay voucher 300K và miễn phí vận chuyển cho đơn hàng sinh nhật của bạn. Mã: BIRTHDAY2024",
-    sentAt: new Date("2024-11-15T08:00:00"),
-    createdAt: new Date("2024-11-10T09:00:00"),
-    createdBy: "marketing",
-    recipients: 560,
-    opens: 560,
-    clicks: 168,
-    conversions: 42,
-    revenue: 85200000
-  },
-  {
-    id: "7",
-    name: "New Product Launch",
-    description: "Thông báo ra mắt sản phẩm mới",
-    type: "push",
-    status: "scheduled",
-    targetAudience: "Tất cả khách hàng",
-    content: "🚀 Ra mắt tai nghe không dây premium mới! Đặt trước ngay để nhận ưu đãi early bird 25%",
-    scheduledAt: new Date("2024-12-05T09:00:00"),
-    createdAt: new Date("2024-11-30T14:00:00"),
-    createdBy: "product",
-    recipients: 0,
-    opens: 0,
-    clicks: 0,
-    conversions: 0,
-    revenue: 0
-  },
-  {
-    id: "8",
-    name: "Year End Sale",
-    description: "Khuyến mãi cuối năm",
-    type: "email",
-    status: "draft",
-    targetAudience: "Khách hàng thân thiết",
-    subject: "🎊 Year End Sale - Giảm giá cuối năm lên tới 60%",
-    content: "Cảm ơn sự đồng hành của bạn trong năm qua! Tận hưởng ưu đãi cuối năm với giảm giá lên tới 60% cho tất cả danh mục sản phẩm.",
-    createdAt: new Date("2024-12-01T11:00:00"),
-    createdBy: "marketing",
-    recipients: 0,
-    opens: 0,
-    clicks: 0,
-    conversions: 0,
-    revenue: 0
-  }
-]
+// No mock data - use real API data only
 
 export function useCampaigns() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -222,8 +80,9 @@ export function useCampaigns() {
       })
       
       if (!response.ok) {
-        // Fall back to mock data if API fails
-        setCampaigns(mockCampaigns)
+        // Return empty if API fails - no mock fallback
+        console.warn('useCampaigns: API failed, returning empty list')
+        setCampaigns([])
         return
       }
       
@@ -239,9 +98,9 @@ export function useCampaigns() {
             : []
 
       if (!Array.isArray(list) || list.length === 0) {
-        // If backend returned unexpected shape, use mock to keep UI functional
-        console.warn('useCampaigns: unexpected response shape; falling back to mock data')
-        setCampaigns(mockCampaigns)
+        // If backend returned unexpected shape, return empty list
+        console.warn('useCampaigns: unexpected response shape; returning empty list')
+        setCampaigns([])
         return
       }
 
@@ -295,9 +154,10 @@ export function useCampaigns() {
       
       setCampaigns(transformedCampaigns)
     } catch (error) {
-      // Fall back to mock data
-      setCampaigns(mockCampaigns)
-      toast.error("Đang sử dụng dữ liệu mẫu")
+      // Return empty list on error
+      console.error('useCampaigns: Error fetching campaigns', error)
+      setCampaigns([])
+      toast.error("Đã xảy ra lỗi khi tải dữ liệu chiến dịch")
     } finally {
       setLoading(false)
     }
@@ -462,18 +322,13 @@ export function useCampaigns() {
       })
       
       if (!response.ok) {
-        // Fallback to local update with mock data
+        // Update local state with sent status (no mock random data)
         setCampaigns(prev => prev.map(campaign => 
           campaign.id === id 
             ? { 
                 ...campaign, 
                 status: "sent" as const, 
                 sentAt: new Date(),
-                recipients: Math.floor(Math.random() * 10000) + 1000,
-                opens: Math.floor(Math.random() * 5000) + 500,
-                clicks: Math.floor(Math.random() * 1000) + 100,
-                conversions: Math.floor(Math.random() * 100) + 10,
-                revenue: Math.floor(Math.random() * 100000000) + 10000000
               } 
             : campaign
         ))

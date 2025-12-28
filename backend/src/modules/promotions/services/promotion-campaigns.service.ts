@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
-import { Decimal } from '@prisma/client/runtime/library';
 import { CampaignStatus, CampaignType } from '@prisma/client';
 
 export interface Campaign {
@@ -264,7 +263,7 @@ export class PromotionCampaignsService {
   /**
    * Add promotions to campaign
    */
-  async addPromotionsToCampaign(campaignId: string, promotionIds: string[]): Promise<boolean> {
+  async addPromotionsToCampaign(campaignId: string, _promotionIds: string[]): Promise<boolean> {
     try {
       const campaign = await this.prisma.campaigns.findUnique({
         where: { id: campaignId },
@@ -278,7 +277,7 @@ export class PromotionCampaignsService {
 
       // Get current highest orderIndex
       // TODO: campaign_promotions relation does not exist
-      const maxOrder = 0; // campaign.campaign_promotions.length;
+      const _maxOrder = 0; // campaign.campaign_promotions.length;
 
       // Add new promotions
       // TODO: campaign_promotions table does not exist
@@ -305,7 +304,10 @@ export class PromotionCampaignsService {
   /**
    * Remove promotions from campaign
    */
-  async removePromotionsFromCampaign(campaignId: string, promotionIds: string[]): Promise<boolean> {
+  async removePromotionsFromCampaign(
+    campaignId: string,
+    _promotionIds: string[],
+  ): Promise<boolean> {
     try {
       const campaign = await this.prisma.campaigns.findUnique({
         where: { id: campaignId },
@@ -699,7 +701,7 @@ export class PromotionCampaignsService {
 
       // Get timeline data from campaign metrics
       // TODO: campaign_metrics table does not exist
-      const timeline: any[] = [];
+      const _timeline: any[] = [];
       // const timeline = await (this.prisma as any).campaign_metrics.findMany({
       //   where: { campaignId },
       //   orderBy: { date: 'asc' },
@@ -745,7 +747,7 @@ export class PromotionCampaignsService {
       const newCampaignId = uuidv4();
 
       // Create new campaign
-      const newCampaign = await this.prisma.campaigns.create({
+      const _newCampaign = await this.prisma.campaigns.create({
         data: {
           id: newCampaignId,
           name: `${campaign.name} (Copy)`,
@@ -842,9 +844,9 @@ export class PromotionCampaignsService {
   /**
    * Get campaigns by promotion ID
    */
-  async getCampaignsByPromotionId(promotionId: string): Promise<Campaign[]> {
+  async getCampaignsByPromotionId(_promotionId: string): Promise<Campaign[]> {
     try {
-      const campaigns = await this.prisma.campaigns.findMany({
+      const _campaigns = await this.prisma.campaigns.findMany({
         // TODO: campaign_promotions relation does not exist
         // where: {
         //   campaign_promotions: {
@@ -934,7 +936,7 @@ export class PromotionCampaignsService {
       const template = templates[templateType];
       const campaignId = uuidv4();
 
-      const campaign = await this.prisma.campaigns.create({
+      const _campaign = await this.prisma.campaigns.create({
         data: {
           id: campaignId,
           name,

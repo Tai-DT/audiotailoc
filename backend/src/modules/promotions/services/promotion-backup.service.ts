@@ -692,17 +692,17 @@ export class PromotionBackupService {
     return null;
   }
 
-  private async getAllBackupsForPromotion(promotionId: string): Promise<PromotionBackup[]> {
+  private async getAllBackupsForPromotion(_promotionId: string): Promise<PromotionBackup[]> {
     // Query all backups for a promotion
     return [];
   }
 
-  private async getAllRestorePointsForPromotion(promotionId: string): Promise<RestorePoint[]> {
+  private async getAllRestorePointsForPromotion(_promotionId: string): Promise<RestorePoint[]> {
     // Query all restore points for a promotion
     return [];
   }
 
-  private async getBackupsOlderThan(date: Date): Promise<PromotionBackup[]> {
+  private async getBackupsOlderThan(_date: Date): Promise<PromotionBackup[]> {
     // Query backups created before the given date
     return [];
   }

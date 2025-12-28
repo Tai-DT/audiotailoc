@@ -431,12 +431,12 @@ export class ProjectsUploadController {
           10000, // 10 second timeout
           10 * 1024 * 1024, // 10MB max size
         );
-        
+
         const response = await fetch(validatedUrl.toString(), fetchOptions);
         if (!response.ok) {
           throw new BadRequestException(`Failed to fetch thumbnail image: ${response.statusText}`);
         }
-        
+
         const buffer = Buffer.from(await response.arrayBuffer());
 
         const result = await this.cloudinaryService.uploadImage(
@@ -464,12 +464,12 @@ export class ProjectsUploadController {
           10000, // 10 second timeout
           10 * 1024 * 1024, // 10MB max size
         );
-        
+
         const response = await fetch(validatedUrl.toString(), fetchOptions);
         if (!response.ok) {
           throw new BadRequestException(`Failed to fetch cover image: ${response.statusText}`);
         }
-        
+
         const buffer = Buffer.from(await response.arrayBuffer());
 
         const result = await this.cloudinaryService.uploadImage(
@@ -500,12 +500,12 @@ export class ProjectsUploadController {
             10000, // 10 second timeout
             10 * 1024 * 1024, // 10MB max size
           );
-          
+
           const response = await fetch(validatedUrl.toString(), fetchOptions);
           if (!response.ok) {
             throw new BadRequestException(`Failed to fetch gallery image: ${response.statusText}`);
           }
-          
+
           const buffer = Buffer.from(await response.arrayBuffer());
 
           const result = await this.cloudinaryService.uploadImage(

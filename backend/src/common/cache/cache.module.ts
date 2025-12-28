@@ -1,4 +1,4 @@
-import { Module, Global, DynamicModule, ModuleMetadata } from '@nestjs/common';
+import { Module, Global, DynamicModule } from '@nestjs/common';
 import {
   CacheModule as NestCacheModule,
   CacheModuleOptions as NestCacheModuleOptions,

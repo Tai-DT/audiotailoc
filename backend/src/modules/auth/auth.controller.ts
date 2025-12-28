@@ -1,13 +1,13 @@
 import {
-Body,
-Controller,
-Get,
-HttpException,
-HttpStatus,
-Post,
-Put,
-Req,
-UseGuards,
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Put,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
@@ -17,11 +17,13 @@ import { UsersService } from '../users/users.service';
 import { IsEmail, IsOptional, IsString, MinLength, IsBoolean, Matches } from 'class-validator';
 
 const PASSWORD_REGEX = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
-const PASSWORD_MESSAGE = 'Password is too weak. It must contain at least one uppercase letter, one lowercase letter, one number or special character.';
+const PASSWORD_MESSAGE =
+  'Password is too weak. It must contain at least one uppercase letter, one lowercase letter, one number or special character.';
 
 class RegisterDto {
   @IsEmail() email!: string;
-  @MinLength(8) @IsString()
+  @MinLength(8)
+  @IsString()
   @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   password!: string;
   @IsOptional() @IsString() name?: string;
@@ -42,14 +44,16 @@ class ForgotPasswordDto {
 
 class ResetPasswordDto {
   @IsString() token!: string;
-  @MinLength(8) @IsString()
+  @MinLength(8)
+  @IsString()
   @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   newPassword!: string;
 }
 
 class ChangePasswordDto {
   @IsString() currentPassword!: string;
-  @MinLength(8) @IsString()
+  @MinLength(8)
+  @IsString()
   @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   newPassword!: string;
 }
@@ -60,7 +64,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly users: UsersService,
-  ) { }
+  ) {}
 
   @Get('status')
   async status() {

@@ -23,6 +23,7 @@ export default function ReviewsPage() {
   const {
     reviews,
     stats,
+    reviewType,
     fetchReviews,
     approveReview,
     rejectReview,
@@ -33,8 +34,8 @@ export default function ReviewsPage() {
   const [filterRating, setFilterRating] = useState("all")
 
   useEffect(() => {
-    fetchReviews(activeTab)
-  }, [activeTab, fetchReviews])
+    fetchReviews(activeTab, reviewType)
+  }, [activeTab, reviewType, fetchReviews])
 
   const renderStars = (rating: number) => {
     return (
@@ -77,17 +78,25 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Quản lý Đánh giá</h1>
               <p className="text-muted-foreground">
                 Xem xét và quản lý đánh giá từ khách hàng
               </p>
             </div>
-            <Button onClick={() => fetchReviews(activeTab)} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Làm mới
-            </Button>
+            <div className="flex items-center gap-2">
+              <Tabs value={reviewType} onValueChange={(v) => fetchReviews(activeTab, v as any)} className="w-[300px]">
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="product" className="text-xs">Sản phẩm</TabsTrigger>
+                  <TabsTrigger value="service" className="text-xs">Dịch vụ</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button onClick={() => fetchReviews(activeTab, reviewType)} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Làm mới
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}

@@ -20,10 +20,10 @@ export declare class InventoryAlertController {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -46,10 +46,10 @@ export declare class InventoryAlertController {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -73,10 +73,10 @@ export declare class InventoryAlertController {
             };
         } & {
             message: string;
+            type: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            type: string;
             productId: string;
             threshold: number | null;
             currentStock: number;
@@ -96,10 +96,10 @@ export declare class InventoryAlertController {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -120,10 +120,10 @@ export declare class InventoryAlertController {
         };
     } & {
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;
@@ -136,10 +136,10 @@ export declare class InventoryAlertController {
     checkAndCreateAlerts(): Promise<any[]>;
     delete(id: string): Promise<{
         message: string;
+        type: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        type: string;
         productId: string;
         threshold: number | null;
         currentStock: number;

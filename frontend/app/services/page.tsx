@@ -3,16 +3,22 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ServiceGrid } from '@/components/services/service-grid';
-import { ServiceFilters } from '@/components/services/service-filters';
 import { useServices, useServiceTypes } from '@/lib/hooks/use-api';
 import { ServiceFilters as ServiceFiltersType } from '@/lib/types';
-import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+
+import { ServicesHero } from '@/components/services/services-hero';
+import { ServiceGridNew } from '@/components/services/service-grid-new';
+import { ServiceFiltersNew } from '@/components/services/service-filters-new';
+
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SlidersHorizontal } from 'lucide-react';
 
 function ServicesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: serviceTypes } = useServiceTypes();
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [filters, setFilters] = useState<ServiceFiltersType>({
     typeId: undefined,
@@ -24,31 +30,20 @@ function ServicesPageContent() {
     pageSize: 12
   });
 
-  // Initialize filters from query parameters
+  // Initialize filters from URL
   useEffect(() => {
     const typeParam = searchParams.get('type');
-    const minPriceParam = searchParams.get('minPrice');
-    const maxPriceParam = searchParams.get('maxPrice');
-    const sortByParam = searchParams.get('sortBy');
-    const sortOrderParam = searchParams.get('sortOrder');
     const pageParam = searchParams.get('page');
 
-    // If type parameter is provided, find the matching service type ID
     let typeId: string | undefined;
     if (typeParam && serviceTypes) {
-      const matchingType = serviceTypes.find(
-        t => t.slug === typeParam || t.id === typeParam
-      );
+      const matchingType = serviceTypes.find(t => t.slug === typeParam || t.id === typeParam);
       typeId = matchingType?.id;
     }
 
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      typeId: typeId || prevFilters.typeId,
-      minPrice: minPriceParam ? parseInt(minPriceParam, 10) : prevFilters.minPrice,
-      maxPrice: maxPriceParam ? parseInt(maxPriceParam, 10) : prevFilters.maxPrice,
-      sortBy: (sortByParam as ServiceFiltersType['sortBy']) || prevFilters.sortBy,
-      sortOrder: (sortOrderParam as ServiceFiltersType['sortOrder']) || prevFilters.sortOrder,
+    setFilters(prev => ({
+      ...prev,
+      typeId: typeId || prev.typeId,
       page: pageParam ? parseInt(pageParam, 10) : 1
     }));
   }, [searchParams, serviceTypes]);
@@ -56,126 +51,107 @@ function ServicesPageContent() {
   const { data, isLoading } = useServices(filters);
 
   const handleFiltersChange = (newFilters: Partial<ServiceFiltersType>) => {
-    const updatedFilters = {
-      ...filters,
-      ...newFilters,
-      page: 1 // Reset to first page when filters change
-    };
-
+    const updatedFilters = { ...filters, ...newFilters, page: 1 };
     setFilters(updatedFilters);
-
-    // Update URL parameters
-    const params = new URLSearchParams();
-    if (updatedFilters.typeId) {
-      const serviceType = serviceTypes?.find(t => t.id === updatedFilters.typeId);
-      if (serviceType) {
-        params.set('type', serviceType.slug);
-      }
-    }
-    if (updatedFilters.minPrice) {
-      params.set('minPrice', updatedFilters.minPrice.toString());
-    }
-    if (updatedFilters.maxPrice) {
-      params.set('maxPrice', updatedFilters.maxPrice.toString());
-    }
-    if (updatedFilters.sortBy !== 'createdAt') {
-      params.set('sortBy', updatedFilters.sortBy!);
-    }
-    if (updatedFilters.sortOrder !== 'desc') {
-      params.set('sortOrder', updatedFilters.sortOrder!);
-    }
-
-    const queryString = params.toString();
-    router.push(`/services${queryString ? `?${queryString}` : ''}`);
+    updateURL(updatedFilters);
+    setIsMobileFilterOpen(false);
   };
 
   const handlePageChange = (newPage: number) => {
-    const updatedFilters = {
-      ...filters,
-      page: newPage
-    };
+    const updatedFilters = { ...filters, page: newPage };
     setFilters(updatedFilters);
+    updateURL(updatedFilters);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-    // Update URL with page parameter
+  const updateURL = (updatedFilters: ServiceFiltersType) => {
     const params = new URLSearchParams();
-    if (filters.typeId) {
-      const serviceType = serviceTypes?.find(t => t.id === filters.typeId);
-      if (serviceType) {
-        params.set('type', serviceType.slug);
-      }
+    
+    if (updatedFilters.typeId) {
+      const serviceType = serviceTypes?.find(t => t.id === updatedFilters.typeId);
+      if (serviceType) params.set('type', serviceType.slug);
     }
-    if (filters.minPrice) {
-      params.set('minPrice', filters.minPrice.toString());
-    }
-    if (filters.maxPrice) {
-      params.set('maxPrice', filters.maxPrice.toString());
-    }
-    if (filters.sortBy !== 'createdAt') {
-      params.set('sortBy', filters.sortBy!);
-    }
-    if (filters.sortOrder !== 'desc') {
-      params.set('sortOrder', filters.sortOrder!);
-    }
-    if (newPage > 1) {
-      params.set('page', newPage.toString());
+    if (updatedFilters.page && updatedFilters.page > 1) {
+      params.set('page', updatedFilters.page.toString());
     }
 
     const queryString = params.toString();
-    router.push(`/services${queryString ? `?${queryString}` : ''}`);
-
-    // Scroll to top
-    window.scrollTo(0, 0);
+    router.push(`/services${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
 
   const services = data?.items || [];
   const totalPages = data?.totalPages || 1;
+  const totalItems = data?.total || services.length;
+
+  const activeFilterCount = [filters.minPrice || filters.maxPrice, filters.typeId].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-4">
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-xs text-muted-foreground mb-4">
-          <Link href="/" className="hover:text-primary">
-            Home
-          </Link>
+      {/* Hero */}
+      <ServicesHero totalServices={totalItems} />
+
+      {/* Breadcrumb */}
+      <div className="container mx-auto px-4 py-4">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-primary">Trang chủ</Link>
           <span>/</span>
           <span className="text-foreground">Dịch vụ</span>
         </nav>
+      </div>
 
-        {/* Compact Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1">
-            <AnimatedGradientText
-              className="text-2xl sm:text-3xl font-bold"
-              speed={1.2}
-              colorFrom="oklch(0.58 0.28 20)"
-              colorTo="oklch(0.70 0.22 40)"
-            >
-              Danh sách dịch vụ
-            </AnimatedGradientText>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Khám phá các dịch vụ chuyên nghiệp của chúng tôi
-          </p>
-        </div>
-
+      {/* Content */}
+      <main className="container mx-auto px-4 pb-12">
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar - Filters */}
-          <aside className="lg:col-span-1">
-            <ServiceFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-            />
+          {/* Desktop Filters */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-20">
+              <ServiceFiltersNew
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+              />
+            </div>
           </aside>
 
-          {/* Main Content - Service Grid */}
+          {/* Mobile Filter Button */}
+          <div className="lg:hidden mb-4">
+            <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span className="flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Bộ lọc
+                    {activeFilterCount > 0 && (
+                      <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-full max-w-sm">
+                <SheetHeader>
+                  <SheetTitle>Bộ lọc</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">
+                  <ServiceFiltersNew
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    className="border-0 p-0"
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Service Grid */}
           <section className="lg:col-span-3">
-            <ServiceGrid
+            <ServiceGridNew
               services={services}
               isLoading={isLoading}
               totalPages={totalPages}
               currentPage={filters.page || 1}
               onPageChange={handlePageChange}
+              totalItems={totalItems}
             />
           </section>
         </div>
@@ -186,7 +162,11 @@ function ServicesPageContent() {
 
 export default function ServicesPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    }>
       <ServicesPageContent />
     </Suspense>
   );

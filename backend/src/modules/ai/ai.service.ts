@@ -1,11 +1,11 @@
 import { Injectable, Logger, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 /**
  * AI Service
- * Integrates with Google Gemini API for recommendations, Q&A, and chatbot functionality
+ * Integrates with Google Gemini API through Antigravity proxy for recommendations, Q&A, and chatbot functionality
  */
 
 export interface ProductRecommendation {
@@ -43,8 +43,7 @@ export interface AIAnalysis {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly geminiApiKey: string;
-  private readonly geminiApiUrl =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private readonly geminiModel: string;
   private readonly maxTokens = 1000;
 
   constructor(
@@ -52,9 +51,12 @@ export class AiService {
     private readonly prisma: PrismaService,
   ) {
     this.geminiApiKey = this.configService.get<string>('GOOGLE_GEMINI_API_KEY') || '';
+    this.geminiModel = this.configService.get<string>('GEMINI_MODEL') || 'gemini-1.5-flash';
 
     if (!this.geminiApiKey) {
       this.logger.warn('GOOGLE_GEMINI_API_KEY not configured - AI features will be limited');
+    } else {
+      this.logger.log(`AI Service initialized with standard Gemini API (Model: ${this.geminiModel})`);
     }
   }
 
@@ -298,38 +300,48 @@ You help customers find products, answer questions about audio equipment, servic
 Keep responses concise and friendly. If the user asks about specific products or services,
 recommend products from the store when relevant.`;
 
-      const messages = [...(conversationHistory || []), { role: 'user', content: userMessage }];
+      const conversationMessages = [...(conversationHistory || []), { role: 'user', content: userMessage }];
+
+      // Google Gemini Format
+      // Map roles for Gemini: 'assistant' -> 'model'
+      const contents = conversationMessages.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      // Add system prompt to the first message if possible, or prepend it
+      if (contents.length > 0 && contents[0].role === 'user') {
+        contents[0].parts[0].text = `${systemPrompt}\n\n${contents[0].parts[0].text}`;
+      }
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.geminiModel}:generateContent`;
 
       const response = await axios.post(
-        `${this.geminiApiUrl}?key=${this.geminiApiKey}`,
+        `${apiUrl}?key=${this.geminiApiKey}`,
         {
-          contents: [
-            {
-              parts: [
-                {
-                  text: systemPrompt + '\n\nUser message: ' + userMessage,
-                },
-              ],
-            },
-          ],
+          contents,
           generationConfig: {
             maxOutputTokens: this.maxTokens,
             temperature: 0.7,
           },
         },
-        { timeout: 10000 },
+        { timeout: 15000 },
       );
 
-      const content =
-        response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        'I could not generate a response.';
+      const content = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'I could not generate a response.';
 
       return {
         message: content,
         confidence: 0.8,
-        conversationContext: { messageCount: messages.length },
+        conversationContext: { messageCount: conversationMessages.length },
       };
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        this.logger.error('Gemini API Error:', error.response.data);
+        const errorMessage = error.response.data?.error?.message || 'Gemini API failed';
+        const statusCode = error.response.status || HttpStatus.INTERNAL_SERVER_ERROR;
+        throw new HttpException(errorMessage, statusCode);
+      }
       this.logger.error('Error generating AI response:', error);
       throw new HttpException('Failed to generate AI response', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -372,15 +384,19 @@ recommend products from the store when relevant.`;
    */
   private async generateAISuggestions(query: string): Promise<SearchSuggestion[]> {
     try {
+      const prompt = `Generate 5 search suggestions for the query "${query}" in JSON format.
+Return array with objects containing "query" and "confidence" (0-1). Keep suggestions relevant to audio equipment.`;
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.geminiModel}:generateContent`;
+
       const response = await axios.post(
-        `${this.geminiApiUrl}?key=${this.geminiApiKey}`,
+        `${apiUrl}?key=${this.geminiApiKey}`,
         {
           contents: [
             {
               parts: [
                 {
-                  text: `Generate 5 search suggestions for the query "${query}" in JSON format.
-Return array with objects containing "query" and "confidence" (0-1). Keep suggestions relevant to audio equipment.`,
+                  text: prompt,
                 },
               ],
             },
@@ -394,6 +410,7 @@ Return array with objects containing "query" and "confidence" (0-1). Keep sugges
       );
 
       const content = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
       if (!content) {
         return [];
       }

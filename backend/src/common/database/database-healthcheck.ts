@@ -434,7 +434,7 @@ export class DatabaseHealthCheck {
   /**
    * Get health check history
    */
-  async getHealthHistory(limit: number = 100): Promise<HealthCheckResult[]> {
+  async getHealthHistory(_limit: number = 100): Promise<HealthCheckResult[]> {
     // This would typically store results in a time-series database
     return this.lastHealthCheck ? [this.lastHealthCheck] : [];
   }

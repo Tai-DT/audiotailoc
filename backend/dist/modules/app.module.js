@@ -47,6 +47,7 @@ const projects_module_1 = require("./projects/projects.module");
 const seo_module_1 = require("./seo/seo.module");
 const blog_module_1 = require("./blog/blog.module");
 const reviews_module_1 = require("./reviews/reviews.module");
+const service_reviews_module_1 = require("./service-reviews/service-reviews.module");
 const messages_module_1 = require("./messages/messages.module");
 const chat_module_1 = require("./chat/chat.module");
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
@@ -88,6 +89,7 @@ const runtimeImports = [
     blog_module_1.BlogModule,
     projects_module_1.ProjectsModule,
     reviews_module_1.ReviewsModule,
+    service_reviews_module_1.ServiceReviewsModule,
     messages_module_1.MessagesModule,
     chat_module_1.ChatModule,
 ];

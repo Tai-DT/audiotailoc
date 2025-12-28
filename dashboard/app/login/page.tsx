@@ -182,39 +182,6 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              <p className="font-semibold mb-2">Demo credentials:</p>
-              {/* <div className="space-y-1">
-                <div className="flex items-center justify-center gap-2">
-                  <p className="font-mono text-xs">Email: admin@audiotailoc.com</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => {
-                      navigator.clipboard.writeText('admin@audiotailoc.com');
-                      toast.success('Email copied to clipboard');
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="font-mono text-xs">Password: admin123</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => {
-                      navigator.clipboard.writeText('admin123');
-                      toast.success('Password copied to clipboard');
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div> */}
               <p className="text-xs text-muted-foreground mt-2">
                 Please contact administrator for access.
               </p>

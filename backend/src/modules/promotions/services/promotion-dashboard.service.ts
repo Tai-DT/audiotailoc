@@ -377,7 +377,7 @@ export class PromotionDashboardService {
   async executeBulkEdit(
     promotionIds: string[],
     changes: Record<string, any>,
-    userId: string,
+    _userId: string,
   ): Promise<BulkEditOperation> {
     const operationId = uuidv4();
     const operation: BulkEditOperation = {
@@ -399,10 +399,17 @@ export class PromotionDashboardService {
           // SECURITY: Explicit field whitelist to prevent mass assignment
           // Only allow specific fields to be updated via bulk operation
           const ALLOWED_UPDATE_FIELDS = [
-            'type', 'value', 'isActive', 'expiresAt', 'name', 
-            'description', 'code', 'minOrderAmount', 'maxDiscount'
+            'type',
+            'value',
+            'isActive',
+            'expiresAt',
+            'name',
+            'description',
+            'code',
+            'minOrderAmount',
+            'maxDiscount',
           ];
-          
+
           const updateData: any = {};
 
           // Map changes to database fields (only allowed fields)
@@ -422,11 +429,13 @@ export class PromotionDashboardService {
 
           // SECURITY: Validate that we're only updating allowed fields
           const updateFields = Object.keys(updateData);
-          const invalidFields = updateFields.filter(field => !ALLOWED_UPDATE_FIELDS.includes(field));
+          const invalidFields = updateFields.filter(
+            field => !ALLOWED_UPDATE_FIELDS.includes(field),
+          );
           if (invalidFields.length > 0) {
             throw new Error(
               `Invalid fields in bulk update: ${invalidFields.join(', ')}. ` +
-              `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`
+                `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`,
             );
           }
 

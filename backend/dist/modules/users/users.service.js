@@ -244,7 +244,7 @@ let UsersService = UsersService_1 = class UsersService {
             });
         }
         catch (_error) {
-            console.log('Error deleting orders, continuing...');
+            this.logger.warn('Error deleting orders, continuing...');
         }
         try {
             const cart = await this.prisma.carts.findFirst({
@@ -260,7 +260,7 @@ let UsersService = UsersService_1 = class UsersService {
             }
         }
         catch (_error) {
-            console.log('Error deleting cart, continuing...');
+            this.logger.warn('Error deleting cart, continuing...');
         }
         await this.prisma.$transaction(async (tx) => {
             await tx.users.delete({
@@ -379,7 +379,7 @@ let UsersService = UsersService_1 = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
-        const { password: _, ...userData } = user;
+        const { password: _password, ...userData } = user;
         return {
             exportDate: new Date().toISOString(),
             user: {

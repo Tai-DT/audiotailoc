@@ -23,12 +23,7 @@ export class UrlValidator {
   private static readonly ALLOWED_PROTOCOLS = ['http:', 'https:'];
 
   // Blocked hostnames
-  private static readonly BLOCKED_HOSTNAMES = [
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0',
-    '::1',
-  ];
+  private static readonly BLOCKED_HOSTNAMES = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
 
   /**
    * Validate URL for SSRF protection
@@ -87,11 +82,13 @@ export class UrlValidator {
     // This prevents bypassing domain whitelist by using IP addresses
     const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
     const ipv6Regex = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
-    
+
     if (ipv4Regex.test(hostname) || ipv6Regex.test(hostname)) {
       // If whitelist is provided, block all IPs
       if (allowedDomains && allowedDomains.length > 0) {
-        throw new BadRequestException('IP addresses are not allowed when domain whitelist is configured');
+        throw new BadRequestException(
+          'IP addresses are not allowed when domain whitelist is configured',
+        );
       }
       // Otherwise, just log a warning but allow (for flexibility)
       this.logger.warn(`URL uses IP address instead of domain name: ${hostname}`);
@@ -112,7 +109,7 @@ export class UrlValidator {
     urlString: string,
     allowedDomains?: string[],
     timeout: number = 10000,
-    maxSize: number = 10 * 1024 * 1024, // 10MB default
+    _maxSize: number = 10 * 1024 * 1024, // 10MB default
   ): { url: URL; fetchOptions: RequestInit } {
     const url = this.validateUrl(urlString, allowedDomains);
 

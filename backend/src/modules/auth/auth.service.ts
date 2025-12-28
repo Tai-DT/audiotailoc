@@ -13,7 +13,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly config: ConfigService,
     private readonly securityService: SecurityService,
-  ) { }
+  ) {}
 
   async register(dto: { email: string; password: string; name?: string }) {
     // Validate password strength using SecurityService
@@ -62,7 +62,7 @@ export class AuthService {
       throw new Error('JWT secrets are not configured');
     }
     const accessToken = jwt.sign(
-      { sub: user.id, email: user.email, role: (user as any).role ?? 'USER' },
+      { sub: user.id, email: user.email, role: (user as { role?: string }).role ?? 'USER' },
       accessSecret,
       { expiresIn: '15m' }, // Short-lived access token for security
     );
@@ -90,7 +90,7 @@ export class AuthService {
       if (!user) throw new Error('User not found');
 
       // Validate user is still active and not disabled
-      const userRole = (user as any).role;
+      const userRole = (user as { role?: string }).role;
       if (userRole === 'DISABLED') {
         throw new Error('User account has been disabled');
       }
@@ -131,7 +131,9 @@ export class AuthService {
     // SECURITY: Only log in development mode, never log tokens in production
     if (process.env.NODE_ENV === 'development') {
       this.logger.debug(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
-      this.logger.debug(`[DEV ONLY] Reset link: http://localhost:3000/reset-password?token=${resetToken}`);
+      this.logger.debug(
+        `[DEV ONLY] Reset link: http://localhost:3000/reset-password?token=${resetToken}`,
+      );
     } else {
       // In production, only log that a reset was requested (without token)
       this.logger.log(`Password reset requested for ${email}`);
@@ -177,7 +179,10 @@ export class AuthService {
     }
 
     // Verify current password using SecurityService
-    const isCurrentPasswordValid = await this.securityService.verifyPassword(currentPassword, user.password);
+    const isCurrentPasswordValid = await this.securityService.verifyPassword(
+      currentPassword,
+      user.password,
+    );
     if (!isCurrentPasswordValid) {
       throw new Error('Current password is incorrect');
     }

@@ -350,8 +350,9 @@ export class PerformanceService {
   }
 
   private getActiveRequestCount(): number {
-    // This would need to be tracked separately in a real implementation
-    return 0;
+    // Return count of requests in the last 30 seconds as a proxy for active requests
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+    return this.requestMetrics.filter(r => r.timestamp >= thirtySecondsAgo).length;
   }
 
   private cleanupMetrics() {

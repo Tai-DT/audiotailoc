@@ -195,7 +195,7 @@ export class ReviewsService {
   }
 
   async updateStatus(id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') {
-    const review = await this.findById(id);
+    const _review = await this.findById(id);
 
     const updated = await this.prisma.product_reviews.update({
       where: { id },
