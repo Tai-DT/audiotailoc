@@ -1,0 +1,16 @@
+{
+  "name": "audiotailoc-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AudioTaiLoc - Audio Equipment E-commerce Platform",
+  "engines": {
+    "node": ">=20.x",
+    "npm": ">=10.x"
+  },
+  "scripts": {
+    "postinstall": "cd backend && npm install",
+    "build": "cd backend && npm run build",
+    "start": "cd backend && npm start",
+    "heroku-postbuild": "cd backend && npm run build"
+  }
+}
