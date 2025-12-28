@@ -68,6 +68,7 @@ type BackendReview = {
 
 type BackendListResponse = {
   data: BackendReview[]
+  items?: BackendReview[]
   total: number
   page: number
   pageSize: number

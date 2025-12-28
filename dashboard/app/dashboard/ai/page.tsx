@@ -74,7 +74,7 @@ export default function AIPage() {
     try {
       setLoading(true)
       const response = await apiClient.get('/ai/status')
-      setStatus(response.data.data)
+      setStatus((response.data as { data: AIStatus }).data)
     } catch (error) {
       console.error('Failed to fetch AI status:', error)
       toast.error('Không thể kiểm tra trạng thái AI')
@@ -87,7 +87,7 @@ export default function AIPage() {
     try {
       setLoadingRecommendations(true)
       const response = await apiClient.get('/ai/recommendations?limit=6')
-      setRecommendations(response.data.data || [])
+      setRecommendations((response.data as { data: ProductRecommendation[] }).data || [])
     } catch (error) {
       console.error('Failed to fetch recommendations:', error)
     } finally {
@@ -126,11 +126,12 @@ export default function AIPage() {
         }))
       })
 
+      const responseData = response.data as { data: { message: string; suggestedProducts?: any[] } }
       const aiResponse: Message = {
         role: 'assistant',
-        content: response.data.data.message,
+        content: responseData.data.message,
         timestamp: new Date(),
-        suggestedProducts: response.data.data.suggestedProducts
+        suggestedProducts: responseData.data.suggestedProducts
       }
 
       setMessages(prev => [...prev, aiResponse])
@@ -160,7 +161,7 @@ export default function AIPage() {
     try {
       setLoadingSuggestions(true)
       const response = await apiClient.get(`/ai/suggestions?q=${encodeURIComponent(searchQuery)}&limit=10`)
-      setSearchSuggestions(response.data.data || [])
+      setSearchSuggestions((response.data as { data: any[] }).data || [])
     } catch (error) {
       console.error('Failed to fetch suggestions:', error)
     } finally {
@@ -180,7 +181,8 @@ export default function AIPage() {
         message: `Viết mô tả sản phẩm chuyên nghiệp cho thiết bị âm thanh: "${productName}". ${productSpecs ? `Thông số kỹ thuật: ${productSpecs}` : ''} Viết bằng tiếng Việt, tối đa 200 từ, nêu bật tính năng và lợi ích.`
       })
       
-      setGeneratedDescription(response.data.data.message)
+      const responseData = response.data as { data: { message: string } }
+      setGeneratedDescription(responseData.data.message)
     } catch (error: any) {
       console.error('Failed to generate description:', error)
       const errorMsg = error.message || ''
