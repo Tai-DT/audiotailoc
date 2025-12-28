@@ -35,33 +35,13 @@
       "permanent": true
     },
     {
-      "source": "/products",
-      "destination": "/products",
-      "permanent": true
-    },
-    {
-      "source": "/products/(.*)",
-      "destination": "/products/$1",
-      "permanent": true
-    },
-    {
       "source": "/categories",
       "destination": "/danh-muc",
       "permanent": true
     },
     {
-      "source": "/categories/(.*)",
-      "destination": "/danh-muc/$1",
-      "permanent": true
-    },
-    {
-      "source": "/services",
-      "destination": "/services",
-      "permanent": true
-    },
-    {
-      "source": "/services/(.*)",
-      "destination": "/services/$1",
+      "source": "/categories/:path*",
+      "destination": "/danh-muc/:path*",
       "permanent": true
     },
     {
@@ -70,8 +50,8 @@
       "permanent": true
     },
     {
-      "source": "/projects/(.*)",
-      "destination": "/du-an/$1",
+      "source": "/projects/:path*",
+      "destination": "/du-an/:path*",
       "permanent": true
     }
   ]
