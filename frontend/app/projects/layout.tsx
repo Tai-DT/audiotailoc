@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Dự án | Audio Tài Lộc',
     description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai',
     type: 'website',
-    url: '/projects',
+    url: '/du-an',
   },
 };
 

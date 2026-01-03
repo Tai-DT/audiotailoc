@@ -176,13 +176,13 @@ export const PAGE_METADATA = {
   categories: generatePageMetadata({
     title: 'Danh mục',
     description: 'Xem sản phẩm theo danh mục',
-    path: '/categories',
+    path: '/danh-muc',
   }),
   
   projects: generatePageMetadata({
     title: 'Dự án',
     description: 'Các dự án âm thanh đã thực hiện bởi Audio Tài Lộc',
-    path: '/projects',
+    path: '/du-an',
   }),
   
   support: generatePageMetadata({

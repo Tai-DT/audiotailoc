@@ -99,7 +99,7 @@ export default function ProjectDetailPage() {
             <p className="text-muted-foreground mb-8">
               Dự án bạn tìm kiếm có thể đã bị xóa hoặc không tồn tại.
             </p>
-            <Link href="/projects">
+            <Link href="/du-an">
               <Button>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Quay lại danh sách dự án
@@ -152,7 +152,7 @@ export default function ProjectDetailPage() {
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
           <Link href="/" className="hover:text-primary">Trang chủ</Link>
           <span>/</span>
-          <Link href="/projects" className="hover:text-primary">Dự án</Link>
+          <Link href="/du-an" className="hover:text-primary">Dự án</Link>
           <span>/</span>
           <span className="text-foreground">{project.name}</span>
         </nav>
@@ -442,7 +442,7 @@ export default function ProjectDetailPage() {
               <p className="text-muted-foreground mb-6">
                 Chúng tôi có nhiều dự án âm thanh chất lượng khác. Hãy khám phá thêm!
               </p>
-              <Link href="/projects">
+              <Link href="/du-an">
                 <Button size="lg">
                   Xem tất cả dự án
                 </Button>

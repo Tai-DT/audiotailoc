@@ -44,7 +44,7 @@ export async function generateMetadata ( { params }: { params: Promise<{ slug: s
             type: 'website',
         },
         alternates: {
-            canonical: `${ process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com' }/categories/${ category.slug || slug }`,
+            canonical: `${ process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com' }/danh-muc/${ category.slug || slug }`,
         },
     };
 }

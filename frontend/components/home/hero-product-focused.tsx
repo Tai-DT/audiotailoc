@@ -69,10 +69,10 @@ export function HeroProductFocused() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {[
-              { title: 'Loa chuyên nghiệp', href: '/categories?category=speakers', icon: '🔊' },
-              { title: 'Micro & Thu âm', href: '/categories?category=microphones', icon: '🎤' },
-              { title: 'Mixer & Amplifier', href: '/categories?category=mixers', icon: '🎛️' },
-              { title: 'Phụ kiện âm thanh', href: '/categories?category=accessories', icon: '🔌' }
+                { title: 'Loa chuyên nghiệp', href: '/danh-muc?category=speakers', icon: '🔊' },
+                { title: 'Micro & Thu âm', href: '/danh-muc?category=microphones', icon: '🎤' },
+                { title: 'Mixer & Amplifier', href: '/danh-muc?category=mixers', icon: '🎛️' },
+                { title: 'Phụ kiện âm thanh', href: '/danh-muc?category=accessories', icon: '🔌' }
             ].map((category, index) => (
               <Link key={index} href={category.href}>
                 <div className="group p-6 rounded-xl border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">

@@ -86,6 +86,7 @@
     0% {
       background-position: 0%;
     }
+
     100% {
       background-position: 200%;
     }
@@ -248,6 +249,7 @@ html {
 
 /* Focus visible styles - for keyboard navigation */
 @layer base {
+
   /* Remove default outline and use focus-visible for keyboard focus */
   *:focus {
     outline: none;
@@ -311,27 +313,11 @@ html {
   white-space: normal;
 }
 
-/* Skip to main content link */
-.skip-to-content {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--background);
-  color: var(--foreground);
-  padding: 8px 16px;
-  z-index: 9999;
-  transition: top 0.3s ease;
-  border: 2px solid var(--primary);
-  border-radius: 0 0 8px 0;
-  font-weight: 500;
-}
 
-.skip-to-content:focus {
-  top: 0;
-}
 
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

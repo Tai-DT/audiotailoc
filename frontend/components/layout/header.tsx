@@ -129,7 +129,8 @@ export function Header() {
   };
 
   const primaryLinks: NavLink[] = [
-    { href: '/projects', label: 'Dự án' },
+    { href: '/about', label: 'Giới thiệu' },
+    { href: '/du-an', label: 'Dự án' },
     { href: '/blog', label: 'Blog' },
     { href: '/support', label: 'Hỗ trợ' },
     { href: '/contact', label: 'Liên hệ' },
@@ -146,7 +147,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm transition-all duration-300">
       {/* Top info bar */}
-      <div className="hidden lg:block border-b bg-gradient-primary/5">
+      <div className="hidden lg:block border-b">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between text-xs py-2 text-muted-foreground">
             <div className="flex items-center space-x-4 lg:space-x-6">

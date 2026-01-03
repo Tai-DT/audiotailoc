@@ -86,7 +86,7 @@ export function SimpleHeader({
               Dịch vụ
             </Link>
             <Link 
-              href="/projects" 
+              href="/du-an" 
               className="text-foreground hover:text-primary font-medium py-2 px-3 transition-colors"
             >
               Dự án
@@ -248,7 +248,7 @@ export function SimpleHeader({
                 Dịch vụ
               </Link>
               <Link 
-                href="/projects" 
+                href="/du-an" 
                 className="text-sm font-medium transition-colors hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >

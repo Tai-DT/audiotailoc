@@ -114,6 +114,32 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async redirects() {
+    return [
+      // Canonical Vietnamese routes for better SEO
+      {
+        source: '/categories',
+        destination: '/danh-muc',
+        permanent: true,
+      },
+      {
+        source: '/categories/:slug',
+        destination: '/danh-muc/:slug',
+        permanent: true,
+      },
+      {
+        source: '/projects',
+        destination: '/du-an',
+        permanent: true,
+      },
+      {
+        source: '/projects/:slug',
+        destination: '/du-an/:slug',
+        permanent: true,
+      },
+    ];
+  },
+
   // Remove turbopack config to avoid conflict with outputFileTracingRoot
   async rewrites() {
     // Only use rewrites in development to proxy API requests to backend
@@ -175,7 +201,8 @@ const nextConfig: NextConfig = {
       },
     ],
     dangerouslyAllowSVG: true,
-    unoptimized: true,
+    // Default to optimized images in production; allow opting out via env.
+    unoptimized: process.env.NEXT_PUBLIC_DISABLE_IMAGE_OPTIMIZATION === 'true',
   },
 };
 

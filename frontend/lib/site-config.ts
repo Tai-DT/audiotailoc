@@ -77,7 +77,7 @@ export const SEO_CONFIG = {
 export const NAVIGATION = {
   // Primary navigation links
   primary: [
-    { href: '/projects', label: 'Dự án', description: 'Các dự án đã thực hiện' },
+    { href: '/du-an', label: 'Dự án', description: 'Các dự án đã thực hiện' },
     { href: '/blog', label: 'Blog', description: 'Tin tức và bài viết' },
     { href: '/support', label: 'Hỗ trợ', description: 'Trung tâm hỗ trợ' },
     { href: '/contact', label: 'Liên hệ', description: 'Liên hệ với chúng tôi' },
@@ -95,7 +95,7 @@ export const NAVIGATION = {
   footerQuickLinks: [
     { href: '/products', label: 'Sản phẩm' },
     { href: '/services', label: 'Dịch vụ' },
-    { href: '/projects', label: 'Dự án' },
+    { href: '/du-an', label: 'Dự án' },
     { href: '/contact', label: 'Liên hệ' },
   ],
   

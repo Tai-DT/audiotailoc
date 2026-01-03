@@ -169,7 +169,7 @@ export function FeaturedProjects() {
                         </div>
                       )}
                       
-                      <Link href="/projects" className="block">
+                      <Link href="/du-an" className="block">
                         <Button 
                           variant="outline" 
                           className="w-full border-gray-700 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 group/btn"
@@ -188,7 +188,7 @@ export function FeaturedProjects() {
         {/* View All Button */}
         <BlurFade delay={0.4} inView>
           <div className="text-center">
-            <Link href="/projects">
+            <Link href="/du-an">
               <RainbowButton className="px-8 py-3 text-base font-bold">
                 Xem tất cả dự án <ArrowRight className="ml-2 h-5 w-5" />
               </RainbowButton>

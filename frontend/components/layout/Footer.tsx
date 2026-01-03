@@ -103,9 +103,10 @@ export function Footer() {
             <h3 className="font-semibold text-base sm:text-lg text-foreground mb-4">Liên kết nhanh</h3>
             <nav className="space-y-2.5">
               {[
+                { href: '/about', label: 'Giới thiệu' },
                 { href: '/products', label: 'Sản phẩm' },
                 { href: '/services', label: 'Dịch vụ' },
-                { href: '/projects', label: 'Dự án' },
+                { href: '/du-an', label: 'Dự án' },
                 { href: '/contact', label: 'Liên hệ' },
               ].map((link, index) => (
                 <motion.div

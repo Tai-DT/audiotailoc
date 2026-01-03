@@ -31,7 +31,7 @@ export const demoBanners: Banner[] = [
     buttonLabel: 'Đặt lịch tư vấn',
     linkUrl: '/service-booking',
     secondaryButtonLabel: 'Xem dự án',
-    secondaryButtonUrl: '/projects',
+    secondaryButtonUrl: '/du-an',
     page: 'home',
     position: 2,
     isActive: true,

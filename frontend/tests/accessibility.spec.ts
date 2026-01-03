@@ -10,7 +10,7 @@ const PAGES_TO_TEST = [
   { name: 'Search', path: '/search' },
   { name: 'Contact', path: '/contact' },
   { name: 'Blog', path: '/blog' },
-  { name: 'Projects', path: '/projects' },
+  { name: 'Projects', path: '/du-an' },
   { name: 'Support', path: '/support' },
   { name: 'Login', path: '/auth/login' },
   { name: 'Register', path: '/register' },

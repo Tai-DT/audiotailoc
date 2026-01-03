@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     title: 'Danh mục sản phẩm | Audio Tài Lộc',
     description: 'Xem sản phẩm theo danh mục tại Audio Tài Lộc',
     type: 'website',
-    url: '/categories',
+    url: '/danh-muc',
   },
 };
 

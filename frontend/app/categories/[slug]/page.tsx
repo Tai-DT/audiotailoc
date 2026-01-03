@@ -123,7 +123,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
           <Link href="/" className="hover:text-primary">Trang chủ</Link>
           <span>/</span>
-          <Link href="/categories" className="hover:text-primary">Danh mục</Link>
+          <Link href="/danh-muc" className="hover:text-primary">Danh mục</Link>
           <span>/</span>
           <span className="text-foreground">{category.name}</span>
         </nav>

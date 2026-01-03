@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useServices, useServiceTypes } from '@/lib/hooks/use-api';
 import { ServiceFilters as ServiceFiltersType } from '@/lib/types';
 
-import { ServicesHero } from '@/components/services/services-hero';
+import { PageBanner } from '@/components/shared/page-banner';
 import { ServiceGrid } from '@/components/services/service-grid';
 import { ServiceFilters } from '@/components/services/service-filters';
 
@@ -87,8 +87,12 @@ function ServicesPageContent() {
 
   return (
     <main className="min-h-screen bg-background" role="main" aria-labelledby="services-hero-title">
-      {/* Hero */}
-      <ServicesHero totalServices={totalItems} />
+      {/* Hero Banner */}
+      <PageBanner 
+        page="services" 
+        fallbackTitle="Dịch vụ của chúng tôi" 
+        fallbackSubtitle="Tư vấn, lắp đặt và bảo trì hệ thống âm thanh chuyên nghiệp"
+      />
 
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-4">

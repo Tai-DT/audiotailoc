@@ -353,6 +353,7 @@ export default function KnowledgeBasePage() {
           </CardContent>
         </Card>
       </div>
+      </main>
     </div>
   );
 }

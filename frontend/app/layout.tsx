@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast";
 import { ChatWidget } from "@/components/ui/chat-widget";
 import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
-import { ScrollProgress } from "@/components/ui/scroll-progress";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -139,20 +139,15 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
+        suppressHydrationWarning
       >
         <OrganizationStructuredData />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
             <CartProvider>
-              {/* Skip to main content - Accessibility */}
-              <a
-                href="#main-content"
-                className="skip-to-content"
-              >
-                Bỏ qua đến nội dung chính
-              </a>
+
               
-              <ScrollProgress />
+
               <Header />
               <main id="main-content" tabIndex={-1}>
                 {children}

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import { PageBanner } from '@/components/shared/page-banner';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
@@ -114,30 +114,12 @@ function ProductsPageContent() {
 
   return (
     <main className="min-h-screen bg-background" role="main" aria-labelledby="products-title">
-      {/* Compact Page Header */}
-      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="max-w-3xl">
-            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide" id="products-breadcrumb">Sản phẩm</div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              <AnimatedGradientText
-                id="products-title"
-                className="text-2xl sm:text-3xl font-bold"
-                speed={1.2}
-                colorFrom="oklch(0.58 0.28 20)"
-                colorTo="oklch(0.70 0.22 40)"
-              >
-                {currentCategory ? currentCategory.name : "Tất cả sản phẩm"}
-              </AnimatedGradientText>
-            </h1>
-            {currentCategory?.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {currentCategory.description}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Hero Banner */}
+      <PageBanner 
+        page="products" 
+        fallbackTitle={currentCategory ? currentCategory.name : "Tất cả sản phẩm"}
+        fallbackSubtitle={currentCategory?.description || "Khám phá hàng ngàn thiết bị âm thanh chính hãng"}
+      />
 
       {/* Category Not Found Alert */}
         <div className="border-b bg-destructive/5" role="alert" aria-live="aggressive">

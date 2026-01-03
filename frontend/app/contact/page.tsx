@@ -21,6 +21,7 @@ import { MagicCard } from '@/components/ui/magic-card';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { apiClient, handleApiResponse } from '@/lib/api';
+import { PageBanner } from '@/components/shared/page-banner';
 
 interface SiteSettings {
   general?: {
@@ -160,20 +161,12 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Compact Page Header */}
-        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Liên hệ</div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                Liên hệ {settings?.general?.siteName || 'Audio Tài Lộc'}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Hero Banner */}
+        <PageBanner 
+          page="contact" 
+          fallbackTitle={`Liên hệ ${settings?.general?.siteName || 'Audio Tài Lộc'}`}
+          fallbackSubtitle="Hãy liên hệ với chúng tôi để được tư vấn miễn phí về giải pháp âm thanh. Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ 24/7."
+        />
 
         {/* Contact Info Section */}
         <section className="py-8">
