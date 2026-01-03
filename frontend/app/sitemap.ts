@@ -170,7 +170,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/du-an`,
+      url: `${baseUrl}/projects`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
@@ -252,7 +252,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic category pages
   const categories = await getCategories();
   const categoryPages = categories.map((category) => ({
-    url: `${baseUrl}/danh-muc/${category.slug}`,
+    url: `${baseUrl}/categories/${category.slug}`,
     lastModified: category.updatedAt ? new Date(category.updatedAt) : new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
@@ -261,7 +261,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic project pages
   const projects = await getProjects();
   const projectPages = projects.map((project) => ({
-    url: `${baseUrl}/du-an/${project.slug}`,
+    url: `${baseUrl}/projects/${project.slug}`,
     lastModified: new Date(project.updatedAt),
     changeFrequency: 'monthly' as const,
     priority: 0.7,

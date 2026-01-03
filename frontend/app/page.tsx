@@ -5,71 +5,58 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { BannerCarousel } from '@/components/home/banner-carousel';
 import { FeaturedProducts } from '@/components/home/featured-products';
+import { SectionSkeleton } from '@/components/ui/loading-skeletons';
+import { SectionErrorBoundary } from '@/components/error-boundary';
 
-// Dynamic imports for below-the-fold sections (lazy loading)
+// ==================== DYNAMIC IMPORTS ====================
+// Below-the-fold sections with lazy loading for optimal bundle size
+
 const CategoryProductsSection = dynamic(
   () => import('@/components/home/category-products-section').then(mod => ({ default: mod.CategoryProductsSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải danh mục sản phẩm" />, ssr: false }
 );
 const NewProductsSection = dynamic(
   () => import('@/components/home/new-products-section').then(mod => ({ default: mod.NewProductsSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải sản phẩm mới" />, ssr: false }
 );
 const BestSellingProductsSection = dynamic(
   () => import('@/components/home/best-selling-products-section').then(mod => ({ default: mod.BestSellingProductsSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải sản phẩm bán chạy" />, ssr: false }
 );
 const FeaturedServices = dynamic(
   () => import('@/components/home/featured-services').then(mod => ({ default: mod.FeaturedServices })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải dịch vụ nổi bật" />, ssr: false }
 );
 const StatsSection = dynamic(
   () => import('@/components/home/stats-section').then(mod => ({ default: mod.StatsSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải thống kê" />, ssr: false }
 );
 const TechniciansSection = dynamic(
   () => import('@/components/home/technicians-section').then(mod => ({ default: mod.TechniciansSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải đội ngũ kỹ thuật" />, ssr: false }
 );
 const TestimonialsSection = dynamic(
   () => import('@/components/home/testimonials-section').then(mod => ({ default: mod.TestimonialsSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải đánh giá khách hàng" />, ssr: false }
 );
 const FeaturedProjects = dynamic(
   () => import('@/components/home/featured-projects').then(mod => ({ default: mod.FeaturedProjects })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải dự án nổi bật" />, ssr: false }
 );
 const FeaturedKnowledgeSection = dynamic(
   () => import('@/components/home/featured-knowledge-section').then(mod => ({ default: mod.FeaturedKnowledgeSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải kiến thức" />, ssr: false }
 );
 const FeaturedBlogSection = dynamic(
   () => import('@/components/home/featured-blog-section').then(mod => ({ default: mod.FeaturedBlogSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải bài viết" />, ssr: false }
 );
 const NewsletterSection = dynamic(
   () => import('@/components/home/newsletter-section').then(mod => ({ default: mod.NewsletterSection })),
-  { loading: () => <SectionSkeleton /> }
+  { loading: () => <SectionSkeleton ariaLabel="Đang tải mục đăng ký" />, ssr: false }
 );
 
-// Loading skeleton for lazy-loaded sections
-function SectionSkeleton() {
-  return (
-    <div className="py-12 px-4">
-      <div className="container mx-auto">
-        <div className="animate-pulse">
-          <div className="h-8 w-48 bg-muted rounded mb-6"></div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-48 bg-muted rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
+// ==================== ANIMATIONS ====================
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -77,82 +64,89 @@ const fadeInUp = {
   transition: { duration: 0.6, ease: 'easeOut' },
 };
 
+// ==================== SECTION WRAPPER ====================
+// Wrapper with error boundary and accessibility
+interface SectionWrapperProps {
+  children: React.ReactNode;
+  delay?: number;
+  fallbackTitle?: string;
+}
+
+function SectionWrapper({ children, delay = 0, fallbackTitle }: SectionWrapperProps) {
+  return (
+    <SectionErrorBoundary fallbackTitle={fallbackTitle}>
+      <Suspense fallback={<SectionSkeleton />}>
+        <motion.div {...fadeInUp} transition={{ delay }}>
+          {children}
+        </motion.div>
+      </Suspense>
+    </SectionErrorBoundary>
+  );
+}
+
+// ==================== HOMEPAGE ====================
 export default function Home() {
   return (
-    <main className="bg-background">
-      {/* Above the fold - loaded immediately */}
-      <BannerCarousel />
+    <main className="bg-background" id="main-content">
+      {/* 
+        Above the fold - Loaded immediately for fast LCP
+        These are critical for first paint
+      */}
+      <section aria-label="Banner chính">
+        <BannerCarousel />
+      </section>
 
-      <motion.div {...fadeInUp}>
+      <motion.section {...fadeInUp} aria-label="Sản phẩm nổi bật">
         <FeaturedProducts />
-      </motion.div>
+      </motion.section>
 
-      {/* Below the fold - lazy loaded */}
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.1 }}>
-          <CategoryProductsSection />
-        </motion.div>
-      </Suspense>
+      {/* 
+        Below the fold - Lazy loaded with error boundaries
+        Each section is independently wrapped for resilience
+      */}
+      <SectionWrapper delay={0.1} fallbackTitle="Không thể tải danh mục">
+        <CategoryProductsSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.2 }}>
-          <NewProductsSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.15} fallbackTitle="Không thể tải sản phẩm mới">
+        <NewProductsSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.3 }}>
-          <BestSellingProductsSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.2} fallbackTitle="Không thể tải sản phẩm bán chạy">
+        <BestSellingProductsSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.4 }}>
-          <FeaturedServices />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.25} fallbackTitle="Không thể tải dịch vụ">
+        <FeaturedServices />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.5 }}>
-          <StatsSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.3} fallbackTitle="Không thể tải thống kê">
+        <StatsSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.55 }}>
-          <TechniciansSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.35} fallbackTitle="Không thể tải đội ngũ">
+        <TechniciansSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.6 }}>
-          <TestimonialsSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.4} fallbackTitle="Không thể tải đánh giá">
+        <TestimonialsSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.7 }}>
-          <FeaturedProjects />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.45} fallbackTitle="Không thể tải dự án">
+        <FeaturedProjects />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.8 }}>
-          <FeaturedKnowledgeSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.5} fallbackTitle="Không thể tải kiến thức">
+        <FeaturedKnowledgeSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 0.9 }}>
-          <FeaturedBlogSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.55} fallbackTitle="Không thể tải bài viết">
+        <FeaturedBlogSection />
+      </SectionWrapper>
 
-      <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay: 1.0 }}>
-          <NewsletterSection />
-        </motion.div>
-      </Suspense>
+      <SectionWrapper delay={0.6} fallbackTitle="Không thể tải mục đăng ký">
+        <NewsletterSection />
+      </SectionWrapper>
     </main>
   );
 }

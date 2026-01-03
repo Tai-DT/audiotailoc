@@ -97,35 +97,36 @@ function SearchContent ()
         {/* Search Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-6">
-            <Link href="/">
+            <Link href="/" aria-label="Về trang chủ">
               <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                 Trang chủ
               </Button>
             </Link>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-2xl font-bold">Tìm kiếm sản phẩm</h1>
+            <Separator orientation="vertical" className="h-6" aria-hidden="true" />
+            <h1 id="search-title" className="text-2xl font-bold">Tìm kiếm sản phẩm</h1>
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="flex gap-4 mb-6">
+          <form onSubmit={handleSearch} className="flex gap-4 mb-6" role="search" aria-label="Tìm kiếm sản phẩm">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
-                type="text"
+                type="search"
                 placeholder="Tìm kiếm sản phẩm..."
                 value={query}
                 onChange={( e ) => setQuery( e.target.value )}
                 className="pl-10"
+                aria-label="Nhập từ khóa tìm kiếm"
               />
             </div>
-            <Button type="submit" disabled={!query.trim()}>
-              <Search className="mr-2 h-4 w-4" />
+            <Button type="submit" disabled={!query.trim()} aria-label="Bắt đầu tìm kiếm">
+              <Search className="mr-2 h-4 w-4" aria-hidden="true" />
               Tìm kiếm
             </Button>
             {query && (
-              <Button variant="outline" onClick={handleClearSearch}>
-                <X className="mr-2 h-4 w-4" />
+              <Button variant="outline" onClick={handleClearSearch} aria-label="Xóa từ khóa tìm kiếm">
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
                 Xóa
               </Button>
             )}
@@ -135,7 +136,7 @@ function SearchContent ()
           {query && (
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground" aria-live="polite">
                   {isLoading ? (
                     'Đang tìm kiếm...'
                   ) : (
@@ -194,7 +195,11 @@ function SearchContent ()
           {/* Search Results */}
           <div className={showFilters ? "lg:col-span-3" : "lg:col-span-4"}>
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                role="status"
+                aria-label="Đang tải kết quả tìm kiếm"
+              >
                 {[ ...Array( 8 ) ].map( ( _, i ) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-muted" />
@@ -204,9 +209,10 @@ function SearchContent ()
                     </CardContent>
                   </Card>
                 ) )}
+                <span className="sr-only">Đang tải...</span>
               </div>
             ) : error ? (
-              <div className="text-center py-16">
+              <div className="text-center py-16" role="alert">
                 <h2 className="text-xl font-semibold text-destructive mb-2">
                   Lỗi tìm kiếm
                 </h2>
@@ -245,13 +251,11 @@ function SearchContent ()
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="region" aria-label="Kết quả tìm kiếm">
                 {searchResults.map( ( product ) => (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onAddToCart={( id ) => console.log( 'Add to cart:', id )}
-                    onViewProduct={( id ) => console.log( 'View product:', id )}
                   />
                 ) )}
               </div>

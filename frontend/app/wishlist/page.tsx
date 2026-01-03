@@ -57,8 +57,14 @@ function WishlistPageContent() {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
+          <div 
+            className="text-center"
+            role="status"
+            aria-label="Đang tải danh sách yêu thích"
+          >
             <h1 className="text-2xl font-bold mb-4">Đang tải danh sách yêu thích...</h1>
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" aria-hidden="true" />
+            <span className="sr-only">Đang tải...</span>
           </div>
         </main>
       </div>
@@ -69,7 +75,7 @@ function WishlistPageContent() {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
+          <div className="text-center" role="alert">
             <h1 className="text-2xl font-bold mb-4 text-destructive">Có lỗi xảy ra</h1>
             <p className="text-muted-foreground">Không thể tải danh sách yêu thích</p>
           </div>
@@ -83,20 +89,20 @@ function WishlistPageContent() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <header className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Danh sách yêu thích</h1>
-              <p className="text-muted-foreground">
+              <h1 id="wishlist-title" className="text-3xl font-bold mb-2">Danh sách yêu thích</h1>
+              <p className="text-muted-foreground" aria-live="polite">
                 {wishlist?.length || 0} sản phẩm trong danh sách yêu thích của bạn
               </p>
             </div>
-            <Button asChild>
+            <Button asChild aria-label="Tiếp tục mua sắm">
               <Link href="/products">
-                <ShoppingBag className="w-4 h-4 mr-2" />
+                <ShoppingBag className="w-4 h-4 mr-2" aria-hidden="true" />
                 Tiếp tục mua sắm
               </Link>
             </Button>
-          </div>
+          </header>
 
           {/* Wishlist Items */}
           {!wishlist || wishlist.length === 0 ? (
@@ -149,8 +155,9 @@ function WishlistPageContent() {
                             variant="destructive"
                             className="w-8 h-8 rounded-full"
                             onClick={() => handleRemoveFromWishlist(productId)}
+                            aria-label={`Xóa ${productName} khỏi danh sách yêu thích`}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -206,14 +213,15 @@ function WishlistPageContent() {
                             className="flex-1"
                             onClick={() => handleAddToCart(productId)}
                             disabled={productStockQuantity === 0}
+                            aria-label={`Thêm ${productName} vào giỏ hàng`}
                           >
-                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
                             Thêm vào giỏ
                           </Button>
                           {productSlug && (
-                            <Button variant="outline" size="icon" asChild>
+                            <Button variant="outline" size="icon" asChild aria-label={`Xem chi tiết ${productName}`}>
                               <Link href={`/products/${productSlug}`}>
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-4 h-4" aria-hidden="true" />
                               </Link>
                             </Button>
                           )}

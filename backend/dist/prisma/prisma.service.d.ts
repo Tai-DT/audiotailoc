@@ -4,8 +4,11 @@ export declare class PrismaService extends PrismaClient implements OnModuleInit,
     private readonly logger;
     private isConnected;
     private reconnectTimer;
+    private reconnectAttempt;
+    private lastConnectionErrorLogAt;
     constructor();
     private handleConnectionError;
+    private isLikelyConnectionError;
     executeWithRetry<T>(operation: () => Promise<T>, maxRetries?: number): Promise<T>;
     getAcceleratedClient(): import("@prisma/client/runtime/library").DynamicClientExtensionThis<import(".prisma/client").Prisma.TypeMap<import("@prisma/client/runtime/library").InternalArgs & {
         result: {};

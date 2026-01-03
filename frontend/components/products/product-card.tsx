@@ -52,11 +52,18 @@ export function ProductCard({
   };
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md ring-1 ring-border/30 shadow-[0_30px_100px_-70px_rgba(0,0,0,0.75)] transition-transform duration-300 hover:-translate-y-2 hover:shadow-[0_40px_120px_-70px_rgba(0,0,0,0.85)]">
+    <article 
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md ring-1 ring-border/30 shadow-[0_30px_100px_-70px_rgba(0,0,0,0.75)] transition-transform duration-300 hover:-translate-y-2 hover:shadow-[0_40px_120px_-70px_rgba(0,0,0,0.85)] focus-within:ring-2 focus-within:ring-primary"
+      aria-label={`Sản phẩm: ${product.name}`}
+    >
       {/* Product Image with AspectRatio for consistent sizing */}
       <div className="relative overflow-hidden bg-muted/15">
         <AspectRatio ratio={1} className="relative">
-          <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
+          <Link 
+            href={`/products/${product.slug}`} 
+            className="relative block w-full h-full focus-visible:outline-none"
+            aria-label={`Xem chi tiết ${product.name}`}
+          >
             <Image
               src={getProductImage()}
               alt={product.name}
@@ -107,8 +114,9 @@ export function ProductCard({
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8"
               onClick={() => onViewProduct?.(product.slug)}
+              aria-label={`Xem nhanh ${product.name}`}
             >
-              <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
             </Button>
             <Button
               variant="secondary"
@@ -122,8 +130,10 @@ export function ProductCard({
                   console.error('Toggle wishlist error:', error);
                 }
               }}
+              aria-label={isInWishlist ? `Xóa ${product.name} khỏi yêu thích` : `Thêm ${product.name} vào yêu thích`}
+              aria-pressed={isInWishlist}
             >
-              <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} />
+              <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -142,8 +152,10 @@ export function ProductCard({
                 console.error('Toggle wishlist error:', error);
               }
             }}
+            aria-label={isInWishlist ? `Xóa khỏi yêu thích` : `Thêm vào yêu thích`}
+            aria-pressed={isInWishlist}
           >
-            <Heart className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} />
+            <Heart className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -219,11 +231,12 @@ export function ProductCard({
           className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20 text-xs sm:text-sm h-9 sm:h-10 group/btn"
           disabled={isOutOfStock}
           onClick={() => onAddToCart?.(product.id)}
+          aria-label={isOutOfStock ? `${product.name} đã hết hàng` : `Thêm ${product.name} vào giỏ hàng`}
         >
-          <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 transition-transform group-hover/btn:scale-110 group-hover/btn:rotate-12" />
+          <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 transition-transform group-hover/btn:scale-110 group-hover/btn:rotate-12" aria-hidden="true" />
           {isOutOfStock ? 'Hết hàng' : 'Thêm giỏ'}
         </Button>
       </CardFooter>
-    </Card>
+    </article>
   );
 }

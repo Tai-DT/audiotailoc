@@ -48,7 +48,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleConnection(@ConnectedSocket() client: ChatSocket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
+      const token =
+        client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
       const guestToken = client.handshake.auth.guestToken as string | undefined;
       const guestId = client.handshake.auth.guestId as string | undefined;
 

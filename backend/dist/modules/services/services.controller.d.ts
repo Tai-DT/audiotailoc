@@ -20,7 +20,6 @@ export declare class ServicesController {
     } & {
         tags: string | null;
         description: string | null;
-        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -31,6 +30,7 @@ export declare class ServicesController {
         images: string | null;
         features: string | null;
         viewCount: number;
+        type: string | null;
         metadata: string | null;
         duration: number;
         price: number;
@@ -152,7 +152,6 @@ export declare class ServicesController {
     deleteService(id: string): Promise<{
         tags: string | null;
         description: string | null;
-        type: string | null;
         id: string;
         name: string;
         createdAt: Date;
@@ -163,6 +162,7 @@ export declare class ServicesController {
         images: string | null;
         features: string | null;
         viewCount: number;
+        type: string | null;
         metadata: string | null;
         duration: number;
         price: number;

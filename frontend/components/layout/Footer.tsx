@@ -105,7 +105,7 @@ export function Footer() {
               {[
                 { href: '/products', label: 'Sản phẩm' },
                 { href: '/services', label: 'Dịch vụ' },
-                { href: '/du-an', label: 'Dự án' },
+                { href: '/projects', label: 'Dự án' },
                 { href: '/contact', label: 'Liên hệ' },
               ].map((link, index) => (
                 <motion.div

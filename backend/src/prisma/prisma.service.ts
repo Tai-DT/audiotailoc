@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
 @Injectable()
@@ -7,6 +7,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
   private isConnected = false;
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private reconnectAttempt = 0;
+  private lastConnectionErrorLogAt = 0;
 
   constructor() {
     super({
@@ -23,8 +25,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // Listen for Prisma errors to handle connection issues
     (this as any).$on('error', (e: any) => {
-      this.logger.error(`Prisma error: ${e.message}`);
-      this.handleConnectionError();
+      if (this.isLikelyConnectionError(e)) {
+        const now = Date.now();
+        // Throttle noisy connection-close logs (e.g. managed DB idle timeouts)
+        if (now - this.lastConnectionErrorLogAt > 5000) {
+          this.lastConnectionErrorLogAt = now;
+          this.logger.warn(`Prisma connection error: ${e.message}`);
+        }
+        void this.handleConnectionError();
+        return;
+      }
+
+      this.logger.error(`Prisma error: ${e.message}`, e?.stack);
     });
 
     // Extend with Accelerate for better performance
@@ -52,29 +64,61 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (this.reconnectTimer) return; // Already reconnecting
 
     this.isConnected = false;
-    this.logger.warn('Database connection lost, attempting to reconnect...');
+
+    const baseDelayMs = Number(process.env.DB_RECONNECT_BASE_DELAY_MS || 1000);
+    const maxDelayMs = Number(process.env.DB_RECONNECT_MAX_DELAY_MS || 30000);
+    const exponent = Math.min(this.reconnectAttempt, 10);
+    const jitter = Math.floor(Math.random() * 250);
+    const delayMs = Math.min(maxDelayMs, baseDelayMs * 2 ** exponent) + jitter;
+    const attemptNo = this.reconnectAttempt + 1;
+    this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 20);
+
+    this.logger.warn(`Database connection lost, reconnecting in ${delayMs}ms (attempt ${attemptNo})...`);
 
     this.reconnectTimer = setTimeout(async () => {
+      let shouldRetry = false;
+
       try {
-        await this.$disconnect();
+        // Avoid forcing a disconnect; just attempt to reconnect.
         await this.$connect();
         this.isConnected = true;
+        this.reconnectAttempt = 0;
         this.logger.log('Database reconnected successfully');
-      } catch (error) {
-        this.logger.error('Failed to reconnect to database:', error);
+      } catch (error: any) {
+        shouldRetry = true;
+        this.logger.error('Failed to reconnect to database:', error?.stack ?? String(error));
       } finally {
         this.reconnectTimer = null;
       }
-    }, 1000);
+
+      if (shouldRetry) {
+        void this.handleConnectionError();
+      }
+    }, delayMs);
+  }
+
+  private isLikelyConnectionError(error: any): boolean {
+    const message = String(error?.message || '').toLowerCase();
+    const code = error?.code;
+
+    if (code === 'P1017' || code === 'P1001' || code === 'P1002') return true;
+
+    return (
+      message.includes('error in postgresql connection') ||
+      message.includes('connection') &&
+        (message.includes('closed') ||
+          message.includes('terminated') ||
+          message.includes('reset') ||
+          message.includes('econnreset') ||
+          message.includes('econnrefused') ||
+          message.includes('timeout'))
+    );
   }
 
   /**
    * Execute a query with retry logic for connection errors
    */
-  async executeWithRetry<T>(
-    operation: () => Promise<T>,
-    maxRetries = 3,
-  ): Promise<T> {
+  async executeWithRetry<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -82,19 +126,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         return await operation();
       } catch (error: any) {
         lastError = error;
-        const isConnectionError =
-          error.message?.includes('Closed') ||
-          error.message?.includes('Connection') ||
-          error.code === 'P1017' ||
-          error.code === 'P1001' ||
-          error.code === 'P1002';
+        const isConnectionError = this.isLikelyConnectionError(error);
 
         if (isConnectionError && attempt < maxRetries) {
           this.logger.warn(
             `Database operation failed (attempt ${attempt}/${maxRetries}), retrying...`,
           );
           await this.handleConnectionError();
-          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+          await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         } else {
           throw error;
         }

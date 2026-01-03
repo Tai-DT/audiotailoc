@@ -63,13 +63,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const adminKey = process.env.ADMIN_API_KEY;
+
+    if (!adminKey) {
+      return NextResponse.json(
+        { error: 'Admin API key is not configured', status: 500 },
+        { status: 500 }
+      );
+    }
 
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-Admin-Key': 'dev-admin-key-2024',
+        'X-Admin-Key': adminKey,
       },
       body: JSON.stringify(body),
     });

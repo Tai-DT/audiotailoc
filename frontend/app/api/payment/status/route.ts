@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+type BackendPayment = {
+  status?: string;
+  transactionId?: string | null;
+  id?: string | null;
+  updatedAt?: string | null;
+};
+
+type BackendOrder = {
+  status?: string;
+  payments?: BackendPayment[];
+  totalCents?: number;
+  createdAt?: string;
+  orderNo?: string;
+};
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const orderId = searchParams.get('orderId');
@@ -60,23 +75,26 @@ async function checkPayOSStatus(orderId: string) {
     });
 
     if (!response.ok) throw new Error('Failed to fetch order status from backend');
-    const order = await response.json();
+    const payload = (await response.json()) as { data?: BackendOrder } | BackendOrder;
+    const order = 'data' in payload ? payload.data ?? {} : payload;
 
     // Map backend order/payment status to frontend format
     let status = 'PENDING';
     if (order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'COMPLETED') {
-        const hasPaid = order.payments?.some((p: any) => p.status === 'SUCCEEDED');
-        if (hasPaid) status = 'COMPLETED';
+      const hasPaid = order.payments?.some(p => p.status === 'SUCCEEDED');
+      if (hasPaid) status = 'COMPLETED';
     } else if (order.status === 'CANCELLED') {
-        status = 'FAILED';
+      status = 'FAILED';
     }
 
-    const latestPayment = order.payments?.[order.payments.length - 1];
+    const latestPayment = order.payments?.length
+      ? order.payments[order.payments.length - 1]
+      : undefined;
 
     return {
       status: status,
       transactionId: latestPayment?.transactionId || latestPayment?.id || null,
-      amount: order.totalCents / 100,
+      amount: (order.totalCents ?? 0) / 100,
       currency: 'VND',
       createdAt: order.createdAt,
       completedAt: latestPayment?.updatedAt || null,

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const auth = request.headers.get('Authorization')
     if (auth) headers['Authorization'] = auth
     // SECURITY: Prefer server-side only ADMIN_API_KEY over NEXT_PUBLIC_* to avoid exposing in client bundle
-    const adminKey = process.env.ADMIN_API_KEY || process.env.NEXT_PUBLIC_ADMIN_API_KEY
+    const adminKey = process.env.ADMIN_API_KEY
     if (adminKey) headers['X-Admin-Key'] = adminKey
 
     const response = await fetch(backendUrl, { headers })

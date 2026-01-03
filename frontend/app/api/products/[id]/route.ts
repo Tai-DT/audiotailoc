@@ -1,23 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-interface ProductSpecifications {
-  [key: string]: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  description: string;
-  inStock: boolean;
-  rating: number;
-  reviews: number;
-  specifications: ProductSpecifications;
-  images: string[];
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

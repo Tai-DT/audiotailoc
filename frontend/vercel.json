@@ -33,26 +33,6 @@
       "source": "/home",
       "destination": "/",
       "permanent": true
-    },
-    {
-      "source": "/categories",
-      "destination": "/danh-muc",
-      "permanent": true
-    },
-    {
-      "source": "/categories/:path*",
-      "destination": "/danh-muc/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/projects",
-      "destination": "/du-an",
-      "permanent": true
-    },
-    {
-      "source": "/projects/:path*",
-      "destination": "/du-an/:path*",
-      "permanent": true
     }
   ]
 }

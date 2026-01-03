@@ -7,8 +7,8 @@ import { useServices, useServiceTypes } from '@/lib/hooks/use-api';
 import { ServiceFilters as ServiceFiltersType } from '@/lib/types';
 
 import { ServicesHero } from '@/components/services/services-hero';
-import { ServiceGridNew } from '@/components/services/service-grid-new';
-import { ServiceFiltersNew } from '@/components/services/service-filters-new';
+import { ServiceGrid } from '@/components/services/service-grid';
+import { ServiceFilters } from '@/components/services/service-filters';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -86,28 +86,30 @@ function ServicesPageContent() {
   const activeFilterCount = [filters.minPrice || filters.maxPrice, filters.typeId].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background" role="main" aria-labelledby="services-hero-title">
       {/* Hero */}
       <ServicesHero totalServices={totalItems} />
 
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-primary">Trang chủ</Link>
-          <span>/</span>
-          <span className="text-foreground">Dịch vụ</span>
+          <span aria-hidden="true">/</span>
+          <span className="text-foreground" aria-current="page">Dịch vụ</span>
         </nav>
       </div>
 
       {/* Content */}
-      <main className="container mx-auto px-4 pb-12">
+      <div className="container mx-auto px-4 pb-12">
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Desktop Filters */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-20">
-              <ServiceFiltersNew
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-24">
+              <h2 className="text-lg font-semibold mb-4" id="filters-sidebar-title">Bộ lọc dịch vụ</h2>
+              <ServiceFilters
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
+                serviceTypes={serviceTypes || []}
               />
             </div>
           </aside>
@@ -116,27 +118,32 @@ function ServicesPageContent() {
           <div className="lg:hidden mb-4">
             <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-between"
+                  aria-label={`Bộ lọc dịch vụ${activeFilterCount > 0 ? `, đang chọn ${activeFilterCount} bộ lọc` : ''}`}
+                >
                   <span className="flex items-center gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
+                    <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                     Bộ lọc
                     {activeFilterCount > 0 && (
-                      <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                      <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full" aria-label={`${activeFilterCount} bộ lọc đang chọn`}>
                         {activeFilterCount}
                       </span>
                     )}
                   </span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-full max-w-sm">
+              <SheetContent side="left" className="w-full max-w-sm" aria-labelledby="filters-sheet-title">
                 <SheetHeader>
-                  <SheetTitle>Bộ lọc</SheetTitle>
+                  <SheetTitle id="filters-sheet-title">Bộ lọc dịch vụ</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">
-                  <ServiceFiltersNew
+                  <ServiceFilters
                     filters={filters}
                     onFiltersChange={handleFiltersChange}
                     className="border-0 p-0"
+                    serviceTypes={serviceTypes || []}
                   />
                 </div>
               </SheetContent>
@@ -144,8 +151,14 @@ function ServicesPageContent() {
           </div>
 
           {/* Service Grid */}
-          <section className="lg:col-span-3">
-            <ServiceGridNew
+          <section className="lg:col-span-3" aria-labelledby="services-grid-title">
+            <h2 id="services-grid-title" className="sr-only">Danh sách dịch vụ</h2>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-muted-foreground text-sm" id="services-count" role="status" aria-live="polite">
+                Hiển thị <span className="font-medium text-foreground">{services.length}</span> trong số <span className="font-medium text-foreground">{totalItems}</span> dịch vụ
+              </p>
+            </div>
+            <ServiceGrid
               services={services}
               isLoading={isLoading}
               totalPages={totalPages}
@@ -155,8 +168,8 @@ function ServicesPageContent() {
             />
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
 

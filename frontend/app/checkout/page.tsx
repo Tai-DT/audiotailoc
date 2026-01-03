@@ -356,64 +356,84 @@ export default function CheckoutPage ()
         <BlurFade delay={0.1} inView>
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-4 mb-8">
-              <Link href="/cart">
+              <Link href="/cart" aria-label="Quay lại giỏ hàng">
                 <Button variant="outline" size="icon">
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold">Thanh toán</h1>
+                <h1 className="text-3xl font-bold" id="checkout-title">Thanh toán</h1>
                 <p className="text-muted-foreground">Hoàn tất đơn hàng của bạn</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center mb-8">
-              <div className="flex items-center space-x-4">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                  <User className="h-5 w-5" />
-                </motion.div>
-                <div className="h-1 w-16 bg-muted relative overflow-hidden rounded-full">
+            {/* Stepper with accessibility */}
+            <nav 
+              className="flex items-center justify-center mb-8" 
+              aria-label="Tiến trình thanh toán"
+              role="navigation"
+            >
+              <ol className="flex items-center space-x-4" role="list">
+                <li className="flex items-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}
+                    aria-current={currentStep === 1 ? 'step' : undefined}
+                    aria-label={`Bước 1: Thông tin giao hàng ${currentStep > 1 ? '(đã hoàn thành)' : currentStep === 1 ? '(đang thực hiện)' : ''}`}
+                  >
+                    <User className="h-5 w-5" aria-hidden="true" />
+                  </motion.div>
+                  <span className="sr-only">Thông tin giao hàng</span>
+                </li>
+                <li aria-hidden="true" className="h-1 w-16 bg-muted relative overflow-hidden rounded-full">
                   <motion.div
                     className="absolute inset-y-0 left-0 bg-primary"
                     initial={{ width: "0%" }}
                     animate={{ width: currentStep >= 2 ? "100%" : "0%" }}
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                   />
-                </div>
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                  <CreditCard className="h-5 w-5" />
-                </motion.div>
-                <div className="h-1 w-16 bg-muted relative overflow-hidden rounded-full">
+                </li>
+                <li className="flex items-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}
+                    aria-current={currentStep === 2 ? 'step' : undefined}
+                    aria-label={`Bước 2: Phương thức thanh toán ${currentStep > 2 ? '(đã hoàn thành)' : currentStep === 2 ? '(đang thực hiện)' : ''}`}
+                  >
+                    <CreditCard className="h-5 w-5" aria-hidden="true" />
+                  </motion.div>
+                  <span className="sr-only">Phương thức thanh toán</span>
+                </li>
+                <li aria-hidden="true" className="h-1 w-16 bg-muted relative overflow-hidden rounded-full">
                   <motion.div
                     className="absolute inset-y-0 left-0 bg-primary"
                     initial={{ width: "0%" }}
                     animate={{ width: currentStep >= 3 ? "100%" : "0%" }}
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                   />
-                </div>
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                  <CheckCircle className="h-5 w-5" />
-                </motion.div>
-              </div>
-            </div>
+                </li>
+                <li className="flex items-center">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-300 ${ currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}
+                    aria-current={currentStep === 3 ? 'step' : undefined}
+                    aria-label="Bước 3: Xác nhận đơn hàng"
+                  >
+                    <CheckCircle className="h-5 w-5" aria-hidden="true" />
+                  </motion.div>
+                  <span className="sr-only">Xác nhận đơn hàng</span>
+                </li>
+              </ol>
+            </nav>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
@@ -430,24 +450,31 @@ export default function CheckoutPage ()
                         <Card className="border-0 shadow-lg">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                              <User className="h-5 w-5" />
+                              <User className="h-5 w-5" aria-hidden="true" />
                               Thông tin giao hàng
                             </CardTitle>
+                            <p className="text-sm text-muted-foreground">Các trường có dấu * là bắt buộc</p>
                           </CardHeader>
                           <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="fullName">Họ và tên *</Label>
+                                <Label htmlFor="fullName">
+                                  Họ và tên <span className="text-destructive" aria-hidden="true">*</span>
+                                </Label>
                                 <Input
                                   id="fullName"
                                   name="fullName"
                                   value={shippingInfo.fullName}
                                   onChange={handleShippingInfoChange}
                                   placeholder="Nhập họ và tên"
+                                  autoComplete="name"
+                                  aria-required="true"
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="email">Email *</Label>
+                                <Label htmlFor="email">
+                                  Email <span className="text-destructive" aria-hidden="true">*</span>
+                                </Label>
                                 <Input
                                   id="email"
                                   name="email"
@@ -455,26 +482,38 @@ export default function CheckoutPage ()
                                   value={shippingInfo.email}
                                   onChange={handleShippingInfoChange}
                                   placeholder="Nhập địa chỉ email"
+                                  autoComplete="email"
+                                  aria-required="true"
                                 />
                               </div>
                               <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="phone">Số điện thoại *</Label>
+                                <Label htmlFor="phone">
+                                  Số điện thoại <span className="text-destructive" aria-hidden="true">*</span>
+                                </Label>
                                 <Input
                                   id="phone"
                                   name="phone"
+                                  type="tel"
                                   value={shippingInfo.phone}
                                   onChange={handleShippingInfoChange}
                                   placeholder="Nhập số điện thoại"
+                                  autoComplete="tel"
+                                  aria-required="true"
                                 />
                               </div>
                               <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="address">Địa chỉ *</Label>
+                                <Label htmlFor="address">
+                                  Địa chỉ <span className="text-destructive" aria-hidden="true">*</span>
+                                </Label>
                                 <Input
                                   id="address"
                                   name="address"
                                   value={shippingInfo.address}
                                   onChange={handleShippingInfoChange}
                                   placeholder="Nhập địa chỉ chi tiết"
+                                  autoComplete="street-address"
+                                  aria-required="true"
+                                  aria-describedby="address-suggestions"
                                 />
                                 {isSearchingAddress && (
                                   <p className="text-xs text-muted-foreground">Đang tìm kiếm địa chỉ...</p>

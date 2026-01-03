@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, API_ENDPOINTS, handleApiResponse, handleApiError } from '@/lib/api';
 import { authStorage, AUTH_EVENTS, StoredUser } from '@/lib/auth-storage';
+import { logger } from '@/lib/logger';
 import toast from 'react-hot-toast';
 
 // Types
@@ -60,7 +61,7 @@ export function useAuth() {
       const token = authStorage.getAccessToken();
       const wasEnabled = hasToken;
       const nowEnabled = Boolean(token);
-      console.log('[DEBUG] useAuth token check', { wasEnabled, nowEnabled, hasToken: !!token });
+      logger.debug('useAuth token check', { wasEnabled, nowEnabled, hasToken: !!token });
       if (wasEnabled !== nowEnabled) {
         setHasToken(nowEnabled);
       }
@@ -72,13 +73,13 @@ export function useAuth() {
     // Listen for storage changes (including from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'audiotailoc_token') {
-        console.log('[DEBUG] Storage event detected', { key: e.key, newValue: e.newValue ? 'present' : 'null' });
+        logger.debug('Storage event detected', { key: e.key, newValue: e.newValue ? 'present' : 'null' });
         checkToken();
       }
     };
 
     const handleSessionUpdated = () => {
-      console.log('[DEBUG] Session updated event');
+      logger.debug('Session updated event');
       checkToken();
     };
 
@@ -168,7 +169,7 @@ export function useLogin() {
 
       const accessToken = data.token ?? data.accessToken;
       if (!accessToken) {
-        console.error('[DEBUG] No access token received!', { data });
+        logger.error('No access token received', undefined, { data });
         toast.error('Không nhận được mã phiên đăng nhập');
         return;
       }
@@ -187,9 +188,9 @@ export function useLogin() {
       toast.success(`Chào mừng ${data.user.name}!`);
     },
     onError: (error: unknown) => {
-      console.error('[DEBUG] Login error', error);
+      logger.error('Login error', error);
       const { message, status } = handleApiError(error as { response?: { data?: { message?: string; retryAfter?: number }; status?: number }; message?: string });
-      console.log('[DEBUG] Login error handled', { message, status });
+      logger.debug('Login error handled', { message, status });
 
       // Handle rate limiting (429) with specific message
       if (status === 429) {

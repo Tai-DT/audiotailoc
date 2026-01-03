@@ -186,7 +186,7 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
     }
     startAllSchedules() {
         for (const schedule of this.schedules.values()) {
-            if (schedule.enabled) {
+            if (schedule.enabled && !this.cronJobs.has(schedule.id)) {
                 this.createCronJob(schedule);
             }
         }
@@ -207,6 +207,11 @@ let BackupSchedulerService = BackupSchedulerService_1 = class BackupSchedulerSer
                 schedule.status = 'inactive';
                 schedule.errorMessage = 'cron package not available';
                 return;
+            }
+            const existingJob = this.cronJobs.get(schedule.id);
+            if (existingJob) {
+                existingJob.stop();
+                this.cronJobs.delete(schedule.id);
             }
             const cronJob = new CronJobCtor(schedule.cronExpression, async () => {
                 if (this.isShuttingDown)

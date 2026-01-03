@@ -30,9 +30,19 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
         this.logger = new common_1.Logger(PrismaService_1.name);
         this.isConnected = false;
         this.reconnectTimer = null;
+        this.reconnectAttempt = 0;
+        this.lastConnectionErrorLogAt = 0;
         this.$on('error', (e) => {
-            this.logger.error(`Prisma error: ${e.message}`);
-            this.handleConnectionError();
+            if (this.isLikelyConnectionError(e)) {
+                const now = Date.now();
+                if (now - this.lastConnectionErrorLogAt > 5000) {
+                    this.lastConnectionErrorLogAt = now;
+                    this.logger.warn(`Prisma connection error: ${e.message}`);
+                }
+                void this.handleConnectionError();
+                return;
+            }
+            this.logger.error(`Prisma error: ${e.message}`, e?.stack);
         });
         const useAccelerate = process.env.USE_PRISMA_ACCELERATE === 'true' || process.env.NODE_ENV === 'production';
         if (useAccelerate) {
@@ -43,28 +53,54 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
         if (logPrisma && logDbUrl) {
             const url = process.env.DATABASE_URL || '';
             const masked = url.replace(/:(.*?)@/, ':***@');
-            this.logger.debug(`DATABASE_URL = ${masked}`);
+            console.log('[Prisma] DATABASE_URL =', masked);
         }
     }
     async handleConnectionError() {
         if (this.reconnectTimer)
             return;
         this.isConnected = false;
-        this.logger.warn('Database connection lost, attempting to reconnect...');
+        const baseDelayMs = Number(process.env.DB_RECONNECT_BASE_DELAY_MS || 1000);
+        const maxDelayMs = Number(process.env.DB_RECONNECT_MAX_DELAY_MS || 30000);
+        const exponent = Math.min(this.reconnectAttempt, 10);
+        const jitter = Math.floor(Math.random() * 250);
+        const delayMs = Math.min(maxDelayMs, baseDelayMs * 2 ** exponent) + jitter;
+        const attemptNo = this.reconnectAttempt + 1;
+        this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 20);
+        this.logger.warn(`Database connection lost, reconnecting in ${delayMs}ms (attempt ${attemptNo})...`);
         this.reconnectTimer = setTimeout(async () => {
+            let shouldRetry = false;
             try {
-                await this.$disconnect();
                 await this.$connect();
                 this.isConnected = true;
+                this.reconnectAttempt = 0;
                 this.logger.log('Database reconnected successfully');
             }
             catch (error) {
-                this.logger.error('Failed to reconnect to database:', error);
+                shouldRetry = true;
+                this.logger.error('Failed to reconnect to database:', error?.stack ?? String(error));
             }
             finally {
                 this.reconnectTimer = null;
             }
-        }, 1000);
+            if (shouldRetry) {
+                void this.handleConnectionError();
+            }
+        }, delayMs);
+    }
+    isLikelyConnectionError(error) {
+        const message = String(error?.message || '').toLowerCase();
+        const code = error?.code;
+        if (code === 'P1017' || code === 'P1001' || code === 'P1002')
+            return true;
+        return (message.includes('error in postgresql connection') ||
+            message.includes('connection') &&
+                (message.includes('closed') ||
+                    message.includes('terminated') ||
+                    message.includes('reset') ||
+                    message.includes('econnreset') ||
+                    message.includes('econnrefused') ||
+                    message.includes('timeout')));
     }
     async executeWithRetry(operation, maxRetries = 3) {
         let lastError = null;
@@ -73,13 +109,8 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
                 return await operation();
             }
             catch (error) {
-                const err = error;
-                lastError = err;
-                const isConnectionError = err.message?.includes('Closed') ||
-                    err.message?.includes('Connection') ||
-                    err.code === 'P1017' ||
-                    err.code === 'P1001' ||
-                    err.code === 'P1002';
+                lastError = error;
+                const isConnectionError = this.isLikelyConnectionError(error);
                 if (isConnectionError && attempt < maxRetries) {
                     this.logger.warn(`Database operation failed (attempt ${attempt}/${maxRetries}), retrying...`);
                     await this.handleConnectionError();
@@ -99,7 +130,7 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
         if (process.env.ALLOW_START_WITHOUT_DB === 'true') {
             const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
             if (logPrisma)
-                this.logger.warn('Skipping DB connect on startup (ALLOW_START_WITHOUT_DB=true)');
+                console.warn('[Prisma] Skipping DB connect on startup (ALLOW_START_WITHOUT_DB=true)');
             return;
         }
         const maxAttempts = Number(process.env.DB_CONNECT_MAX_ATTEMPTS || 20);
@@ -112,20 +143,19 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
                 await this.$connect();
                 const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
                 if (logPrisma)
-                    this.logger.log(`Connected to database after ${attempt} attempt(s)`);
+                    console.log(`[Prisma] Connected to database after ${attempt} attempt(s)`);
                 break;
             }
-            catch (error) {
-                const err = error;
+            catch (err) {
                 const isLast = attempt >= maxAttempts;
-                const message = err.message || String(err);
+                const message = err?.message || String(err);
                 const logPrisma = (process.env.LOG_PRISMA_STARTUP || '').toLowerCase() === 'true';
                 if (logPrisma)
-                    this.logger.warn(`DB connection attempt ${attempt}/${maxAttempts} failed: ${message}`);
+                    console.warn(`[Prisma] DB connection attempt ${attempt}/${maxAttempts} failed: ${message}`);
                 if (isLast) {
                     if (process.env.ALLOW_START_WITHOUT_DB === 'fallback') {
                         if (logPrisma)
-                            this.logger.warn('Failed to connect after max attempts; continuing without DB (fallback mode)');
+                            console.warn('[Prisma] Failed to connect after max attempts; continuing without DB (fallback mode)');
                         return;
                     }
                     throw err;

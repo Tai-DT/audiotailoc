@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -421,7 +422,14 @@ export default function AIPage() {
                         <div className="flex items-start gap-3">
                           <div className="h-16 w-16 rounded bg-muted flex items-center justify-center flex-shrink-0">
                             {product.image ? (
-                              <img src={product.image} alt={product.name} className="h-full w-full object-cover rounded" />
+                              <Image
+                                src={product.image}
+                                alt={product.name}
+                                width={64}
+                                height={64}
+                                unoptimized
+                                className="h-full w-full object-cover rounded"
+                              />
                             ) : (
                               <Package className="h-8 w-8 text-muted-foreground" />
                             )}

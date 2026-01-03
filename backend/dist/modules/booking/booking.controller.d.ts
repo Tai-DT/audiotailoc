@@ -23,25 +23,24 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
+            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
-            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -52,6 +51,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -103,8 +103,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -123,9 +123,9 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
@@ -152,8 +152,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -178,25 +178,24 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         service_payments: {
             status: string;
             id: string;
             createdAt: Date;
+            bookingId: string;
             transactionId: string | null;
             provider: string;
             amountCents: number;
             paidAt: Date | null;
-            bookingId: string;
         }[];
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -207,6 +206,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -258,8 +258,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -284,15 +284,14 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -303,6 +302,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -354,8 +354,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -370,7 +370,6 @@ export declare class BookingController {
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -381,6 +380,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -403,8 +403,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -429,15 +429,14 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -448,6 +447,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -499,8 +499,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -519,7 +519,6 @@ export declare class BookingController {
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -530,6 +529,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -581,8 +581,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -607,15 +607,14 @@ export declare class BookingController {
         } & {
             id: string;
             createdAt: Date;
+            bookingId: string;
             quantity: number;
             price: number;
-            bookingId: string;
             serviceItemId: string;
         })[];
         services: {
             tags: string | null;
             description: string | null;
-            type: string | null;
             id: string;
             name: string;
             createdAt: Date;
@@ -626,6 +625,7 @@ export declare class BookingController {
             images: string | null;
             features: string | null;
             viewCount: number;
+            type: string | null;
             metadata: string | null;
             duration: number;
             price: number;
@@ -677,8 +677,8 @@ export declare class BookingController {
         userId: string | null;
         customerName: string | null;
         scheduledAt: Date | null;
-        serviceId: string;
         technicianId: string | null;
+        serviceId: string;
         scheduledTime: string | null;
         completedAt: Date | null;
         notes: string | null;
@@ -693,20 +693,20 @@ export declare class BookingController {
         status: string;
         id: string;
         createdAt: Date;
+        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
-        bookingId: string;
     }>;
     updatePaymentStatus(paymentId: string, updatePaymentDto: UpdatePaymentStatusDto): Promise<{
         status: string;
         id: string;
         createdAt: Date;
+        bookingId: string;
         transactionId: string | null;
         provider: string;
         amountCents: number;
         paidAt: Date | null;
-        bookingId: string;
     }>;
 }

@@ -37,7 +37,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Googlebot-Image',
-        allow: ['/products/', '/services/', '/du-an/'],
+        allow: ['/products/', '/services/', '/projects/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

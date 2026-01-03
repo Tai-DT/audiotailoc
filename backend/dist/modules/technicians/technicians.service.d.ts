@@ -67,7 +67,6 @@ export declare class TechniciansService {
             services: {
                 tags: string | null;
                 description: string | null;
-                type: string | null;
                 id: string;
                 name: string;
                 createdAt: Date;
@@ -78,6 +77,7 @@ export declare class TechniciansService {
                 images: string | null;
                 features: string | null;
                 viewCount: number;
+                type: string | null;
                 metadata: string | null;
                 duration: number;
                 price: number;
@@ -100,8 +100,8 @@ export declare class TechniciansService {
             userId: string | null;
             customerName: string | null;
             scheduledAt: Date | null;
-            serviceId: string;
             technicianId: string | null;
+            serviceId: string;
             scheduledTime: string | null;
             completedAt: Date | null;
             notes: string | null;

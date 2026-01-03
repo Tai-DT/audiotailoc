@@ -12,6 +12,15 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  webServer: {
+    command: 'npm run dev',
+    url: baseURL,
+    reuseExistingServer: process.env.CI ? false : true,
+    timeout: 120_000,
+    env: {
+      PORT: '3001',
+    },
+  },
   use: {
     baseURL,
     trace: 'retain-on-failure',

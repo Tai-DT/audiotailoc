@@ -1,5 +1,5 @@
 // Contact information configuration
-// TODO: In production, this should be fetched from /site/contact-info API
+// NOTE: Fallback configuration. In production, use useContactInfo hook which fetches from /site/contact-info API
 export const CONTACT_CONFIG = {
   // Zalo chat configuration
   zalo: {

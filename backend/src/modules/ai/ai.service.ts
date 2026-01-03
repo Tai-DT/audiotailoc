@@ -56,7 +56,9 @@ export class AiService {
     if (!this.geminiApiKey) {
       this.logger.warn('GOOGLE_GEMINI_API_KEY not configured - AI features will be limited');
     } else {
-      this.logger.log(`AI Service initialized with standard Gemini API (Model: ${this.geminiModel})`);
+      this.logger.log(
+        `AI Service initialized with standard Gemini API (Model: ${this.geminiModel})`,
+      );
     }
   }
 
@@ -300,13 +302,16 @@ You help customers find products, answer questions about audio equipment, servic
 Keep responses concise and friendly. If the user asks about specific products or services,
 recommend products from the store when relevant.`;
 
-      const conversationMessages = [...(conversationHistory || []), { role: 'user', content: userMessage }];
+      const conversationMessages = [
+        ...(conversationHistory || []),
+        { role: 'user', content: userMessage },
+      ];
 
       // Google Gemini Format
       // Map roles for Gemini: 'assistant' -> 'model'
       const contents = conversationMessages.map(msg => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content }],
       }));
 
       // Add system prompt to the first message if possible, or prepend it
@@ -328,7 +333,9 @@ recommend products from the store when relevant.`;
         { timeout: 15000 },
       );
 
-      const content = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'I could not generate a response.';
+      const content =
+        response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        'I could not generate a response.';
 
       return {
         message: content,

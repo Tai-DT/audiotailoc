@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreateServiceBooking } from '@/lib/hooks/use-api';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Service } from '@/lib/types';
-import { CalendarIcon, Clock, User, CheckCircle } from 'lucide-react';
+import { CalendarIcon, Clock, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface ServiceBookingModalProps {

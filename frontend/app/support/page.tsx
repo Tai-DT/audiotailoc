@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
   Search,
@@ -135,12 +135,7 @@ export default function SupportPage() {
     priority: 'MEDIUM'
   });
 
-  useEffect(() => {
-    fetchSupportData();
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await apiClient.get('/content/settings');
       const data = handleApiResponse<typeof settings>(response);
@@ -150,9 +145,9 @@ export default function SupportPage() {
     } catch (error) {
       console.error('Error fetching settings:', error);
     }
-  };
+  }, []);
 
-  const fetchSupportData = async () => {
+  const fetchSupportData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -181,7 +176,12 @@ export default function SupportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSupportData();
+    fetchSettings();
+  }, [fetchSupportData, fetchSettings]);
 
   const filteredBlogPosts = Array.isArray(blogPosts) ? blogPosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -219,9 +219,13 @@ export default function SupportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div 
+        className="min-h-screen bg-background flex items-center justify-center"
+        role="status"
+        aria-label="Đang tải trang hỗ trợ"
+      >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" aria-hidden="true"></div>
           <p className="text-muted-foreground">Đang tải trang hỗ trợ...</p>
         </div>
       </div>
@@ -230,7 +234,7 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
+      <main role="main" aria-labelledby="support-hero-title">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20 overflow-hidden">
           <div className="absolute inset-0 opacity-5">
@@ -244,7 +248,7 @@ export default function SupportPage() {
                 Trung tâm hỗ trợ
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+              <h1 id="support-hero-title" className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
                 Hỗ trợ khách hàng
               </h1>
 
@@ -268,6 +272,7 @@ export default function SupportPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
+                    aria-label="Tìm kiếm trong blog hỗ trợ"
                   />
                 </div>
               </div>
@@ -280,8 +285,8 @@ export default function SupportPage() {
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="flex items-center gap-3 mb-8">
-                <BookOpen className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Bài viết từ Blog</h2>
+                <BookOpen className="h-6 w-6 text-primary" aria-hidden="true" />
+                <h2 className="text-2xl font-bold text-foreground" id="blog-articles-title">Bài viết từ Blog</h2>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -342,8 +347,8 @@ export default function SupportPage() {
               </div>
 
               {filteredBlogPosts.length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <div className="text-center py-12" role="alert" aria-live="polite">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
                   <p className="text-muted-foreground">Không tìm thấy bài viết nào.</p>
                 </div>
               )}
@@ -362,12 +367,18 @@ export default function SupportPage() {
 
               <div className="space-y-4">
                 {faqs.map((faq) => (
-                  <Card key={faq.id} className="cursor-pointer" onClick={() => toggleFaq(faq.id)}>
+                  <Card 
+                    key={faq.id} 
+                    className="cursor-pointer" 
+                    onClick={() => toggleFaq(faq.id)}
+                    role="button"
+                    aria-expanded={expandedFaq === faq.id}
+                  >
                     <CardHeader>
                       <CardTitle className="text-lg text-foreground">{faq.question}</CardTitle>
                     </CardHeader>
                     {expandedFaq === faq.id && (
-                      <CardContent>
+                      <CardContent role="region" aria-label={`Trả lời cho: ${faq.question}`}>
                         <p className="text-muted-foreground">{faq.answer}</p>
                       </CardContent>
                     )}

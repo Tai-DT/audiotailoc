@@ -146,12 +146,10 @@ class ApiClient {
     }
 
     // Add admin API key for backend authentication
-    // Try both server and client side env vars
-    const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY;
+    // Server-only: do not expose admin key to browser bundles
+    const adminKey = typeof window === 'undefined' ? process.env.ADMIN_API_KEY : undefined;
     if (adminKey) {
       headers['X-Admin-Key'] = adminKey;
-    } else if (typeof window !== 'undefined') {
-      console.warn('⚠️ ADMIN_API_KEY not found in environment variables');
     }
 
     return headers;
@@ -167,7 +165,7 @@ class ApiClient {
 
     try {
       // #region agent log
-      debugLog({ hypothesisId: 'H1', location: 'dashboard/lib/api-client.ts:167', message: 'api.request.start', data: { endpoint, url, method: options.method || 'GET', hasAuth: !!this.token, hasAdminKey: !!(process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY) } });
+      debugLog({ hypothesisId: 'H1', location: 'dashboard/lib/api-client.ts:167', message: 'api.request.start', data: { endpoint, url, method: options.method || 'GET', hasAuth: !!this.token, hasAdminKey: typeof window === 'undefined' && !!process.env.ADMIN_API_KEY } });
       // #endregion
       response = await fetch(url, {
         ...options,

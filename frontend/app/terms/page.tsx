@@ -11,11 +11,11 @@ export default function TermsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-10">
+        <main className="container mx-auto px-4 py-10" role="status" aria-label="Đang tải điều khoản sử dụng">
           <Skeleton className="h-10 w-64 mb-6" />
           <Skeleton className="h-4 w-full mb-4" />
           <Skeleton className="h-4 w-3/4 mb-8" />
-          <div className="space-y-6">
+          <div className="space-y-6" aria-hidden="true">
             {[...Array(4)].map((_, i) => (
               <div key={i}>
                 <Skeleton className="h-6 w-48 mb-3" />
@@ -24,6 +24,7 @@ export default function TermsPage() {
               </div>
             ))}
           </div>
+          <span className="sr-only">Đang tải nội dung...</span>
         </main>
       </div>
     );
@@ -32,10 +33,10 @@ export default function TermsPage() {
   if (error || !policy) {
     return (
       <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-10">
-          <h1 className="text-3xl font-bold mb-6">Điều khoản sử dụng</h1>
+        <main className="container mx-auto px-4 py-10" role="alert">
+          <h1 id="terms-title" className="text-3xl font-bold mb-6">Điều khoản sử dụng</h1>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <AlertCircle className="h-5 w-5" />
+            <AlertCircle className="h-5 w-5" aria-hidden="true" />
             <p>Không thể tải nội dung. Vui lòng thử lại sau.</p>
           </div>
         </main>
@@ -45,12 +46,14 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold mb-6">{policy.title}</h1>
-        <div
-          className="prose prose-gray dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: policy.content }}
-        />
+      <main className="container mx-auto px-4 py-10" aria-labelledby="terms-title">
+        <h1 id="terms-title" className="text-3xl font-bold mb-6">{policy.title}</h1>
+        <article>
+          <div
+            className="prose prose-gray dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: policy.content }}
+          />
+        </article>
         <p className="text-sm text-muted-foreground mt-8">
           Cập nhật lần cuối: {new Date(policy.updatedAt).toLocaleDateString('vi-VN')}
         </p>
@@ -58,3 +61,4 @@ export default function TermsPage() {
     </div>
   );
 }
+

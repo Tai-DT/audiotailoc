@@ -1,0 +1,44 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bg-gradient)"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="650" cy="100" r="150" fill="#e94560" opacity="0.1"/>
+  <circle cx="150" cy="500" r="100" fill="#e94560" opacity="0.08"/>
+  
+  <!-- Villa/House shape -->
+  <g transform="translate(280, 180)" opacity="0.4">
+    <!-- Roof -->
+    <path d="M120 0 L0 80 L240 80 Z" fill="#e94560"/>
+    <!-- House body -->
+    <rect x="20" y="80" width="200" height="140" fill="#e94560" opacity="0.8"/>
+    <!-- Door -->
+    <rect x="90" y="140" width="60" height="80" fill="#1a1a2e"/>
+    <!-- Windows -->
+    <rect x="40" y="100" width="40" height="35" fill="#1a1a2e"/>
+    <rect x="160" y="100" width="40" height="35" fill="#1a1a2e"/>
+  </g>
+  
+  <!-- Speaker icons -->
+  <g transform="translate(350, 420)" opacity="0.6">
+    <rect x="0" y="0" width="50" height="70" rx="5" fill="#e94560"/>
+    <circle cx="25" cy="25" r="12" fill="#1a1a2e"/>
+    <circle cx="25" cy="50" r="8" fill="#1a1a2e"/>
+    
+    <rect x="60" y="0" width="50" height="70" rx="5" fill="#e94560"/>
+    <circle cx="85" cy="25" r="12" fill="#1a1a2e"/>
+    <circle cx="85" cy="50" r="8" fill="#1a1a2e"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="400" y="540" font-family="system-ui, sans-serif" font-size="18" fill="#ffffff" text-anchor="middle" opacity="0.7">
+    Villa Audio Setup
+  </text>
+</svg>

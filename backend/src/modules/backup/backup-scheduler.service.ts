@@ -258,7 +258,7 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
   // Start all enabled schedules
   private startAllSchedules() {
     for (const schedule of this.schedules.values()) {
-      if (schedule.enabled) {
+      if (schedule.enabled && !this.cronJobs.has(schedule.id)) {
         this.createCronJob(schedule);
       }
     }
@@ -287,6 +287,14 @@ export class BackupSchedulerService implements OnModuleInit, OnModuleDestroy {
         schedule.status = 'inactive';
         schedule.errorMessage = 'cron package not available';
         return;
+      }
+
+      // Prevent duplicate jobs when initialization/startup code calls createCronJob
+      // multiple times for the same schedule.
+      const existingJob = this.cronJobs.get(schedule.id);
+      if (existingJob) {
+        existingJob.stop();
+        this.cronJobs.delete(schedule.id);
       }
 
       const cronJob = new CronJobCtor(

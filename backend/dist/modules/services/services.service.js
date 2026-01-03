@@ -277,10 +277,14 @@ let ServicesService = class ServicesService {
             updateData.tags = Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags;
         }
         if (data.features !== undefined) {
-            updateData.features = Array.isArray(data.features) ? JSON.stringify(data.features) : data.features;
+            updateData.features = Array.isArray(data.features)
+                ? JSON.stringify(data.features)
+                : data.features;
         }
         if (data.requirements !== undefined) {
-            updateData.requirements = Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : data.requirements;
+            updateData.requirements = Array.isArray(data.requirements)
+                ? JSON.stringify(data.requirements)
+                : data.requirements;
         }
         if (data.shortDescription !== undefined)
             updateData.shortDescription = data.shortDescription;

@@ -64,8 +64,14 @@ function OrdersPageContent() {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
+          <div 
+            className="text-center"
+            role="status"
+            aria-label="Đang tải danh sách đơn hàng"
+          >
             <h1 className="text-2xl font-bold mb-4">Đang tải đơn hàng...</h1>
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" aria-hidden="true" />
+            <span className="sr-only">Đang tải...</span>
           </div>
         </main>
       </div>
@@ -80,7 +86,7 @@ function OrdersPageContent() {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-16">
-          <div className="text-center">
+          <div className="text-center" role="alert">
             <h1 className="text-2xl font-bold mb-4 text-destructive">
               {isForbidden ? 'Không có quyền truy cập' : 'Có lỗi xảy ra'}
             </h1>
@@ -105,20 +111,20 @@ function OrdersPageContent() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <header className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Đơn hàng của tôi</h1>
+              <h1 id="orders-title" className="text-3xl font-bold mb-2">Đơn hàng của tôi</h1>
               <p className="text-muted-foreground">
                 Quản lý và theo dõi tất cả đơn hàng của bạn
               </p>
             </div>
-            <Button asChild>
+            <Button asChild aria-label="Tiếp tục mua sắm">
               <Link href="/products">
-                <ShoppingBag className="w-4 h-4 mr-2" />
+                <ShoppingBag className="w-4 h-4 mr-2" aria-hidden="true" />
                 Tiếp tục mua sắm
               </Link>
             </Button>
-          </div>
+          </header>
 
           {/* Orders List */}
           {!orders?.items || orders.items.length === 0 ? (
@@ -147,7 +153,7 @@ function OrdersPageContent() {
                 const orderItems = order?.items || [];
 
                 return (
-                  <Card key={orderId} className="hover:shadow-md transition-shadow">
+                  <Card key={orderId} className="hover:shadow-md transition-shadow" role="article" aria-labelledby={`order-${orderId}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -226,9 +232,9 @@ function OrdersPageContent() {
 
                         <div className="flex space-x-2">
                           {orderId && (
-                            <Button variant="outline" size="sm" asChild>
+                            <Button variant="outline" size="sm" asChild aria-label={`Xem chi tiết đơn hàng ${order.orderNo || orderId}`}>
                               <Link href={`/orders/${orderId}`}>
-                                <Eye className="w-4 h-4 mr-1" />
+                                <Eye className="w-4 h-4 mr-1" aria-hidden="true" />
                                 Chi tiết
                               </Link>
                             </Button>

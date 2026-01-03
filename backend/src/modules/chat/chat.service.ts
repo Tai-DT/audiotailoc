@@ -1,4 +1,13 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, UnauthorizedException, Inject, forwardRef, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+  Inject,
+  forwardRef,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateConversationDto, SendMessageDto } from './dto/chat.dto';
 import { TelegramService } from '../notifications/telegram.service';
@@ -141,7 +150,9 @@ export class ChatService {
       // For guest messages, validate token
       if (dto.guestToken && !dto.senderId) {
         // Guest is sending message
-        if (!this.validateGuestToken(dto.conversationId, conversation.guestId || '', dto.guestToken)) {
+        if (
+          !this.validateGuestToken(dto.conversationId, conversation.guestId || '', dto.guestToken)
+        ) {
           throw new UnauthorizedException('Invalid guest token');
         }
       }
@@ -228,7 +239,7 @@ export class ChatService {
         take: options.limit || 50,
       });
 
-      return messages.map((m) => ({
+      return messages.map(m => ({
         id: m.id,
         conversationId: m.conversationId,
         content: m.content,
@@ -248,11 +259,13 @@ export class ChatService {
   /**
    * Get all conversations (for admin)
    */
-  async getConversations(options: {
-    status?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<{
+  async getConversations(
+    options: {
+      status?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ): Promise<{
     data: ConversationResponse[];
     total: number;
   }> {
@@ -276,7 +289,7 @@ export class ChatService {
       ]);
 
       return {
-        data: conversations.map((c) => ({
+        data: conversations.map(c => ({
           id: c.id,
           guestId: c.guestId || '',
           guestToken: '', // Don't expose token
@@ -284,7 +297,7 @@ export class ChatService {
           guestPhone: c.guestPhone,
           status: c.status,
           createdAt: c.createdAt,
-          messages: c.messages.map((m) => ({
+          messages: c.messages.map(m => ({
             id: m.id,
             conversationId: m.conversationId,
             content: m.content,
@@ -327,7 +340,7 @@ export class ChatService {
         guestPhone: conversation.guestPhone,
         status: conversation.status,
         createdAt: conversation.createdAt,
-        messages: conversation.messages.map((m) => ({
+        messages: conversation.messages.map(m => ({
           id: m.id,
           conversationId: m.conversationId,
           content: m.content,

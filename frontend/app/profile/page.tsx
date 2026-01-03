@@ -156,21 +156,38 @@ function ProfilePageContent() {
 
   if (userLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Clock className="w-8 h-8 animate-spin text-primary" />
+      <div 
+        className="flex items-center justify-center min-h-[60vh]"
+        role="status"
+        aria-label="Đang tải thông tin hồ sơ"
+      >
+        <Clock className="w-8 h-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Đang tải...</span>
       </div>
     );
   }
 
   const displayName = user.name || user.email || 'Khách hàng';
   const avatarFallback = (displayName.charAt(0) || '?').toUpperCase();
+  const completionPercent =
+    (Object.values(formData).filter(Boolean).length / Object.values(formData).length) * 100;
+  const completionWidthClass =
+    completionPercent >= 87.5
+      ? 'w-full'
+      : completionPercent >= 62.5
+        ? 'w-3/4'
+        : completionPercent >= 37.5
+          ? 'w-1/2'
+          : completionPercent >= 12.5
+            ? 'w-1/4'
+            : 'w-0';
 
   return (
     <div className="min-h-screen bg-background/50 pb-20">
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8" aria-labelledby="profile-title">
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
-          <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-background border p-8">
+          <header className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-background border p-8">
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start md:space-x-8">
               <div className="relative group cursor-pointer mb-6 md:mb-0">
                 <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
@@ -181,7 +198,13 @@ function ProfilePageContent() {
                 </Avatar>
                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                   <Camera className="w-8 h-8 text-white" />
-                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    aria-label="Tải ảnh đại diện"
+                  />
                 </label>
                 {uploadAvatar.isPending && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
@@ -192,7 +215,7 @@ function ProfilePageContent() {
 
               <div className="flex-1 text-center md:text-left space-y-2">
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight">{displayName}</h1>
+                  <h1 id="profile-title" className="text-3xl font-bold tracking-tight">{displayName}</h1>
                   <Badge variant="outline" className="w-fit mx-auto md:mx-0 bg-background/50">
                     {user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
                   </Badge>
@@ -221,14 +244,14 @@ function ProfilePageContent() {
 
               <div className="mt-8 md:mt-0">
                 {!isEditing ? (
-                  <Button size="lg" onClick={() => setIsEditing(true)} className="rounded-full shadow-lg">
-                    <Edit className="w-4 h-4 mr-2" />
+                  <Button size="lg" onClick={() => setIsEditing(true)} className="rounded-full shadow-lg" aria-label="Chỉnh sửa thông tin hồ sơ">
+                    <Edit className="w-4 h-4 mr-2" aria-hidden="true" />
                     Chỉnh sửa hồ sơ
                   </Button>
                 ) : (
                   <div className="flex gap-3">
-                    <Button size="lg" onClick={handleSaveProfile} disabled={updateProfile.isPending} className="rounded-full shadow-lg">
-                      <Save className="w-4 h-4 mr-2" />
+                    <Button size="lg" onClick={handleSaveProfile} disabled={updateProfile.isPending} className="rounded-full shadow-lg" aria-label="Lưu thay đổi hồ sơ">
+                      <Save className="w-4 h-4 mr-2" aria-hidden="true" />
                       {updateProfile.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
                     </Button>
                     <Button size="lg" variant="outline" onClick={() => setIsEditing(false)} className="rounded-full">
@@ -238,7 +261,7 @@ function ProfilePageContent() {
                 )}
               </div>
             </div>
-          </div>
+          </header>
 
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="bg-background/50 border backdrop-blur p-1 h-14 rounded-xl flex w-full md:w-fit overflow-x-auto no-scrollbar">
@@ -294,8 +317,7 @@ function ProfilePageContent() {
                   <CardContent className="space-y-4">
                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary transition-all duration-500"
-                        style={{ width: `${(Object.values(formData).filter(Boolean).length / Object.values(formData).length) * 100}%` }}
+                        className={`h-full bg-primary transition-all duration-500 ${completionWidthClass}`}
                       />
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -337,7 +359,7 @@ function ProfilePageContent() {
                           <div key={item.id} className="min-w-[200px] border rounded-xl p-3 bg-muted/30">
                             <div className="aspect-square relative rounded-lg overflow-hidden mb-2 bg-white">
                               <Image
-                                src={item.product?.imageUrl || '/images/placeholder-product.png'}
+                                src={item.product?.imageUrl || '/placeholder-product.svg'}
                                 alt={item.product?.name}
                                 fill
                                 className="object-contain"
@@ -394,8 +416,11 @@ function ProfilePageContent() {
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label>Giới tính</Label>
+                        <Label htmlFor="gender">Giới tính</Label>
                         <select
+                          id="gender"
+                          name="gender"
+                          aria-label="Giới tính"
                           className="w-full h-12 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
                           value={formData.gender}
                           onChange={(e) => handleInputChange('gender', e.target.value)}
@@ -648,40 +673,46 @@ function ProfilePageContent() {
                     <CardDescription>Tùy chỉnh các loại thông báo bạn muốn nhận.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('emailNotifications', !formData.emailNotifications)}>
+                    <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <Label className="font-semibold cursor-pointer">Thông báo qua Email</Label>
-                        <p className="text-sm text-muted-foreground">Nhận tin nhắn về trạng thái đơn hàng và cập nhật hệ thống.</p>
+                        <Label htmlFor="email-notifications" className="font-semibold cursor-pointer">Thông báo qua Email</Label>
+                        <p id="email-notifications-desc" className="text-sm text-muted-foreground">Nhận tin nhắn về trạng thái đơn hàng và cập nhật hệ thống.</p>
                       </div>
                       <Switch
+                        id="email-notifications"
                         checked={formData.emailNotifications}
                         onCheckedChange={(checked) => handleInputChange('emailNotifications', checked)}
+                        aria-describedby="email-notifications-desc"
                       />
                     </div>
 
                     <Separator />
 
-                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('promoNotifications', !formData.promoNotifications)}>
+                    <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <Label className="font-semibold cursor-pointer">Khuyến mãi & Ưu đãi</Label>
-                        <p className="text-sm text-muted-foreground">Nhận thông tin về các chương trình giảm giá và quà tặng mới.</p>
+                        <Label htmlFor="promo-notifications" className="font-semibold cursor-pointer">Khuyến mãi & Ưu đãi</Label>
+                        <p id="promo-notifications-desc" className="text-sm text-muted-foreground">Nhận thông tin về các chương trình giảm giá và quà tặng mới.</p>
                       </div>
                       <Switch
+                        id="promo-notifications"
                         checked={formData.promoNotifications}
                         onCheckedChange={(checked) => handleInputChange('promoNotifications', checked)}
+                        aria-describedby="promo-notifications-desc"
                       />
                     </div>
 
                     <Separator />
 
-                    <div className="flex items-center justify-between cursor-pointer" onClick={() => handleInputChange('smsNotifications', !formData.smsNotifications)}>
+                    <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <Label className="font-semibold cursor-pointer">Thông báo qua SMS</Label>
-                        <p className="text-sm text-muted-foreground">Nhận mã xác thực và thông báo khẩn cấp (có thể tính phí).</p>
+                        <Label htmlFor="sms-notifications" className="font-semibold cursor-pointer">Thông báo qua SMS</Label>
+                        <p id="sms-notifications-desc" className="text-sm text-muted-foreground">Nhận mã xác thực và thông báo khẩn cấp (có thể tính phí).</p>
                       </div>
                       <Switch
+                        id="sms-notifications"
                         checked={formData.smsNotifications}
                         onCheckedChange={(checked) => handleInputChange('smsNotifications', checked)}
+                        aria-describedby="sms-notifications-desc"
                       />
                     </div>
 

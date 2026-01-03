@@ -13,19 +13,30 @@ interface ProductGridProps {
   loading?: boolean;
   onAddToCart?: (productId: string) => void;
   onViewProduct?: (productSlug: string) => void;
+  /** ID for the grid, useful for aria-labelledby */
+  id?: string;
+  /** Label for screen readers */
+  ariaLabel?: string;
 }
 
 export function ProductGrid({ 
   products, 
   loading = false, 
   onAddToCart, 
-  onViewProduct 
+  onViewProduct,
+  id,
+  ariaLabel = 'Danh sách sản phẩm',
 }: ProductGridProps) {
+  // Loading state with accessibility
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7">
+      <div 
+        role="status" 
+        aria-label="Đang tải danh sách sản phẩm"
+        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7"
+      >
         {[...Array(8)].map((_, index) => (
-          <div key={index} className="space-y-4 animate-pulse">
+          <div key={index} className="space-y-4 animate-pulse" aria-hidden="true">
             <Skeleton className="aspect-square w-full rounded-lg" />
             <div className="space-y-2">
               <Skeleton className="h-3 w-1/4 rounded" />
@@ -35,10 +46,12 @@ export function ProductGrid({
             </div>
           </div>
         ))}
+        <span className="sr-only">Đang tải sản phẩm...</span>
       </div>
     );
   }
 
+  // Empty state
   if (products.length === 0) {
     return (
       <EmptyState
@@ -54,7 +67,16 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7">
+    <section 
+      id={id}
+      aria-label={ariaLabel}
+      className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7"
+    >
+      {/* Screen reader announcement */}
+      <div className="sr-only" aria-live="polite">
+        Hiển thị {products.length} sản phẩm
+      </div>
+      
       {products.map((product, index) => (
         <BlurFade key={product.id} delay={0.05 * index} inView>
           <ProductCard
@@ -64,7 +86,6 @@ export function ProductGrid({
           />
         </BlurFade>
       ))}
-    </div>
+    </section>
   );
 }
-

@@ -69,6 +69,11 @@ export const metadata: Metadata = {
   creator: "Audio Tài Lộc",
   publisher: "Audio Tài Lộc",
   metadataBase: new URL(CANONICAL_BASE),
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "any" }],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
   openGraph: {
     title: "Audio Tài Lộc - Thiết bị âm thanh chuyên nghiệp",
     description: "Chuyên cung cấp thiết bị âm thanh chất lượng cao: Dàn karaoke, Loa, Ampli, Micro. Dịch vụ lắp đặt, bảo hành uy tín tại TP.HCM. Hotline: 0768 426 262",
@@ -132,16 +137,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
-      <head>
-        {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
-        {/* Favicon variations */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
@@ -149,9 +144,19 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
             <CartProvider>
+              {/* Skip to main content - Accessibility */}
+              <a
+                href="#main-content"
+                className="skip-to-content"
+              >
+                Bỏ qua đến nội dung chính
+              </a>
+              
               <ScrollProgress />
               <Header />
-              {children}
+              <main id="main-content" tabIndex={-1}>
+                {children}
+              </main>
               <Footer />
               <Toaster
                 position="top-right"

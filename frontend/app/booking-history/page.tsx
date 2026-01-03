@@ -39,8 +39,13 @@ export default function BookingHistoryPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div 
+        className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[400px]"
+        role="status"
+        aria-label="Đang tải lịch sử đặt lịch"
+      >
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Đang tải...</span>
       </div>
     );
   }
@@ -101,10 +106,10 @@ export default function BookingHistoryPage() {
   const totalBookings = filteredBookings.length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8" role="main" aria-labelledby="page-title">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Lịch sử đặt lịch</h1>
+        <h1 id="page-title" className="text-3xl font-bold mb-4">Lịch sử đặt lịch</h1>
         <p className="text-muted-foreground">
           Theo dõi và quản lý tất cả lịch hẹn dịch vụ của bạn
         </p>
@@ -169,6 +174,7 @@ export default function BookingHistoryPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
+                  aria-label="Tìm kiếm lịch hẹn"
                 />
               </div>
             </div>
@@ -404,7 +410,7 @@ export default function BookingHistoryPage() {
           </div>
 
           {filteredBookings.length === 0 && (
-            <div className="text-center py-12">
+            <div className="text-center py-12" role="alert" aria-live="polite">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Không có lịch hẹn nào</h3>
               <p className="text-muted-foreground">
@@ -414,6 +420,6 @@ export default function BookingHistoryPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

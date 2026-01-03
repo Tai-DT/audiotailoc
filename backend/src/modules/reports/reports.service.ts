@@ -359,7 +359,7 @@ export class ReportsService {
   /**
    * Export comprehensive report with all data
    */
-  async exportComprehensiveReport(format: 'excel'): Promise<Buffer> {
+  async exportComprehensiveReport(): Promise<Buffer> {
     const [salesReport, inventoryReport, customersReport] = await Promise.all([
       this.generateSalesReport(),
       this.generateInventoryReport(),

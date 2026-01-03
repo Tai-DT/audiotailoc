@@ -127,9 +127,6 @@ export function useReports() {
       const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token') || '') : ''
       if (token) headers['Authorization'] = `Bearer ${token}`
 
-      const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY
-      if (adminKey) headers['X-Admin-Key'] = adminKey
-
       const res = await fetch(url.toString(), {
         method: 'GET',
         headers,

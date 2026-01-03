@@ -162,13 +162,15 @@ export class ServicesService {
     ]);
 
     // Map services to include computed price field and parse JSON fields
-    const mappedServices = services.map(service => this.parseJsonFields({
-      ...service,
-      price: Number(service.basePriceCents) / 100,
-      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
-      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
-      type: service.service_types,
-    }));
+    const mappedServices = services.map(service =>
+      this.parseJsonFields({
+        ...service,
+        price: Number(service.basePriceCents) / 100,
+        minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+        maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
+        type: service.service_types,
+      }),
+    );
 
     const result = { total, page, pageSize, services: mappedServices };
 
@@ -300,7 +302,7 @@ export class ServicesService {
 
     if (data.duration !== undefined) updateData.duration = data.duration;
     else if (data.estimatedDuration !== undefined) updateData.duration = data.estimatedDuration;
-    
+
     // Handle images - can be array from frontend or single string
     if (data.images !== undefined) {
       if (Array.isArray(data.images) && data.images.length > 0) {
@@ -313,22 +315,26 @@ export class ServicesService {
     } else if (data.imageUrl !== undefined) {
       updateData.images = data.imageUrl;
     }
-    
+
     // Handle other array fields
     if (data.tags !== undefined) {
       updateData.tags = Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags;
     }
     if (data.features !== undefined) {
-      updateData.features = Array.isArray(data.features) ? JSON.stringify(data.features) : data.features;
+      updateData.features = Array.isArray(data.features)
+        ? JSON.stringify(data.features)
+        : data.features;
     }
     if (data.requirements !== undefined) {
-      updateData.requirements = Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : data.requirements;
+      updateData.requirements = Array.isArray(data.requirements)
+        ? JSON.stringify(data.requirements)
+        : data.requirements;
     }
     if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription;
     if (data.seoTitle !== undefined) updateData.seoTitle = data.seoTitle;
     if (data.seoDescription !== undefined) updateData.seoDescription = data.seoDescription;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
-    
+
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     const updated = await this.prisma.services.update({

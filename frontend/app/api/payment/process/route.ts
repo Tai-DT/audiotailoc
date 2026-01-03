@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 interface OrderItem {
   id?: string;
@@ -16,14 +15,6 @@ interface OrderData {
   shippingAddress?: string;
   finalTotal: number;
   items: OrderItem[];
-}
-
-interface PayOSSignatureData {
-  amount: number;
-  cancelUrl: string;
-  description: string;
-  orderCode: number;
-  returnUrl: string;
 }
 
 export async function POST(request: NextRequest) {

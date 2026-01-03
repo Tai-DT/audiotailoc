@@ -113,14 +113,15 @@ function ProductsPageContent() {
   const currentCategory = categories?.find((cat: { id: string }) => cat.id === filters.categoryId);
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background" role="main" aria-labelledby="products-title">
       {/* Compact Page Header */}
       <div className="bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-3xl">
-            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sản phẩm</div>
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide" id="products-breadcrumb">Sản phẩm</div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               <AnimatedGradientText
+                id="products-title"
                 className="text-2xl sm:text-3xl font-bold"
                 speed={1.2}
                 colorFrom="oklch(0.58 0.28 20)"
@@ -139,20 +140,19 @@ function ProductsPageContent() {
       </div>
 
       {/* Category Not Found Alert */}
-      {categoryNotFound && (
-        <div className="border-b bg-destructive/5">
+        <div className="border-b bg-destructive/5" role="alert" aria-live="aggressive">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-destructive">
-              <X className="h-4 w-4 flex-shrink-0" />
+              <X className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <span><strong>Không tìm thấy &quot;{categorySlug}&quot;</strong> - Hiển thị tất cả sản phẩm</span>
             </div>
           </div>
         </div>
-      )}
 
       {/* Search and Filters */}
-      <section className="py-3 bg-muted/30 border-b">
+      <section className="py-3 bg-muted/30 border-b" aria-labelledby="filters-title">
         <div className="container mx-auto px-4">
+          <h2 id="filters-title" className="sr-only">Bộ lọc và Tìm kiếm</h2>
           <div className="bg-background rounded-lg p-3 shadow-sm">
             <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2 mb-3">
               <div className="flex-1 relative">
@@ -162,7 +162,7 @@ function ProductsPageContent() {
                   placeholder="Tìm kiếm sản phẩm..."
                   value={searchQuery}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-9"
+                  aria-label="Tìm kiếm sản phẩm"
                 />
               </div>
               <Button type="submit" variant="default" className="w-full sm:w-auto h-9">
@@ -268,11 +268,12 @@ function ProductsPageContent() {
       </section>
 
       {/* Products Grid */}
-      <section className="py-4">
+      <section className="py-4" aria-labelledby="products-grid-title">
         <div className="container mx-auto px-4">
+          <h2 id="products-grid-title" className="sr-only">Danh sách sản phẩm</h2>
           {/* Product Count and Active Filters */}
           {(currentCategory || filters.q) && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground" role="status" aria-live="polite">
               <span>
                 {data?.items.length || 0} sản phẩm
                 {currentCategory && <span className="font-medium text-foreground"> • {currentCategory.name}</span>}
@@ -288,7 +289,7 @@ function ProductsPageContent() {
           />
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

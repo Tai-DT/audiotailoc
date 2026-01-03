@@ -176,12 +176,13 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <main role="main" aria-labelledby="knowledge-hero-title">
       {/* Compact Page Header */}
-      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
+      <header className="bg-gradient-to-b from-primary/5 to-background border-b" role="banner">
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-3xl mx-auto text-center">
             <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Kiến thức</div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+            <h1 id="knowledge-hero-title" className="text-2xl sm:text-3xl font-bold mb-2">
               Kiến thức âm thanh
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -189,7 +190,7 @@ export default function KnowledgeBasePage() {
             </p>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="container mx-auto px-4 py-6">
 
@@ -205,6 +206,7 @@ export default function KnowledgeBasePage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
+                    aria-label="Tìm kiếm trong kho kiến thức"
                   />
                 </div>
               </div>
@@ -238,6 +240,8 @@ export default function KnowledgeBasePage() {
                   variant={viewMode === 'grid' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
+                  aria-label="Xem dạng lưới"
+                  aria-pressed={viewMode === 'grid'}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
@@ -245,6 +249,8 @@ export default function KnowledgeBasePage() {
                   variant={viewMode === 'list' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('list')}
+                  aria-label="Xem dạng danh sách"
+                  aria-pressed={viewMode === 'list'}
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -301,6 +307,11 @@ export default function KnowledgeBasePage() {
         </Tabs>
 
         {/* Articles Grid/List */}
+        <div className="mb-6 flex items-center justify-between text-sm" role="status" aria-live="polite">
+          <p className="text-muted-foreground" id="articles-count">
+            Hiển thị <span className="font-medium text-foreground">{sortedArticles.length}</span> bài viết
+          </p>
+        </div>
         {sortedArticles.length > 0 ? (
           <div className={
             viewMode === 'grid'
@@ -310,12 +321,12 @@ export default function KnowledgeBasePage() {
             {sortedArticles.map(renderArticleCard)}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <div className="text-center py-16" role="alert" aria-live="polite">
+            <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
+              <HelpCircle className="h-8 w-8 text-muted-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-2">Không tìm thấy bài viết</h3>
-            <p className="text-muted-foreground">
-              Thử thay đổi từ khóa tìm kiếm hoặc chọn danh mục khác
-            </p>
+            <p className="text-muted-foreground">Thử tìm kiếm với từ khóa khác hoặc danh mục khác</p>
           </div>
         )}
 

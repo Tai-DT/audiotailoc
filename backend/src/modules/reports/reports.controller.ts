@@ -10,7 +10,6 @@ import {
   HttpStatus,
   HttpCode,
   Res,
-  StreamableFile,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -195,7 +194,7 @@ export class ReportsController {
   @Get('export/comprehensive')
   @ApiOperation({ summary: 'Export comprehensive report (Excel with multiple sheets)' })
   async exportComprehensiveReport(@Res() res: Response) {
-    const buffer = await this.reportsService.exportComprehensiveReport('excel');
+    const buffer = await this.reportsService.exportComprehensiveReport();
 
     const filename = `bao-cao-tong-hop-${new Date().toISOString().split('T')[0]}.xlsx`;
 

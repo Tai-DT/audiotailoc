@@ -1,6 +1,6 @@
 // Export utilities for reports and data using professional libraries
 import { toast } from 'sonner'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -56,9 +56,9 @@ export function exportToCSV(options: ExportOptions): void {
 }
 
 /**
- * Export data to Excel format using XLSX library
+ * Export data to Excel format using ExcelJS library
  */
-export function exportToExcel(options: ExportOptions): void {
+export async function exportToExcel(options: ExportOptions): Promise<void> {
   try {
     const { filename, data, columns, title, subtitle } = options
 
@@ -68,45 +68,73 @@ export function exportToExcel(options: ExportOptions): void {
     }
 
     // Create workbook
-    const wb = XLSX.utils.book_new()
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Audio Tài Lộc Dashboard'
+    workbook.created = new Date()
+    
+    const worksheet = workbook.addWorksheet('Báo cáo')
 
-    // Prepare data with headers
+    // Prepare headers and keys
     const headers = columns ? columns.map(c => c.header) : Object.keys(data[0])
     const keys = columns ? columns.map(c => c.key) : Object.keys(data[0])
 
-    // Map data to use custom headers
-    const exportData = data.map((row: Record<string, unknown>) => {
-      const newRow: Record<string, unknown> = {}
-      keys.forEach((key, index) => {
-        newRow[headers[index]] = row[key]
-      })
-      return newRow
-    })
-
-    // Convert to worksheet
-    const ws = XLSX.utils.json_to_sheet(exportData)
+    let startRow = 1
 
     // Add title rows if provided
     if (title) {
-      XLSX.utils.sheet_add_aoa(ws, [[title]], { origin: 'A1' })
+      worksheet.addRow([title])
+      worksheet.getRow(startRow).font = { bold: true, size: 14 }
+      worksheet.mergeCells(startRow, 1, startRow, headers.length)
+      startRow++
+      
       if (subtitle) {
-        XLSX.utils.sheet_add_aoa(ws, [[subtitle]], { origin: 'A2' })
+        worksheet.addRow([subtitle])
+        worksheet.getRow(startRow).font = { italic: true, size: 11 }
+        worksheet.mergeCells(startRow, 1, startRow, headers.length)
+        startRow++
       }
-      XLSX.utils.sheet_add_aoa(ws, [[`Ngày tạo: ${new Date().toLocaleString('vi-VN')}`]], { origin: 'A3' })
-      // Re-add data starting from row 5
-      XLSX.utils.sheet_add_json(ws, exportData, { origin: 'A5', skipHeader: false })
+      
+      worksheet.addRow([`Ngày tạo: ${new Date().toLocaleString('vi-VN')}`])
+      worksheet.getRow(startRow).font = { size: 10, color: { argb: '666666' } }
+      startRow++
+      worksheet.addRow([]) // Empty row
+      startRow++
     }
+
+    // Add header row
+    worksheet.addRow(headers)
+    const headerRow = worksheet.getRow(startRow)
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } }
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4A5568' }
+    }
+    headerRow.alignment = { horizontal: 'center' }
+    startRow++
+
+    // Add data rows
+    data.forEach((row: Record<string, unknown>) => {
+      const rowData = keys.map(key => row[key] ?? '')
+      worksheet.addRow(rowData)
+    })
 
     // Set column widths
     if (columns) {
-      ws['!cols'] = columns.map(col => ({ wch: col.width || 20 }))
+      columns.forEach((col, index) => {
+        worksheet.getColumn(index + 1).width = col.width || 20
+      })
+    } else {
+      // Auto-width based on header length
+      headers.forEach((header, index) => {
+        worksheet.getColumn(index + 1).width = Math.max(header.length + 5, 15)
+      })
     }
 
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Báo cáo')
-
-    // Write file
-    XLSX.writeFile(wb, `${filename}.xlsx`)
+    // Generate buffer and download
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    downloadFile(blob, `${filename}.xlsx`)
     toast.success('Xuất Excel thành công')
   } catch (error) {
     console.error('Excel export error:', error)
@@ -235,11 +263,11 @@ function downloadFile(blob: Blob, filename: string): void {
 /**
  * Export reports to multiple formats
  */
-export function exportReports(
+export async function exportReports(
   reports: Record<string, unknown>[],
   format: 'pdf' | 'excel' | 'csv' = 'pdf',
   columns?: { key: string; header: string; width?: number }[]
-): void {
+): Promise<void> {
   if (!reports || reports.length === 0) {
     toast.error('Không có báo cáo để xuất')
     return
@@ -270,7 +298,7 @@ export function exportReports(
       exportToCSV(options)
       break
     case 'excel':
-      exportToExcel(options)
+      await exportToExcel(options)
       break
     case 'pdf':
       exportToPDF(options)
@@ -283,12 +311,12 @@ export function exportReports(
 /**
  * Export table data with custom options
  */
-export function exportTableData(
+export async function exportTableData(
   tableData: Record<string, unknown>[],
   tableName: string,
   format: 'pdf' | 'excel' | 'csv' = 'csv',
   columns?: { key: string; header: string; width?: number }[]
-): void {
+): Promise<void> {
   if (!tableData || tableData.length === 0) {
     toast.error('Không có dữ liệu để xuất')
     return
@@ -315,7 +343,7 @@ export function exportTableData(
       exportToCSV(options)
       break
     case 'excel':
-      exportToExcel(options)
+      await exportToExcel(options)
       break
     case 'pdf':
       exportToPDF(options)

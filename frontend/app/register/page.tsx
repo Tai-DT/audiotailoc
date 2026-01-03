@@ -117,17 +117,19 @@ export default function RegisterPage() {
               borderWidth={2}
             />
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Đăng ký tài khoản</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center" id="register-title">Đăng ký tài khoản</CardTitle>
               <CardDescription className="text-center">
                 Tạo tài khoản để trải nghiệm đầy đủ dịch vụ
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="register-title">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Họ và tên *</Label>
+                  <Label htmlFor="fullName">
+                    Họ và tên <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="fullName"
                       name="fullName"
@@ -137,14 +139,18 @@ export default function RegisterPage() {
                       onChange={handleInputChange}
                       className="pl-10"
                       required
+                      autoComplete="name"
+                      aria-required="true"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">
+                    Email <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="email"
                       name="email"
@@ -154,14 +160,18 @@ export default function RegisterPage() {
                       onChange={handleInputChange}
                       className="pl-10"
                       required
+                      autoComplete="email"
+                      aria-required="true"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Số điện thoại *</Label>
+                  <Label htmlFor="phone">
+                    Số điện thoại <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="phone"
                       name="phone"
@@ -171,14 +181,18 @@ export default function RegisterPage() {
                       onChange={handleInputChange}
                       className="pl-10"
                       required
+                      autoComplete="tel"
+                      aria-required="true"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mật khẩu *</Label>
+                  <Label htmlFor="password">
+                    Mật khẩu <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="password"
                       name="password"
@@ -188,25 +202,32 @@ export default function RegisterPage() {
                       onChange={handleInputChange}
                       className="pl-10 pr-10"
                       required
+                      autoComplete="new-password"
+                      aria-required="true"
+                      aria-describedby="password-hint"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4" aria-hidden="true" />
                       )}
                     </button>
                   </div>
+                  <p id="password-hint" className="text-xs text-muted-foreground">Tối thiểu 6 ký tự</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
+                  <Label htmlFor="confirmPassword">
+                    Xác nhận mật khẩu <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
@@ -216,16 +237,19 @@ export default function RegisterPage() {
                       onChange={handleInputChange}
                       className="pl-10 pr-10"
                       required
+                      autoComplete="new-password"
+                      aria-required="true"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4" aria-hidden="true" />
                       )}
                     </button>
                   </div>

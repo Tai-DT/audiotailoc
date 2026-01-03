@@ -70,12 +70,10 @@ export function useCampaigns() {
     setLoading(true)
     try {
       const token = localStorage.getItem("accessToken")
-      const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || process.env.ADMIN_API_KEY
       const response = await fetch(`${API_URL}/marketing`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
-          ...(adminKey ? { 'X-Admin-Key': adminKey } : {})
         }
       })
       

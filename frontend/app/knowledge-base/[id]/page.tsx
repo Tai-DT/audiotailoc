@@ -46,13 +46,13 @@ export default function ArticlePage() {
 
   const relatedArticles = (relatedArticlesData?.items || []).filter(a => a.id !== articleId);
 
-  const comments: { id: string; author: string; content: string; createdAt: string }[] = []; // TODO: Implement comments API
+  const comments: { id: string; author: string; content: string; createdAt: string }[] = []; // NOTE: Comments feature pending backend API integration
 
   const handleFeedback = async (feedback: 'helpful' | 'not-helpful') => {
     if (userFeedback) return; // Prevent multiple votes
 
     try {
-      // TODO: Implement article feedback API call
+      // NOTE: Feedback is stored locally. Backend API integration pending for persistence
       setUserFeedback(feedback);
       toast.success('Cảm ơn phản hồi của bạn!');
     } catch {
@@ -83,7 +83,7 @@ export default function ArticlePage() {
     if (!comment.trim()) return;
 
     try {
-      // TODO: Implement comment submission
+      // NOTE: Comment submission pending backend API integration
       toast.success('Bình luận đã được gửi!');
       setComment('');
     } catch {

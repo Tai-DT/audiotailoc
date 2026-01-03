@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Package,
   Wrench,
-  Info,
   BookOpen,
   Mail,
   Home,

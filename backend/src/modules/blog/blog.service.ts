@@ -67,7 +67,7 @@ export class BlogService {
     ]);
 
     // Transform to match frontend types
-    const data = articles.map((article) => this.transformArticle(article));
+    const data = articles.map(article => this.transformArticle(article));
 
     return {
       data,
@@ -146,7 +146,7 @@ export class BlogService {
       },
     });
 
-    return articles.map((article) => this.transformArticle(article));
+    return articles.map(article => this.transformArticle(article));
   }
 
   async findRelatedArticles(slug: string, limit: number = 3) {
@@ -186,7 +186,7 @@ export class BlogService {
       },
     });
 
-    return articles.map((article) => this.transformArticle(article));
+    return articles.map(article => this.transformArticle(article));
   }
 
   async findAllCategories(params: { published?: boolean; limit?: number } = {}) {
@@ -214,7 +214,7 @@ export class BlogService {
       },
     });
 
-    return categories.map((cat) => ({
+    return categories.map(cat => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,

@@ -109,10 +109,11 @@ function LoginPageContent() {
   // Show loading while checking auth
   if (isCheckingAuth && isAuthLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Đang kiểm tra đăng nhập">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" aria-hidden="true" />
           <p className="text-muted-foreground">Đang kiểm tra đăng nhập...</p>
+          <span className="sr-only">Đang tải</span>
         </div>
       </div>
     );
@@ -225,7 +226,7 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden" role="main" aria-labelledby="login-title">
       <DotPattern className="absolute inset-0 opacity-30" width={20} height={20} cx={1} cy={1} cr={1} />
       <div className="w-full max-w-md relative z-10">
         <MagicCard gradientColor="oklch(0.97 0.008 45)" className="p-0 border-none shadow-none">
@@ -238,17 +239,17 @@ function LoginPageContent() {
               borderWidth={2}
             />
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center" id="login-title">Đăng nhập</CardTitle>
               <CardDescription className="text-center">
                 Nhập thông tin tài khoản để tiếp tục
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="login-title">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="email"
                       type="email"
@@ -258,6 +259,9 @@ function LoginPageContent() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
                       disabled={isLoading}
+                      autoComplete="email"
+                      aria-required="true"
+                      aria-label="Địa chỉ email"
                     />
                   </div>
                 </div>
@@ -265,7 +269,7 @@ function LoginPageContent() {
                 <div className="space-y-2">
                   <Label htmlFor="password">Mật khẩu</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -275,6 +279,9 @@ function LoginPageContent() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 pr-10"
                       disabled={isLoading}
+                      autoComplete="current-password"
+                      aria-required="true"
+                      aria-label="Mật khẩu"
                     />
                     <Button
                       type="button"
@@ -283,11 +290,12 @@ function LoginPageContent() {
                       className="absolute right-0 top-0 h-full"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={isLoading}
+                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       )}
                     </Button>
                   </div>
@@ -300,6 +308,7 @@ function LoginPageContent() {
                       checked={rememberMe}
                       onCheckedChange={(checked) => setRememberMe(checked === true)}
                       disabled={isLoading}
+                      aria-label="Ghi nhớ đăng nhập"
                     />
                     <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                       Ghi nhớ đăng nhập
@@ -321,6 +330,7 @@ function LoginPageContent() {
                   shimmerSize="0.1em"
                   borderRadius="0.5rem"
                   background="oklch(0.58 0.28 20)"
+                  aria-busy={isLoading}
                 >
                   {isLoading ? (
                     <span className="flex items-center text-white">
@@ -351,6 +361,8 @@ function LoginPageContent() {
                   className="w-full mt-6"
                   onClick={handleDemoLogin}
                   disabled={isLoading}
+                  aria-label="Đăng nhập bằng tài khoản Demo"
+                  aria-busy={isLoading}
                 >
                   Tài khoản demo
                 </Button>
@@ -377,7 +389,7 @@ function LoginPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

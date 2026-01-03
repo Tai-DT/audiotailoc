@@ -39,10 +39,7 @@ export class BlogController {
   }
 
   @Get('articles/:slug/related')
-  findRelatedArticles(
-    @Param('slug') slug: string,
-    @Query('limit') limit?: string,
-  ) {
+  findRelatedArticles(@Param('slug') slug: string, @Query('limit') limit?: string) {
     return this.blogService.findRelatedArticles(slug, limit ? parseInt(limit, 10) : 3);
   }
 
@@ -52,10 +49,7 @@ export class BlogController {
   }
 
   @Get('categories')
-  findAllCategories(
-    @Query('published') published?: string,
-    @Query('limit') limit?: string,
-  ) {
+  findAllCategories(@Query('published') published?: string, @Query('limit') limit?: string) {
     return this.blogService.findAllCategories({
       published: published !== 'false',
       limit: limit ? parseInt(limit, 10) : undefined,

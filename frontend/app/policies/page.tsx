@@ -68,9 +68,13 @@ export default function PoliciesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div 
+        className="min-h-screen bg-background flex items-center justify-center"
+        role="status"
+        aria-label="Đang tải chính sách"
+      >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" aria-hidden="true"></div>
           <p className="text-muted-foreground">Đang tải chính sách...</p>
         </div>
       </div>
@@ -79,7 +83,7 @@ export default function PoliciesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" role="alert" aria-live="assertive">
         <div className="text-center">
           <p className="text-destructive mb-4">Không thể tải chính sách: {error}</p>
           <Button onClick={() => window.location.reload()}>
@@ -92,7 +96,7 @@ export default function PoliciesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
+      <main role="main" aria-labelledby="policy-hero-title">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20 overflow-hidden">
           {/* Background Pattern */}
@@ -107,7 +111,7 @@ export default function PoliciesPage() {
                 Chính sách & Điều khoản
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+              <h1 id="policy-hero-title" className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
                 Chính sách cửa hàng
               </h1>
 
@@ -144,10 +148,13 @@ export default function PoliciesPage() {
                   const isExpanded = expandedPolicy === policy.id;
 
                   return (
-                    <Card
+                     <Card
                       key={policy.id}
                       className="hover-audio group cursor-pointer transition-all duration-300 border-border/50 hover:border-primary/30 policy-card animate-fade-in-up"
                       onClick={() => togglePolicy(policy.id)}
+                      role="button"
+                      aria-expanded={isExpanded}
+                      aria-labelledby={`policy-title-${policy.id}`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardHeader className="pb-4">
@@ -157,7 +164,7 @@ export default function PoliciesPage() {
                               <IconComponent className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                              <CardTitle className="text-xl group-hover:text-primary transition-colors duration-300">
+                              <CardTitle id={`policy-title-${policy.id}`} className="text-xl group-hover:text-primary transition-colors duration-300">
                                 {policyTitles[policy.type as keyof typeof policyTitles] || policy.title}
                               </CardTitle>
                               {policy.summary && (
@@ -186,7 +193,7 @@ export default function PoliciesPage() {
                       </CardHeader>
 
                       {isExpanded && (
-                        <CardContent className="pt-0 animate-in slide-in-from-top-5 duration-300">
+                         <CardContent className="pt-0 animate-in slide-in-from-top-5 duration-300" role="region" aria-labelledby={`policy-title-${policy.id}`}>
                           <div className="border-t border-border/50 pt-6">
                             <div
                               className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-li:text-foreground/90"
@@ -217,7 +224,7 @@ export default function PoliciesPage() {
               </div>
 
               {policies.length === 0 && (
-                <div className="text-center py-12">
+                 <div className="text-center py-12" role="status">
                   <p className="text-muted-foreground">Chưa có chính sách nào được đăng tải.</p>
                 </div>
               )}

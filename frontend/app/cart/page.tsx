@@ -57,8 +57,8 @@ export default function CartPage() {
         <BlurFade delay={0.1} inView>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Giỏ hàng</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="text-3xl font-bold tracking-tight" id="cart-title">Giỏ hàng</h1>
+              <p className="text-muted-foreground mt-1" aria-live="polite">
                 Bạn có <span className="font-medium text-foreground">{items.length} sản phẩm</span> trong giỏ hàng
               </p>
             </div>
@@ -75,7 +75,11 @@ export default function CartPage() {
           {/* Cart Items List */}
           <div className="lg:col-span-8">
             <BlurFade delay={0.2} inView>
-              <div className="border rounded-xl bg-card shadow-sm overflow-hidden">
+              <div 
+                className="border rounded-xl bg-card shadow-sm overflow-hidden"
+                role="region"
+                aria-labelledby="cart-title"
+              >
                 {/* Header (Desktop only) */}
                 <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b bg-muted/40 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   <div className="col-span-6">Sản phẩm</div>
@@ -122,10 +126,14 @@ export default function CartPage() {
                               className="h-8 w-8 rounded-none rounded-l-lg hover:bg-muted"
                               onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                               disabled={item.quantity <= 1}
+                              aria-label={`Giảm số lượng ${item.name}`}
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-3 w-3" aria-hidden="true" />
                             </Button>
-                            <div className="w-10 text-center text-sm font-medium border-x h-8 flex items-center justify-center">
+                            <div 
+                              className="w-10 text-center text-sm font-medium border-x h-8 flex items-center justify-center"
+                              aria-label={`Số lượng: ${item.quantity}`}
+                            >
                               {item.quantity}
                             </div>
                             <Button
@@ -133,8 +141,9 @@ export default function CartPage() {
                               size="icon"
                               className="h-8 w-8 rounded-none rounded-r-lg hover:bg-muted"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              aria-label={`Tăng số lượng ${item.name}`}
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-3 w-3" aria-hidden="true" />
                             </Button>
                           </div>
 
@@ -143,8 +152,9 @@ export default function CartPage() {
                             size="icon"
                             className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full ml-3 md:hidden"
                             onClick={() => removeItem(item.id)}
+                            aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
 
@@ -165,8 +175,9 @@ export default function CartPage() {
                             size="icon"
                             className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full hidden md:flex transition-colors"
                             onClick={() => removeItem(item.id)}
+                            aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>

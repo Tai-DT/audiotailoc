@@ -1,6 +1,7 @@
 "use client"
 
-import { motion, MotionStyle, Transition } from "motion/react"
+import * as React from "react"
+import { motion, Transition } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
@@ -64,30 +65,27 @@ export const BorderBeam = ({
   initialOffset = 0,
   borderWidth = 1,
 }: BorderBeamProps) => {
+  const id = React.useId().replace(/:/g, "")
+  const scopeClass = `border-beam-${id}`
+
+  const extraCssVars = Object.entries(style ?? {})
+    .filter(([key]) => key.startsWith("--"))
+    .map(([key, value]) => `${key}:${String(value)};`)
+    .join("")
+
   return (
     <div
-      className="pointer-events-none absolute inset-0 rounded-[inherit] border-(length:--border-beam-width) border-transparent [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)] [mask-composite:intersect] [mask-clip:padding-box,border-box]"
-      style={
-        {
-          "--border-beam-width": `${borderWidth}px`,
-        } as React.CSSProperties
-      }
+      className={cn(
+        "pointer-events-none absolute inset-0 rounded-[inherit] border-(length:--border-beam-width) border-transparent [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)] [mask-composite:intersect] [mask-clip:padding-box,border-box]",
+        scopeClass
+      )}
     >
       <motion.div
         className={cn(
-          "absolute aspect-square",
+          "border-beam__beam absolute aspect-square",
           "bg-gradient-to-l from-[var(--color-from)] via-[var(--color-to)] to-transparent",
           className
         )}
-        style={
-          {
-            width: size,
-            offsetPath: `rect(0 auto auto 0 round ${size}px)`,
-            "--color-from": colorFrom,
-            "--color-to": colorTo,
-            ...style,
-          } as MotionStyle
-        }
         initial={{ offsetDistance: `${initialOffset}%` }}
         animate={{
           offsetDistance: reverse
@@ -102,6 +100,10 @@ export const BorderBeam = ({
           ...transition,
         }}
       />
+      <style>{`
+        .${scopeClass}{--border-beam-width:${borderWidth}px;}
+        .${scopeClass} .border-beam__beam{width:${size}px;offset-path:rect(0 auto auto 0 round ${size}px);--color-from:${colorFrom};--color-to:${colorTo};${extraCssVars}}
+      `}</style>
     </div>
   )
 }

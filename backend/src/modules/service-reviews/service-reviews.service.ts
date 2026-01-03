@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'crypto';
-import { CreateServiceReviewDto, UpdateServiceReviewDto, ServiceReviewQueryDto } from './dto/service-review.dto';
+import {
+  CreateServiceReviewDto,
+  UpdateServiceReviewDto,
+  ServiceReviewQueryDto,
+} from './dto/service-review.dto';
 import { TelegramService } from '../notifications/telegram.service';
 
 @Injectable()
@@ -130,7 +134,7 @@ export class ServiceReviewsService {
     });
 
     const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    ratingDistribution.forEach((item) => {
+    ratingDistribution.forEach(item => {
       distribution[item.rating] = item._count.rating;
     });
 

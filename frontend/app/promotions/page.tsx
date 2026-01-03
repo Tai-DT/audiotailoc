@@ -104,13 +104,13 @@ export default function PromotionsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
+      <main role="main" aria-labelledby="promotions-title">
         {/* Compact Page Header */}
         <div className="bg-gradient-to-b from-primary/5 to-background border-b">
           <div className="container mx-auto px-4 py-6">
             <div className="max-w-3xl mx-auto text-center">
               <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Khuyến mãi</div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+               <h1 id="promotions-title" className="text-2xl sm:text-3xl font-bold mb-2">
                 Chương trình khuyến mãi
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -123,7 +123,7 @@ export default function PromotionsPage() {
         {/* Promotions Content */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="mb-8">
+             <div className="mb-8" id="promotions-active-heading">
               <h2 className="text-3xl font-bold mb-4">Khuyến mãi đang hoạt động</h2>
               <p className="text-muted-foreground">
                 Áp dụng ngay các mã khuyến mãi để nhận ưu đãi tốt nhất
@@ -131,9 +131,9 @@ export default function PromotionsPage() {
             </div>
 
             {isLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" role="status" aria-label="Đang tải khuyến mãi">
                 {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
+                  <Card key={i} className="animate-pulse" aria-hidden="true">
                     <CardHeader>
                       <div className="h-6 bg-muted rounded mb-2"></div>
                       <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -146,9 +146,9 @@ export default function PromotionsPage() {
                 ))}
               </div>
             ) : data?.items && data.items.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" aria-labelledby="promotions-active-heading">
                 {data.items.map((promotion: Promotion) => (
-                  <Card key={promotion.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={promotion.id} className="hover:shadow-lg transition-shadow" role="article" aria-labelledby={`promo-title-${promotion.id}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function PromotionsPage() {
                           <Badge variant="destructive">Hết hạn</Badge>
                         )}
                       </div>
-                      <CardTitle className="text-xl">{promotion.name}</CardTitle>
+                       <CardTitle id={`promo-title-${promotion.id}`} className="text-xl">{promotion.name}</CardTitle>
                       <div className="text-2xl font-bold text-primary">
                         {formatDiscount(promotion)}
                       </div>
@@ -192,18 +192,20 @@ export default function PromotionsPage() {
 
                       <div className="space-y-3">
                         <div className="flex gap-2">
-                          <Input
+                           <Input
                             value={promotion.code}
                             readOnly
                             className="text-center font-mono"
+                            aria-label={`Mã khuyến mãi: ${promotion.code}`}
                           />
-                          <Button
+                            <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleCopyCode(promotion.code)}
                             className="shrink-0"
+                            aria-label={`Sao chép mã ${promotion.code}`}
                           >
-                            <Copy className="h-4 w-4" />
+                            <Copy className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
 
@@ -218,15 +220,15 @@ export default function PromotionsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Gift className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+               <div className="text-center py-12" role="alert" aria-live="polite">
+                <Gift className="h-16 w-16 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
                 <h3 className="text-xl font-semibold mb-2">Không có khuyến mãi nào</h3>
                 <p className="text-muted-foreground mb-6">
                   Hiện tại chưa có chương trình khuyến mãi nào đang hoạt động.
                   Hãy quay lại sau để nhận ưu đãi hấp dẫn!
                 </p>
                 <Link href="/products">
-                  <Button>
+                  <Button aria-label="Xem sản phẩm trong cửa hàng">
                     Xem sản phẩm
                   </Button>
                 </Link>
