@@ -8,7 +8,6 @@ import { ProductGrid } from '@/components/products/product-grid';
 import { useTopViewedProducts } from '@/lib/hooks/use-api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '@/components/providers/cart-provider';
-import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 import { parseImages } from '@/lib/utils';
 
 export function FeaturedProducts ()
@@ -59,14 +58,12 @@ export function FeaturedProducts ()
               Được yêu thích nhất
             </div>
             <div className="section-title text-foreground">
-              <AnimatedGradientText
-                className="text-3xl sm:text-4xl lg:text-5xl font-bold"
-                speed={1.2}
-                colorFrom="oklch(0.60 0.26 25)"
-                colorTo="oklch(0.72 0.20 35)"
+              {/* Using CSS gradient instead of AnimatedGradientText for faster initial render */}
+              <span 
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-tertiary to-primary bg-clip-text text-transparent"
               >
                 Sản phẩm nổi bật
-              </AnimatedGradientText>
+              </span>
             </div>
             <p className="section-subtitle max-w-3xl mx-auto">
               Khám phá các sản phẩm được yêu thích nhất với chất lượng vượt trội và giá hợp lý.

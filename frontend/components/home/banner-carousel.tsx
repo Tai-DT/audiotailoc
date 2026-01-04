@@ -72,7 +72,7 @@ export function BannerCarousel() {
         <CarouselContent>
           {activeBanners.map((banner, index) => (
             <CarouselItem key={banner.id} className="relative h-[500px] md:h-[600px] w-full">
-              {/* Background Image */}
+              {/* Background Image - Optimized for LCP */}
               <div className="absolute inset-0 w-full h-full">
                 <Image
                   src={banner.imageUrl}
@@ -83,6 +83,9 @@ export function BannerCarousel() {
                   fetchPriority={index === 0 ? "high" : "auto"}
                   sizes="100vw"
                   loading={index === 0 ? "eager" : "lazy"}
+                  quality={index === 0 ? 85 : 75}
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgIBAwQDAAAAAAAAAAAAAQIDBAAFESExBhJBYXGR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQEAAgMAAAAAAAAAAAAAAAABAAIDESH/2gAMAwEAAhEDEEA="
                 />
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />

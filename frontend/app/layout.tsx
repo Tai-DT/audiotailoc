@@ -6,10 +6,10 @@ import { CartProvider } from "@/components/providers/cart-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
-import { Toaster } from "react-hot-toast";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
 import { LazyAnalytics } from "@/components/analytics/lazy-analytics";
 import { LazyChatWidget } from "@/components/ui/lazy-chat-widget";
+import { LazyToaster } from "@/components/ui/lazy-toaster";
 
 
 const geistSans = Geist({
@@ -160,22 +160,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: "var(--background)",
-                    color: "var(--foreground)",
-                  },
-                  success: {
-                    duration: 3000,
-                  },
-                  error: {
-                    duration: 5000,
-                  },
-                }}
-              />
+              <LazyToaster />
               <LazyChatWidget />
             </CartProvider>
           </QueryProvider>
