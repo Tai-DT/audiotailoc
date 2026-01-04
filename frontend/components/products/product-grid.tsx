@@ -80,12 +80,13 @@ export function ProductGrid({
         <div 
           key={product.id} 
           className="animate-fade-in-up"
-          style={{ animationDelay: `${index * 50}ms` }}
+          style={{ animationDelay: `${Math.min(index * 50, 200)}ms` }}
         >
           <ProductCard
             product={product}
             onAddToCart={onAddToCart}
             onViewProduct={onViewProduct}
+            priority={index < 4} // First 4 products load with priority
           />
         </div>
       ))}

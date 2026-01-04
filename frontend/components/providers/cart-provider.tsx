@@ -123,40 +123,55 @@ const calculateItemCount = (items: CartItem[]): number => {
   return items.reduce((count, item) => count + item.quantity, 0);
 };
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, {
+// Lazy initializer for useReducer - defers localStorage read
+const initializeCart = (): CartState => {
+  return {
     items: [],
     total: 0,
     itemCount: 0,
-  });
+  };
+};
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(cartReducer, undefined, initializeCart);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount - uses requestIdleCallback for non-blocking load
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('audiotailoc-cart');
-      if (savedCart) {
-        const cartItems = JSON.parse(savedCart);
-        // Validate cart items before loading
-        if (Array.isArray(cartItems) && cartItems.every(item =>
-          item && typeof item === 'object' &&
-          typeof item.id === 'string' &&
-          typeof item.name === 'string' &&
-          typeof item.price === 'number' &&
-          typeof item.quantity === 'number' &&
-          item.quantity > 0
-        )) {
-          dispatch({ type: 'LOAD_CART', payload: cartItems });
-        } else {
-          // Invalid cart data, clear it
-          localStorage.removeItem('audiotailoc-cart');
+    const loadCart = () => {
+      try {
+        const savedCart = localStorage.getItem('audiotailoc-cart');
+        if (savedCart) {
+          const cartItems = JSON.parse(savedCart);
+          // Validate cart items before loading
+          if (Array.isArray(cartItems) && cartItems.every(item =>
+            item && typeof item === 'object' &&
+            typeof item.id === 'string' &&
+            typeof item.name === 'string' &&
+            typeof item.price === 'number' &&
+            typeof item.quantity === 'number' &&
+            item.quantity > 0
+          )) {
+            dispatch({ type: 'LOAD_CART', payload: cartItems });
+          } else {
+            // Invalid cart data, clear it
+            localStorage.removeItem('audiotailoc-cart');
+          }
         }
+      } catch (error) {
+        console.error('Failed to load cart from localStorage:', error);
+        localStorage.removeItem('audiotailoc-cart');
+      } finally {
+        setIsInitialized(true);
       }
-    } catch (error) {
-      console.error('Failed to load cart from localStorage:', error);
-      localStorage.removeItem('audiotailoc-cart');
-    } finally {
-      setIsInitialized(true);
+    };
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(loadCart, { timeout: 1000 });
+    } else {
+      // Fallback: load after short delay to not block render
+      setTimeout(loadCart, 50);
     }
   }, []);
 

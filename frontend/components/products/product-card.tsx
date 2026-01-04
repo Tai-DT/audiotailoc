@@ -16,12 +16,15 @@ interface ProductCardProps {
   product: Product;
   onAddToCart?: (productId: string) => void;
   onViewProduct?: (productSlug: string) => void;
+  /** When true, image loads with higher priority (for above-the-fold products) */
+  priority?: boolean;
 }
 
 export function ProductCard({ 
   product, 
   onAddToCart, 
-  onViewProduct 
+  onViewProduct,
+  priority = false,
 }: ProductCardProps) {
   const { data: isInWishlistData } = useIsInWishlist(product.id);
   const { toggleWishlist, isLoading: isWishlistLoading } = useToggleWishlist();
@@ -70,6 +73,8 @@ export function ProductCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover transition-all duration-700 group-hover:scale-[1.03] group-hover:brightness-[1.05] group-hover:contrast-105"
+              loading={priority ? "eager" : "lazy"}
+              priority={priority}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = '/placeholder-product.svg';
