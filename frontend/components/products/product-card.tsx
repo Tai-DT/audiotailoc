@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
@@ -26,9 +26,21 @@ export function ProductCard({
   onViewProduct,
   priority = false,
 }: ProductCardProps) {
-  const { data: isInWishlistData } = useIsInWishlist(product.id);
+  // Defer wishlist check to avoid blocking initial render
+  const [shouldCheckWishlist, setShouldCheckWishlist] = useState(false);
+  
+  useEffect(() => {
+    // Delay wishlist check to after initial paint
+    const timer = setTimeout(() => setShouldCheckWishlist(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const { data: isInWishlistData } = useIsInWishlist(
+    shouldCheckWishlist ? product.id : undefined
+  );
   const { toggleWishlist, isLoading: isWishlistLoading } = useToggleWishlist();
   const isInWishlist = isInWishlistData?.isInWishlist || false;
+  
   const formatPrice = (cents: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',

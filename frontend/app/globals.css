@@ -842,3 +842,69 @@ html {
   display: none;
   /* Chrome, Safari and Opera */
 }
+
+/* ==================== PERFORMANCE OPTIMIZATIONS ==================== */
+
+/* Content visibility for below-the-fold sections - reduces initial render work */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+  /* Estimated height to prevent layout shifts */
+}
+
+/* Sections that are likely below the fold on initial load */
+section:not(:first-of-type):not(:nth-of-type(2)) {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+
+/* Optimize image containers for rendering */
+.image-container {
+  contain: layout style;
+}
+
+/* Optimize card rendering */
+.card,
+[class*="Card"] {
+  contain: layout paint style;
+}
+
+/* GPU acceleration for animated elements */
+.animate-fade-in-up,
+.transition-all {
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+/* Remove will-change after animation completes to free GPU memory */
+.animation-complete {
+  will-change: auto;
+}
+
+/* Optimize text rendering */
+body {
+  text-rendering: optimizeSpeed;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-rendering: optimizeLegibility;
+}
+
+/* Containment for independent sections */
+.contain-strict {
+  contain: strict;
+}
+
+.contain-content {
+  contain: content;
+}
+
+/* Defer offscreen images */
+img[loading="lazy"] {
+  content-visibility: auto;
+}
