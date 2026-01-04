@@ -148,6 +148,37 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://api.audiotailoc.com" />
         <link rel="dns-prefetch" href="https://api.audiotailoc.com" />
+        
+        {/* Preload first banner image hint - actual URL will be dynamic but this helps */}
+        <link 
+          rel="preload" 
+          as="image" 
+          href="https://res.cloudinary.com/dfbwxnmht/image/upload/v1735480099/banners/banner-main_xzv1gd.webp"
+          fetchPriority="high"
+        />
+        
+        {/* Critical CSS for above-the-fold content - prevents FOUC and speeds up FCP */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          /* Critical rendering styles */
+          *, *::before, *::after { box-sizing: border-box; }
+          html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+          body { margin: 0; min-height: 100vh; }
+          img { max-width: 100%; height: auto; }
+          
+          /* Skeleton animation for faster perceived load */
+          @keyframes skeleton-loading {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+          }
+          .skeleton-pulse {
+            background: linear-gradient(90deg, #f0f0f0 8px, #e0e0e0 18px, #f0f0f0 33px);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite;
+          }
+          
+          /* Hide content until hydrated to prevent layout shift */
+          [data-pending-hydration] { opacity: 0.99; }
+        `}} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}

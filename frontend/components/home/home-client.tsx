@@ -3,10 +3,10 @@
 import React, { Suspense, useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { BannerCarouselSSR } from '@/components/home/banner-carousel-ssr';
-import { FeaturedProducts } from '@/components/home/featured-products';
+import { FeaturedProductsSSR } from '@/components/home/featured-products-ssr';
 import { SectionSkeleton } from '@/components/ui/loading-skeletons';
 import { SectionErrorBoundary } from '@/components/error-boundary';
-import { Banner } from '@/lib/types';
+import { Banner, Product } from '@/lib/types';
 
 // ==================== DYNAMIC IMPORTS ====================
 // Below-the-fold sections with lazy loading for optimal bundle size
@@ -106,22 +106,23 @@ function AnimatedSection({ children, fallbackTitle, className = '' }: AnimatedSe
 // ==================== HOMEPAGE CLIENT COMPONENT ====================
 interface HomeClientProps {
   initialBanners: Banner[];
+  initialProducts?: Product[];
 }
 
-export function HomeClient({ initialBanners }: HomeClientProps) {
+export function HomeClient({ initialBanners, initialProducts = [] }: HomeClientProps) {
   return (
     <main className="bg-background" id="main-content">
       {/* 
         Above the fold - Loaded immediately for fast LCP
-        Banners are pre-fetched on server side - no client fetch waterfall
+        Banners AND products are pre-fetched on server side - no client fetch waterfall
       */}
       <section aria-label="Banner chính">
         <BannerCarouselSSR initialBanners={initialBanners} />
       </section>
 
-      {/* Featured Products - CSS animation only, no JS blocking */}
+      {/* Featured Products - SSR with data, minimal client JS */}
       <section aria-label="Sản phẩm nổi bật" className="animate-fade-in-up">
-        <FeaturedProducts />
+        <FeaturedProductsSSR initialProducts={initialProducts} />
       </section>
 
       {/* 
