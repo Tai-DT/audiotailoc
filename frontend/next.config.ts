@@ -74,12 +74,14 @@ const nextConfig: NextConfig = {
       'lucide-react',
       'react-hook-form',
       'framer-motion',
+      'motion/react',
       // Additional optimizations for smaller bundles
       '@tanstack/react-query',
       'date-fns',
       'clsx',
       'embla-carousel-react',
       'react-hot-toast',
+      'socket.io-client',
     ],
   },
   
