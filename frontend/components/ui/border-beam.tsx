@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { motion, Transition } from "motion/react"
-
 import { cn } from "@/lib/utils"
 
 interface BorderBeamProps {
@@ -11,7 +9,7 @@ interface BorderBeamProps {
    */
   size?: number
   /**
-   * The duration of the border beam.
+   * The duration of the border beam animation in seconds.
    */
   duration?: number
   /**
@@ -27,10 +25,6 @@ interface BorderBeamProps {
    */
   colorTo?: string
   /**
-   * The motion transition of the border beam.
-   */
-  transition?: Transition
-  /**
    * The class name of the border beam.
    */
   className?: string
@@ -43,28 +37,26 @@ interface BorderBeamProps {
    */
   reverse?: boolean
   /**
-   * The initial offset position (0-100).
-   */
-  initialOffset?: number
-  /**
    * The border width of the beam.
    */
   borderWidth?: number
 }
 
-export const BorderBeam = ({
+/**
+ * BorderBeam Component - Optimized without motion/react
+ * Uses CSS animations for the beam effect
+ */
+export const BorderBeam = React.memo(function BorderBeam({
   className,
   size = 50,
   delay = 0,
   duration = 6,
   colorFrom = "#ffaa40",
   colorTo = "#9c40ff",
-  transition,
   style,
   reverse = false,
-  initialOffset = 0,
   borderWidth = 1,
-}: BorderBeamProps) => {
+}: BorderBeamProps) {
   const id = React.useId().replace(/:/g, "")
   const scopeClass = `border-beam-${id}`
 
@@ -80,30 +72,35 @@ export const BorderBeam = ({
         scopeClass
       )}
     >
-      <motion.div
+      <div
         className={cn(
           "border-beam__beam absolute aspect-square",
           "bg-gradient-to-l from-[var(--color-from)] via-[var(--color-to)] to-transparent",
           className
         )}
-        initial={{ offsetDistance: `${initialOffset}%` }}
-        animate={{
-          offsetDistance: reverse
-            ? [`${100 - initialOffset}%`, `${-initialOffset}%`]
-            : [`${initialOffset}%`, `${100 + initialOffset}%`],
-        }}
-        transition={{
-          repeat: Infinity,
-          ease: "linear",
-          duration,
-          delay: -delay,
-          ...transition,
+        style={{
+          animation: `border-beam-${reverse ? 'reverse' : 'forward'} ${duration}s linear infinite`,
+          animationDelay: `-${delay}s`,
         }}
       />
       <style>{`
         .${scopeClass}{--border-beam-width:${borderWidth}px;}
-        .${scopeClass} .border-beam__beam{width:${size}px;offset-path:rect(0 auto auto 0 round ${size}px);--color-from:${colorFrom};--color-to:${colorTo};${extraCssVars}}
+        .${scopeClass} .border-beam__beam{
+          width:${size}px;
+          offset-path:rect(0 auto auto 0 round ${size}px);
+          --color-from:${colorFrom};
+          --color-to:${colorTo};
+          ${extraCssVars}
+        }
+        @keyframes border-beam-forward {
+          0% { offset-distance: 0%; }
+          100% { offset-distance: 100%; }
+        }
+        @keyframes border-beam-reverse {
+          0% { offset-distance: 100%; }
+          100% { offset-distance: 0%; }
+        }
       `}</style>
     </div>
   )
-}
+})

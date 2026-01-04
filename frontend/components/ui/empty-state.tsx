@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Package } from 'lucide-react';
 
@@ -17,6 +16,10 @@ interface EmptyStateProps {
   className?: string;
 }
 
+/**
+ * EmptyState Component - Optimized without framer-motion
+ * Uses CSS animations for fade-in effects
+ */
 export function EmptyState({
   icon: Icon,
   title,
@@ -27,50 +30,41 @@ export function EmptyState({
   const IconComponent = Icon || Package;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+    <div
       className={cn(
-        'flex flex-col items-center justify-center py-12 px-4 text-center',
+        'flex flex-col items-center justify-center py-12 px-4 text-center animate-fade-in-up',
         className
       )}
+      style={{ animationDuration: '0.5s' }}
     >
-      <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative mb-6"
+      <div 
+        className="relative mb-6 animate-fade-in-up"
+        style={{ animationDelay: '0.1s', animationDuration: '0.5s' }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-2xl animate-pulse" />
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center border border-primary/20">
           <IconComponent className="w-12 h-12 sm:w-14 sm:h-14 text-primary/60" />
         </div>
-      </motion.div>
+      </div>
 
-      <motion.h3
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="text-xl sm:text-2xl font-semibold text-foreground mb-2"
+      <h3
+        className="text-xl sm:text-2xl font-semibold text-foreground mb-2 animate-fade-in-up"
+        style={{ animationDelay: '0.2s', animationDuration: '0.5s' }}
       >
         {title}
-      </motion.h3>
+      </h3>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="text-sm sm:text-base text-muted-foreground max-w-md mb-6"
+      <p
+        className="text-sm sm:text-base text-muted-foreground max-w-md mb-6 animate-fade-in-up"
+        style={{ animationDelay: '0.3s', animationDuration: '0.5s' }}
       >
         {description}
-      </motion.p>
+      </p>
 
       {action && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: '0.4s', animationDuration: '0.5s' }}
         >
           <Button
             asChild
@@ -78,8 +72,8 @@ export function EmptyState({
           >
             <a href={action.href}>{action.label}</a>
           </Button>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

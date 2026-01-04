@@ -1,8 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect } from "react"
-import { motion, useMotionTemplate, useMotionValue } from "motion/react"
-
+import React, { useCallback, useEffect, useRef, useState, memo } from "react"
 import { cn } from "@/lib/utils"
 
 interface MagicCardProps {
@@ -15,7 +13,11 @@ interface MagicCardProps {
   gradientTo?: string
 }
 
-export function MagicCard({
+/**
+ * MagicCard Component - Optimized without motion/react
+ * Uses CSS variables and direct DOM updates for smooth mouse tracking
+ */
+export const MagicCard = memo(function MagicCard({
   children,
   className,
   gradientSize = 200,
@@ -24,21 +26,23 @@ export function MagicCard({
   gradientFrom = "#9E7AFF",
   gradientTo = "#FE8BBB",
 }: MagicCardProps) {
-  const mouseX = useMotionValue(-gradientSize)
-  const mouseY = useMotionValue(-gradientSize)
-  const reset = useCallback(() => {
-    mouseX.set(-gradientSize)
-    mouseY.set(-gradientSize)
-  }, [gradientSize, mouseX, mouseY])
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [mousePos, setMousePos] = useState({ x: -gradientSize, y: -gradientSize })
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
-      mouseX.set(e.clientX - rect.left)
-      mouseY.set(e.clientY - rect.top)
+      setMousePos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
     },
-    [mouseX, mouseY]
+    []
   )
+
+  const reset = useCallback(() => {
+    setMousePos({ x: -gradientSize, y: -gradientSize })
+  }, [gradientSize])
 
   useEffect(() => {
     reset()
@@ -68,36 +72,30 @@ export function MagicCard({
     }
   }, [reset])
 
+  const borderGradient = `radial-gradient(${gradientSize}px circle at ${mousePos.x}px ${mousePos.y}px, ${gradientFrom}, ${gradientTo}, var(--border) 100%)`
+  const overlayGradient = `radial-gradient(${gradientSize}px circle at ${mousePos.x}px ${mousePos.y}px, ${gradientColor}, transparent 100%)`
+
   return (
     <div
+      ref={cardRef}
       className={cn("group relative rounded-[inherit]", className)}
       onPointerMove={handlePointerMove}
       onPointerLeave={reset}
       onPointerEnter={reset}
     >
-      <motion.div
+      <div
         className="bg-border pointer-events-none absolute inset-0 rounded-[inherit] duration-300 group-hover:opacity-100"
-        style={{
-          background: useMotionTemplate`
-          radial-gradient(${gradientSize}px circle at ${mouseX}px ${mouseY}px,
-          ${gradientFrom}, 
-          ${gradientTo}, 
-          var(--border) 100%
-          )
-          `,
-        }}
+        style={{ background: borderGradient }}
       />
       <div className="bg-background absolute inset-px rounded-[inherit]" />
-      <motion.div
+      <div
         className="pointer-events-none absolute inset-px rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: useMotionTemplate`
-            radial-gradient(${gradientSize}px circle at ${mouseX}px ${mouseY}px, ${gradientColor}, transparent 100%)
-          `,
+          background: overlayGradient,
           opacity: gradientOpacity,
         }}
       />
       <div className="relative">{children}</div>
     </div>
   )
-}
+})
