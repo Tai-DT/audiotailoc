@@ -27,11 +27,13 @@ export function ProductCard({
   priority = false,
 }: ProductCardProps) {
   // Defer wishlist check to avoid blocking initial render
+  // Increased delay + randomization to prevent thundering herd on mobile
   const [shouldCheckWishlist, setShouldCheckWishlist] = useState(false);
   
   useEffect(() => {
-    // Delay wishlist check to after initial paint
-    const timer = setTimeout(() => setShouldCheckWishlist(true), 1000);
+    // Longer delay (2.5s) + random spread (0-500ms) to reduce TBT
+    const delay = 2500 + Math.random() * 500;
+    const timer = setTimeout(() => setShouldCheckWishlist(true), delay);
     return () => clearTimeout(timer);
   }, []);
   
