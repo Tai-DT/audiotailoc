@@ -852,11 +852,8 @@ html {
   /* Estimated height to prevent layout shifts */
 }
 
-/* Sections that are likely below the fold on initial load */
-section:not(:first-of-type):not(:nth-of-type(2)) {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
-}
+/* Sections that are likely below the fold - opt-in class only */
+/* Use .content-visibility-auto class instead of automatic section targeting */
 
 /* Optimize image containers for rendering */
 .image-container {
@@ -869,9 +866,8 @@ section:not(:first-of-type):not(:nth-of-type(2)) {
   contain: layout paint style;
 }
 
-/* GPU acceleration for animated elements */
-.animate-fade-in-up,
-.transition-all {
+/* GPU acceleration for animated elements - explicit only */
+.animate-fade-in-up {
   will-change: opacity, transform;
   backface-visibility: hidden;
 }
