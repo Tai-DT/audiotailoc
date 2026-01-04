@@ -345,8 +345,9 @@ export function ChatWidget({
                   size="icon"
                   className="h-8 w-8 text-primary-foreground hover:bg-white/20"
                   onClick={handleClose}
+                  aria-label="Đóng cửa sổ chat"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </div>
             </div>
@@ -524,8 +525,9 @@ export function ChatWidget({
                             className="h-9 w-9 text-muted-foreground hover:text-destructive"
                             onClick={endConversation}
                             title="Kết thúc chat"
+                            aria-label="Kết thúc cuộc trò chuyện"
                           >
-                            <LogOut className="w-4 h-4" />
+                            <LogOut className="w-4 h-4" aria-hidden="true" />
                           </Button>
                           <Input
                             ref={inputRef}
@@ -541,11 +543,12 @@ export function ChatWidget({
                             className="h-9 w-9"
                             onClick={sendMessage}
                             disabled={sending || !message.trim()}
+                            aria-label="Gửi tin nhắn"
                           >
                             {sending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                             ) : (
-                              <Send className="w-4 h-4" />
+                              <Send className="w-4 h-4" aria-hidden="true" />
                             )}
                           </Button>
                         </div>
@@ -586,6 +589,8 @@ export function ChatWidget({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? 'Đóng cửa sổ chat' : 'Mở cửa sổ chat hỗ trợ'}
+          aria-expanded={isOpen}
           className={cn(
             'relative w-14 h-14 rounded-full shadow-lg transition-all duration-300',
             'bg-gradient-to-br from-primary via-primary to-accent',
@@ -604,7 +609,7 @@ export function ChatWidget({
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <X className="w-6 h-6 text-white" />
+                <X className="w-6 h-6 text-white" aria-hidden="true" />
               </motion.div>
             ) : (
               <motion.div
@@ -614,7 +619,7 @@ export function ChatWidget({
                 exit={{ rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <MessageSquareMore className="w-6 h-6 text-white" />
+                <MessageSquareMore className="w-6 h-6 text-white" aria-hidden="true" />
               </motion.div>
             )}
           </AnimatePresence>

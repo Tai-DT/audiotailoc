@@ -98,17 +98,17 @@ export function StaticHeroBanner({ banner }: StaticHeroBannerProps) {
       </div>
 
       {/* Trust indicators - CSS only */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 text-white/70 text-sm animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-        <span className="flex items-center gap-2">
-          <span className="text-yellow-400">✓</span>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 text-white/90 text-sm animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <span className="flex items-center gap-2" aria-label="Bảo hành chính hãng">
+          <span className="text-yellow-400" aria-hidden="true">✓</span>
           Bảo hành chính hãng
         </span>
-        <span className="flex items-center gap-2">
-          <span className="text-yellow-400">✓</span>
+        <span className="flex items-center gap-2" aria-label="Giao hàng toàn quốc">
+          <span className="text-yellow-400" aria-hidden="true">✓</span>
           Giao hàng toàn quốc
         </span>
-        <span className="flex items-center gap-2 hidden md:flex">
-          <span className="text-yellow-400">✓</span>
+        <span className="flex items-center gap-2 hidden md:flex" aria-label="Hỗ trợ 24/7">
+          <span className="text-yellow-400" aria-hidden="true">✓</span>
           Hỗ trợ 24/7
         </span>
       </div>
