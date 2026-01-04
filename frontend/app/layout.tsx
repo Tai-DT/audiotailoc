@@ -4,7 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Header } from "@/components/layout/header";
+import { HeaderClient } from "@/components/layout/header-client";
 import { Footer } from "@/components/layout/Footer";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
 import { LazyAnalytics } from "@/components/analytics/lazy-analytics";
@@ -155,7 +155,7 @@ export default function RootLayout({
 
               
 
-              <Header />
+              <HeaderClient />
               <main id="main-content" tabIndex={-1}>
                 {children}
               </main>
