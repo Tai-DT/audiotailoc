@@ -1,8 +1,7 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
 import { BannerCarousel } from '@/components/home/banner-carousel';
 import { FeaturedProducts } from '@/components/home/featured-products';
 import { SectionSkeleton } from '@/components/ui/loading-skeletons';
@@ -56,29 +55,48 @@ const NewsletterSection = dynamic(
   { loading: () => <SectionSkeleton ariaLabel="Đang tải mục đăng ký" />, ssr: false }
 );
 
-// ==================== ANIMATIONS ====================
-const fadeInUp = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-100px' },
-  transition: { duration: 0.6, ease: 'easeOut' },
-};
-
-// ==================== SECTION WRAPPER ====================
-// Wrapper with error boundary and accessibility
-interface SectionWrapperProps {
+// ==================== ANIMATED SECTION (CSS + IntersectionObserver) ====================
+// Uses CSS animations triggered by IntersectionObserver - NO framer-motion for TBT reduction
+interface AnimatedSectionProps {
   children: React.ReactNode;
-  delay?: number;
   fallbackTitle?: string;
+  className?: string;
 }
 
-function SectionWrapper({ children, delay = 0, fallbackTitle }: SectionWrapperProps) {
+function AnimatedSection({ children, fallbackTitle, className = '' }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '-50px', threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <SectionErrorBoundary fallbackTitle={fallbackTitle}>
       <Suspense fallback={<SectionSkeleton />}>
-        <motion.div {...fadeInUp} transition={{ delay }}>
+        <div
+          ref={ref}
+          className={`transition-all duration-600 ease-out ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          } ${className}`}
+          style={{ transitionDuration: '0.6s' }}
+        >
           {children}
-        </motion.div>
+        </div>
       </Suspense>
     </SectionErrorBoundary>
   );
@@ -90,63 +108,64 @@ export default function Home() {
     <main className="bg-background" id="main-content">
       {/* 
         Above the fold - Loaded immediately for fast LCP
-        These are critical for first paint
+        These are critical for first paint - NO heavy animations here
       */}
       <section aria-label="Banner chính">
         <BannerCarousel />
       </section>
 
-      <motion.section {...fadeInUp} aria-label="Sản phẩm nổi bật">
+      {/* Featured Products - CSS animation only, no JS blocking */}
+      <section aria-label="Sản phẩm nổi bật" className="animate-fade-in-up">
         <FeaturedProducts />
-      </motion.section>
+      </section>
 
       {/* 
         Below the fold - Lazy loaded with error boundaries
-        Each section is independently wrapped for resilience
+        Each section uses CSS animations with IntersectionObserver (lighter than framer-motion)
       */}
-      <SectionWrapper delay={0.1} fallbackTitle="Không thể tải danh mục">
+      <AnimatedSection fallbackTitle="Không thể tải danh mục">
         <CategoryProductsSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.15} fallbackTitle="Không thể tải sản phẩm mới">
+      <AnimatedSection fallbackTitle="Không thể tải sản phẩm mới">
         <NewProductsSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.2} fallbackTitle="Không thể tải sản phẩm bán chạy">
+      <AnimatedSection fallbackTitle="Không thể tải sản phẩm bán chạy">
         <BestSellingProductsSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.25} fallbackTitle="Không thể tải dịch vụ">
+      <AnimatedSection fallbackTitle="Không thể tải dịch vụ">
         <FeaturedServices />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.3} fallbackTitle="Không thể tải thống kê">
+      <AnimatedSection fallbackTitle="Không thể tải thống kê">
         <StatsSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.35} fallbackTitle="Không thể tải đội ngũ">
+      <AnimatedSection fallbackTitle="Không thể tải đội ngũ">
         <TechniciansSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.4} fallbackTitle="Không thể tải đánh giá">
+      <AnimatedSection fallbackTitle="Không thể tải đánh giá">
         <TestimonialsSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.45} fallbackTitle="Không thể tải dự án">
+      <AnimatedSection fallbackTitle="Không thể tải dự án">
         <FeaturedProjects />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.5} fallbackTitle="Không thể tải kiến thức">
+      <AnimatedSection fallbackTitle="Không thể tải kiến thức">
         <FeaturedKnowledgeSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.55} fallbackTitle="Không thể tải bài viết">
+      <AnimatedSection fallbackTitle="Không thể tải bài viết">
         <FeaturedBlogSection />
-      </SectionWrapper>
+      </AnimatedSection>
 
-      <SectionWrapper delay={0.6} fallbackTitle="Không thể tải mục đăng ký">
+      <AnimatedSection fallbackTitle="Không thể tải mục đăng ký">
         <NewsletterSection />
-      </SectionWrapper>
+      </AnimatedSection>
     </main>
   );
 }

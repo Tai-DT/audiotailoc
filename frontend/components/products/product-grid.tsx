@@ -4,7 +4,6 @@ import React from 'react';
 import { ProductCard } from './product-card';
 import { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BlurFade } from '@/components/ui/blur-fade';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Package } from 'lucide-react';
 
@@ -78,13 +77,17 @@ export function ProductGrid({
       </div>
       
       {products.map((product, index) => (
-        <BlurFade key={product.id} delay={0.05 * index} inView>
+        <div 
+          key={product.id} 
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${index * 50}ms` }}
+        >
           <ProductCard
             product={product}
             onAddToCart={onAddToCart}
             onViewProduct={onViewProduct}
           />
-        </BlurFade>
+        </div>
       ))}
     </section>
   );

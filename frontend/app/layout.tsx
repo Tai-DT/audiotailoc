@@ -10,6 +10,9 @@ import { Toaster } from "react-hot-toast";
 import { ChatWidget } from "@/components/ui/chat-widget";
 import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
 
 
 const geistSans = Geist({
@@ -137,6 +140,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
+      <head>
+        {/* Preconnect to critical domains for faster LCP */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://api.audiotailoc.com" />
+        <link rel="dns-prefetch" href="https://api.audiotailoc.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
@@ -173,6 +183,9 @@ export default function RootLayout({
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
+        <WebVitalsReporter />
       </body>
     </html>
   );

@@ -81,6 +81,9 @@ export function BannerCarousel() {
                   fill
                   className="object-cover"
                   priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  sizes="100vw"
+                  loading={index === 0 ? "eager" : "lazy"}
                 />
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
