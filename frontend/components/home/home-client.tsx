@@ -56,19 +56,46 @@ const NewsletterSection = dynamic(
   { loading: () => <SectionSkeleton ariaLabel="Đang tải mục đăng ký" />, ssr: false }
 );
 
-// ==================== ANIMATED SECTION (CSS + IntersectionObserver) ====================
+// ==================== ANIMATED SECTION (CSS + IntersectionObserver + Deferred) ====================
 // Uses CSS animations triggered by IntersectionObserver - NO framer-motion for TBT reduction
+// Now with deferred rendering to reduce initial TBT even further
 interface AnimatedSectionProps {
   children: React.ReactNode;
   fallbackTitle?: string;
   className?: string;
+  /** Delay in ms before starting to observe - helps reduce initial TBT */
+  deferMs?: number;
 }
 
-function AnimatedSection({ children, fallbackTitle, className = '' }: AnimatedSectionProps) {
+function AnimatedSection({ 
+  children, 
+  fallbackTitle, 
+  className = '',
+  deferMs = 0 
+}: AnimatedSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(deferMs === 0);
+
+  // Defer rendering using requestIdleCallback for better TBT
+  useEffect(() => {
+    if (deferMs > 0) {
+      // Use requestIdleCallback if available, else setTimeout
+      if ('requestIdleCallback' in window) {
+        const id = window.requestIdleCallback(() => {
+          setShouldRender(true);
+        }, { timeout: deferMs });
+        return () => window.cancelIdleCallback(id);
+      } else {
+        const id = setTimeout(() => setShouldRender(true), deferMs);
+        return () => clearTimeout(id);
+      }
+    }
+  }, [deferMs]);
 
   useEffect(() => {
+    if (!shouldRender) return;
+    
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -84,7 +111,12 @@ function AnimatedSection({ children, fallbackTitle, className = '' }: AnimatedSe
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [shouldRender]);
+
+  // Show empty placeholder until ready to render
+  if (!shouldRender) {
+    return <div className="min-h-[200px]" aria-hidden="true" />;
+  }
 
   return (
     <SectionErrorBoundary fallbackTitle={fallbackTitle}>
@@ -133,48 +165,49 @@ export function HomeClient({
       {/* 
         Below the fold - Lazy loaded with error boundaries
         Each section uses CSS animations with IntersectionObserver (lighter than framer-motion)
+        deferMs staggers loading to reduce initial TBT
       */}
       <AnimatedSection fallbackTitle="Không thể tải danh mục">
         <CategoryProductsSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải sản phẩm mới">
+      <AnimatedSection fallbackTitle="Không thể tải sản phẩm mới" deferMs={100}>
         <NewProductsSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải sản phẩm bán chạy">
+      <AnimatedSection fallbackTitle="Không thể tải sản phẩm bán chạy" deferMs={200}>
         <BestSellingProductsSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải dịch vụ">
+      <AnimatedSection fallbackTitle="Không thể tải dịch vụ" deferMs={300}>
         <FeaturedServices />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải thống kê">
+      <AnimatedSection fallbackTitle="Không thể tải thống kê" deferMs={500}>
         <StatsSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải đội ngũ">
+      <AnimatedSection fallbackTitle="Không thể tải đội ngũ" deferMs={700}>
         <TechniciansSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải đánh giá">
+      <AnimatedSection fallbackTitle="Không thể tải đánh giá" deferMs={900}>
         <TestimonialsSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải dự án">
+      <AnimatedSection fallbackTitle="Không thể tải dự án" deferMs={1100}>
         <FeaturedProjects />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải kiến thức">
+      <AnimatedSection fallbackTitle="Không thể tải kiến thức" deferMs={1300}>
         <FeaturedKnowledgeSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải bài viết">
+      <AnimatedSection fallbackTitle="Không thể tải bài viết" deferMs={1500}>
         <FeaturedBlogSection />
       </AnimatedSection>
 
-      <AnimatedSection fallbackTitle="Không thể tải mục đăng ký">
+      <AnimatedSection fallbackTitle="Không thể tải mục đăng ký" deferMs={1700}>
         <NewsletterSection />
       </AnimatedSection>
     </>

@@ -82,7 +82,21 @@ const nextConfig: NextConfig = {
       'embla-carousel-react',
       'react-hot-toast',
       'socket.io-client',
+      // Heavy libraries - optimize imports
+      'recharts',
+      'react-markdown',
+      'zod',
     ],
+  },
+  
+  // Modularize imports for better tree-shaking
+  modularizeImports: {
+    'date-fns': {
+      transform: 'date-fns/{{member}}',
+    },
+    'recharts': {
+      transform: 'recharts/es6/{{member}}',
+    },
   },
   
   // Webpack optimizations
