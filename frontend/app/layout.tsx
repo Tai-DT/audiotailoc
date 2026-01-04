@@ -10,6 +10,7 @@ import { OrganizationStructuredData } from "@/components/seo/organization-struct
 import { LazyAnalytics } from "@/components/analytics/lazy-analytics";
 import { LazyChatWidget } from "@/components/ui/lazy-chat-widget";
 import { LazyToaster } from "@/components/ui/lazy-toaster";
+import { ResourceHints } from "@/components/performance/resource-hints";
 
 
 const geistSans = Geist({
@@ -170,6 +171,7 @@ export default function RootLayout({
           </QueryProvider>
         </ThemeProvider>
         <LazyAnalytics />
+        <ResourceHints />
       </body>
     </html>
   );
