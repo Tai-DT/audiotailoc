@@ -74,7 +74,6 @@ const nextConfig: NextConfig = {
       'lucide-react',
       'react-hook-form',
       'framer-motion',
-      'motion/react',
       // Additional optimizations for smaller bundles
       '@tanstack/react-query',
       'date-fns',
