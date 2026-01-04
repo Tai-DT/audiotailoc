@@ -107,18 +107,23 @@ function AnimatedSection({ children, fallbackTitle, className = '' }: AnimatedSe
 interface HomeClientProps {
   initialBanners: Banner[];
   initialProducts?: Product[];
+  /** Skip banner carousel when static banner is rendered in parent */
+  skipBanner?: boolean;
 }
 
-export function HomeClient({ initialBanners, initialProducts = [] }: HomeClientProps) {
+export function HomeClient({ 
+  initialBanners, 
+  initialProducts = [],
+  skipBanner = false,
+}: HomeClientProps) {
   return (
-    <main className="bg-background" id="main-content">
-      {/* 
-        Above the fold - Loaded immediately for fast LCP
-        Banners AND products are pre-fetched on server side - no client fetch waterfall
-      */}
-      <section aria-label="Banner chính">
-        <BannerCarouselSSR initialBanners={initialBanners} />
-      </section>
+    <>
+      {/* Banner Carousel - Skip if static banner is rendered in parent */}
+      {!skipBanner && initialBanners.length > 0 && (
+        <section aria-label="Banner chính">
+          <BannerCarouselSSR initialBanners={initialBanners} />
+        </section>
+      )}
 
       {/* Featured Products - SSR with data, minimal client JS */}
       <section aria-label="Sản phẩm nổi bật" className="animate-fade-in-up">
@@ -172,6 +177,6 @@ export function HomeClient({ initialBanners, initialProducts = [] }: HomeClientP
       <AnimatedSection fallbackTitle="Không thể tải mục đăng ký">
         <NewsletterSection />
       </AnimatedSection>
-    </main>
+    </>
   );
 }

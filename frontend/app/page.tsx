@@ -1,32 +1,46 @@
 import { fetchHomeBanners } from '@/lib/api/banners';
 import { fetchFeaturedProducts } from '@/lib/api/products';
 import { HomeClient } from '@/components/home/home-client';
+import { StaticHeroBanner } from '@/components/home/static-hero-banner';
 
 /**
- * Homepage - Server Component with SSR banners AND products for optimal LCP
+ * Homepage - Server Component with maximum performance optimizations
  * 
- * This page fetches both banner and product data on the server, eliminating 
- * client-side data fetch waterfall that causes slow LCP.
+ * Uses StaticHeroBanner (zero JS) for first banner to minimize TBT.
+ * Additional banners and products are passed to client for hydration.
  * 
  * Benefits:
- * - Banners and products are pre-rendered with data (no loading skeleton)
- * - First banner image can be immediately loaded by browser
- * - Reduces Time to First Contentful Paint (FCP)
- * - Reduces Largest Contentful Paint (LCP)
- * - Reduces Total Blocking Time (TBT) by removing client-side fetch logic
+ * - First banner renders without any JavaScript (pure HTML/CSS)
+ * - Significantly reduced TBT
+ * - Faster LCP as first banner is immediately visible
+ * - Products are pre-fetched to avoid client fetch waterfall
  */
 export default async function Home() {
-  // Pre-fetch both banners and products on server in parallel
+  // Pre-fetch data on server in parallel
   const [banners, featuredProducts] = await Promise.all([
     fetchHomeBanners(),
     fetchFeaturedProducts(8),
   ]);
 
+  const firstBanner = banners[0];
+  const remainingBanners = banners.slice(1);
+
   return (
-    <HomeClient 
-      initialBanners={banners} 
-      initialProducts={featuredProducts}
-    />
+    <main className="bg-background" id="main-content">
+      {/* Static Hero Banner - Zero hydration for fastest LCP */}
+      {firstBanner && (
+        <section aria-label="Banner chính">
+          <StaticHeroBanner banner={firstBanner} />
+        </section>
+      )}
+      
+      {/* Rest of homepage with client interactivity */}
+      <HomeClient 
+        initialBanners={remainingBanners} 
+        initialProducts={featuredProducts}
+        skipBanner={!!firstBanner}
+      />
+    </main>
   );
 }
 
