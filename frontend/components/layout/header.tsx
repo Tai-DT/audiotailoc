@@ -37,7 +37,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
-import { motion } from 'framer-motion';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -542,22 +541,17 @@ export function Header() {
               // Client render after mount: show login/register if not authenticated
               <Popover>
                 <PopoverTrigger asChild>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <div className="transition-transform hover:scale-105 active:scale-95">
                     <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-primary/10 transition-all">
                       <User className="h-4 w-4" />
                       <span className="hidden md:inline">Tài khoản</span>
                     </Button>
-                  </motion.div>
+                  </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-0" align="end">
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-4 space-y-3"
+                  <div
+                    className="p-4 space-y-3 animate-fade-in-up"
+                    style={{ animationDuration: '0.2s' }}
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-semibold">Chào mừng bạn!</p>
@@ -591,7 +585,7 @@ export function Header() {
                         <li>• Tư vấn kỹ thuật 24/7</li>
                       </ul>
                     </div>
-                  </motion.div>
+                  </div>
                 </PopoverContent>
               </Popover>
             )}

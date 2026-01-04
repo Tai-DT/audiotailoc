@@ -7,12 +7,11 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
-import { ChatWidget } from "@/components/ui/chat-widget";
-import { CONTACT_CONFIG } from "@/lib/contact-config";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
+import { LazyChatWidget } from "@/components/ui/lazy-chat-widget";
 
 
 const geistSans = Geist({
@@ -179,7 +178,7 @@ export default function RootLayout({
                   },
                 }}
               />
-              <ChatWidget zaloPhoneNumber={CONTACT_CONFIG.zalo.phoneNumber} />
+              <LazyChatWidget />
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>

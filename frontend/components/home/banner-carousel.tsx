@@ -18,7 +18,6 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from '@/components/ui/carousel';
-import { BlurFade } from '@/components/ui/blur-fade';
 import { cn } from '@/lib/utils';
 
 export function BannerCarousel() {
@@ -89,55 +88,59 @@ export function BannerCarousel() {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
               </div>
 
-              {/* Content */}
+              {/* Content - Pure CSS animations instead of BlurFade for better LCP */}
               <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
                 <div className="max-w-2xl space-y-6 pl-4 md:pl-12">
                   {banner.subtitle && (
-                    <BlurFade delay={0.1}>
-                      <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md">
-                        <Sparkles className="h-4 w-4 text-yellow-400" />
-                        <span>{banner.subtitle}</span>
-                      </div>
-                    </BlurFade>
+                    <div 
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md animate-fade-in-up"
+                      style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
+                    >
+                      <Sparkles className="h-4 w-4 text-yellow-400" />
+                      <span>{banner.subtitle}</span>
+                    </div>
                   )}
 
-                  <BlurFade delay={0.2}>
-                    <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
-                      {banner.title}
-                    </h2>
-                  </BlurFade>
+                  <h2 
+                    className="text-4xl md:text-6xl font-bold text-white leading-tight animate-fade-in-up"
+                    style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
+                  >
+                    {banner.title}
+                  </h2>
 
                   {banner.description && (
-                    <BlurFade delay={0.3}>
-                      <p className="text-lg md:text-xl text-white/90 max-w-xl leading-relaxed">
-                        {banner.description}
-                      </p>
-                    </BlurFade>
+                    <p 
+                      className="text-lg md:text-xl text-white/90 max-w-xl leading-relaxed animate-fade-in-up"
+                      style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
+                    >
+                      {banner.description}
+                    </p>
                   )}
 
-                  <BlurFade delay={0.4}>
-                    <div className="flex flex-wrap gap-4 pt-4">
-                      <Button 
-                        size="lg" 
-                        className="bg-primary hover:bg-primary/90 text-white border-none h-12 px-8 text-base"
-                        asChild
-                      >
-                        <Link href={banner.linkUrl || '/products'}>
-                          Xem chi tiết <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button 
-                        size="lg" 
-                        variant="outline" 
-                        className="bg-white/10 hover:bg-white/20 text-white border-white/20 h-12 px-8 text-base backdrop-blur-sm"
-                        asChild
-                      >
-                        <Link href="/contact">
-                          Liên hệ ngay
-                        </Link>
-                      </Button>
-                    </div>
-                  </BlurFade>
+                  <div 
+                    className="flex flex-wrap gap-4 pt-4 animate-fade-in-up"
+                    style={{ animationDelay: '0.4s', animationFillMode: 'both' }}
+                  >
+                    <Button 
+                      size="lg" 
+                      className="bg-primary hover:bg-primary/90 text-white border-none h-12 px-8 text-base"
+                      asChild
+                    >
+                      <Link href={banner.linkUrl || '/products'}>
+                        Xem chi tiết <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 h-12 px-8 text-base backdrop-blur-sm"
+                      asChild
+                    >
+                      <Link href="/contact">
+                        Liên hệ ngay
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CarouselItem>
