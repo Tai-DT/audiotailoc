@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,10 +31,9 @@ function RelatedServiceCard({ service, index }: { service: Service; index: numbe
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+    <div
+      className="animate-fade-in-up"
+      style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
     >
       <Link href={`/services/${service.slug}`}>
         <Card className={cn(
@@ -84,7 +82,7 @@ function RelatedServiceCard({ service, index }: { service: Service; index: numbe
           </div>
         </Card>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -137,11 +135,7 @@ export function RelatedServices({ currentServiceId, serviceTypeId, limit = 4 }: 
   return (
     <section className="py-12 border-t border-border/50">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="animate-fade-in-up" style={{ animationDuration: '0.5s' }}>
           {/* Section Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -164,7 +158,7 @@ export function RelatedServices({ currentServiceId, serviceTypeId, limit = 4 }: 
               <RelatedServiceCard key={service.id} service={service} index={index} />
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
