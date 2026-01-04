@@ -40,7 +40,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: ['/products/', '/services/', '/du-an/', '/danh-muc/'],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    sitemap: 'https://audiotailoc.com/sitemap.xml',
   };
 }
