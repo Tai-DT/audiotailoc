@@ -42,8 +42,8 @@ export function HeaderUserMenu() {
   // Server render / not mounted - show placeholder
   if (!isMounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-        <User className="h-4 w-4 sm:h-5 sm:w-5" />
+      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" aria-label="Đang tải menu người dùng">
+        <User className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
       </Button>
     );
   }
@@ -53,13 +53,14 @@ export function HeaderUserMenu() {
     return (
       <div className="flex items-center space-x-1 sm:space-x-2">
         {/* Wishlist */}
-        <Link href="/wishlist" className="relative group">
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-            <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Link href="/wishlist" className="relative group" aria-label="Danh sách yêu thích">
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" aria-label="Xem danh sách yêu thích">
+            <Heart className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             {wishlistCount?.count && wishlistCount.count > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warning text-warning-foreground"
+                aria-label={`${wishlistCount.count} sản phẩm yêu thích`}
               >
                 {wishlistCount.count}
               </Badge>
@@ -70,10 +71,10 @@ export function HeaderUserMenu() {
         {/* User Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+            <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full" aria-label="Menu tài khoản">
               <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
-                <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback>
+                <AvatarImage src={user?.avatar} alt={user?.name || 'Avatar người dùng'} />
+                <AvatarFallback aria-hidden="true">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

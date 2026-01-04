@@ -153,13 +153,14 @@ export function HeaderClient() {
             <ThemeToggle />
             
             {/* Cart */}
-            <Link href="/cart" className="relative group">
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Link href="/cart" className="relative group" aria-label="Giỏ hàng">
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" aria-label="Xem giỏ hàng">
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 {isMounted && itemCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                    aria-label={`${itemCount} sản phẩm trong giỏ`}
                   >
                     {itemCount}
                   </Badge>
@@ -169,8 +170,8 @@ export function HeaderClient() {
 
             {/* User Menu - Lazy loaded */}
             <Suspense fallback={
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <User className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Đang tải menu người dùng">
+                <User className="h-4 w-4" aria-hidden="true" />
               </Button>
             }>
               <UserMenu />
