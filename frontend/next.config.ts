@@ -73,7 +73,13 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-tooltip',
       'lucide-react',
       'react-hook-form',
-      'framer-motion'
+      'framer-motion',
+      // Additional optimizations for smaller bundles
+      '@tanstack/react-query',
+      'date-fns',
+      'clsx',
+      'embla-carousel-react',
+      'react-hot-toast',
     ],
   },
   
