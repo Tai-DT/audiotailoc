@@ -8,9 +8,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
+import { LazyAnalytics } from "@/components/analytics/lazy-analytics";
 import { LazyChatWidget } from "@/components/ui/lazy-chat-widget";
 
 
@@ -182,9 +180,7 @@ export default function RootLayout({
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>
-        <Analytics />
-        <SpeedInsights />
-        <WebVitalsReporter />
+        <LazyAnalytics />
       </body>
     </html>
   );
