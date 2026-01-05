@@ -153,7 +153,7 @@ export function AccessiblePagination({
   totalPages,
   onPageChange,
   className,
-  showEdges = false,
+  showEdges: _showEdges = false,
   siblingCount = 1,
 }: AccessiblePaginationProps) {
   // Generate page numbers to display

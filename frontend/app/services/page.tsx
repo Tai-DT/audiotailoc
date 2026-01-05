@@ -113,7 +113,6 @@ function ServicesPageContent() {
               <ServiceFilters
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
-                serviceTypes={serviceTypes || []}
               />
             </div>
           </aside>
@@ -147,7 +146,6 @@ function ServicesPageContent() {
                     filters={filters}
                     onFiltersChange={handleFiltersChange}
                     className="border-0 p-0"
-                    serviceTypes={serviceTypes || []}
                   />
                 </div>
               </SheetContent>

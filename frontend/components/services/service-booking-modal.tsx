@@ -24,7 +24,9 @@ const timeSlots = [
 ];
 
 export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBookingModalProps) {
-  const { user, isAuthenticated } = useAuth();
+  const authResult = useAuth();
+  const user = authResult.data;
+  const isAuthenticated = !!user;
   
   const [formData, setFormData] = useState({
     customerName: '',
@@ -84,8 +86,6 @@ export function ServiceBookingModal({ service, isOpen, onClose }: ServiceBooking
         scheduledDate: formData.preferredDate,
         scheduledTime: formData.preferredTime,
         notes: formData.notes,
-        // Include userId if user is authenticated - this links booking to their account
-        userId: isAuthenticated && user?.id ? user.id : undefined
       });
 
       toast.success('Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.');

@@ -334,7 +334,7 @@ export function ProfileSkeleton() {
   );
 }
 
-export default {
+const LoadingSkeletons = {
   Section: SectionSkeleton,
   ProductCard: ProductCardSkeleton,
   ProductGrid: ProductGridSkeleton,
@@ -344,3 +344,5 @@ export default {
   Text: TextSkeleton,
   Profile: ProfileSkeleton,
 };
+
+export default LoadingSkeletons;

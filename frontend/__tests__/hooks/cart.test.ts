@@ -1,7 +1,7 @@
 /**
  * Unit tests for cart hook
  */
-import { renderHook } from '@testing-library/react';
+import { renderHook as _renderHook } from '@testing-library/react';
 
 // Mock the API client
 jest.mock('@/lib/api', () => ({

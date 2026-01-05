@@ -40,7 +40,7 @@ const PRIMARY_LINKS = [
 export function HeaderNav({ pathname }: HeaderNavProps) {
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const { data: serviceTypes, isLoading: isLoadingServiceTypes } = useServiceTypes();
-  const { data: servicesByType } = useServicesByType();
+  const { data: _servicesByType } = useServicesByType();
 
   const topLevelCategories = React.useMemo(
     () => (categories ?? []).filter((cat: Category) => !cat.parentId),

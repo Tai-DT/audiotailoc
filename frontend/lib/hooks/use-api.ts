@@ -1464,3 +1464,86 @@ export const useBlogCategoryBySlug = ( slug: string ) =>
     enabled: !!slug,
   } );
 };
+
+// Service Review Types and Hooks
+export interface ServiceReview {
+  id: string;
+  serviceId: string;
+  userId: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  images?: string;
+  isVerified: boolean;
+  upvotes: number;
+  downvotes: number;
+  response?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name?: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface ServiceReviewsResponse {
+  items: ServiceReview[];
+  stats?: {
+    averageRating: number;
+    totalReviews: number;
+    distribution: Record<number, number>;
+  };
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export const useServiceReviews = (serviceId: string, page = 1, pageSize = 10) => {
+  return useQuery({
+    queryKey: ['service-reviews', serviceId, page, pageSize],
+    queryFn: async () => {
+      const response = await apiClient.get(`/services/${serviceId}/reviews`, {
+        params: { page, pageSize }
+      });
+      return handleApiResponse<ServiceReviewsResponse>(response);
+    },
+    enabled: !!serviceId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useMarkServiceReviewHelpful = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ reviewId }: { reviewId: string; helpful: boolean }) => {
+      const response = await apiClient.post(`/reviews/${reviewId}/helpful`);
+      return handleApiResponse(response);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-reviews'] });
+    },
+  });
+};
+
+export const useCreateServiceReview = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      serviceId: string;
+      rating: number;
+      title?: string;
+      comment?: string;
+      images?: string[];
+    }) => {
+      const response = await apiClient.post(`/services/${data.serviceId}/reviews`, data);
+      return handleApiResponse<ServiceReview>(response);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['service-reviews', variables.serviceId] });
+    },
+  });
+};

@@ -42,14 +42,10 @@ function SearchContent ()
     setFilters( prev => ( { ...prev, q } ) );
   }, [ searchParams ] );
 
-  const { data: searchData, isLoading, error } = useProductSearch( {
-    ...filters,
-    minPrice: filters.minPrice ? filters.minPrice * 100 : undefined,
-    maxPrice: filters.maxPrice ? filters.maxPrice * 100 : undefined,
-  } );
+  const { data: searchData, isLoading, error } = useProductSearch( filters.q || '', 50 );
 
-  const searchResults = searchData?.items || [];
-  const totalResults = searchData?.total || 0;
+  const searchResults = searchData || [];
+  const totalResults = searchResults.length;
 
   const handleSearch = ( e: React.FormEvent ) =>
   {

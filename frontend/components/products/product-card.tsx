@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -38,7 +38,7 @@ export function ProductCard({
   }, []);
   
   const { data: isInWishlistData } = useIsInWishlist(
-    shouldCheckWishlist ? product.id : undefined
+    shouldCheckWishlist ? product.id : ''
   );
   const { toggleWishlist, isLoading: isWishlistLoading } = useToggleWishlist();
   const isInWishlist = isInWishlistData?.isInWishlist || false;

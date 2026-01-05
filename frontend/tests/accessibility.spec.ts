@@ -24,44 +24,42 @@ const RULES_TO_SKIP = [
 
 // ==================== TESTS ====================
 
-test.describe('Accessibility Tests', () => {
-  PAGES_TO_TEST.forEach(({ name, path }) => {
-    test(`${name} page should have no critical accessibility violations`, async ({ page }) => {
-      // Navigate to page
-      await page.goto(path, { waitUntil: 'networkidle' });
-      
-      // Wait for page to fully load
-      await page.waitForTimeout(1000);
+PAGES_TO_TEST.forEach(({ name, path }) => {
+  test(`${name} page should have no critical accessibility violations`, async ({ page }) => {
+    // Navigate to page
+    await page.goto(path, { waitUntil: 'networkidle' });
+    
+    // Wait for page to fully load
+    await page.waitForTimeout(1000);
 
-      // Run accessibility scan
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .disableRules(RULES_TO_SKIP)
-        .analyze();
+    // Run accessibility scan
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .disableRules(RULES_TO_SKIP)
+      .analyze();
 
-      // Filter for only serious and critical violations
-      const criticalViolations = accessibilityScanResults.violations.filter(
-        v => v.impact === 'critical' || v.impact === 'serious'
-      );
+    // Filter for only serious and critical violations
+    const criticalViolations = accessibilityScanResults.violations.filter(
+      v => v.impact === 'critical' || v.impact === 'serious'
+    );
 
-      // Log all violations for debugging
-      if (criticalViolations.length > 0) {
-        console.log(`\n❌ ${name} page has ${criticalViolations.length} critical/serious violations:`);
-        criticalViolations.forEach((violation, index) => {
-          console.log(`\n${index + 1}. ${violation.id} (${violation.impact})`);
-          console.log(`   Description: ${violation.description}`);
-          console.log(`   Help: ${violation.helpUrl}`);
-          console.log(`   Affected elements: ${violation.nodes.length}`);
-          violation.nodes.slice(0, 3).forEach(node => {
-            console.log(`   - ${node.html.slice(0, 100)}...`);
-          });
+    // Log all violations for debugging
+    if (criticalViolations.length > 0) {
+      console.log(`\n❌ ${name} page has ${criticalViolations.length} critical/serious violations:`);
+      criticalViolations.forEach((violation, index) => {
+        console.log(`\n${index + 1}. ${violation.id} (${violation.impact})`);
+        console.log(`   Description: ${violation.description}`);
+        console.log(`   Help: ${violation.helpUrl}`);
+        console.log(`   Affected elements: ${violation.nodes.length}`);
+        violation.nodes.slice(0, 3).forEach(node => {
+          console.log(`   - ${node.html.slice(0, 100)}...`);
         });
-      } else {
-        console.log(`✅ ${name} page passed accessibility check`);
-      }
+      });
+    } else {
+      console.log(`✅ ${name} page passed accessibility check`);
+    }
 
-      // Assert no critical violations
-      expect(criticalViolations).toHaveLength(0);
-    });
+    // Assert no critical violations
+    expect(criticalViolations.length).toBe(0);
   });
 });
 
@@ -105,31 +103,30 @@ test('Generate full accessibility report', async ({ page }) => {
 
 // ==================== KEYBOARD NAVIGATION TEST ====================
 
-test.describe('Keyboard Navigation', () => {
-  test('Can navigate homepage with keyboard only', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
-    // Check skip link is first focusable element
-    await page.keyboard.press('Tab');
-    const skipLink = page.locator('a[href="#main-content"]');
-    
-    // Check that interactive elements are reachable
-    const focusableCount = await page.locator('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])').count();
-    expect(focusableCount).toBeGreaterThan(10);
-    
-    console.log(`✅ Homepage has ${focusableCount} focusable elements`);
-  });
+test('Can navigate homepage with keyboard only', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  
+  // Check skip link is first focusable element
+  await page.keyboard.press('Tab');
+  
+  // Check that interactive elements are reachable
+  const focusableCount = await page.locator('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])').count();
+  // Use toBeTruthy instead of toBeGreaterThan since Playwright expect has limited matchers
+  expect(focusableCount > 10).toBeTruthy();
+  
+  console.log(`✅ Homepage has ${focusableCount} focusable elements`);
+});
 
-  test('Forms are keyboard accessible', async ({ page }) => {
-    await page.goto('/contact', { waitUntil: 'networkidle' });
-    
-    // Tab through form fields
-    const formInputs = page.locator('input, textarea, select, button[type="submit"]');
-    const inputCount = await formInputs.count();
-    
-    console.log(`✅ Contact form has ${inputCount} interactive elements`);
-    expect(inputCount).toBeGreaterThan(3);
-  });
+test('Forms are keyboard accessible', async ({ page }) => {
+  await page.goto('/contact', { waitUntil: 'networkidle' });
+  
+  // Tab through form fields
+  const formInputs = page.locator('input, textarea, select, button[type="submit"]');
+  const inputCount = await formInputs.count();
+  
+  console.log(`✅ Contact form has ${inputCount} interactive elements`);
+  // Use toBeTruthy instead of toBeGreaterThan
+  expect(inputCount > 3).toBeTruthy();
 });
 
 // ==================== ARIA LANDMARKS TEST ====================
@@ -145,8 +142,9 @@ test('Pages have proper ARIA landmarks', async ({ page }) => {
   
   console.log(`Landmarks found: header=${header}, main=${main}, nav=${nav}, footer=${footer}`);
   
-  expect(header).toBeGreaterThanOrEqual(1);
-  expect(main).toBeGreaterThanOrEqual(1);
-  expect(nav).toBeGreaterThanOrEqual(1);
-  expect(footer).toBeGreaterThanOrEqual(1);
+  // Use toBeTruthy for greater than or equal comparisons
+  expect(header >= 1).toBeTruthy();
+  expect(main >= 1).toBeTruthy();
+  expect(nav >= 1).toBeTruthy();
+  expect(footer >= 1).toBeTruthy();
 });

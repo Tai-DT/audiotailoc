@@ -88,7 +88,7 @@ export default function AboutPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-6 left-6 text-white text-lg font-semibold italic">
-                    "Âm thanh đỉnh cao - Nâng tầm cuộc sống"
+                    &ldquo;Âm thanh đỉnh cao - Nâng tầm cuộc sống&rdquo;
                   </div>
                 </div>
               </BlurFade>

@@ -220,7 +220,19 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
     PROFILE: '/auth/profile',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
+
+  // Users
+  USERS: {
+    UPDATE: (id: string) => `/users/${id}`,
+    DELETE: (id: string) => `/users/${id}`,
+    EXPORT: '/users/export',
+    BOOKINGS: '/users/bookings',
+    PAYMENTS: '/users/payments',
+    AVATAR: '/users/avatar',
+  },
+
 
   // Products
   PRODUCTS: {

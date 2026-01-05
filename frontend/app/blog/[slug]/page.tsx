@@ -37,7 +37,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   });
   
   // Filter out current article from related
-  const relatedArticles = (relatedData?.items || []).filter(
+  const relatedArticles = (relatedData?.data || []).filter(
     (a: BlogArticle) => a.slug !== slug
   ).slice(0, 3);
 

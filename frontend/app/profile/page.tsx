@@ -360,14 +360,14 @@ function ProfilePageContent() {
                             <div className="aspect-square relative rounded-lg overflow-hidden mb-2 bg-white">
                               <Image
                                 src={item.product?.imageUrl || '/placeholder-product.svg'}
-                                alt={item.product?.name}
+                                alt={item.product?.name || 'Sản phẩm'}
                                 fill
                                 className="object-contain"
                               />
                             </div>
                             <h5 className="font-semibold line-clamp-1">{item.product?.name}</h5>
                             <p className="text-primary font-bold">
-                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.product?.priceCents / 100)}
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((item.product?.priceCents ?? 0) / 100)}
                             </p>
                           </div>
                         ))}

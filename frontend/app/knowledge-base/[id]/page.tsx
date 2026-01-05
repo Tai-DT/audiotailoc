@@ -61,6 +61,7 @@ export default function ArticlePage() {
   };
 
   const handleShare = async () => {
+    if (!article) return;
     if (navigator.share) {
       try {
         await navigator.share({

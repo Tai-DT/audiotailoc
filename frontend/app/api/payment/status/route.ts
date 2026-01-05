@@ -76,12 +76,21 @@ async function checkPayOSStatus(orderId: string) {
 
     if (!response.ok) throw new Error('Failed to fetch order status from backend');
     const payload = (await response.json()) as { data?: BackendOrder } | BackendOrder;
-    const order = 'data' in payload ? payload.data ?? {} : payload;
+    
+    // Extract order from payload with proper typing
+    let order: BackendOrder;
+    if ('data' in payload && payload.data) {
+      order = payload.data;
+    } else if ('status' in payload) {
+      order = payload as BackendOrder;
+    } else {
+      order = {};
+    }
 
     // Map backend order/payment status to frontend format
     let status = 'PENDING';
     if (order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'COMPLETED') {
-      const hasPaid = order.payments?.some(p => p.status === 'SUCCEEDED');
+      const hasPaid = order.payments?.some((p: BackendPayment) => p.status === 'SUCCEEDED');
       if (hasPaid) status = 'COMPLETED';
     } else if (order.status === 'CANCELLED') {
       status = 'FAILED';
@@ -98,7 +107,7 @@ async function checkPayOSStatus(orderId: string) {
       currency: 'VND',
       createdAt: order.createdAt,
       completedAt: latestPayment?.updatedAt || null,
-      description: `Payment for order ${order.orderNo}`,
+      description: `Payment for order ${order.orderNo || orderId}`,
       paymentMethod: 'PayOS',
     };
   } catch (error) {

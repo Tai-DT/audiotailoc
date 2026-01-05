@@ -26,7 +26,7 @@ function ProductsPageContent() {
 
   const { addItem: addCartItem } = useCart();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [categoryNotFound, setCategoryNotFound] = React.useState(false);
+  const [_categoryNotFound, setCategoryNotFound] = React.useState(false);
   const [filters, setFilters] = React.useState<ProductFilters>({
     page: 1,
     pageSize: 20,
@@ -122,7 +122,7 @@ function ProductsPageContent() {
       />
 
       {/* Category Not Found Alert */}
-        <div className="border-b bg-destructive/5" role="alert" aria-live="aggressive">
+        <div className="border-b bg-destructive/5" role="alert" aria-live="assertive">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-destructive">
               <X className="h-4 w-4 flex-shrink-0" aria-hidden="true" />

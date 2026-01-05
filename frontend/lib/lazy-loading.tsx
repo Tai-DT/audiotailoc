@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { ComponentType, ReactNode } from 'react';
 import { SectionSkeleton, ProductGridSkeleton } from '@/components/ui/loading-skeletons';
 
@@ -60,7 +61,7 @@ export function lazyProductGrid<P extends object>(
 
 /** Lazy-loaded BannerCarousel - heavy with animations */
 export const LazyBannerCarousel = dynamic(
-  () => import('@/components/home/banner-carousel-enhanced').then(mod => ({ default: mod.BannerCarouselEnhanced })),
+  () => import('@/components/home/banner-carousel-enhanced').then(mod => ({ default: mod.BannerCarousel })),
   { 
     loading: () => (
       <div className="h-[400px] md:h-[500px] bg-muted animate-pulse rounded-xl" />
@@ -71,7 +72,7 @@ export const LazyBannerCarousel = dynamic(
 
 /** Lazy-loaded FeaturedProducts - can be deferred */
 export const LazyFeaturedProducts = dynamic(
-  () => import('@/components/home/featured-products'),
+  () => import('@/components/home/featured-products').then(mod => ({ default: mod.FeaturedProducts })),
   { 
     loading: () => <SectionSkeleton />,
     ssr: false 
@@ -80,7 +81,7 @@ export const LazyFeaturedProducts = dynamic(
 
 /** Lazy-loaded CategoryProductsSection */
 export const LazyCategoryProductsSection = dynamic(
-  () => import('@/components/home/category-products-section'),
+  () => import('@/components/home/category-products-section').then(mod => ({ default: mod.CategoryProductsSection })),
   { 
     loading: () => <SectionSkeleton />,
     ssr: false 
@@ -267,13 +268,12 @@ export function ProgressiveImage({
       
       {/* Actual image */}
       {shouldLoad && (
-        <img
+        <Image
           src={src}
           alt={alt}
-          width={width}
-          height={height}
+          width={width || 400}
+          height={height || 300}
           loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
           onLoad={handleLoad}
           className={`transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
@@ -305,7 +305,7 @@ export function usePrefetch(href: string) {
   return { onMouseEnter };
 }
 
-export default {
+const LazyLoadingUtils = {
   createLazyComponent,
   lazySection,
   lazyProductGrid,
@@ -313,3 +313,5 @@ export default {
   ProgressiveSection,
   ProgressiveImage,
 };
+
+export default LazyLoadingUtils;

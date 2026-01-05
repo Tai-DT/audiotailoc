@@ -77,17 +77,17 @@ export function StaticHeroBanner({ banner }: StaticHeroBannerProps) {
             )}
 
             {/* CTA Button */}
-            {banner.buttonLink && (
+            {banner.linkUrl && (
               <div 
                 className="animate-fade-in-up"
                 style={{ animationDelay: '0.4s', animationDuration: '0.6s' }}
               >
-                <Link href={banner.buttonLink}>
+                <Link href={banner.linkUrl}>
                   <Button 
                     size="lg" 
                     className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-8 py-6 text-lg font-semibold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
                   >
-                    {banner.buttonText || 'Xem ngay'}
+                    {banner.buttonLabel || 'Xem ngay'}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

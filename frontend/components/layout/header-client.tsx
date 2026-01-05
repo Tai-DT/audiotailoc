@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { Suspense, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   Search,
   User,
-  Heart,
   Mic as MicIcon,
   Speaker as SpeakerIcon,
   SlidersHorizontal,
@@ -20,7 +19,6 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useCart } from '@/components/providers/cart-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { cn } from '@/lib/utils';
 
 // Lazy load heavy components
 const NavigationMenuFull = dynamic(
