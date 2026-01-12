@@ -2,19 +2,18 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuth, useLogin } from '@/lib/hooks/use-auth';
 import { authStorage } from '@/lib/auth-storage';
 import { logger } from '@/lib/logger';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, Chrome, Github } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DotPattern } from '@/components/ui/dot-pattern';
-import { MagicCard } from '@/components/ui/magic-card';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
 
@@ -31,225 +30,160 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
 
   const isAuthenticated = !!user;
-  // Decode the redirect URL (e.g., %2Fprofile -> /profile)
   const redirectParam = searchParams.get('redirect');
   const redirectTo = redirectParam ? decodeURIComponent(redirectParam) : '/';
 
-  // Redirect if already authenticated - check immediately on mount
-  // Use sessionStorage to prevent redirect loops across page reloads
-  const REDIRECT_KEY = 'login_redirected';
-  const hasRedirected = typeof window !== 'undefined' ? sessionStorage.getItem(REDIRECT_KEY) === 'true' : false;
-
   React.useEffect(() => {
-    // Check localStorage immediately
     const token = authStorage.getAccessToken();
     const storedUser = authStorage.getUser();
 
-    logger.debug('[LoginPage] Auth check', {
-      hasToken: !!token,
-      hasStoredUser: !!storedUser,
-      isAuthenticated,
-      isAuthLoading,
-      redirectTo,
-      hasRedirected
-    });
-
-    // If already authenticated, verify cookies before redirecting
-    // Only redirect if we have BOTH token AND storedUser to avoid redirect loop
-    // Use sessionStorage to prevent multiple redirects in the same session
-    if (!hasRedirected && token && storedUser) {
-      // Verify cookies are set before redirecting
-      const verifyCookiesAndRedirect = async () => {
-        let cookieCheckAttempts = 0;
-        const maxAttempts = 10;
-
-        while (cookieCheckAttempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          const cookies = document.cookie;
-          const hasTokenCookie = cookies.includes('audiotailoc_token=');
-          const hasUserCookie = cookies.includes('audiotailoc_user=');
-
-          if (hasTokenCookie && hasUserCookie) {
-            if (typeof window !== 'undefined') {
-              sessionStorage.setItem(REDIRECT_KEY, 'true');
-            }
-            logger.debug('[LoginPage] Already authenticated, cookies verified, redirecting', { redirectTo });
-            // Wait longer to ensure cookies are fully set and browser has time to send them
-            await new Promise(resolve => setTimeout(resolve, 500));
-            window.location.href = redirectTo;
-            return;
-          }
-          cookieCheckAttempts++;
-        }
-
-        // If cookies still not set after max attempts, redirect anyway
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(REDIRECT_KEY, 'true');
-        }
-        logger.warn('[LoginPage] Cookies not verified after max attempts, redirecting anyway', { redirectTo, attempts: maxAttempts });
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.href = redirectTo;
-      };
-
-      verifyCookiesAndRedirect();
+    if (token && storedUser) {
+      window.location.href = redirectTo;
       return;
     }
 
-    // Clear redirect flag if we don't have auth (user logged out)
-    if (!token && !storedUser && typeof window !== 'undefined') {
-      sessionStorage.removeItem(REDIRECT_KEY);
-    }
-
-    // Done checking
     if (!isAuthLoading) {
       setIsCheckingAuth(false);
     }
-  }, [isAuthenticated, isAuthLoading, redirectTo, hasRedirected]);
+  }, [isAuthenticated, isAuthLoading, redirectTo]);
 
-  // Show loading while checking auth
   if (isCheckingAuth && isAuthLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Đang kiểm tra đăng nhập">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" aria-hidden="true" />
-          <p className="text-muted-foreground">Đang kiểm tra đăng nhập...</p>
-          <span className="sr-only">Đang tải</span>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground animate-pulse font-medium">Đang chuẩn bị không gian âm nhạc...</p>
+        </motion.div>
       </div>
     );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      return;
-    }
-
+    if (!email || !password) return;
     setIsLoading(true);
-
     try {
       await loginMutation.mutateAsync({ email, password, rememberMe });
-
-      // Verify token and user are stored before redirecting
-      const tokenAfterLogin = authStorage.getAccessToken();
-      const userAfterLogin = authStorage.getUser();
-      if (!tokenAfterLogin || !userAfterLogin) {
-        logger.error('[LoginPage] Token or user not stored after login', undefined, { hasToken: !!tokenAfterLogin, hasUser: !!userAfterLogin });
-        setIsLoading(false);
-        return;
-      }
-
-      // Clear redirect flag before redirecting (so we can redirect after successful login)
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(REDIRECT_KEY);
-      }
-
-      // Verify cookies are set before redirecting
-      // Wait a bit to ensure cookies are set and available for server-side proxy.ts
-      let cookieCheckAttempts = 0;
-      const maxAttempts = 10;
-      while (cookieCheckAttempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const cookies = document.cookie;
-        const hasTokenCookie = cookies.includes('audiotailoc_token=');
-        const hasUserCookie = cookies.includes('audiotailoc_user=');
-
-        if (hasTokenCookie && hasUserCookie) {
-          // Use window.location.href for full page reload to ensure cookies are sent to server
-          // This is necessary because proxy.ts runs server-side and needs cookies in the request
-          // Wait longer to ensure cookies are fully set and browser has time to send them
-          await new Promise(resolve => setTimeout(resolve, 500));
-          window.location.href = redirectTo;
-          return;
-        }
-        cookieCheckAttempts++;
-      }
-
-      // If cookies still not set after max attempts, redirect anyway
-      // Use window.location.href for full page reload to ensure cookies are sent to server
-      await new Promise(resolve => setTimeout(resolve, 500));
       window.location.href = redirectTo;
     } catch (error) {
-      // Error is handled by the mutation
-      logger.error('[LoginPage] Login error caught in handleSubmit', error, { email });
+      logger.error('[LoginPage] Login error', error);
       setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    try {
-      await loginMutation.mutateAsync({ email: 'demo@audiotailoc.com', password: 'demo123', rememberMe: true });
-      // Verify token and user are stored before redirecting
-      const tokenAfterLogin = authStorage.getAccessToken();
-      const userAfterLogin = authStorage.getUser();
-      if (!tokenAfterLogin || !userAfterLogin) {
-        logger.error('[LoginPage] Token or user not stored after demo login', undefined, { hasToken: !!tokenAfterLogin, hasUser: !!userAfterLogin });
-        setIsLoading(false);
-        return;
-      }
-      // Clear redirect flag before redirecting (so we can redirect after successful login)
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(REDIRECT_KEY);
-      }
-
-      // Verify cookies are set before redirecting
-      // Wait a bit to ensure cookies are set and available for server-side proxy.ts
-      let cookieCheckAttempts = 0;
-      const maxAttempts = 10;
-      while (cookieCheckAttempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const cookies = document.cookie;
-        const hasTokenCookie = cookies.includes('audiotailoc_token=');
-        const hasUserCookie = cookies.includes('audiotailoc_user=');
-
-        if (hasTokenCookie && hasUserCookie) {
-          // Use window.location.href for full page reload to ensure cookies are sent to server
-          // Wait longer to ensure cookies are fully set and browser has time to send them
-          await new Promise(resolve => setTimeout(resolve, 500));
-          window.location.href = redirectTo;
-          return;
-        }
-        cookieCheckAttempts++;
-      }
-
-      // If cookies still not set after max attempts, redirect anyway
-      // Use window.location.href for full page reload to ensure cookies are sent to server
-      await new Promise(resolve => setTimeout(resolve, 500));
-      window.location.href = redirectTo;
-    } catch (error) {
-      // Error is handled by the mutation
-      logger.error('[LoginPage] Demo login error', error);
-      setIsLoading(false);
-    }
+  const handleSocialLogin = (provider: string) => {
+    const neonAuthUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL || 'https://ep-holy-star-a18js5u8.ap-southeast-1.aws.neon.tech/auth';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const providerPath = provider.toLowerCase();
+    
+    // Construct the Neon Auth login URL
+    const loginUrl = `${neonAuthUrl}/login/${providerPath}?redirect_uri=${encodeURIComponent(`${siteUrl}/auth/callback`)}`;
+    
+    logger.info(`Redirecting to Neon Auth ${provider} via: ${loginUrl}`);
+    window.location.href = loginUrl;
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden" role="main" aria-labelledby="login-title">
-      <DotPattern className="absolute inset-0 opacity-30" width={20} height={20} cx={1} cy={1} cr={1} />
-      <div className="w-full max-w-md relative z-10">
-        <MagicCard gradientColor="oklch(0.97 0.008 45)" className="p-0 border-none shadow-none">
-          <Card className="border-0 shadow-2xl relative overflow-hidden">
-            <BorderBeam
-              size={100}
-              duration={10}
-              colorFrom="oklch(0.58 0.28 20)"
-              colorTo="oklch(0.70 0.22 40)"
-              borderWidth={2}
+    <main className="min-h-[calc(100vh-64px)] bg-background flex items-center justify-center p-0 md:p-6 lg:p-12 transition-colors duration-500">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-card rounded-none md:rounded-[2rem] border border-border shadow-2xl overflow-hidden min-h-[700px] relative">
+        <BorderBeam size={200} duration={12} delay={9} colorFrom="var(--primary)" colorTo="#ff2d2d" className="hidden md:block" />
+        
+        {/* Left Side: Visual Asset - We keep this dark as it's a premium visual feature */}
+        <div className="hidden md:flex relative flex-col justify-between p-12 bg-zinc-900 group">
+          <div className="absolute inset-0 z-0">
+            <Image 
+              src="/auth-bg.png" 
+              alt="Premium Audio Background" 
+              fill 
+              className="object-cover opacity-60 grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100"
+              priority
             />
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center" id="login-title">Đăng nhập</CardTitle>
-              <CardDescription className="text-center">
-                Nhập thông tin tài khoản để tiếp tục
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="login-title">
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+          </div>
+          
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="relative z-10"
+          >
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary),0.3)]">
+                <span className="text-white font-bold text-xl font-sans">A</span>
+              </div>
+              <span className="text-2xl font-bold tracking-tighter text-white uppercase font-sans">Audio Tài Lộc</span>
+            </Link>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="relative z-10"
+          >
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
+              Trải nghiệm âm thanh <br />
+              <span className="text-primary italic">Xứng tầm nghệ thuật.</span>
+            </h2>
+            <p className="text-zinc-300 text-lg max-w-md font-medium">
+              Chạm vào cảm xúc thông qua những thiết bị âm thanh đỉnh cao nhất.
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Right Side: Login Form - Adaptable to Light/Dark mode */}
+        <div className="relative flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-card transition-colors duration-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-sm space-y-8"
+          >
+            <div className="space-y-2 text-center md:text-left">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Đăng nhập</h1>
+              <p className="text-muted-foreground font-medium">
+                Chào mừng bạn trở lại với Audio Tài Lộc.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                variant="outline" 
+                className="bg-background border-border hover:bg-muted text-foreground h-12 rounded-xl transition-all"
+                onClick={() => handleSocialLogin('google')}
+              >
+                <Chrome className="mr-2 h-5 w-5 text-red-500" />
+                <span className="font-semibold">Google</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="bg-background border-border hover:bg-muted text-foreground h-12 rounded-xl transition-all"
+                onClick={() => handleSocialLogin('github')}
+              >
+                <Github className="mr-2 h-5 w-5 text-foreground dark:text-white" />
+                <span className="font-semibold">GitHub</span>
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="bg-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-3 text-muted-foreground font-bold tracking-widest">Hoặc điền Email</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Label htmlFor="email" className="text-foreground/80 font-bold ml-1">Địa chỉ Email</Label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <Input
                       id="email"
                       type="email"
@@ -257,135 +191,90 @@ function LoginPageContent() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      disabled={isLoading}
-                      autoComplete="email"
-                      aria-required="true"
-                      aria-label="Địa chỉ email"
+                      className="pl-11 bg-muted/30 border-border h-12 rounded-xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mật khẩu</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <div className="flex items-center justify-between ml-1">
+                    <Label htmlFor="password" title="passwordLabel" className="text-foreground/80 font-bold">Mật khẩu</Label>
+                    <Link href="/auth/forgot-password" title="forgotPassword" className="text-xs font-bold text-primary hover:underline underline-offset-2">
+                      Quên mật khẩu?
+                    </Link>
+                  </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Nhập mật khẩu"
+                      placeholder="••••••••"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10"
-                      disabled={isLoading}
-                      autoComplete="current-password"
-                      aria-required="true"
-                      aria-label="Mật khẩu"
+                      className="pl-11 pr-12 bg-muted/30 border-border h-12 rounded-xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
-                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                      )}
-                    </Button>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked === true)}
-                      disabled={isLoading}
-                      aria-label="Ghi nhớ đăng nhập"
-                    />
-                    <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                      Ghi nhớ đăng nhập
-                    </Label>
-                  </div>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Quên mật khẩu?
-                  </Link>
-                </div>
-
-                <ShimmerButton
-                  type="submit"
-                  className="w-full h-10"
-                  disabled={isLoading}
-                  shimmerColor="oklch(0.99 0.005 45)"
-                  shimmerSize="0.1em"
-                  borderRadius="0.5rem"
-                  background="oklch(0.58 0.28 20)"
-                  aria-busy={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center text-white">
-                      <span className="mr-2">Đang xử lý...</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center text-white">
-                      Đăng nhập
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </span>
-                  )}
-                </ShimmerButton>
-              </form>
-
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <Separator />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">HOẶC</span>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mt-6"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                  aria-label="Đăng nhập bằng tài khoản Demo"
-                  aria-busy={isLoading}
-                >
-                  Tài khoản demo
-                </Button>
               </div>
 
-              <div className="mt-6 text-center text-sm">
-                <span className="text-muted-foreground">Chưa có tài khoản? </span>
-                <Link href="/auth/register" className="text-primary hover:underline">
+              <div className="flex items-center space-x-3 px-1">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded-[4px]"
+                />
+                <label 
+                  htmlFor="remember" 
+                  className="text-sm text-muted-foreground font-semibold cursor-pointer select-none hover:text-foreground transition-colors"
+                >
+                  Ghi nhớ đăng nhập
+                </label>
+              </div>
+
+              <ShimmerButton
+                type="submit"
+                className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20"
+                disabled={isLoading}
+                shimmerColor="#ffffff"
+                shimmerSize="0.1em"
+                borderRadius="0.75rem"
+                background="var(--primary)"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Đang xác thực...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-white">
+                    <span>Đăng nhập</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                )}
+              </ShimmerButton>
+            </form>
+
+            <div className="text-center pt-2">
+              <p className="text-muted-foreground font-medium">
+                Bạn chưa có tài khoản?{' '}
+                <Link href="/auth/register" className="text-primary font-bold hover:underline underline-offset-4 decoration-2">
                   Đăng ký ngay
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </MagicCard>
+              </p>
+            </div>
+          </motion.div>
 
-        <div className="mt-8 text-center">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Tại sao nên đăng ký?</h3>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Theo dõi đơn hàng dễ dàng</li>
-              <li>• Nhận ưu đãi đặc biệt</li>
-              <li>• Tư vấn kỹ thuật chuyên nghiệp</li>
-            </ul>
+          <div className="absolute bottom-8 text-muted-foreground/30 text-[10px] uppercase tracking-widest font-black text-center w-full">
+            © 2026 AUDIO TÀI LỘC — PREMIUM EXPERIENCE
           </div>
         </div>
       </div>
@@ -397,9 +286,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Đang tải...</h1>
-        </div>
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     }>
       <LoginPageContent />

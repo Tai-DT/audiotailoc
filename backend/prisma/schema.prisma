@@ -561,21 +561,20 @@ model product_views {
   users     users?   @relation(fields: [userId], references: [id])
 }
 
-// Service Reviews - Đánh giá dịch vụ
 model service_reviews {
   id         String       @id
   userId     String
   serviceId  String
-  bookingId  String?      // Liên kết với booking đã hoàn thành (nếu có)
-  rating     Int          // 1-5 sao
+  bookingId  String?
+  rating     Int
   title      String?
   comment    String?
-  images     String?      // JSON array of image URLs
-  isVerified Boolean      @default(false) // Đã sử dụng dịch vụ
+  images     String?
+  isVerified Boolean      @default(false)
   status     ReviewStatus @default(APPROVED)
   upvotes    Int          @default(0)
   downvotes  Int          @default(0)
-  response   String?      // Phản hồi từ admin
+  response   String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime
   services   services     @relation(fields: [serviceId], references: [id])
@@ -800,7 +799,6 @@ model service_bookings {
   address                String?
   coordinates            String?
   goongPlaceId           String?
-  // Guest booking customer info
   customerName           String?
   customerPhone          String?
   customerEmail          String?
@@ -1005,7 +1003,7 @@ model testimonials {
 model users {
   id                   String                 @id
   email                String                 @unique
-  password             String
+  password             String?
   name                 String?
   phone                String?
   role                 String                 @default("USER")
@@ -1213,6 +1211,20 @@ model support_tickets {
   @@index([userId])
 }
 
+model faqs {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String
+  category     String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
 enum CampaignStatus {
   DRAFT
   SCHEDULED
@@ -1236,18 +1248,4 @@ enum ReviewStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model faqs {
-  id           String   @id @default(cuid())
-  question     String
-  answer       String
-  category     String?
-  displayOrder Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([displayOrder])
-  @@index([isActive])
 }

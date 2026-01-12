@@ -58,7 +58,7 @@ export function SimpleHeader({
                 fill
                 priority
                 className="object-contain dark:hidden"
-                sizes="112px"
+                sizes="(max-width: 768px) 112px, 144px"
               />
               <Image
                 src="/images/logo/logo-dark.svg"
@@ -66,7 +66,7 @@ export function SimpleHeader({
                 fill
                 priority
                 className="hidden object-contain dark:block"
-                sizes="112px"
+                sizes="(max-width: 768px) 112px, 144px"
               />
             </div>
           </Link>

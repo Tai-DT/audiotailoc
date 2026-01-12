@@ -6,7 +6,12 @@ import IORedis, { Redis } from 'ioredis';
 export class CacheService implements OnModuleDestroy {
   private client: Redis | null = null;
   constructor(private readonly config: ConfigService) {
-    const url = this.config.get<string>('REDIS_URL') || 'redis://localhost:6379';
+    const url = this.config.get<string>('REDIS_URL');
+    // Skip Redis if REDIS_URL is not configured (empty or not set)
+    if (!url || url.trim() === '') {
+      this.client = null;
+      return;
+    }
     try {
       this.client = new IORedis(url, { maxRetriesPerRequest: 1 });
     } catch {

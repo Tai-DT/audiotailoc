@@ -26,6 +26,7 @@
     "node_modules",
     "dist",
     "prisma/seed.ts",
+    "prisma/prisma.config.ts",
     "src/add-karaoke-products.ts",
     "src/seed-karaoke.ts",
     "src/seed-services.ts",

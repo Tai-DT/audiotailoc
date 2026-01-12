@@ -98,6 +98,18 @@ export function ProductCard({
             <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             {/* Subtle shine */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            
+            {/* Logo Watermark for Copyright Protection */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08] group-hover:opacity-15 transition-opacity duration-700">
+              <div className="relative w-1/2 h-1/2">
+                <Image
+                  src="/images/logo/logo-dark.svg"
+                  alt="Audio Tài Lộc Watermark"
+                  fill
+                  className="object-contain select-none shadow-sm"
+                />
+              </div>
+            </div>
           </Link>
         </AspectRatio>
 

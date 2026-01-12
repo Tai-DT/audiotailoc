@@ -1,1 +1,0 @@
-{"version":3,"file":"custom-io.adapter.js","sourceRoot":"","sources":["../../../src/common/adapters/custom-io.adapter.ts"],"names":[],"mappings":";;;AAAA,mEAAuD;AAGvD,MAAa,eAAgB,SAAQ,8BAAS;IAC5C,cAAc,CAAC,IAAY,EAAE,OAAwC;QACnE,MAAM,MAAM,GAAG,KAAK,CAAC,cAAc,CAAC,IAAI,EAAE,OAAO,CAAC,CAAC;QAKnD,OAAO,MAAM,CAAC;IAChB,CAAC;CACF;AATD,0CASC"}

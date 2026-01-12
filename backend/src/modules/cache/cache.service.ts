@@ -29,6 +29,14 @@ export class CacheService {
   }
 
   private async initializeRedis() {
+    // Skip Redis if REDIS_URL is not configured (empty or not set)
+    const redisUrl = this.config.get('REDIS_URL', '');
+    if (!redisUrl || redisUrl.trim() === '') {
+      this.logger.log('Redis not configured (REDIS_URL is empty), using in-memory cache');
+      this.redis = null;
+      return;
+    }
+
     try {
       this.redis = new Redis({
         host: this.config.get('REDIS_HOST', 'localhost'),

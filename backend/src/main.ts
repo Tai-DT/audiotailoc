@@ -145,6 +145,15 @@ async function bootstrap() {
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       }
+      // Check for local network IPs and loopback in development
+      else if (
+        process.env.NODE_ENV === 'development' &&
+        /^https?:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|10\.\d+\.\d+\.\d+):300[0-2]$/.test(
+          origin,
+        )
+      ) {
+        callback(null, true);
+      }
       // Check wildcard patterns for Vercel domains
       else if (
         allowedOrigins.some(allowedOrigin => {

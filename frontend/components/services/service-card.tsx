@@ -61,6 +61,18 @@ export function ServiceCard({ service }: ServiceCardProps) {
           onError={() => setImageError(true)}
         />
         
+        {/* Logo Watermark for Copyright Protection */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] group-hover:opacity-12 transition-opacity duration-700">
+          <div className="relative w-1/2 h-1/2">
+            <Image
+              src="/images/logo/logo-dark.svg"
+              alt="Audio Tài Lộc Watermark"
+              fill
+              className="object-contain select-none"
+            />
+          </div>
+        </div>
+
         {/* Service Type Badge */}
         <Badge className="absolute top-3 left-3 bg-background/90 text-foreground text-xs">
           {service.serviceType?.name || 'Dịch vụ'}

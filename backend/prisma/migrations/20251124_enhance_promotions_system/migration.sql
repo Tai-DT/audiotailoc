@@ -12,7 +12,20 @@ ADD COLUMN IF NOT EXISTS "conditions" JSONB,
 ADD COLUMN IF NOT EXISTS "versionNumber" INTEGER DEFAULT 1;
 
 -- Update existing data: migrate starts_at to startsAt if empty
-UPDATE "promotions" SET "startsAt" = "starts_at" WHERE "startsAt" IS NULL AND "starts_at" IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'promotions'
+      AND column_name = 'starts_at'
+  ) THEN
+    UPDATE "promotions"
+    SET "startsAt" = "starts_at"
+    WHERE "startsAt" IS NULL AND "starts_at" IS NOT NULL;
+  END IF;
+END $$;
 
 -- Create promotions_products junction table
 CREATE TABLE IF NOT EXISTS "promotions_products" (
@@ -136,6 +149,27 @@ BEGIN
     SELECT 1 FROM information_schema.table_constraints
     WHERE constraint_name = 'promotions_created_by_fkey'
   ) THEN
-    ALTER TABLE "promotions" ADD CONSTRAINT "promotions_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    -- Some databases use camelCase ("createdBy"), others might have snake_case ("created_by").
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'promotions'
+        AND column_name = 'createdBy'
+    ) THEN
+      ALTER TABLE "promotions"
+        ADD CONSTRAINT "promotions_created_by_fkey"
+        FOREIGN KEY ("createdBy") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'promotions'
+        AND column_name = 'created_by'
+    ) THEN
+      ALTER TABLE "promotions"
+        ADD CONSTRAINT "promotions_created_by_fkey"
+        FOREIGN KEY ("created_by") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
   END IF;
 END $$;

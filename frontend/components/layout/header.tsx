@@ -192,17 +192,17 @@ export function Header() {
               <Image
                 src="/images/logo/logo-light.svg"
                 alt="Audio Tài Lộc"
-                width={144}
-                height={36}
-                className="h-8 w-28 sm:h-9 sm:w-36 object-contain dark:hidden"
+                width={150}
+                height={40}
+                className="h-9 w-32 sm:h-10 sm:w-40 object-contain dark:hidden"
                 priority
               />
               <Image
                 src="/images/logo/logo-dark.svg"
                 alt="Audio Tài Lộc"
-                width={144}
-                height={36}
-                className="hidden h-8 w-28 sm:h-9 sm:w-36 object-contain dark:block"
+                width={150}
+                height={40}
+                className="hidden h-9 w-32 sm:h-10 sm:w-40 object-contain dark:block"
                 priority
               />
             </div>

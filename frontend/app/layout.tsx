@@ -29,7 +29,7 @@ const geistMono = Geist_Mono({
 
 // Canonical / metadata base selection logic
 const CANONICAL_BASE = process.env.NEXT_PUBLIC_CANONICAL_BASE_URL || "https://audiotailoc.com";
-
+  
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

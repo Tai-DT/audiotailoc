@@ -54,8 +54,16 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async initializeRedis() {
+    const redisUrl = this.configService.get('REDIS_URL', '');
+    
+    // Skip Redis if REDIS_URL is not configured (empty or not set)
+    if (!redisUrl || redisUrl.trim() === '') {
+      this.logger.log('Redis not configured (REDIS_URL is empty), cache operations will be skipped');
+      this.isConnected = false;
+      return;
+    }
+
     try {
-      const redisUrl = this.configService.get('REDIS_URL', 'redis://localhost:6379');
       const redisPassword = this.configService.get('REDIS_PASSWORD');
       const redisDb = this.configService.get('REDIS_DB', 0);
 
