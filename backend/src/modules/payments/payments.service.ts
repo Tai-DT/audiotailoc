@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
 import { PayOSService } from './payos.service';
 import { MailService } from '../notifications/mail.service';
+import { OrdersService } from '../orders/orders.service';
 
 @Injectable()
 export class PaymentsService {
@@ -15,6 +16,7 @@ export class PaymentsService {
     private readonly config: ConfigService,
     private readonly payos: PayOSService,
     private readonly mailService: MailService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   async createIntent(params: {
@@ -68,12 +70,7 @@ export class PaymentsService {
     });
     // For COD, no redirect needed
     if (params.provider === 'COD') {
-      await this.prisma.orders.update({
-        where: { id: order.id },
-        data: {
-          status: 'CONFIRMED',
-        },
-      });
+      await this.ordersService.updateStatus(order.id, 'CONFIRMED');
       // Update payment intent to mark COD
       await this.prisma.payment_intents.update({
         where: { id: intent.id },
@@ -148,11 +145,24 @@ export class PaymentsService {
     if (intent.provider === 'VNPAY') {
       const tmnCode = this.config.get<string>('VNPAY_TMN_CODE') || 'TEST';
       const secret = this.config.get<string>('VNPAY_HASH_SECRET') || 'secret';
+      const vnpAmount = Number(intent.amountCents) * 100; // VNPay needs amount * 100
+
       const params: Record<string, string> = {
-        vnp_Amount: String(intent.amountCents),
+        vnp_Amount: String(vnpAmount),
         vnp_TmnCode: tmnCode,
         vnp_TxnRef: intent.id,
         vnp_ReturnUrl: baseReturn,
+        vnp_Command: 'pay',
+        vnp_CreateDate: new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/[T:\-]/g, ''),
+        vnp_CurrCode: 'VND',
+        vnp_IpAddr: '127.0.0.1',
+        vnp_Locale: 'vn',
+        vnp_OrderInfo: `Thanh toan don hang ${order.orderNo}`,
+        vnp_OrderType: 'other',
+        vnp_Version: '2.1.0',
       };
       const signData = Object.keys(params)
         .sort()
@@ -288,6 +298,19 @@ export class PaymentsService {
     const order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
     if (!order) throw new BadRequestException('Order not found');
 
+    // ✅ IDEMPOTENCY: Check if this intent or transaction has already been processed
+    const existingPayment = await this.prisma.payments.findFirst({
+      where: {
+        OR: [{ intentId: intent.id }, { transactionId: transactionId || txnRef }],
+        status: 'SUCCEEDED',
+      },
+    });
+
+    if (existingPayment) {
+      this.logger.log(`Payment already processed for intent ${intent.id}, skipping...`);
+      return { ok: true, alreadyProcessed: true };
+    }
+
     // SECURITY: Verify that the paid amount matches the intended amount
     if (amountCents !== undefined && amountCents !== null) {
       if (amountCents !== intent.amountCents) {
@@ -299,6 +322,7 @@ export class PaymentsService {
     }
 
     await this.prisma.$transaction(async tx => {
+      // Create payment record
       await tx.payments.create({
         data: {
           id: randomUUID(),
@@ -311,9 +335,18 @@ export class PaymentsService {
           updatedAt: new Date(),
         },
       });
-      // ✅ Change status to CONFIRMED instead of PAID
-      await tx.orders.update({ where: { id: intent.orderId }, data: { status: 'CONFIRMED' } });
-      await tx.payment_intents.update({ where: { id: intent.id }, data: { status: 'SUCCEEDED' } });
+
+      // Update order status via OrdersService (to ensure emails are sent and logic is consistent)
+      await this.ordersService.updateStatus(intent.orderId, 'CONFIRMED', tx);
+
+      // Update intent status
+      await tx.payment_intents.update({
+        where: { id: intent.id },
+        data: {
+          status: 'SUCCEEDED',
+          updatedAt: new Date(),
+        },
+      });
     });
 
     this.logger.log(`Payment marked as paid: ${provider} - ${txnRef}`);
@@ -402,11 +435,11 @@ export class PaymentsService {
             await this.mailService.send(
               order.users.email,
               `Hoàn tiền cho đơn hàng #${order.orderNo}`,
-              `Chúng tôi đã thực hiện hoàn tiền ${amountCents / 100} cho đơn hàng #${order.orderNo}.`,
+              `Chúng tôi đã thực hiện hoàn tiền ${Number(amountCents).toLocaleString('vi-VN')} VND cho đơn hàng #${order.orderNo}.`,
               `<h1>Thông báo hoàn tiền</h1>
                <p>Xin chào ${order.users.name || 'quý khách'},</p>
                <p>Chúng tôi đã thực hiện hoàn tiền cho đơn hàng <strong>#${order.orderNo}</strong>.</p>
-               <p>Số tiền: <strong>${(amountCents / 100).toLocaleString('vi-VN')} VND</strong></p>
+               <p>Số tiền: <strong>${Number(amountCents).toLocaleString('vi-VN')} VND</strong></p>
                <p>Lý do: ${reason || 'Yêu cầu từ khách hàng'}</p>
                <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.</p>`,
             );
@@ -460,7 +493,7 @@ export class PaymentsService {
         vnp_TmnCode: vnpTmnCode,
         vnp_TransactionType: '02', // 02 for full refund, 03 for partial
         vnp_TxnRef: payment.transactionId,
-        vnp_Amount: refund.amountCents, // ✅ Already in cents, don't multiply by 100
+        vnp_Amount: Number(refund.amountCents) * 100, // VNPay requires amount * 100 for VND
         vnp_OrderInfo: `Refund for transaction ${payment.transactionId}`,
         vnp_TransactionNo: payment.transactionId,
         vnp_TransactionDate: payment.createdAt.toISOString().slice(0, 19).replace(/[:-]/g, ''),
@@ -624,7 +657,8 @@ export class PaymentsService {
     }
 
     if (vnp_ResponseCode === '00') {
-      await this.markPaid('VNPAY', vnp_TxnRef, vnp_TransactionNo, Number(vnp_Amount));
+      const realAmount = Number(vnp_Amount) / 100;
+      await this.markPaid('VNPAY', vnp_TxnRef, vnp_TransactionNo, realAmount);
       return { RspCode: '00', Message: 'success' };
     } else {
       // Handle failed payment
@@ -680,8 +714,21 @@ export class PaymentsService {
   }
 
   private async handlePayosWebhook(payload: any) {
-    // Delegate to SDK-based handler which validates signature and resolves intents
-    return await this.payos.handleWebhook(payload);
+    const result = await this.payos.handleWebhook(payload);
+
+    if (result.status === 'PAID') {
+      await this.markPaid('PAYOS', result.intentId, result.transactionId, result.amount);
+      return { error: 0, message: 'Payment successful' };
+    } else if (result.status === 'FAILED') {
+      await this.markFailed('PAYOS', result.intentId);
+      return { error: 0, message: 'Payment failed' };
+    } else if (result.status === 'CANCELLED') {
+      // Logic for cancelled could be added here if needed
+      this.logger.log(`PayOS payment cancelled for intent ${result.intentId}`);
+      return { error: 0, message: 'Payment cancelled' };
+    }
+
+    return result;
   }
 
   private async markFailed(provider: 'VNPAY' | 'MOMO' | 'PAYOS', txnRef: string) {

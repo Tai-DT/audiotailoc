@@ -29,7 +29,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 
 // Complete Product API Module
-import { CompleteProductModule } from './catalog/complete-product.module';
+// import { CompleteProductModule } from './catalog/complete-product.module';
 
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
@@ -111,7 +111,7 @@ const runtimeImports = [
   WishlistModule,
 
   // Complete Product API Module - NEW COMPLETE SYSTEM
-  CompleteProductModule,
+  // CompleteProductModule,
 
   // Services Management
   ServicesModule,

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export interface CreatePromotionDto {
@@ -39,742 +40,388 @@ export interface UpdatePromotionDto {
 export class PromotionsService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Get all promotions with optional filters
-   */
   async findAll(filters?: { isActive?: boolean; type?: string; search?: string }) {
     const where: any = {};
-
-    if (filters?.isActive !== undefined) {
-      where.isActive = filters.isActive;
-    }
-
-    if (filters?.type) {
-      where.type = filters.type;
-    }
-
+    if (filters?.isActive !== undefined) where.isActive = filters.isActive;
+    if (filters?.type) where.type = filters.type;
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
         { code: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
-
     const promotions = await this.prisma.promotions.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     });
+    return promotions.map(p => this.mapPromotion(p));
+  }
 
-    // Calculate usage count from metadata if available
-    const promotionsWithUsage = promotions.map(promo => {
-      const metadata = (promo.metadata as any) || {};
-      return {
-        ...promo,
-        usageCount: metadata.usageCount || 0,
-        usageLimit: metadata.usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promo.startsAt || promo.createdAt,
-        endDate: promo.expiresAt,
-        minOrderAmount: promo.minOrderAmount,
-        maxDiscount: promo.maxDiscount,
-      };
-    });
-
+  private mapPromotion(p: any) {
+    const metadata = (p.metadata as any) || {};
     return {
-      success: true,
-      data: {
-        promotions: promotionsWithUsage,
-        total: promotionsWithUsage.length,
-      },
+      ...p,
+      usageCount: metadata.usageCount || 0,
+      usageLimit: metadata.usageLimit,
+      categories: metadata.categories || [],
+      products: metadata.products || [],
+      customerSegments: metadata.customerSegments || [],
     };
   }
 
-  /**
-   * Get promotion by ID
-   */
   async findOne(id: string) {
-    const promotion = await this.prisma.promotions.findUnique({
-      where: { id },
-    });
-
-    if (!promotion) {
-      throw new NotFoundException(`Promotion with ID ${id} not found`);
-    }
-
-    const metadata = (promotion.metadata as any) || {};
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: metadata.usageCount || 0,
-        usageLimit: metadata.usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-    };
+    const promotion = await this.prisma.promotions.findUnique({ where: { id } });
+    if (!promotion) throw new NotFoundException('Promotion not found');
+    return this.mapPromotion(promotion);
   }
 
-  /**
-   * Get promotion by code
-   */
-  async findByCode(code: string) {
-    const promotion = await this.prisma.promotions.findUnique({
+  async findByCode(code: string, tx?: any) {
+    const client = tx || this.prisma;
+    const promotion = await client.promotions.findUnique({
       where: { code: code.toUpperCase() },
     });
-
-    if (!promotion) {
-      throw new NotFoundException(`Promotion with code ${code} not found`);
-    }
-
-    const metadata = (promotion.metadata as any) || {};
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: metadata.usageCount || 0,
-        usageLimit: metadata.usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-    };
+    if (!promotion) throw new NotFoundException('Promotion not found');
+    return this.mapPromotion(promotion);
   }
 
-  /**
-   * Create new promotion
-   */
-  async create(createDto: CreatePromotionDto, createdBy?: string) {
-    // Check if code already exists
-    const existingPromotion = await this.prisma.promotions.findUnique({
-      where: { code: createDto.code.toUpperCase() },
+  async create(dto: CreatePromotionDto, createdBy?: string) {
+    const existing = await this.prisma.promotions.findUnique({
+      where: { code: dto.code.toUpperCase() },
     });
-
-    if (existingPromotion) {
-      throw new BadRequestException(`Promotion with code ${createDto.code} already exists`);
-    }
-
-    // Validate dates
-    if (createDto.startsAt && createDto.expiresAt && createDto.startsAt >= createDto.expiresAt) {
-      throw new BadRequestException('Start date must be before expiration date');
-    }
-
-    const metadata = {
-      usageCount: 0,
-      usageLimit: createDto.usageLimit,
-      categories: createDto.categories || [],
-      products: createDto.products || [],
-      customerSegments: createDto.customerSegments || [],
-    };
+    if (existing) throw new BadRequestException('Code already exists');
 
     const promotion = await this.prisma.promotions.create({
       data: {
-        id: `promo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        code: createDto.code.toUpperCase(),
-        name: createDto.name,
-        description: createDto.description,
-        type: createDto.type || 'PERCENTAGE',
-        value: createDto.value,
-        minOrderAmount: createDto.minOrderAmount,
-        maxDiscount: createDto.maxDiscount,
-        isActive: createDto.isActive ?? true,
-        startsAt: createDto.startsAt,
-        expiresAt: createDto.expiresAt,
-        metadata,
-        createdBy: createdBy,
-        updatedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: 0,
-        usageLimit: createDto.usageLimit,
-        categories: createDto.categories || [],
-        products: createDto.products || [],
-        customerSegments: createDto.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-      message: 'Promotion created successfully',
-    };
-  }
-
-  /**
-   * Update promotion
-   */
-  async update(id: string, updateDto: UpdatePromotionDto) {
-    const existing = await this.prisma.promotions.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundException(`Promotion with ID ${id} not found`);
-    }
-
-    // Check code uniqueness if code is being updated
-    if (updateDto.code && updateDto.code !== existing.code) {
-      const existingCode = await this.prisma.promotions.findUnique({
-        where: { code: updateDto.code.toUpperCase() },
-      });
-
-      if (existingCode) {
-        throw new BadRequestException(`Promotion with code ${updateDto.code} already exists`);
-      }
-    }
-
-    // Validate dates
-    const startsAt = updateDto.startsAt || existing.startsAt;
-    const expiresAt = updateDto.expiresAt || existing.expiresAt;
-    if (startsAt && expiresAt && startsAt >= expiresAt) {
-      throw new BadRequestException('Start date must be before expiration date');
-    }
-
-    const existingMetadata = (existing.metadata as any) || {};
-    const metadata = {
-      ...existingMetadata,
-      usageLimit: updateDto.usageLimit ?? existingMetadata.usageLimit,
-      categories: updateDto.categories ?? existingMetadata.categories,
-      products: updateDto.products ?? existingMetadata.products,
-      customerSegments: updateDto.customerSegments ?? existingMetadata.customerSegments,
-    };
-
-    const promotion = await this.prisma.promotions.update({
-      where: { id },
-      data: {
-        code: updateDto.code?.toUpperCase(),
-        name: updateDto.name,
-        description: updateDto.description,
-        type: updateDto.type,
-        value: updateDto.value,
-        minOrderAmount: updateDto.minOrderAmount,
-        maxDiscount: updateDto.maxDiscount,
-        isActive: updateDto.isActive,
-        startsAt: updateDto.startsAt,
-        expiresAt: updateDto.expiresAt,
-        metadata,
-        updatedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: metadata.usageCount || 0,
-        usageLimit: metadata.usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-      message: 'Promotion updated successfully',
-    };
-  }
-
-  /**
-   * Delete promotion
-   */
-  async delete(id: string) {
-    const existing = await this.prisma.promotions.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundException(`Promotion with ID ${id} not found`);
-    }
-
-    await this.prisma.promotions.delete({
-      where: { id },
-    });
-
-    return {
-      success: true,
-      message: 'Promotion deleted successfully',
-    };
-  }
-
-  /**
-   * Duplicate promotion
-   */
-  async duplicate(id: string) {
-    const existing = await this.prisma.promotions.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundException(`Promotion with ID ${id} not found`);
-    }
-
-    const existingMetadata = (existing.metadata as any) || {};
-
-    // Generate new code
-    const newCode = `${existing.code}_COPY_${Date.now()}`;
-
-    const promotion = await this.prisma.promotions.create({
-      data: {
-        id: `promo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        code: newCode,
-        name: `${existing.name} (Copy)`,
-        description: existing.description,
-        type: existing.type,
-        value: existing.value,
-        minOrderAmount: existing.minOrderAmount,
-        maxDiscount: existing.maxDiscount,
-        isActive: existing.isActive,
-        startsAt: new Date(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        id: `promo_${Date.now()}`,
+        code: dto.code.toUpperCase(),
+        name: dto.name,
+        description: dto.description,
+        type: dto.type,
+        value: dto.value,
+        minOrderAmount: dto.minOrderAmount,
+        maxDiscount: dto.maxDiscount,
+        isActive: dto.isActive ?? true,
+        startsAt: dto.startsAt,
+        expiresAt: dto.expiresAt,
         metadata: {
-          ...existingMetadata,
-          usageCount: 0, // Reset usage count
+          usageCount: 0,
+          usageLimit: dto.usageLimit,
+          categories: dto.categories || [],
+          products: dto.products || [],
+          customerSegments: dto.customerSegments || [],
         },
-        createdBy: existing.createdBy,
-        updatedAt: new Date(),
-      },
+        createdBy,
+      } as any,
     });
-
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: 0,
-        usageLimit: existingMetadata.usageLimit,
-        categories: existingMetadata.categories || [],
-        products: existingMetadata.products || [],
-        customerSegments: existingMetadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-      message: 'Promotion duplicated successfully',
-    };
+    return this.mapPromotion(promotion);
   }
 
-  /**
-   * Toggle promotion active status
-   */
-  async toggleActive(id: string) {
-    const existing = await this.prisma.promotions.findUnique({
-      where: { id },
-    });
+  async update(id: string, dto: UpdatePromotionDto) {
+    const existing = await this.prisma.promotions.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Promotion not found');
 
-    if (!existing) {
-      throw new NotFoundException(`Promotion with ID ${id} not found`);
-    }
-
-    const promotion = await this.prisma.promotions.update({
-      where: { id },
-      data: {
-        isActive: !existing.isActive,
-        updatedAt: new Date(),
-      },
-    });
-
-    const metadata = (promotion.metadata as any) || {};
-    return {
-      success: true,
-      data: {
-        ...promotion,
-        usageCount: metadata.usageCount || 0,
-        usageLimit: metadata.usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-      message: `Promotion ${promotion.isActive ? 'activated' : 'deactivated'} successfully`,
+    const metadata = {
+      ...(existing.metadata as any),
+      usageLimit: dto.usageLimit ?? (existing.metadata as any).usageLimit,
+      categories: dto.categories ?? (existing.metadata as any).categories,
+      products: dto.products ?? (existing.metadata as any).products,
     };
+
+    const updated = await this.prisma.promotions.update({
+      where: { id },
+      data: {
+        ...dto,
+        code: dto.code?.toUpperCase(),
+        metadata,
+      } as any,
+    });
+    return this.mapPromotion(updated);
   }
 
-  /**
-   * Validate promotion code
-   */
-  async validateCode(code: string, orderAmount: number = 0) {
-    const promotion = await this.prisma.promotions.findUnique({
+  async delete(id: string) {
+    await this.prisma.promotions.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async validateCode(
+    code: string,
+    orderAmount: number = 0,
+    userId?: string,
+    items: any[] = [],
+    tx?: any,
+  ) {
+    const client = tx || this.prisma;
+    const promotion = await client.promotions.findUnique({
       where: { code: code.toUpperCase() },
+      include: {
+        promotions_categories: { select: { categoryId: true } },
+        promotions_products: { select: { productId: true } },
+      },
     });
 
-    if (!promotion) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi không tồn tại',
-      };
-    }
-
-    if (!promotion.isActive) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi đã bị vô hiệu hóa',
-      };
-    }
+    if (!promotion || !promotion.isActive) return { valid: false, error: 'Mã không hợp lệ' };
 
     const now = new Date();
-    if (promotion.startsAt && promotion.startsAt > now) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi chưa có hiệu lực',
-      };
-    }
-
-    if (promotion.expiresAt && promotion.expiresAt < now) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi đã hết hạn',
-      };
-    }
+    if (promotion.startsAt && promotion.startsAt > now)
+      return { valid: false, error: 'Mã chưa có hiệu lực' };
+    if (promotion.expiresAt && promotion.expiresAt < now)
+      return { valid: false, error: 'Mã đã hết hạn' };
 
     const metadata = (promotion.metadata as any) || {};
-    const usageCount = metadata.usageCount || 0;
-    const usageLimit = metadata.usageLimit;
+    const totalUsageLimit = metadata.usageLimit || promotion.usageLimit;
+    const usageCount = promotion.usageCount || metadata.usageCount || 0;
 
-    if (usageLimit && usageCount >= usageLimit) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi đã được sử dụng hết',
-      };
+    // 1. Total usage limit
+    if (totalUsageLimit && usageCount >= totalUsageLimit) {
+      return { valid: false, error: 'Mã đã dùng hết lượt' };
     }
 
+    // 2. Per-user usage limit
+    if (userId) {
+      const userUsageLimit = metadata.userLimit || 1; // Default 1 if not specified but user tracking is active
+      const userUsageCount = await client.customer_promotions.count({
+        where: { promotionId: promotion.id, userId, status: 'SUCCEEDED' },
+      });
+      if (userUsageCount >= userUsageLimit) {
+        return { valid: false, error: 'Bạn đã dùng mã này quá số lần cho phép' };
+      }
+    }
+
+    // 3. First Purchase Only Check
+    if (promotion.isFirstPurchaseOnly && userId) {
+      const orderCount = await client.orders.count({
+        where: {
+          userId,
+          status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+        },
+      });
+      if (orderCount > 0) {
+        return { valid: false, error: 'Mã giảm giá này chỉ dành cho đơn hàng đầu tiên' };
+      }
+    }
+
+    // 4. Customer Segment Check
+    if (promotion.customerSegment && userId) {
+      const user = await client.users.findUnique({ where: { id: userId } });
+      if (user && user.role !== promotion.customerSegment) {
+        // Simple role-based segment for now, can be expanded to active/loyalty segments later
+        return { valid: false, error: 'Bạn không thuộc nhóm khách hàng được áp dụng mã này' };
+      }
+    }
+
+    // 5. Minimum order amount
     if (promotion.minOrderAmount && orderAmount < promotion.minOrderAmount) {
-      return {
-        valid: false,
-        error: `Đơn hàng tối thiểu ${promotion.minOrderAmount?.toLocaleString('vi-VN')}đ để sử dụng mã này`,
-      };
+      return { valid: false, error: `Đơn tối thiểu ${promotion.minOrderAmount.toLocaleString()}đ` };
     }
 
-    // Calculate discount
+    // 6. Product/Category Restrictions
+    const allowedProducts = promotion.promotions_products.map(p => p.productId);
+    const allowedCategories = promotion.promotions_categories.map(c => c.categoryId);
+
+    let applicableAmount = orderAmount;
+    if (allowedProducts.length > 0 || allowedCategories.length > 0) {
+      const applicableItems = items.filter(item => {
+        const isAllowedProduct =
+          allowedProducts.length === 0 || allowedProducts.includes(item.productId);
+        const isAllowedCategory =
+          allowedCategories.length === 0 ||
+          (item.categoryId && allowedCategories.includes(item.categoryId));
+        return isAllowedProduct && isAllowedCategory;
+      });
+
+      if (applicableItems.length === 0) {
+        return { valid: false, error: 'Mã giảm giá không áp dụng cho các sản phẩm này' };
+      }
+
+      applicableAmount = applicableItems.reduce(
+        (sum, item) => sum + Number(item.price || item.priceCents) * item.quantity,
+        0,
+      );
+    }
+
     let discount = 0;
-    switch (promotion.type) {
-      case 'PERCENTAGE':
-        discount = orderAmount * (promotion.value / 100);
-        if (promotion.maxDiscount) {
-          discount = Math.min(discount, promotion.maxDiscount);
-        }
-        break;
-      case 'FIXED_AMOUNT':
-        discount = promotion.value;
-        break;
-      case 'FREE_SHIPPING':
-        discount = 0; // Handled separately
-        break;
-      case 'BUY_X_GET_Y':
-        discount = 0; // Handled in cart logic
-        break;
+    const isFreeShipping = promotion.type === 'FREE_SHIPPING';
+
+    if (promotion.type === 'PERCENTAGE') {
+      discount = Math.round(applicableAmount * (promotion.value / 100));
+      if (promotion.maxDiscount) discount = Math.min(discount, promotion.maxDiscount);
+    } else if (promotion.type === 'FIXED_AMOUNT') {
+      discount = promotion.value;
     }
 
     return {
       valid: true,
-      promotion: {
-        ...promotion,
-        usageCount,
-        usageLimit,
-        categories: metadata.categories || [],
-        products: metadata.products || [],
-        customerSegments: metadata.customerSegments || [],
-        startDate: promotion.startsAt || promotion.createdAt,
-        endDate: promotion.expiresAt,
-        minOrderAmount: promotion.minOrderAmount,
-        maxDiscount: promotion.maxDiscount,
-      },
-      discount: Math.min(discount, orderAmount),
+      discount: Math.round(Math.min(discount, orderAmount)),
+      isFreeShipping,
+      promotion: this.mapPromotion(promotion),
     };
   }
 
-  /**
-   * Get promotion statistics
-   */
-  async getStats() {
-    const allPromotions = await this.prisma.promotions.findMany();
-
-    const now = new Date();
-    const activePromotions = allPromotions.filter(p => {
-      const isActive = p.isActive;
-      const notExpired = !p.expiresAt || p.expiresAt >= now;
-      const hasStarted = !p.startsAt || p.startsAt <= now;
-      return isActive && notExpired && hasStarted;
-    });
-
-    const expiredPromotions = allPromotions.filter(p => {
-      return p.expiresAt && p.expiresAt < now;
-    });
-
-    let totalUsage = 0;
-    let totalSavings = 0;
-
-    allPromotions.forEach(promo => {
-      const metadata = (promo.metadata as any) || {};
-      const usageCount = metadata.usageCount || 0;
-      totalUsage += usageCount;
-
-      // Estimate savings
-      if (promo.type === 'PERCENTAGE') {
-        totalSavings += usageCount * 1500000 * (promo.value / 100);
-      } else if (promo.type === 'FIXED_AMOUNT') {
-        totalSavings += usageCount * promo.value;
-      }
-    });
-
-    return {
-      success: true,
-      data: {
-        totalPromotions: allPromotions.length,
-        activePromotions: activePromotions.length,
-        expiredPromotions: expiredPromotions.length,
-        totalUsage,
-        totalSavings: Math.round(totalSavings),
-        conversionRate:
-          allPromotions.length > 0
-            ? Math.round((totalUsage / (allPromotions.length * 100)) * 100)
-            : 0,
-      },
-    };
-  }
-
-  /**
-   * Apply promotion to cart items
-   * Returns discount breakdown for each applicable item
-   */
-  async applyToCart(
+  async incrementUsage(
     code: string,
-    cartItems: Array<{
-      productId: string;
-      categoryId?: string;
-      quantity: number;
-      priceCents: number;
-    }>,
+    userId?: string,
+    orderId?: string,
+    discountApplied?: number,
+    tx?: any,
   ) {
-    const promotion = await this.prisma.promotions.findUnique({
-      where: { code: code.toUpperCase() },
+    const client = tx || this.prisma;
+    const promo = await this.findByCode(code, client);
+    const metadata = (promo.metadata as any) || {};
+
+    // 1. Update total usage count
+    await client.promotions.update({
+      where: { id: promo.id },
+      data: {
+        usageCount: { increment: 1 },
+        metadata: {
+          ...metadata,
+          usageCount: (metadata.usageCount || 0) + 1,
+        },
+      },
     });
 
-    if (!promotion || !promotion.isActive) {
-      return {
-        valid: false,
-        error: 'Mã khuyến mãi không hợp lệ',
-      };
-    }
-
-    // Validate time range
-    const now = new Date();
-    if (promotion.startsAt && promotion.startsAt > now) {
-      return { valid: false, error: 'Mã khuyến mãi chưa có hiệu lực' };
-    }
-    if (promotion.expiresAt && promotion.expiresAt < now) {
-      return { valid: false, error: 'Mã khuyến mãi đã hết hạn' };
-    }
-
-    const metadata = (promotion.metadata as any) || {};
-    const promotionProducts = metadata.products || [];
-    const promotionCategories = metadata.categories || [];
-
-    // Calculate total order amount
-    const totalAmount = cartItems.reduce((sum, item) => sum + item.priceCents * item.quantity, 0);
-
-    // Check minimum order amount
-    if (promotion.minOrderAmount && totalAmount < promotion.minOrderAmount) {
-      return {
-        valid: false,
-        error: `Đơn hàng tối thiểu ${promotion.minOrderAmount?.toLocaleString('vi-VN')}đ`,
-      };
-    }
-
-    // Filter applicable items based on product/category restrictions
-    let applicableItems = cartItems;
-    if (promotionProducts.length > 0 || promotionCategories.length > 0) {
-      applicableItems = cartItems.filter(item => {
-        const matchesProduct =
-          promotionProducts.length === 0 || promotionProducts.includes(item.productId);
-        const matchesCategory =
-          promotionCategories.length === 0 ||
-          (item.categoryId && promotionCategories.includes(item.categoryId));
-        return matchesProduct || matchesCategory;
+    // 2. Record customer usage
+    if (userId) {
+      await client.customer_promotions.create({
+        data: {
+          id: randomUUID(),
+          promotionId: promo.id,
+          userId,
+          orderId,
+          discountApplied,
+          status: 'SUCCEEDED',
+        },
       });
     }
+  }
 
-    if (applicableItems.length === 0) {
-      return {
-        valid: false,
-        error: 'Không có sản phẩm nào áp dụng được khuyến mãi này',
-      };
-    }
+  async applyToCart(code: string, items: any[]) {
+    const validation = await this.validateCode(
+      code,
+      items.reduce((s, i) => s + i.priceCents * i.quantity, 0),
+    );
+    if (!validation.valid) return validation;
 
-    // Calculate discount based on promotion type
-    let totalDiscount = 0;
+    const promotion = validation.promotion as any;
+    const totalDiscount = validation.discount;
+    // 6. Redistribute discount only to applicable items
+    const allowedProducts = promotion.promotions_products?.map((p: any) => p.productId) || [];
+    const allowedCategories = promotion.promotions_categories?.map((c: any) => c.categoryId) || [];
+
+    const applicableItems = items.filter(item => {
+      const isAllowedProduct =
+        allowedProducts.length === 0 || allowedProducts.includes(item.productId);
+      const isAllowedCategory =
+        allowedCategories.length === 0 ||
+        (item.categoryId && allowedCategories.includes(item.categoryId));
+      return isAllowedProduct && isAllowedCategory;
+    });
+
+    const applicableSubtotal = applicableItems.reduce(
+      (s, i) => s + Number(i.price || i.priceCents) * i.quantity,
+      0,
+    );
     const itemDiscounts = [];
+    let remaining = validation.discount;
 
-    switch (promotion.type) {
-      case 'PERCENTAGE':
-        applicableItems.forEach(item => {
-          const itemTotal = item.priceCents * item.quantity;
-          const itemDiscount = Math.round(itemTotal * (promotion.value / 100));
-          itemDiscounts.push({
-            productId: item.productId,
-            quantity: item.quantity,
-            originalPrice: item.priceCents,
-            discount: itemDiscount,
-            finalPrice: item.priceCents - Math.round(itemDiscount / item.quantity),
-          });
-          totalDiscount += itemDiscount;
-        });
+    items.forEach(item => {
+      let itemDiscount = 0;
+      const isApplicable = applicableItems.some(ai => ai.productId === item.productId);
 
-        // Apply max discount cap
-        if (promotion.maxDiscount && totalDiscount > promotion.maxDiscount) {
-          const ratio = promotion.maxDiscount / totalDiscount;
-          itemDiscounts.forEach(item => {
-            item.discount = Math.round(item.discount * ratio);
-            item.finalPrice = item.originalPrice - Math.round(item.discount / item.quantity);
-          });
-          totalDiscount = promotion.maxDiscount;
-        }
-        break;
-
-      case 'FIXED_AMOUNT':
-        // Distribute fixed discount proportionally across applicable items
-        const applicableTotal = applicableItems.reduce(
-          (sum, item) => sum + item.priceCents * item.quantity,
-          0,
+      if (isApplicable && applicableSubtotal > 0) {
+        // Simple proportional distribution
+        itemDiscount = Math.round(
+          ((Number(item.price || item.priceCents) * item.quantity) / applicableSubtotal) *
+            validation.discount,
         );
+        // Ensure we don't exceed remaining
+        itemDiscount = Math.min(itemDiscount, remaining);
+        remaining -= itemDiscount;
+      }
 
-        applicableItems.forEach(item => {
-          const itemTotal = item.priceCents * item.quantity;
-          const proportion = itemTotal / applicableTotal;
-          const itemDiscount = Math.round(promotion.value * proportion);
-          itemDiscounts.push({
-            productId: item.productId,
-            quantity: item.quantity,
-            originalPrice: item.priceCents,
-            discount: itemDiscount,
-            finalPrice: item.priceCents - Math.round(itemDiscount / item.quantity),
-          });
-          totalDiscount += itemDiscount;
-        });
-        break;
+      itemDiscounts.push({
+        productId: item.productId,
+        discount: itemDiscount,
+        finalPrice:
+          Number(item.price || item.priceCents) - Math.round(itemDiscount / item.quantity),
+      });
+    });
 
-      case 'FREE_SHIPPING':
-        // Free shipping doesn't affect item prices
-        itemDiscounts.push({
-          type: 'FREE_SHIPPING',
-          description: 'Miễn phí vận chuyển',
-        });
-        break;
-
-      case 'BUY_X_GET_Y':
-        {
-          const buyQuantity = Math.max(1, Number(metadata.buyQuantity || 1));
-          const getQuantity = Math.max(1, Number(metadata.getQuantity || 1));
-          const buyProducts = metadata.buyProducts || metadata.products || [];
-          const buyCategories = metadata.buyCategories || metadata.categories || [];
-          const getProducts = metadata.getProducts || [];
-          const getCategories = metadata.getCategories || [];
-          const discountType = metadata.discountType || 'FREE'; // FREE or PERCENTAGE
-          const discountValue = Number(metadata.discountValue || 100); // percentage if PERCENTAGE
-
-          const isBuyMatch = (item: any) => {
-            const matchesProduct = buyProducts.length === 0 || buyProducts.includes(item.productId);
-            const matchesCategory =
-              buyCategories.length === 0 ||
-              (item.categoryId && buyCategories.includes(item.categoryId));
-            return matchesProduct || matchesCategory;
-          };
-
-          const isGetMatch = (item: any) => {
-            const matchesProduct = getProducts.length === 0 || getProducts.includes(item.productId);
-            const matchesCategory =
-              getCategories.length === 0 ||
-              (item.categoryId && getCategories.includes(item.categoryId));
-            // If no explicit getProducts/getCategories configured, fallback to buy criteria
-            return getProducts.length === 0 && getCategories.length === 0
-              ? isBuyMatch(item)
-              : matchesProduct || matchesCategory;
-          };
-
-          const buyPool = applicableItems.filter(isBuyMatch);
-          const getPool = applicableItems.filter(isGetMatch);
-
-          const totalBuyQty = buyPool.reduce((sum, i) => sum + i.quantity, 0);
-          if (totalBuyQty < buyQuantity) {
-            return {
-              valid: false,
-              error: `Cần mua tối thiểu ${buyQuantity} sản phẩm áp dụng để nhận ưu đãi`,
-            };
-          }
-
-          const eligibleFreeQty = Math.floor(totalBuyQty / buyQuantity) * getQuantity;
-          if (eligibleFreeQty <= 0 || getPool.length === 0) {
-            return {
-              valid: false,
-              error: 'Không có sản phẩm nào đủ điều kiện nhận khuyến mãi tặng kèm',
-            };
-          }
-
-          // Sort get-pool by price ASC to discount cheapest items first
-          const sortedGetPool = [...getPool].sort((a, b) => a.priceCents - b.priceCents);
-          let remainingFreeQty = eligibleFreeQty;
-
-          for (const item of sortedGetPool) {
-            if (remainingFreeQty <= 0) break;
-            const applyQty = Math.min(item.quantity, remainingFreeQty);
-            const baseDiscount = item.priceCents * applyQty;
-            const itemDiscount =
-              discountType === 'PERCENTAGE'
-                ? Math.round(baseDiscount * (discountValue / 100))
-                : baseDiscount;
-
-            itemDiscounts.push({
-              productId: item.productId,
-              quantity: applyQty,
-              originalPrice: item.priceCents,
-              discount: itemDiscount,
-              finalPrice: item.priceCents - Math.round(itemDiscount / applyQty),
-              note: `Buy ${buyQuantity} get ${getQuantity}`,
-            });
-
-            totalDiscount += itemDiscount;
-            remainingFreeQty -= applyQty;
-          }
-        }
-        break;
+    // Cleanup: if there's a tiny rounding error (remaining != 0), add it to the first applicable item
+    if (remaining !== 0 && itemDiscounts.length > 0) {
+      const firstApplicable = itemDiscounts.find(id =>
+        applicableItems.some(ai => ai.productId === id.productId),
+      );
+      if (firstApplicable) firstApplicable.discount += remaining;
     }
 
     return {
       valid: true,
-      promotion: {
-        id: promotion.id,
-        code: promotion.code,
-        name: promotion.name,
-        type: promotion.type,
-        value: promotion.value,
-      },
-      totalDiscount: Math.min(totalDiscount, totalAmount),
+      totalDiscount,
       itemDiscounts,
-      applicableItems: applicableItems.map(i => i.productId),
-      applicableItemsCount: applicableItems.length,
-      totalItemsCount: cartItems.length,
+      isFreeShipping: promotion.type === 'FREE_SHIPPING',
+    };
+  }
+
+  async getStats() {
+    const all = await this.prisma.promotions.findMany();
+    return {
+      total: all.length,
+      active: all.filter(p => p.isActive).length,
     };
   }
 
   /**
-   * Check if product is eligible for a promotion
+   * Get promotions applicable for a specific product
+   */
+  async getPromotionsForProduct(productId: string, categoryId?: string) {
+    const now = new Date();
+
+    // Get all active promotions
+    const promotions = await this.prisma.promotions.findMany({
+      where: {
+        isActive: true,
+        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+        AND: [
+          {
+            OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+          },
+        ],
+      },
+      include: {
+        promotions_products: { select: { productId: true } },
+        promotions_categories: { select: { categoryId: true } },
+      },
+    });
+
+    // Filter promotions that apply to this product
+    const applicable = promotions.filter(promo => {
+      const allowedProducts = promo.promotions_products.map(p => p.productId);
+      const allowedCategories = promo.promotions_categories.map(c => c.categoryId);
+
+      // If no product/category restrictions, it applies to all
+      if (allowedProducts.length === 0 && allowedCategories.length === 0) {
+        return true;
+      }
+
+      // Check if product is in allowed list
+      if (allowedProducts.length > 0 && allowedProducts.includes(productId)) {
+        return true;
+      }
+
+      // Check if category is in allowed list
+      if (categoryId && allowedCategories.length > 0 && allowedCategories.includes(categoryId)) {
+        return true;
+      }
+
+      return false;
+    });
+
+    return applicable.map(p => this.mapPromotion(p));
+  }
+
+  /**
+   * Check if a product is eligible for a specific promotion
    */
   async isProductEligible(
     promotionId: string,
@@ -783,28 +430,35 @@ export class PromotionsService {
   ): Promise<boolean> {
     const promotion = await this.prisma.promotions.findUnique({
       where: { id: promotionId },
+      include: {
+        promotions_products: { select: { productId: true } },
+        promotions_categories: { select: { categoryId: true } },
+      },
     });
 
     if (!promotion || !promotion.isActive) {
       return false;
     }
 
-    const metadata = (promotion.metadata as any) || {};
-    const products = metadata.products || [];
-    const categories = metadata.categories || [];
+    const now = new Date();
+    if (promotion.startsAt && promotion.startsAt > now) return false;
+    if (promotion.expiresAt && promotion.expiresAt < now) return false;
+
+    const allowedProducts = promotion.promotions_products.map(p => p.productId);
+    const allowedCategories = promotion.promotions_categories.map(c => c.categoryId);
 
     // If no restrictions, all products are eligible
-    if (products.length === 0 && categories.length === 0) {
+    if (allowedProducts.length === 0 && allowedCategories.length === 0) {
       return true;
     }
 
-    // Check product ID match
-    if (products.includes(productId)) {
+    // Check product restriction
+    if (allowedProducts.length > 0 && allowedProducts.includes(productId)) {
       return true;
     }
 
-    // Check category ID match
-    if (categoryId && categories.includes(categoryId)) {
+    // Check category restriction
+    if (categoryId && allowedCategories.length > 0 && allowedCategories.includes(categoryId)) {
       return true;
     }
 
@@ -812,110 +466,80 @@ export class PromotionsService {
   }
 
   /**
-   * Increment promotion usage count
+   * Duplicate an existing promotion with a new code
    */
-  async incrementUsage(code: string) {
-    const promotion = await this.prisma.promotions.findUnique({
-      where: { code: code.toUpperCase() },
+  async duplicate(id: string) {
+    const original = await this.prisma.promotions.findUnique({
+      where: { id },
+      include: {
+        promotions_products: true,
+        promotions_categories: true,
+      },
     });
 
-    if (promotion) {
-      const metadata = (promotion.metadata as any) || {};
-      const currentUsage = metadata.usageCount || 0;
-
-      await this.prisma.promotions.update({
-        where: { id: promotion.id },
-        data: {
-          metadata: {
-            ...metadata,
-            usageCount: currentUsage + 1,
-          },
-        },
-      });
-    }
-  }
-
-  /**
-   * Get active promotions for a product
-   */
-  async getPromotionsForProduct(productId: string, categoryId?: string) {
-    const allPromotions = await this.prisma.promotions.findMany({
-      where: { isActive: true },
-    });
-
-    const now = new Date();
-    const applicablePromotions = [];
-
-    for (const promotion of allPromotions) {
-      // Check time validity
-      if (promotion.startsAt && promotion.startsAt > now) continue;
-      if (promotion.expiresAt && promotion.expiresAt < now) continue;
-
-      const metadata = (promotion.metadata as any) || {};
-      const products = metadata.products || [];
-      const categories = metadata.categories || [];
-
-      // Check if product is eligible
-      const isEligible =
-        (products.length === 0 && categories.length === 0) ||
-        products.includes(productId) ||
-        (categoryId && categories.includes(categoryId));
-
-      if (isEligible) {
-        applicablePromotions.push({
-          ...promotion,
-          usageCount: metadata.usageCount || 0,
-          usageLimit: metadata.usageLimit,
-          categories: metadata.categories || [],
-          products: metadata.products || [],
-          startDate: promotion.startsAt || promotion.createdAt,
-          endDate: promotion.expiresAt,
-          minOrderAmount: promotion.minOrderAmount,
-          maxDiscount: promotion.maxDiscount,
-        });
-      }
-    }
-
-    return {
-      success: true,
-      data: applicablePromotions,
-      count: applicablePromotions.length,
-    };
-  }
-
-  /**
-   * Mark promotion as used (increment usage count)
-   */
-  async markAsUsed(code: string) {
-    const result = await this.prisma.$queryRaw<any[]>`
-      UPDATE "promotions" 
-      SET "metadata" = jsonb_set(
-        COALESCE("metadata", '{}'), 
-        '{usageCount}', 
-        (COALESCE("metadata"->>'usageCount', '0')::int + 1)::text::jsonb
-      ) 
-      WHERE "code" = ${code.toUpperCase()}
-      RETURNING "metadata"
-    `;
-
-    if (result.length === 0) {
+    if (!original) {
       throw new NotFoundException('Promotion not found');
     }
 
-    const metadata = result[0].metadata || {};
-    const usageCount = metadata.usageCount || 0;
+    const newCode = `${original.code}_COPY_${Date.now().toString(36).toUpperCase()}`;
 
-    return {
-      success: true,
-      data: { usageCount },
-    };
+    const duplicated = await this.prisma.promotions.create({
+      data: {
+        id: `promo_${Date.now()}`,
+        code: newCode,
+        name: `${original.name} (Copy)`,
+        description: original.description,
+        type: original.type,
+        value: original.value,
+        minOrderAmount: original.minOrderAmount,
+        maxDiscount: original.maxDiscount,
+        isActive: false, // Start as inactive
+        startsAt: null,
+        expiresAt: null,
+        usageCount: 0,
+        metadata: original.metadata,
+      } as any,
+    });
+
+    // Copy product associations
+    if (original.promotions_products.length > 0) {
+      await this.prisma.promotions_products.createMany({
+        data: original.promotions_products.map(pp => ({
+          id: `pp_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          promotionId: duplicated.id,
+          productId: pp.productId,
+        })),
+      });
+    }
+
+    // Copy category associations
+    if (original.promotions_categories.length > 0) {
+      await this.prisma.promotions_categories.createMany({
+        data: original.promotions_categories.map(pc => ({
+          id: `pc_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          promotionId: duplicated.id,
+          categoryId: pc.categoryId,
+        })),
+      });
+    }
+
+    return { success: true, data: this.mapPromotion(duplicated) };
   }
 
-  async getStatus() {
-    return {
-      module: 'promotions',
-      status: 'operational',
-      uptime: process.uptime(),
-    };
+  /**
+   * Toggle promotion active status
+   */
+  async toggleActive(id: string) {
+    const promotion = await this.prisma.promotions.findUnique({ where: { id } });
+    if (!promotion) {
+      throw new NotFoundException('Promotion not found');
+    }
+
+    const updated = await this.prisma.promotions.update({
+      where: { id },
+      data: { isActive: !promotion.isActive },
+    });
+
+    return { success: true, data: this.mapPromotion(updated) };
   }
 }

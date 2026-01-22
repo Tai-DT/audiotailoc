@@ -11,12 +11,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private lastConnectionErrorLogAt = 0;
 
   constructor() {
+    // Prisma 7: Database URL is configured in prisma.config.ts
     super({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
       log: [
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },
@@ -73,7 +69,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const attemptNo = this.reconnectAttempt + 1;
     this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 20);
 
-    this.logger.warn(`Database connection lost, reconnecting in ${delayMs}ms (attempt ${attemptNo})...`);
+    this.logger.warn(
+      `Database connection lost, reconnecting in ${delayMs}ms (attempt ${attemptNo})...`,
+    );
 
     this.reconnectTimer = setTimeout(async () => {
       let shouldRetry = false;
@@ -105,13 +103,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     return (
       message.includes('error in postgresql connection') ||
-      message.includes('connection') &&
+      (message.includes('connection') &&
         (message.includes('closed') ||
           message.includes('terminated') ||
           message.includes('reset') ||
           message.includes('econnreset') ||
           message.includes('econnrefused') ||
-          message.includes('timeout'))
+          message.includes('timeout')))
     );
   }
 

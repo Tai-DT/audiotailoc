@@ -23,12 +23,14 @@ module.exports = {
     // Temporarily disable no-explicit-any - requires major refactor
     '@typescript-eslint/no-explicit-any': 'off',
     // Allow unused vars if prefixed with underscore
-    '@typescript-eslint/no-unused-vars': ['warn', { 
+    '@typescript-eslint/no-unused-vars': ['warn', {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_',
-      caughtErrorsIgnorePattern: '^_'
+      caughtErrorsIgnorePattern: '^_|^error$|^e$|^err$'
     }],
     '@typescript-eslint/no-empty-function': 'off',
+    // Allow require() for dynamic/optional imports (e.g., @sentry/node, cron, etc.)
+    '@typescript-eslint/no-require-imports': 'off',
     'prettier/prettier': ['error', {
       endOfLine: 'auto',
     }],

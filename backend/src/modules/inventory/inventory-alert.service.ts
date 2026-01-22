@@ -6,14 +6,18 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class InventoryAlertService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: {
-    productId: string;
-    type: string;
-    message: string;
-    threshold?: number;
-    currentStock?: number;
-  }) {
-    return this.prisma.inventory_alerts.create({
+  async create(
+    data: {
+      productId: string;
+      type: string;
+      message: string;
+      threshold?: number;
+      currentStock?: number;
+    },
+    tx?: any,
+  ) {
+    const client = tx || this.prisma;
+    return client.inventory_alerts.create({
       data: {
         id: randomUUID(),
         productId: data.productId,
@@ -240,9 +244,28 @@ export class InventoryAlertService {
     };
   }
 
-  async checkAndCreateAlerts() {
-    // Get all products with their current stock and inventory settings
-    const products = await this.prisma.products.findMany({
+  async checkAndCreateAlerts(tx?: any) {
+    // Legacy support: check all products (could be slow)
+    const client = tx || this.prisma;
+    const products = await client.products.findMany({
+      select: { id: true },
+    });
+
+    const results = [];
+    for (const p of products) {
+      const alerts = await this.checkProductAlerts(p.id, tx);
+      if (alerts.length > 0) results.push(...alerts);
+    }
+    return results;
+  }
+
+  /**
+   * ✅ OPTIMIZED: Check alerts for a single product efficiently
+   */
+  async checkProductAlerts(productId: string, tx?: any) {
+    const client = tx || this.prisma;
+    const product = await client.products.findUnique({
+      where: { id: productId },
       select: {
         id: true,
         name: true,
@@ -257,83 +280,107 @@ export class InventoryAlertService {
       },
     });
 
-    const alerts = [];
+    if (!product) return [];
 
-    for (const product of products) {
-      const currentStock = product.stockQuantity;
-      const lowStockThreshold = product.inventory?.lowStockThreshold;
-      const maxStock = product.maxStock;
+    const currentStock = product.stockQuantity;
+    const lowStockThreshold = product.inventory?.lowStockThreshold;
+    const maxStock = product.maxStock;
+    const newAlerts = [];
 
-      // Check low stock alert
-      if (lowStockThreshold && currentStock <= lowStockThreshold) {
-        const existingAlert = await this.prisma.inventory_alerts.findFirst({
-          where: {
-            productId: product.id,
-            type: 'LOW_STOCK',
-            isResolved: false,
-          },
+    // 1. AUTO-RESOLVE
+    if (lowStockThreshold && currentStock > lowStockThreshold) {
+      await client.inventory_alerts.updateMany({
+        where: {
+          productId: product.id,
+          type: { in: ['LOW_STOCK', 'OUT_OF_STOCK'] },
+          isResolved: false,
+        },
+        data: {
+          isResolved: true,
+          resolvedAt: new Date(),
+          message: `[Hệ thống] Tồn kho phục hồi: ${currentStock} > ${lowStockThreshold}`,
+        },
+      });
+    }
+
+    if (maxStock && currentStock < maxStock) {
+      await client.inventory_alerts.updateMany({
+        where: {
+          productId: product.id,
+          type: 'OVERSTOCK',
+          isResolved: false,
+        },
+        data: {
+          isResolved: true,
+          resolvedAt: new Date(),
+          message: `[Hệ thống] Tồn kho an toàn: ${currentStock} < ${maxStock}`,
+        },
+      });
+    }
+
+    // 2. CREATE ALERTS
+    if (currentStock === 0) {
+      const existing = await client.inventory_alerts.findFirst({
+        where: { productId: product.id, type: 'OUT_OF_STOCK', isResolved: false },
+      });
+      if (!existing) {
+        await client.inventory_alerts.updateMany({
+          where: { productId: product.id, type: 'LOW_STOCK', isResolved: false },
+          data: { isResolved: true, resolvedAt: new Date() },
         });
-
-        if (!existingAlert) {
-          alerts.push(
-            await this.create({
-              productId: product.id,
-              type: 'LOW_STOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) có tồn kho thấp: ${currentStock} <= ${lowStockThreshold}`,
-              threshold: lowStockThreshold,
-              currentStock: currentStock,
-            }),
-          );
-        }
-      }
-
-      // Check out of stock alert
-      if (currentStock === 0) {
-        const existingAlert = await this.prisma.inventory_alerts.findFirst({
-          where: {
-            productId: product.id,
-            type: 'OUT_OF_STOCK',
-            isResolved: false,
-          },
-        });
-
-        if (!existingAlert) {
-          alerts.push(
-            await this.create({
+        newAlerts.push(
+          await this.create(
+            {
               productId: product.id,
               type: 'OUT_OF_STOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) đã hết hàng`,
+              message: `Hết hàng: ${product.name}`,
               currentStock: 0,
-            }),
-          );
-        }
+            },
+            tx,
+          ),
+        );
       }
-
-      // Check overstock alert
-      if (maxStock && currentStock >= maxStock) {
-        const existingAlert = await this.prisma.inventory_alerts.findFirst({
-          where: {
-            productId: product.id,
-            type: 'OVERSTOCK',
-            isResolved: false,
-          },
-        });
-
-        if (!existingAlert) {
-          alerts.push(
-            await this.create({
+    } else if (lowStockThreshold && currentStock <= lowStockThreshold) {
+      const existing = await client.inventory_alerts.findFirst({
+        where: { productId: product.id, type: 'LOW_STOCK', isResolved: false },
+      });
+      if (!existing) {
+        newAlerts.push(
+          await this.create(
+            {
               productId: product.id,
-              type: 'OVERSTOCK',
-              message: `Sản phẩm ${product.name} (${product.sku}) tồn kho quá nhiều: ${currentStock} >= ${maxStock}`,
-              threshold: maxStock,
-              currentStock: currentStock,
-            }),
-          );
-        }
+              type: 'LOW_STOCK',
+              message: `Sắp hết hàng: ${product.name} (${currentStock})`,
+              threshold: lowStockThreshold,
+              currentStock,
+            },
+            tx,
+          ),
+        );
       }
     }
 
-    return alerts;
+    if (maxStock && currentStock >= maxStock) {
+      const existing = await client.inventory_alerts.findFirst({
+        where: { productId: product.id, type: 'OVERSTOCK', isResolved: false },
+      });
+      if (!existing) {
+        newAlerts.push(
+          await this.create(
+            {
+              productId: product.id,
+              type: 'OVERSTOCK',
+              message: `Quá định mức: ${product.name} (${currentStock})`,
+              threshold: maxStock,
+              currentStock,
+            },
+            tx,
+          ),
+        );
+      }
+    }
+
+    return newAlerts;
   }
 
   async delete(id: string) {

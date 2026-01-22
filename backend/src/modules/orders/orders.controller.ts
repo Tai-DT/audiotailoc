@@ -10,6 +10,7 @@ import {
   Delete,
   Req,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
@@ -66,12 +67,25 @@ export class OrdersController {
   @UseGuards(AdminOrKeyGuard)
   @Get('stats')
   async getStats() {
-    const totalOrders = await this.orders.list({ page: 1, pageSize: 1 });
-    return {
-      totalOrders: totalOrders.total || 0,
-      pendingOrders: totalOrders.total || 0,
-      completedOrders: 0,
-    };
+    return this.orders.getStats();
+  }
+
+  @Post(':id/cancel')
+  async cancel(@Param('id') id: string, @Req() req: any) {
+    if (!req.user) throw new ForbiddenException('Bạn phải đăng nhập để hủy đơn hàng');
+
+    const userId = req.user.sub || req.user.id;
+    const order = await this.orders.get(id);
+
+    if (order.userId !== userId && req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này');
+    }
+
+    if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
+      throw new BadRequestException('Chỉ có thể hủy đơn hàng khi đang chờ xử lý hoặc đã xác nhận');
+    }
+
+    return this.orders.updateStatus(id, 'CANCELLED');
   }
 
   @Get(':id')

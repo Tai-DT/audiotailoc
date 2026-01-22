@@ -6,24 +6,51 @@ import { IsOptional, IsString } from 'class-validator';
 class CheckoutDto {
   @IsOptional()
   @IsString()
+  cartId?: string; // For guest checkout
+
+  @IsOptional()
+  @IsString()
   promotionCode?: string;
 
-  // shippingAddress will be any JSON from frontend
+  @IsOptional()
+  shippingAddress?: any;
+
+  @IsOptional()
+  shippingCoordinates?: any;
+
+  @IsOptional()
+  @IsString()
+  customerEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
 }
 
-@UseGuards(JwtGuard)
 @Controller('checkout')
 export class CheckoutController {
   constructor(private readonly checkout: CheckoutService) {}
 
   @Post('create-order')
   async create(@Request() req: any, @Body() dto: CheckoutDto) {
-    const order = await this.checkout.createOrder(req.user?.sub, {
+    const userId = req.user?.sub || null;
+    const order = await this.checkout.createOrder(userId, {
+      cartId: dto.cartId,
       promotionCode: dto.promotionCode,
+      shippingAddress: dto.shippingAddress,
+      shippingCoordinates: dto.shippingCoordinates,
+      customerEmail: dto.customerEmail,
+      customerName: dto.customerName,
+      customerPhone: dto.customerPhone,
     });
     return { order };
   }
 
+  @UseGuards(JwtGuard)
   @Get('order-by-no/:orderNo')
   async getByOrderNo(@Request() req: any, @Param('orderNo') orderNo: string) {
     return this.checkout.getOrderForUserByNo(req.user?.sub, orderNo);

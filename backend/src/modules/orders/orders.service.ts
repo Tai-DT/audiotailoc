@@ -1,564 +1,357 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
 import { randomUUID, randomBytes } from 'crypto';
+import { InventoryMovementService } from '../inventory/inventory-movement.service';
+import { PromotionsService } from '../promotions/promotions.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { CartService } from '../cart/cart.service';
+import { UsersService } from '../users/users.service';
+import { TelegramService } from '../notifications/telegram.service';
 
 const allowedTransitions: Record<string, string[]> = {
-  PENDING: ['PROCESSING', 'CANCELLED', 'COMPLETED'],
-  PROCESSING: ['COMPLETED', 'CANCELLED'],
-  COMPLETED: [],
+  PENDING: ['CONFIRMED', 'PROCESSING', 'CANCELLED'],
+  CONFIRMED: ['PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'COMPLETED', 'CANCELLED'],
+  SHIPPED: ['COMPLETED', 'RETURNED', 'CANCELLED'],
+  COMPLETED: ['RETURNED'],
   CANCELLED: [],
+  RETURNED: [],
 };
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly cache: CacheService,
-  ) {}
+    private readonly inventoryMovement: InventoryMovementService,
+    private readonly promotions: PromotionsService,
+    private readonly inventory: InventoryService,
+    private readonly cartService: CartService,
+    private readonly usersService: UsersService,
+    private readonly telegramService: TelegramService,
+  ) { }
 
-  list(params: { page?: number; pageSize?: number; status?: string }) {
+  async list(params: { page?: number; pageSize?: number; status?: string }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
     const where: any = {};
     if (params.status) where.status = params.status;
-    return this.prisma
-      .$transaction([
-        this.prisma.orders.count({ where }),
-        this.prisma.orders.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          include: {
-            users: {
-              select: {
-                name: true,
-                email: true,
-              },
-            },
-            order_items: {
-              include: {
-                products: {
-                  select: {
-                    name: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        }),
-      ])
-      .then(([total, items]) => ({
-        total,
-        page,
-        pageSize,
-        items: items.map(order => ({
-          id: order.id,
-          orderNumber: order.orderNo,
-          customerName: order.users?.name || 'N/A',
-          customerEmail: order.users?.email || 'N/A',
-          totalAmount: Number(order.totalCents),
-          status: order.status,
-          createdAt: order.createdAt,
-          updatedAt: order.updatedAt,
-          items: order.order_items.map(item => {
-            const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
-            return {
-              id: item.id,
-              productId: item.productId,
-              productSlug: (item as any).products?.slug || null,
-              productName: item.products?.name || item.name || 'Sản phẩm',
-              quantity: item.quantity,
-              price: unitPrice,
-              total: unitPrice * item.quantity,
-            };
-          }),
-        })),
-      }));
-  }
 
-  async get(id: string) {
-    const order = await this.prisma.orders.findFirst({
-      where: {
-        OR: [{ id: id }, { orderNo: id }],
-      },
-      include: { order_items: true, payments: true },
-    });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.orders.count({ where }),
+      this.prisma.orders.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          users: { select: { name: true, email: true } },
+          order_items: { include: { products: { select: { name: true, slug: true } } } },
+        },
+      }),
+    ]);
 
-    // Serialize BigInt values to numbers
     return {
-      ...order,
-      totalCents: Number(order.totalCents),
-      subtotalCents: order.subtotalCents ? Number(order.subtotalCents) : null,
-      order_items: order.order_items.map(item => ({
-        ...item,
-        price: item.price ? Number(item.price) : null,
-        unitPrice: item.unitPrice ? Number(item.unitPrice) : null,
+      total,
+      page,
+      pageSize,
+      items: items.map(order => ({
+        id: order.id,
+        orderNumber: order.orderNo,
+        customerName: order.users?.name || 'N/A',
+        customerEmail: order.users?.email || 'N/A',
+        totalAmount: Number(order.totalCents),
+        status: order.status,
+        createdAt: order.createdAt,
+        items: order.order_items.map(item => ({
+          productId: item.productId,
+          productName: item.products?.name || item.name,
+          quantity: item.quantity,
+          price: Number(item.unitPrice || item.price),
+        })),
       })),
     };
   }
 
-  async updateStatus(id: string, status: string) {
-    const order = await this.get(id);
-    const current = (order.status || '').toUpperCase();
-    const next = (status || '').toUpperCase();
-    const nexts = allowedTransitions[current] || [];
-    // Debug logs to help diagnose invalid transitions
-    console.log(
-      '[OrdersService.updateStatus] current=',
-      current,
-      'requested=',
-      next,
-      'allowed=',
-      nexts,
-    );
-    if (!nexts.includes(next)) throw new BadRequestException('Trạng thái không hợp lệ');
-    const updated = await this.prisma.orders.update({ where: { id }, data: { status: next } });
+  async get(id: string, tx?: any) {
+    const client = tx || this.prisma;
+    const order = await client.orders.findFirst({
+      where: { OR: [{ id }, { orderNo: id }] },
+      include: { order_items: true, payments: true, users: true },
+    });
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+    return {
+      ...order,
+      totalCents: Number(order.totalCents),
+      subtotalCents: Number(order.subtotalCents),
+      discountCents: Number(order.discountCents),
+      shippingAddress: this.safeParseJSON(order.shippingAddress, order.shippingAddress),
+      shippingCoordinates: this.safeParseJSON(order.shippingCoordinates, order.shippingCoordinates),
+    };
+  }
 
-    // If order is cancelled from PENDING/PROCESSING, restore stock back to inventory
-    if (next === 'CANCELLED' && (current === 'PENDING' || current === 'PROCESSING')) {
-      try {
-        const items = await this.prisma.order_items.findMany({
-          where: { orderId: id },
-          include: { products: { select: { id: true, slug: true, name: true } } },
-        });
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
 
-        for (const item of items) {
-          let targetProductId: string | null = item.productId ?? null;
+  async create(orderData: any, userId?: string): Promise<any> {
+    const orderNo = `ATL-${Date.now()}-${randomBytes(2).toString('hex').toUpperCase()}`;
+    const itemsToProcess = Array.isArray(orderData.items) ? orderData.items : [];
+    if (itemsToProcess.length === 0) throw new BadRequestException('Đơn hàng không có sản phẩm');
 
-          // Try to resolve via relation if productId is null
-          if (!targetProductId && item.products?.id) {
-            targetProductId = item.products.id;
+    const result = await this.prisma.$transaction(
+      async tx => {
+        let subtotalCents = 0;
+        const finalItems = [];
+
+        for (const item of itemsToProcess) {
+          const product = await tx.products.findUnique({ where: { id: item.productId } });
+          if (!product || !product.isActive || product.isDeleted) {
+            throw new BadRequestException(`Sản phẩm ${item.productId} không tồn tại`);
           }
 
-          // Try resolve by slug if available
-          if (!targetProductId && item.products?.slug) {
-            const bySlug = await this.prisma.products.findUnique({
-              where: { slug: item.products.slug },
-            });
-            if (bySlug) targetProductId = bySlug.id;
+          const quantity = Math.max(1, item.quantity || 1);
+          if (product.stockQuantity < quantity) {
+            throw new BadRequestException(`Sản phẩm ${product.name} hết hàng`);
           }
 
-          // As a last resort, try by name
-          if (!targetProductId && item.products?.name) {
-            const byName = await (this.prisma as any).products.findFirst({
-              where: { name: item.products.name },
-            });
-            if (byName) targetProductId = byName.id;
-          }
+          // Deduct Stock via InventoryService (handles movements, alerts, and sync)
+          await this.inventory.adjust(
+            product.id,
+            {
+              stockDelta: -quantity,
+              reason: `Order ${orderNo}`,
+              referenceId: orderNo,
+              referenceType: 'ORDER',
+            },
+            { syncToProduct: true },
+            tx,
+          );
 
-          if (targetProductId) {
-            await this.prisma.products.update({
-              where: { id: targetProductId },
-              data: { stockQuantity: { increment: item.quantity } },
-            });
+          subtotalCents += Number(product.priceCents) * quantity;
+          finalItems.push({
+            id: randomUUID(),
+            productId: product.id,
+            name: product.name,
+            quantity,
+            price: product.priceCents,
+            unitPrice: product.priceCents,
+          });
+        }
+
+        let discountCents = 0;
+        let isFreeShipping = false;
+
+        if (orderData.promotionCode) {
+          const promo: any = await this.promotions.validateCode(
+            orderData.promotionCode,
+            subtotalCents,
+            userId,
+            finalItems,
+            tx,
+          );
+          if (promo.valid) {
+            discountCents = Number(promo.discount || 0);
+            isFreeShipping = !!promo.isFreeShipping;
           } else {
-            console.warn(
-              '[OrdersService.updateStatus] Could not resolve product for order item during cancel restore. Skipped increment.',
-            );
+            throw new BadRequestException(promo.error || 'Mã khuyến mãi không hợp lệ');
           }
         }
 
-        // Invalidate cached product lists so stock changes reflect immediately
-        await this.cache.clearByPrefix('audiotailoc');
-      } catch (error) {
-        console.error('Failed to restore stock on cancellation:', error);
+        let finalUserId = userId;
+
+        // Guest User Handling: Link order to user by email or create a guest user
+        if (!finalUserId && orderData.customerEmail) {
+          let user = await tx.users.findUnique({
+            where: { email: orderData.customerEmail },
+          });
+          if (!user) {
+            user = await tx.users.create({
+              data: {
+                id: randomUUID(),
+                email: orderData.customerEmail,
+                name: orderData.customerName || 'Guest Customer',
+                phone: orderData.customerPhone || null,
+                role: 'USER',
+                isActive: true,
+                updatedAt: new Date(),
+              },
+            });
+          }
+          finalUserId = user.id;
+        }
+
+        // Shipping Calculation (Sync with CartService)
+        // Free shipping if subtotal > 10M VND or promo provides free shipping
+        const shippingCents = subtotalCents > 10000000 || isFreeShipping ? 0 : 50000;
+
+        const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
+        const order = await tx.orders.create({
+          data: {
+            id: randomUUID(),
+            orderNo,
+            userId: finalUserId,
+            status: 'PENDING',
+            subtotalCents,
+            discountCents,
+            shippingCents,
+            totalCents,
+            promotionCode: orderData.promotionCode || null,
+            shippingAddress: orderData.shippingAddress,
+            shippingCoordinates: orderData.shippingCoordinates
+              ? JSON.stringify(orderData.shippingCoordinates)
+              : null,
+            updatedAt: new Date(),
+          } as any,
+        });
+
+        await tx.order_items.createMany({
+          data: finalItems.map(i => ({ ...i, orderId: order.id, updatedAt: new Date() })),
+        });
+
+        // Track promotion usage if applicable
+        if (orderData.promotionCode) {
+          await this.promotions.incrementUsage(
+            orderData.promotionCode,
+            finalUserId,
+            order.id,
+            discountCents,
+            tx,
+          );
+        }
+
+        // Clear User Cart after successful checkout
+        if (finalUserId) {
+          await this.cartService.clearCart(finalUserId);
+          await this.cache.del(`cart:${finalUserId}`);
+          await this.cache.del(`cart_totals:${finalUserId}`);
+        }
+
+        return { ...order, items: finalItems };
+      },
+      { timeout: 15000 },
+    );
+
+    // Notify via Telegram (post-transaction)
+    try {
+      await this.telegramService.sendMessage(
+        `🔔 *ĐƠN HÀNG MỚI*: #${result.orderNo}\n` +
+        `👤 Khách hàng: ${orderData.customerName || 'Guest'}\n` +
+        `💰 Tổng cộng: ${result.totalCents.toLocaleString('vi-VN')}đ\n` +
+        `📍 Địa chỉ: ${orderData.shippingAddress || 'N/A'}`,
+      );
+    } catch (err) {
+      // Log but don't fail
+      this.logger.error('Telegram notification failed', err);
+    }
+
+    return result;
+  }
+
+  async updateStatus(id: string, status: string, tx?: any) {
+    const client = tx || this.prisma;
+    const order = await this.get(id, client);
+    const current = order.status.toUpperCase();
+    const next = status.toUpperCase();
+    if (!(allowedTransitions[current] || []).includes(next))
+      throw new BadRequestException('Chuyển đổi trạng thái không hợp lệ');
+
+    const updated = await client.orders.update({ where: { id: order.id }, data: { status: next } });
+
+    // Handle Restoration if Cancelled
+    // Handle Restoration if Cancelled or Returned
+    if (
+      ['CANCELLED', 'RETURNED'].includes(next) &&
+      ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'COMPLETED'].includes(current)
+    ) {
+      const items = await client.order_items.findMany({ where: { orderId: order.id } });
+      for (const item of items) {
+        await this.inventory.adjust(
+          item.productId,
+          {
+            stockDelta: item.quantity,
+            reason: `${next} Order ${order.orderNo}`,
+            referenceId: order.id,
+            referenceType: next,
+          },
+          { syncToProduct: true },
+          client,
+        );
       }
     }
 
-    // Send notification email if we have the user's email
-    if (order.userId) {
+    if (order.users?.email) {
       try {
-        const user = await this.prisma.users.findUnique({ where: { id: order.userId } });
-        if (user?.email) {
-          // Get order with items for email template
-          const orderWithItems = await this.prisma.orders.findUnique({
-            where: { id: order.id },
-            include: { order_items: true },
-          });
-
-          if (orderWithItems) {
-            const orderData = {
-              orderNo: order.orderNo,
-              customerName: user.name || user.email,
-              totalAmount: `${(Number(order.totalCents) / 100).toLocaleString('vi-VN')} VNĐ`,
-              items: orderWithItems.order_items.map((item: any) => ({
-                name: item.name || 'Sản phẩm',
-                quantity: item.quantity,
-                price: `${(Number(item.unitPrice || 0) / 100).toLocaleString('vi-VN')} VNĐ`,
-              })),
-              status: status,
-            };
-
-            await this.mail.sendOrderStatusUpdate(user.email, orderData);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to send email notification:', error);
+        await this.mail.sendOrderStatusUpdate(order.users.email, {
+          orderNo: order.orderNo,
+          customerName: order.users.name || 'Khách hàng',
+          status: next,
+          items: [],
+          totalAmount: order.totalCents.toString(),
+        });
+      } catch (err) {
+        this.logger.error('Failed to send status update email', err);
       }
     }
 
     return updated;
   }
 
-  async create(orderData: any): Promise<any> {
-    // SECURITY: Only log in development mode to prevent information disclosure
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== SIMPLE CREATE ORDER DEBUG ===');
-      // Sanitize sensitive data before logging
-      const sanitizedData = { ...orderData };
-      if (sanitizedData.customerEmail) sanitizedData.customerEmail = '***';
-      if (sanitizedData.customerPhone) sanitizedData.customerPhone = '***';
-      console.log('Input data:', JSON.stringify(sanitizedData, null, 2));
-    }
-
-    // SECURITY: Generate unique order number using cryptographically secure random
-    const timestamp = Date.now();
-    const random = randomBytes(2).readUInt16BE(0) % 10000; // 0-9999 range
-    const orderNo = `ORD${timestamp}${random.toString().padStart(4, '0')}`;
-
-    // Handle user creation/connection
-    let userId = orderData.userId;
-    if (!userId) {
-      // SECURITY: Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Creating guest user...');
-      }
-      // Create a guest user if no userId provided
-      const uniqueEmail = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@audiotailoc.com`;
-      const guestUser = await this.prisma.users.create({
-        data: {
-          id: randomUUID(),
-          email: uniqueEmail,
-          password: 'hashed_guest_password', // Use a simple string for now
-          name: orderData.customerName || 'Khách hàng',
-          phone: orderData.customerPhone,
-          role: 'USER',
-          updatedAt: new Date(),
-        },
-      });
-      userId = guestUser.id;
-      // SECURITY: Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Guest user created:', userId);
-      }
-    }
-
-    // Simple item processing
-    const items = [];
-    let subtotalCents = 0;
-
-    const incomingItems = Array.isArray(orderData.items) ? orderData.items : [];
-    if (incomingItems.length === 0) {
-      throw new BadRequestException('Vui lòng chọn ít nhất một sản phẩm');
-    }
-
-    for (const item of incomingItems) {
-      console.log('Processing item:', item);
-
-      // Get product
-      const product = await this.prisma.products.findUnique({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new BadRequestException(`Product not found: ${item.productId}`);
-      }
-
-      const itemData = {
-        productId: product.id,
-        quantity: item.quantity || 1,
-        price: Number(product.priceCents),
-        unitPrice: Number(product.priceCents),
-        name: product.name,
-      };
-
-      items.push(itemData);
-      subtotalCents += itemData.price * itemData.quantity;
-    }
-
-    // SECURITY: Only log in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Processed items:', items);
-      console.log('Subtotal:', subtotalCents);
-    }
-
-    // Create order and items separately (no transaction for debugging)
-    const order = await this.prisma.orders.create({
-      data: {
-        id: randomUUID(),
-        orderNo,
-        userId,
-        status: 'PENDING',
-        subtotalCents,
-        totalCents: subtotalCents,
-        shippingAddress: orderData.shippingAddress || null,
-        shippingCoordinates: orderData.shippingCoordinates
-          ? JSON.stringify(orderData.shippingCoordinates)
-          : null,
-        updatedAt: new Date(),
-      },
-    });
-
-    // SECURITY: Only log in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Order created:', order.id);
-    }
-
-    // Create order items
-    for (const itemData of items) {
-      await this.prisma.order_items.create({
-        data: {
-          id: randomUUID(),
-          orderId: order.id,
-          ...itemData,
-          updatedAt: new Date(),
-        },
-      });
-    }
-
-    // SECURITY: Only log in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Order items created');
-    }
-
-    // Get full order with items
-    const fullOrder = await this.prisma.orders.findUnique({
-      where: { id: order.id },
-      include: {
-        order_items: true,
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
-    });
-
-    // SECURITY: Only log in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Returning order:', fullOrder?.id);
-    }
-    return fullOrder;
-  }
-
-  async update(id: string, updateData: any): Promise<any> {
-    // SECURITY: Only log in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== UPDATE ORDER DEBUG ===');
-      console.log('Order ID:', id);
-      console.log('Update data keys:', Object.keys(updateData));
-      // Sanitize sensitive data before logging
-      const sanitizedUpdateData = { ...updateData };
-      if (sanitizedUpdateData.customerEmail) sanitizedUpdateData.customerEmail = '***';
-      if (sanitizedUpdateData.customerPhone) sanitizedUpdateData.customerPhone = '***';
-      console.log('Update data:', JSON.stringify(sanitizedUpdateData, null, 2));
-    }
-
-    const order = await this.get(id);
-    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
-
-    const updatePayload: any = {};
-
-    // Update user information if provided
-    if (updateData.customerName || updateData.customerPhone || updateData.customerEmail) {
-      const userUpdate: any = {};
-      if (updateData.customerName) userUpdate.name = updateData.customerName;
-      if (updateData.customerPhone) userUpdate.phone = updateData.customerPhone;
-      if (updateData.customerEmail) userUpdate.email = updateData.customerEmail;
-
-      if (order.userId) {
-        await this.prisma.users.update({
-          where: { id: order.userId },
-          data: userUpdate,
-        });
-      }
-    }
-
-    // Update order fields
-    if (updateData.shippingAddress !== undefined) {
-      updatePayload.shippingAddress =
-        typeof updateData.shippingAddress === 'string'
-          ? updateData.shippingAddress
-          : updateData.shippingAddress
-            ? JSON.stringify(updateData.shippingAddress)
-            : null;
-    }
-
-    if (updateData.shippingCoordinates !== undefined) {
-      updatePayload.shippingCoordinates = updateData.shippingCoordinates
-        ? JSON.stringify(updateData.shippingCoordinates)
-        : null;
-    }
-
-    if (updateData.notes !== undefined) {
-      // Notes field doesn't exist in Order model, skip this update
-      console.log('Skipping notes update - field not in Order schema');
-    }
-
-    // Update items if provided
-    if (updateData.items) {
-      // Delete existing items
-      await this.prisma.order_items.deleteMany({ where: { orderId: id } });
-
-      // Recalculate total
-      let subtotalCents = 0;
-      const items: any[] = [];
-
-      for (const item of updateData.items) {
-        const itemData: any = {
-          quantity: item.quantity || 1,
-          unitPrice: item.unitPrice || 0,
-          price: item.unitPrice || 0, // Required field for compatibility
-          name: item.name || 'Sản phẩm',
-        };
-
-        // Try to get product price from database
-        try {
-          let product = await this.prisma.products.findUnique({
-            where: { id: item.productId },
-          });
-
-          if (!product) {
-            product = await this.prisma.products.findUnique({
-              where: { slug: item.productId },
-            });
-          }
-
-          if (product) {
-            itemData.unitPrice = Number(product.priceCents);
-            itemData.price = Number(product.priceCents); // Keep both fields in sync
-            itemData.productId = product.id;
-            if (!item.name && product.name) itemData.name = product.name;
-          }
-        } catch (error) {
-          console.error('Failed to fetch product:', error);
-        }
-
-        items.push(itemData);
-        subtotalCents += (itemData.unitPrice || 0) * (itemData.quantity || 1);
-      }
-
-      // Ensure every item resolved to a valid productId
-      const unresolved = items.filter(i => !i.productId);
-      if (unresolved.length > 0) {
-        throw new BadRequestException('Sản phẩm không hợp lệ. Vui lòng chọn lại sản phẩm.');
-      }
-
-      updatePayload.order_items = { create: items };
-      updatePayload.subtotalCents = subtotalCents;
-      updatePayload.totalCents = subtotalCents;
-    }
-
-    // Update the order
-    const _updatedOrder = await this.prisma.orders.update({
-      where: { id },
-      data: updatePayload,
-      include: {
-        order_items: {
-          include: {
-            products: {
-              select: {
-                name: true,
-                slug: true,
-              },
-            },
-          },
-        },
-        users: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
-    });
-
-    // Get the full order with all fields for return
-    const fullOrder = await this.prisma.orders.findUnique({
-      where: { id },
-      include: {
-        order_items: {
-          include: {
-            products: {
-              select: {
-                name: true,
-                slug: true,
-              },
-            },
-          },
-        },
-        users: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
-    });
+  async getStats() {
+    const [total, pending, processing, completed, cancelled] = await Promise.all([
+      this.prisma.orders.count(),
+      this.prisma.orders.count({ where: { status: 'PENDING' } }),
+      this.prisma.orders.count({ where: { status: 'PROCESSING' } }),
+      this.prisma.orders.count({ where: { status: { in: ['DELIVERED', 'COMPLETED'] } } }),
+      this.prisma.orders.count({ where: { status: 'CANCELLED' } }),
+    ]);
 
     return {
-      id: fullOrder!.id,
-      orderNumber: fullOrder!.orderNo,
-      customerName: fullOrder!.users?.name || 'N/A',
-      customerEmail: fullOrder!.users?.email || 'N/A',
-      customerPhone: fullOrder!.users?.phone || 'N/A',
-      totalAmount: Number(fullOrder!.totalCents),
-      status: fullOrder!.status,
-      shippingAddress: fullOrder!.shippingAddress,
-      createdAt: fullOrder!.createdAt,
-      updatedAt: fullOrder!.updatedAt,
-      items: fullOrder!.order_items.map(item => {
-        const unitPrice = item.unitPrice ? Number(item.unitPrice) : 0;
-        return {
-          id: item.id,
-          productName: item.products?.name || item.name || 'Sản phẩm',
-          quantity: item.quantity,
-          price: unitPrice,
-          total: unitPrice * item.quantity,
-        };
-      }),
+      total,
+      pending,
+      processing,
+      completed,
+      cancelled,
     };
   }
 
   async delete(id: string) {
-    const order = await this.prisma.orders.findUnique({
-      where: { id },
-      include: { order_items: true },
-    });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+    const order = await this.get(id);
 
-    // If deleting a PENDING/PROCESSING order, restore stock first
-    if (order.status === 'PENDING' || order.status === 'PROCESSING') {
-      try {
-        for (const item of order.order_items) {
-          if (item.productId) {
-            await this.prisma.products.update({
-              where: { id: item.productId },
-              data: { stockQuantity: { increment: item.quantity } },
-            });
-          }
-        }
-        // Invalidate cached product lists
-        await this.cache.clearByPrefix('audiotailoc');
-      } catch (error) {
-        console.error('Failed to restore stock on delete:', error);
-      }
+    // Security: Only allow archiving/cancelling if not already shipped/completed
+    if (['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status)) {
+      throw new BadRequestException('Không thể xóa đơn hàng đã giao hoặc đã hoàn thành');
     }
 
-    await this.prisma.order_items.deleteMany({ where: { orderId: id } });
-    await this.prisma.payments.deleteMany({ where: { orderId: id } });
-    await this.prisma.orders.delete({ where: { id } });
-    return { message: 'Đơn hàng đã được xóa thành công' };
+    if (order.status !== 'CANCELLED') {
+      await this.updateStatus(id, 'CANCELLED');
+    }
+
+    return { success: true, message: 'Đơn hàng đã được chuyển sang trạng thái Hủy' };
+  }
+
+  async update(id: string, data: any) {
+    const order = await this.get(id);
+    return this.prisma.orders.update({
+      where: { id: order.id },
+      data: {
+        ...data,
+        updatedAt: new Date(),
+      },
+      include: {
+        order_items: true,
+      },
+    });
   }
 }

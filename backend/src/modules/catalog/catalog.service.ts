@@ -1,26 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../caching/cache.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InventoryService } from '../inventory/inventory.service';
+import { ActivityLogService } from '../logging/activity-log.service';
+import { randomUUID } from 'crypto';
 
 export type ProductDto = {
   id: string;
-  slug?: string;
+  slug: string;
   name: string;
-  description?: string | null;
-  shortDescription?: string | null;
+  description: string;
+  shortDescription?: string;
   priceCents: number;
   originalPriceCents?: number | null;
   imageUrl?: string | null;
-  images?: any;
+  images?: string[] | null;
   categoryId?: string | null;
   brand?: string | null;
   model?: string | null;
   sku?: string | null;
-  specifications?: any;
+  specifications?: any | null;
   features?: string | null;
   warranty?: string | null;
   weight?: number | null;
@@ -35,8 +36,6 @@ export type ProductDto = {
   canonicalUrl?: string | null;
   featured?: boolean;
   isActive?: boolean;
-  isDeleted?: boolean;
-  viewCount?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -45,621 +44,362 @@ export type ProductDto = {
 export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
-    /* private readonly search: SearchService, */
-    private readonly cache: CacheService,
     private readonly inventory: InventoryService,
+    private readonly cache: CacheService,
+    private readonly activityLog: ActivityLogService,
   ) {}
 
-  async listProducts(
-    params: {
-      page?: number;
-      pageSize?: number;
-      q?: string;
-      minPrice?: number;
-      maxPrice?: number;
-      sortBy?: 'createdAt' | 'name' | 'priceCents' | 'price' | 'viewCount';
-      sortOrder?: 'asc' | 'desc';
-      featured?: boolean;
-      categoryId?: string;
-      isActive?: boolean;
-    } = {},
-  ): Promise<{ items: ProductDto[]; total: number; page: number; pageSize: number }> {
-    const page = Math.max(1, Math.floor(params.page ?? 1));
-    const pageSize = Math.min(10000, Math.max(1, Math.floor(params.pageSize ?? 20)));
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
 
-    // Use a loose type to match tests that work with mocked Prisma shapes
-    const where: any = {};
+  // --- CATEGORIES ---
+
+  async listCategories() {
+    return this.prisma.categories.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async getCategoryBySlug(slug: string) {
+    const category = await this.prisma.categories.findUnique({ where: { slug } });
+    if (!category) throw new NotFoundException('Danh mục không tồn tại');
+    return category;
+  }
+
+  async createCategory(dto: any, userId?: string) {
+    const category = await this.prisma.categories.create({
+      data: {
+        id: randomUUID(),
+        ...dto,
+      },
+    });
+
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'CREATE',
+        resource: 'category',
+        resourceId: category.id,
+        details: { name: category.name },
+        category: 'catalog',
+      });
+    }
+
+    return category;
+  }
+
+  async updateCategory(id: string, dto: any, userId?: string) {
+    const category = await this.prisma.categories.update({
+      where: { id },
+      data: dto,
+    });
+
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'UPDATE',
+        resource: 'category',
+        resourceId: id,
+        details: dto,
+        category: 'catalog',
+      });
+    }
+
+    return category;
+  }
+
+  async deleteCategory(id: string, userId?: string) {
+    // Check if category has products
+    const productCount = await this.prisma.products.count({
+      where: { categoryId: id, isDeleted: false },
+    });
+    if (productCount > 0) {
+      throw new BadRequestException('Không thể xóa danh mục đang có sản phẩm');
+    }
+
+    await this.prisma.categories.delete({ where: { id } });
+
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'DELETE',
+        resource: 'category',
+        resourceId: id,
+        category: 'catalog',
+        severity: 'medium',
+      });
+    }
+
+    return { success: true };
+  }
+
+  // --- PRODUCTS ---
+
+  async listProducts(params: any) {
+    const page = Math.max(1, Math.floor(params.page ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
+
+    const where: any = { isDeleted: false };
+    if (params.categoryId) where.categoryId = params.categoryId;
+    if (params.brand) where.brand = params.brand;
+    if (params.featured !== undefined) where.featured = params.featured;
+    if (params.isActive !== undefined) where.isActive = params.isActive;
     if (params.q) {
       where.OR = [
         { name: { contains: params.q, mode: 'insensitive' } },
-        { description: { contains: params.q, mode: 'insensitive' } },
+        { brand: { contains: params.q, mode: 'insensitive' } },
+        { sku: { contains: params.q, mode: 'insensitive' } },
       ];
     }
-    // Tests expect priceCents filter values to be used directly
-    if (typeof params.minPrice === 'number')
-      where.priceCents = { ...(where.priceCents || {}), gte: params.minPrice };
-    if (typeof params.maxPrice === 'number')
-      where.priceCents = { ...(where.priceCents || {}), lte: params.maxPrice };
-    if (typeof params.featured === 'boolean') where.featured = params.featured; // Used by unit tests
-    if (params.categoryId) where.categoryId = params.categoryId; // Filter by category
-    if (typeof params.isActive === 'boolean') where.isActive = params.isActive; // Filter by active status
 
-    const orderByField =
-      (params.sortBy === 'price'
-        ? 'priceCents'
-        : params.sortBy === 'viewCount'
-          ? 'viewCount'
-          : params.sortBy) ?? 'createdAt';
-    const orderDirection = params.sortOrder ?? 'desc';
-
-    const cacheKey = `products:list:${JSON.stringify({ where, page, pageSize, orderByField, orderDirection })}`;
-    const cached = await this.cache.get<{
-      items: ProductDto[];
-      total: number;
-      page: number;
-      pageSize: number;
-    }>(cacheKey);
-    if (cached) return cached;
-
-    // Build orderBy object with type safety
-    let orderBy: Record<string, 'asc' | 'desc'>;
-    if (orderByField === 'viewCount') {
-      orderBy = { viewCount: orderDirection };
-    } else if (orderByField === 'priceCents') {
-      orderBy = { priceCents: orderDirection };
-    } else if (orderByField === 'name') {
-      orderBy = { name: orderDirection };
-    } else {
-      orderBy = { createdAt: orderDirection };
-    }
-
-    const [total, rawItems] = await this.prisma.$transaction([
+    const [total, items] = await this.prisma.$transaction([
       this.prisma.products.count({ where }),
       this.prisma.products.findMany({
         where,
-        orderBy,
+        orderBy: { [params.sortBy || 'createdAt']: params.sortOrder || 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
     ]);
 
-    // Parse images field for each product
-    const items = rawItems.map(item => ({
-      ...item,
-      priceCents: Number(item.priceCents),
-      originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
-      images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
-      specifications:
-        typeof item.specifications === 'string'
-          ? JSON.parse(item.specifications)
-          : item.specifications,
-    }));
-
-    const result = { items, total, page, pageSize };
-    await this.cache.set(cacheKey, result, { ttl: 60 });
-    return result;
-  }
-
-  async getById(id: string): Promise<ProductDto> {
-    const product = await this.prisma.products.findUnique({ where: { id } });
-    if (!product) throw new NotFoundException('Product not found');
-
-    // Parse images and specifications fields
-    let parsedImages = product.images;
-    let parsedSpecifications = product.specifications;
-
-    if (typeof product.images === 'string') {
-      try {
-        parsedImages = JSON.parse(product.images);
-      } catch (error) {
-        console.error('Error parsing images:', error);
-      }
-    }
-
-    if (typeof product.specifications === 'string') {
-      try {
-        parsedSpecifications = JSON.parse(product.specifications);
-      } catch (error) {
-        console.error('Error parsing specifications:', error);
-      }
-    }
-
-    return {
+    const mappedItems = items.map(product => ({
       ...product,
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: parsedImages,
-      specifications: parsedSpecifications,
-    };
-  }
-
-  async getBySlug(slug: string): Promise<ProductDto> {
-    const product = await (this.prisma as any).products.findUnique({ where: { slug } });
-    if (!product) throw new NotFoundException('Product not found');
-
-    // Parse images and specifications fields
-    return {
-      ...product,
-      priceCents: Number(product.priceCents),
-      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-      specifications:
-        typeof product.specifications === 'string'
-          ? JSON.parse(product.specifications)
-          : product.specifications,
-    };
-  }
-
-  async checkSkuExists(sku: string, excludeId?: string): Promise<boolean> {
-    const where: any = { sku };
-    if (excludeId) {
-      where.id = { not: excludeId };
-    }
-    const count = await this.prisma.products.count({ where });
-    return count > 0;
-  }
-
-  async generateUniqueSku(baseName?: string): Promise<string> {
-    const base = baseName
-      ? baseName
-          .toUpperCase()
-          .replace(/[^A-Z0-9]/g, '')
-          .substring(0, 8)
-      : 'PROD';
-    let sku = base;
-    let counter = 1;
-
-    while (await this.checkSkuExists(sku)) {
-      sku = `${base}-${counter.toString().padStart(3, '0')}`;
-      counter++;
-
-      // Prevent infinite loop
-      if (counter > 999) {
-        sku = `${base}-${Date.now().toString().slice(-6)}`;
-        break;
-      }
-    }
-
-    return sku;
-  }
-
-  async create(data: CreateProductDto): Promise<ProductDto> {
-    // Validate price is positive
-    if (data.priceCents <= 0) {
-      throw new Error('Price must be greater than 0');
-    }
-
-    // Ensure slug uniqueness
-    const existed = await this.prisma.products.findUnique({ where: { slug: data.slug } });
-    if (existed) {
-      throw new Error('Product with this slug already exists');
-    }
-
-    // Prepare product data
-    const productData: any = {
-      slug: data.slug,
-      name: data.name,
-      description: data.description,
-      shortDescription: data.shortDescription || data.description?.substring(0, 200),
-      priceCents: data.priceCents,
-      originalPriceCents: data.originalPriceCents || data.priceCents,
-      imageUrl: data.images?.[0] || null,
-      images: data.images ? JSON.stringify(data.images) : null,
-      categoryId: data.categoryId,
-      brand: data.brand,
-      model: data.model,
-      sku: data.sku,
-      specifications: data.specifications ? JSON.stringify(data.specifications) : null,
-      features: data.features,
-      warranty: data.warranty,
-      weight: data.weight,
-      dimensions: data.dimensions,
-      stockQuantity: data.stockQuantity || 0,
-      minOrderQuantity: data.minOrderQuantity || 1,
-      maxOrderQuantity: data.maxOrderQuantity,
-      tags: data.tags,
-      metaTitle: data.metaTitle || data.name,
-      metaDescription: data.metaDescription || data.description?.substring(0, 160),
-      metaKeywords: data.metaKeywords,
-      canonicalUrl: data.canonicalUrl,
-      featured: data.featured || false,
-      isActive: data.isActive ?? true,
-      id: randomUUID(),
-      updatedAt: new Date(),
-    };
-
-    const product = await this.prisma.products.create({ data: productData });
-
-    // Sync to inventory if stock is provided or default 0
-    try {
-      await this.inventory.adjust(
-        product.id,
-        {
-          stock: product.stockQuantity,
-          reason: 'Initial product creation',
-        },
-        { syncToProduct: false },
-      );
-    } catch (error) {
-      console.error(`Failed to create inventory for product ${product.id}`, error);
-    }
-
-    // Clear cache
-    await this.cache.deletePattern('products:list:*');
-
-    // Parse images and specifications fields for response
-    return {
-      ...product,
-      priceCents: Number(product.priceCents),
-      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-      specifications:
-        typeof product.specifications === 'string'
-          ? JSON.parse(product.specifications)
-          : product.specifications,
-    };
-  }
-
-  async update(id: string, data: UpdateProductDto): Promise<ProductDto> {
-    // Check if product exists
-    const existingProduct = await this.prisma.products.findUnique({ where: { id } });
-    if (!existingProduct) {
-      throw new NotFoundException('Product not found');
-    }
-
-    // Prepare update data
-    const updateData: any = {};
-
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) {
-      updateData.description = data.description;
-      updateData.shortDescription = data.description?.substring(0, 200);
-    }
-    if (data.priceCents !== undefined) updateData.priceCents = data.priceCents;
-    if (data.originalPriceCents !== undefined)
-      updateData.originalPriceCents = data.originalPriceCents;
-    if (data.images !== undefined) {
-      updateData.imageUrl = data.images?.[0] || null;
-      updateData.images = data.images ? JSON.stringify(data.images) : null;
-    }
-    if (data.imageUrl !== undefined) {
-      updateData.imageUrl = data.imageUrl;
-      // If imageUrl is provided directly, also update the images array
-      if (data.imageUrl) {
-        updateData.images = JSON.stringify([data.imageUrl]);
-      } else {
-        updateData.images = null;
-      }
-    }
-    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
-    if (data.brand !== undefined) updateData.brand = data.brand;
-    if (data.model !== undefined) updateData.model = data.model;
-    if (data.sku !== undefined) updateData.sku = data.sku;
-    if (data.specifications !== undefined) {
-      updateData.specifications = data.specifications ? JSON.stringify(data.specifications) : null;
-    }
-    if (data.features !== undefined) updateData.features = data.features;
-    if (data.warranty !== undefined) updateData.warranty = data.warranty;
-    if (data.weight !== undefined) updateData.weight = data.weight;
-    if (data.dimensions !== undefined) updateData.dimensions = data.dimensions;
-    if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
-    if (data.minOrderQuantity !== undefined) updateData.minOrderQuantity = data.minOrderQuantity;
-    if (data.maxOrderQuantity !== undefined) updateData.maxOrderQuantity = data.maxOrderQuantity;
-    if (data.tags !== undefined) updateData.tags = data.tags;
-    if (data.metaTitle !== undefined) updateData.metaTitle = data.metaTitle;
-    if (data.metaDescription !== undefined) updateData.metaDescription = data.metaDescription;
-    if (data.metaKeywords !== undefined) updateData.metaKeywords = data.metaKeywords;
-    if (data.canonicalUrl !== undefined) updateData.canonicalUrl = data.canonicalUrl;
-    if (data.featured !== undefined) updateData.featured = data.featured;
-    if (data.isActive !== undefined) updateData.isActive = data.isActive;
-
-    const product = await this.prisma.products.update({
-      where: { id },
-      data: updateData,
-    });
-
-    // Sync to inventory if stockQuantity is updated
-    if (data.stockQuantity !== undefined) {
-      try {
-        await this.inventory.adjust(
-          id,
-          {
-            stock: data.stockQuantity,
-            reason: 'Product update from catalog',
-          },
-          { syncToProduct: false },
-        );
-      } catch (error) {
-        console.error(`Failed to update inventory for product ${id}`, error);
-      }
-    }
-
-    // Clear cache
-    await this.cache.deletePattern('products:list:*');
-
-    // Parse images and specifications fields for response
-    return {
-      ...product,
-      priceCents: Number(product.priceCents),
-      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: typeof product.images === 'string' ? JSON.parse(product.images) : product.images,
-      specifications:
-        typeof product.specifications === 'string'
-          ? JSON.parse(product.specifications)
-          : product.specifications,
-    };
-  }
-
-  async remove(id: string): Promise<{ deleted: boolean; message?: string }> {
-    try {
-      // Check if product exists
-      const product = await this.prisma.products.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          name: true,
-          _count: {
-            select: { order_items: true },
-          },
-        },
-      });
-
-      if (!product) {
-        return { deleted: false, message: 'Product not found' };
-      }
-
-      // Check if product has associated order items
-      if (product._count.order_items > 0) {
-        return {
-          deleted: false,
-          message: `Cannot delete product "${product.name}" because it has ${product._count.order_items} associated order(s). Please remove or update the orders first.`,
-        };
-      }
-
-      // Delete associated inventory first to avoid foreign key constraint
-      await this.prisma.inventory.deleteMany({
-        where: { productId: id },
-      });
-
-      // Safe to delete
-      const res = await this.prisma.products.deleteMany({ where: { id } });
-      await this.cache.deletePattern('products:list:*');
-      return { deleted: (res.count ?? 0) > 0 };
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      return { deleted: false, message: 'An error occurred while deleting the product' };
-    }
-  }
-
-  async listCategories(): Promise<
-    { id: string; slug: string; name: string; parentId: string | null }[]
-  > {
-    const key = 'categories:list';
-    const cached =
-      await this.cache.get<{ id: string; slug: string; name: string; parentId: string | null }[]>(
-        key,
-      );
-    if (cached) return cached;
-    const items = await this.prisma.categories.findMany({ orderBy: { name: 'asc' } });
-    await this.cache.set(key, items, { ttl: 300 });
-    return items;
-  }
-
-  async getCategoryBySlug(slug: string): Promise<{
-    id: string;
-    slug: string;
-    name: string;
-    parentId: string | null;
-    isActive: boolean;
-  }> {
-    const key = `categories:slug:${slug}`;
-    const cached = await this.cache.get<{
-      id: string;
-      slug: string;
-      name: string;
-      parentId: string | null;
-      isActive: boolean;
-    }>(key);
-    if (cached) return cached;
-
-    const category = await this.prisma.categories.findUnique({
-      where: { slug },
-      select: { id: true, slug: true, name: true, parentId: true, isActive: true },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with slug '${slug}' not found`);
-    }
-
-    await this.cache.set(key, category, { ttl: 300 });
-    return category;
-  }
-
-  async getProductsByCategory(
-    slug: string,
-    params: { page?: number; limit?: number },
-  ): Promise<{ items: any[]; total: number; page: number; pageSize: number; totalPages: number }> {
-    // First get category by slug
-    const category = await this.getCategoryBySlug(slug);
-
-    const page = Math.max(1, params.page || 1);
-    const limit = Math.min(10000, Math.max(1, params.limit || 10));
-    const offset = (page - 1) * limit;
-
-    const where = {
-      categoryId: category.id,
-      isDeleted: false,
-      isActive: true,
-    };
-
-    const [items, total] = await Promise.all([
-      this.prisma.products.findMany({
-        where,
-        include: {
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: offset,
-        take: limit,
-      }),
-      this.prisma.products.count({ where }),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
-
-    const mappedItems = items.map(item => ({
-      id: item.id,
-      slug: item.slug,
-      name: item.name,
-      description: item.description,
-      shortDescription: item.shortDescription,
-      priceCents: Number(item.priceCents),
-      originalPriceCents: item.originalPriceCents ? Number(item.originalPriceCents) : null,
-      imageUrl: item.imageUrl,
-      images: Array.isArray(item.images) ? (item.images as string[]) : [],
-      category: item.categories
-        ? {
-            id: item.categories.id,
-            name: item.categories.name,
-            slug: item.categories.slug,
-          }
-        : undefined,
-      isActive: item.isActive,
-      featured: item.featured,
-      stockQuantity: item.stockQuantity,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
+      images: this.safeParseJSON(product.images, []),
+      specifications: this.safeParseJSON(product.specifications, {}),
     }));
 
     return {
       items: mappedItems,
       total,
       page,
-      pageSize: limit,
-      totalPages,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
-  async createCategory(data: {
-    name: string;
-    slug: string;
-    parentId?: string;
-    isActive?: boolean;
-  }): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
-    // Check if slug already exists
-    const existing = await this.prisma.categories.findUnique({ where: { slug: data.slug } });
-    if (existing) {
-      throw new Error('Category with this slug already exists');
+  async getProductsByCategory(slug: string, params: { page?: number; limit?: number }) {
+    const category = await this.getCategoryBySlug(slug);
+    return this.listProducts({ categoryId: category.id, ...params });
+  }
+
+  async getById(id: string): Promise<ProductDto> {
+    const cacheKey = `product:${id}`;
+    const cached = await this.cache.get<ProductDto>(cacheKey);
+    if (cached) return cached;
+
+    const product = await this.prisma.products.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
+
+    const result = {
+      ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
+      images: this.safeParseJSON(product.images, []),
+      specifications: this.safeParseJSON(product.specifications, {}),
+    } as any;
+
+    await this.cache.set(cacheKey, result, { ttl: 300, tags: ['products'] });
+    return result;
+  }
+
+  async getBySlug(slug: string): Promise<ProductDto> {
+    const cacheKey = `product:slug:${slug}`;
+    const cached = await this.cache.get<ProductDto>(cacheKey);
+    if (cached) return cached;
+
+    const product = await this.prisma.products.findUnique({ where: { slug } });
+    if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
+
+    const result = {
+      ...product,
+      priceCents: Number(product.priceCents),
+      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
+      images: this.safeParseJSON(product.images, []),
+      specifications: this.safeParseJSON(product.specifications, {}),
+    } as any;
+
+    await this.cache.set(cacheKey, result, { ttl: 300, tags: ['products'] });
+    return result;
+  }
+
+  async checkSkuExists(sku: string, excludeId?: string): Promise<boolean> {
+    const where: any = { sku };
+    if (excludeId) where.id = { not: excludeId };
+    const count = await this.prisma.products.count({ where });
+    return count > 0;
+  }
+
+  async generateUniqueSku(baseName?: string): Promise<string> {
+    const base =
+      baseName
+        ?.toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 8) || 'PROD';
+    let sku = base;
+    let counter = 1;
+    while (await this.checkSkuExists(sku)) {
+      sku = `${base}-${counter.toString().padStart(3, '0')}`;
+      counter++;
+    }
+    return sku;
+  }
+
+  async create(data: CreateProductDto, userId?: string): Promise<ProductDto> {
+    const slug =
+      data.slug ||
+      data.name
+        .toLowerCase()
+        .replace(/ /g, '-')
+        .replace(/[^\w-]+/g, '');
+    const existed = await this.prisma.products.findUnique({ where: { slug } });
+    if (existed) throw new BadRequestException('Slug đã tồn tại');
+
+    if (data.sku) {
+      const skuExisted = await this.checkSkuExists(data.sku);
+      if (skuExisted) throw new BadRequestException(`SKU "${data.sku}" đã được sử dụng`);
     }
 
-    const category = await this.prisma.categories.create({
+    const product = await this.prisma.products.create({
       data: {
         id: randomUUID(),
-        updatedAt: new Date(),
+        slug,
         name: data.name,
-        slug: data.slug,
-        ...(data.parentId && { parent: { connect: { id: data.parentId } } }),
+        description: data.description,
+        shortDescription: data.shortDescription || data.description?.substring(0, 200),
+        priceCents: BigInt(data.priceCents),
+        originalPriceCents: BigInt(data.originalPriceCents || data.priceCents),
+        imageUrl: data.images?.[0] || null,
+        images: data.images ? JSON.stringify(data.images) : null,
+        categoryId: data.categoryId,
+        brand: data.brand,
+        model: data.model,
+        sku: data.sku || (await this.generateUniqueSku(data.name)),
+        specifications: data.specifications ? JSON.stringify(data.specifications) : null,
+        metaTitle: data.metaTitle || data.name,
+        metaDescription: data.metaDescription || data.shortDescription,
+        featured: data.featured || false,
         isActive: data.isActive ?? true,
-      },
+      } as any,
     });
 
-    // Clear cache
-    await this.cache.deletePattern('categories:*');
+    await this.inventory.create(product.id, { stock: data.stockQuantity || 0 });
 
-    return {
-      id: category.id,
-      slug: category.slug,
-      name: category.name,
-      parentId: category.parentId,
-    };
-  }
-
-  async updateCategory(
-    id: string,
-    data: { name?: string; slug?: string; parentId?: string; isActive?: boolean },
-  ): Promise<{ id: string; slug: string; name: string; parentId: string | null }> {
-    // Check if slug already exists (excluding current category)
-    if (data.slug) {
-      const existing = await this.prisma.categories.findFirst({
-        where: { slug: data.slug, id: { not: id } },
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'CREATE',
+        resource: 'product',
+        resourceId: product.id,
+        details: { name: product.name, price: data.priceCents },
+        category: 'catalog',
       });
-      if (existing) {
-        throw new Error('Category with this slug already exists');
-      }
     }
 
-    const category = await this.prisma.categories.update({
+    await this.cache.invalidateByTags(['products']);
+    return this.getById(product.id);
+  }
+
+  async update(id: string, data: UpdateProductDto, userId?: string): Promise<ProductDto> {
+    const existing = await this.prisma.products.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Sản phẩm không tồn tại');
+
+    // Check SKU uniqueness if SKU is being updated
+    if (data.sku && data.sku !== existing.sku) {
+      const skuExisted = await this.checkSkuExists(data.sku, id);
+      if (skuExisted) throw new BadRequestException(`SKU "${data.sku}" đã được sử dụng`);
+    }
+
+    const updateData: any = { ...data };
+    if (data.priceCents !== undefined) updateData.priceCents = BigInt(data.priceCents);
+    if (data.originalPriceCents !== undefined && data.originalPriceCents !== null) {
+      updateData.originalPriceCents = BigInt(data.originalPriceCents);
+    }
+    if (data.images) {
+      updateData.imageUrl = data.images[0];
+      updateData.images = JSON.stringify(data.images);
+    }
+    if (data.specifications) {
+      updateData.specifications = JSON.stringify(data.specifications);
+    }
+
+    const product = await this.prisma.products.update({
       where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.slug && { slug: data.slug }),
-        ...(data.parentId !== undefined && { parentId: data.parentId }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-      },
+      data: updateData,
     });
 
-    // Clear cache
-    await this.cache.deletePattern('categories:*');
-
-    return {
-      id: category.id,
-      slug: category.slug,
-      name: category.name,
-      parentId: category.parentId,
-    };
-  }
-
-  async deleteCategory(id: string): Promise<{ deleted: boolean; message?: string }> {
-    try {
-      // Check if category has products
-      const productCount = await this.prisma.products.count({
-        where: { categoryId: id },
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'UPDATE',
+        resource: 'product',
+        resourceId: id,
+        details: data,
+        category: 'catalog',
       });
-
-      if (productCount > 0) {
-        throw new Error(
-          `Cannot delete category because it has ${productCount} associated product(s). Please remove or reassign the products first.`,
-        );
-      }
-
-      // Check if category has subcategories
-      const subcategoryCount = await this.prisma.categories.count({
-        where: { parentId: id },
-      });
-
-      if (subcategoryCount > 0) {
-        throw new Error(
-          `Cannot delete category because it has ${subcategoryCount} subcategory(ies). Please remove or reassign the subcategories first.`,
-        );
-      }
-
-      await this.prisma.categories.delete({ where: { id } });
-
-      // Clear cache
-      await this.cache.deletePattern('categories:*');
-
-      return { deleted: true };
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      return {
-        deleted: false,
-        message:
-          error instanceof Error ? error.message : 'An error occurred while deleting the category',
-      };
     }
+
+    await this.cache.invalidateByTags(['products']);
+
+    return this.getById(product.id);
   }
 
-  async removeMany(slugs: string[] | null): Promise<{ deleted: number }> {
-    if (!slugs || slugs.length === 0) return { deleted: 0 };
-    // The tests expect deleteMany by slug
-    const res = await (this.prisma as any).products.deleteMany({ where: { slug: { in: slugs } } });
-    await this.cache.deletePattern('products:list:*');
-    return { deleted: res.count };
+  async delete(id: string, userId?: string) {
+    const product = await this.prisma.products.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
+
+    await this.prisma.products.update({
+      where: { id },
+      data: { isDeleted: true, updatedAt: new Date() },
+    });
+
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'DELETE',
+        resource: 'product',
+        resourceId: id,
+        category: 'catalog',
+        severity: 'medium',
+      });
+    }
+
+    await Promise.all([
+      this.cache.del(`product:${id}`),
+      this.cache.del(`product:slug:${product.slug}`),
+      this.cache.del('products:list:*'),
+    ]);
+
+    return { success: true };
+  }
+
+  async removeMany(ids: string[], userId?: string) {
+    await this.prisma.products.updateMany({
+      where: { id: { in: ids } },
+      data: { isDeleted: true, updatedAt: new Date() },
+    });
+
+    if (userId) {
+      await this.activityLog.logActivity({
+        userId,
+        action: 'DELETE_MANY',
+        resource: 'product',
+        details: { ids },
+        category: 'catalog',
+        severity: 'high',
+      });
+    }
+
+    await this.cache.del('products:list:*');
+    return { success: true };
   }
 }

@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'crypto';
 import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
 import { TelegramService } from '../notifications/telegram.service';
+import { CacheService } from '../caching/cache.service';
 
 @Injectable()
 export class ReviewsService {
@@ -11,7 +12,18 @@ export class ReviewsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly telegram: TelegramService,
+    private readonly cache: CacheService,
   ) {}
+
+  private escapeHtml(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
   async findAll(params: {
     page: number;
@@ -27,25 +39,14 @@ export class ReviewsService {
     if (params.rating) where.rating = params.rating;
     if (params.status) where.status = params.status;
 
-    const [reviews, total] = await Promise.all([
+    const [reviews, total] = await this.prisma.$transaction([
       this.prisma.product_reviews.findMany({
         where,
         skip,
         take: params.pageSize,
         include: {
-          products: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          users: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
+          products: { select: { id: true, name: true } },
+          users: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -65,208 +66,142 @@ export class ReviewsService {
     const review = await this.prisma.product_reviews.findUnique({
       where: { id },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        products: { select: { id: true, name: true } },
+        users: { select: { id: true, name: true } },
       },
     });
-
-    if (!review) {
-      throw new NotFoundException('Review not found');
-    }
-
+    if (!review) throw new NotFoundException('Review not found');
     return review;
   }
 
-  async create(createReviewDto: CreateReviewDto) {
-    // Validate productId
-    if (!createReviewDto.productId) {
-      throw new BadRequestException('productId is required');
+  async create(dto: CreateReviewDto) {
+    if (dto.rating < 1 || dto.rating > 5) throw new BadRequestException('Rating must be 1-5');
+
+    const product = await this.prisma.products.findUnique({ where: { id: dto.productId } });
+    if (!product || product.isDeleted) throw new NotFoundException('Product not found');
+
+    if (dto.userId) {
+      const existing = await this.prisma.product_reviews.findFirst({
+        where: { userId: dto.userId, productId: dto.productId },
+      });
+      if (existing) throw new BadRequestException('Bạn đã đánh giá sản phẩm này rồi');
     }
 
-    // Validate rating
-    if (createReviewDto.rating < 1 || createReviewDto.rating > 5) {
-      throw new BadRequestException('Rating must be between 1 and 5');
+    let isVerified = false;
+    if (dto.userId) {
+      const orderCount = await this.prisma.order_items.count({
+        where: {
+          productId: dto.productId,
+          orders: { userId: dto.userId, status: 'COMPLETED' },
+        },
+      });
+      isVerified = orderCount > 0;
     }
 
     const review = await this.prisma.product_reviews.create({
       data: {
         id: randomUUID(),
-        userId: createReviewDto.userId,
-        productId: createReviewDto.productId,
-        rating: createReviewDto.rating,
-        title: createReviewDto.title,
-        comment: createReviewDto.comment,
-        images: createReviewDto.images,
+        userId: dto.userId,
+        productId: dto.productId,
+        rating: dto.rating,
+        title: dto.title,
+        comment: dto.comment,
+        images: dto.images ? JSON.stringify(dto.images) : null,
         status: 'PENDING',
-        isVerified: false,
-        upvotes: 0,
-        downvotes: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+        isVerified,
+      } as any,
     });
 
-    this.logger.log(`Review created: ${review.id}`);
-
-    // Send Telegram notification
     try {
-      // Fetch product name for notification
-      const product = await this.prisma.products.findUnique({
-        where: { id: createReviewDto.productId },
-        select: { name: true },
-      });
-
-      await this.telegram.sendNewReviewNotification({
-        id: review.id,
-        productName: product?.name,
-        userName: review.users?.name,
-        rating: review.rating,
-        comment: review.comment,
-        createdAt: review.createdAt,
-      });
-    } catch (error) {
-      this.logger.error('Failed to send review notification:', error);
-    }
+      const msg = `📢 <b>Đánh giá mới</b>: ${dto.rating}⭐ cho ${this.escapeHtml(
+        product.name,
+      )}\n💬 ${this.escapeHtml(dto.comment)}`;
+      await this.telegram.sendMessage(msg);
+    } catch {}
 
     return review;
   }
 
-  async update(id: string, updateReviewDto: UpdateReviewDto) {
+  async update(id: string, dto: UpdateReviewDto, isAdmin: boolean = false) {
     const review = await this.findById(id);
 
-    if (updateReviewDto.rating && (updateReviewDto.rating < 1 || updateReviewDto.rating > 5)) {
-      throw new BadRequestException('Rating must be between 1 and 5');
+    const updateData: any = { ...dto };
+    if (!isAdmin) {
+      delete updateData.status;
     }
 
-    const updated = await this.prisma.product_reviews.update({
+    if (dto.images) updateData.images = JSON.stringify(dto.images);
+
+    const updatedReview = await this.prisma.product_reviews.update({
       where: { id },
-      data: {
-        title: updateReviewDto.title ?? review.title,
-        comment: updateReviewDto.comment ?? review.comment,
-        rating: updateReviewDto.rating ?? review.rating,
-        response: updateReviewDto.response ?? review.response,
-        updatedAt: new Date(),
-      },
-      include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+      data: { ...updateData, updatedAt: new Date() },
     });
 
-    this.logger.log(`Review updated: ${id}`);
-    return updated;
+    if (updateData.status === 'APPROVED' || review.status === 'APPROVED') {
+      await this.recalculateProductRating(review.productId);
+    }
+
+    return updatedReview;
   }
 
-  async updateStatus(id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') {
-    const _review = await this.findById(id);
-
-    const updated = await this.prisma.product_reviews.update({
-      where: { id },
-      data: {
-        status,
-        updatedAt: new Date(),
-      },
-      include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    this.logger.log(`Review status updated: ${id} -> ${status}`);
-    return updated;
+  async updateStatus(id: string, status: string) {
+    return this.update(id, { status } as any, true);
   }
 
   async delete(id: string) {
-    await this.findById(id);
+    const review = await this.findById(id);
+    await this.prisma.product_reviews.delete({ where: { id } });
 
-    await this.prisma.product_reviews.delete({
+    if (review.status === 'APPROVED') {
+      await this.recalculateProductRating(review.productId);
+    }
+    return { success: true };
+  }
+
+  async markHelpful(id: string, helpful: boolean, _userId?: string) {
+    const review = await this.findById(id);
+
+    // Prevent helpfulCount from going negative
+    const currentHelpful = (review as any).helpfulCount ?? 0;
+    if (!helpful && currentHelpful <= 0) {
+      return review;
+    }
+
+    return this.prisma.product_reviews.update({
       where: { id },
+      data: {
+        helpfulCount: helpful ? { increment: 1 } : { decrement: 1 },
+      } as any,
     });
-
-    this.logger.log(`Review deleted: ${id}`);
-    return { message: 'Review deleted successfully' };
   }
 
   async getStats() {
-    const [total, approved, pending, rejected, avgRating] = await Promise.all([
-      this.prisma.product_reviews.count(),
-      this.prisma.product_reviews.count({ where: { status: 'APPROVED' } }),
-      this.prisma.product_reviews.count({ where: { status: 'PENDING' } }),
-      this.prisma.product_reviews.count({ where: { status: 'REJECTED' } }),
-      this.prisma.product_reviews.aggregate({
-        _avg: { rating: true },
-      }),
-    ]);
-
-    return {
-      total,
-      approved,
-      pending,
-      rejected,
-      averageRating: avgRating._avg.rating || 0,
-    };
+    const stats = await this.prisma.product_reviews.groupBy({
+      by: ['status'],
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+    return stats;
   }
 
-  async markHelpful(id: string, isHelpful: boolean) {
-    const review = await this.findById(id);
-
-    const updated = await this.prisma.product_reviews.update({
-      where: { id },
-      data: {
-        upvotes: isHelpful ? review.upvotes + 1 : review.upvotes,
-        downvotes: !isHelpful ? review.downvotes + 1 : review.downvotes,
-        updatedAt: new Date(),
-      },
+  private async recalculateProductRating(productId: string) {
+    const agg = await this.prisma.product_reviews.aggregate({
+      where: { productId, status: 'APPROVED' },
+      _avg: { rating: true },
+      _count: { id: true },
     });
 
-    return updated;
+    await this.prisma.products.update({
+      where: { id: productId },
+      data: {
+        averageRating: agg._avg.rating || 0,
+        reviewCount: agg._count.id || 0,
+      } as any,
+    });
+
+    // Invalidate product cache
+    await this.cache.del(`product:${productId}`);
+    await this.cache.del(`product_detail:${productId}`);
+    this.logger.log(`Invalidated cache for product ${productId} after rating update`);
   }
 }

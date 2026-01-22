@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
@@ -121,10 +121,25 @@ export class CartService {
     });
 
     if (existingItem) {
-      // Update quantity
+      // Update quantity with re-validation
+      const newQuantity = existingItem.quantity + quantity;
+
+      // Re-validate stock for new total quantity
+      if (inventory) {
+        const availableStock = inventory.stock - inventory.reserved;
+        if (availableStock < newQuantity) {
+          throw new BadRequestException(
+            `Insufficient stock. Available: ${availableStock}, Total in cart would be: ${newQuantity}`,
+          );
+        }
+      }
+
       await this.prisma.cart_items.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity },
+        data: {
+          quantity: newQuantity,
+          price: product.priceCents, // Sync price to latest
+        },
       });
     } else {
       // Add new item
@@ -164,10 +179,16 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    const delta = quantity - cartItem.quantity;
-    if (delta !== 0) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+    if (quantity > cartItem.quantity) {
+      const inventory = await this.prisma.inventory.findUnique({
+        where: { productId },
+      });
+      if (inventory) {
+        const availableStock = inventory.stock - inventory.reserved;
+        if (availableStock < quantity) {
+          throw new BadRequestException(`Số lượng tồn kho không đủ. Còn lại: ${availableStock}`);
+        }
+      }
     }
 
     if (quantity <= 0) {
@@ -325,6 +346,72 @@ export class CartService {
     return this.calculateCartTotals(cart);
   }
 
+  async mergeGuestCartIntoUserCart(guestCartId: string, userId: string) {
+    const guestCart = await this.prisma.carts.findFirst({
+      where: { id: guestCartId, userId: null, status: 'ACTIVE' },
+      include: { cart_items: true },
+    });
+
+    if (!guestCart || guestCart.cart_items.length === 0) return;
+
+    let userCart = await this.prisma.carts.findFirst({
+      where: { userId, status: 'ACTIVE' },
+    });
+
+    if (!userCart) {
+      userCart = await this.createUserCart(userId);
+    }
+
+    for (const item of guestCart.cart_items) {
+      // Check stock availability
+      const inventory = await this.prisma.inventory.findUnique({
+        where: { productId: item.productId },
+      });
+      const availableStock = inventory ? inventory.stock - inventory.reserved : 0;
+
+      const existingUserItem = await this.prisma.cart_items.findFirst({
+        where: { cartId: userCart.id, productId: item.productId },
+      });
+
+      const currentQtyInUserCart = existingUserItem?.quantity || 0;
+      const requestedTotal = currentQtyInUserCart + item.quantity;
+
+      // Cap to available stock if exceeded
+      const finalQuantity = Math.min(requestedTotal, availableStock);
+
+      if (finalQuantity <= 0) {
+        this.logger.warn(`Skipping merge for product ${item.productId} - no stock available`);
+        continue;
+      }
+
+      if (existingUserItem) {
+        await this.prisma.cart_items.update({
+          where: { id: existingUserItem.id },
+          data: { quantity: finalQuantity },
+        });
+      } else {
+        await this.prisma.cart_items.create({
+          data: {
+            id: randomUUID(),
+            cartId: userCart.id,
+            productId: item.productId,
+            quantity: Math.min(item.quantity, availableStock),
+            price: item.price,
+            updatedAt: new Date(),
+          },
+        });
+      }
+    }
+
+    // Mark guest cart as COMPLETED or DELETED
+    await this.prisma.carts.update({
+      where: { id: guestCartId },
+      data: { status: 'MERGED', updatedAt: new Date() },
+    });
+
+    this.logger.log(`Merged guest cart ${guestCartId} into user cart ${userCart.id}`);
+  }
+
   async createUserCart(userId: string) {
     const cart = await this.prisma.carts.create({
       data: {
@@ -369,15 +456,34 @@ export class CartService {
 
     const product = await this.prisma.products.findUnique({
       where: { id: productId },
+      select: {
+        id: true,
+        name: true,
+        priceCents: true,
+        stockQuantity: true,
+        isActive: true,
+        isDeleted: true,
+      },
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Sản phẩm không tồn tại');
     }
 
-    // Note: Stock check removed as inventory is not in current schema
-    // TODO: Implement stock check when inventory schema is added
+    if (!product.isActive || product.isDeleted) {
+      throw new NotFoundException('Sản phẩm không còn được bán');
+    }
 
+    // ✅ Check stock availability from Inventory
+    const inventory = await this.prisma.inventory.findUnique({
+      where: { productId },
+    });
+
+    if (!inventory) {
+      throw new NotFoundException('Sản phẩm không có thông tin tồn kho');
+    }
+
+    const availableStock = inventory.stock - inventory.reserved;
     const existingItem = await this.prisma.cart_items.findFirst({
       where: {
         cartId: cart.id,
@@ -385,10 +491,22 @@ export class CartService {
       },
     });
 
+    const currentQtyInCart = existingItem?.quantity || 0;
+    const totalRequestedQty = currentQtyInCart + quantity;
+
+    if (totalRequestedQty > availableStock) {
+      throw new BadRequestException(
+        `Không đủ hàng: ${product.name} (còn ${availableStock}, trong giỏ ${currentQtyInCart}, thêm ${quantity})`,
+      );
+    }
+
     if (existingItem) {
       await this.prisma.cart_items.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity },
+        data: {
+          quantity: existingItem.quantity + quantity,
+          price: product.priceCents, // Sync price
+        },
       });
     } else {
       await this.prisma.cart_items.create({
@@ -426,10 +544,16 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    const delta = quantity - cartItem.quantity;
-    if (delta !== 0) {
-      // Note: Inventory management removed as it's not in current schema
-      // TODO: Implement inventory management when schema is updated
+    if (quantity > cartItem.quantity) {
+      const inventory = await this.prisma.inventory.findUnique({
+        where: { productId },
+      });
+      if (inventory) {
+        const availableStock = inventory.stock - inventory.reserved;
+        if (availableStock < quantity) {
+          throw new BadRequestException(`Số lượng tồn kho không đủ. Còn lại: ${availableStock}`);
+        }
+      }
     }
 
     if (quantity <= 0) {
@@ -486,24 +610,72 @@ export class CartService {
 
   // Helper method to calculate cart totals
   private calculateCartTotals(cart: any) {
-    const subtotal = cart.items.reduce((sum: number, item: any) => {
-      return sum + (item.price ?? item.products?.priceCents ?? 0) * item.quantity;
+    // 1. Filter out inactive or deleted products first
+    const rawItems = cart.cart_items || cart.items || [];
+    const validItems = rawItems.filter(
+      (item: any) => item.products && !item.products.isDeleted && (item.products.isActive ?? true),
+    );
+
+    // 2. Identify and (optionally) log removed items
+    if (validItems.length < rawItems.length) {
+      this.logger.warn(
+        `Cart ${cart.id} had ${rawItems.length - validItems.length} invalid items removed.`,
+      );
+    }
+
+    const subtotal = validItems.reduce((sum: number, item: any) => {
+      // ALWAYS use the latest product price from the DB (item.products.priceCents)
+      // unless we want to "freeze" prices, but for e-commerce, real-time price is better
+      const currentPrice = Number(item.products?.priceCents) || Number(item.price) || 0;
+      return sum + currentPrice * item.quantity;
     }, 0);
 
-    const itemCount = cart.items.reduce((sum: number, item: any) => {
-      return sum + item.quantity;
-    }, 0);
+    const itemCount = validItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+
+    // In many Vietnam retailers, price already includes VAT.
+    // If not, tax is 8% (current) or 10%. We'll assume VAT is inclusive for total,
+    // but show it separately in the breakdown.
+    const taxInclusive = true;
+    const taxRate = 0.1;
+    const taxAmount = taxInclusive
+      ? Math.round(subtotal - subtotal / (1 + taxRate)) // Part of subtotal
+      : Math.round(subtotal * taxRate); // Extra
+
+    const shipping = subtotal > 10000000 ? 0 : 50000; // Free ship over 10M VND for Audio equipment
 
     return {
       ...cart,
+      items: validItems.map((item: any) => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: Number(item.products?.priceCents) || Number(item.price), // Sync price
+        product: {
+          id: item.products.id,
+          name: item.products.name,
+          priceCents: Number(item.products.priceCents),
+          imageUrl: item.products.imageUrl,
+          images: this.safeParseJSON(item.products.images, []),
+          stock: item.products.stockQuantity,
+        },
+      })),
       subtotal,
       itemCount,
-      // Add tax calculation (10% VAT for Vietnam)
-      tax: Math.round(subtotal * 0.1),
-      // Add shipping calculation (free shipping for orders > 500k VND)
-      shipping: subtotal > 500000 ? 0 : 30000,
-      total: subtotal + Math.round(subtotal * 0.1) + (subtotal > 500000 ? 0 : 30000),
+      tax: taxAmount,
+      shipping,
+      total: taxInclusive ? subtotal + shipping : subtotal + taxAmount + shipping,
+      invalidItemsRemoved: rawItems.length - validItems.length,
     };
+  }
+
+  private safeParseJSON(data: any, defaultValue: any = []) {
+    if (!data) return defaultValue;
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return defaultValue;
+    }
   }
 
   // Clean up old guest carts (older than 7 days)
@@ -525,6 +697,20 @@ export class CartService {
     }
 
     this.logger.log(`Cleaned up ${expiredCarts.length} expired guest carts`);
+  }
+
+  async clearCart(userId: string) {
+    const cart = await this.prisma.carts.findFirst({
+      where: { userId, status: 'ACTIVE' },
+    });
+
+    if (cart) {
+      await this.prisma.carts.update({
+        where: { id: cart.id },
+        data: { status: 'COMPLETED', updatedAt: new Date() },
+      });
+      this.logger.log(`Cart ${cart.id} cleared for user ${userId}`);
+    }
   }
 
   // Utility for checkout to fetch cart and totals

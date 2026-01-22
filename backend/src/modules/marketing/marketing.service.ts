@@ -226,30 +226,86 @@ export class MarketingService {
 
   // Audience Management
   async getAudienceSegments() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const [newCount, allUsers] = await Promise.all([
+      // Count new customers directly
+      this.prisma.users.count({
+        where: {
+          role: 'USER',
+          createdAt: { gte: thirtyDaysAgo },
+          isActive: true,
+        },
+      }),
+      // Fetch user data for more complex segmentation
+      this.prisma.users.findMany({
+        where: { role: 'USER', isActive: true },
+        select: {
+          id: true,
+          orders: {
+            where: { status: { in: ['DELIVERED', 'COMPLETED', 'SHIPPED'] } },
+            select: { totalCents: true, createdAt: true },
+          },
+          activity_logs: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true },
+          },
+          createdAt: true,
+        },
+      }) as unknown as Promise<any[]>,
+    ]);
+
+    let returningCount = 0;
+    let highValueCount = 0;
+    let inactiveCount = 0;
+
+    allUsers.forEach(user => {
+      const orderCount = user.orders?.length || 0;
+      const totalSpent =
+        user.orders?.reduce((sum: number, o: any) => sum + Number(o.totalCents), 0) || 0;
+
+      // Determine last activity: either an order or an activity log
+      const lastOrderTime =
+        user.orders?.length > 0
+          ? Math.max(...user.orders.map((o: any) => o.createdAt.getTime()))
+          : 0;
+      const lastLogTime = user.activity_logs?.[0]?.createdAt?.getTime() || 0;
+      const lastActivityTime = Math.max(lastOrderTime, lastLogTime, user.createdAt.getTime());
+
+      if (orderCount > 1) returningCount++;
+      if (totalSpent >= 5000000) highValueCount++; // High value if spend > 5M VND
+      if (lastActivityTime < ninetyDaysAgo.getTime()) inactiveCount++;
+    });
+
     return [
       {
         id: 'new-customers',
         name: 'New Customers',
         description: 'Customers who registered in the last 30 days',
-        count: 150,
+        count: newCount,
       },
       {
         id: 'returning-customers',
         name: 'Returning Customers',
-        description: 'Customers with more than 1 order',
-        count: 320,
+        description: 'Customers with more than 1 successful order',
+        count: returningCount,
       },
       {
         id: 'high-value',
         name: 'High Value Customers',
-        description: 'Customers who spent more than 5M VND',
-        count: 85,
+        description: 'Customers who spent more than 5,000,000₫',
+        count: highValueCount,
       },
       {
         id: 'inactive',
         name: 'Inactive Customers',
-        description: 'Customers with no activity in 90 days',
-        count: 200,
+        description: 'Customers with no activity in the last 90 days',
+        count: inactiveCount,
       },
     ];
   }

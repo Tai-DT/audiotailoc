@@ -19,7 +19,7 @@ import { AdminGuard } from '../auth/admin.guard';
  * Handles search endpoints for products, services, blog, and knowledge base
  */
 @ApiTags('Search')
-@Controller('api/v1/search')
+@Controller('search')
 export class SearchController {
   private readonly logger = new Logger(SearchController.name);
 

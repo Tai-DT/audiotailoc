@@ -340,29 +340,29 @@ export class PayOSService implements OnModuleInit {
         return { error: 0, message: 'Already processed or no pending intent' };
       }
 
-      // Xử lý theo status
+      // Xử lý và trả về chỉ thị cho PaymentsService
       if (code === '00') {
-        // Thanh toán thành công
-        await this.markPaymentAsPaid(intent, transactionId);
-        return { error: 0, message: 'Payment successful' };
-      } else if (code === '01') {
-        // Thanh toán thất bại
-        await this.markPaymentAsFailed(intent);
-        return { error: 0, message: 'Payment failed' };
-      } else if (code === '02') {
-        // Thanh toán bị hủy
-        await this.markPaymentAsCancelled(intent);
-        return { error: 0, message: 'Payment cancelled' };
+        return {
+          status: 'PAID',
+          intentId: intent.id,
+          transactionId: transactionId || String(orderCode),
+          amount: verifiedWebhookData.amount || intent.amountCents,
+        };
+      } else if (code === '01' || code === '02') {
+        return {
+          status: code === '02' ? 'CANCELLED' : 'FAILED',
+          intentId: intent.id,
+        };
       } else {
-        // Status khác
-        this.logger.warn(`PayOS webhook: unknown status code=${code}`);
-        return { error: 0, message: 'Unknown status' };
+        return { status: 'UNKNOWN', code };
       }
     } catch (error) {
       this.logger.error(`PayOS webhook processing error: ${(error as Error).message}`);
-      return { error: 1, message: 'Webhook processing failed' };
+      return { status: 'ERROR', message: (error as Error).message };
     }
   }
+
+  // --- INTERNAL HELPER METHODS REMOVED AS THEY ARE NOW HANDLED BY PAYMENTSSERVICE ---
 
   /**
    * Hoàn tiền với PayOS sử dụng SDK
@@ -439,99 +439,5 @@ export class PayOSService implements OnModuleInit {
           ? 'https://api.payos.vn'
           : 'https://api-merchant.payos.vn'),
     };
-  }
-
-  /**
-   * Đánh dấu thanh toán thành công
-   */
-  private async markPaymentAsPaid(intent: any, transactionId: string) {
-    await this.prisma.$transaction(async tx => {
-      // Tạo payment record
-      await tx.payments.create({
-        data: {
-          id: crypto.randomUUID(),
-          provider: 'PAYOS',
-          orderId: intent.orderId,
-          intentId: intent.id,
-          amountCents: intent.amountCents,
-          status: 'SUCCEEDED',
-          transactionId: transactionId,
-          updatedAt: new Date(),
-        },
-      });
-
-      // Cập nhật order status
-      await tx.orders.update({
-        where: { id: intent.orderId },
-        data: { status: 'CONFIRMED' },
-      });
-
-      // Cập nhật payment intent status
-      await tx.payment_intents.update({
-        where: { id: intent.id },
-        data: { status: 'SUCCEEDED' },
-      });
-    });
-
-    // Notifications (best-effort)
-    try {
-      const order = await this.prisma.orders.findUnique({
-        where: { id: intent.orderId },
-        include: { users: true },
-      });
-
-      await this.notificationService.sendNotification({
-        userId: order?.userId || undefined,
-        email: order?.users?.email || undefined,
-        title: 'Thanh toán thành công',
-        message: `Đơn hàng ${order?.orderNo || intent.orderId} đã được thanh toán thành công`,
-        type: 'PAYMENT',
-        priority: 'HIGH',
-        channels: ['EMAIL', 'PUSH'],
-        data: {
-          orderId: intent.orderId,
-          intentId: intent.id,
-          provider: 'PAYOS',
-          amountCents: intent.amountCents,
-          transactionId,
-        },
-      });
-
-      await this.telegramService?.sendPaymentNotification({
-        orderNo: order?.orderNo || intent.orderId,
-        amountCents: intent.amountCents,
-        provider: 'PAYOS',
-        status: 'SUCCEEDED',
-        createdAt: new Date(),
-      });
-    } catch (e) {
-      this.logger.warn(`[PayOS] Notification sending failed: ${(e as Error).message}`);
-    }
-
-    this.logger.log(`PayOS payment marked as paid: ${intent.id} - ${transactionId}`);
-  }
-
-  /**
-   * Đánh dấu thanh toán thất bại
-   */
-  private async markPaymentAsFailed(intent: any) {
-    await this.prisma.payment_intents.update({
-      where: { id: intent.id },
-      data: { status: 'FAILED' },
-    });
-
-    this.logger.log(`PayOS payment marked as failed: ${intent.id}`);
-  }
-
-  /**
-   * Đánh dấu thanh toán bị hủy
-   */
-  private async markPaymentAsCancelled(intent: any) {
-    await this.prisma.payment_intents.update({
-      where: { id: intent.id },
-      data: { status: 'CANCELLED' },
-    });
-
-    this.logger.log(`PayOS payment marked as cancelled: ${intent.id}`);
   }
 }

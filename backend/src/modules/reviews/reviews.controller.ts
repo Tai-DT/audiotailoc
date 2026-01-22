@@ -91,7 +91,9 @@ export class ReviewsController {
       }
     }
 
-    return this.reviewsService.update(id, updateReviewDto);
+    const isAdmin = req?.user?.role === 'ADMIN';
+
+    return this.reviewsService.update(id, updateReviewDto, isAdmin);
   }
 
   @Patch(':id/status/:status')
@@ -114,7 +116,13 @@ export class ReviewsController {
   @Patch(':id/helpful/:helpful')
   @UseGuards(OptionalJwtGuard, RateLimitGuard)
   @ApiOperation({ summary: 'Mark review as helpful/unhelpful' })
-  async markHelpful(@Param('id') id: string, @Param('helpful') helpful: 'true' | 'false') {
-    return this.reviewsService.markHelpful(id, helpful === 'true');
+  async markHelpful(
+    @Param('id') id: string,
+    @Param('helpful') helpful: 'true' | 'false',
+    @Req() req?: any,
+  ) {
+    // Pass userId if user is authenticated to enable vote tracking
+    const userId = req?.user?.sub || req?.user?.id;
+    return this.reviewsService.markHelpful(id, helpful === 'true', userId);
   }
 }

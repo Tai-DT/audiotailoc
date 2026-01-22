@@ -90,9 +90,18 @@ export class ProjectsUploadController {
       await fs.unlink(file.path).catch(() => {});
 
       // Update project with new thumbnail URL
+      const project = await this.projectsService.findById(id);
+      const oldThumbnail = project.thumbnailImage;
+
       const updated = await this.projectsService.updateImages(id, {
         thumbnailImage: result.secure_url,
       });
+
+      // ✅ CLEANUP: Delete old image from Cloudinary
+      const oldPublicId = this.cloudinaryService.extractPublicId(oldThumbnail);
+      if (oldPublicId) {
+        await this.cloudinaryService.deleteAsset(oldPublicId);
+      }
 
       return {
         success: true,
@@ -169,9 +178,18 @@ export class ProjectsUploadController {
       await fs.unlink(file.path).catch(() => {});
 
       // Update project with new cover URL
+      const project = await this.projectsService.findById(id);
+      const oldCover = project.coverImage;
+
       const updated = await this.projectsService.updateImages(id, {
         coverImage: result.secure_url,
       });
+
+      // ✅ CLEANUP: Delete old image from Cloudinary
+      const oldPublicId = this.cloudinaryService.extractPublicId(oldCover);
+      if (oldPublicId) {
+        await this.cloudinaryService.deleteAsset(oldPublicId);
+      }
 
       return {
         success: true,
@@ -366,13 +384,24 @@ export class ProjectsUploadController {
       }
 
       // Replace gallery with new images
+      const project = await this.projectsService.findById(id);
+      let oldImages: string[] = [];
+      if (project.galleryImages) {
+        try {
+          oldImages = JSON.parse(project.galleryImages as string);
+        } catch (e) {}
+      }
+
       const updated = await this.projectsService.updateImages(id, {
         galleryImages: JSON.stringify(uploadedUrls),
       });
 
-      // Clean up temp files
-      for (const tempFile of tempFiles) {
-        await fs.unlink(tempFile).catch(() => {});
+      // ✅ CLEANUP: Delete all old gallery images from Cloudinary
+      for (const oldImg of oldImages) {
+        const publicId = this.cloudinaryService.extractPublicId(oldImg);
+        if (publicId) {
+          await this.cloudinaryService.deleteAsset(publicId);
+        }
       }
 
       return {

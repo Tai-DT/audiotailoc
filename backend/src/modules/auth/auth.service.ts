@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { SecurityService } from '../security/security.service';
 import * as jwt from 'jsonwebtoken';
@@ -32,8 +38,8 @@ export class AuthService {
     // Check if account is locked
     if (this.securityService.isAccountLocked(dto.email)) {
       const remainingTime = this.securityService.getRemainingLockoutTime(dto.email);
-      throw new Error(
-        `Account is locked. Try again in ${Math.ceil(remainingTime / 60000)} minutes.`,
+      throw new ForbiddenException(
+        `Tài khoản bị khóa. Vui lòng thử lại sau ${Math.ceil(remainingTime / 60000)} phút.`,
       );
     }
 
@@ -42,7 +48,7 @@ export class AuthService {
     // Use generic error message to prevent user enumeration
     if (!user) {
       this.securityService.recordLoginAttempt(dto.email, false);
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
     const ok = await this.securityService.verifyPassword(dto.password, user.password);
@@ -52,7 +58,7 @@ export class AuthService {
 
     // Use generic error message to prevent user enumeration
     if (!ok) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
     const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET');
@@ -87,30 +93,35 @@ export class AuthService {
       const payload = jwt.verify(refreshToken, refreshSecret) as { sub: string };
 
       const user = await this.users.findById(payload.sub);
-      if (!user) throw new Error('User not found');
+      if (!user) throw new UnauthorizedException('Người dùng không tồn tại');
 
       // Validate user is still active and not disabled
       const userRole = (user as { role?: string }).role;
       if (userRole === 'DISABLED') {
-        throw new Error('User account has been disabled');
+        throw new ForbiddenException('Tài khoản đã bị vô hiệu hóa');
       }
 
       const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET');
       if (!accessSecret) {
         throw new Error('JWT access secret is not configured');
       }
+
       const newAccessToken = jwt.sign(
         { sub: user.id, email: user.email, role: userRole ?? 'USER' },
         accessSecret,
         { expiresIn: '15m' },
       );
 
-      return { accessToken: newAccessToken, refreshToken };
+      // Refresh token rotation
+      const newRefreshToken = jwt.sign({ sub: user.id }, refreshSecret, {
+        expiresIn: '7d',
+      });
+
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     } catch (error) {
-      if (error instanceof Error && error.message !== 'Invalid refresh token') {
+      if (error instanceof UnauthorizedException || error instanceof ForbiddenException)
         throw error;
-      }
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
   }
 

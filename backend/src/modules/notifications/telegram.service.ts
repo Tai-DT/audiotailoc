@@ -45,10 +45,10 @@ export class TelegramService {
     // TODO: ChatService module does not exist
     // @Inject(forwardRef(() => ChatService))
     // private readonly chatService: ChatService,
-  ) {
-    this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN', '');
-    this.chatIds = this.configService
-      .get<string>('TELEGRAM_CHAT_IDS', '')
+  /**
+   * Format money in VND
+   * Note: DB may store amounts in cents (e.g. `amountCents`). This helper expects a full VND amount.
+   */
       .split(',')
       .map(id => id.trim())
       .filter(Boolean);
@@ -417,11 +417,14 @@ Trạng thái: ${this.translateStatus(oldStatus)} → ${this.translateStatus(new
 
     const emoji = statusEmoji[payment.status] || '💳';
 
+    // amount may be provided as `amountCents` (DB cents) or `amount` (full VND)
+    const amountValue = payment.amountCents !== undefined ? payment.amountCents / 100 : payment.amount;
+
     return `
 ${emoji} THANH TOÁN #${payment.orderNo}
 
 Trạng thái: ${payment.status}
-💰 Số tiền: ${this.formatMoney(payment.amountCents)}
+💰 Số tiền: ${this.formatMoney(amountValue)}
 💳 Phương thức: ${payment.provider}
 ⏰ ${this.formatDate(payment.createdAt)}
 
@@ -471,12 +474,13 @@ Trạng thái: ${payment.status}
 
   /**
    * Format money in VND
+   * Note: VND values are stored as full amounts (not cents), so no division needed
    */
-  private formatMoney(cents: number): string {
+  private formatMoney(amount: number): string {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
-    }).format(cents / 100);
+    }).format(amount);
   }
 
   /**
@@ -595,7 +599,7 @@ Trạng thái: ${payment.status}
       // Ignore error
     }
 
-    if (data.startsWith('confirm_order:')) {
+    if (typeof data === 'string' && data.startsWith('confirm_order:')) {
       const orderId = data.split(':')[1];
       await this.sendToChat(chatId, `⏳ Đang xác nhận đơn hàng ${orderId}...`);
       // TODO: Call OrdersService to update status (Need to inject OrdersService properly to avoid circular dependency hell, or emit event)
@@ -604,7 +608,7 @@ Trạng thái: ${payment.status}
         chatId,
         `✅ Đã gửi lệnh xác nhận đơn hàng ${orderId}. (Tính năng đang hoàn thiện)`,
       );
-    } else if (data.startsWith('cancel_order:')) {
+    } else if (typeof data === 'string' && data.startsWith('cancel_order:')) {
       const orderId = data.split(':')[1];
       await this.sendToChat(chatId, `⏳ Đang hủy đơn hàng ${orderId}...`);
       // TODO: Call OrdersService
@@ -628,7 +632,7 @@ Trạng thái: ${payment.status}
 
     if (!text) return;
 
-    if (text.startsWith('/')) {
+    if (typeof text === 'string' && text.startsWith('/')) {
       const [command, ...args] = text.split(' ');
       await this.handleCommand(chatId, command, args, message);
     } else if (message.reply_to_message) {
@@ -711,7 +715,7 @@ Trạng thái: ${payment.status}
       const message = `
 📊 <b>THỐNG KÊ NHANH (7 ngày qua)</b>
 
-💰 Doanh thu: ${this.formatMoney(overview.totalRevenue * 100)}
+💰 Doanh thu: ${this.formatMoney(overview.totalRevenue)}
 📦 Đơn hàng: ${overview.totalOrders}
 👥 Khách mới: ${overview.newCustomers}
 

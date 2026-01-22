@@ -51,7 +51,13 @@ export class WishlistService {
 
   async getWishlist(userId: string) {
     const wishlistItems = await this.prisma.wishlist_items.findMany({
-      where: { userId },
+      where: {
+        userId,
+        products: {
+          isDeleted: false,
+          isActive: true,
+        },
+      },
       include: {
         products: {
           select: {
@@ -80,7 +86,22 @@ export class WishlistService {
     });
 
     return {
-      items: wishlistItems,
+      items: wishlistItems.map(item => ({
+        ...item,
+        products: item.products
+          ? {
+              ...item.products,
+              priceCents: Number(item.products.priceCents),
+              originalPriceCents: item.products.originalPriceCents
+                ? Number(item.products.originalPriceCents)
+                : null,
+              images:
+                typeof item.products.images === 'string'
+                  ? JSON.parse(item.products.images)
+                  : item.products.images,
+            }
+          : null,
+      })),
       total: wishlistItems.length,
     };
   }

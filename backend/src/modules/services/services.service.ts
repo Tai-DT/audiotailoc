@@ -51,20 +51,18 @@ export class ServicesService {
     }
 
     // Handle price based on type
+    // DB stores amounts in cents (basePriceCents). Incoming `price` is expected in full VND.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const priceData: any = {
       priceType: data.priceType || 'FIXED',
     };
 
     if (data.priceType === 'RANGE') {
-      // For range, convert VND to cents
-      priceData.minPrice = data.minPrice ? Math.round(data.minPrice * 100) : null;
-      priceData.maxPrice = data.maxPrice ? Math.round(data.maxPrice * 100) : null;
-      // Set basePriceCents to minPrice for compatibility
+      priceData.minPrice = data.minPrice !== undefined ? Math.round(data.minPrice * 100) : null;
+      priceData.maxPrice = data.maxPrice !== undefined ? Math.round(data.maxPrice * 100) : null;
       priceData.basePriceCents = priceData.minPrice || 0;
       priceData.price = priceData.minPrice || 0;
     } else if (data.priceType === 'NEGOTIABLE' || data.priceType === 'CONTACT') {
-      // For negotiable/contact, set prices to 0
       priceData.basePriceCents = 0;
       priceData.price = 0;
       priceData.minPrice = null;
@@ -114,7 +112,14 @@ export class ServicesService {
     // Invalidate list cache
     await this.cache.del('services:list:*');
 
-    return service;
+    // Normalize returned price fields to full VND (divide cents by 100)
+    return this.parseJsonFields({
+      ...service,
+      price: service.basePriceCents ? service.basePriceCents / 100 : 0,
+      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
+      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+      type: service.service_types,
+    });
   }
 
   async getServices(params: {
@@ -161,11 +166,11 @@ export class ServicesService {
       }),
     ]);
 
-    // Map services to include computed price field and parse JSON fields
+    // Map services to include computed price field (convert cents -> VND) and parse JSON fields
     const mappedServices = services.map(service =>
       this.parseJsonFields({
         ...service,
-        price: Number(service.basePriceCents) / 100,
+        price: service.basePriceCents ? Number(service.basePriceCents) / 100 : 0,
         minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
         maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
         type: service.service_types,
@@ -202,7 +207,7 @@ export class ServicesService {
 
     const result = this.parseJsonFields({
       ...service,
-      price: Number(service.basePriceCents) / 100,
+      price: service.basePriceCents ? Number(service.basePriceCents) / 100 : 0,
       minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
       maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
       type: service.service_types,
@@ -236,7 +241,7 @@ export class ServicesService {
 
     const result = this.parseJsonFields({
       ...service,
-      price: Number(service.basePriceCents) / 100,
+      price: service.basePriceCents ? Number(service.basePriceCents) / 100 : 0,
       type: service.service_types,
     });
 
@@ -292,6 +297,7 @@ export class ServicesService {
         updateData.minPrice = null;
         updateData.maxPrice = null;
       } else if (data.price !== undefined) {
+        // incoming `price` expected in full VND -> convert to cents
         const basePriceCents = Math.round(data.price * 100);
         updateData.basePriceCents = basePriceCents;
         updateData.price = basePriceCents;
@@ -496,7 +502,7 @@ export class ServicesService {
     return type;
   }
 
-  private async generateSlug(name: string): Promise<string> {
+  private async generateSlug(name: string, scope: 'services' | 'service_types' = 'services'): Promise<string> {
     const baseSlug = name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
@@ -504,22 +510,30 @@ export class ServicesService {
       .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
       .trim();
 
-    // Check if slug already exists
-    const existing = await this.prisma.service_types.findFirst({
-      where: { slug: baseSlug },
-    });
-
-    if (!existing) {
-      return baseSlug;
+    // Check if slug already exists in the requested scope
+    let existing: any = null;
+    if (scope === 'service_types') {
+      existing = await this.prisma.service_types.findFirst({ where: { slug: baseSlug } });
+    } else {
+      existing = await this.prisma.services.findFirst({ where: { slug: baseSlug } });
     }
+
+    if (!existing) return baseSlug;
 
     // If slug exists, add suffix
     let counter = 1;
     let uniqueSlug = `${baseSlug}-${counter}`;
 
-    while (await this.prisma.service_types.findFirst({ where: { slug: uniqueSlug } })) {
-      counter++;
-      uniqueSlug = `${baseSlug}-${counter}`;
+    if (scope === 'service_types') {
+      while (await this.prisma.service_types.findFirst({ where: { slug: uniqueSlug } })) {
+        counter++;
+        uniqueSlug = `${baseSlug}-${counter}`;
+      }
+    } else {
+      while (await this.prisma.services.findFirst({ where: { slug: uniqueSlug } })) {
+        counter++;
+        uniqueSlug = `${baseSlug}-${counter}`;
+      }
     }
 
     return uniqueSlug;
@@ -580,7 +594,7 @@ export class ServicesService {
     description?: string;
     isActive?: boolean;
   }) {
-    const slug = data.slug || (await this.generateSlug(data.name));
+    const slug = data.slug || (await this.generateSlug(data.name, 'service_types'));
 
     return this.prisma.service_types.create({
       data: {

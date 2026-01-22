@@ -12,4 +12,5 @@ export class UpdateReviewDto {
   comment?: string;
   rating?: number;
   response?: string;
+  images?: string;
 }

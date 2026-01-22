@@ -119,7 +119,7 @@ export class PromotionCheckoutService {
       }
 
       // Apply promotion to items
-      const applyResult = await this.promotionsService.applyToCart(
+      const applyResult: any = await this.promotionsService.applyToCart(
         code.toUpperCase(),
         checkout.items.map(item => ({
           productId: item.productId,
@@ -149,9 +149,9 @@ export class PromotionCheckoutService {
         code: promotion.code,
         discountCents,
         discountPercentage,
-        applicableItems: applyResult.applicableItems || [],
+        applicableItems: applyResult.itemDiscounts?.map((id: any) => id.productId) || [],
         message: `Promotion applied successfully! You saved ${(discountCents / 100).toLocaleString('vi-VN')}đ`,
-        breakdown: applyResult.itemDiscounts?.map(item => ({
+        breakdown: applyResult.itemDiscounts?.map((item: any) => ({
           itemId: item.productId,
           discount: item.discount,
         })),

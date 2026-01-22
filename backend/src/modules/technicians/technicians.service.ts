@@ -342,13 +342,19 @@ export class TechniciansService {
       throw new NotFoundException('Technician not found');
     }
 
+    // Clone dates to prevent mutation
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     // Get schedule for the date
     const schedule = await this.prisma.technician_schedules.findFirst({
       where: {
         technicianId,
         date: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lt: new Date(date.setHours(23, 59, 59, 999)),
+          gte: startOfDay,
+          lt: endOfDay,
         },
       },
     });
@@ -358,8 +364,8 @@ export class TechniciansService {
       where: {
         technicianId,
         scheduledAt: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lt: new Date(date.setHours(23, 59, 59, 999)),
+          gte: startOfDay,
+          lt: endOfDay,
         },
         status: {
           in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'],

@@ -9,8 +9,10 @@ import { TelegramService } from './telegram.service';
 import { MessagesModule } from '../messages/messages.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 
+import { LoggingModule } from '../logging/logging.module';
+
 @Module({
-  imports: [PrismaModule, MessagesModule, AnalyticsModule],
+  imports: [PrismaModule, MessagesModule, AnalyticsModule, LoggingModule],
   controllers: [NotificationsController, TelegramController],
   providers: [MailService, NotificationService, NotificationGateway, TelegramService],
   exports: [MailService, NotificationService, NotificationGateway, TelegramService],

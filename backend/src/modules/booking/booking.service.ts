@@ -209,10 +209,33 @@ export class BookingService {
       where: { id: guestBookingData.serviceId },
     });
     if (!service) {
-      throw new NotFoundException('Service not found');
+      throw new NotFoundException('Dịch vụ không tồn tại');
     }
     if (!service.isActive) {
-      throw new NotFoundException('Service is not available');
+      throw new BadRequestException('Dịch vụ hiện không khả dụng');
+    }
+
+    // ✅ Validate scheduled date is in the future
+    const scheduledDate = new Date(guestBookingData.scheduledDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+
+    if (scheduledDate < today) {
+      throw new BadRequestException('Ngày đặt lịch phải từ hôm nay trở đi');
+    }
+
+    // ✅ Validate phone number format (Vietnamese phone)
+    const phoneRegex = /^(0|\+84)[3-9][0-9]{8}$/;
+    if (!phoneRegex.test(guestBookingData.customerPhone.replace(/\s/g, ''))) {
+      throw new BadRequestException('Số điện thoại không hợp lệ');
+    }
+
+    // ✅ Validate email format if provided
+    if (guestBookingData.customerEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestBookingData.customerEmail)) {
+        throw new BadRequestException('Email không hợp lệ');
+      }
     }
 
     // Create guest booking
@@ -223,7 +246,7 @@ export class BookingService {
         userId: null, // No user for guest booking
         technicianId: null,
         status: 'PENDING',
-        scheduledAt: new Date(guestBookingData.scheduledDate),
+        scheduledAt: scheduledDate,
         scheduledTime: guestBookingData.scheduledTime,
         notes: guestBookingData.notes || null,
         address: guestBookingData.customerAddress || null,
@@ -368,10 +391,31 @@ export class BookingService {
   }
 
   async createPayment(bookingId: string, paymentData: any) {
+    // Verify booking exists
+    const booking = await this.prisma.service_bookings.findUnique({
+      where: { id: bookingId },
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // Whitelist allowed fields for security
+    const allowedFields = ['provider', 'amountCents', 'status', 'transactionId'];
+    const sanitizedData: any = {};
+    for (const field of allowedFields) {
+      if (paymentData[field] !== undefined) {
+        sanitizedData[field] = paymentData[field];
+      }
+    }
+
     return this.prisma.service_payments.create({
       data: {
+        id: crypto.randomUUID(),
         bookingId,
-        ...paymentData,
+        provider: sanitizedData.provider || 'COD',
+        status: sanitizedData.status || 'PENDING',
+        amountCents: sanitizedData.amountCents || booking.estimatedCosts || 0,
+        transactionId: sanitizedData.transactionId,
       },
     });
   }

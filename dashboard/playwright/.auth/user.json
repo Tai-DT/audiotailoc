@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3001",
+      "localStorage": [
+        {
+          "name": "accessToken",
+          "value": "mock_access_token_for_testing_12345"
+        },
+        {
+          "name": "refreshToken",
+          "value": "mock_refresh_token_for_testing_12345"
+        }
+      ]
+    }
+  ]
+}

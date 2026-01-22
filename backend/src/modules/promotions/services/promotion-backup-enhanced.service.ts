@@ -381,7 +381,7 @@ export class PromotionBackupEnhancedService {
       // Try parsing JSON
       try {
         JSON.parse(content);
-      } catch (parseError) {
+      } catch (_parseError) {
         errors.push('Backup file is not valid JSON');
       }
 

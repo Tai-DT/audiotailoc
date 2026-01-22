@@ -30,10 +30,12 @@ export class SimpleAnalyticsService {
         },
       });
 
-      // Calculate total revenue
+      // Calculate total revenue (confirmed and above)
       const totalRevenue = await this.prisma.orders.aggregate({
         _sum: { totalCents: true },
-        where: { status: { not: 'CANCELLED' } },
+        where: {
+          status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+        },
       });
 
       // Get top products
@@ -83,18 +85,17 @@ export class SimpleAnalyticsService {
         }),
       ]);
 
-      const inventoryValue =
-        inventoryValueData.reduce(
-          (sum, inv) => sum + Number(inv.products?.priceCents || 0) * inv.stock,
-          0,
-        ) / 100;
+      const inventoryValue = inventoryValueData.reduce(
+        (sum, inv) => sum + Number(inv.products?.priceCents || 0) * inv.stock,
+        0,
+      ); // Remvoved / 100 as it's VND
 
       return {
         sales: {
-          totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
+          totalRevenue: Number(totalRevenue._sum.totalCents || 0),
           totalOrders: orderCount,
           averageOrderValue:
-            orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
+            orderCount > 0 ? Number(totalRevenue._sum.totalCents || 0) / orderCount : 0,
           conversionRate: Math.round(conversionRate * 10000) / 100, // Percentage
         },
         customers: {
@@ -134,20 +135,22 @@ export class SimpleAnalyticsService {
 
   async getSalesMetrics() {
     // Simple sales metrics
+    const validStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
+
     const totalRevenue = await this.prisma.orders.aggregate({
       _sum: { totalCents: true },
-      where: { status: { not: 'CANCELLED' } },
+      where: { status: { in: validStatuses } },
     });
 
     const orderCount = await this.prisma.orders.count({
-      where: { status: { not: 'CANCELLED' } },
+      where: { status: { in: validStatuses } },
     });
 
     return {
-      totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
+      totalRevenue: Number(totalRevenue._sum.totalCents || 0),
       totalOrders: orderCount,
       averageOrderValue:
-        orderCount > 0 ? (totalRevenue._sum.totalCents || 0) / orderCount / 100 : 0,
+        orderCount > 0 ? Number(totalRevenue._sum.totalCents || 0) / orderCount : 0,
     };
   }
 }

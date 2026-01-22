@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -56,6 +57,7 @@ export interface SearchFilters {
   page?: number;
   pageSize?: number;
   includeFacets?: boolean;
+  userId?: string;
 }
 
 @Injectable()
@@ -106,22 +108,35 @@ export class SearchService {
           : [filters.type];
 
       // Execute parallel searches
-      const [results, facets] = await Promise.all([
-        this.executeParallelSearch(normalizedQuery, searchTypes, filters, skip, pageSize),
-        filters.includeFacets
-          ? this.generateFacets(normalizedQuery, searchTypes, filters)
-          : undefined,
-      ]);
+      // We still get total count for pagination info
+      const [results, total] = await this.executeParallelSearch(
+        normalizedQuery,
+        searchTypes,
+        filters,
+        skip,
+        pageSize,
+      );
 
-      // Sort results by relevance
+      const facets = filters.includeFacets
+        ? await this.generateFacets(normalizedQuery, searchTypes, filters)
+        : undefined;
+
+      // Sort results by relevance (since we combined multiple types)
       const sortedResults = this.sortResults(results, filters.sortBy || 'relevance');
 
       const executionTime = Date.now() - startTime;
 
+      // Log search query for analytics
+      if (query && query.trim().length > 0) {
+        this.logSearchQuery(filters.userId || null, query, total).catch(err =>
+          this.logger.error('Failed to log search query', err),
+        );
+      }
+
       return {
         query,
-        results: sortedResults.slice(0, pageSize),
-        total: results.length,
+        results: sortedResults,
+        total,
         page,
         pageSize,
         facets,
@@ -142,27 +157,112 @@ export class SearchService {
     filters: SearchFilters,
     skip: number,
     pageSize: number,
-  ): Promise<SearchResult[]> {
+  ): Promise<[SearchResult[], number]> {
     const searchPromises: Promise<SearchResult[]>[] = [];
 
+    // For "all" search, we fetch a bit more from each to allow meaningful cross-type sorting
+    // but still capped to prevent performance issues
+    const limitPerType = searchTypes.length > 1 ? pageSize : pageSize;
+
     if (searchTypes.includes('product')) {
-      searchPromises.push(this.searchProducts(query, filters, skip, pageSize));
+      searchPromises.push(this.searchProducts(query, filters, skip, limitPerType));
     }
 
     if (searchTypes.includes('service')) {
-      searchPromises.push(this.searchServices(query, filters, skip, pageSize));
+      searchPromises.push(this.searchServices(query, filters, skip, limitPerType));
     }
 
     if (searchTypes.includes('blog')) {
-      searchPromises.push(this.searchBlogArticles(query, filters, skip, pageSize));
+      searchPromises.push(this.searchBlogArticles(query, filters, skip, limitPerType));
     }
 
     if (searchTypes.includes('knowledge')) {
-      searchPromises.push(this.searchKnowledgeBase(query, filters, skip, pageSize));
+      searchPromises.push(this.searchKnowledgeBase(query, filters, skip, limitPerType));
     }
 
-    const results = await Promise.all(searchPromises);
-    return results.flat();
+    const resultsArray = await Promise.all(searchPromises);
+    const combinedResults = resultsArray.flat();
+
+    // In a real production system with large data, cross-table pagination is handled via
+    // a dedicated Search Engine (Elasticsearch) or a unified Search Index table.
+    // For this SQL implementation, we fetch the totals for each type to give a correct "total" count.
+    const totalCount = await this.countTotalResults(query, searchTypes, filters);
+
+    return [combinedResults, totalCount];
+  }
+
+  private async countTotalResults(
+    query: string,
+    searchTypes: string[],
+    _filters: SearchFilters,
+  ): Promise<number> {
+    let total = 0;
+
+    const countPromises = [];
+
+    if (searchTypes.includes('product')) {
+      countPromises.push(
+        this.prisma.products.count({
+          where: {
+            isDeleted: false,
+            isActive: true,
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { description: { contains: query, mode: 'insensitive' } },
+              { brand: { contains: query, mode: 'insensitive' } },
+              { sku: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    }
+
+    if (searchTypes.includes('service')) {
+      countPromises.push(
+        this.prisma.services.count({
+          where: {
+            isActive: true,
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { description: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    }
+
+    if (searchTypes.includes('blog')) {
+      countPromises.push(
+        this.prisma.blog_articles.count({
+          where: {
+            status: 'PUBLISHED',
+            OR: [
+              { title: { contains: query, mode: 'insensitive' } },
+              { content: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    }
+
+    if (searchTypes.includes('knowledge')) {
+      countPromises.push(
+        this.prisma.knowledge_base_entries.count({
+          where: {
+            isActive: true,
+            OR: [
+              { title: { contains: query, mode: 'insensitive' } },
+              { content: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    }
+
+    const counts = await Promise.all(countPromises);
+    total = counts.reduce((acc, c) => acc + c, 0);
+
+    return total;
   }
 
   /**
@@ -198,6 +298,7 @@ export class SearchService {
       if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
         where.priceCents = {};
         if (filters.priceMin !== undefined) {
+          // filters provided in full VND -> convert to cents
           (where.priceCents as any).gte = Math.round(filters.priceMin * 100);
         }
         if (filters.priceMax !== undefined) {
@@ -274,6 +375,7 @@ export class SearchService {
       if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
         where.basePriceCents = {};
         if (filters.priceMin !== undefined) {
+          // filters provided in full VND -> convert to cents
           (where.basePriceCents as any).gte = Math.round(filters.priceMin * 100);
         }
         if (filters.priceMax !== undefined) {
@@ -586,28 +688,76 @@ export class SearchService {
   /**
    * Log search query for analytics
    */
-  async logSearchQuery(
-    _userId: string | null,
-    _query: string,
-    _resultsCount: number,
-  ): Promise<void> {
-    // Search query logging disabled - model not available
-    return;
+  async logSearchQuery(userId: string | null, query: string, _resultsCount: number): Promise<void> {
+    try {
+      await this.prisma.search_queries.create({
+        data: {
+          id: randomUUID(),
+          query: query.trim(),
+          userId: userId,
+          timestamp: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.error('Failed to log search query to DB', error);
+    }
   }
 
-  /**
-   * Get popular search queries
-   */
-  async getPopularSearches(_limit: number = 10): Promise<Array<{ query: string; count: number }>> {
-    // Search query analytics disabled - model not available
-    return [];
+  async getPopularSearches(limit: number = 10): Promise<Array<{ query: string; count: number }>> {
+    try {
+      const popular = await this.prisma.search_queries.groupBy({
+        by: ['query'],
+        _count: {
+          id: true,
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+        take: limit,
+      });
+
+      return popular.map(p => ({
+        query: p.query,
+        count: p._count.id,
+      }));
+    } catch (error) {
+      this.logger.error('Failed to get popular searches', error);
+      return [];
+    }
   }
 
-  /**
-   * Get search suggestions based on partial query
-   */
-  async getSearchSuggestions(_query: string, _limit: number = 5): Promise<string[]> {
-    // Search suggestions disabled - model not available
-    return [];
+  async getSearchSuggestions(query: string, limit: number = 5): Promise<string[]> {
+    if (!query || query.length < 2) return [];
+
+    try {
+      // Suggest from product names and categories
+      const [products, categories] = await Promise.all([
+        this.prisma.products.findMany({
+          where: {
+            name: { contains: query, mode: 'insensitive' },
+            isActive: true,
+            isDeleted: false,
+          },
+          select: { name: true },
+          take: limit,
+        }),
+        this.prisma.categories.findMany({
+          where: {
+            name: { contains: query, mode: 'insensitive' },
+          },
+          select: { name: true },
+          take: limit,
+        }),
+      ]);
+
+      const suggestions = new Set([...products.map(p => p.name), ...categories.map(c => c.name)]);
+
+      return Array.from(suggestions).slice(0, limit);
+    } catch (error) {
+      this.logger.error('Failed to get search suggestions', error);
+      return [];
+    }
   }
 }

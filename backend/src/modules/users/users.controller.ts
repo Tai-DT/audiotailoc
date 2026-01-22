@@ -36,33 +36,6 @@ class CreateUserDto {
   @IsOptional()
   @IsEnum(['USER', 'ADMIN'])
   role?: 'USER' | 'ADMIN';
-
-  @IsOptional()
-  generatePassword?: boolean;
-
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @IsOptional()
-  @IsString()
-  dateOfBirth?: string;
-
-  @IsOptional()
-  @IsString()
-  gender?: string;
-
-  @IsOptional()
-  isActive?: boolean;
-
-  @IsOptional()
-  emailNotifications?: boolean;
-
-  @IsOptional()
-  smsNotifications?: boolean;
-
-  @IsOptional()
-  promoNotifications?: boolean;
 }
 
 class UpdateUserDto {
@@ -80,27 +53,10 @@ class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  address?: string;
-
-  @IsOptional()
-  @IsString()
-  dateOfBirth?: string;
-
-  @IsOptional()
-  @IsString()
-  gender?: string;
+  password?: string;
 
   @IsOptional()
   isActive?: boolean;
-
-  @IsOptional()
-  emailNotifications?: boolean;
-
-  @IsOptional()
-  smsNotifications?: boolean;
-
-  @IsOptional()
-  promoNotifications?: boolean;
 }
 
 @Controller('users')
@@ -115,10 +71,6 @@ export class UsersController {
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('sortBy') sortBy = 'createdAt',
-    @Query('sortOrder') sortOrder = 'desc',
   ) {
     return this.usersService.findAll({
       page: parseInt(page),
@@ -126,10 +78,6 @@ export class UsersController {
       search,
       role,
       status,
-      startDate,
-      endDate,
-      sortBy,
-      sortOrder: sortOrder as 'asc' | 'desc',
     });
   }
 
@@ -144,23 +92,11 @@ export class UsersController {
   }
 
   @UseGuards(JwtGuard)
-  @Get('export-data')
-  async exportUserData(@Req() req: any) {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('User not authenticated');
-    }
-    return this.usersService.exportUserData(userId);
-  }
-
-  @UseGuards(JwtGuard)
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req: any) {
-    // SECURITY: Prevent IDOR - users can only view their own profile unless they're admin
     const user = req.user;
-    const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = user?.role === 'ADMIN';
 
-    // Allow admin to view any user, or user to view themselves
     if (!isAdmin && user?.sub !== id) {
       throw new ForbiddenException('You can only view your own profile');
     }
@@ -177,33 +113,19 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req: any) {
-    // SECURITY: Prevent IDOR - users can only update their own profile unless they're admin
     const user = req.user;
-    const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = user?.role === 'ADMIN';
 
-    // Allow admin to update any user, or user to update themselves
     if (!isAdmin && user?.sub !== id) {
       throw new ForbiddenException('You can only update your own profile');
     }
 
-    return this.usersService.update(id, updateUserDto, user);
+    return this.usersService.update(id, updateUserDto, isAdmin);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string, @Req() req: any) {
-    return this.usersService.remove(id, req.user);
-  }
-
-  @UseGuards(AdminOrKeyGuard)
-  @Get('stats/overview')
-  async getStats() {
-    return this.usersService.getStats();
-  }
-
-  @UseGuards(AdminOrKeyGuard)
-  @Get('stats/activity')
-  async getActivityStats(@Query('days') days = '30') {
-    return this.usersService.getActivityStats(parseInt(days));
+  async remove(@Param('id') id: string) {
+    return this.usersService.delete(id);
   }
 }

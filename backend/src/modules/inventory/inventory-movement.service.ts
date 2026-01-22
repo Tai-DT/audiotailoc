@@ -6,19 +6,23 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class InventoryMovementService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: {
-    productId: string;
-    type: string;
-    quantity: number;
-    previousStock: number;
-    newStock: number;
-    reason?: string;
-    referenceId?: string;
-    referenceType?: string;
-    userId?: string;
-    notes?: string;
-  }) {
-    return this.prisma.inventory_movements.create({
+  async create(
+    data: {
+      productId: string;
+      type: string;
+      quantity: number;
+      previousStock: number;
+      newStock: number;
+      reason?: string;
+      referenceId?: string;
+      referenceType?: string;
+      userId?: string;
+      notes?: string;
+    },
+    tx?: any,
+  ) {
+    const client = tx || this.prisma;
+    return client.inventory_movements.create({
       data: {
         id: randomUUID(),
         ...data,

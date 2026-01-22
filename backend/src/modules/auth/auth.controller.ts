@@ -14,6 +14,7 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './jwt.guard';
 import { UsersService } from '../users/users.service';
+import { CartService } from '../cart/cart.service';
 import { IsEmail, IsOptional, IsString, MinLength, IsBoolean, Matches } from 'class-validator';
 
 const PASSWORD_REGEX = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
@@ -27,11 +28,13 @@ class RegisterDto {
   @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   password!: string;
   @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() guestCartId?: string;
 }
 class LoginDto {
   @IsEmail() email!: string;
   @IsString() password!: string;
   @IsOptional() @IsBoolean() rememberMe?: boolean;
+  @IsOptional() @IsString() guestCartId?: string;
 }
 
 class RefreshTokenDto {
@@ -64,6 +67,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly users: UsersService,
+    private readonly cart: CartService,
   ) {}
 
   @Get('status')
@@ -81,6 +85,12 @@ export class AuthController {
     if (!dto.email || !dto.password)
       throw new HttpException('Invalid payload', HttpStatus.BAD_REQUEST);
     const user = await this.auth.register(dto);
+
+    // Merge guest cart if provided
+    if (dto.guestCartId) {
+      await this.cart.mergeGuestCartIntoUserCart(dto.guestCartId, user.id);
+    }
+
     // Auto-login after successful registration
     const tokens = await this.auth.login({ email: dto.email, password: dto.password });
     // Access token expires in 15 minutes (15 * 60 * 1000 ms)
@@ -98,6 +108,12 @@ export class AuthController {
   async login(@Body() dto: LoginDto) {
     try {
       const tokens = await this.auth.login(dto);
+
+      // Merge guest cart if provided
+      if (dto.guestCartId) {
+        await this.cart.mergeGuestCartIntoUserCart(dto.guestCartId, tokens.userId);
+      }
+
       const user = await this.users.findById(tokens.userId);
       // Access token expires in 15 minutes (15 * 60 * 1000 ms)
       const expiresInMs = 15 * 60 * 1000;

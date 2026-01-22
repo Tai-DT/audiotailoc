@@ -228,7 +228,8 @@ class ApiClient {
         } else if (response.status === 403) {
           errorMessage = 'Access Denied: You do not have permission to access this resource. Please check your credentials.';
         } else if (response.status === 404) {
-          errorMessage = 'Not Found: The requested resource does not exist';
+          // Include endpoint in error for debugging, but use backend message if available
+          errorMessage = data?.message as string || `Not Found: ${endpoint}`;
         } else if (response.status === 429) {
           errorMessage = data?.message as string || 'Too many requests. Please wait a moment and try again.';
         } else if (response.status >= 500) {

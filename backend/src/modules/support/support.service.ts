@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
@@ -44,6 +44,8 @@ export interface SupportTicket {
 
 @Injectable()
 export class SupportService {
+  private readonly logger = new Logger(SupportService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -209,18 +211,28 @@ export class SupportService {
     order?: number;
     published?: boolean;
   }): Promise<FAQ> {
-    const faq = {
-      id: `faq_${Date.now()}`,
-      question: data.question,
-      answer: data.answer,
-      category: data.category,
-      order: data.order || 0,
-      published: data.published || false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const faq = await this.prisma.faqs.create({
+      data: {
+        id: randomUUID(),
+        question: data.question,
+        answer: data.answer,
+        category: data.category,
+        displayOrder: data.order || 0,
+        isActive: data.published ?? false,
+        updatedAt: new Date(),
+      },
+    });
 
-    return faq;
+    return {
+      id: faq.id,
+      question: faq.question,
+      answer: faq.answer,
+      category: faq.category || 'General',
+      order: faq.displayOrder,
+      published: faq.isActive,
+      createdAt: faq.createdAt,
+      updatedAt: faq.updatedAt,
+    };
   }
 
   async getFAQs(category?: string): Promise<FAQ[]> {
@@ -256,21 +268,46 @@ export class SupportService {
     userId?: string;
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   }): Promise<SupportTicket> {
-    const ticket = {
-      id: `ticket_${Date.now()}`,
-      subject: data.subject,
-      description: data.description,
-      status: 'OPEN' as const,
-      priority: data.priority || ('MEDIUM' as const),
-      userId: data.userId,
-      email: data.email,
-      name: data.name,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const ticket = await this.prisma.support_tickets.create({
+      data: {
+        id: randomUUID(),
+        subject: data.subject,
+        description: data.description,
+        status: 'OPEN',
+        priority: data.priority || 'MEDIUM',
+        userId: data.userId || null,
+        email: data.email,
+        name: data.name,
+        updatedAt: new Date(),
+      },
+    });
 
-    // In real implementation, save to database and send notifications
-    return ticket;
+    // Send confirmation email
+    try {
+      await this.mailService.sendEmail({
+        to: data.email,
+        subject: `[Support Ticket #${ticket.id.substring(0, 8)}] ${data.subject}`,
+        text: `Xin chào ${data.name},\n\nChúng tôi đã nhận được yêu cầu hỗ trợ của bạn với tiêu đề: "${data.subject}". Đội ngũ hỗ trợ của Audio Tài Lộc sẽ phản hồi bạn trong thời gian sớm nhất.\n\nTrân trọng,\nAudio Tài Lộc Support Team.`,
+        html: `<h3>Xin chào ${data.name},</h3><p>Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn với tiêu đề: <b>"${data.subject}"</b>.</p><p>Đội ngũ hỗ trợ của Audio Tài Lộc sẽ phản hồi bạn trong thời gian sớm nhất.</p><br/><p>Trân trọng,<br/>Audio Tài Lộc Support Team.</p>`,
+      });
+      this.logger.log(`Ticket confirmation email sent to ${data.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send ticket confirmation email to ${data.email}`, error);
+    }
+
+    return {
+      id: ticket.id,
+      subject: ticket.subject,
+      description: ticket.description,
+      status: ticket.status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED',
+      priority: ticket.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+      userId: ticket.userId || undefined,
+      email: ticket.email,
+      name: ticket.name,
+      assignedTo: ticket.assignedTo || undefined,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+    };
   }
 
   async getTickets(params: {
