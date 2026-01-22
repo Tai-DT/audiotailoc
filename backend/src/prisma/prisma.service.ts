@@ -1,5 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
 @Injectable()
@@ -9,10 +11,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectAttempt = 0;
   private lastConnectionErrorLogAt = 0;
+  private pool: Pool;
 
   constructor() {
-    // Prisma 7: Database URL is configured in prisma.config.ts
+    // Prisma 7: Requires adapter for database connection
+    const connectionString = process.env.DATABASE_URL || '';
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+
     super({
+      adapter,
       log: [
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },

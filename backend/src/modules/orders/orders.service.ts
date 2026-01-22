@@ -34,7 +34,7 @@ export class OrdersService {
     private readonly cartService: CartService,
     private readonly usersService: UsersService,
     private readonly telegramService: TelegramService,
-  ) { }
+  ) {}
 
   async list(params: { page?: number; pageSize?: number; status?: string }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -245,12 +245,14 @@ export class OrdersService {
 
     // Notify via Telegram (post-transaction)
     try {
-      await this.telegramService.sendMessage(
-        `🔔 *ĐƠN HÀNG MỚI*: #${result.orderNo}\n` +
-        `👤 Khách hàng: ${orderData.customerName || 'Guest'}\n` +
-        `💰 Tổng cộng: ${result.totalCents.toLocaleString('vi-VN')}đ\n` +
+      const message = [
+        `🔔 *ĐƠN HÀNG MỚI*: #${result.orderNo}`,
+        `👤 Khách hàng: ${orderData.customerName || 'Guest'}`,
+        `💰 Tổng cộng: ${result.totalCents.toLocaleString('vi-VN')}đ`,
         `📍 Địa chỉ: ${orderData.shippingAddress || 'N/A'}`,
-      );
+      ].join('\n');
+
+      await this.telegramService.sendMessage(message);
     } catch (err) {
       // Log but don't fail
       this.logger.error('Telegram notification failed', err);

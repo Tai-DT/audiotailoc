@@ -64,11 +64,11 @@ async function bootstrap() {
   const port = Number(process.env.PORT || config.get('PORT') || 3010);
 
   // Prisma directUrl fallback: allow setups that only provide DATABASE_URL.
-  // If DIRECT_DATABASE_URL is not explicitly set, default it to DATABASE_URL.
+  // If DIRECT_URL is not explicitly set, default it to DATABASE_URL.
   const databaseUrl = config.get<string>('DATABASE_URL');
-  const directDatabaseUrl = config.get<string>('DIRECT_DATABASE_URL');
-  if (!directDatabaseUrl && databaseUrl) {
-    process.env.DIRECT_DATABASE_URL = databaseUrl;
+  const directUrl = config.get<string>('DIRECT_URL');
+  if (!directUrl && databaseUrl) {
+    process.env.DIRECT_URL = databaseUrl;
   }
 
   // Validate required environment variables

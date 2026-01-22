@@ -45,10 +45,10 @@ export class TelegramService {
     // TODO: ChatService module does not exist
     // @Inject(forwardRef(() => ChatService))
     // private readonly chatService: ChatService,
-  /**
-   * Format money in VND
-   * Note: DB may store amounts in cents (e.g. `amountCents`). This helper expects a full VND amount.
-   */
+  ) {
+    this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN', '');
+    this.chatIds = this.configService
+      .get<string>('TELEGRAM_CHAT_IDS', '')
       .split(',')
       .map(id => id.trim())
       .filter(Boolean);
@@ -418,7 +418,8 @@ Trạng thái: ${this.translateStatus(oldStatus)} → ${this.translateStatus(new
     const emoji = statusEmoji[payment.status] || '💳';
 
     // amount may be provided as `amountCents` (DB cents) or `amount` (full VND)
-    const amountValue = payment.amountCents !== undefined ? payment.amountCents / 100 : payment.amount;
+    const amountValue =
+      payment.amountCents !== undefined ? payment.amountCents / 100 : payment.amount;
 
     return `
 ${emoji} THANH TOÁN #${payment.orderNo}

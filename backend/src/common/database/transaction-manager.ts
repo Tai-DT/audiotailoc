@@ -355,10 +355,15 @@ export function Transactional(options: TransactionOptions = {}) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
-      const txManager = this.transactionManager as TransactionManager;
+    descriptor.value = async function (
+      this: { transactionManager?: TransactionManager; logger?: Logger },
+      ...args: any[]
+    ) {
+      const txManager = this.transactionManager;
+      const logger =
+        this.logger || new Logger(target?.constructor?.name || target?.name || 'Transactional');
       if (!txManager) {
-        this.logger.warn('TransactionManager not injected, executing without transaction');
+        logger.warn('TransactionManager not injected, executing without transaction');
         return originalMethod.apply(this, args);
       }
 
@@ -367,7 +372,7 @@ export function Transactional(options: TransactionOptions = {}) {
           // Inject transaction into method arguments if needed
           return originalMethod.apply(this, [tx, ...args]);
         },
-        { ...options, name: `${target.name}.${propertyKey}` },
+        { ...options, name: `${target?.constructor?.name || target?.name}.${propertyKey}` },
       );
 
       if (!result.success) {

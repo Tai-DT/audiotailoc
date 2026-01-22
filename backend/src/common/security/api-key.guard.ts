@@ -37,7 +37,11 @@ export const REQUIRE_API_KEY = 'require_api_key';
  * Custom decorator for API key requirement
  */
 export function RequireApiKey(scopes?: string[]): MethodDecorator & ClassDecorator {
-  return function (target: any, propertyKey?: string, descriptor?: PropertyDescriptor) {
+  return function (
+    target: object,
+    propertyKey?: string | symbol,
+    descriptor?: TypedPropertyDescriptor<any>,
+  ) {
     if (descriptor) {
       // Method decorator
       Reflect.defineMetadata(REQUIRE_API_KEY, { scopes: scopes || [] }, descriptor.value);

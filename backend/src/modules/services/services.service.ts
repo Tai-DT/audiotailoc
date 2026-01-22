@@ -502,7 +502,10 @@ export class ServicesService {
     return type;
   }
 
-  private async generateSlug(name: string, scope: 'services' | 'service_types' = 'services'): Promise<string> {
+  private async generateSlug(
+    name: string,
+    scope: 'services' | 'service_types' = 'services',
+  ): Promise<string> {
     const baseSlug = name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove special characters
