@@ -61,9 +61,14 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Handle VNPAY payment webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid webhook data' })
-  async handleVNPAYWebhook(@Body() data: VNPAYWebhookDto) {
+  async handleVNPAYWebhook(
+    @Req() req: any,
+    @Body() data: VNPAYWebhookDto,
+    @Headers('x-vnpay-signature') signature?: string,
+  ) {
     try {
-      const result = await this.webhooksService.handleVNPAYWebhook(data);
+      const rawBody: string = req?.rawBody || JSON.stringify(data);
+      const result = await this.webhooksService.handleVNPAYWebhook(data, rawBody, signature);
       return result;
     } catch (error) {
       throw new BadRequestException((error as Error).message);

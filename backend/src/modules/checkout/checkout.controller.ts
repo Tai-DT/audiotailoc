@@ -38,6 +38,7 @@ export class CheckoutController {
   @Post('create-order')
   async create(@Request() req: any, @Body() dto: CheckoutDto) {
     const userId = req.user?.sub || null;
+    const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
     const order = await this.checkout.createOrder(userId, {
       cartId: dto.cartId,
       promotionCode: dto.promotionCode,
@@ -46,6 +47,7 @@ export class CheckoutController {
       customerEmail: dto.customerEmail,
       customerName: dto.customerName,
       customerPhone: dto.customerPhone,
+      idempotencyKey,
     });
     return { order };
   }

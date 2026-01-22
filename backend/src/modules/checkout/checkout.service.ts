@@ -5,6 +5,7 @@ import { CartService } from '../cart/cart.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { MailService } from '../notifications/mail.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { CacheService } from '../caching/cache.service';
 
 @Injectable()
 export class CheckoutService {
@@ -14,6 +15,7 @@ export class CheckoutService {
     private readonly promos: PromotionsService,
     private readonly mail: MailService,
     private readonly inventory: InventoryService,
+    private readonly cache: CacheService,
   ) {}
 
   async createOrder(
@@ -26,9 +28,27 @@ export class CheckoutService {
       customerEmail?: string;
       customerName?: string;
       customerPhone?: string;
+      idempotencyKey?: string;
     },
   ) {
     let cart, items;
+
+    // Idempotency check: if client provided an idempotencyKey and cache is available,
+    // return existing order immediately to prevent duplicate orders on retries.
+    if (params.idempotencyKey) {
+      try {
+        const existingOrderId = await this.cache.get<string>(
+          `idempotency:checkout:${params.idempotencyKey}`,
+        );
+        if (existingOrderId) {
+          const existingOrder = await this.prisma.orders.findUnique({ where: { id: existingOrderId } });
+          if (existingOrder) return existingOrder;
+        }
+      } catch (err) {
+        // If cache check fails, we continue without preventing the operation
+        // but log the issue via mailer/logger in higher level (no-op here).
+      }
+    }
 
     if (userId) {
       const result = await this.cart.getCartWithTotals(userId);
@@ -190,6 +210,17 @@ export class CheckoutService {
 
       return order;
     });
+
+    // Save idempotency mapping (best-effort). TTL 24h.
+    if (params.idempotencyKey) {
+      try {
+        await this.cache.set(`idempotency:checkout:${params.idempotencyKey}`, result.id, {
+          ttl: 60 * 60 * 24,
+        });
+      } catch (err) {
+        // Non-fatal: fallback silently, logging handled by centralized logger if needed
+      }
+    }
 
     // Send email confirmation asynchronously (post-transaction)
     try {
