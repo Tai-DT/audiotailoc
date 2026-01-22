@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "Dashboard API",
+    "_postman_id": "b3e9d8a0-1234-4a5f-9c01-abcde1234567",
+    "description": "Postman collection for Dashboard API (summary, metrics, charts, refresh)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Summary",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Accept", "value": "application/json", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/dashboard/summary?startDate=2026-01-01&endDate=2026-01-31&fields=revenue,orders",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","v1","dashboard","summary"],
+          "query": [
+            { "key": "startDate", "value": "2026-01-01" },
+            { "key": "endDate", "value": "2026-01-31" },
+            { "key": "fields", "value": "revenue,orders" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Metrics",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/dashboard/metrics?page=1&pageSize=20&sortBy=timestamp&sortOrder=desc",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","v1","dashboard","metrics"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "pageSize", "value": "20" },
+            { "key": "sortBy", "value": "timestamp" },
+            { "key": "sortOrder", "value": "desc" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Charts",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/dashboard/charts?startDate=2026-01-01&endDate=2026-01-07",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","v1","dashboard","charts"],
+          "query": [
+            { "key": "startDate", "value": "2026-01-01" },
+            { "key": "endDate", "value": "2026-01-07" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Post Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"scope\": \"all\",\n  \"immediate\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/dashboard/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","v1","dashboard","refresh"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set example variables if not set",
+          "if (!pm.environment.get('baseUrl')) { pm.environment.set('baseUrl', 'http://localhost:3000'); }",
+          "if (!pm.environment.get('token')) { pm.environment.set('token', 'eyJhbGci...'); }"
+        ]
+      }
+    }
+  ]
+}
