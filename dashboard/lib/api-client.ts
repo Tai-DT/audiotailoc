@@ -65,7 +65,7 @@ export interface CreateProductData {
   brand?: string;
   model?: string;
   sku?: string;
-  specifications?: Record<string, unknown>;
+  specifications?: { key: string; value: string }[];
   features?: string;
   warranty?: string;
   weight?: number;
@@ -78,6 +78,7 @@ export interface CreateProductData {
   metaDescription?: string;
   metaKeywords?: string;
   canonicalUrl?: string;
+  slug?: string;
   featured?: boolean;
   isActive?: boolean;
 }
@@ -93,7 +94,7 @@ export interface UpdateProductData {
   brand?: string;
   model?: string;
   sku?: string;
-  specifications?: Record<string, unknown>;
+  specifications?: { key: string; value: string }[];
   features?: string;
   warranty?: string;
   weight?: number;
@@ -106,6 +107,7 @@ export interface UpdateProductData {
   metaDescription?: string;
   metaKeywords?: string;
   canonicalUrl?: string;
+  slug?: string;
   featured?: boolean;
   isActive?: boolean;
 }
@@ -256,8 +258,30 @@ class ApiClient {
   }
 
   // Health check
+  // Some backend deployments expose a root-level `/health` (e.g., http://localhost:3010/health)
+  // while API_BASE_URL includes the `/api/v1` prefix. Try the root health first and fall
+  // back to `${API_BASE_URL}/health` if necessary.
   async health(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    return this.request('/health');
+    try {
+      const root = this.baseURL.replace(/\/api\/v1\/?$/, '');
+      const res = await fetch(`${root}/health`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+
+      if (!res.ok) {
+        // If root health exists but returns non-OK, fallback to API_BASE_URL/health
+        return this.request('/health');
+      }
+
+      return data as unknown as ApiResponse<{ status: string; timestamp: string }>;
+    } catch (err) {
+      // Fallback to `/api/v1/health` when root check fails (network/parse errors, etc.)
+      return this.request('/health');
+    }
   }
 
   // Users endpoints
@@ -403,7 +427,7 @@ class ApiClient {
   async generateUniqueSku(baseName?: string) {
     const query = new URLSearchParams();
     if (baseName) query.append('baseName', baseName);
-    return this.request(`/catalog/generate-sku?${query.toString()}`);
+    return this.request(`/catalog/products/generate-sku?${query.toString()}`);
   }
 
   async deleteProduct(id: string) {
@@ -430,14 +454,43 @@ class ApiClient {
     return this.request('/catalog/categories');
   }
 
-  async createCategory(data: { name: string; description?: string; parentId?: string; isActive?: boolean }) {
+  async createCategory(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    parentId?: string | null;
+    isActive?: boolean;
+    imageUrl?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string;
+  }) {
+    // Auto-generate slug from name if not provided
+    const slug = data.slug || data.name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
     return this.request('/catalog/categories', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, slug }),
     });
   }
 
-  async updateCategory(id: string, data: { name?: string; description?: string; parentId?: string; isActive?: boolean }) {
+  async updateCategory(id: string, data: {
+    name?: string;
+    slug?: string;
+    description?: string;
+    parentId?: string | null;
+    isActive?: boolean;
+    imageUrl?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string;
+  }) {
     return this.request(`/catalog/categories/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -1260,6 +1313,26 @@ class ApiClient {
     return this.request(`/chat/conversations/${conversationId}/close`, {
       method: 'POST',
     });
+  }
+
+  async uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/upload/image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Lỗi khi upload ảnh');
+    }
+
+    return response.json();
   }
 }
 

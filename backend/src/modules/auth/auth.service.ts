@@ -19,7 +19,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly config: ConfigService,
     private readonly securityService: SecurityService,
-  ) {}
+  ) { }
 
   async register(dto: { email: string; password: string; name?: string }) {
     // Validate password strength using SecurityService
@@ -51,7 +51,13 @@ export class AuthService {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
+    // DEBUG: Log password verification details
+    this.logger.debug(`[LOGIN DEBUG] User found: ${user.email}, has password: ${!!user.password}`);
+    this.logger.debug(`[LOGIN DEBUG] Password hash prefix: ${user.password?.substring(0, 20)}`);
+
     const ok = await this.securityService.verifyPassword(dto.password, user.password);
+
+    this.logger.debug(`[LOGIN DEBUG] Password verification result: ${ok}`);
 
     // Record login attempt
     this.securityService.recordLoginAttempt(dto.email, ok);
@@ -70,7 +76,7 @@ export class AuthService {
     const accessToken = jwt.sign(
       { sub: user.id, email: user.email, role: (user as { role?: string }).role ?? 'USER' },
       accessSecret,
-      { expiresIn: '15m' }, // Short-lived access token for security
+      { expiresIn: '30m' }, // Extended to 30 minutes for better admin UX
     );
     // SECURITY: Refresh token expiry
     // - Default: 7 days (reasonable balance between security and UX)
@@ -109,7 +115,7 @@ export class AuthService {
       const newAccessToken = jwt.sign(
         { sub: user.id, email: user.email, role: userRole ?? 'USER' },
         accessSecret,
-        { expiresIn: '15m' },
+        { expiresIn: '30m' },
       );
 
       // Refresh token rotation

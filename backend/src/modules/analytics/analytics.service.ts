@@ -98,7 +98,7 @@ export class AnalyticsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
-  ) {}
+  ) { }
 
   // Dashboard Overview
   async getOverview(range: string = '7days') {
@@ -400,7 +400,7 @@ export class AnalyticsService {
     const avgSessionDuration =
       activityLogRecords.length > 0
         ? activityLogRecords.reduce((sum: number, log: any) => sum + (log.duration || 0), 0) /
-          activityLogRecords.length
+        activityLogRecords.length
         : 0;
 
     return {

@@ -46,7 +46,9 @@ import {
 export class CompleteProductController {
   private readonly logger = new Logger(CompleteProductController.name);
 
-  constructor(private readonly catalogService: CompleteProductService) {}
+  constructor(private readonly catalogService: CompleteProductService) {
+    this.logger.log('CompleteProductController initialized');
+  }
 
   @Post()
   @UseGuards(JwtGuard, AdminOrKeyGuard)
@@ -165,6 +167,7 @@ export class CompleteProductController {
     description: 'Filter by tags (comma-separated)',
   })
   async findAll(@Query() query: ProductListQueryDto): Promise<ProductListResponseDto> {
+    this.logger.debug('DEBUG: CompleteProductController.findAll hit');
     return this.catalogService.findProducts(query);
   }
 
@@ -290,6 +293,26 @@ export class CompleteProductController {
     };
   }
 
+  // SKU utility routes - MUST be before :id route to avoid being caught as product ID
+  @Get('generate-sku')
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate unique SKU' })
+  async generateUniqueSku(@Query('baseName') baseName?: string): Promise<string> {
+    return this.catalogService.generateUniqueSku(baseName);
+  }
+
+  @Get('check-sku/:sku')
+  @UseGuards(JwtGuard, AdminOrKeyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Check if SKU exists' })
+  async checkSkuExists(
+    @Param('sku') sku: string,
+    @Query('excludeId') excludeId?: string,
+  ): Promise<boolean> {
+    return this.catalogService.checkSkuExists(sku, excludeId);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get product by ID',
@@ -336,7 +359,7 @@ export class CompleteProductController {
     return this.catalogService.findProductBySlug(slug);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @UseGuards(JwtGuard, AdminOrKeyGuard)
   @ApiBearerAuth()
   @ApiOperation({

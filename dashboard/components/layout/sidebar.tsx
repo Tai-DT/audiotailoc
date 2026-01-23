@@ -41,7 +41,8 @@ import {
   HelpCircle,
   ShieldCheck,
   Info,
-  Bot
+  Bot,
+  LayoutList
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -81,6 +82,12 @@ const sidebarGroups = [
         title: "Sản phẩm",
         href: "/dashboard/products",
         icon: Package,
+        badge: null,
+      },
+      {
+        title: "Danh mục",
+        href: "/dashboard/categories",
+        icon: LayoutList,
         badge: null,
       },
       {

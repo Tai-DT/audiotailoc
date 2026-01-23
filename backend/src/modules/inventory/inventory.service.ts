@@ -12,7 +12,7 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly inventoryMovementService: InventoryMovementService,
     private readonly inventoryAlertService: InventoryAlertService,
-  ) {}
+  ) { }
 
   async list(params: { page?: number; pageSize?: number; lowStockOnly?: boolean }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -57,9 +57,9 @@ export class InventoryService {
       ...item,
       product: item.products
         ? {
-            ...item.products,
-            priceCents: item.products.priceCents ? Number(item.products.priceCents) : null,
-          }
+          ...item.products,
+          priceCents: item.products.priceCents ? Number(item.products.priceCents) : null,
+        }
         : null,
     }));
     return { total, page, pageSize, items };
@@ -113,9 +113,11 @@ export class InventoryService {
       // When inside a transaction, lock the inventory row to prevent race conditions
       try {
         // Use FOR UPDATE to lock the row in the current transaction
-        await client.$queryRaw`SELECT id FROM inventory WHERE productId = ${productId} FOR UPDATE`;
+        // Note: Column names in PostgreSQL are case-sensitive when quoted
+        await client.$queryRaw`SELECT id FROM inventory WHERE "productId" = ${productId} FOR UPDATE`;
       } catch (e) {
         // Some Prisma clients or DBs may not support raw queries in mocked tests; ignore failures gracefully
+        this.logger.debug(`FOR UPDATE lock failed for product ${productId}: ${e}`);
       }
 
       // Get current inventory to track changes

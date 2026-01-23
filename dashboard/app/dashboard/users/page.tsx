@@ -9,49 +9,44 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import
-  {
-    Users,
-    Search,
-    Plus,
-    MoreHorizontal,
-    Edit,
-    Trash2,
-    Eye,
-    X
-  } from "lucide-react"
+import {
+Users,
+Search,
+Plus,
+MoreHorizontal,
+Edit,
+Trash2,
+Eye,
+X
+} from "lucide-react"
 import { UserFormDialog } from "@/components/users/user-form-dialog"
 import { UserDetailsDialog } from "@/components/users/user-details-dialog"
-import
-  {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
-import
-  {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-  } from "@/components/ui/alert-dialog"
-import
-  {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 
-interface User
-{
+interface User {
   id: string
   email: string
   name: string
@@ -67,35 +62,32 @@ interface User
   }
 }
 
-export default function UsersPage ()
-{
+export default function UsersPage() {
   const { token } = useAuth()
-  const [ users, setUsers ] = useState<User[]>( [] )
-  const [ loading, setLoading ] = useState( true )
-  const [ searchTerm, setSearchTerm ] = useState( "" )
-  const [ currentPage, setCurrentPage ] = useState( 1 )
-  const [ totalUsers, setTotalUsers ] = useState( 0 )
-  const [ pageSize ] = useState( 10 )
-  const [ deleteUserId, setDeleteUserId ] = useState<string | null>( null )
-  const [ showCreateDialog, setShowCreateDialog ] = useState( false )
-  const [ showEditDialog, setShowEditDialog ] = useState( false )
-  const [ showDetailsDialog, setShowDetailsDialog ] = useState( false )
-  const [ selectedUser, setSelectedUser ] = useState<User | null>( null )
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [pageSize] = useState(10)
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
   // Filter states
-  const [ roleFilter, setRoleFilter ] = useState<string | undefined>( undefined )
-  const [ statusFilter, setStatusFilter ] = useState<string | undefined>( undefined )
-  const [ startDate, setStartDate ] = useState<string>( "" )
-  const [ endDate, setEndDate ] = useState<string>( "" )
-  const [ sortBy, setSortBy ] = useState<string>( "createdAt" )
-  const [ sortOrder, setSortOrder ] = useState<'asc' | 'desc'>( 'desc' )
+  const [roleFilter, setRoleFilter] = useState<string | undefined>(undefined)
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
+  const [sortBy, setSortBy] = useState<string>("createdAt")
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const fetchUsers = useCallback( async () =>
-  {
-    try
-    {
-      setLoading( true )
-      const response = await apiClient.getUsers( {
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await apiClient.getUsers({
         page: currentPage,
         limit: pageSize,
         search: searchTerm || undefined,
@@ -105,82 +97,68 @@ export default function UsersPage ()
         endDate: endDate || undefined,
         sortBy: sortBy || undefined,
         sortOrder: sortOrder || undefined
-      } )
-      const data = response.data as { users: User[]; pagination: { total: number } }
-      setUsers( data.users )
-      setTotalUsers( data.pagination.total )
-    } catch ( error )
-    {
-      console.error( 'Failed to fetch users:', error )
-    } finally
-    {
-      setLoading( false )
+      })
+      const data = response.data as unknown as { users: User[]; total: number }
+      setUsers(data.users)
+      setTotalUsers(data.total)
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+    } finally {
+      setLoading(false)
     }
-  }, [ currentPage, pageSize, searchTerm, roleFilter, statusFilter, startDate, endDate, sortBy, sortOrder ] )
+  }, [currentPage, pageSize, searchTerm, roleFilter, statusFilter, startDate, endDate, sortBy, sortOrder])
 
-  useEffect( () =>
-  {
-    if ( token )
-    {
-      apiClient.setToken( token )
+  useEffect(() => {
+    if (token) {
+      apiClient.setToken(token)
       fetchUsers()
     }
-  }, [ token, currentPage, searchTerm, roleFilter, statusFilter, startDate, endDate, sortBy, sortOrder, fetchUsers ] )
+  }, [token, currentPage, searchTerm, roleFilter, statusFilter, startDate, endDate, sortBy, sortOrder, fetchUsers])
 
-  const handleDeleteUser = async ( userId: string ) =>
-  {
-    try
-    {
-      if ( !token ) return
-      apiClient.setToken( token )
-      await apiClient.deleteUser( userId )
-      setDeleteUserId( null )
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      if (!token) return
+      apiClient.setToken(token)
+      await apiClient.deleteUser(userId)
+      setDeleteUserId(null)
       fetchUsers() // Refresh the list
-    } catch ( error )
-    {
-      console.error( 'Failed to delete user:', error )
+    } catch (error) {
+      console.error('Failed to delete user:', error)
     }
   }
 
-  const handleCreateUser = () =>
-  {
-    setSelectedUser( null )
-    setShowCreateDialog( true )
+  const handleCreateUser = () => {
+    setSelectedUser(null)
+    setShowCreateDialog(true)
   }
 
-  const handleEditUser = ( user: User ) =>
-  {
-    setSelectedUser( user )
-    setShowEditDialog( true )
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user)
+    setShowEditDialog(true)
   }
 
-  const handleViewUser = ( user: User ) =>
-  {
-    setSelectedUser( user )
-    setShowDetailsDialog( true )
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user)
+    setShowDetailsDialog(true)
   }
 
-  const handleClearFilters = () =>
-  {
-    setSearchTerm( "" )
-    setRoleFilter( undefined )
-    setStatusFilter( undefined )
-    setStartDate( "" )
-    setEndDate( "" )
-    setSortBy( "createdAt" )
-    setSortOrder( 'desc' )
-    setCurrentPage( 1 )
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setRoleFilter(undefined)
+    setStatusFilter(undefined)
+    setStartDate("")
+    setEndDate("")
+    setSortBy("createdAt")
+    setSortOrder('desc')
+    setCurrentPage(1)
   }
 
-  const handleFormSuccess = () =>
-  {
+  const handleFormSuccess = () => {
     fetchUsers() // Refresh the list
   }
 
-  const getRoleBadgeVariant = ( role: string ) =>
-  {
-    switch ( role )
-    {
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
       case 'ADMIN':
         return 'destructive'
       case 'MANAGER':
@@ -192,12 +170,11 @@ export default function UsersPage ()
     }
   }
 
-  const formatDate = ( dateString: string ) =>
-  {
-    return new Date( dateString ).toLocaleDateString( 'vi-VN' )
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN')
   }
 
-  const totalPages = Math.ceil( totalUsers / pageSize )
+  const totalPages = Math.ceil(totalUsers / pageSize)
 
   return (
     <>
@@ -245,7 +222,7 @@ export default function UsersPage ()
                 <Input
                   placeholder="Tìm kiếm theo email hoặc tên..."
                   value={searchTerm}
-                  onChange={( e ) => setSearchTerm( e.target.value )}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -259,7 +236,7 @@ export default function UsersPage ()
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="role-filter">Vai trò</Label>
-                <Select value={roleFilter || "all"} onValueChange={( value ) => setRoleFilter( value === "all" ? undefined : value )}>
+                <Select value={roleFilter || "all"} onValueChange={(value) => setRoleFilter(value === "all" ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Tất cả vai trò" />
                   </SelectTrigger>
@@ -274,7 +251,7 @@ export default function UsersPage ()
 
               <div className="space-y-2">
                 <Label htmlFor="status-filter">Trạng thái</Label>
-                <Select value={statusFilter || "all"} onValueChange={( value ) => setStatusFilter( value === "all" ? undefined : value )}>
+                <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Tất cả trạng thái" />
                   </SelectTrigger>
@@ -292,7 +269,7 @@ export default function UsersPage ()
                   id="start-date"
                   type="date"
                   value={startDate}
-                  onChange={( e ) => setStartDate( e.target.value )}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
 
@@ -302,7 +279,7 @@ export default function UsersPage ()
                   id="end-date"
                   type="date"
                   value={endDate}
-                  onChange={( e ) => setEndDate( e.target.value )}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
             </div>
@@ -326,7 +303,7 @@ export default function UsersPage ()
 
               <div className="flex items-center space-x-2">
                 <Label>Thứ tự:</Label>
-                <Select value={sortOrder} onValueChange={( value: 'asc' | 'desc' ) => setSortOrder( value )}>
+                <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
@@ -353,7 +330,7 @@ export default function UsersPage ()
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    Array.from( { length: 5 } ).map( ( _, index ) => (
+                    Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={index}>
                         <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-48" /></TableCell>
@@ -362,7 +339,7 @@ export default function UsersPage ()
                         <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                       </TableRow>
-                    ) )
+                    ))
                   ) : !users || users.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8">
@@ -370,14 +347,14 @@ export default function UsersPage ()
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users.map( ( user ) => (
+                    users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           {user.name}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={getRoleBadgeVariant( user.role )}>
+                          <Badge variant={getRoleBadgeVariant(user.role)}>
                             {user.role}
                           </Badge>
                         </TableCell>
@@ -386,7 +363,7 @@ export default function UsersPage ()
                             {user.isActive ? 'Hoạt động' : 'Tạm khóa'}
                           </Badge>
                         </TableCell>
-                        <TableCell>{formatDate( user.createdAt )}</TableCell>
+                        <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -395,17 +372,17 @@ export default function UsersPage ()
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewUser( user )}>
+                              <DropdownMenuItem onClick={() => handleViewUser(user)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditUser( user )}>
+                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-red-600"
-                                onClick={() => setDeleteUserId( user.id )}
+                                onClick={() => setDeleteUserId(user.id)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Xóa
@@ -414,7 +391,7 @@ export default function UsersPage ()
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ) )
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -430,7 +407,7 @@ export default function UsersPage ()
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage( prev => Math.max( 1, prev - 1 ) )}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                   >
                     Trước
@@ -441,7 +418,7 @@ export default function UsersPage ()
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage( prev => Math.min( totalPages, prev + 1 ) )}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                   >
                     Sau
@@ -456,19 +433,17 @@ export default function UsersPage ()
       {/* Create/Edit User Dialog */}
       <UserFormDialog
         open={showCreateDialog || showEditDialog}
-        onOpenChange={( open ) =>
-        {
+        onOpenChange={(open) => {
           // Preserve which mode was opened instead of always closing immediately
-          if ( !open )
-          {
-            setShowCreateDialog( false )
-            setShowEditDialog( false )
-            setSelectedUser( null )
+          if (!open) {
+            setShowCreateDialog(false)
+            setShowEditDialog(false)
+            setSelectedUser(null)
             return
           }
           // Keep the correct dialog mode active when reopening
-          setShowCreateDialog( !selectedUser )
-          setShowEditDialog( !!selectedUser )
+          setShowCreateDialog(!selectedUser)
+          setShowEditDialog(!!selectedUser)
         }}
         user={selectedUser}
         onSuccess={handleFormSuccess}
@@ -482,7 +457,7 @@ export default function UsersPage ()
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId( null )}>
+      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
@@ -493,7 +468,7 @@ export default function UsersPage ()
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteUserId && handleDeleteUser( deleteUserId )}
+              onClick={() => deleteUserId && handleDeleteUser(deleteUserId)}
               className="bg-red-600 hover:bg-red-700"
             >
               Xóa

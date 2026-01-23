@@ -34,7 +34,7 @@ export class OrdersService {
     private readonly cartService: CartService,
     private readonly usersService: UsersService,
     private readonly telegramService: TelegramService,
-  ) {}
+  ) { }
 
   async list(params: { page?: number; pageSize?: number; status?: string }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -68,12 +68,17 @@ export class OrdersService {
         totalAmount: Number(order.totalCents),
         status: order.status,
         createdAt: order.createdAt,
-        items: order.order_items.map(item => ({
-          productId: item.productId,
-          productName: item.products?.name || item.name,
-          quantity: item.quantity,
-          price: Number(item.unitPrice || item.price),
-        })),
+        items: order.order_items.map(item => {
+          const price = Number(item.unitPrice || item.price || 0);
+          return {
+            id: item.id,
+            productId: item.productId,
+            productName: item.products?.name || item.name,
+            quantity: item.quantity,
+            price: price,
+            total: price * item.quantity,
+          };
+        }),
       })),
     };
   }
@@ -212,6 +217,7 @@ export class OrdersService {
             shippingCoordinates: orderData.shippingCoordinates
               ? JSON.stringify(orderData.shippingCoordinates)
               : null,
+            notes: orderData.notes || null,
             updatedAt: new Date(),
           } as any,
         });
@@ -345,10 +351,21 @@ export class OrdersService {
 
   async update(id: string, data: any) {
     const order = await this.get(id);
+
+    // Filter valid fields for orders model
+    const {
+      customerName: _customerName,
+      customerEmail: _customerEmail,
+      customerPhone: _customerPhone,
+      items: _items,
+      ...validData
+    } = data;
+
+    // notes is now supported in schema
     return this.prisma.orders.update({
       where: { id: order.id },
       data: {
-        ...data,
+        ...validData,
         updatedAt: new Date(),
       },
       include: {

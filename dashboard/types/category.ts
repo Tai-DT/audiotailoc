@@ -11,6 +11,9 @@ export interface Category {
     _count?: {
         products: number;
     };
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    metaKeywords?: string | null;
 }
 
 export interface CreateCategoryData {
@@ -20,6 +23,9 @@ export interface CreateCategoryData {
     imageUrl?: string;
     parentId?: string;
     isActive?: boolean;
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string;
 }
 
 export interface UpdateCategoryData {
@@ -29,4 +35,7 @@ export interface UpdateCategoryData {
     imageUrl?: string;
     parentId?: string;
     isActive?: boolean;
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string;
 }

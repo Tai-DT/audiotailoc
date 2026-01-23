@@ -168,6 +168,8 @@ test('Backups page loads and triggers full backup', async ({ browser }) => {
   })
 
   await page.getByRole('button', { name: 'Tải xuống backup' }).click()
+  // Wait for the in-page download capture to be populated (async fetch + blob + click)
+  await page.waitForFunction(() => (window as any).__download_capture__ && (window as any).__download_capture__.filename !== null, null, { timeout: 10_000 })
   downloadTriggered = await page.evaluate(() => (window as any).__download_capture__)
   expect(downloadTriggered?.filename).toBe('b-1.backup')
 

@@ -55,7 +55,7 @@ export class PromotionsController {
     private readonly campaignService: PromotionCampaignsService,
     private readonly projectsService: PromotionProjectsService,
     private readonly settingsService: PromotionSettingsService,
-  ) {}
+  ) { }
 
   // ==================== PUBLIC ENDPOINTS ====================
 
@@ -288,13 +288,12 @@ export class PromotionsController {
   @UseGuards(JwtGuard, AdminGuard)
   @HttpCode(HttpStatus.CREATED)
   async createPromotion(@Body() createDto: CreatePromotionDto, @Req() req) {
-    const result = await this.promotionsService.create(createDto);
-    const promotion = result.data;
+    const promotion = await this.promotionsService.create(createDto, req.user?.id);
 
     // Audit log
     await this.auditService.log({
       promotionId: promotion.id,
-      userId: req.user.id,
+      userId: req.user?.id,
       action: 'CREATE',
       newValues: createDto,
       reason: 'Promotion created',

@@ -47,7 +47,7 @@ export class CatalogService {
     private readonly inventory: InventoryService,
     private readonly cache: CacheService,
     private readonly activityLog: ActivityLogService,
-  ) {}
+  ) { }
 
   private safeParseJSON(data: any, defaultValue: any = null) {
     if (!data) return defaultValue;
@@ -79,6 +79,7 @@ export class CatalogService {
       data: {
         id: randomUUID(),
         ...dto,
+        updatedAt: new Date(),
       },
     });
 

@@ -76,7 +76,9 @@ class SocketManager {
       });
 
       // Connect to the common realtime namespace if not root
-      const namespace = this.url.includes('/api/v1') ? '/api/v1/realtime' : '/';
+      // Connect to the common realtime namespace
+      // For AudioTailoc backend, the namespace is always /api/v1/realtime
+      const namespace = '/api/v1/realtime';
       this.socket = manager.socket(namespace);
 
       // Set up event handlers

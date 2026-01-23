@@ -818,6 +818,12 @@ export class ProductResponseDto {
     example: 'https://audiotailoc.com/products/premium-audio-cable',
   })
   canonicalUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Stock quantity',
+    example: 100,
+  })
+  stockQuantity?: number;
 }
 
 export class ProductListResponseDto {

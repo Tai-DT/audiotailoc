@@ -192,12 +192,13 @@ export default function CategoriesPage() {
                                     <TableCell>
                                         {category.imageUrl ? (
                                             <div className="relative w-10 h-10">
-                                                <Image
+                                                <img
                                                     src={category.imageUrl}
                                                     alt={category.name}
-                                                    fill
-                                                    className="object-cover rounded"
-                                                    sizes="40px"
+                                                    className="w-full h-full object-cover rounded"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                                                    }}
                                                 />
                                             </div>
                                         ) : (

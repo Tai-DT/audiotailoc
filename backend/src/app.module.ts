@@ -23,6 +23,7 @@ import { SearchModule } from './modules/search/search.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { FilesModule } from './modules/files/files.module';
 import { ServiceReviewsModule } from './modules/service-reviews/service-reviews.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -52,8 +53,9 @@ import { ServiceReviewsModule } from './modules/service-reviews/service-reviews.
     NotificationsModule,
     FilesModule,
     ServiceReviewsModule,
+    UploadModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

@@ -29,7 +29,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 
 // Complete Product API Module
-// import { CompleteProductModule } from './catalog/complete-product.module';
+import { CompleteProductModule } from './catalog/complete-product.module';
 
 // Support and integrations - ENABLING STEP BY STEP
 import { SupportModule } from './support/support.module';
@@ -66,6 +66,13 @@ import { MessagesModule } from './messages/messages.module';
 
 // Chat Module
 import { ChatModule } from './chat/chat.module';
+
+// Upload Module
+import { UploadModule } from './upload/upload.module';
+
+// FAQ and Policies
+import { FaqModule } from './faq/faq.module';
+import { PoliciesModule } from './policies/policies.module';
 
 // Test module removed
 // import { TestModule } from './test/test.module';
@@ -111,7 +118,7 @@ const runtimeImports = [
   WishlistModule,
 
   // Complete Product API Module - NEW COMPLETE SYSTEM
-  // CompleteProductModule,
+  CompleteProductModule,
 
   // Services Management
   ServicesModule,
@@ -122,7 +129,11 @@ const runtimeImports = [
   // Site Content Management
   SiteModule,
   SeoModule,
+  SiteModule,
+  SeoModule,
   BlogModule,
+  FaqModule,
+  PoliciesModule,
 
   // Portfolio/Projects
   ProjectsModule,
@@ -136,8 +147,8 @@ const runtimeImports = [
   // Chat
   ChatModule,
 
-  // Test module for payment testing
-  // TestModule, // Removed
+  // Image Upload
+  UploadModule,
 ];
 
 if (FEATURE_CHECKOUT) {
@@ -148,5 +159,5 @@ if (FEATURE_CHECKOUT) {
   imports: runtimeImports,
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule { }
 // Trigger rebuild for module registration

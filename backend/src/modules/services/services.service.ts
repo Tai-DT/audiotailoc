@@ -11,7 +11,7 @@ export class ServicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   // Helper function to parse JSON string fields back to arrays
   private parseJsonFields(service: any): any {
@@ -40,7 +40,7 @@ export class ServicesService {
   // Service Management
   async createService(data: CreateServiceDto) {
     // Generate slug if not provided
-    const slug = data.slug || this.generateSlug(data.name);
+    const slug = data.slug || await this.generateSlug(data.name);
 
     // Validate typeId exist if provided
     if (data.typeId) {

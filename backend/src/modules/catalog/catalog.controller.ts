@@ -23,64 +23,21 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 @ApiTags('Catalog')
 @ApiBearerAuth()
-@Controller('catalog')
-export class CatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+@Controller('catalog/categories')
+export class CatalogCategoriesController {
+  constructor(private readonly catalog: CatalogService) { }
 
-  @Get('products')
-  @ApiOperation({ summary: 'List all products' })
-  list(@Query() query: any) {
-    return this.catalog.listProducts(query);
-  }
-
-  @Get('products/:id')
-  get(@Param('id') id: string) {
-    return this.catalog.getById(id);
-  }
-
-  @Get('products/slug/:slug')
-  getBySlug(@Param('slug') slug: string) {
-    return this.catalog.getBySlug(slug);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Post('products')
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateProductDto, @Request() req: any) {
-    return this.catalog.create(dto, req.user?.id);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Patch('products/:id')
-  updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req: any) {
-    return this.catalog.update(id, dto, req.user?.id);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Delete('products/:id')
-  deleteProduct(@Param('id') id: string, @Request() req: any) {
-    return this.catalog.delete(id, req.user?.id);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Post('products/delete-many')
-  deleteMany(@Body('ids') ids: string[], @Request() req: any) {
-    return this.catalog.removeMany(ids, req.user?.id);
-  }
-
-  // --- CATEGORIES ---
-
-  @Get('categories')
+  @Get()
   listCategories() {
     return this.catalog.listCategories();
   }
 
-  @Get('categories/slug/:slug')
+  @Get('slug/:slug')
   getCategoryBySlug(@Param('slug') slug: string) {
     return this.catalog.getCategoryBySlug(slug);
   }
 
-  @Get('categories/slug/:slug/products')
+  @Get('slug/:slug/products')
   getProductsByCategory(
     @Param('slug') slug: string,
     @Query('page') page?: number,
@@ -90,32 +47,20 @@ export class CatalogController {
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Post('categories')
+  @Post()
   createCategory(@Body() dto: CreateCategoryDto, @Request() req: any) {
     return this.catalog.createCategory(dto, req.user?.id);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Patch('categories/:id')
+  @Patch(':id')
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto, @Request() req: any) {
     return this.catalog.updateCategory(id, dto, req.user?.id);
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Delete('categories/:id')
+  @Delete(':id')
   deleteCategory(@Param('id') id: string, @Request() req: any) {
     return this.catalog.deleteCategory(id, req.user?.id);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Get('products/check-sku/:sku')
-  checkSkuExists(@Param('sku') sku: string, @Query('excludeId') excludeId?: string) {
-    return this.catalog.checkSkuExists(sku, excludeId);
-  }
-
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Get('generate-sku')
-  generateUniqueSku(@Query('baseName') baseName?: string) {
-    return this.catalog.generateUniqueSku(baseName);
   }
 }

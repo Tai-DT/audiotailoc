@@ -41,7 +41,9 @@ export class CheckoutService {
           `idempotency:checkout:${params.idempotencyKey}`,
         );
         if (existingOrderId) {
-          const existingOrder = await this.prisma.orders.findUnique({ where: { id: existingOrderId } });
+          const existingOrder = await this.prisma.orders.findUnique({
+            where: { id: existingOrderId },
+          });
           if (existingOrder) return existingOrder;
         }
       } catch (err) {

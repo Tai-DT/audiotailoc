@@ -162,14 +162,14 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true)
-      
+
       // Ensure we have a valid token
       if (!token) {
         console.warn('No auth token available, skipping orders fetch')
         setLoading(false)
         return
       }
-      
+
       const response = await apiClient.getOrders({
         page: currentPage,
         limit: pageSize,
@@ -273,24 +273,24 @@ export default function OrdersPage() {
           const resp = await apiClient.get(`/catalog/products/${req.value}`);
           const pd = resp.data as Record<string, unknown>;
           if (pd?.id) {
-            fetched.push({ 
-              id: pd.id as string, 
-              name: pd.name as string, 
-              slug: pd.slug as string, 
-              priceCents: pd.priceCents as number, 
-              stockQuantity: (pd.stockQuantity as number) ?? 0 
+            fetched.push({
+              id: pd.id as string,
+              name: pd.name as string,
+              slug: pd.slug as string,
+              priceCents: pd.priceCents as number,
+              stockQuantity: (pd.stockQuantity as number) ?? 0
             });
           }
         } else {
           const resp = await apiClient.get(`/catalog/products/slug/${req.value}`);
           const pd = resp.data as Record<string, unknown>;
           if (pd?.id) {
-            fetched.push({ 
-              id: pd.id as string, 
-              name: pd.name as string, 
-              slug: pd.slug as string, 
-              priceCents: pd.priceCents as number, 
-              stockQuantity: (pd.stockQuantity as number) ?? 0 
+            fetched.push({
+              id: pd.id as string,
+              name: pd.name as string,
+              slug: pd.slug as string,
+              priceCents: pd.priceCents as number,
+              stockQuantity: (pd.stockQuantity as number) ?? 0
             });
           }
         }
@@ -496,17 +496,24 @@ export default function OrdersPage() {
   // Backend allowedTransitions: PENDING -> [PROCESSING, CANCELLED, COMPLETED], PROCESSING -> [COMPLETED, CANCELLED]
   const getAllowedNextStatuses = (current: string | undefined): string[] => {
     if (!current) return []
-    if (current === 'PENDING') return ['PROCESSING', 'CANCELLED', 'COMPLETED']
-    if (current === 'PROCESSING') return ['COMPLETED', 'CANCELLED']
-    // COMPLETED and CANCELLED cannot transition further
-    return []
+    const transitions: Record<string, string[]> = {
+      PENDING: ['CONFIRMED', 'PROCESSING', 'CANCELLED'],
+      CONFIRMED: ['PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'],
+      PROCESSING: ['SHIPPED', 'COMPLETED', 'CANCELLED'],
+      SHIPPED: ['COMPLETED', 'RETURNED', 'CANCELLED'],
+      COMPLETED: ['RETURNED'],
+      CANCELLED: [],
+      RETURNED: [],
+    }
+    return transitions[current.toUpperCase()] || []
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    const val = Number(amount || 0);
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(amount / 100)
+    }).format(val / 100)
   }
 
   const formatDate = (dateString: string) => {
@@ -812,7 +819,7 @@ export default function OrdersPage() {
                               {formatCurrency(item.price)}
                             </div>
                             <div className="col-span-2 text-right font-medium">
-                              {formatCurrency(item.total)}
+                              {formatCurrency(item.total || (item.price * item.quantity))}
                             </div>
                           </div>
                         </div>

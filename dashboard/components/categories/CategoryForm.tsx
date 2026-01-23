@@ -14,7 +14,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Info } from 'lucide-react';
+import { Info, Wand2 } from 'lucide-react';
+import { ImageUpload } from '@/components/ui/image-upload';
 import type { Category, CreateCategoryData, UpdateCategoryData } from '@/types/category';
 
 interface CategoryFormProps {
@@ -24,33 +25,47 @@ interface CategoryFormProps {
     categories: Category[];
 }
 
+interface FormValues {
+    name: string;
+    slug: string;
+    description: string;
+}
+
 export function CategoryForm({ category, onSubmit, onCancel, categories }: CategoryFormProps) {
     const [loading, setLoading] = useState(false);
     const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+    // Track controlled fields with refs and state (not react-hook-form)
+    const [imageUrl, setImageUrl] = useState(category?.imageUrl || '');
+    const [parentId, setParentId] = useState(category?.parentId || '');
+    const [isActive, setIsActive] = useState(category?.isActive ?? true);
+    const [metaTitle, setMetaTitle] = useState(category?.metaTitle || '');
+    const [metaDescription, setMetaDescription] = useState(category?.metaDescription || '');
+    const [metaKeywords, setMetaKeywords] = useState(category?.metaKeywords || '');
+
     const {
         register,
         handleSubmit,
         watch,
         setValue,
         formState: { errors },
-    } = useForm({
+    } = useForm<FormValues>({
         defaultValues: {
             name: category?.name || '',
             slug: category?.slug || '',
             description: category?.description || '',
-            imageUrl: category?.imageUrl || '',
-            parentId: category?.parentId || '',
-            isActive: category?.isActive ?? true,
         },
     });
 
-    const name = watch('name');
-    const slug = watch('slug');
+    // Watch all values for controlled components
+    const watchedName = watch('name');
+    const watchedSlug = watch('slug');
+    const watchedDescription = watch('description');
 
     // Auto-generate slug from name (only if not manually edited)
     useEffect(() => {
-        if (!category && name && !slugManuallyEdited) {
-            const generatedSlug = name
+        if (!category && watchedName && !slugManuallyEdited) {
+            const generatedSlug = watchedName
                 .toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // Remove Vietnamese diacritics
@@ -60,12 +75,56 @@ export function CategoryForm({ category, onSubmit, onCancel, categories }: Categ
                 .replace(/^-+|-+$/g, '');
             setValue('slug', generatedSlug);
         }
-    }, [name, category, setValue, slugManuallyEdited]);
+    }, [watchedName, category, setValue, slugManuallyEdited]);
 
-    const handleFormSubmit = async (data: CreateCategoryData | UpdateCategoryData) => {
+    const generateSEOData = () => {
+        if (!watchedName) return;
+
+        const generatedTitle = `${watchedName} - Audio Tài Lộc`;
+        const generatedDesc = watchedDescription
+            ? watchedDescription.substring(0, 160)
+            : `Mua ${watchedName} chính hãng, giá tốt nhất tại Audio Tài Lộc. Bảo hành uy tín, hậu mãi chu đáo.`;
+
+        // Simple keyword generation from name parts
+        const keywords = watchedName
+            .split(' ')
+            .filter(w => w.length > 2)
+            .join(', ');
+
+        setMetaTitle(generatedTitle);
+        setMetaDescription(generatedDesc);
+        setMetaKeywords(keywords);
+
+        // Also regenerate slug if empty
+        if (!watchedSlug) {
+            const generatedSlug = watchedName
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/Đ/g, 'D')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            setValue('slug', generatedSlug);
+        }
+    };
+
+    const handleFormSubmit = async (data: FormValues) => {
         try {
             setLoading(true);
-            await onSubmit(data);
+            // Combine RHF data with state-managed values
+            const submissionData: CreateCategoryData | UpdateCategoryData = {
+                name: data.name,
+                slug: data.slug,
+                description: data.description || undefined,
+                imageUrl: imageUrl || undefined,
+                parentId: parentId === 'none' || parentId === '' ? undefined : parentId,
+                isActive: isActive,
+                metaTitle: metaTitle || undefined,
+                metaDescription: metaDescription || undefined,
+                metaKeywords: metaKeywords || undefined,
+            };
+            await onSubmit(submissionData);
         } finally {
             setLoading(false);
         }
@@ -77,7 +136,7 @@ export function CategoryForm({ category, onSubmit, onCancel, categories }: Categ
     );
 
     return (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="space-y-2">
                 <Label htmlFor="name">
                     Name <span className="text-destructive">*</span>
@@ -134,32 +193,26 @@ export function CategoryForm({ category, onSubmit, onCancel, categories }: Categ
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                    id="imageUrl"
-                    {...register('imageUrl', {
-                        pattern: {
-                            value: /^https?:\/\/.+/,
-                            message: 'Must be a valid URL starting with http:// or https://'
-                        }
-                    })}
-                    placeholder="https://example.com/image.jpg"
-                    type="url"
+                <ImageUpload
+                    label="Category Image"
+                    value={imageUrl ? [{ url: imageUrl }] : []}
+                    onChange={(images) => setImageUrl(images[0]?.url || '')}
+                    onRemove={() => setImageUrl('')}
+                    placeholder="Tải ảnh danh mục lên Cloud"
+                    maxFiles={1}
+                    showSEOFields={true}
                 />
-                {errors.imageUrl && (
-                    <p className="text-sm text-destructive">{errors.imageUrl.message}</p>
-                )}
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Info className="h-3 w-3" />
-                    URL of the category image to display (optional)
+                    Upload an image and add SEO metadata (Alt/Title) just like products.
                 </p>
             </div>
 
             <div className="space-y-2">
                 <Label htmlFor="parentId">Parent Category</Label>
                 <Select
-                    value={watch('parentId') || 'none'}
-                    onValueChange={(value) => setValue('parentId', value === 'none' ? '' : value)}
+                    value={parentId || 'none'}
+                    onValueChange={(value) => setParentId(value === 'none' ? '' : value)}
                 >
                     <SelectTrigger>
                         <SelectValue placeholder="Select parent category (optional)" />
@@ -181,15 +234,62 @@ export function CategoryForm({ category, onSubmit, onCancel, categories }: Categ
             <div className="flex items-center space-x-2">
                 <Switch
                     id="isActive"
-                    checked={watch('isActive')}
-                    onCheckedChange={(checked) => setValue('isActive', checked)}
+                    checked={isActive}
+                    onCheckedChange={setIsActive}
                 />
                 <Label htmlFor="isActive" className="cursor-pointer">
                     Active
                 </Label>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="border-t pt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">SEO Optimization</h3>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={generateSEOData}
+                        disabled={!watchedName}
+                    >
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        Auto Generate
+                    </Button>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="metaTitle">Meta Title</Label>
+                    <Input
+                        id="metaTitle"
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value)}
+                        placeholder="SEO Title (defaults to category name)"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="metaKeywords">Meta Keywords</Label>
+                    <Input
+                        id="metaKeywords"
+                        value={metaKeywords}
+                        onChange={(e) => setMetaKeywords(e.target.value)}
+                        placeholder="keyword1, keyword2, keyword3"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="metaDescription">Meta Description</Label>
+                    <Textarea
+                        id="metaDescription"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
+                        placeholder="SEO Description (limit to 160 chars)"
+                        rows={3}
+                    />
+                </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 sticky bottom-0 bg-background pb-2">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
                     Cancel
                 </Button>

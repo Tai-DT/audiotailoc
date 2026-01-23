@@ -187,10 +187,10 @@ async function bootstrap() {
   // Body parsing with optimized limits
   app.use(
     json({
-      limit: '2mb',
+      limit: '10mb',
       verify: (req: any, res, buf) => {
         // Verify request body size for security
-        if (buf.length > 2 * 1024 * 1024) {
+        if (buf.length > 10 * 1024 * 1024) {
           throw new Error('Request body too large');
         }
       },
@@ -199,7 +199,7 @@ async function bootstrap() {
   app.use(
     urlencoded({
       extended: true,
-      limit: '2mb',
+      limit: '10mb',
       parameterLimit: 10000, // Limit number of parameters
     }),
   );
@@ -257,7 +257,7 @@ async function bootstrap() {
   // - This global limiter provides defense-in-depth for all endpoints
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 300, // limit each IP to 300 requests per windowMs (hardened baseline)
+    max: 10000, // Significant increase for development/testing flexibility
     message: {
       success: false,
       message: 'Too many requests from this IP, please try again later.',

@@ -21,7 +21,17 @@ import {
 
 @Injectable()
 export class CompleteProductService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
 
   async createProduct(createProductDto: CreateProductDto): Promise<ProductResponseDto> {
     const {
@@ -98,8 +108,8 @@ export class CompleteProductService {
         model,
         weight,
         dimensions,
-        specifications: specifications ? JSON.parse(JSON.stringify(specifications)) : null,
-        images: images ? JSON.parse(JSON.stringify(images)) : null,
+        specifications: specifications ? JSON.stringify(specifications) : null,
+        images: images ? JSON.stringify(images) : null,
         isActive,
         featured,
         metaTitle,
@@ -412,8 +422,8 @@ export class CompleteProductService {
         ...(model !== undefined && { model }),
         ...(weight !== undefined && { weight }),
         ...(dimensions !== undefined && { dimensions }),
-        ...(specifications && { specifications: JSON.parse(JSON.stringify(specifications)) }),
-        ...(images && { images: JSON.parse(JSON.stringify(images)) }),
+        ...(specifications && { specifications: JSON.stringify(specifications) }),
+        ...(images && { images: JSON.stringify(images) }),
         ...(isActive !== undefined && { isActive }),
         ...(featured !== undefined && { featured }),
         ...(metaTitle !== undefined && { metaTitle }),
@@ -554,7 +564,7 @@ export class CompleteProductService {
     if (invalidFields.length > 0) {
       throw new BadRequestException(
         `Invalid fields in bulk update: ${invalidFields.join(', ')}. ` +
-          `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`,
+        `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`,
       );
     }
 
@@ -979,12 +989,12 @@ export class CompleteProductService {
       shortDescription: product.shortDescription,
       priceCents: product.priceCents,
       originalPriceCents: product.originalPriceCents,
-      images: product.images,
+      images: this.safeParseJSON(product.images, []),
       category: product.categories,
       brand: product.brand,
       model: product.model,
       sku: product.sku,
-      specifications: product.specifications,
+      specifications: this.safeParseJSON(product.specifications, {}),
       features: product.features,
       warranty: product.warranty,
       // stockQuantity: product.stockQuantity, // Field does not exist in ProductResponseDto
@@ -998,6 +1008,7 @@ export class CompleteProductService {
       featured: product.featured,
       isActive: product.isActive,
       viewCount: product.viewCount,
+      stockQuantity: product.stockQuantity,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
     };
@@ -1045,5 +1056,27 @@ export class CompleteProductService {
         associatedOrdersCount: 0,
       };
     }
+  }
+
+  async checkSkuExists(sku: string, excludeId?: string): Promise<boolean> {
+    const where: any = { sku };
+    if (excludeId) where.id = { not: excludeId };
+    const count = await this.prisma.products.count({ where });
+    return count > 0;
+  }
+
+  async generateUniqueSku(baseName?: string): Promise<string> {
+    const base =
+      baseName
+        ?.toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 8) || 'PROD';
+    let sku = base;
+    let counter = 1;
+    while (await this.checkSkuExists(sku)) {
+      sku = `${base}-${counter.toString().padStart(3, '0')}`;
+      counter++;
+    }
+    return sku;
   }
 }

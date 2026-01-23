@@ -121,6 +121,11 @@ async function installMocks(page: Page) {
     await fulfillJson(route, ok(MOCK_USER, '/auth/me', 'GET'))
   })
 
+  // Notifications API - mock to avoid hitting real backend auth-protected endpoint during tests
+  await page.route('**/api/v1/notifications*', async (route) => {
+    await fulfillJson(route, ok({ notifications: [], total: 0 }, '/notifications', 'GET'))
+  })
+
   // Bookings API
   await page.route('**/api/bookings', async (route) => {
     const req = route.request()

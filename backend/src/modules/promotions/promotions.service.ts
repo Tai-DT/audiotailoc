@@ -38,7 +38,7 @@ export interface UpdatePromotionDto {
 
 @Injectable()
 export class PromotionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(filters?: { isActive?: boolean; type?: string; search?: string }) {
     const where: any = {};
@@ -111,6 +111,7 @@ export class PromotionsService {
           customerSegments: dto.customerSegments || [],
         },
         createdBy,
+        updatedAt: new Date(),
       } as any,
     });
     return this.mapPromotion(promotion);
@@ -332,7 +333,7 @@ export class PromotionsService {
         // Simple proportional distribution
         itemDiscount = Math.round(
           ((Number(item.price || item.priceCents) * item.quantity) / applicableSubtotal) *
-            validation.discount,
+          validation.discount,
         );
         // Ensure we don't exceed remaining
         itemDiscount = Math.min(itemDiscount, remaining);
@@ -498,6 +499,7 @@ export class PromotionsService {
         expiresAt: null,
         usageCount: 0,
         metadata: original.metadata,
+        updatedAt: new Date(),
       } as any,
     });
 

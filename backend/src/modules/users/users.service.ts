@@ -22,17 +22,6 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.users.findUnique({
       where: { id },
-      include: {
-        orders: {
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-        },
-        _count: {
-          select: {
-            orders: true,
-          },
-        },
-      },
     });
 
     if (!user) {
