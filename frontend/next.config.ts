@@ -86,7 +86,6 @@ const nextConfig: NextConfig = {
       'react-markdown',
       'zod',
     ],
-    allowedDevOrigins: ['localhost', '127.0.0.1', '192.168.0.120'],
   },
   
   // Modularize imports for better tree-shaking

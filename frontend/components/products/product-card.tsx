@@ -62,6 +62,12 @@ export function ProductCard({
   const isOutOfStock = product.stockQuantity === 0;
   const isLowStock = product.stockQuantity < 10;
 
+  // Calculate rating
+  const ratingCount = product.reviews?.length || 0;
+  const averageRating = ratingCount > 0
+    ? product.reviews!.reduce((acc, review) => acc + review.rating, 0) / ratingCount
+    : 0;
+
   // Get the primary image URL - prefer images array, fallback to imageUrl
   const getProductImage = () => {
     const images = parseImages(product.images, product.imageUrl);
@@ -70,7 +76,7 @@ export function ProductCard({
 
   return (
     <article 
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md ring-1 ring-border/30 shadow-[0_30px_100px_-70px_rgba(0,0,0,0.75)] transition-transform duration-300 hover:-translate-y-2 hover:shadow-[0_40px_120px_-70px_rgba(0,0,0,0.85)] focus-within:ring-2 focus-within:ring-primary"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md ring-1 ring-border/30 shadow-[0_30px_100px_-70px_rgba(0,0,0,0.75)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_40px_120px_-60px_rgba(0,0,0,0.2)] hover:border-primary/50 focus-within:ring-2 focus-within:ring-primary dark:hover:shadow-[0_40px_120px_-60px_rgba(255,255,255,0.05)]"
       aria-label={`Sản phẩm: ${product.name}`}
     >
       {/* Product Image with AspectRatio for consistent sizing */}
@@ -86,7 +92,7 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-all duration-700 group-hover:scale-[1.03] group-hover:brightness-[1.05] group-hover:contrast-105"
+              className={`object-cover transition-all duration-700 group-hover:scale-[1.05] group-hover:brightness-[1.05] group-hover:contrast-105 ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
               loading={priority ? "eager" : "lazy"}
               priority={priority}
               onError={(e) => {
@@ -95,7 +101,7 @@ export function ProductCard({
               }}
             />
             {/* Gradient overlay on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             {/* Subtle shine */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             
@@ -139,20 +145,21 @@ export function ProductCard({
 
         {/* Quick Actions - Hidden on mobile, visible on hover on desktop */}
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-2">
             <Button
               variant="secondary"
               size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8"
+              className="h-9 w-9 rounded-full shadow-md bg-background/80 backdrop-blur hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               onClick={() => onViewProduct?.(product.slug)}
               aria-label={`Xem nhanh ${product.name}`}
+              title="Xem nhanh"
             >
-              <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+              <Eye className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               variant="secondary"
               size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8"
+              className="h-9 w-9 rounded-full shadow-md bg-background/80 backdrop-blur hover:bg-destructive hover:text-destructive-foreground transition-all duration-300"
               disabled={isWishlistLoading}
               onClick={async () => {
                 try {
@@ -163,8 +170,9 @@ export function ProductCard({
               }}
               aria-label={isInWishlist ? `Xóa ${product.name} khỏi yêu thích` : `Thêm ${product.name} vào yêu thích`}
               aria-pressed={isInWishlist}
+              title={isInWishlist ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
             >
-              <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isInWishlist ? 'fill-red-500 text-destructive' : ''}`} aria-hidden="true" />
+              <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-current text-destructive' : ''}`} aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -231,16 +239,16 @@ export function ProductCard({
 
         {/* Rating - Compact on mobile */}
         <div className="flex items-center space-x-1 mb-2">
-          <div className="flex items-center">
+          <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-tertiary text-tertiary"
+                className={`h-3 w-3 ${i < Math.round(averageRating || 4.5) ? 'fill-yellow-400 text-yellow-400' : 'fill-muted text-muted-foreground'}`}
               />
             ))}
           </div>
-          <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
-            (4.5) • {product.viewCount} xem
+          <span className="text-[10px] sm:text-xs text-muted-foreground truncate ml-1">
+            {averageRating > 0 ? `(${averageRating.toFixed(1)})` : '(Mới)'} • {product.viewCount} xem
           </span>
         </div>
 
