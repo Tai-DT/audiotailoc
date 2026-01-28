@@ -31,23 +31,25 @@ model activity_logs {
 }
 
 model banners {
-  id             String    @id
-  title          String
-  subtitle       String?
-  description    String?
-  imageUrl       String
-  mobileImageUrl String?
-  linkUrl        String?
-  buttonLabel    String?
-  page           String    @default("home")
-  locale         String?
-  position       Int       @default(0)
-  isActive       Boolean   @default(true)
-  startAt        DateTime?
-  endAt          DateTime?
-  isDeleted      Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime
+  id                  String    @id
+  title               String
+  subtitle            String?
+  description         String?
+  imageUrl            String
+  darkImageUrl        String?
+  mobileImageUrl      String?
+  darkMobileImageUrl  String?
+  linkUrl             String?
+  buttonLabel         String?
+  page                String    @default("home")
+  locale              String?
+  position            Int       @default(0)
+  isActive            Boolean   @default(true)
+  startAt             DateTime?
+  endAt               DateTime?
+  isDeleted           Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime
 
   @@index([isActive])
   @@index([isDeleted])
@@ -188,8 +190,8 @@ model cart_items {
   price     BigInt
   createdAt DateTime @default(now())
   updatedAt DateTime
-  carts     carts    @relation(fields: [cartId], references: [id])
-  products  products @relation(fields: [productId], references: [id])
+  carts     carts    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  products  products @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId])
 }
@@ -203,7 +205,7 @@ model carts {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime
   cart_items cart_items[]
-  users      users?       @relation(fields: [userId], references: [id])
+  users      users?       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model categories {
@@ -415,7 +417,7 @@ model order_items {
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime
-  orders    orders   @relation(fields: [orderId], references: [id])
+  orders    orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   products  products @relation(fields: [productId], references: [id])
 }
 
@@ -424,10 +426,10 @@ model orders {
   orderNo             String                @unique
   userId              String?
   idempotencyKey      String?
-  subtotalCents       Int                   @default(0)
-  discountCents       Int                   @default(0)
-  shippingCents       Int                   @default(0)
-  totalCents          Int
+  subtotalCents       BigInt                @default(0)
+  discountCents       BigInt                @default(0)
+  shippingCents       BigInt                @default(0)
+  totalCents          BigInt
   status              String                @default("PENDING")
   shippingAddress     String?
   shippingCoordinates String?
@@ -458,14 +460,14 @@ model payment_intents {
   id           String     @id
   orderId      String
   provider     String
-  amountCents  Int
+  amountCents  BigInt
   status       String     @default("PENDING")
   clientSecret String?
   returnUrl    String?
   metadata     String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime
-  orders       orders     @relation(fields: [orderId], references: [id])
+  orders       orders     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   payments     payments[]
 }
 
@@ -474,14 +476,14 @@ model payments {
   orderId         String
   intentId        String?
   provider        String
-  amountCents     Int
+  amountCents     BigInt
   status          String           @default("PENDING")
   transactionId   String?
   metadata        String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime
   payment_intents payment_intents? @relation(fields: [intentId], references: [id])
-  orders          orders           @relation(fields: [orderId], references: [id])
+  orders          orders           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   refunds         refunds[]
 }
 
@@ -549,8 +551,8 @@ model product_reviews {
   response               String?
   product_review_reports product_review_reports[]
   product_review_votes   product_review_votes[]
-  products               products                 @relation(fields: [productId], references: [id])
-  users                  users                    @relation(fields: [userId], references: [id])
+  products               products                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  users                  users                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model product_views {
@@ -579,8 +581,8 @@ model service_reviews {
   response   String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime
-  services   services     @relation(fields: [serviceId], references: [id])
-  users      users        @relation(fields: [userId], references: [id])
+  services   services     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  users      users        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([serviceId])
   @@index([userId])
@@ -754,7 +756,7 @@ model redemption_history {
 model refunds {
   id               String    @id
   paymentId        String
-  amountCents      Int
+  amountCents      BigInt
   reason           String?
   status           String    @default("PENDING")
   providerRefundId String?
@@ -778,10 +780,10 @@ model service_booking_items {
   bookingId        String
   serviceItemId    String
   quantity         Int
-  price            Int
+  price            BigInt
   createdAt        DateTime         @default(now())
-  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
-  service_items    service_items    @relation(fields: [serviceItemId], references: [id])
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  service_items    service_items    @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
 }
 
 model service_bookings {
@@ -794,8 +796,8 @@ model service_bookings {
   scheduledTime          String?
   completedAt            DateTime?
   notes                  String?
-  estimatedCosts         Int?                     @default(0)
-  actualCosts            Int?
+  estimatedCosts         BigInt?                  @default(0)
+  actualCosts            BigInt?
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime
   address                String?
@@ -805,7 +807,7 @@ model service_bookings {
   customerPhone          String?
   customerEmail          String?
   service_booking_items  service_booking_items[]
-  services               services                 @relation(fields: [serviceId], references: [id])
+  services               services                 @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   technicians            technicians?             @relation(fields: [technicianId], references: [id])
   users                  users?                   @relation(fields: [userId], references: [id])
   service_payments       service_payments[]
@@ -816,24 +818,24 @@ model service_items {
   id                    String                  @id
   serviceId             String
   name                  String
-  price                 Int
+  price                 BigInt
   quantity              Int
   createdAt             DateTime                @default(now())
   updatedAt             DateTime
   service_booking_items service_booking_items[]
-  services              services                @relation(fields: [serviceId], references: [id])
+  services              services                @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 model service_payments {
   id               String           @id
   bookingId        String
   provider         String
-  amountCents      Int
+  amountCents      BigInt
   status           String           @default("PENDING")
   transactionId    String?
   paidAt           DateTime?
   createdAt        DateTime         @default(now())
-  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model service_status_history {
@@ -844,7 +846,7 @@ model service_status_history {
   note             String?
   changedBy        String?
   createdAt        DateTime         @default(now())
-  service_bookings service_bookings @relation(fields: [bookingId], references: [id])
+  service_bookings service_bookings @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model service_types {
@@ -880,10 +882,10 @@ model services {
   name             String
   description      String?
   shortDescription String?
-  basePriceCents   Int                @default(0)
-  price            Int                @default(0)
-  minPrice         Int?
-  maxPrice         Int?
+  basePriceCents   BigInt             @default(0)
+  price            BigInt             @default(0)
+  minPrice         BigInt?
+  maxPrice         BigInt?
   priceType        String             @default("FIXED")
   duration         Int
   typeId           String?
@@ -1062,8 +1064,8 @@ model wishlist_items {
   productId String
   createdAt DateTime @default(now())
   updatedAt DateTime
-  products  products @relation(fields: [productId], references: [id])
-  users     users    @relation(fields: [userId], references: [id])
+  products  products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
@@ -1086,12 +1088,12 @@ model customer_promotions {
   promotionId     String
   userId          String
   orderId         String?
-  discountApplied Int?
+  discountApplied BigInt?
   usedAt          DateTime   @default(now())
   status          String     @default("APPLIED")
   metadata        Json?
   createdAt       DateTime   @default(now())
-  orders          orders?    @relation(fields: [orderId], references: [id])
+  orders          orders?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   promotions      promotions @relation(fields: [promotionId], references: [id], onDelete: Cascade)
   users           users      @relation(fields: [userId], references: [id], onDelete: Cascade)
 

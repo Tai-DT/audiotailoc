@@ -4,9 +4,13 @@ export interface Banner {
   subtitle?: string | null;
   description?: string | null;
   imageUrl: string;
+  darkImageUrl?: string | null;
   mobileImageUrl?: string | null;
+  darkMobileImageUrl?: string | null;
   images?: string[]; // Array support for multiple images
+  darkImages?: string[]; // Array support for multiple dark images
   mobileImages?: string[]; // Array support for multiple mobile images
+  darkMobileImages?: string[]; // Array support for multiple dark mobile images
   linkUrl?: string | null;
   buttonLabel?: string | null;
   page: string;
@@ -33,9 +37,13 @@ export interface CreateBannerDto {
   subtitle?: string;
   description?: string;
   imageUrl: string;
+  darkImageUrl?: string;
   mobileImageUrl?: string;
+  darkMobileImageUrl?: string;
   images?: string[]; // Array support for multiple images
+  darkImages?: string[]; // Array support for multiple dark images
   mobileImages?: string[]; // Array support for multiple mobile images
+  darkMobileImages?: string[]; // Array support for multiple dark mobile images
   linkUrl?: string;
   buttonLabel?: string;
   page: string;
