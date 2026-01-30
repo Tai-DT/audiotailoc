@@ -1,12 +1,5 @@
 {
   "version": 2,
-  "rootDirectory": "frontend",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
   "env": {
     "NODE_ENV": "production",
     "NEXT_PUBLIC_API_URL": "https://backend-audiotailoc-f6b75c2cc1ea.herokuapp.com/api/v1"
