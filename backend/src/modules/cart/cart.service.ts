@@ -103,28 +103,22 @@ export class CartService {
 
     if (!inventory) {
       this.logger.warn(`No inventory record found for product ${productId}`);
-    } else {
-      const availableStock = inventory.stock - inventory.reserved;
-      if (availableStock < quantity) {
-        throw new NotFoundException(
-          `Insufficient stock. Available: ${availableStock}, Requested: ${quantity}`,
-        );
-      }
     }
 
-    // Check if item already exists in cart
-    const existingItem = await this.prisma.cart_items.findFirst({
-      where: {
-        cartId: cart.id,
-        productId,
-      },
-    });
+    // Use transaction to handle race conditions
+    await this.prisma.$transaction(async tx => {
+      // Check if item already exists in cart (within transaction)
+      const existingItem = await tx.cart_items.findFirst({
+        where: {
+          cartId: cart.id,
+          productId,
+        },
+      });
 
-    if (existingItem) {
-      // Update quantity with re-validation
-      const newQuantity = existingItem.quantity + quantity;
+      const currentQtyInCart = existingItem?.quantity || 0;
+      const newQuantity = currentQtyInCart + quantity;
 
-      // Re-validate stock for new total quantity
+      // Validate stock for total quantity
       if (inventory) {
         const availableStock = inventory.stock - inventory.reserved;
         if (availableStock < newQuantity) {
@@ -134,26 +128,52 @@ export class CartService {
         }
       }
 
-      await this.prisma.cart_items.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: newQuantity,
-          price: product.priceCents, // Sync price to latest
-        },
-      });
-    } else {
-      // Add new item
-      await this.prisma.cart_items.create({
-        data: {
-          id: randomUUID(),
-          updatedAt: new Date(),
-          carts: { connect: { id: cart.id } },
-          products: { connect: { id: productId } },
-          quantity,
-          price: product.priceCents,
-        },
-      });
-    }
+      if (existingItem) {
+        // Update existing item
+        await tx.cart_items.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: newQuantity,
+            price: product.priceCents,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        // Create new item - handle potential race condition
+        try {
+          await tx.cart_items.create({
+            data: {
+              id: randomUUID(),
+              updatedAt: new Date(),
+              cartId: cart.id,
+              productId,
+              quantity,
+              price: product.priceCents,
+            },
+          });
+        } catch (error: any) {
+          // If unique constraint violation, item was created by concurrent request
+          // Retry as update
+          if (error.code === 'P2002') {
+            const concurrentItem = await tx.cart_items.findFirst({
+              where: { cartId: cart.id, productId },
+            });
+            if (concurrentItem) {
+              await tx.cart_items.update({
+                where: { id: concurrentItem.id },
+                data: {
+                  quantity: concurrentItem.quantity + quantity,
+                  price: product.priceCents,
+                  updatedAt: new Date(),
+                },
+              });
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
+    });
 
     this.logger.log(`Added ${quantity} of product ${productId} to guest cart ${cartId}`);
     return this.getGuestCart(cartId);
@@ -484,42 +504,70 @@ export class CartService {
     }
 
     const availableStock = inventory.stock - inventory.reserved;
-    const existingItem = await this.prisma.cart_items.findFirst({
-      where: {
-        cartId: cart.id,
-        productId,
-      },
+
+    // Use transaction to handle race conditions
+    await this.prisma.$transaction(async tx => {
+      const existingItem = await tx.cart_items.findFirst({
+        where: {
+          cartId: cart.id,
+          productId,
+        },
+      });
+
+      const currentQtyInCart = existingItem?.quantity || 0;
+      const totalRequestedQty = currentQtyInCart + quantity;
+
+      if (totalRequestedQty > availableStock) {
+        throw new BadRequestException(
+          `Không đủ hàng: ${product.name} (còn ${availableStock}, trong giỏ ${currentQtyInCart}, thêm ${quantity})`,
+        );
+      }
+
+      if (existingItem) {
+        await tx.cart_items.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: existingItem.quantity + quantity,
+            price: product.priceCents,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        // Create new item - handle potential race condition
+        try {
+          await tx.cart_items.create({
+            data: {
+              id: randomUUID(),
+              updatedAt: new Date(),
+              cartId: cart.id,
+              productId,
+              quantity,
+              price: product.priceCents,
+            },
+          });
+        } catch (error: any) {
+          // If unique constraint violation, item was created by concurrent request
+          // Retry as update
+          if (error.code === 'P2002') {
+            const concurrentItem = await tx.cart_items.findFirst({
+              where: { cartId: cart.id, productId },
+            });
+            if (concurrentItem) {
+              await tx.cart_items.update({
+                where: { id: concurrentItem.id },
+                data: {
+                  quantity: concurrentItem.quantity + quantity,
+                  price: product.priceCents,
+                  updatedAt: new Date(),
+                },
+              });
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
     });
-
-    const currentQtyInCart = existingItem?.quantity || 0;
-    const totalRequestedQty = currentQtyInCart + quantity;
-
-    if (totalRequestedQty > availableStock) {
-      throw new BadRequestException(
-        `Không đủ hàng: ${product.name} (còn ${availableStock}, trong giỏ ${currentQtyInCart}, thêm ${quantity})`,
-      );
-    }
-
-    if (existingItem) {
-      await this.prisma.cart_items.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: existingItem.quantity + quantity,
-          price: product.priceCents, // Sync price
-        },
-      });
-    } else {
-      await this.prisma.cart_items.create({
-        data: {
-          id: randomUUID(),
-          updatedAt: new Date(),
-          carts: { connect: { id: cart.id } },
-          products: { connect: { id: productId } },
-          quantity,
-          price: product.priceCents,
-        },
-      });
-    }
 
     return this.getUserCart(userId);
   }
@@ -623,12 +671,12 @@ export class CartService {
       );
     }
 
-    const subtotal = validItems.reduce((sum: number, item: any) => {
+    const subtotal = validItems.reduce((sum: bigint, item: any) => {
       // ALWAYS use the latest product price from the DB (item.products.priceCents)
       // unless we want to "freeze" prices, but for e-commerce, real-time price is better
-      const currentPrice = Number(item.products?.priceCents) || Number(item.price) || 0;
-      return sum + currentPrice * item.quantity;
-    }, 0);
+      const currentPrice = item.products?.priceCents || item.price || BigInt(0);
+      return sum + currentPrice * BigInt(item.quantity);
+    }, BigInt(0));
 
     const itemCount = validItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
@@ -638,10 +686,10 @@ export class CartService {
     const taxInclusive = true;
     const taxRate = 0.1;
     const taxAmount = taxInclusive
-      ? Math.round(subtotal - subtotal / (1 + taxRate)) // Part of subtotal
-      : Math.round(subtotal * taxRate); // Extra
+      ? subtotal - (subtotal * BigInt(Math.round(100 / (1 + taxRate)))) / BigInt(100)
+      : (subtotal * BigInt(Math.round(taxRate * 100))) / BigInt(100);
 
-    const shipping = subtotal > 10000000 ? 0 : 50000; // Free ship over 10M VND for Audio equipment
+    const shipping = subtotal > BigInt(10000000) ? BigInt(0) : BigInt(50000); // Free ship over 10M VND for Audio equipment
 
     return {
       ...cart,
@@ -659,11 +707,11 @@ export class CartService {
           stock: item.products.stockQuantity,
         },
       })),
-      subtotal,
+      subtotal: Number(subtotal),
       itemCount,
-      tax: taxAmount,
-      shipping,
-      total: taxInclusive ? subtotal + shipping : subtotal + taxAmount + shipping,
+      tax: Number(taxAmount),
+      shipping: Number(shipping),
+      total: Number(taxInclusive ? subtotal + shipping : subtotal + taxAmount + shipping),
       invalidItemsRemoved: rawItems.length - validItems.length,
     };
   }
@@ -726,9 +774,9 @@ export class CartService {
       include: { products: true },
     });
     const subtotalCents = items.reduce(
-      (sum, i) => sum + Number(i.price || i.products.priceCents) * i.quantity,
-      0,
+      (sum, i) => sum + (i.price || i.products.priceCents) * BigInt(i.quantity),
+      BigInt(0),
     );
-    return { cart, items, subtotalCents };
+    return { cart, items, subtotalCents: Number(subtotalCents) };
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { GoongMapAddressPicker } from '@/components/ui/goong-map-address-picker'
 import { Calendar, Clock, User, Phone, MapPin, Wrench, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth-context';
 
 interface Booking {
   id: string;
@@ -109,6 +110,7 @@ const formatDate = (dateValue: string | object | null | undefined): string => {
 
 export default function BookingsPage() {
   const router = useRouter();
+  const { token } = useAuth();
   const [bookingsData, setBookingsData] = useState<{
     bookings: Booking[];
     total: number;
@@ -129,17 +131,25 @@ export default function BookingsPage() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
+  const getAuthHeaders = useCallback((): Record<string, string> => {
+    if (!token) return {};
+    return { Authorization: `Bearer ${token}` };
+  }, [token]);
+
   useEffect(() => {
     fetchBookings();
     fetchServices();
     fetchTechnicians();
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/bookings');
+      const response = await fetch('/api/bookings', {
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+      });
       if (response.ok) {
         const data = await response.json();
 
@@ -195,7 +205,9 @@ export default function BookingsPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services?limit=100');
+      const response = await fetch('/api/services?limit=100', {
+        headers: getAuthHeaders(),
+      });
       if (response.ok) {
         const data = await response.json();
         let servicesList: Service[] = [];
@@ -248,7 +260,9 @@ export default function BookingsPage() {
 
   const fetchTechnicians = async () => {
     try {
-      const response = await fetch('/api/technicians?pageSize=100');
+      const response = await fetch('/api/technicians?pageSize=100', {
+        headers: getAuthHeaders(),
+      });
       if (response.ok) {
         const data = await response.json();
         let techniciansList: Technician[] = [];
@@ -352,7 +366,9 @@ export default function BookingsPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users?limit=100');
+      const response = await fetch('/api/users?limit=100', {
+        headers: getAuthHeaders(),
+      });
       if (response.ok) {
         const data = await response.json();
         // Handle different response formats from backend
@@ -420,6 +436,7 @@ export default function BookingsPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -452,6 +469,7 @@ export default function BookingsPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(bookingData),
       });
@@ -485,9 +503,15 @@ export default function BookingsPage() {
     try {
       const response = await fetch(`/api/bookings/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
+        setBookingsData(prev => ({
+          ...prev,
+          bookings: prev.bookings.filter((booking) => booking.id !== id),
+          total: Math.max(0, prev.total - 1),
+        }));
         fetchBookings();
         toast.success('Xóa đặt lịch thành công!');
       } else {
@@ -514,6 +538,7 @@ export default function BookingsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(bookingData),
       });

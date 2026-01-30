@@ -39,8 +39,16 @@ export function usePolicy(slug: string) {
         queryKey: ['policy', slug],
         queryFn: async (): Promise<Policy | null> => {
             try {
-                const response = await apiClient.get(`/policies/${slug}`);
-                return response.data;
+                const response = await apiClient.get<{ success: boolean; data: any }>(`/policies/${slug}`);
+                const rawData = response.data?.data || response.data;
+
+                if (!rawData) return null;
+
+                // Map contentHtml from backend to content for frontend components
+                return {
+                    ...rawData,
+                    content: rawData.contentHtml || rawData.content || '',
+                };
             } catch {
                 return null;
             }

@@ -1,28 +1,28 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Dự án | Audio Tài Lộc',
-  description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai: hội trường, nhà hàng, quán karaoke, sự kiện và nhiều hơn nữa',
-  keywords: [
-    'dự án âm thanh',
-    'lắp đặt hội trường',
-    'âm thanh nhà hàng',
-    'karaoke',
-    'sự kiện',
-    'Audio Tài Lộc',
-  ],
-  openGraph: {
-    title: 'Dự án | Audio Tài Lộc',
-    description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai',
-    type: 'website',
-    url: '/du-an',
-  },
+ title: 'Dự án | Audio Tài Lộc',
+ description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai: hội trường, nhà hàng, quán karaoke, sự kiện và nhiều hơn nữa',
+ keywords: [
+ 'dự án âm thanh',
+ 'lắp đặt hội trường',
+ 'âm thanh nhà hàng',
+ 'karaoke',
+ 'sự kiện',
+ 'Audio Tài Lộc',
+ ],
+ openGraph: {
+ title: 'Dự án | Audio Tài Lộc',
+ description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai',
+ type: 'website',
+ url: '/du-an',
+ },
 };
 
 export default function ProjectsLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }) {
-  return children;
+ return children;
 }

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Wrench, Clock, DollarSign, Calendar, TrendingUp } from "lucide-react"
 import Image from "next/image"
 import { Service, ServiceType } from "@/types/service";
+import { resolveBackendImageUrl } from "@/lib/utils/image-url";
 
 interface ServiceDetailDialogProps {
   serviceId: string | null
@@ -97,7 +98,11 @@ export function ServiceDetailDialog({ serviceId, open, onOpenChange, types }: Se
               <div className="flex-shrink-0">
                 {service.images?.length || service.imageUrl ? (
                   <Image
-                    src={service.images?.[0] || service.imageUrl || ''}
+                    src={resolveBackendImageUrl(
+                      Array.isArray(service.images)
+                        ? service.images[0]
+                        : (service.images as unknown as string) || service.imageUrl || ''
+                    )}
                     alt={service.name}
                     width={120}
                     height={120}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, handleApiResponse } from '../api';
+import { apiClient, handleApiResponse, API_ENDPOINTS } from '../api';
+import { authStorage } from '../auth-storage';
 import { Service, ServiceFilters, PaginatedResponse, ServiceType } from '../types';
 
 export const serviceQueryKeys = {
@@ -164,7 +165,7 @@ export const useServices = (filters: ServiceFilters = {}) => {
       const useProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
       // Only send backend-accepted params
       const { page, pageSize, typeId, isActive, q, minPrice, maxPrice, isFeatured, sortBy, sortOrder } = filters as ServiceFilters;
-      const params: Partial<Pick<ServiceFilters,'page'|'pageSize'|'typeId'|'q'|'minPrice'|'maxPrice'|'isFeatured'|'sortBy'|'sortOrder'>> & { isActive?: boolean } = {
+      const params: Partial<Pick<ServiceFilters, 'page' | 'pageSize' | 'typeId' | 'q' | 'minPrice' | 'maxPrice' | 'isFeatured' | 'sortBy' | 'sortOrder'>> & { isActive?: boolean } = {
         page,
         pageSize,
         typeId,
@@ -179,7 +180,7 @@ export const useServices = (filters: ServiceFilters = {}) => {
       (Object.keys(params) as (keyof typeof params)[]).forEach(k => params[k] === undefined && delete params[k]);
 
       if (useProxy && typeof window !== 'undefined') {
-        const search = new URLSearchParams(params as Record<string,string>).toString();
+        const search = new URLSearchParams(params as Record<string, string>).toString();
         const res = await fetch(`/api/proxy/services${search ? `?${search}` : ''}`);
         if (!res.ok) throw new Error('Proxy services request failed');
         const json = await res.json();
@@ -331,7 +332,17 @@ export const useCreateServiceBooking = () => {
       scheduledTime: string;
       notes?: string;
     }) => {
-      const response = await apiClient.post('/bookings', data);
+      const token = authStorage.getAccessToken();
+      const hasValidToken = token && typeof token === 'string' && token.trim().length > 0;
+      // Use explicit endpoint constant logic with safe fallback
+      const guestEndpoint = API_ENDPOINTS.SERVICES.GUEST_BOOKING || '/bookings/guest';
+      const endpoint = hasValidToken
+        ? (API_ENDPOINTS.SERVICES.CREATE_BOOKING || '/bookings')
+        : guestEndpoint;
+
+      const payload = { ...data, address: data.customerAddress };
+
+      const response = await apiClient.post(endpoint, payload);
       return handleApiResponse(response);
     },
     onSuccess: () => {

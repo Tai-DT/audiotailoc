@@ -12,6 +12,7 @@ const eslintConfig = [
       "next-env.d.ts",
       "playwright-report/**",
       "**/playwright-report/**",
+      ".vercel/**",
     ],
   },
   ...config,

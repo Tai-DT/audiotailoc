@@ -34,7 +34,7 @@ export class OrdersService {
     private readonly cartService: CartService,
     private readonly usersService: UsersService,
     private readonly telegramService: TelegramService,
-  ) { }
+  ) {}
 
   async list(params: { page?: number; pageSize?: number; status?: string }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -117,7 +117,7 @@ export class OrdersService {
 
     const result = await this.prisma.$transaction(
       async tx => {
-        let subtotalCents = 0;
+        let subtotalCents = BigInt(0);
         const finalItems = [];
 
         for (const item of itemsToProcess) {
@@ -144,7 +144,7 @@ export class OrdersService {
             tx,
           );
 
-          subtotalCents += Number(product.priceCents) * quantity;
+          subtotalCents += product.priceCents * BigInt(quantity);
           finalItems.push({
             id: randomUUID(),
             productId: product.id,
@@ -155,7 +155,7 @@ export class OrdersService {
           });
         }
 
-        let discountCents = 0;
+        let discountCents = BigInt(0);
         let isFreeShipping = false;
 
         if (orderData.promotionCode) {
@@ -167,7 +167,7 @@ export class OrdersService {
             tx,
           );
           if (promo.valid) {
-            discountCents = Number(promo.discount || 0);
+            discountCents = BigInt(promo.discount || 0);
             isFreeShipping = !!promo.isFreeShipping;
           } else {
             throw new BadRequestException(promo.error || 'Mã khuyến mãi không hợp lệ');
@@ -199,9 +199,13 @@ export class OrdersService {
 
         // Shipping Calculation (Sync with CartService)
         // Free shipping if subtotal > 10M VND or promo provides free shipping
-        const shippingCents = subtotalCents > 10000000 || isFreeShipping ? 0 : 50000;
+        const shippingCents =
+          subtotalCents > BigInt(10000000) || isFreeShipping ? BigInt(0) : BigInt(50000);
 
-        const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
+        const totalCents =
+          subtotalCents - discountCents + shippingCents > BigInt(0)
+            ? subtotalCents - discountCents + shippingCents
+            : BigInt(0);
         const order = await tx.orders.create({
           data: {
             id: randomUUID(),
@@ -232,7 +236,7 @@ export class OrdersService {
             orderData.promotionCode,
             finalUserId,
             order.id,
-            discountCents,
+            Number(discountCents),
             tx,
           );
         }
@@ -335,18 +339,47 @@ export class OrdersService {
   }
 
   async delete(id: string) {
-    const order = await this.get(id);
+    return this.prisma.$transaction(async tx => {
+      const order = await tx.orders.findFirst({
+        where: { OR: [{ id }, { orderNo: id }] },
+        include: { order_items: true },
+      });
 
-    // Security: Only allow archiving/cancelling if not already shipped/completed
-    if (['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status)) {
-      throw new BadRequestException('Không thể xóa đơn hàng đã giao hoặc đã hoàn thành');
-    }
+      if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
 
-    if (order.status !== 'CANCELLED') {
-      await this.updateStatus(id, 'CANCELLED');
-    }
+      // Security: Only allow deletion if not already shipped/completed
+      if (['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status)) {
+        throw new BadRequestException('Không thể xóa đơn hàng đã giao hoặc đã hoàn thành');
+      }
 
-    return { success: true, message: 'Đơn hàng đã được chuyển sang trạng thái Hủy' };
+      this.logger.log(`Performing permanent delete for order: ${order.orderNo} (${order.id})`);
+
+      // 1. Restore stock if the order was active (not already cancelled)
+      if (!['CANCELLED', 'RETURNED'].includes(order.status.toUpperCase())) {
+        for (const item of order.order_items) {
+          await this.inventory.adjust(
+            item.productId,
+            {
+              stockDelta: item.quantity,
+              reason: `Deleted Order ${order.orderNo}`,
+              referenceId: order.id,
+              referenceType: 'ORDER_DELETED',
+            },
+            { syncToProduct: true },
+            tx,
+          );
+        }
+      }
+
+      // Dependency cascades are now handled by Prisma at the database level (onDelete: Cascade)
+      // We only need to delete the parent record
+      await tx.orders.delete({
+        where: { id: order.id },
+      });
+
+      this.logger.log(`Successfully deleted order ${order.orderNo}`);
+      return { success: true, message: `Đơn hàng #${order.orderNo} đã được xóa vĩnh viễn` };
+    });
   }
 
   async update(id: string, data: any) {

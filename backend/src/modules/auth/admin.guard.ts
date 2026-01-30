@@ -28,8 +28,14 @@ export class AdminGuard implements CanActivate {
 
     // Fallback: check against configured admin emails
     const adminEmails = this.config.get<string>('ADMIN_EMAILS', '');
-    if (adminEmails && user.email) {
-      const allowedEmails = adminEmails.split(',').map(email => email.trim().toLowerCase());
+    const singleAdminEmail = this.config.get<string>('ADMIN_EMAIL', '');
+    const combinedEmails = [adminEmails, singleAdminEmail].filter(Boolean).join(',');
+
+    if (combinedEmails && user.email) {
+      const allowedEmails = combinedEmails
+        .split(',')
+        .map(email => email.trim().toLowerCase())
+        .filter(email => email.length > 0);
       const isAllowed = allowedEmails.includes(user.email.toLowerCase());
       this.logger.debug(
         `AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`,

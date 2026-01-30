@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 async function seedCustomers() {
     console.log('🌱 Seeding customer data...');

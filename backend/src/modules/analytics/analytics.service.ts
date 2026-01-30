@@ -98,7 +98,7 @@ export class AnalyticsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
-  ) { }
+  ) {}
 
   // Dashboard Overview
   async getOverview(range: string = '7days') {
@@ -400,7 +400,7 @@ export class AnalyticsService {
     const avgSessionDuration =
       activityLogRecords.length > 0
         ? activityLogRecords.reduce((sum: number, log: any) => sum + (log.duration || 0), 0) /
-        activityLogRecords.length
+          activityLogRecords.length
         : 0;
 
     return {
@@ -466,7 +466,7 @@ export class AnalyticsService {
     const returningCustomers = new Set(orders.map(o => o.userId)).size;
     const avgOrderValue =
       orders.length > 0
-        ? orders.reduce((sum, o) => sum + (o.totalCents || 0), 0) / orders.length
+        ? orders.reduce((sum, o) => sum + Number(o.totalCents || 0), 0) / orders.length
         : 0;
 
     return {
@@ -915,7 +915,7 @@ export class AnalyticsService {
     });
 
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalCents, 0);
+    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalCents), 0);
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Calculate conversion rate from actual data
@@ -1022,7 +1022,7 @@ export class AnalyticsService {
     let totalCLV = 0;
     users.forEach(user => {
       if (user.orders.length > 0) {
-        const totalSpent = user.orders.reduce((sum, o) => sum + o.totalCents, 0);
+        const totalSpent = user.orders.reduce((sum, o) => sum + Number(o.totalCents), 0);
         totalCLV += totalSpent;
       }
     });

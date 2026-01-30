@@ -46,9 +46,7 @@ export class PrismaHelper {
     return this.prisma.customer_questions;
   }
   // get dashboardWidget() { return this.prisma.dashboard_widgets; } // Not in schema
-  get knowledgeBaseEntry() {
-    return this.prisma.knowledge_base_entries;
-  }
+  // get knowledgeBaseEntry() { return this.prisma.knowledge_base_entries; } // Not in schema
   // get notification() { return this.prisma.notifications; } // Not in schema
   get order() {
     return this.prisma.orders;

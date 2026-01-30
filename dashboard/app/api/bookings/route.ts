@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
 import { randomUUID } from 'crypto';
+import { apiClient } from '@/lib/api-client';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,12 +52,27 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // We use the generic 'get' from apiClient to ensure we use the same base URL handling
-    // We pass the endpoint directly with query string because apiClient.get takes options but params handling is simple
-    const response = await apiClient.get(`/bookings?${query.toString()}`);
+    const backendUrl = `${API_BASE_URL}/bookings${query.toString() ? `?${query.toString()}` : ''}`;
 
-    // Transform logic (same as before)
-    const data: any = response;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
+    const response = await fetch(backendUrl, { headers });
+    const responseText = await response.text();
+
+    let data: any;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      console.error('[Bookings API] Failed to parse backend response:', responseText);
+      return NextResponse.json({
+        error: 'Invalid response from backend',
+        details: responseText.slice(0, 500)
+      }, { status: 500 });
+    }
 
     let bookings: any[] = [];
     let total = 0;
@@ -150,7 +167,7 @@ export async function GET(request: NextRequest) {
       total,
       page: pageNum,
       pageSize: pageSizeNum,
-    });
+    }, { status: response.status });
 
   } catch (error: any) {
     console.error('Error fetching bookings:', error);
@@ -185,9 +202,22 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    // Use apiClient generic post
-    const response = await apiClient.post('/bookings', bookingData);
-    return NextResponse.json(response);
+    const backendUrl = `${API_BASE_URL}/bookings`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(bookingData),
+    });
+
+    const responseText = await response.text();
+    const data = responseText ? JSON.parse(responseText) : {};
+    return NextResponse.json(data, { status: response.status });
 
   } catch (error: any) {
     console.error('Error creating booking:', error);

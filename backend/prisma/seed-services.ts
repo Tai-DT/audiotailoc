@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function seedServices() {
   console.log('🛠️ Seeding services...');
@@ -41,16 +39,16 @@ async function seedServices() {
       isFeatured: false,
     },
     {
-       name: 'Tư vấn & Khảo sát phòng phim',
-       slug: 'tu-van-phong-phim',
-       description: 'Khảo sát không gian và tư vấn giải pháp lắp đặt phòng chiếu phim gia đình tiêu chuẩn 5.1, 7.1, Atmos.',
-       shortDescription: 'Tư vấn giải pháp phòng phim gia đình',
-       basePriceCents: 30000000, 
-       price: 30000000,
-       duration: 45,
-       typeId: typeMap.get('khao-sat'),
-       images: JSON.stringify(['https://placehold.co/800x600/png?text=Tu-van-phong-phim']),
-       isFeatured: true,
+      name: 'Tư vấn & Khảo sát phòng phim',
+      slug: 'tu-van-phong-phim',
+      description: 'Khảo sát không gian và tư vấn giải pháp lắp đặt phòng chiếu phim gia đình tiêu chuẩn 5.1, 7.1, Atmos.',
+      shortDescription: 'Tư vấn giải pháp phòng phim gia đình',
+      basePriceCents: 30000000,
+      price: 30000000,
+      duration: 45,
+      typeId: typeMap.get('khao-sat'),
+      images: JSON.stringify(['https://placehold.co/800x600/png?text=Tu-van-phong-phim']),
+      isFeatured: true,
     }
   ];
 

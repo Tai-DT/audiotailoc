@@ -119,6 +119,40 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
 
+  const normalizeProductImages = (images: unknown, imageUrl?: string): string[] => {
+    if (Array.isArray(images)) {
+      const urls = images
+        .map((item) => {
+          if (typeof item === 'string') return item
+          if (item && typeof item === 'object' && typeof (item as { url?: string }).url === 'string') {
+            return (item as { url: string }).url
+          }
+          return ''
+        })
+        .filter(Boolean)
+      if (urls.length > 0) return urls
+    }
+
+    if (typeof images === 'string') {
+      try {
+        const parsed = JSON.parse(images) as unknown
+        if (Array.isArray(parsed)) {
+          return normalizeProductImages(parsed, imageUrl)
+        }
+      } catch {
+        return [images]
+      }
+    }
+
+    return imageUrl ? [imageUrl] : []
+  }
+
+  const getFirstImageUrl = (product: Product): string => {
+    const first = product.images?.[0]
+    if (first) return first
+    return product.imageUrl || ''
+  }
+
   // Stats state (fetched separately from all products) 
   const [stats, setStats] = useState({
     totalActive: 0,
@@ -207,7 +241,11 @@ export default function ProductsPage() {
 
       const response = await apiClient.getProducts(params)
       const data = response.data as ProductsResponse
-      setProducts(data.items)
+      const normalizedItems = (data.items || []).map((item) => ({
+        ...item,
+        images: normalizeProductImages(item.images as unknown, item.imageUrl),
+      }))
+      setProducts(normalizedItems)
       setTotalProducts(data.total)
     } catch (error) {
       console.error('Failed to fetch products:', error)
@@ -620,47 +658,54 @@ export default function ProductsPage() {
                             </Button>
                           </TableCell>
                           <TableCell>
-                            {(product.images && product.images.length > 0) || product.imageUrl ? (
-                              <Image
-                                src={(() => {
-                                  // Priority: images array > imageUrl field
-                                  const imgValue = product.images && product.images.length > 0
-                                    ? product.images[0]
-                                    : product.imageUrl;
+                            {(() => {
+                              // Priority: images array > imageUrl field
+                              const imgValue = getFirstImageUrl(product);
 
-                                  if (!imgValue) return '';
+                              if (!imgValue) {
+                                return (
+                                  <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                  </div>
+                                );
+                              }
 
-                                  // If it's already a full URL, use it directly
-                                  if (imgValue.startsWith('http')) {
-                                    return imgValue;
-                                  }
-
-                                  // Otherwise, treat it as a Cloudinary public ID and optimize it
-                                  return CloudinaryService.getOptimizedUrl(imgValue, {
+                              // If it's already a full URL or local path, use it directly
+                              const src = imgValue.startsWith('http') || imgValue.startsWith('/')
+                                ? imgValue
+                                : CloudinaryService.getOptimizedUrl(imgValue, {
                                     width: 48,
                                     height: 48,
                                     crop: 'fill',
                                     quality: 'auto'
                                   });
-                                })()}
-                                alt={product.name}
-                                width={48}
-                                height={48}
-                                className="h-12 w-12 rounded object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const parent = target.parentElement;
-                                  if (parent) {
-                                    parent.innerHTML = '<div class="h-12 w-12 rounded bg-muted flex items-center justify-center"><svg class="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                              </div>
-                            )}
+
+                              if (!src) {
+                                return (
+                                  <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <Image
+                                  src={src}
+                                  alt={product.name}
+                                  width={48}
+                                  height={48}
+                                  className="h-12 w-12 rounded object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = '<div class="h-12 w-12 rounded bg-muted flex items-center justify-center"><svg class="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                    }
+                                  }}
+                                />
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <div>

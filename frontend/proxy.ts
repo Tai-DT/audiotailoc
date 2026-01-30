@@ -54,16 +54,7 @@ export function proxy(request: NextRequest) {
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
-    // Log for debugging (only in development)
-    if (process.env.NODE_ENV === 'development' && isProtectedRoute) {
-      console.log('[Proxy] Protected route check:', {
-        pathname,
-        hasToken: !!token,
-        hasUser: !!user,
-        isAuthenticated,
-        tokenLength: token?.length || 0
-      })
-    }
+    // Intentionally avoid logging on every request to prevent noisy dev output.
 
     if (isProtectedRoute && !isAuthenticated) {
       const url = new URL('/auth/login', request.url)

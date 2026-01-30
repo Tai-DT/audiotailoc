@@ -15,7 +15,8 @@ export const useCategories = () => {
     queryKey: categoryQueryKeys.list(),
     queryFn: async () => {
       const response = await apiClient.get('/catalog/categories');
-      const result = handleApiResponse<{ data: Category[] }>(response);
+      const result = handleApiResponse<Category[] | { data: Category[] }>(response);
+      if (Array.isArray(result)) return result;
       return result.data || [];
     },
     staleTime: 15 * 60 * 1000, // 15 minutes

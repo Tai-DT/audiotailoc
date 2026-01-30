@@ -36,6 +36,8 @@ export class FilesService {
   private readonly logger = new Logger(FilesService.name);
   private readonly uploadDir: string;
   private readonly cdnUrl: string;
+  private readonly signedUrlSecret: string;
+  private readonly signedUrlTtlSeconds: number;
 
   constructor(
     private readonly config: ConfigService,
@@ -44,6 +46,8 @@ export class FilesService {
   ) {
     this.uploadDir = this.config.get<string>('UPLOAD_DIR', './uploads');
     this.cdnUrl = this.config.get<string>('CDN_URL', '');
+    this.signedUrlSecret = this.config.get<string>('SIGNED_URL_SECRET', '');
+    this.signedUrlTtlSeconds = Number(this.config.get<string>('SIGNED_URL_TTL_SECONDS', '300'));
 
     // Ensure upload directory exists
     this.ensureUploadDir();
@@ -240,6 +244,24 @@ export class FilesService {
         },
       };
 
+      // Persist file metadata when File model exists
+      const prismaAny = this.prisma as PrismaService & { file?: any };
+      if (prismaAny.file?.create) {
+        await prismaAny.file.create({
+          data: {
+            id: fileRecord.id,
+            filename: fileRecord.filename,
+            originalName: fileRecord.originalName,
+            mimeType: fileRecord.mimeType,
+            size: fileRecord.size,
+            path: cloudPublicId || filePath,
+            url: fileRecord.url,
+            thumbnailUrl: fileRecord.thumbnailUrl,
+            metadata: fileRecord.metadata,
+          },
+        });
+      }
+
       return {
         id: fileRecord.id,
         filename: fileRecord.filename,
@@ -381,16 +403,117 @@ export class FilesService {
   }
 
   async getFileInfo(fileId: string): Promise<FileUploadResult | null> {
-    // Comment out database access since no File model exists
-    // const file = await this.prisma.file.findUnique({
-    //   where: { id: fileId },
-    // });
+    // If File model exists, use it
+    const prismaAny = this.prisma as PrismaService & { file?: any };
+    if (prismaAny.file?.findUnique) {
+      const file = await prismaAny.file.findUnique({ where: { id: fileId } });
+      if (!file) return null;
+      return {
+        id: file.id,
+        filename: file.filename,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: file.size,
+        url: file.url,
+        thumbnailUrl: file.thumbnailUrl || undefined,
+        metadata: file.metadata as Record<string, any>,
+      };
+    }
 
-    // if (!file) return null;
-
-    // For now, return null since we can't access file records
-    this.logger.log(`File info requested for ID: ${fileId}`);
+    // Fallback when File model is not present
+    this.logger.warn('File model not available; cannot lookup file metadata');
     return null;
+  }
+
+  async generateSignedUrl(
+    fileId: string,
+    options: { forceRefresh?: boolean } = {},
+  ): Promise<{ url: string; expiresAt: string }> {
+    const file = await this.getFileInfo(fileId);
+    if (!file) {
+      throw new BadRequestException('File not found');
+    }
+
+    const expiresAt = new Date(Date.now() + this.signedUrlTtlSeconds * 1000);
+
+    // If Cloudinary URL exists, return as-is (Cloudinary secure URLs are already signed/secure)
+    if (file.metadata?.storage === 'cloudinary' && file.url) {
+      return { url: file.url, expiresAt: expiresAt.toISOString() };
+    }
+
+    // If CDN URL is configured for local uploads, return CDN url
+    if (this.cdnUrl && file.url) {
+      return { url: file.url, expiresAt: expiresAt.toISOString() };
+    }
+
+    // Fallback: sign local file URL to prevent hotlinking
+    if (!this.signedUrlSecret) {
+      this.logger.warn('SIGNED_URL_SECRET not configured; returning raw URL');
+      return { url: file.url, expiresAt: expiresAt.toISOString() };
+    }
+
+    const url = new URL(file.url, this.getPublicBaseUrl());
+    const expires = Math.floor(expiresAt.getTime() / 1000);
+    const signature = crypto
+      .createHmac('sha256', this.signedUrlSecret)
+      .update(`${url.pathname}:${expires}`)
+      .digest('hex');
+
+    url.searchParams.set('expires', String(expires));
+    url.searchParams.set('signature', signature);
+    if (options.forceRefresh) {
+      url.searchParams.set('force', '1');
+    }
+
+    return { url: url.toString(), expiresAt: expiresAt.toISOString() };
+  }
+
+  async generateSignedUrlFromUrl(
+    rawUrl: string,
+    options: { forceRefresh?: boolean } = {},
+  ): Promise<{ url: string; expiresAt: string }> {
+    if (!rawUrl) {
+      throw new BadRequestException('URL is required');
+    }
+
+    const expiresAt = new Date(Date.now() + this.signedUrlTtlSeconds * 1000);
+
+    // If Cloudinary or CDN URLs, return as-is
+    if (rawUrl.includes('cloudinary.com') || (this.cdnUrl && rawUrl.startsWith(this.cdnUrl))) {
+      return { url: rawUrl, expiresAt: expiresAt.toISOString() };
+    }
+
+    if (!this.signedUrlSecret) {
+      this.logger.warn('SIGNED_URL_SECRET not configured; returning raw URL');
+      return { url: rawUrl, expiresAt: expiresAt.toISOString() };
+    }
+
+    const url = new URL(rawUrl, this.getPublicBaseUrl());
+    const expires = Math.floor(expiresAt.getTime() / 1000);
+    const signature = crypto
+      .createHmac('sha256', this.signedUrlSecret)
+      .update(`${url.pathname}:${expires}`)
+      .digest('hex');
+
+    url.searchParams.set('expires', String(expires));
+    url.searchParams.set('signature', signature);
+    if (options.forceRefresh) {
+      url.searchParams.set('force', '1');
+    }
+
+    return { url: url.toString(), expiresAt: expiresAt.toISOString() };
+  }
+
+  validateSignedUrl(pathname: string, expires: string, signature: string): boolean {
+    if (!this.signedUrlSecret) return false;
+    const expiresAt = Number(expires);
+    if (!expiresAt || Date.now() > expiresAt * 1000) return false;
+    const expected = crypto
+      .createHmac('sha256', this.signedUrlSecret)
+      .update(`${pathname}:${expiresAt}`)
+      .digest('hex');
+    if (signature.length !== expected.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
   }
 
   async listFiles(
@@ -543,5 +666,13 @@ export class FilesService {
       return `${this.cdnUrl}/${subDir}/${filename}`;
     }
     return `/uploads/${subDir}/${filename}`;
+  }
+
+  private getPublicBaseUrl(): string {
+    return (
+      this.config.get<string>('API_PUBLIC_URL') ||
+      this.config.get<string>('BACKEND_PUBLIC_URL') ||
+      'http://localhost:3010'
+    );
   }
 }

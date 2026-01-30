@@ -1,18 +1,18 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Hỗ trợ trực tuyến | Audio Tài Lộc',
-  description: 'Chat trực tiếp với đội ngũ hỗ trợ Audio Tài Lộc',
-  robots: {
-    index: false,
-    follow: false,
-  },
+ title: 'Hỗ trợ trực tuyến | Audio Tài Lộc',
+ description: 'Chat trực tiếp với đội ngũ hỗ trợ Audio Tài Lộc',
+ robots: {
+ index: false,
+ follow: false,
+ },
 };
 
 export default function ChatLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }) {
-  return children;
+ return children;
 }

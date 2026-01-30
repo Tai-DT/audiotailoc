@@ -10,13 +10,14 @@ export interface ProjectFilters {
   status?: string;
   featured?: boolean;
   category?: string;
+  search?: string;
 }
 
 export function useProjects(filters: ProjectFilters = {}) {
-  const { page = 1, limit = 12, status, featured, category } = filters;
+  const { page = 1, limit = 12, status, featured, category, search } = filters;
 
   return useQuery({
-    queryKey: ['projects', { page, limit, status, featured, category }],
+    queryKey: ['projects', { page, limit, status, featured, category, search }],
     queryFn: async () => {
       const response = await apiClient.get(API_ENDPOINTS.PROJECTS.LIST, {
         params: {
@@ -25,6 +26,7 @@ export function useProjects(filters: ProjectFilters = {}) {
           status,
           featured,
           category,
+          search,
         },
       });
 

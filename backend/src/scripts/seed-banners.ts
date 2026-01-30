@@ -1,8 +1,17 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { randomUUID } from 'crypto';
 
 async function main() {
-  const prisma = new PrismaClient();
+  const connectionString = process.env.DATABASE_URL || '';
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+
+  const prisma = new PrismaClient({
+    adapter,
+  });
 
   try {
     console.log('🧹 Cleaning up old banners...');
@@ -13,11 +22,23 @@ async function main() {
     const banners = [
       {
         id: randomUUID(),
-        title: 'Trải Nghiệm Âm Thanh Đỉnh Cao',
-        subtitle: 'Hệ Thống Karaoke Gia Đình Hạng Sang',
+        title: 'Audio Tài Lộc Royal Elite',
+        subtitle: 'Đẳng Cấp Âm Thanh Hoàng Gia',
         description:
-          'Mang không gian sân khấu chuyên nghiệp về ngay phòng khách nhà bạn với các giải pháp âm thanh từ JBL, Bose, BMB.',
-        imageUrl: '/images/banners/home-hero.png',
+          'Trải nghiệm đỉnh cao công nghệ âm thanh với thiết kế sang trọng, quý phái. Sự kết hợp hoàn hảo giữa Sắc Đỏ Quyền Lực và Ánh Kim Vương Giả.',
+        imageUrl: '/images/banners/banner_master_sound.png',
+        page: 'home',
+        position: 0,
+        isActive: true,
+        updatedAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        title: 'Gắn Kết Yêu Thương',
+        subtitle: 'Phòng Hát Tại Gia - Đẳng Cấp Thượng Lưu',
+        description:
+          'Biến phòng khách thành sân khấu chuyên nghiệp. Nơi lưu giữ những khoảnh khắc hạnh phúc cùng gia đình trong không gian ấm cúng và sang trọng.',
+        imageUrl: '/images/banners/banner_luxury_karaoke.png',
         page: 'home',
         position: 1,
         isActive: true,
@@ -25,11 +46,11 @@ async function main() {
       },
       {
         id: randomUUID(),
-        title: 'Chào Xuân 2026 - Bùng Nổ Ưu Đãi',
-        subtitle: 'Giảm giá lên đến 40%',
+        title: 'Sức Mạnh Vượt Trội',
+        subtitle: 'Giải Pháp Âm Thanh Sân Khấu Chuyên Nghiệp',
         description:
-          'Cơ hội sở hữu thiết bị âm thanh chính hãng với mức giá tốt nhất năm. Tặng phụ kiện và gói lắp đặt chuyên nghiệp.',
-        imageUrl: '/images/banners/promo-2026.png',
+          'Hệ thống loa công suất lớn, chinh phục mọi không gian. Đánh thức mọi giác quan với chất âm mạnh mẽ, sống động và chân thực nhất.',
+        imageUrl: '/images/banners/banner_pro_stage.png',
         page: 'home',
         position: 2,
         isActive: true,
@@ -37,11 +58,11 @@ async function main() {
       },
       {
         id: randomUUID(),
-        title: 'Showroom Thiết Bị Âm Thanh Chính Hãng',
-        subtitle: 'Đa dạng mẫu mã - Cam kết chất lượng',
+        title: 'Bộ Sưu Tập Royal Elite',
+        subtitle: 'Tinh Hoa Âm Thanh Thế Giới',
         description:
-          'Khám phá hàng ngàn sản phẩm từ Loa, Amply, Micro đến các bộ dàn Karaoke trọn gói.',
-        imageUrl: '/images/banners/products-hero.png',
+          'Khám phá những kiệt tác âm thanh đến từ các thương hiệu hàng đầu. Thiết kế sang trọng, chất âm đỉnh cao.',
+        imageUrl: '/images/banners/banner_products_showcase.png',
         page: 'products',
         position: 1,
         isActive: true,
@@ -49,13 +70,25 @@ async function main() {
       },
       {
         id: randomUUID(),
-        title: 'Dịch vụ Kỹ thuật & Lắp đặt Chuyên nghiệp',
-        subtitle: 'Hỗ trợ tận tâm 24/7',
+        title: 'Dịch Vụ Lắp Đặt Chuyên Nghiệp',
+        subtitle: 'Kiến Tạo Không Gian Giải Trí',
         description:
-          'Đội ngũ kỹ thuật viên giàu kinh nghiệm, khảo sát và lắp đặt tận nơi. Bảo hành, bảo trì định kỳ uy tín.',
-        imageUrl: '/images/banners/services-hero.png',
+          'Đội ngũ kỹ thuật viên giàu kinh nghiệm, thi công tỉ mỉ, đảm bảo thẩm mỹ và chất lượng âm thanh tốt nhất cho ngôi nhà của bạn.',
+        imageUrl: '/images/banners/banner_service_installation.png',
         page: 'services',
         position: 1,
+        isActive: true,
+        updatedAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        title: 'Cân Chỉnh Âm Thanh Đỉnh Cao',
+        subtitle: 'Đánh Thức Tiềm Năng Hệ Thống',
+        description:
+          'Quy trình căn chỉnh chuyên sâu, tối ưu hóa mọi thiết bị để đạt được độ chi tiết và trung thực tuyệt đối.',
+        imageUrl: '/images/banners/banner_service_tuning.png',
+        page: 'services',
+        position: 2,
         isActive: true,
         updatedAt: new Date(),
       },

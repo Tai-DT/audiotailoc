@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +8,24 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const booking = await apiClient.get(`/bookings/${id}`);
-    return NextResponse.json(booking);
+    const backendUrl = `${API_BASE_URL}/bookings/${id}`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
+    const response = await fetch(backendUrl, { headers });
+    const responseText = await response.text();
+
+    let result;
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = { error: responseText || 'Invalid response from backend' };
+    }
+
+    return NextResponse.json(result, { status: response.status });
   } catch (error: any) {
     console.error('Error fetching booking:', error);
     const status = error?.status || error?.statusCode || 500;
@@ -27,9 +44,28 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    // Backend uses PATCH for updates, not PUT
-    const updatedBooking = await apiClient.patch(`/bookings/${id}`, body);
-    return NextResponse.json(updatedBooking);
+    const backendUrl = `${API_BASE_URL}/bookings/${id}`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
+    const response = await fetch(backendUrl, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    });
+    const responseText = await response.text();
+
+    let result;
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = { error: responseText || 'Invalid response from backend' };
+    }
+
+    return NextResponse.json(result, { status: response.status });
   } catch (error: any) {
     console.error('Error updating booking:', error);
     const status = error?.status || error?.statusCode || 500;
@@ -47,8 +83,27 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await apiClient.delete(`/bookings/${id}`);
-    return NextResponse.json({ message: 'Booking deleted successfully' });
+    const backendUrl = `${API_BASE_URL}/bookings/${id}`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
+    const response = await fetch(backendUrl, {
+      method: 'DELETE',
+      headers,
+    });
+    const responseText = await response.text();
+
+    let result;
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = { error: responseText || 'Invalid response from backend' };
+    }
+
+    return NextResponse.json(result, { status: response.status });
   } catch (error: any) {
     console.error('Error deleting booking:', error);
     const status = error?.status || error?.statusCode || 500;

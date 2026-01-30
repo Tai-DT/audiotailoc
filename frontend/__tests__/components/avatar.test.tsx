@@ -4,6 +4,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 describe('Avatar', () => {
   it('should render avatar container', () => {
@@ -25,5 +26,11 @@ describe('Avatar', () => {
   it('should accept custom className', () => {
     const { container } = render(<Avatar className="custom-avatar" />);
     expect(container.firstChild).toHaveClass('custom-avatar');
+  });
+
+  it('renders OptimizedImage with fallback when no src provided', () => {
+    render(<OptimizedImage alt="test" />);
+    const img = screen.getByAltText('test');
+    expect(img).toBeInTheDocument();
   });
 });

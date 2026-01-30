@@ -4,7 +4,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Param,
   Query,
   UseGuards,
@@ -14,29 +13,7 @@ import {
 import { SupportService } from './support.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { JwtGuard } from '../auth/jwt.guard';
-import { IsString, IsOptional, IsBoolean, IsArray, IsIn, MinLength } from 'class-validator';
-
-class CreateArticleDto {
-  @IsString()
-  @MinLength(1)
-  title!: string;
-
-  @IsString()
-  @MinLength(1)
-  content!: string;
-
-  @IsString()
-  category!: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  published?: boolean;
-}
+import { IsString, IsOptional, IsBoolean, IsIn, MinLength } from 'class-validator';
 
 class CreateFAQDto {
   @IsString()
@@ -90,76 +67,6 @@ class UpdateTicketStatusDto {
 @Controller('support')
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}
-
-  // Knowledge Base endpoints
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Post('kb/articles')
-  createArticle(@Body() dto: CreateArticleDto) {
-    return this.supportService.createArticle(dto);
-  }
-
-  @Get('kb/articles')
-  getArticles(
-    @Query('category') category?: string,
-    @Query('published') published?: string,
-    @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
-  ) {
-    return this.supportService.getArticles({
-      category,
-      published: published === 'true',
-      search,
-      page: page ? parseInt(page, 10) : undefined,
-      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
-    });
-  }
-
-  @Get('kb/articles/:id')
-  getArticle(@Param('id') id: string) {
-    return this.supportService.getArticle(id);
-  }
-
-  // Update KB Article
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Put('kb/articles/:id')
-  updateArticle(
-    @Param('id') id: string,
-    @Body()
-    dto: Partial<{
-      title: string;
-      content: string;
-      category: string;
-      tags: string[];
-      published: boolean;
-      slug: string;
-    }>,
-  ) {
-    return this.supportService.updateArticle(id, dto);
-  }
-
-  // Delete KB Article
-  @UseGuards(JwtGuard, AdminOrKeyGuard)
-  @Delete('kb/articles/:id')
-  deleteArticle(@Param('id') id: string) {
-    return this.supportService.deleteArticle(id);
-  }
-
-  // Feedback (helpful / not helpful)
-  @Post('kb/articles/:id/feedback')
-  feedbackArticle(@Param('id') id: string, @Body() body: { helpful: boolean }) {
-    return this.supportService.feedback(id, body.helpful);
-  }
-
-  @Get('kb/search')
-  searchKnowledgeBase(@Query('q') query: string) {
-    return this.supportService.searchKnowledgeBase(query);
-  }
-
-  @Get('kb/categories')
-  getKBCategories() {
-    return this.supportService.getCategories();
-  }
 
   // FAQ endpoints
   @UseGuards(JwtGuard, AdminOrKeyGuard)

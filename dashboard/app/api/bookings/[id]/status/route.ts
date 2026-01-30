@@ -12,12 +12,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const backendUrl = `${API_BASE_URL}/bookings/${id}/status`;
     console.log('Proxying status update to backend:', backendUrl);
 
+    // Prepare headers with authentication
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+    };
+
+    // Pass along browser's authorization if present
+    const auth = request.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+
+    // Add admin key from environment
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+
     // Backend uses PATCH, not PUT
     const response = await fetch(backendUrl, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': contentType,
-      },
+      headers,
       body: bodyText,
     });
 

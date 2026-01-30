@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Search, Edit, Trash2, Loader2, FileText, FolderTree, ExternalLink } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Loader2, FileText, FolderTree } from "lucide-react"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
@@ -16,8 +16,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import Image from "next/image"
-
 // --- Types ---
 interface BlogCategory {
     id: string
@@ -304,7 +302,7 @@ function ArticlesManager() {
                                             <div className="flex items-center gap-3">
                                                 {article.coverImage && (
                                                     <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
-                                                        <Image src={article.coverImage} alt={article.title} fill className="object-cover" />
+                                                        <img src={article.coverImage} alt={article.title} className="object-cover" />
                                                     </div>
                                                 )}
                                                 <div>

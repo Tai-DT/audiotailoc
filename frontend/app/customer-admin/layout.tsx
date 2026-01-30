@@ -1,17 +1,17 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Quản lý tài khoản | Audio Tài Lộc',
-  robots: {
-    index: false,
-    follow: false,
-  },
+ title: 'Quản lý tài khoản | Audio Tài Lộc',
+ robots: {
+ index: false,
+ follow: false,
+ },
 };
 
 export default function CustomerAdminLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }) {
-  return children;
+ return children;
 }

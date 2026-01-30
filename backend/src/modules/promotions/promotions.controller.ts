@@ -55,7 +55,7 @@ export class PromotionsController {
     private readonly campaignService: PromotionCampaignsService,
     private readonly projectsService: PromotionProjectsService,
     private readonly settingsService: PromotionSettingsService,
-  ) { }
+  ) {}
 
   // ==================== PUBLIC ENDPOINTS ====================
 

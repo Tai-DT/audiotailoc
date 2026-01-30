@@ -3,196 +3,175 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, ArrowRight, Clock, ExternalLink } from 'lucide-react';
+import { Calendar, ArrowRight, Clock, Pin, Music4 } from 'lucide-react';
 import { Project } from '@/lib/types';
-import { MagicCard } from '@/components/ui/magic-card';
 import { BlurFade } from '@/components/ui/blur-fade';
+import { cn } from '@/lib/utils';
 
 interface ProjectGridProps {
-  projects?: Project[];
-  isLoading?: boolean;
+ projects?: Project[];
+ isLoading?: boolean;
 }
 
 export function ProjectGrid({ projects = [], isLoading = false }: ProjectGridProps) {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-full" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-48 w-full mb-4" />
-              <Skeleton className="h-3 w-full mb-2" />
-              <Skeleton className="h-3 w-2/3" />
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-8 w-24" />
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+ if (isLoading) {
+ return (
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ {Array.from({ length: 4 }).map((_, i) => (
+ <div key={i} className="aspect-[4/3] bg-white/5 border border-white/10 rounded-[2.5rem] animate-pulse" />
+ ))}
+ </div>
+ );
+ }
 
-  if (projects.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">Chưa có dự án nào</h3>
-        <p className="text-muted-foreground">
-          Chúng tôi đang cập nhật các dự án mới. Vui lòng quay lại sau.
-        </p>
-      </div>
-    );
-  }
+ return (
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+ {projects.map((project, index) => {
+ const isFeatured = project.featured ?? project.isFeatured ?? false;
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {projects.map((project, index) => {
-        const isFeatured = project.featured ?? project.isFeatured ?? false;
-        let technologies: string[] | undefined;
+ let technologies: string[] = [];
+ if (Array.isArray(project.technologies)) {
+ technologies = project.technologies;
+ } else if (typeof project.technologies === 'string') {
+ try {
+ const parsed = JSON.parse(project.technologies);
+ technologies = Array.isArray(parsed) ? parsed : [];
+ } catch {
+ technologies = [];
+ }
+ }
 
-        if (Array.isArray(project.technologies)) {
-          technologies = project.technologies;
-        } else if (typeof project.technologies === 'string') {
-          try {
-            const parsed = JSON.parse(project.technologies);
-            technologies = Array.isArray(parsed) ? parsed : undefined;
-          } catch {
-            technologies = undefined;
-          }
-        }
+ return (
+ <BlurFade key={project.id} delay={0.05 * index} inView>
+ <Card className="group relative bg-card/80 border border-border/60 rounded-[2.5rem] overflow-hidden hover:border-primary/50 transition-all duration-700 hover:shadow-[0_20px_60px_-15px_rgba(220,38,38,0.3)] hover:-translate-y-2 flex flex-col h-full">
+ {/* High-Impact Visual Wrapper */}
+ <div className="relative aspect-[4/3] overflow-hidden">
+ {project.thumbnailImage || project.coverImage ? (
+ <Image
+ src={project.thumbnailImage || project.coverImage || '/projects/placeholder-project.svg'}
+ alt={project.name}
+ fill
+ className="object-cover transition-transform duration-1000 group-hover:scale-110 brightness-75 group-hover:brightness-100"
+ />
+ ) : (
+ <div className="w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+ <Music4 className="h-20 w-20 text-foreground/5 dark:text-foreground/5 dark:text-foreground dark:text-white/5 group-hover:text-primary/20 transition-colors" />
+ </div>
+ )}
 
-        return (
-          <BlurFade key={project.id} delay={0.05 * index} inView>
-            <MagicCard gradientColor="oklch(0.97 0.008 45)" className="p-0 border-none shadow-none h-full">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
-                {/* Project Image */}
-                <div className="aspect-video relative overflow-hidden bg-muted">
-                  {project.thumbnailImage || project.coverImage ? (
-                    <Image
-                      src={project.thumbnailImage || project.coverImage || ''}
-                      alt={project.name}
-                      fill
-                      className="object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                      <div className="text-4xl font-bold text-primary/20">
-                        {project.name.charAt(0)}
-                      </div>
-                    </div>
-                  )}
-                  {isFeatured && (
-                    <Badge className="absolute top-2 left-2 bg-primary">
-                      Nổi bật
-                    </Badge>
-                  )}
-                </div>
+ {/* Glass Overlays */}
+ <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background/95 via-background/60 to-transparent dark:from-slate-950 dark:via-slate-950/60" />
 
-                <CardHeader className="pb-2">
-                  <CardTitle className="line-clamp-2 text-lg">
-                    {project.name}
-                  </CardTitle>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    <span>
-                      {project.startDate && project.endDate
-                        ? `${new Date(project.startDate).getFullYear()} - ${new Date(project.endDate).getFullYear()}`
-                        : project.createdAt
-                        ? new Date(project.createdAt).getFullYear()
-                        : 'N/A'}
-                    </span>
-                  </div>
-                </CardHeader>
+ {/* Status & Featured Badge */}
+ <div className="absolute top-6 left-6 flex flex-col gap-2">
+ {isFeatured && (
+ <Badge className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest px-4 py-1.5 rounded-full border border-primary/20 shadow-xl shadow-primary/20 flex items-center gap-2">
+ <Pin className="w-3 h-3 fill-current rotate-45" />
+ Kiệt tác tiêu biểu
+ </Badge>
+ )}
+ <Badge
+ className={cn(
+ "font-black uppercase text-[9px] tracking-widest px-4 py-1.5 rounded-full border backdrop-blur-md",
+ project.status === 'COMPLETED'
+ ? 'bg-green-500/10 text-green-400 border-green-500/20'
+ : project.status === 'IN_PROGRESS'
+ ? 'bg-primary/10 text-primary border-primary/20'
+ : 'bg-background/70 text-foreground/70 dark:bg-white/5 dark:text-white/60 border-border/60 dark:border-white/10'
+ )}
+ >
+ {project.status === 'COMPLETED'
+ ? 'Đã bàn giao'
+ : project.status === 'IN_PROGRESS'
+ ? 'Đang thực hiện'
+ : project.status === 'ON_HOLD'
+ ? 'Tạm dừng'
+ : 'Bản thiết kế'}
+ </Badge>
+ </div>
 
-                <CardContent className="pt-0 flex-grow">
-                  {project.shortDescription && (
-                    <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                      {project.shortDescription}
-                    </p>
-                  )}
+ {/* Category Indicator */}
+ {project.category && (
+ <div className="absolute top-6 right-6">
+ <div className="px-4 py-1.5 rounded-full bg-background/70 border border-border/60 backdrop-blur-xl text-[9px] font-black uppercase tracking-widest text-foreground/70 dark:bg-white/10 dark:border-white/10 dark:text-white/60">
+ {project.category}
+ </div>
+ </div>
+ )}
 
-                  {/* Project Status */}
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge
-                      variant={
-                        project.status === 'COMPLETED'
-                          ? 'default'
-                          : project.status === 'IN_PROGRESS'
-                          ? 'secondary'
-                          : project.status === 'ON_HOLD'
-                          ? 'outline'
-                          : 'destructive'
-                      }
-                    >
-                      {project.status === 'COMPLETED'
-                        ? 'Hoàn thành'
-                        : project.status === 'IN_PROGRESS'
-                        ? 'Đang thực hiện'
-                        : project.status === 'ON_HOLD'
-                        ? 'Tạm dừng'
-                        : 'Nháp'}
-                    </Badge>
-                    {project.duration && (
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4 mr-1" />
-                        <span>{project.duration}</span>
-                      </div>
-                    )}
-                  </div>
+ {/* Project Title Floating */}
+ <div className="absolute inset-x-8 bottom-8 transition-transform duration-500 group-hover:-translate-y-2">
+ <h3 className="text-2xl lg:text-3xl font-black text-foreground dark:text-white leading-tight font-display tracking-tight drop-shadow-2xl">
+ {project.name}
+ </h3>
+ </div>
+ </div>
 
-                  {/* Technologies */}
-                  {technologies && technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {technologies.slice(0, 3).map((tech, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tech}
-                        </Badge>
-                      ))}
-                      {technologies.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{technologies.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
+ <CardContent className="p-8 flex flex-col flex-1 space-y-6">
+ {/* Meta Stats */}
+ <div className="flex flex-wrap items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60 dark:text-zinc-300">
+ <div className="flex items-center gap-2">
+ <Calendar className="w-4 h-4 text-primary" />
+ <span>
+ {project.startDate && project.endDate
+ ? `${new Date(project.startDate).getFullYear()} - ${new Date(project.endDate).getFullYear()}`
+ : project.createdAt
+ ? new Date(project.createdAt).getFullYear()
+ : '2024'}
+ </span>
+ </div>
+ {project.duration && (
+ <div className="flex items-center gap-2">
+ <Clock className="w-4 h-4 text-accent" />
+ <span>{project.duration}</span>
+ </div>
+ )}
+ </div>
 
-                <CardFooter className="pt-0 mt-auto">
-                  <div className="flex gap-2 w-full">
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/projects/${project.slug || project.id}`}>
-                        Xem chi tiết
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </Link>
-                    </Button>
-                    {(project.liveUrl || project.demoUrl) && (
-                      <Button asChild size="icon" variant="ghost">
-                        <a
-                          href={(project.liveUrl || project.demoUrl) ?? '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="Xem demo trực tiếp"
-                          title="Xem demo trực tiếp"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </CardFooter>
-              </Card>
-            </MagicCard>
-          </BlurFade>
-        );
-      })}
-    </div>
-  );
+ {project.shortDescription && (
+ <p className="text-foreground/70 dark:text-white/60 text-sm font-medium italic leading-[1.6] line-clamp-3">
+ &ldquo;{project.shortDescription}&rdquo;
+ </p>
+ )}
+
+ {/* Technologies / Key Features */}
+ {technologies.length > 0 && (
+ <div className="flex flex-wrap gap-2 pt-2">
+ {technologies.slice(0, 4).map((tech, i) => (
+ <span key={i} className="text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-md bg-background/70 border border-border/60 text-foreground/60 dark:bg-white/5 dark:border-white/10 dark:text-zinc-300 group-hover:text-primary transition-colors">
+ {tech}
+ </span>
+ ))}
+ {technologies.length > 4 && (
+ <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 text-zinc-400 dark:text-zinc-300">
+ +{technologies.length - 4}
+ </span>
+ )}
+ </div>
+ )}
+
+ {/* Action Link */}
+ <div className="pt-6 mt-auto border-t border-border/40">
+ <Link
+ href={`/du-an/${project.slug || project.id}`}
+ className="group/btn inline-flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:text-foreground dark:text-white transition-all"
+ >
+ <span className="relative">
+ Minh chứng Đẳng cấp
+ <div className="absolute -bottom-1 left-0 w-0 h-px bg-primary group-hover/btn:w-full transition-all duration-500" />
+ </span>
+ <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover/btn:bg-primary group-hover/btn:border-primary transition-all">
+ <ArrowRight className="w-5 h-5 text-primary group-hover/btn:text-foreground dark:text-white transition-colors" />
+ </div>
+ </Link>
+ </div>
+ </CardContent>
+ </Card>
+ </BlurFade>
+ );
+ })}
+ </div>
+ );
 }

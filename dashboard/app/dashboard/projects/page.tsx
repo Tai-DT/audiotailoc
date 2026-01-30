@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit, Trash2, Video, Link, Image as ImageIcon, Star, StarOff, Power, PowerOff, Search, ExternalLink } from 'lucide-react';
-import Image from 'next/image';
+import { Plus, Edit, Trash2, Video, Link, Image as ImageIcon, Star, StarOff, Power, PowerOff, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import
-{
+import {
   Table,
   TableBody,
   TableCell,
@@ -16,8 +14,7 @@ import
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import
-{
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -25,8 +22,7 @@ import
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import
-{
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,8 +35,7 @@ import { useAuth } from '@/lib/auth-context';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { format } from 'date-fns';
 import { ProjectsResponse } from '@/types/project';
-import
-{
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -50,8 +45,7 @@ import
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 
-interface Project
-{
+interface Project {
   id: string;
   name: string;
   slug: string;
@@ -73,144 +67,118 @@ interface Project
   updatedAt: string;
 }
 
-export default function ProjectsPage ()
-{
+export default function ProjectsPage() {
   const { token } = useAuth();
-  const [ projects, setProjects ] = useState<Project[]>( [] );
-  const [ loading, setLoading ] = useState( true );
-  const [ isFormOpen, setIsFormOpen ] = useState( false );
-  const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState( false );
-  const [ selectedProject, setSelectedProject ] = useState<Project | null>( null );
-  const [ searchQuery, setSearchQuery ] = useState( '' );
-  const [ statusFilter, setStatusFilter ] = useState( 'all' );
-  const [ featuredFilter, setFeaturedFilter ] = useState( 'all' );
-  const [ categoryFilter ] = useState( 'all' );
-  const [ currentPage, setCurrentPage ] = useState( 1 );
-  const [ totalPages, setTotalPages ] = useState( 1 );
-  const [ totalProjects, setTotalProjects ] = useState( 0 );
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [featuredFilter, setFeaturedFilter] = useState('all');
+  const [categoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProjects, setTotalProjects] = useState(0);
 
-  const fetchProjects = useCallback( async () =>
-  {
-    try
-    {
-      setLoading( true );
-      const params = new URLSearchParams( {
+  const fetchProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
-      } );
+      });
 
-      if ( statusFilter !== 'all' )
-      {
-        params.append( 'status', statusFilter );
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
       }
-      if ( featuredFilter !== 'all' )
-      {
-        params.append( 'featured', featuredFilter );
+      if (featuredFilter !== 'all') {
+        params.append('featured', featuredFilter);
       }
-      if ( categoryFilter !== 'all' )
-      {
-        params.append( 'category', categoryFilter );
+      if (categoryFilter !== 'all') {
+        params.append('category', categoryFilter);
       }
 
-      const response = await apiClient.get<ProjectsResponse>( `/projects?${ params }` );
+      const response = await apiClient.get<ProjectsResponse>(`/projects?${params}`);
       const responseData = response.data as ProjectsResponse;
-      setProjects( responseData.data || [] );
-      setTotalPages( responseData.meta?.totalPages || 1 );
-      setTotalProjects( responseData.meta?.total || 0 );
-    } catch ( error )
-    {
-      console.error( 'Error fetching projects:', error );
-      toast.error( 'Failed to load projects' );
-    } finally
-    {
-      setLoading( false );
+      setProjects(responseData.data || []);
+      setTotalPages(responseData.meta?.totalPages || 1);
+      setTotalProjects(responseData.meta?.total || 0);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      toast.error('Failed to load projects');
+    } finally {
+      setLoading(false);
     }
-  }, [ currentPage, statusFilter, featuredFilter, categoryFilter ] );
+  }, [currentPage, statusFilter, featuredFilter, categoryFilter]);
 
-  useEffect( () =>
-  {
+  useEffect(() => {
     // Ensure authenticated requests (create/update/delete) have token
-    if ( token )
-    {
-      apiClient.setToken( token );
+    if (token) {
+      apiClient.setToken(token);
     }
-  }, [ token ] );
+  }, [token]);
 
-  useEffect( () =>
-  {
+  useEffect(() => {
     fetchProjects();
-  }, [ fetchProjects ] );
+  }, [fetchProjects]);
 
-  const handleCreate = () =>
-  {
-    setSelectedProject( null );
-    setIsFormOpen( true );
+  const handleCreate = () => {
+    setSelectedProject(null);
+    setIsFormOpen(true);
   };
 
-  const handleEdit = ( project: Project ) =>
-  {
-    setSelectedProject( project );
-    setIsFormOpen( true );
+  const handleEdit = (project: Project) => {
+    setSelectedProject(project);
+    setIsFormOpen(true);
   };
 
-  const handleDelete = ( project: Project ) =>
-  {
-    setSelectedProject( project );
-    setIsDeleteDialogOpen( true );
+  const handleDelete = (project: Project) => {
+    setSelectedProject(project);
+    setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () =>
-  {
-    if ( !selectedProject ) return;
+  const confirmDelete = async () => {
+    if (!selectedProject) return;
 
-    try
-    {
-      await apiClient.delete( `/projects/${ selectedProject.id }` );
-      toast.success( 'Project deleted successfully' );
+    try {
+      await apiClient.delete(`/projects/${selectedProject.id}`);
+      toast.success('Project deleted successfully');
       fetchProjects();
-    } catch ( error )
-    {
-      console.error( 'Error deleting project:', error );
-      toast.error( 'Failed to delete project' );
-    } finally
-    {
-      setIsDeleteDialogOpen( false );
-      setSelectedProject( null );
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedProject(null);
     }
   };
 
-  const toggleFeatured = async ( project: Project ) =>
-  {
-    try
-    {
-      await apiClient.post( `/projects/${ project.id }/toggle-featured` );
-      toast.success( `Project ${ project.isFeatured ? 'unfeatured' : 'featured' } successfully` );
+  const toggleFeatured = async (project: Project) => {
+    try {
+      await apiClient.post(`/projects/${project.id}/toggle-featured`);
+      toast.success(`Project ${project.isFeatured ? 'unfeatured' : 'featured'} successfully`);
       fetchProjects();
-    } catch ( error )
-    {
-      console.error( 'Error toggling featured status:', error );
-      toast.error( 'Failed to update featured status' );
+    } catch (error) {
+      console.error('Error toggling featured status:', error);
+      toast.error('Failed to update featured status');
     }
   };
 
-  const toggleActive = async ( project: Project ) =>
-  {
-    try
-    {
-      await apiClient.post( `/projects/${ project.id }/toggle-active` );
-      toast.success( `Project ${ project.isActive ? 'deactivated' : 'activated' } successfully` );
+  const toggleActive = async (project: Project) => {
+    try {
+      await apiClient.post(`/projects/${project.id}/toggle-active`);
+      toast.success(`Project ${project.isActive ? 'deactivated' : 'activated'} successfully`);
       fetchProjects();
-    } catch ( error )
-    {
-      console.error( 'Error toggling active status:', error );
-      toast.error( 'Failed to update active status' );
+    } catch (error) {
+      console.error('Error toggling active status:', error);
+      toast.error('Failed to update active status');
     }
   };
 
-  const getStatusColor = ( status: string ): "default" | "secondary" | "destructive" | "outline" | "success" =>
-  {
-    switch ( status )
-    {
+  const getStatusColor = (status: string): "default" | "secondary" | "destructive" | "outline" | "success" => {
+    switch (status) {
       case 'COMPLETED':
         return 'success';
       case 'IN_PROGRESS':
@@ -223,10 +191,10 @@ export default function ProjectsPage ()
     }
   };
 
-  const filteredProjects = projects.filter( project =>
-    project.name.toLowerCase().includes( searchQuery.toLowerCase() ) ||
-    project.client?.toLowerCase().includes( searchQuery.toLowerCase() ) ||
-    project.category?.toLowerCase().includes( searchQuery.toLowerCase() )
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.client?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -264,7 +232,7 @@ export default function ProjectsPage ()
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projects.filter( p => p.isActive ).length}
+              {projects.filter(p => p.isActive).length}
             </div>
           </CardContent>
         </Card>
@@ -276,7 +244,7 @@ export default function ProjectsPage ()
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projects.filter( p => p.isFeatured ).length}
+              {projects.filter(p => p.isFeatured).length}
             </div>
           </CardContent>
         </Card>
@@ -288,7 +256,7 @@ export default function ProjectsPage ()
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projects.reduce( ( sum, p ) => sum + p.viewCount, 0 )}
+              {projects.reduce((sum, p) => sum + p.viewCount, 0)}
             </div>
           </CardContent>
         </Card>
@@ -304,7 +272,7 @@ export default function ProjectsPage ()
                 <Input
                   placeholder="Search projects..."
                   value={searchQuery}
-                  onChange={( e ) => setSearchQuery( e.target.value )}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -366,17 +334,11 @@ export default function ProjectsPage ()
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProjects.map( ( project ) => (
+                filteredProjects.map((project) => (
                   <TableRow key={project.id}>
                     <TableCell>
                       {project.thumbnailImage ? (
-                        <Image
-                          src={project.thumbnailImage}
-                          alt={project.name}
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded object-cover"
-                        />
+                        <img src={project.thumbnailImage} alt={project.name} className="w-10 h-10 rounded object-cover" />
                       ) : (
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                           <ImageIcon className="h-4 w-4 text-muted-foreground" />
@@ -394,7 +356,7 @@ export default function ProjectsPage ()
                     <TableCell>{project.client || '-'}</TableCell>
                     <TableCell>{project.category || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor( project.status )}>
+                      <Badge variant={getStatusColor(project.status)}>
                         {project.status}
                       </Badge>
                     </TableCell>
@@ -419,7 +381,7 @@ export default function ProjectsPage ()
                     </TableCell>
                     <TableCell>{project.viewCount}</TableCell>
                     <TableCell>
-                      {format( new Date( project.createdAt ), 'MMM dd, yyyy' )}
+                      {format(new Date(project.createdAt), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -430,18 +392,13 @@ export default function ProjectsPage ()
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <a href={`/projects/${ project.slug }`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              View Public Page
-                            </a>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit( project )}>
+
+                          <DropdownMenuItem onClick={() => handleEdit(project)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => toggleFeatured( project )}
+                            onClick={() => toggleFeatured(project)}
                           >
                             {project.isFeatured ? (
                               <>
@@ -456,7 +413,7 @@ export default function ProjectsPage ()
                             )}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => toggleActive( project )}
+                            onClick={() => toggleActive(project)}
                           >
                             {project.isActive ? (
                               <>
@@ -472,7 +429,7 @@ export default function ProjectsPage ()
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleDelete( project )}
+                            onClick={() => handleDelete(project)}
                             className="text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -482,7 +439,7 @@ export default function ProjectsPage ()
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ) )
+                ))
               )}
             </TableBody>
           </Table>
@@ -494,26 +451,26 @@ export default function ProjectsPage ()
         <div className="flex justify-center gap-2">
           <Button
             variant="outline"
-            onClick={() => setCurrentPage( p => Math.max( 1, p - 1 ) )}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
           </Button>
           <div className="flex items-center gap-2">
-            {Array.from( { length: totalPages }, ( _, i ) => i + 1 ).map( page => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
               <Button
                 key={page}
                 variant={currentPage === page ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setCurrentPage( page )}
+                onClick={() => setCurrentPage(page)}
               >
                 {page}
               </Button>
-            ) )}
+            ))}
           </div>
           <Button
             variant="outline"
-            onClick={() => setCurrentPage( p => Math.min( totalPages, p + 1 ) )}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
@@ -536,12 +493,11 @@ export default function ProjectsPage ()
           </DialogHeader>
           <ProjectForm
             project={selectedProject || undefined}
-            onSuccess={() =>
-            {
-              setIsFormOpen( false );
+            onSuccess={() => {
+              setIsFormOpen(false);
               fetchProjects();
             }}
-            onCancel={() => setIsFormOpen( false )}
+            onCancel={() => setIsFormOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -559,7 +515,7 @@ export default function ProjectsPage ()
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsDeleteDialogOpen( false )}
+              onClick={() => setIsDeleteDialogOpen(false)}
             >
               Cancel
             </Button>

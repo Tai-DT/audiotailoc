@@ -24,6 +24,8 @@ export class SecurityMiddleware implements NestMiddleware {
     const clientIP = this.getClientIP(req);
     const userAgent = req.get('User-Agent') || '';
     const now = Date.now();
+    const adminKeyHeader = (req.headers['x-admin-key'] as string) || '';
+    const adminKey = (this.configService.get('ADMIN_API_KEY') || '').trim();
 
     // 1. Check blocked IPs
     if (this.blockedIPs.has(clientIP)) {
@@ -38,6 +40,12 @@ export class SecurityMiddleware implements NestMiddleware {
         },
       });
       throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
+    }
+
+    // Trusted internal/admin-key requests: skip deep inspection (avoid false positives)
+    if (adminKey && adminKeyHeader && adminKeyHeader === adminKey) {
+      this.addSecurityHeaders(res);
+      return next();
     }
 
     // 2. Check suspicious patterns
@@ -191,11 +199,18 @@ export class SecurityMiddleware implements NestMiddleware {
 
   private containsSQLInjection(req: Request): boolean {
     const sqlPatterns = [
-      /(\%27)|(\')|(\-\-)|(\%23)|(#)/i, // Single quotes, comments
-      /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/i, // Union selects
-      /\w*((\%27)|(\'))(\s)*((\%6F)|o|(\%4F))((\%72)|r|(\%52))/i, // OR statements
-      /((\%27)|(\'))union/i, // Union injections
-      /exec(\s|\+)+(s|x)p\w+/i, // exec xp
+      // SQL keywords with word boundaries to avoid matching partial words
+      /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|TRUNCATE|GRANT|REVOKE)\b/i,
+      // Pattern for ' OR 1=1' style injections
+      /\b(OR|AND)\b\s+(['"]?\d+['"]?|['"]?\w+['"]?)\s*=\s*\1/i,
+      // More specific comment patterns (only if followed by newline or end of string in some contexts,
+      // but here we check for common indicators combined with other tokens)
+      /(\-\-|\/\*|\*\/)/,
+      // Specific sensitive stored procedures
+      /\bxp_cmdshell\b/i,
+      /\bsp_executesql\b/i,
+      // Union based injection
+      /\bUNION\b\s+(ALL\s+)?\bSELECT\b/i,
     ];
 
     const checkString = JSON.stringify({

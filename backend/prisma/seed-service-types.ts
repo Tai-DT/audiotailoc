@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function seedServiceTypes() {
   console.log('🛠️ Seeding service types...');

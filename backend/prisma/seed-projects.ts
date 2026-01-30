@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function seedProjects() {
     console.log('🎨 Seeding projects...');
@@ -145,6 +143,15 @@ async function seedProjects() {
     ];
 
     for (const project of projects) {
+        const existing = await prisma.projects.findUnique({
+            where: { slug: project.slug },
+        });
+
+        if (existing) {
+            console.log(`✓ Project "${project.name}" already exists`);
+            continue;
+        }
+
         const created = await prisma.projects.create({
             data: project,
         });

@@ -15,6 +15,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 import { BigIntSerializeInterceptor } from './common/interceptors/bigint-serialize.interceptor';
 import { CsrfMiddleware } from './common/security/csrf.middleware';
+import { CustomIoAdapter } from './common/adapters/custom-io.adapter';
 
 // Guard against EPIPE/EIO when stdout/stderr is closed (e.g., cron jobs or piped output).
 // This prevents Nest's ConsoleLogger from crashing the process when writes fail.
@@ -59,6 +60,9 @@ async function bootstrap() {
   const trustProxyCount =
     config.get<number>('TRUST_PROXY_COUNT') ?? (process.env.NODE_ENV === 'production' ? 1 : false);
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxyCount);
+
+  // Set up custom Socket.io adapter
+  app.useWebSocketAdapter(new CustomIoAdapter(app));
 
   // Get port early to avoid hoisting issues
   const port = Number(process.env.PORT || config.get('PORT') || 3010);

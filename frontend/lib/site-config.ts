@@ -85,9 +85,9 @@ export const NAVIGATION = {
   
   // Quick access categories
   quickCategories: [
-    { label: 'Micro', href: '/products?category=micro-karaoke-khong-day', icon: 'mic' },
-    { label: 'Loa', href: '/products?category=loa-loa-sub', icon: 'speaker' },
-    { label: 'Mixer', href: '/products?category=mixer-vang-so', icon: 'sliders' },
+    { label: 'Micro', href: '/products?category=microphone', icon: 'mic' },
+    { label: 'Loa', href: '/products?category=loa-karaoke', icon: 'speaker' },
+    { label: 'Mixer', href: '/products?category=vang-so-mixer', icon: 'sliders' },
     { label: 'Thanh Lý', href: '/products?category=hang-thanh-ly-hang-cu', icon: 'package' },
   ],
   

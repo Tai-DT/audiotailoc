@@ -24,15 +24,35 @@ import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { AssignTechnicianDto } from './dto/assign-technician.dto';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminGuard } from '../auth/admin.guard';
+import { JwtOrKeyGuard } from '../auth/jwt-or-key.guard';
 
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
+  private isAdmin(req: any): boolean {
+    const user = req?.user;
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+
+    const adminEmails = [process.env.ADMIN_EMAILS, process.env.ADMIN_EMAIL]
+      .filter(Boolean)
+      .join(',');
+    if (!adminEmails || !user.email) return false;
+    const allowedEmails = adminEmails
+      .split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(email => email.length > 0);
+    return allowedEmails.includes(String(user.email).toLowerCase());
+  }
+
   @Get()
-  @UseGuards(JwtGuard, AdminGuard)
-  async findAll(@Query() _query: any) {
+  @UseGuards(JwtOrKeyGuard)
+  async findAll(@Query() _query: any, @Req() req: any) {
+    if (!req?.isAdminKey && !this.isAdmin(req)) {
+      throw new ForbiddenException('Admin access required');
+    }
     return this.bookingService.findAll();
   }
 
@@ -49,13 +69,13 @@ export class BookingController {
   }
 
   @Get(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtOrKeyGuard)
   async findOne(@Param('id') id: string, @Req() req: any) {
     const booking = await this.bookingService.findOne(id);
 
     // SECURITY: Prevent IDOR - users can only view their own bookings unless they're admin
     const authenticatedUserId = req.user?.sub || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = this.isAdmin(req) || Boolean(req?.isAdminKey);
 
     // Check if booking belongs to authenticated user
     const bookingUserId = (booking as any)?.userId || (booking as any)?.users?.id;
@@ -67,12 +87,12 @@ export class BookingController {
   }
 
   @Post()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtOrKeyGuard)
   async create(@Body() createBookingDto: CreateBookingDto, @Req() req: any) {
     const authenticatedUserId = req.user?.sub || req.user?.id;
 
     // SECURITY: Ensure booking is created for the authenticated user
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = this.isAdmin(req) || Boolean(req?.isAdminKey);
 
     if (createBookingDto.userId && !isAdmin && createBookingDto.userId !== authenticatedUserId) {
       throw new ForbiddenException('You can only create bookings for yourself');
@@ -80,6 +100,8 @@ export class BookingController {
 
     // Force authenticated user's ID if not admin
     if (!isAdmin) {
+      createBookingDto.userId = authenticatedUserId;
+    } else if (!createBookingDto.userId && authenticatedUserId) {
       createBookingDto.userId = authenticatedUserId;
     }
 
@@ -96,7 +118,7 @@ export class BookingController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtOrKeyGuard)
   async update(
     @Param('id') id: string,
     @Body() updateBookingDto: UpdateBookingDto,
@@ -105,7 +127,7 @@ export class BookingController {
     // SECURITY: Prevent IDOR - verify ownership before update
     const booking = await this.bookingService.findOne(id);
     const authenticatedUserId = req.user?.sub || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = this.isAdmin(req) || Boolean(req?.isAdminKey);
 
     const bookingUserId = (booking as any)?.userId || (booking as any)?.users?.id;
     if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
@@ -121,12 +143,12 @@ export class BookingController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtOrKeyGuard)
   async delete(@Param('id') id: string, @Req() req: any) {
     // SECURITY: Prevent IDOR - verify ownership before delete
     const booking = await this.bookingService.findOne(id);
     const authenticatedUserId = req.user?.sub || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = this.isAdmin(req) || Boolean(req?.isAdminKey);
 
     const bookingUserId = (booking as any)?.userId || (booking as any)?.users?.id;
     if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
@@ -137,7 +159,7 @@ export class BookingController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtOrKeyGuard)
   async updateStatus(
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateBookingStatusDto,
@@ -146,7 +168,7 @@ export class BookingController {
     // SECURITY: Prevent IDOR - verify ownership before status update
     const booking = await this.bookingService.findOne(id);
     const authenticatedUserId = req.user?.sub || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = this.isAdmin(req) || Boolean(req?.isAdminKey);
 
     const bookingUserId = (booking as any)?.userId || (booking as any)?.users?.id;
     if (!isAdmin && bookingUserId && bookingUserId !== authenticatedUserId) {
@@ -157,11 +179,18 @@ export class BookingController {
   }
 
   @Patch(':id/assign')
-  @UseGuards(JwtGuard, AdminGuard)
+  @UseGuards(JwtOrKeyGuard)
   @ApiOperation({ summary: 'Assign technician to booking' })
   @ApiResponse({ status: 200, description: 'Technician assigned successfully' })
   @ApiResponse({ status: 404, description: 'Booking or technician not found' })
-  async assignTechnician(@Param('id') id: string, @Body() assignDto: AssignTechnicianDto) {
+  async assignTechnician(
+    @Param('id') id: string,
+    @Body() assignDto: AssignTechnicianDto,
+    @Req() req: any,
+  ) {
+    if (!req?.isAdminKey && !this.isAdmin(req)) {
+      throw new ForbiddenException('Admin access required');
+    }
     return this.bookingService.assignTechnician(id, assignDto.technicianId);
   }
 

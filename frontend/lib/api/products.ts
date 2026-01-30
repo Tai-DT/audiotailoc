@@ -1,6 +1,5 @@
 import { Product } from '@/lib/types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.audiotailoc.com/api/v1';
+import { buildApiUrl } from '@/lib/api-config';
 
 /**
  * Fetch top viewed products from the API on the server side.
@@ -8,7 +7,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.audiotailoc.com
  */
 export async function fetchFeaturedProducts(limit: number = 8): Promise<Product[]> {
   try {
-    const response = await fetch(`${API_BASE}/catalog/products/top-viewed?limit=${limit}`, {
+    const url = new URL(buildApiUrl('/catalog/products/top-viewed'));
+    url.searchParams.set('limit', String(limit));
+    const response = await fetch(url.toString(), {
       next: {
         // Cache for 10 minutes
         revalidate: 600,

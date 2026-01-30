@@ -17,6 +17,7 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtGuard } from '../auth/jwt.guard';
+import { OptionalJwtGuard } from '../auth/optional-jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { FilesService } from './files.service';
 
@@ -160,6 +161,21 @@ export class FilesController {
     return this.filesService.uploadUserAvatar(file, userId);
   }
 
+  @Get('sign')
+  @UseGuards(OptionalJwtGuard)
+  @ApiOperation({ summary: 'Generate signed URL for a public asset by URL' })
+  async signUrl(@Query('url') url?: string, @Query('force') force?: string) {
+    if (!url) {
+      throw new BadRequestException('url is required');
+    }
+
+    const signed = await this.filesService.generateSignedUrlFromUrl(url, {
+      forceRefresh: force === '1',
+    });
+
+    return { url: signed.url, expiresAt: signed.expiresAt };
+  }
+
   @UseGuards(JwtGuard)
   @Get(':fileId')
   @ApiBearerAuth()
@@ -181,6 +197,29 @@ export class FilesController {
     }
 
     return file;
+  }
+
+  @Get(':fileId/sign')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate signed URL for file download (short-lived)' })
+  async signFile(@Param('fileId') fileId: string, @Req() req: any, @Query('force') force?: string) {
+    const file = await this.filesService.getFileInfo(fileId);
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const user = req.user;
+    const isAdmin = user?.role === 'ADMIN' || user?.email === process.env.ADMIN_EMAIL;
+    if (file.metadata?.userId && !isAdmin && user?.sub !== file.metadata.userId) {
+      throw new ForbiddenException('You can only sign your own files');
+    }
+
+    const signed = await this.filesService.generateSignedUrl(fileId, {
+      forceRefresh: force === '1',
+    });
+
+    return { url: signed.url, expiresAt: signed.expiresAt };
   }
 
   @Get()

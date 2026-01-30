@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +19,7 @@ import { ServiceDetailDialog } from "@/components/services/service-detail-dialog
 import { Service, ServiceFormData } from "@/types/service"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale/vi"
+import { resolveBackendImageUrl } from "@/lib/utils/image-url"
 
 export default function ServicesManager() {
   const {
@@ -129,6 +129,13 @@ export default function ServicesManager() {
     return 'Unknown';
   };
 
+  const getServiceImageUrl = (service: Service): string => {
+    const imagesValue = service.images as unknown
+    const firstFromImages = Array.isArray(imagesValue) ? imagesValue[0] : (typeof imagesValue === 'string' ? imagesValue : '')
+    const rawUrl = (firstFromImages || service.imageUrl || '') as string
+    return resolveBackendImageUrl(rawUrl)
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center p-8">
@@ -183,15 +190,9 @@ export default function ServicesManager() {
                   <TableRow key={service.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-4">
-                        {service.imageUrl && (
+                        {getServiceImageUrl(service) && (
                           <div className="relative h-10 w-10 overflow-hidden rounded-md">
-                            <Image
-                              src={service.imageUrl}
-                              alt={service.name}
-                              width={40}
-                              height={40}
-                              className="h-full w-full object-cover"
-                            />
+                            <img src={getServiceImageUrl(service)} alt={service.name} className="h-full w-full object-cover" />
                           </div>
                         )}
                         <div>

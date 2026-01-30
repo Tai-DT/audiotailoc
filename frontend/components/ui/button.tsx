@@ -5,54 +5,56 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:ring-destructive/25 aria-invalid:border-destructive/70",
-  {
-    variants: {
-      variant: {
-        default:
-          "bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_20px_60px_-28px_rgba(0,0,0,0.45)] hover:from-primary/90 hover:to-accent/90 border-none",
-        destructive:
-          "bg-destructive text-destructive-foreground border-destructive/50 shadow-[0_10px_40px_-24px_rgba(0,0,0,0.6)] hover:bg-destructive/90 focus-visible:ring-destructive/30",
-        outline:
-          "border-border bg-card/60 text-foreground shadow-[0_10px_40px_-28px_rgba(0,0,0,0.35)] hover:bg-card/80 hover:border-border/80",
-        secondary: "bg-secondary/70 text-secondary-foreground hover:bg-secondary/90",
-        ghost:
-          "text-foreground hover:bg-muted/60 hover:text-foreground data-[state=open]:bg-muted/60",
-        link: "text-primary underline-offset-4 hover:underline decoration-2",
-      },
-      size: {
-        default: "h-11 px-5 text-sm rounded-xl has-[>svg]:px-4",
-        sm: "h-9 rounded-lg gap-1.5 px-3 text-sm has-[>svg]:px-2.5",
-        lg: "h-12 px-6 text-base rounded-2xl has-[>svg]:px-4",
-        icon: "size-10 rounded-xl",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
+ "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-display font-bold transition-all duration-300 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none uppercase tracking-widest",
+ {
+ variants: {
+ variant: {
+ default:
+ "bg-gradient-to-br from-primary via-red-600 to-primary text-foreground dark:text-white shadow-[0_10px_35px_-5px_rgba(220,38,38,0.45)] hover:bg-red-700 hover:shadow-[0_15px_45px_-5px_rgba(220,38,38,0.6)] hover:-translate-y-1 hover:brightness-110 active:translate-y-0 active:scale-95 border-none relative overflow-hidden",
+ destructive:
+ "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+ outline:
+ "border border-border/60 bg-background/50 backdrop-blur-sm shadow-sm hover:bg-muted/50 hover:text-accent-foreground hover:border-primary/40",
+ secondary:
+ "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+ ghost: "hover:bg-muted/50 hover:text-accent-foreground border-none",
+ link: "text-primary underline-offset-4 hover:underline border-none",
+ premium: "bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground shadow-[0_10px_40px_-10px_rgba(220,38,38,0.5)] hover:shadow-[0_15px_50px_-10px_rgba(220,38,38,0.6)] hover:brightness-110 hover:-translate-y-1 transition-all duration-500 border-none",
+ gold: "bg-gradient-to-br from-accent via-accent/90 to-accent/70 text-accent-foreground shadow-[0_10px_35px_-10px_rgba(180,140,50,0.4)] hover:shadow-[0_15px_45px_-10px_rgba(180,140,50,0.5)] hover:brightness-110 hover:-translate-y-1 transition-all duration-500 border-none",
+ },
+ size: {
+ default: "h-11 px-6 text-[10px]",
+ sm: "h-9 px-4 text-[9px]",
+ lg: "h-14 px-10 text-[11px] tracking-[0.2em]",
+ icon: "size-11",
+ },
+ },
+ defaultVariants: {
+ variant: "default",
+ size: "default",
+ },
+ }
 )
 
 function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
+ className,
+ variant,
+ size,
+ asChild = false,
+ ...props
 }: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot : "button"
+ VariantProps<typeof buttonVariants> & {
+ asChild?: boolean
+ }) {
+ const Comp = asChild ? Slot : "button"
 
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
+ return (
+ <Comp
+ data-slot="button"
+ className={cn(buttonVariants({ variant, size, className }))}
+ {...props}
+ />
+ )
 }
 
 export { Button, buttonVariants }

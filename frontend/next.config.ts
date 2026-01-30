@@ -1,15 +1,16 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 const backendBase = apiUrl.replace(/\/api\/v1\/?$/, '');
 
 let backendImagePattern:
   | {
-      protocol: 'http' | 'https';
-      hostname: string;
-      port: string;
-      pathname: string;
-    }
+    protocol: 'http' | 'https';
+    hostname: string;
+    port: string;
+    pathname: string;
+  }
   | undefined;
 
 try {
@@ -29,9 +30,10 @@ try {
 
 const nextConfig: NextConfig = {
   // Turbopack configuration removed - not compatible with outputFileTracingRoot
-  
+
   // Enable Turbopack for faster builds
   turbopack: {
+    root: path.resolve("."),
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],
@@ -39,17 +41,18 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  
+
   // Temporarily disable TypeScript checking to focus on connectivity
   typescript: {
     ignoreBuildErrors: true,
   },
-  
+
   // Performance optimizations
   experimental: {
     optimizePackageImports: [
+      'lucide-react',
       '@radix-ui/react-accordion',
-      '@radix-ui/react-alert-dialog', 
+      '@radix-ui/react-alert-dialog',
       '@radix-ui/react-aspect-ratio',
       '@radix-ui/react-avatar',
       '@radix-ui/react-checkbox',
@@ -71,7 +74,6 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-toast',
       '@radix-ui/react-tooltip',
-      'lucide-react',
       'react-hook-form',
       'framer-motion',
       // Additional optimizations for smaller bundles
@@ -86,9 +88,8 @@ const nextConfig: NextConfig = {
       'react-markdown',
       'zod',
     ],
-    allowedDevOrigins: ['localhost', '127.0.0.1', '192.168.0.120'],
   },
-  
+
   // Modularize imports for better tree-shaking
   modularizeImports: {
     'date-fns': {
@@ -98,7 +99,7 @@ const nextConfig: NextConfig = {
       transform: 'recharts/es6/{{member}}',
     },
   },
-  
+
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size in production
@@ -109,10 +110,10 @@ const nextConfig: NextConfig = {
         sideEffects: false,
       };
     }
-    
+
     return config;
   },
-  
+
   // Custom domain configuration with aggressive caching
   async headers() {
     return [
@@ -219,7 +220,7 @@ const nextConfig: NextConfig = {
     }
     return [];
   },
-  
+
   // Optimize for production builds
   serverExternalPackages: ['axios'],
   images: {
@@ -261,10 +262,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'phuctruongaudio.vn',
+        port: '',
+        pathname: '/**',
+      },
     ],
     dangerouslyAllowSVG: true,
+    qualities: [75, 90, 100],
     // Default to optimized images in production; allow opting out via env.
-    unoptimized: process.env.NEXT_PUBLIC_DISABLE_IMAGE_OPTIMIZATION === 'true',
+    // In development, we disable optimization to prevent timeouts with remote images like Cloudinary.
+    unoptimized: process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_IMAGE_OPTIMIZATION === 'true',
   },
 };
 

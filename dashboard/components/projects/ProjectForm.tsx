@@ -1,19 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import
-  {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Youtube, Link, Github } from 'lucide-react';
@@ -26,266 +24,234 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
 import { AxiosError } from 'axios';
 
-interface ProjectFormProps
-{
+interface ProjectFormProps {
   project?: Project;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectFormProps )
-{
+export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) {
   const { token } = useAuth();
-  const [ loading, setLoading ] = useState( false );
-  const [ uploadingImage, setUploadingImage ] = useState( false );
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  const parseStringArrayField = ( value: unknown ): string[] =>
-  {
-    if ( !value ) return [];
-    if ( Array.isArray( value ) ) return value.filter( Boolean ).map( String );
+  const parseStringArrayField = (value: unknown): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.filter(Boolean).map(String);
 
-    if ( typeof value !== 'string' ) return [];
+    if (typeof value !== 'string') return [];
     const trimmed = value.trim();
-    if ( !trimmed ) return [];
+    if (!trimmed) return [];
 
-    if ( trimmed.startsWith( '[' ) )
-    {
-      try
-      {
-        const parsed = JSON.parse( trimmed );
-        if ( Array.isArray( parsed ) ) return parsed.filter( Boolean ).map( String );
-      } catch
-      {
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+      } catch {
         // fall through to comma-split
       }
     }
 
-    if ( trimmed.includes( ',' ) )
-    {
+    if (trimmed.includes(',')) {
       return trimmed
-        .split( ',' )
-        .map( ( item ) => item.trim() )
-        .filter( Boolean );
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
     }
 
-    return [ trimmed ];
+    return [trimmed];
   };
 
   // Basic Information
-  const [ name, setName ] = useState( '' );
-  const [ slug, setSlug ] = useState( '' );
-  const [ shortDescription, setShortDescription ] = useState( '' );
-  const [ description, setDescription ] = useState( '' );
-  const [ client, setClient ] = useState( '' );
-  const [ clientLogo, setClientLogo ] = useState( '' );
-  const [ category, setCategory ] = useState( '' );
-  const [ status, setStatus ] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'>( 'DRAFT' );
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
+  const [description, setDescription] = useState('');
+  const [client, setClient] = useState('');
+  const [clientLogo, setClientLogo] = useState('');
+  const [category, setCategory] = useState('');
+  const [status, setStatus] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'>('DRAFT');
 
   // Media
-  const [ thumbnailImage, setThumbnailImage ] = useState( '' );
-  const [ coverImage, setCoverImage ] = useState( '' );
-  const [ images, setImages ] = useState<string[]>( [] );
-  const [ youtubeVideoUrl, setYoutubeVideoUrl ] = useState( '' );
+  const [thumbnailImage, setThumbnailImage] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
 
   // Links
-  const [ liveUrl, setLiveUrl ] = useState( '' );
-  const [ demoUrl, setDemoUrl ] = useState( '' );
-  const [ githubUrl, setGithubUrl ] = useState( '' );
+  const [liveUrl, setLiveUrl] = useState('');
+
+  const [githubUrl, setGithubUrl] = useState('');
 
   // Project Details
-  const [ startDate, setStartDate ] = useState( '' );
-  const [ endDate, setEndDate ] = useState( '' );
-  const [ duration, setDuration ] = useState( '' );
-  const [ teamSize, setTeamSize ] = useState<number | ''>( '' );
-  const [ budget, setBudget ] = useState( '' );
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [duration, setDuration] = useState('');
+  const [teamSize, setTeamSize] = useState<number | ''>('');
+  const [budget, setBudget] = useState('');
 
   // Technologies & Features
-  const [ technologies, setTechnologies ] = useState<string[]>( [] );
-  const [ features, setFeatures ] = useState<string[]>( [] );
-  const [ tags, setTags ] = useState<string[]>( [] );
+  const [technologies, setTechnologies] = useState<string[]>([]);
+  const [features, setFeatures] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   // Case Study
-  const [ testimonial, setTestimonial ] = useState( '' );
-  const [ results, setResults ] = useState( '' );
-  const [ challenges, setChallenges ] = useState( '' );
-  const [ solutions, setSolutions ] = useState( '' );
+  const [testimonial, setTestimonial] = useState('');
+  const [results, setResults] = useState('');
+  const [challenges, setChallenges] = useState('');
+  const [solutions, setSolutions] = useState('');
 
   // Settings
-  const [ isActive, setIsActive ] = useState( true );
-  const [ isFeatured, setIsFeatured ] = useState( false );
-  const [ displayOrder, setDisplayOrder ] = useState<number | ''>( 0 );
+  const [isActive, setIsActive] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [displayOrder, setDisplayOrder] = useState<number | ''>(0);
 
   // Input fields for arrays
-  const [ techInput, setTechInput ] = useState( '' );
-  const [ featureInput, setFeatureInput ] = useState( '' );
-  const [ tagInput, setTagInput ] = useState( '' );
+  const [techInput, setTechInput] = useState('');
+  const [featureInput, setFeatureInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
 
-  useEffect( () =>
-  {
-    if ( project )
-    {
-      setName( project.name || '' );
-      setSlug( project.slug || '' );
-      setShortDescription( project.shortDescription || '' );
-      setDescription( project.description || '' );
-      setClient( project.client || '' );
-      setClientLogo( project.clientLogo || '' );
-      setCategory( project.category || '' );
-      setStatus( project.status || 'DRAFT' );
+  useEffect(() => {
+    if (project) {
+      setName(project.name || '');
+      setSlug(project.slug || '');
+      setShortDescription(project.shortDescription || '');
+      setDescription(project.description || '');
+      setClient(project.client || '');
+      setClientLogo(project.clientLogo || '');
+      setCategory(project.category || '');
+      setStatus(project.status || 'DRAFT');
 
-      setThumbnailImage( project.thumbnailImage || '' );
-      setCoverImage( project.coverImage || '' );
-      setImages( parseStringArrayField( project.images ) );
-      setYoutubeVideoUrl( project.youtubeVideoUrl || '' );
+      setThumbnailImage(project.thumbnailImage || '');
+      setCoverImage(project.coverImage || '');
+      setImages(parseStringArrayField(project.images));
+      setYoutubeVideoUrl(project.youtubeVideoUrl || '');
 
-      setLiveUrl( project.liveUrl || '' );
-      setDemoUrl( project.demoUrl || '' );
-      setGithubUrl( project.githubUrl || '' );
+      setLiveUrl(project.liveUrl || '');
 
-      setStartDate( project.startDate ? format( new Date( project.startDate ), 'yyyy-MM-dd' ) : '' );
-      setEndDate( project.endDate ? format( new Date( project.endDate ), 'yyyy-MM-dd' ) : '' );
-      setDuration( project.duration || '' );
-      setTeamSize( project.teamSize || '' );
-      setBudget( project.budget || '' );
+      setGithubUrl(project.githubUrl || '');
 
-      setTechnologies( parseStringArrayField( project.technologies ) );
-      setFeatures( parseStringArrayField( project.features ) );
-      setTags( parseStringArrayField( project.tags ) );
+      setStartDate(project.startDate ? format(new Date(project.startDate), 'yyyy-MM-dd') : '');
+      setEndDate(project.endDate ? format(new Date(project.endDate), 'yyyy-MM-dd') : '');
+      setDuration(project.duration || '');
+      setTeamSize(project.teamSize || '');
+      setBudget(project.budget || '');
 
-      setTestimonial( project.testimonial || '' );
-      setResults( project.results || '' );
-      setChallenges( project.challenges || '' );
-      setSolutions( project.solutions || '' );
+      setTechnologies(parseStringArrayField(project.technologies));
+      setFeatures(parseStringArrayField(project.features));
+      setTags(parseStringArrayField(project.tags));
 
-      setIsActive( project.isActive ?? true );
-      setIsFeatured( project.isFeatured ?? false );
-      setDisplayOrder( project.displayOrder ?? 0 );
+      setTestimonial(project.testimonial || '');
+      setResults(project.results || '');
+      setChallenges(project.challenges || '');
+      setSolutions(project.solutions || '');
+
+      setIsActive(project.isActive ?? true);
+      setIsFeatured(project.isFeatured ?? false);
+      setDisplayOrder(project.displayOrder ?? 0);
     }
-  }, [ project ] );
+  }, [project]);
 
   // Ensure API client carries token for uploads and mutations
-  useEffect( () =>
-  {
-    if ( token )
-    {
-      apiClient.setToken( token );
+  useEffect(() => {
+    if (token) {
+      apiClient.setToken(token);
     }
-  }, [ token ] );
+  }, [token]);
 
   // Auto-generate slug from name
-  useEffect( () =>
-  {
-    if ( !project && name )
-    {
+  useEffect(() => {
+    if (!project && name) {
       const generatedSlug = name
         .toLowerCase()
-        .replace( /[^a-z0-9]+/g, '-' )
-        .replace( /^-+|-+$/g, '' );
-      setSlug( generatedSlug );
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      setSlug(generatedSlug);
     }
-  }, [ name, project ] );
+  }, [name, project]);
 
-  const handleImageUpload = async ( file: File, type: 'thumbnail' | 'cover' | 'gallery' | 'clientLogo' ) =>
-  {
-    try
-    {
-      setUploadingImage( true );
+  const handleImageUpload = async (file: File, type: 'thumbnail' | 'cover' | 'gallery' | 'clientLogo') => {
+    try {
+      setUploadingImage(true);
       // Use dedicated upload method which sets proper headers and includes auth token
-      const response = await apiClient.uploadFile( file );
+      const response = await apiClient.uploadFile(file);
       const responseData = response.data as { url?: string; secure_url?: string };
       const imageUrl = responseData.url || responseData.secure_url;
-      if ( !imageUrl )
-      {
-        throw new Error( 'Failed to get image URL from response' );
+      if (!imageUrl) {
+        throw new Error('Failed to get image URL from response');
       }
 
-      switch ( type )
-      {
+      switch (type) {
         case 'thumbnail':
-          setThumbnailImage( imageUrl );
+          setThumbnailImage(imageUrl);
           break;
         case 'cover':
-          setCoverImage( imageUrl );
+          setCoverImage(imageUrl);
           break;
         case 'clientLogo':
-          setClientLogo( imageUrl );
+          setClientLogo(imageUrl);
           break;
         case 'gallery':
-          setImages( [ ...images, imageUrl ] );
+          setImages([...images, imageUrl]);
           break;
       }
 
-      toast.success( 'Image uploaded successfully' );
-    } catch ( error )
-    {
-      console.error( 'Error uploading image:', error );
-      toast.error( 'Failed to upload image' );
-    } finally
-    {
-      setUploadingImage( false );
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
-  const removeImage = ( index: number ) =>
-  {
-    setImages( images.filter( ( _, i ) => i !== index ) );
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
   };
 
-  const addTechnology = () =>
-  {
-    if ( techInput.trim() )
-    {
-      setTechnologies( [ ...technologies, techInput.trim() ] );
-      setTechInput( '' );
+  const addTechnology = () => {
+    if (techInput.trim()) {
+      setTechnologies([...technologies, techInput.trim()]);
+      setTechInput('');
     }
   };
 
-  const removeTechnology = ( index: number ) =>
-  {
-    setTechnologies( technologies.filter( ( _, i ) => i !== index ) );
+  const removeTechnology = (index: number) => {
+    setTechnologies(technologies.filter((_, i) => i !== index));
   };
 
-  const addFeature = () =>
-  {
-    if ( featureInput.trim() )
-    {
-      setFeatures( [ ...features, featureInput.trim() ] );
-      setFeatureInput( '' );
+  const addFeature = () => {
+    if (featureInput.trim()) {
+      setFeatures([...features, featureInput.trim()]);
+      setFeatureInput('');
     }
   };
 
-  const removeFeature = ( index: number ) =>
-  {
-    setFeatures( features.filter( ( _, i ) => i !== index ) );
+  const removeFeature = (index: number) => {
+    setFeatures(features.filter((_, i) => i !== index));
   };
 
-  const addTag = () =>
-  {
-    if ( tagInput.trim() )
-    {
-      setTags( [ ...tags, tagInput.trim() ] );
-      setTagInput( '' );
+  const addTag = () => {
+    if (tagInput.trim()) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
     }
   };
 
-  const removeTag = ( index: number ) =>
-  {
-    setTags( tags.filter( ( _, i ) => i !== index ) );
+  const removeTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async ( e: React.FormEvent ) =>
-  {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if ( !name )
-    {
-      toast.error( 'Project name is required' );
+    if (!name) {
+      toast.error('Project name is required');
       return;
     }
 
-    try
-    {
-      setLoading( true );
+    try {
+      setLoading(true);
 
       const projectData: CreateProjectRequest = {
         name,
@@ -301,7 +267,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
         images: images.length > 0 ? images : undefined,
         youtubeVideoUrl,
         liveUrl,
-        demoUrl,
+
         githubUrl,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -320,29 +286,25 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
         displayOrder: displayOrder || 0,
       };
 
-      if ( project )
-      {
-        await apiClient.put( `/projects/${ project.id }`, projectData as unknown as Record<string, unknown> );
-        toast.success( 'Project updated successfully' );
-      } else
-      {
-        await apiClient.post( '/projects', projectData as unknown as Record<string, unknown> );
-        toast.success( 'Project created successfully' );
+      if (project) {
+        await apiClient.put(`/projects/${project.id}`, projectData as unknown as Record<string, unknown>);
+        toast.success('Project updated successfully');
+      } else {
+        await apiClient.post('/projects', projectData as unknown as Record<string, unknown>);
+        toast.success('Project created successfully');
       }
 
       onSuccess();
-    } catch ( error: unknown )
-    {
-      console.error( 'Error saving project:', error );
+    } catch (error: unknown) {
+      console.error('Error saving project:', error);
       const message = error instanceof AxiosError
-        ? String( ( ( error as AxiosError ).response?.data as { message?: string } )?.message || 'API Error' )
+        ? String(((error as AxiosError).response?.data as { message?: string })?.message || 'API Error')
         : error instanceof Error
           ? error.message
           : 'Failed to save project';
-      toast.error( message );
-    } finally
-    {
-      setLoading( false );
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -364,7 +326,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
               <Input
                 id="name"
                 value={name}
-                onChange={( e ) => setName( e.target.value )}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="Enter project name"
                 required
               />
@@ -374,7 +336,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
               <Input
                 id="slug"
                 value={slug}
-                onChange={( e ) => setSlug( e.target.value )}
+                onChange={(e) => setSlug(e.target.value)}
                 placeholder="project-slug"
               />
             </div>
@@ -385,7 +347,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
             <Input
               id="shortDescription"
               value={shortDescription}
-              onChange={( e ) => setShortDescription( e.target.value )}
+              onChange={(e) => setShortDescription(e.target.value)}
               placeholder="Brief project description"
             />
           </div>
@@ -395,7 +357,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
             <Textarea
               id="description"
               value={description}
-              onChange={( e ) => setDescription( e.target.value )}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed project description"
               rows={5}
             />
@@ -407,7 +369,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
               <Input
                 id="client"
                 value={client}
-                onChange={( e ) => setClient( e.target.value )}
+                onChange={(e) => setClient(e.target.value)}
                 placeholder="Client or company name"
               />
             </div>
@@ -416,7 +378,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
               <Input
                 id="category"
                 value={category}
-                onChange={( e ) => setCategory( e.target.value )}
+                onChange={(e) => setCategory(e.target.value)}
                 placeholder="e.g., Web Development, Mobile App"
               />
             </div>
@@ -424,7 +386,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
 
           <div className="space-y-2">
             <Label htmlFor="status">Project Status</Label>
-            <Select value={status} onValueChange={( value ) => setStatus( value as 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' )}>
+            <Select value={status} onValueChange={(value) => setStatus(value as 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -451,17 +413,16 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                     <Input
                       type="file"
                       accept="image/*"
-                      onChange={( e ) =>
-                      {
-                        const file = e.target.files?.[ 0 ];
-                        if ( file ) handleImageUpload( file, 'thumbnail' );
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'thumbnail');
                       }}
                       disabled={uploadingImage}
                     />
                     {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                   {thumbnailImage && (
-                    <Image src={thumbnailImage} alt="Thumbnail" width={128} height={128} className="w-32 h-32 object-cover rounded" />
+                    <img src={thumbnailImage} alt="Thumbnail" className="w-32 h-32 object-cover rounded" />
                   )}
                 </div>
 
@@ -471,17 +432,16 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                     <Input
                       type="file"
                       accept="image/*"
-                      onChange={( e ) =>
-                      {
-                        const file = e.target.files?.[ 0 ];
-                        if ( file ) handleImageUpload( file, 'cover' );
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'cover');
                       }}
                       disabled={uploadingImage}
                     />
                     {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                   {coverImage && (
-                    <Image src={coverImage} alt="Cover" width={128} height={128} className="w-32 h-32 object-cover rounded" />
+                    <img src={coverImage} alt="Cover" className="w-32 h-32 object-cover rounded" />
                   )}
                 </div>
               </div>
@@ -492,17 +452,16 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={( e ) =>
-                    {
-                      const file = e.target.files?.[ 0 ];
-                      if ( file ) handleImageUpload( file, 'clientLogo' );
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file, 'clientLogo');
                     }}
                     disabled={uploadingImage}
                   />
                   {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
                 </div>
                 {clientLogo && (
-                  <Image src={clientLogo} alt="Client Logo" width={128} height={64} className="w-32 h-16 object-contain rounded bg-gray-50" />
+                  <img src={clientLogo} alt="Client Logo" className="w-32 h-16 object-contain rounded bg-gray-50" />
                 )}
               </div>
 
@@ -512,10 +471,9 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={( e ) =>
-                    {
-                      const file = e.target.files?.[ 0 ];
-                      if ( file ) handleImageUpload( file, 'gallery' );
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file, 'gallery');
                     }}
                     disabled={uploadingImage}
                   />
@@ -523,20 +481,20 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 </div>
                 {images.length > 0 && (
                   <div className="grid grid-cols-4 gap-2 mt-2">
-                    {images.map( ( img, index ) => (
+                    {images.map((img, index) => (
                       <div key={index} className="relative">
-                        <Image src={img} alt={`Gallery ${ index + 1 }`} width={200} height={96} className="w-full h-24 object-cover rounded" />
+                        <img src={img} alt={`Gallery ${index + 1}`} className="w-full h-24 object-cover rounded" />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
                           className="absolute top-1 right-1 h-6 w-6"
-                          onClick={() => removeImage( index )}
+                          onClick={() => removeImage(index)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
-                    ) )}
+                    ))}
                   </div>
                 )}
               </div>
@@ -556,7 +514,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <Input
                   id="youtubeVideoUrl"
                   value={youtubeVideoUrl}
-                  onChange={( e ) => setYoutubeVideoUrl( e.target.value )}
+                  onChange={(e) => setYoutubeVideoUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
                 <p className="text-sm text-muted-foreground">
@@ -580,7 +538,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                     id="startDate"
                     type="date"
                     value={startDate}
-                    onChange={( e ) => setStartDate( e.target.value )}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -589,7 +547,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                     id="endDate"
                     type="date"
                     value={endDate}
-                    onChange={( e ) => setEndDate( e.target.value )}
+                    onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -597,7 +555,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     id="duration"
                     value={duration}
-                    onChange={( e ) => setDuration( e.target.value )}
+                    onChange={(e) => setDuration(e.target.value)}
                     placeholder="e.g., 3 months"
                   />
                 </div>
@@ -610,7 +568,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                     id="teamSize"
                     type="number"
                     value={teamSize}
-                    onChange={( e ) => setTeamSize( e.target.value ? parseInt( e.target.value ) : '' )}
+                    onChange={(e) => setTeamSize(e.target.value ? parseInt(e.target.value) : '')}
                     placeholder="Number of team members"
                   />
                 </div>
@@ -619,7 +577,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     id="budget"
                     value={budget}
-                    onChange={( e ) => setBudget( e.target.value )}
+                    onChange={(e) => setBudget(e.target.value)}
                     placeholder="e.g., $10,000 - $50,000"
                   />
                 </div>
@@ -639,26 +597,14 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     id="liveUrl"
                     value={liveUrl}
-                    onChange={( e ) => setLiveUrl( e.target.value )}
+                    onChange={(e) => setLiveUrl(e.target.value)}
                     placeholder="https://example.com"
                     className="flex-1"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="demoUrl">Demo URL</Label>
-                <div className="flex items-center gap-2">
-                  <Link className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="demoUrl"
-                    value={demoUrl}
-                    onChange={( e ) => setDemoUrl( e.target.value )}
-                    placeholder="https://demo.example.com"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="githubUrl">GitHub URL</Label>
@@ -667,7 +613,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   <Input
                     id="githubUrl"
                     value={githubUrl}
-                    onChange={( e ) => setGithubUrl( e.target.value )}
+                    onChange={(e) => setGithubUrl(e.target.value)}
                     placeholder="https://github.com/username/repo"
                     className="flex-1"
                   />
@@ -686,12 +632,10 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <div className="flex gap-2">
                   <Input
                     value={techInput}
-                    onChange={( e ) => setTechInput( e.target.value )}
+                    onChange={(e) => setTechInput(e.target.value)}
                     placeholder="Add technology"
-                    onKeyPress={( e ) =>
-                    {
-                      if ( e.key === 'Enter' )
-                      {
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
                         e.preventDefault();
                         addTechnology();
                       }
@@ -702,12 +646,12 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {technologies.map( ( tech, index ) => (
+                  {technologies.map((tech, index) => (
                     <Badge key={index} variant="secondary">
                       {tech}
                       <button
                         type="button"
-                        onClick={() => removeTechnology( index )}
+                        onClick={() => removeTechnology(index)}
                         className="ml-2"
                         aria-label={`Remove technology ${tech}`}
                         title={`Remove technology ${tech}`}
@@ -715,7 +659,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  ) )}
+                  ))}
                 </div>
               </div>
 
@@ -724,12 +668,10 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <div className="flex gap-2">
                   <Input
                     value={featureInput}
-                    onChange={( e ) => setFeatureInput( e.target.value )}
+                    onChange={(e) => setFeatureInput(e.target.value)}
                     placeholder="Add feature"
-                    onKeyPress={( e ) =>
-                    {
-                      if ( e.key === 'Enter' )
-                      {
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
                         e.preventDefault();
                         addFeature();
                       }
@@ -740,12 +682,12 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {features.map( ( feature, index ) => (
+                  {features.map((feature, index) => (
                     <Badge key={index} variant="secondary">
                       {feature}
                       <button
                         type="button"
-                        onClick={() => removeFeature( index )}
+                        onClick={() => removeFeature(index)}
                         className="ml-2"
                         aria-label={`Remove feature ${feature}`}
                         title={`Remove feature ${feature}`}
@@ -753,7 +695,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  ) )}
+                  ))}
                 </div>
               </div>
 
@@ -762,12 +704,10 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <div className="flex gap-2">
                   <Input
                     value={tagInput}
-                    onChange={( e ) => setTagInput( e.target.value )}
+                    onChange={(e) => setTagInput(e.target.value)}
                     placeholder="Add tag"
-                    onKeyPress={( e ) =>
-                    {
-                      if ( e.key === 'Enter' )
-                      {
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
                         e.preventDefault();
                         addTag();
                       }
@@ -778,12 +718,12 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map( ( tag, index ) => (
+                  {tags.map((tag, index) => (
                     <Badge key={index} variant="outline">
                       #{tag}
                       <button
                         type="button"
-                        onClick={() => removeTag( index )}
+                        onClick={() => removeTag(index)}
                         className="ml-2"
                         aria-label={`Remove tag ${tag}`}
                         title={`Remove tag ${tag}`}
@@ -791,7 +731,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  ) )}
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -809,7 +749,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <Textarea
                   id="challenges"
                   value={challenges}
-                  onChange={( e ) => setChallenges( e.target.value )}
+                  onChange={(e) => setChallenges(e.target.value)}
                   placeholder="What challenges did you face?"
                   rows={4}
                 />
@@ -820,7 +760,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <Textarea
                   id="solutions"
                   value={solutions}
-                  onChange={( e ) => setSolutions( e.target.value )}
+                  onChange={(e) => setSolutions(e.target.value)}
                   placeholder="How did you solve the challenges?"
                   rows={4}
                 />
@@ -831,7 +771,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <Textarea
                   id="results"
                   value={results}
-                  onChange={( e ) => setResults( e.target.value )}
+                  onChange={(e) => setResults(e.target.value)}
                   placeholder="What were the outcomes and impact?"
                   rows={4}
                 />
@@ -842,7 +782,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                 <Textarea
                   id="testimonial"
                   value={testimonial}
-                  onChange={( e ) => setTestimonial( e.target.value )}
+                  onChange={(e) => setTestimonial(e.target.value)}
                   placeholder="Client feedback or testimonial"
                   rows={3}
                 />
@@ -891,7 +831,7 @@ export default function ProjectForm ( { project, onSuccess, onCancel }: ProjectF
                   id="displayOrder"
                   type="number"
                   value={displayOrder}
-                  onChange={( e ) => setDisplayOrder( e.target.value ? parseInt( e.target.value ) : '' )}
+                  onChange={(e) => setDisplayOrder(e.target.value ? parseInt(e.target.value) : '')}
                   placeholder="0"
                 />
                 <p className="text-sm text-muted-foreground">

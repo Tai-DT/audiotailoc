@@ -1,8 +1,9 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { API_CONFIG } from '@/lib/api-config';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010';
+const BACKEND_BASE_URL = API_CONFIG.baseUrl.replace(/\/$/, '');
 
 export async function POST(request: NextRequest) {
     try {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         const backendFormData = new FormData();
         backendFormData.append('file', file);
 
-        const response = await fetch(`${BACKEND_URL}/api/v1/files/upload/review`, {
+        const response = await fetch(`${BACKEND_BASE_URL}/files/upload/review`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,

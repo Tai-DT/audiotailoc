@@ -3,277 +3,257 @@
 import React, { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  Home,
-  ShoppingBag,
-  RefreshCw,
-  ArrowLeft
+ CheckCircle,
+ XCircle,
+ Clock,
+ Home,
+ ShoppingBag,
+ Sparkles,
+ Music4,
+ Mail,
+ Phone,
+ ArrowRight,
+ Truck
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useCart } from '@/components/providers/cart-provider';
+import { useContactInfo } from '@/lib/hooks/use-contact-info';
+import { BlurFade } from '@/components/ui/blur-fade';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface PaymentStatus {
-  status: string;
-  orderId?: string;
-  transactionId?: string;
-  amount?: number;
-  currency?: string;
-  createdAt?: string;
-  completedAt?: string;
-  estimatedDelivery?: string;
+ status: string;
+ orderId?: string;
+ transactionId?: string;
+ amount?: number;
+ currency?: string;
+ createdAt?: string;
+ completedAt?: string;
+ estimatedDelivery?: string;
 }
 
 function OrderSuccessContent() {
-  const searchParams = useSearchParams();
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { clearCart } = useCart();
-  const cartClearedRef = useRef(false);
+ const searchParams = useSearchParams();
+ const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
+ const { clearCart } = useCart();
+ const cartClearedRef = useRef(false);
+ const { data: contactInfo } = useContactInfo();
+ const hotlineDisplay = contactInfo?.phone?.display || contactInfo?.phone?.hotline || '';
+ const contactEmail = contactInfo?.email || '';
 
-  const orderId = searchParams.get('orderId');
-  const paymentMethod = searchParams.get('method');
+ const orderId = searchParams.get('orderId');
+ const rawPaymentMethod = searchParams.get('method');
+ const paymentMethod = rawPaymentMethod === 'cos' ? 'cod' : rawPaymentMethod;
 
-  const checkPaymentStatus = useCallback(async () => {
-    if (!orderId || !paymentMethod) return;
+ const checkPaymentStatus = useCallback(async () => {
+ if (!orderId || !paymentMethod) return;
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/payment/status?orderId=${orderId}&paymentMethod=${paymentMethod}`);
-      const result = await response.json();
+ try {
+ const response = await fetch(`/api/payment/status?orderId=${orderId}&paymentMethod=${paymentMethod}`);
+ const result = await response.json();
 
-      if (result.success) {
-        setPaymentStatus(result.status);
+ if (result.success) {
+ setPaymentStatus(result.status);
 
-        // Clear cart on successful payment (only once)
-        if ((result.status.status === 'COMPLETED' || paymentMethod === 'cos') && !cartClearedRef.current) {
-          clearCart();
-          cartClearedRef.current = true;
-        }
+ if ((result.status.status === 'COMPLETED' || paymentMethod === 'cod') && !cartClearedRef.current) {
+ clearCart();
+ cartClearedRef.current = true;
+ }
 
-        // Show appropriate message based on status
-        if (result.status.status === 'COMPLETED') {
-          toast.success('Thanh toán thành công!');
-        } else if (result.status.status === 'FAILED') {
-          toast.error('Thanh toán thất bại. Vui lòng thử lại.', { icon: '❌' });
-        } else if (result.status.status === 'PENDING') {
-          toast('Đang xử lý thanh toán...', { icon: '⏳' });
-        }
-      }
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-      toast.error('Không thể kiểm tra trạng thái thanh toán', { icon: '❌' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orderId, paymentMethod, clearCart]);
+ if (result.status.status === 'COMPLETED') {
+ toast.success('Giao dịch thành công!');
+ } else if (result.status.status === 'FAILED') {
+ toast.error('Giao dịch chưa hoàn tất');
+ }
+ }
+ } catch (error) {
+ console.error('Error checking payment status:', error);
+ } finally {
+ // No-op: status updates are reflected via paymentStatus state.
+ }
+ }, [orderId, paymentMethod, clearCart]);
 
-  useEffect(() => {
-    // If we have orderId and paymentMethod, check payment status
-    if (orderId && paymentMethod) {
-      checkPaymentStatus();
-    }
-  }, [orderId, paymentMethod, checkPaymentStatus]);
+ useEffect(() => {
+ if (orderId && paymentMethod) {
+ checkPaymentStatus();
+ }
+ }, [orderId, paymentMethod, checkPaymentStatus]);
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'success':
-        return <CheckCircle className="h-8 w-8 text-success" />;
-      case 'failed':
-      case 'error':
-        return <XCircle className="h-8 w-8 text-destructive" />;
-      case 'pending':
-      case 'processing':
-      default:
-        return <Clock className="h-8 w-8 text-warning" />;
-    }
-  };
+ const getStatusVisuals = (status: string) => {
+ switch (status.toLowerCase()) {
+ case 'completed':
+ case 'success':
+ return {
+ icon: CheckCircle,
+ color: 'text-primary',
+ bg: 'bg-primary/10',
+ border: 'border-primary/20',
+ label: 'Giao dịch Thành công',
+ desc: 'Hệ thống đã nhận ủy thác đơn hàng của bạn.'
+ };
+ case 'failed':
+ case 'error':
+ return {
+ icon: XCircle,
+ color: 'text-red-500',
+ bg: 'bg-red-500/10',
+ border: 'border-red-500/20',
+ label: 'Giao dịch Thất bại',
+ desc: 'Vui lòng kiểm tra lại phương thức thanh toán.'
+ };
+ case 'pending':
+ case 'processing':
+ default:
+ return {
+ icon: Clock,
+ color: 'text-accent',
+ bg: 'bg-accent/10',
+ border: 'border-accent/20',
+ label: 'Đang Xử lý',
+ desc: 'Hệ thống đang đồng bộ dữ liệu thanh toán.'
+ };
+ }
+ };
 
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'success':
-        return <Badge className="bg-green-100 text-green-800">Thành công</Badge>;
-      case 'failed':
-      case 'error':
-        return <Badge className="bg-red-100 text-red-800">Thất bại</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Đang xử lý</Badge>;
-      case 'processing':
-        return <Badge className="bg-blue-100 text-blue-800">Đang xử lý</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
+ const status = paymentStatus?.status || (paymentMethod === 'cod' ? 'COMPLETED' : 'PENDING');
+ const visuals = getStatusVisuals(status);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <Link href="/">
-              <Button variant="outline" size="icon" className="mb-4">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold mb-2">Kết quả đặt hàng</h1>
-            <p className="text-muted-foreground">
-              {paymentMethod === 'cos' ? 'Đặt hàng COD' : 'Kết quả thanh toán PayOS'}
-            </p>
-          </div>
+ return (
+ <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+ {/* Background Decor */}
+ <div className="absolute inset-0 z-0 pointer-events-none">
+ <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 blur-[150px] animate-pulse" />
+ <div className="absolute inset-0 bg-studio-grid opacity-15" />
+ </div>
 
-          {/* Order Status Card */}
-          <Card className="mb-8">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                {paymentStatus ? getStatusIcon(paymentStatus.status) : <Clock className="h-8 w-8 text-muted-foreground" />}
-              </div>
-              <CardTitle>
-                {paymentMethod === 'cos' ? 'Đặt hàng COD' : 'Thanh toán PayOS'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {paymentStatus && (
-                <>
-                  <div className="flex justify-center">
-                    {getStatusBadge(paymentStatus.status)}
-                  </div>
+ <div className="container max-w-2xl relative z-10 py-12">
+ <BlurFade delay={0.1} inView>
+ <div className="text-center space-y-12">
+ {/* Celebration Icon */}
+ <div className="relative inline-block group">
+ <div className={cn(
+ "w-32 h-32 rounded-[2.5rem] flex items-center justify-center border-2 transition-all duration-700 shadow-2xl relative z-10",
+ visuals.bg, visuals.border, visuals.color
+ )}>
+ <visuals.icon className="w-14 h-14 group-hover:scale-125 transition-transform" />
+ {status === 'COMPLETED' && (
+ <>
+ <Sparkles className="absolute -top-4 -right-4 w-8 h-8 text-accent animate-pulse" />
+ <Sparkles className="absolute -bottom-4 -left-4 w-6 h-6 text-accent animate-bounce" />
+ </>
+ )}
+ </div>
+ <div className={cn("absolute inset-0 blur-3xl opacity-40 group-hover:opacity-60 transition-opacity", visuals.bg)} />
+ </div>
 
-                  <div className="grid grid-cols-1 gap-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Mã đơn hàng:</span>
-                      <span className="font-medium">{orderId}</span>
-                    </div>
+ <div className="space-y-4">
+ <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none">
+ {visuals.label.split(' ')[0]} <span className="text-primary">{visuals.label.split(' ')[1]}</span>
+ </h1>
+ <p className="text-foreground/40 dark:text-zinc-300 font-medium italic max-w-md mx-auto">{visuals.desc}</p>
+ </div>
 
-                    {paymentStatus.transactionId && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Mã giao dịch:</span>
-                        <span className="font-medium">{paymentStatus.transactionId}</span>
-                      </div>
-                    )}
+ {/* Order Detail Card */}
+ <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10 backdrop-blur-3xl shadow-3xl text-left space-y-8 relative overflow-hidden">
+ <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-                    {paymentStatus.amount && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Số tiền:</span>
-                        <span className="font-medium">{paymentStatus.amount.toLocaleString('vi-VN')}₫</span>
-                      </div>
-                    )}
+ <div className="flex justify-between items-end border-b border-white/5 pb-8">
+ <div className="space-y-1">
+ <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Order Identifier</p>
+ <p className="text-xl font-black text-foreground dark:text-white tracking-tight">#{orderId}</p>
+ </div>
+ <div className="text-right space-y-1">
+ <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Protocol</p>
+ <p className="text-xs font-black text-primary uppercase italic">{paymentMethod === 'cod' ? 'Cash on Delivery' : 'Digital Transfer'}</p>
+ </div>
+ </div>
 
-                    {paymentStatus.createdAt && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Thời gian tạo:</span>
-                        <span className="font-medium">
-                          {new Date(paymentStatus.createdAt).toLocaleString('vi-VN')}
-                        </span>
-                      </div>
-                    )}
+ <div className="grid grid-cols-2 gap-8">
+ {paymentStatus?.amount && (
+ <div className="space-y-1">
+ <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 italic">Total Value</p>
+ <p className="text-lg font-black text-foreground dark:text-white tabular-nums tracking-tighter">{formatCurrency(paymentStatus.amount)}</p>
+ </div>
+ )}
+ {paymentStatus?.createdAt && (
+ <div className="space-y-1">
+ <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 italic">Registration Time</p>
+ <p className="text-sm font-bold text-foreground/80 dark:text-white/80">{new Date(paymentStatus.createdAt).toLocaleDateString('vi-VN')}</p>
+ </div>
+ )}
+ {paymentStatus?.estimatedDelivery && (
+ <div className="space-y-1 col-span-2 p-6 bg-white/5 border border-white/5 rounded-2xl flex items-center gap-6">
+ <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+ <Truck className="w-5 h-5" />
+ </div>
+ <div>
+ <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 mb-1">Estimated Arrival</p>
+ <p className="text-sm font-bold text-foreground dark:text-white italic">
+ Dự kiến giao hàng: <span className="text-primary">{new Date(paymentStatus.estimatedDelivery).toLocaleDateString('vi-VN')}</span>
+ </p>
+ </div>
+ </div>
+ )}
+ </div>
 
-                    {paymentStatus.estimatedDelivery && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Dự kiến giao hàng:</span>
-                        <span className="font-medium">
-                          {new Date(paymentStatus.estimatedDelivery).toLocaleString('vi-VN')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+ {/* Status Messages */}
+ {status === 'COMPLETED' && (
+ <div className="p-6 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-5">
+ <CheckCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+ <p className="text-[11px] text-foreground/40 dark:text-zinc-300 italic leading-relaxed">
+ Kiệt tác của bạn đang được các chuyên gia của chúng tôi chuẩn bị.
+ Quý khách sẽ sớm nhận được thông báo hành chặng vận chuyển.
+ </p>
+ </div>
+ )}
+ </div>
 
-                  {/* Status-specific messages */}
-                  {paymentStatus.status === 'COMPLETED' && (
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-green-800 font-medium">🎉 Thanh toán thành công!</p>
-                      <p className="text-success text-sm">Đơn hàng của bạn đã được xử lý thành công.</p>
-                    </div>
-                  )}
+ {/* Actions */}
+ <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
+ <Link href="/">
+ <button className="h-14 px-10 bg-white text-slate-950 font-black uppercase tracking-widest rounded-xl hover:bg-white/90 transition-all flex items-center gap-4 text-xs italic">
+ <Home className="w-4 h-4" />
+ Về Trang chủ
+ </button>
+ </Link>
+ <Link href="/products">
+ <button className="h-14 px-10 bg-white/5 border border-white/10 text-foreground dark:text-white font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all flex items-center gap-4 text-xs italic">
+ <ShoppingBag className="w-4 h-4" />
+ Tiếp tục Trải nghiệm
+ <ArrowRight className="w-4 h-4" />
+ </button>
+ </Link>
+ </div>
 
-                  {paymentStatus.status === 'PENDING' && (
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-yellow-800 font-medium">⏳ Đang xử lý</p>
-                      <p className="text-warning text-sm">Vui lòng đợi trong giây lát...</p>
-                    </div>
-                  )}
-
-                  {paymentStatus.status === 'FAILED' && (
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-red-800 font-medium">❌ Thanh toán thất bại</p>
-                      <p className="text-destructive text-sm">Vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {!paymentStatus && !isLoading && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-muted-foreground">Không tìm thấy thông tin đơn hàng</p>
-                </div>
-              )}
-
-              {isLoading && (
-                <div className="text-center p-4">
-                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  <p className="text-muted-foreground">Đang kiểm tra trạng thái...</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={checkPaymentStatus}
-              disabled={isLoading}
-              variant="outline"
-            >
-              {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Kiểm tra lại
-            </Button>
-
-            <Link href="/">
-              <Button size="lg" className="w-full sm:w-auto">
-                <Home className="h-5 w-5 mr-2" />
-                Về trang chủ
-              </Button>
-            </Link>
-
-            <Link href="/products">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                <ShoppingBag className="h-5 w-5 mr-2" />
-                Tiếp tục mua sắm
-              </Button>
-            </Link>
-          </div>
-
-          {/* Additional Information */}
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            <p>Nếu có vấn đề với đơn hàng, vui lòng liên hệ:</p>
-            <p>📧 audiotailoc@gmail.com | 📞 0768 426 262</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+ {/* Footer Contact */}
+ <div className="pt-8 text-center space-y-3 opacity-30 hover:opacity-100 transition-opacity duration-700">
+ <p className="text-[10px] font-black uppercase tracking-[0.2em] italic">Artisan Support Network</p>
+ <div className="flex items-center justify-center gap-6 text-[11px] font-medium text-foreground/60 dark:text-zinc-200">
+ <span className="flex items-center gap-2 italic"><Mail className="w-3 h-3 text-primary" /> {contactEmail}</span>
+ <span className="flex items-center gap-2 italic"><Phone className="w-3 h-3 text-primary" /> {hotlineDisplay}</span>
+ </div>
+ </div>
+ </div>
+ </BlurFade>
+ </div>
+ </main>
+ );
 }
 
 export default function OrderSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Đang tải...</p>
-        </div>
-      </div>
-    }>
-      <OrderSuccessContent />
-    </Suspense>
-  );
+ return (
+ <Suspense fallback={
+ <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-12">
+ <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center animate-pulse mb-6">
+ <Music4 className="w-8 h-8 text-primary" />
+ </div>
+ <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+ <div className="h-full bg-primary animate-progress" style={{ width: '40%' }} />
+ </div>
+ </div>
+ }>
+ <OrderSuccessContent />
+ </Suspense>
+ );
 }

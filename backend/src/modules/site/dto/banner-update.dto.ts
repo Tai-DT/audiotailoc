@@ -18,7 +18,17 @@ export class UpdateBannerDto extends PartialType(CreateBannerDto) {
   @IsOptional()
   @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
+  darkImageUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
   mobileImageUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
+  darkMobileImageUrl?: string;
 
   @IsOptional()
   @Transform(({ value }) => (value === '' || value === null ? undefined : value))

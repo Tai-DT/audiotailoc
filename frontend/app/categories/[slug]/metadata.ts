@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { apiClient, handleApiResponse } from '@/lib/api';
 import { Category } from '@/lib/types';
+import { getMediaUrl } from '@/lib/utils';
 
 async function getCategory ( slug: string ): Promise<Category | null>
 {
@@ -40,7 +41,7 @@ export async function generateMetadata ( { params }: { params: Promise<{ slug: s
         openGraph: {
             title,
             description,
-            images: category.imageUrl ? [ { url: category.imageUrl } ] : undefined,
+            images: category.imageUrl ? [ { url: getMediaUrl(category.imageUrl) } ] : undefined,
             type: 'website',
         },
         alternates: {

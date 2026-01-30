@@ -1,188 +1,68 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, Grid, List, Clock, Users } from 'lucide-react';
+import { Search, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useServices, useServiceTypes } from '@/lib/hooks/use-api';
-import { Service } from '@/lib/types';
+import { useCategories } from '@/lib/hooks/use-categories';
+import { Category } from '@/lib/types';
+import { getMediaUrl } from '@/lib/utils';
 
 export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<'name' | 'price' | 'createdAt' | 'viewCount'>('createdAt');
+  const [sortBy, setSortBy] = useState<'name' | 'createdAt'>('name');
 
-  const { data: servicesData, isLoading: servicesLoading } = useServices({
-    q: searchQuery || undefined,
-    typeId: selectedType !== 'all' ? selectedType : undefined,
-    sortBy,
-    sortOrder: 'desc',
-    pageSize: 50,
-  });
+  const { data: categories = [], isLoading } = useCategories();
 
-  const { data: serviceTypes, isLoading: typesLoading } = useServiceTypes();
-
-  const services = servicesData?.items || [];
-  const filteredServices = services.filter(service =>
-    service.isActive && (!selectedType || selectedType === 'all' || service.typeId === selectedType)
-  );
-
-  const renderServiceCard = (service: Service) => {
-    const serviceType = serviceTypes?.find(type => type.id === service.typeId);
-
-    if (viewMode === 'list') {
+  const filteredCategories = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    let items = categories.filter((category) => {
+      if (!query) return true;
       return (
-        <Card key={service.id} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="relative w-24 h-24 flex-shrink-0">
-                <Image
-                  src={service.images?.[0] || '/placeholder-service.jpg'}
-                  alt={service.name}
-                  fill
-                  className="object-cover rounded-md"
-                />
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <Link href={`/services/${service.slug}`}>
-                      <h3 className="font-semibold text-lg hover:text-primary transition-colors">
-                        {service.name}
-                      </h3>
-                    </Link>
-                    {serviceType && (
-                      <Badge variant="secondary" className="mt-1">
-                        {serviceType.name}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-success">
-                      {service.priceType === 'FIXED'
-                        ? `${service.price.toLocaleString('vi-VN')}₫`
-                        : service.priceType === 'RANGE'
-                        ? `${service.minPrice?.toLocaleString('vi-VN')}₫ - ${service.maxPrice?.toLocaleString('vi-VN')}₫`
-                        : 'Liên hệ'
-                      }
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {service.priceType === 'FIXED' ? 'Giá cố định' :
-                       service.priceType === 'RANGE' ? 'Giá theo yêu cầu' :
-                       'Giá thương lượng'}
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-muted-foreground text-sm line-clamp-2">
-                  {service.shortDescription || service.description}
-                </p>
-
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{service.duration} phút</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{service.viewCount} lượt xem</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1">
-                    {service.tags?.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Link href={`/services/${service.slug}`}>
-                    <Button size="sm">Xem chi tiết</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        category.name.toLowerCase().includes(query) ||
+        (category.description || '').toLowerCase().includes(query)
       );
-    }
+    });
+
+    items = items.sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name, 'vi');
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return items;
+  }, [categories, searchQuery, sortBy]);
+
+  const renderCategoryImage = (category: Category) => {
+    const imageSrc = category.imageUrl ? getMediaUrl(category.imageUrl) : '/placeholder-product.svg';
 
     return (
-      <Card key={service.id} className="hover:shadow-lg transition-shadow">
-        <CardHeader className="p-0">
-          <div className="relative h-48">
-            <Image
-              src={service.images?.[0] || '/placeholder-service.jpg'}
-              alt={service.name}
-              fill
-              className="object-cover rounded-t-lg"
-            />
-            {service.isFeatured && (
-              <Badge className="absolute top-2 left-2 bg-yellow-500">
-                Nổi bật
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="space-y-3">
-            <div>
-              <Link href={`/services/${service.slug}`}>
-                <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2">
-                  {service.name}
-                </h3>
-              </Link>
-              {serviceType && (
-                <Badge variant="secondary" className="mt-1">
-                  {serviceType.name}
-                </Badge>
-              )}
-            </div>
-
-            <p className="text-muted-foreground text-sm line-clamp-2">
-              {service.shortDescription || service.description}
-            </p>
-
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>{service.duration} phút</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-bold text-success">
-                {service.priceType === 'FIXED'
-                  ? `${service.price.toLocaleString('vi-VN')}₫`
-                  : service.priceType === 'RANGE'
-                  ? `${service.minPrice?.toLocaleString('vi-VN')}₫ - ${service.maxPrice?.toLocaleString('vi-VN')}₫`
-                  : 'Liên hệ'
-                }
-              </div>
-              <Link href={`/services/${service.slug}`}>
-                <Button size="sm">Xem chi tiết</Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Image
+        src={imageSrc}
+        alt={category.name}
+        fill
+        className="object-cover"
+        sizes="(max-width: 768px) 100vw, 33vw"
+      />
     );
   };
 
-  if (servicesLoading || typesLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="bg-gradient-to-b from-primary/5 to-background border-b">
           <div className="container mx-auto px-4 py-6">
             <div className="max-w-3xl">
               <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Danh mục</div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Danh mục dịch vụ</h1>
-              <p className="text-sm text-muted-foreground">Tìm kiếm dịch vụ theo từng danh mục chuyên biệt</p>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Danh mục sản phẩm</h1>
+              <p className="text-sm text-muted-foreground">Tìm kiếm sản phẩm theo từng danh mục</p>
             </div>
           </div>
         </div>
@@ -202,145 +82,128 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main role="main" aria-labelledby="page-title">
-        {/* Compact Page Header */}
-        <div className="bg-gradient-to-b from-primary/5 to-background border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="max-w-3xl">
-              <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Danh mục</div>
-              <h1 id="page-title" className="text-2xl sm:text-3xl font-bold mb-2">
-                Danh mục dịch vụ
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Tìm kiếm dịch vụ âm thanh theo từng danh mục chuyên biệt. Từ lắp đặt, bảo trì đến tư vấn kỹ thuật.
-              </p>
-            </div>
-          </div>
-        </div>
-
+      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="container mx-auto px-4 py-6">
-          {/* Filters and Search */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Tìm kiếm dịch vụ..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                    aria-label="Tìm kiếm dịch vụ"
-                  />
-                </div>
-              </div>
-
-              {/* Type Filter */}
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger className="w-full lg:w-48">
-                  <SelectValue placeholder="Tất cả loại" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả loại</SelectItem>
-                  {serviceTypes?.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-                <SelectTrigger className="w-full lg:w-48">
-                  <SelectValue placeholder="Sắp xếp theo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt">Mới nhất</SelectItem>
-                  <SelectItem value="name">Tên A-Z</SelectItem>
-                  <SelectItem value="price">Giá thấp đến cao</SelectItem>
-                  <SelectItem value="viewCount">Phổ biến nhất</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* View Mode */}
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  aria-label="Xem dạng lưới"
-                  aria-pressed={viewMode === 'grid'}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  aria-label="Xem dạng danh sách"
-                  aria-pressed={viewMode === 'list'}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Results Count */}
-          <div className="mb-6">
-            <p className="text-muted-foreground">
-              Hiển thị {filteredServices.length} dịch vụ
-              {selectedType !== 'all' && serviceTypes?.find(t => t.id === selectedType) &&
-                ` trong danh mục ${serviceTypes.find(t => t.id === selectedType)?.name}`
-              }
+          <div className="max-w-3xl">
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Danh mục</div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Danh mục sản phẩm</h1>
+            <p className="text-sm text-muted-foreground">
+              Khám phá các nhóm sản phẩm âm thanh phù hợp với nhu cầu của bạn.
             </p>
           </div>
-
-          {/* Services Grid/List */}
-          {filteredServices.length > 0 ? (
-            <div className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                : 'space-y-4'
-            }>
-              {filteredServices.map(renderServiceCard)}
-            </div>
-          ) : (
-            <div className="text-center py-12" role="alert" aria-live="polite">
-              <div className="text-muted-foreground mb-4">
-                <Search className="h-12 w-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Không tìm thấy dịch vụ</h3>
-              <p className="text-muted-foreground">
-                Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-              </p>
-            </div>
-          )}
-
-          {/* Categories Overview */}
-          {selectedType === 'all' && serviceTypes && serviceTypes.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">Danh mục dịch vụ</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {serviceTypes.map((type) => {
-                  const typeServices = services.filter(s => s.typeId === type.id && s.isActive);
-                  return (
-                    <Card key={type.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4 text-center">
-                        <div className="text-2xl mb-2">{type.icon || '🎵'}</div>
-                        <h3 className="font-semibold mb-1">{type.name}</h3>
-                        <p className="text-sm text-muted-foreground">{typeServices.length} dịch vụ</p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
-      </main>
+      </div>
+
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Tìm danh mục..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'createdAt')}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Tên A → Z</SelectItem>
+                <SelectItem value="createdAt">Mới nhất</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('grid')}
+                aria-label="Xem dạng lưới"
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('list')}
+                aria-label="Xem dạng danh sách"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {filteredCategories.length === 0 ? (
+          <div className="text-center text-muted-foreground py-16">
+            Không tìm thấy danh mục phù hợp.
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="space-y-4">
+            {filteredCategories.map((category) => (
+              <Card key={category.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <div className="relative w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                      {renderCategoryImage(category)}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <Link href={`/danh-muc/${category.slug}`}>
+                            <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+                              {category.name}
+                            </h3>
+                          </Link>
+                          <Badge variant="secondary" className="mt-1">Danh mục</Badge>
+                        </div>
+                        <Link href={`/danh-muc/${category.slug}`}>
+                          <Button size="sm">Xem danh mục</Button>
+                        </Link>
+                      </div>
+                      <p className="text-muted-foreground text-sm line-clamp-2">
+                        {category.description || 'Khám phá các sản phẩm nổi bật trong danh mục này.'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCategories.map((category) => (
+              <Card key={category.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="p-0">
+                  <div className="relative h-48 rounded-t-lg overflow-hidden bg-muted">
+                    {renderCategoryImage(category)}
+                    <Badge className="absolute top-3 left-3 bg-primary text-foreground">Danh mục</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <Link href={`/danh-muc/${category.slug}`}>
+                    <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2">
+                      {category.name}
+                    </h3>
+                  </Link>
+                  <p className="text-muted-foreground text-sm line-clamp-2">
+                    {category.description || 'Khám phá các sản phẩm nổi bật trong danh mục này.'}
+                  </p>
+                  <Link href={`/danh-muc/${category.slug}`}>
+                    <Button size="sm" variant="outline">Xem danh mục</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

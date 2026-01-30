@@ -19,7 +19,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly config: ConfigService,
     private readonly securityService: SecurityService,
-  ) { }
+  ) {}
 
   async register(dto: { email: string; password: string; name?: string }) {
     // Validate password strength using SecurityService

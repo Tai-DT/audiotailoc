@@ -1,79 +1,88 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Search, Home, ArrowLeft } from 'lucide-react';
+import { Home, Search, ArrowLeft, Phone } from 'lucide-react';
 
 export default function NotFound() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Search className="h-24 w-24 text-muted-foreground" />
-              <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">
-                404
-              </div>
-            </div>
-          </div>
-          <CardTitle className="text-3xl">Không tìm thấy trang</CardTitle>
-          <CardDescription className="text-base">
-            Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/" className="flex-1">
-              <Button variant="default" className="w-full">
-                <Home className="mr-2 h-4 w-4" />
-                Về trang chủ
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => window.history.back()}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Quay lại
-            </Button>
-          </div>
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex items-center justify-center px-4">
+            <div className="max-w-2xl mx-auto text-center">
+                {/* 404 Number with Animation */}
+                <div className="relative mb-8">
+                    <h1 className="text-[180px] md:text-[240px] font-black text-primary/10 leading-none select-none">
+                        404
+                    </h1>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-full p-8 shadow-2xl shadow-primary/30">
+                            <Search className="w-16 h-16" />
+                        </div>
+                    </div>
+                </div>
 
-          <div className="pt-4 border-t">
-            <p className="text-sm font-medium mb-3">Gợi ý cho bạn:</p>
-            <div className="space-y-2">
-              <Link href="/products" className="block">
-                <Button variant="ghost" className="w-full justify-start">
-                  📦 Sản phẩm
-                </Button>
-              </Link>
-              <Link href="/services" className="block">
-                <Button variant="ghost" className="w-full justify-start">
-                  🔧 Dịch vụ
-                </Button>
-              </Link>
-              <Link href="/blog" className="block">
-                <Button variant="ghost" className="w-full justify-start">
-                  📰 Blog
-                </Button>
-              </Link>
-              <Link href="/support" className="block">
-                <Button variant="ghost" className="w-full justify-start">
-                  💬 Hỗ trợ
-                </Button>
-              </Link>
-              <Link href="/contact" className="block">
-                <Button variant="ghost" className="w-full justify-start">
-                  📞 Liên hệ
-                </Button>
-              </Link>
+                {/* Message */}
+                <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-4">
+                    Không Tìm Thấy Trang
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto">
+                    Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.
+                    Hãy quay lại trang chủ hoặc liên hệ chúng tôi để được hỗ trợ.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                    <Button asChild size="lg" className="rounded-full shadow-lg">
+                        <Link href="/">
+                            <Home className="w-5 h-5 mr-2" />
+                            Về Trang Chủ
+                        </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg" className="rounded-full">
+                        <Link href="/products">
+                            <Search className="w-5 h-5 mr-2" />
+                            Tìm Sản Phẩm
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="lg" className="rounded-full">
+                        <Link href="/contact">
+                            <Phone className="w-5 h-5 mr-2" />
+                            Liên Hệ
+                        </Link>
+                    </Button>
+                </div>
+
+                {/* Quick Links */}
+                <div className="border-t border-border/50 pt-8">
+                    <p className="text-sm text-muted-foreground mb-4">Có thể bạn muốn tìm:</p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {[
+                            { label: 'Dàn Karaoke', href: '/categories/dan-karaoke' },
+                            { label: 'Loa', href: '/categories/loa' },
+                            { label: 'Ampli', href: '/categories/ampli' },
+                            { label: 'Micro', href: '/categories/micro' },
+                            { label: 'Dịch Vụ', href: '/services' },
+                            { label: 'Dự Án', href: '/projects' },
+                        ].map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className="px-4 py-2 bg-card hover:bg-primary/10 border border-border/50 rounded-full text-sm font-medium transition-colors"
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Back Button */}
+                <button
+                    onClick={() => window.history.back()}
+                    className="mt-8 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Quay lại trang trước
+                </button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        </div>
+    );
 }

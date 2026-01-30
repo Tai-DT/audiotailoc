@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import * as crypto from 'crypto';
 import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
 // import { LoggerModule } from './logger/logger.module';
@@ -80,6 +83,57 @@ import { PoliciesModule } from './policies/policies.module';
 const FEATURE_CHECKOUT = String(process.env.FEATURE_CHECKOUT || '').toLowerCase() === 'true';
 const runtimeImports = [
   ConfigModule.forRoot({ isGlobal: true }),
+  // Serve static files from public directory (e.g., /images/*)
+  ServeStaticModule.forRoot({
+    rootPath: join(process.cwd(), 'public'),
+    serveRoot: '/',
+    serveStaticOptions: {
+      index: false,
+    },
+  }),
+  // Serve static files from uploads directory
+  ServeStaticModule.forRoot({
+    rootPath: join(process.cwd(), 'uploads'),
+    serveRoot: '/uploads',
+    serveStaticOptions: {
+      index: false,
+      setHeaders: (res, _filePath) => {
+        // Enforce signed URL check for local uploads if enabled
+        const enableSigned = String(process.env.SIGNED_URL_ENFORCE || '').toLowerCase() === 'true';
+        if (enableSigned) {
+          const url = new URL(`http://localhost${res.req.url}`);
+          const expires = url.searchParams.get('expires');
+          const signature = url.searchParams.get('signature');
+          if (!expires || !signature) {
+            res.statusCode = 401;
+            res.end('Signed URL required');
+            return;
+          }
+          const secret = process.env.SIGNED_URL_SECRET || '';
+          const expiresAt = Number(expires);
+          if (!secret || !expiresAt || Date.now() > expiresAt * 1000) {
+            res.statusCode = 401;
+            res.end('Signed URL expired');
+            return;
+          }
+          const expected = crypto
+            .createHmac('sha256', secret)
+            .update(`${url.pathname}:${expiresAt}`)
+            .digest('hex');
+          if (signature.length !== expected.length) {
+            res.statusCode = 401;
+            res.end('Invalid signature');
+            return;
+          }
+          if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+            res.statusCode = 401;
+            res.end('Invalid signature');
+            return;
+          }
+        }
+      },
+    },
+  }),
   // LoggerModule,
   CacheModule.forRoot({
     isGlobal: true,
@@ -129,8 +183,6 @@ const runtimeImports = [
   // Site Content Management
   SiteModule,
   SeoModule,
-  SiteModule,
-  SeoModule,
   BlogModule,
   FaqModule,
   PoliciesModule,
@@ -159,5 +211,5 @@ if (FEATURE_CHECKOUT) {
   imports: runtimeImports,
   controllers: [AppController],
 })
-export class AppModule { }
+export class AppModule {}
 // Trigger rebuild for module registration

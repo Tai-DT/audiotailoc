@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function seedProducts() {
   console.log('📦 Seeding products...');
@@ -70,17 +68,17 @@ async function seedProducts() {
       imageUrl: 'https://placehold.co/600x600/png?text=Shure+SM58',
     },
     {
-       name: 'Vang số JBL KX180A',
-       slug: 'vang-so-jbl-kx180a',
-       description: 'Thiết bị xử lý tín hiệu âm thanh kỹ thuật số chuyên dụng cho karaoke chuyên nghiệp.',
-       priceCents: 850000000,
-       brand: 'JBL',
-       model: 'KX180A',
-       sku: 'JBL-KX180A',
-       stockQuantity: 10,
-       featured: true,
-       categoryId: catMap.get('vang-so-mixer'),
-       imageUrl: 'https://placehold.co/600x600/png?text=JBL+KX180A',
+      name: 'Vang số JBL KX180A',
+      slug: 'vang-so-jbl-kx180a',
+      description: 'Thiết bị xử lý tín hiệu âm thanh kỹ thuật số chuyên dụng cho karaoke chuyên nghiệp.',
+      priceCents: 850000000,
+      brand: 'JBL',
+      model: 'KX180A',
+      sku: 'JBL-KX180A',
+      stockQuantity: 10,
+      featured: true,
+      categoryId: catMap.get('vang-so-mixer'),
+      imageUrl: 'https://placehold.co/600x600/png?text=JBL+KX180A',
     }
   ];
 

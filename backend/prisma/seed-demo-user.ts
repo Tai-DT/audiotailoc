@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 async function seedDemoUser() {
     console.log('🌱 Seeding demo user...');
@@ -21,7 +19,7 @@ async function seedDemoUser() {
         console.log(`  - Name: ${existingUser.name || 'N/A'}`);
         console.log(`  - Role: ${existingUser.role}`);
         console.log(`  - Created: ${existingUser.createdAt}`);
-        
+
         // Update password to ensure it's correct
         await prisma.users.update({
             where: { email: demoEmail },

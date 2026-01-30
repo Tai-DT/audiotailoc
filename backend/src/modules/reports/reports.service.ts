@@ -133,7 +133,7 @@ export class ReportsService {
 
     return {
       totalOrders,
-      totalRevenue: (totalRevenue._sum.totalCents || 0) / 100,
+      totalRevenue: Number(totalRevenue._sum.totalCents || BigInt(0)) / 100,
       totalCustomers,
       totalProducts,
       timestamp: new Date(),
@@ -170,16 +170,19 @@ export class ReportsService {
       },
     });
 
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalCents, 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + BigInt(order.totalCents || 0),
+      BigInt(0),
+    );
     const totalOrders = orders.length;
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / BigInt(totalOrders) : BigInt(0);
 
     return {
       type: 'SALES',
       period: { startDate, endDate },
       totalOrders,
-      totalRevenue: totalRevenue / 100,
-      averageOrderValue: averageOrderValue / 100,
+      totalRevenue: Number(totalRevenue) / 100,
+      averageOrderValue: Number(averageOrderValue) / 100,
       orders: orders.map(order => ({
         id: order.id,
         orderNo: order.orderNo,
@@ -226,7 +229,9 @@ export class ReportsService {
       },
     });
 
-    const totalSpent = users.map(u => u.orders.reduce((sum, order) => sum + order.totalCents, 0));
+    const totalSpent = users.map(u =>
+      u.orders.reduce((sum, order) => sum + BigInt(order.totalCents || 0), BigInt(0)),
+    );
 
     return {
       type: 'CUSTOMERS',
@@ -236,7 +241,7 @@ export class ReportsService {
         name: u.name,
         email: u.email,
         orders: u.orders.length,
-        totalSpent: totalSpent[idx] / 100,
+        totalSpent: Number(totalSpent[idx]) / 100,
         createdAt: u.createdAt,
       })),
       generatedAt: new Date(),
@@ -262,7 +267,7 @@ export class ReportsService {
 
     const data = reportData.orders.map(order => ({
       ...order,
-      totalCents: (order.totalCents / 100).toLocaleString('vi-VN'),
+      totalCents: (Number(order.totalCents) / 100).toLocaleString('vi-VN'),
       createdAt: new Date(order.createdAt).toLocaleDateString('vi-VN'),
     }));
 
@@ -372,7 +377,7 @@ export class ReportsService {
         sheetName: 'Doanh số',
         data: salesReport.orders.map(order => ({
           ...order,
-          totalCents: (order.totalCents / 100).toLocaleString('vi-VN'),
+          totalCents: (Number(order.totalCents) / 100).toLocaleString('vi-VN'),
           createdAt: new Date(order.createdAt).toLocaleDateString('vi-VN'),
         })),
         columns: [

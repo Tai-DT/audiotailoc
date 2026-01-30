@@ -28,7 +28,7 @@ export interface Product {
   id: string;
   slug: string;
   name: string;
-  description?: string;
+  description: string;
   shortDescription?: string;
   priceCents: number;
   originalPriceCents?: number;
@@ -204,12 +204,22 @@ export interface ServiceBooking {
   userId: string;
   serviceId: string;
   technicianId?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status:
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
+  | 'RESCHEDULED'
+  | 'COMPLETED'
+  | 'CANCELLED';
   scheduledAt?: string;
   scheduledTime?: string;
   notes?: string;
   address?: string;
   phoneNumber?: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
   estimatedCosts?: number;
   actualCosts?: number;
   createdAt: string;
@@ -272,7 +282,9 @@ export interface Banner {
   subtitle?: string;
   description?: string;
   imageUrl: string;
+  darkImageUrl?: string;
   mobileImageUrl?: string;
+  darkMobileImageUrl?: string;
   linkUrl?: string;
   buttonLabel?: string;
   secondaryButtonLabel?: string;
@@ -302,7 +314,7 @@ export interface Project {
   thumbnailImage?: string;
   coverImage?: string;
   youtubeVideoId?: string;
-  demoUrl?: string;
+
   githubUrl?: string;
   liveUrl?: string;
   startDate?: string;
@@ -382,19 +394,6 @@ export interface CustomerAnalytics {
   retentionRate: number;
 }
 
-export interface KnowledgeBaseArticle {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  published: boolean;
-  viewCount: number;
-  helpful: number;
-  notHelpful: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface BlogAuthor {
   id: string;
@@ -572,10 +571,13 @@ export interface ProductFilters {
   isActive?: boolean;
   inStock?: boolean;
   tags?: string;
+  search?: string;
   sortBy?: 'createdAt' | 'name' | 'price' | 'updatedAt' | 'viewCount';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   pageSize?: number;
+  limit?: number;
+
 }
 
 export interface OrderFilters {
@@ -613,5 +615,4 @@ export interface Technician {
   createdAt: string;
   updatedAt?: string;
 }
-
 

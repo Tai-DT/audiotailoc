@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function seedReviews() {
     console.log('⭐ Seeding reviews...');

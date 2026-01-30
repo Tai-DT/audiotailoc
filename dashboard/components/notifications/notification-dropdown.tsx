@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, Check, Trash2, Settings, ExternalLink } from "lucide-react"
+import { Bell, Check, Trash2, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -86,7 +86,7 @@ export function NotificationDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-96 p-0">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -101,7 +101,7 @@ export function NotificationDropdown() {
               </Badge>
             )}
           </div>
-          
+
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
               <Button
@@ -146,7 +146,7 @@ export function NotificationDropdown() {
                     <div className="mt-1">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className={cn(
@@ -166,11 +166,11 @@ export function NotificationDropdown() {
                           </Button>
                         )}
                       </div>
-                      
+
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {notification.message}
                       </p>
-                      
+
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(notification.createdAt), {
@@ -178,7 +178,7 @@ export function NotificationDropdown() {
                             locale: vi
                           })}
                         </span>
-                        
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -214,8 +214,6 @@ export function NotificationDropdown() {
                 className="w-full justify-center text-sm"
                 onClick={handleViewAll}
               >
-                Xem tất cả thông báo
-                <ExternalLink className="h-3 w-3 ml-2" />
               </Button>
             </div>
           </>

@@ -24,7 +24,7 @@ export function createLazyComponent<P extends object>(
   options: LazyOptions = {}
 ) {
   const { loading, ssr = false } = options;
-  
+
   return dynamic(importFn, {
     loading: () => <>{loading || <SectionSkeleton />}</>,
     ssr,
@@ -37,9 +37,9 @@ export function createLazyComponent<P extends object>(
 export function lazySection<P extends object>(
   importFn: () => Promise<{ default: ComponentType<P> }>
 ) {
-  return createLazyComponent(importFn, { 
+  return createLazyComponent(importFn, {
     loading: <SectionSkeleton />,
-    ssr: false 
+    ssr: false
   });
 }
 
@@ -50,86 +50,86 @@ export function lazyProductGrid<P extends object>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   count = 8
 ) {
-  return createLazyComponent(importFn, { 
+  return createLazyComponent(importFn, {
     loading: <ProductGridSkeleton count={count} />,
-    ssr: false 
+    ssr: false
   });
 }
 
 // ==================== PRE-DEFINED LAZY COMPONENTS ====================
 // Common components that benefit from lazy loading
 
-/** Lazy-loaded BannerCarousel - heavy with animations */
-export const LazyBannerCarousel = dynamic(
-  () => import('@/components/home/banner-carousel-enhanced').then(mod => ({ default: mod.BannerCarousel })),
-  { 
+/** Lazy-loaded HeroCarousel */
+export const LazyHeroCarousel = dynamic(
+  () => import('@/components/home/hero-carousel').then(mod => ({ default: mod.HeroCarousel })),
+  {
     loading: () => (
       <div className="h-[400px] md:h-[500px] bg-muted animate-pulse rounded-xl" />
     ),
-    ssr: false 
+    ssr: false
   }
 );
 
-/** Lazy-loaded FeaturedProducts - can be deferred */
-export const LazyFeaturedProducts = dynamic(
-  () => import('@/components/home/featured-products').then(mod => ({ default: mod.FeaturedProducts })),
-  { 
+/** Lazy-loaded CategoriesSection */
+export const LazyCategoriesSection = dynamic(
+  () => import('@/components/home/categories-section').then(mod => ({ default: mod.CategoriesSection })),
+  {
     loading: () => <SectionSkeleton />,
-    ssr: false 
+    ssr: false
   }
 );
 
-/** Lazy-loaded CategoryProductsSection */
-export const LazyCategoryProductsSection = dynamic(
-  () => import('@/components/home/category-products-section').then(mod => ({ default: mod.CategoryProductsSection })),
-  { 
-    loading: () => <SectionSkeleton />,
-    ssr: false 
-  }
-);
-
-/** Lazy-loaded NewProducts */
-export const LazyNewProducts = dynamic(
-  () => import('@/components/home/new-products-section').then(mod => ({ default: mod.NewProductsSection })),
-  { 
+/** Lazy-loaded ProductGrid */
+export const LazyProductGrid = dynamic(
+  () => import('@/components/home/product-grid').then(mod => ({ default: mod.ProductGrid })),
+  {
     loading: () => <ProductGridSkeleton count={8} />,
-    ssr: false 
+    ssr: false
   }
 );
 
-/** Lazy-loaded BestSelling */
-export const LazyBestSelling = dynamic(
-  () => import('@/components/home/best-selling-products-section').then(mod => ({ default: mod.BestSellingProductsSection })),
-  { 
-    loading: () => <ProductGridSkeleton count={8} />,
-    ssr: false 
-  }
-);
-
-/** Lazy-loaded FeaturedProjects */
-export const LazyFeaturedProjects = dynamic(
-  () => import('@/components/home/featured-projects').then(mod => ({ default: mod.FeaturedProjects })),
-  { 
+/** Lazy-loaded ServicesSection */
+export const LazyServicesSection = dynamic(
+  () => import('@/components/home/services-section').then(mod => ({ default: mod.ServicesSection })),
+  {
     loading: () => <SectionSkeleton />,
-    ssr: false 
+    ssr: false
+  }
+);
+
+/** Lazy-loaded WhyChooseUsSection */
+export const LazyWhyChooseUsSection = dynamic(
+  () => import('@/components/home/why-choose-us-section').then(mod => ({ default: mod.WhyChooseUsSection })),
+  {
+    loading: () => <SectionSkeleton />,
+    ssr: false
+  }
+);
+
+/** Lazy-loaded CTASection */
+export const LazyCTASection = dynamic(
+  () => import('@/components/home/cta-section').then(mod => ({ default: mod.CTASection })),
+  {
+    loading: () => <SectionSkeleton />,
+    ssr: false
   }
 );
 
 /** Lazy-loaded ChatWidget - definitely should be lazy */
 export const LazyChatWidget = dynamic(
   () => import('@/components/ui/chat-widget').then(mod => ({ default: mod.ChatWidget })),
-  { 
+  {
     loading: () => null,
-    ssr: false 
+    ssr: false
   }
 );
 
 /** Lazy-loaded ServiceBookingModal */
 export const LazyServiceBookingModal = dynamic(
   () => import('@/components/services/service-booking-modal').then(mod => ({ default: mod.ServiceBookingModal })),
-  { 
+  {
     loading: () => null,
-    ssr: false 
+    ssr: false
   }
 );
 
@@ -162,7 +162,7 @@ export function useIntersection(options: UseIntersectionOptions = {}) {
         if (entry.isIntersecting) {
           setIsIntersecting(true);
           setHasIntersected(true);
-          
+
           if (triggerOnce) {
             observer.disconnect();
           }
@@ -253,19 +253,19 @@ export function ProgressiveImage({
   const shouldLoad = priority || hasIntersected;
 
   return (
-    <div 
-      ref={ref} 
+    <div
+      ref={ref}
       className={`relative overflow-hidden ${className || ''}`}
       style={{ width, height }}
     >
       {/* Placeholder */}
       {!isLoaded && (
-        <div 
+        <div
           className="absolute inset-0 bg-muted animate-pulse"
           aria-hidden="true"
         />
       )}
-      
+
       {/* Actual image */}
       {shouldLoad && (
         <Image
@@ -292,13 +292,13 @@ export function usePrefetch(href: string) {
 
   const onMouseEnter = useCallback(() => {
     if (prefetched.current) return;
-    
+
     // Use link preload
     const link = document.createElement('link');
     link.rel = 'prefetch';
     link.href = href;
     document.head.appendChild(link);
-    
+
     prefetched.current = true;
   }, [href]);
 

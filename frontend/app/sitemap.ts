@@ -34,12 +34,6 @@ interface Project {
   updatedAt: string;
 }
 
-interface KnowledgeBaseArticle {
-  id: string;
-  title: string;
-  updatedAt: string;
-  published: boolean;
-}
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -101,24 +95,12 @@ async function getProjects(): Promise<Project[]> {
   }
 }
 
-async function getArticles(): Promise<KnowledgeBaseArticle[]> {
-  try {
-    const response = await apiClient.get('/support/kb/articles', {
-      params: { page: 1, limit: 1000, published: true }
-    });
-    const data = handleApiResponse<PaginatedResponse<KnowledgeBaseArticle>>(response);
-    return Array.isArray(data?.items) ? data.items : [];
-  } catch (error) {
-    console.error('Failed to fetch articles for sitemap:', error);
-    return [];
-  }
-}
 
 async function getBlogArticles(): Promise<BlogArticle[]> {
   try {
     // Use dashboard URL if available, otherwise skip
     const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || process.env.DASHBOARD_URL;
-    
+
     if (!dashboardUrl) {
       console.warn('No dashboard URL configured, skipping blog sitemap entries');
       return [];
@@ -188,12 +170,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/knowledge-base`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    },
-    {
       url: `${baseUrl}/support`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
@@ -234,7 +210,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic product pages
   const products = await getProducts();
   const productPages = products.map((product) => ({
-  url: `${baseUrl}/products/${product.slug}`,
+    url: `${baseUrl}/products/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
@@ -272,20 +248,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogArticlePages = blogArticles
     .filter((article) => article.status === 'PUBLISHED')
     .map((article) => ({
-    url: `${baseUrl}/blog/${article.slug}`,
-    lastModified: new Date(article.updatedAt),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+      url: `${baseUrl}/blog/${article.slug}`,
+      lastModified: new Date(article.updatedAt),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
 
-  // Dynamic knowledge base article pages
-  const articles = await getArticles();
-  const articlePages = articles.map((article) => ({
-    url: `${baseUrl}/knowledge-base/${article.id}`,
-    lastModified: new Date(article.updatedAt),
-    changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }));
 
   return [
     ...staticPages,
@@ -294,6 +262,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...categoryPages,
     ...projectPages,
     ...blogArticlePages,
-    ...articlePages,
   ];
 }

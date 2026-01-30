@@ -277,14 +277,12 @@ export class PromotionCheckoutService {
       return applicable.slice(0, limit);
     }
 
-    // Get customer's used promotions - TODO: Implement customer_promotions tracking
-    // const usedPromotions = await this.prisma.customer_promotions.findMany({
-    //   where: { userId: checkout.userId },
-    //   select: { promotionId: true },
-    //   distinct: ['promotionId'],
-    // });
-    // const usedPromotionIds = usedPromotions.map(up => up.promotionId);
-    const usedPromotionIds: string[] = [];
+    const usedPromotions = await this.prisma.customer_promotions.findMany({
+      where: { userId: checkout.userId },
+      select: { promotionId: true },
+      distinct: ['promotionId'],
+    });
+    const usedPromotionIds = usedPromotions.map(up => up.promotionId);
 
     // Filter out already used promotions
     const suggestions = applicable.filter(p => !usedPromotionIds.includes(p.id));

@@ -21,15 +21,14 @@ interface NotificationData {
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-      process.env.DASHBOARD_URL || 'http://localhost:3001',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-    ],
+    origin: (origin: string, callback: any) => {
+      callback(null, true);
+    },
     credentials: true,
+    methods: ['GET', 'POST'],
   },
+  transports: ['websocket', 'polling'],
+  path: '/api/v1/socket.io',
 })
 export class NotificationGateway {
   @WebSocketServer()

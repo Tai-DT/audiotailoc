@@ -5,11 +5,11 @@ const backendBase = apiUrl.replace(/\/api\/v1\/?$/, '');
 
 let backendImagePattern:
   | {
-      protocol: 'http' | 'https';
-      hostname: string;
-      port: string;
-      pathname: string;
-    }
+    protocol: 'http' | 'https';
+    hostname: string;
+    port: string;
+    pathname: string;
+  }
   | undefined;
 
 try {
@@ -36,6 +36,73 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false, // Disable source maps in production for smaller bundle
 
   // Image optimization
+  async headers() {
+    const headers = [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+      // Cache static assets aggressively (1 year)
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Cache images (1 month)
+      {
+        source: '/_next/image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      // Cache fonts (1 year)
+      {
+        source: '/fonts/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Cache public assets (1 week)
+      {
+        source: '/:path*.{ico,png,jpg,jpeg,svg,webp}',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=604800, stale-while-revalidate=86400',
+          },
+        ],
+      },
+    ];
+
+    // Only apply X-Frame-Options in production to allow dev tools
+    if (process.env.NODE_ENV === 'production') {
+      headers[0].headers.push({
+        key: 'X-Frame-Options',
+        value: 'DENY',
+      });
+    }
+
+    return headers;
+  },
   images: {
     remotePatterns: [
       {
@@ -83,7 +150,8 @@ const nextConfig: NextConfig = {
       },
     ],
     dangerouslyAllowSVG: true,
-    unoptimized: false, // Enable image optimization
+    // Disable optimization in development to prevent timeouts or 400 errors with local/remote images
+    unoptimized: process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_IMAGE_OPTIMIZATION === 'true',
     formats: ['image/avif', 'image/webp'], // Use modern image formats
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

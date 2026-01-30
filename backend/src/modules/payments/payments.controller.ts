@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Headers, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PayOSService } from './payos.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
+import { OptionalJwtGuard } from '../auth/optional-jwt.guard';
 import { IsIn, IsOptional, IsString, MinLength, IsNumber, Min } from 'class-validator';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -227,10 +238,22 @@ export class PaymentsController {
     };
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(OptionalJwtGuard)
   @Post('intents')
-  createIntent(@Body() dto: CreateIntentDto) {
-    return this.payments.createIntent(dto);
+  createIntent(
+    @Body() dto: CreateIntentDto,
+    @Req() req: any,
+    @Headers('x-admin-key') adminKey?: string,
+  ) {
+    const userId = req.user?.sub || req.user?.id;
+    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const isAdminKey = Boolean(adminKey && adminKey === process.env.ADMIN_API_KEY);
+
+    if (!userId && !isAdminKey && dto.provider !== 'PAYOS') {
+      throw new ForbiddenException('Authentication required for this payment method');
+    }
+
+    return this.payments.createIntent(dto, { userId, isAdmin, isAdminKey });
   }
 
   @UseGuards(JwtGuard, AdminOrKeyGuard)
@@ -277,6 +300,6 @@ export class PaymentsController {
     // Note: PayOS signature is included in payload; header can be ignored.
     void req;
     void xsig;
-    return this.payos.handleWebhook(body);
+    return this.payments.handleWebhook('PAYOS', body);
   }
 }

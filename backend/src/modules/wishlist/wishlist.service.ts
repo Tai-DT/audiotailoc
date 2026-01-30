@@ -46,7 +46,11 @@ export class WishlistService {
       },
     });
 
-    return wishlistItem;
+    return {
+      ...wishlistItem,
+      product: wishlistItem.products,
+      products: undefined,
+    };
   }
 
   async getWishlist(userId: string) {
@@ -88,7 +92,7 @@ export class WishlistService {
     return {
       items: wishlistItems.map(item => ({
         ...item,
-        products: item.products
+        product: item.products
           ? {
               ...item.products,
               priceCents: Number(item.products.priceCents),
@@ -101,6 +105,7 @@ export class WishlistService {
                   : item.products.images,
             }
           : null,
+        products: undefined, // Remove the original products property
       })),
       total: wishlistItems.length,
     };

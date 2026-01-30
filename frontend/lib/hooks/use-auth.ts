@@ -20,6 +20,9 @@ export interface User {
   dateOfBirth?: string;
   gender?: string;
   isActive: boolean;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  promoNotifications?: boolean;
   createdAt: string;
 }
 
@@ -194,8 +197,7 @@ export function useLogin() {
 
       // Handle rate limiting (429) with specific message
       if (status === 429) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const retryAfter = (error as any)?.response?.data?.retryAfter;
+        const retryAfter = (error as { response?: { data?: { retryAfter?: number } } })?.response?.data?.retryAfter;
         if (retryAfter) {
           const retryMinutes = Math.ceil(retryAfter / 60);
           toast.error(`Quá nhiều yêu cầu đăng nhập. Vui lòng đợi ${retryMinutes} phút rồi thử lại.`, {
@@ -367,23 +369,35 @@ export function useDeleteAccount() {
 }
 
 export function useUserBookings() {
+  const token = authStorage.getAccessToken();
+  const user = authStorage.getUser();
+  const hasValidToken = Boolean(token && token.trim().length > 0 && token !== 'null');
+  const hasUser = Boolean(user && (user as { id?: string }).id);
+  const enabled = hasValidToken && hasUser;
   return useQuery({
     queryKey: ['user', 'bookings'],
     queryFn: async () => {
       const response = await apiClient.get(API_ENDPOINTS.USERS.BOOKINGS);
       return handleApiResponse<{ id: string; serviceId: string; status: string; createdAt: string }[]>(response);
     },
+    enabled,
     retry: 1,
   });
 }
 
 export function useUserPayments() {
+  const token = authStorage.getAccessToken();
+  const user = authStorage.getUser();
+  const hasValidToken = Boolean(token && token.trim().length > 0 && token !== 'null');
+  const hasUser = Boolean(user && (user as { id?: string }).id);
+  const enabled = hasValidToken && hasUser;
   return useQuery({
     queryKey: ['user', 'payments'],
     queryFn: async () => {
       const response = await apiClient.get(API_ENDPOINTS.USERS.PAYMENTS);
       return handleApiResponse<{ id: string; amountCents: number; status: string; createdAt: string; transactionId?: string }[]>(response);
     },
+    enabled,
     retry: 1,
   });
 }

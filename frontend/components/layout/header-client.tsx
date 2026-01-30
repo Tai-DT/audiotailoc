@@ -1,216 +1,236 @@
 'use client';
 
-import React, { Suspense, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import {
-  ShoppingCart,
-  Search,
-  User,
-  Mic as MicIcon,
-  Speaker as SpeakerIcon,
-  SlidersHorizontal,
-  PackageSearch,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useCart } from '@/components/providers/cart-provider';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { useContactInfo } from '@/lib/hooks/use-contact-info';
+import { ThemeToggle } from './theme-toggle';
+import HeaderSubNav from './header-sub-nav';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Lazy load heavy components
-const NavigationMenuFull = dynamic(
-  () => import('./header-nav').then(mod => ({ default: mod.HeaderNav })),
-  { ssr: false }
-);
+export function AppHeader() {
+    const [hasMounted, setHasMounted] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const { itemCount } = useCart();
+    const { data: contactInfo } = useContactInfo();
+    const pathname = usePathname();
 
-const UserMenu = dynamic(
-  () => import('./header-user-menu').then(mod => ({ default: mod.HeaderUserMenu })),
-  { ssr: false }
-);
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
 
-const MobileNav = dynamic(
-  () => import('./mobile-nav').then(mod => ({ default: mod.MobileNav })),
-  { ssr: false }
-);
+    const hotlineDisplay = contactInfo?.phone?.display || '0768 426 262';
+    const hotlineNumber = hotlineDisplay.replace(/\s+/g, '');
 
-interface SubNavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-}
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
-const SUB_NAV_ITEMS: SubNavItem[] = [
-  { label: 'Micro', href: '/products?category=micro-karaoke-khong-day', icon: MicIcon },
-  { label: 'Loa', href: '/products?category=loa-loa-sub', icon: SpeakerIcon },
-  { label: 'Mixer', href: '/products?category=mixer-vang-so', icon: SlidersHorizontal },
-  { label: 'Thanh Lý', href: '/products?category=hang-thanh-ly-hang-cu', icon: PackageSearch },
-];
+    const navLinks = [
+        { name: 'Sản phẩm', href: '/products' },
+        { name: 'Dịch vụ', href: '/services' },
+        { name: 'Dự án', href: '/projects' },
+        { name: 'Tin tức', href: '/blog' },
+        { name: 'Liên hệ', href: '/contact' },
+    ];
 
-/**
- * HeaderClient - Lightweight Client Component
- * Only contains interactive elements that require JavaScript.
- * Heavy components (Navigation, UserMenu) are lazy loaded.
- */
-export function HeaderClient() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isMounted, setIsMounted] = useState(false);
-  const { itemCount } = useCart();
-  const pathname = usePathname();
+    return (
+        <header
+            suppressHydrationWarning
+            className={cn(
+                "sticky top-0 left-0 right-0 z-50 transition-all duration-500 flex flex-col",
+                isScrolled
+                    ? "bg-background/80 backdrop-blur-xl border-b border-primary/10 shadow-lg"
+                    : "bg-transparent"
+            )}
+        >
+            {/* Premium Top Line - High-end feel */}
+            {!isScrolled && (
+                <div className="bg-primary/5 border-b border-white/5 py-1 hidden lg:block" translate="no">
+                    {hasMounted ? (
+                        <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                            <div className="flex items-center gap-6">
+                                <a href={`tel:${hotlineNumber}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                                    <Phone className="w-3 h-3 text-primary" />
+                                    <span>Hotline: <span className="text-foreground">{hotlineDisplay}</span></span>
+                                </a>
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-3 h-3 text-accent" />
+                                    <span className="notranslate">Đặc quyền thành viên Elite</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <Link href="/shipping" className="hover:text-primary transition-colors">Giao hàng toàn quốc</Link>
+                                <Link href="/warranty" className="hover:text-primary transition-colors">Bảo hành 24 tháng</Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="container mx-auto px-6 h-4 bg-transparent" />
+                    )}
+                </div>
+            )}
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+            <div className={cn(
+                "container mx-auto px-4 lg:px-6 flex items-center justify-between gap-8 transition-all duration-500",
+                isScrolled ? "h-16" : "h-20"
+            )}>
+                {/* Logo Section */}
+                <Link href="/" className="relative z-50 transition-transform active:scale-95 group">
+                    <div className={cn(
+                        "relative transition-all duration-500",
+                        isScrolled ? "h-[52px] w-[148px]" : "h-[68px] w-[212px]"
+                    )}>
+                        <Image
+                            src="/images/logo/logo-dark.svg"
+                            alt="Audio Tài Lộc"
+                            fill
+                            className="object-contain dark:hidden"
+                            priority
+                            unoptimized
+                        />
+                        <Image
+                            src="/images/logo/logo-light.svg"
+                            alt="Audio Tài Lộc"
+                            fill
+                            className="object-contain hidden dark:block"
+                            priority
+                            unoptimized
+                        />
+                    </div>
+                    <div className="absolute -inset-4 bg-primary/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                </Link>
 
-  const handleSearch = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
-    }
-  }, [searchQuery]);
+                {/* Desktop Navigation */}
+                <nav className="hidden xl:flex items-center gap-8">
+                    {navLinks.map((link) => (
+                        <Link
+                            key={link.name}
+                            href={link.href}
+                            className={cn(
+                                "text-xs font-black uppercase tracking-[0.2em] transition-all relative py-2 group",
+                                pathname === link.href ? "text-primary" : "text-foreground/70 hover:text-primary"
+                            )}
+                        >
+                            {link.name}
+                            <span className={cn(
+                                "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-500",
+                                pathname === link.href ? "w-full" : "w-0 group-hover:w-full"
+                            )} />
+                        </Link>
+                    ))}
+                </nav>
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
-      {/* Top info bar - Static content inlined for speed */}
-      <div className="hidden lg:block border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between text-xs py-2 text-muted-foreground">
-            <div className="flex items-center space-x-4 lg:space-x-6">
-              <a href="tel:0768426262" className="flex items-center space-x-1.5 hover:text-primary transition-colors">
-                <span className="font-medium">Hotline: 0768 426 262</span>
-              </a>
-              <span className="hidden xl:flex items-center space-x-1.5">
-                <span>08:00 - 21:00 (T2 - CN)</span>
-              </span>
-            </div>
-            <div className="flex items-center space-x-4 lg:space-x-6">
-              <Link href="/shipping" className="hover:text-primary transition-colors text-xs">Chính sách giao hàng</Link>
-              <Link href="/warranty" className="hover:text-primary transition-colors text-xs">Bảo hành & đổi trả</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4">
-        <div className="flex h-14 items-center justify-between gap-2 sm:gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 shrink-0">
-            <div className="relative h-8 w-28 sm:h-9 sm:w-36">
-              <Image
-                src="/images/logo/logo-light.svg"
-                alt="Audio Tài Lộc"
-                width={144}
-                height={36}
-                className="h-8 w-28 sm:h-9 sm:w-36 object-contain dark:hidden"
-                priority
-              />
-              <Image
-                src="/images/logo/logo-dark.svg"
-                alt="Audio Tài Lộc"
-                width={144}
-                height={36}
-                className="hidden h-8 w-28 sm:h-9 sm:w-36 object-contain dark:block"
-                priority
-              />
-            </div>
-          </Link>
-
-          {/* Navigation - Lazy loaded */}
-          <div className="hidden lg:flex items-center justify-center flex-1">
-            <Suspense fallback={
-              <nav className="flex items-center space-x-6">
-                {['Sản phẩm', 'Dịch vụ', 'Giới thiệu', 'Blog', 'Liên hệ'].map((label) => (
-                  <span key={label} className="text-sm text-muted-foreground">{label}</span>
-                ))}
-              </nav>
-            }>
-              <NavigationMenuFull pathname={pathname} />
-            </Suspense>
-          </div>
-
-          {/* Search Bar */}
-          <div className="hidden lg:flex lg:flex-1 lg:max-w-md xl:max-w-xl">
-            <form onSubmit={handleSearch} className="relative group w-full">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                <Search className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-              <Input
-                type="text"
-                placeholder="Tìm kiếm thiết bị, dịch vụ..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 hover:border-primary focus:border-primary transition-all"
-              />
-            </form>
-          </div>
-
-          {/* User Actions */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <ThemeToggle />
-            
-            {/* Cart */}
-            <Link href="/cart" className="relative group" aria-label="Giỏ hàng">
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" aria-label="Xem giỏ hàng">
-                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-                {isMounted && itemCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                    aria-label={`${itemCount} sản phẩm trong giỏ`}
-                  >
-                    {itemCount}
-                  </Badge>
+                {/* Integrated Search Bar (Featured Hero Style) */}
+                {!isScrolled && (
+                    <div className="hidden lg:flex flex-1 max-w-md relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-full opacity-20 blur group-focus-within:opacity-40 transition-opacity" />
+                        <div className="relative w-full flex items-center bg-card/40 backdrop-blur-md border border-white/10 rounded-full px-4 py-2">
+                            <Search className="w-4 h-4 text-muted-foreground mr-3" />
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm sản phẩm..."
+                                className="bg-transparent border-none outline-none text-xs font-medium w-full placeholder:text-muted-foreground/50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <button className="text-[10px] font-black uppercase tracking-widest text-primary ml-2 hover:scale-105 transition-transform">
+                                Tìm ngay
+                            </button>
+                        </div>
+                    </div>
                 )}
-              </Button>
-            </Link>
 
-            {/* User Menu - Lazy loaded */}
-            <Suspense fallback={
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Đang tải menu người dùng">
-                <User className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            }>
-              <UserMenu />
-            </Suspense>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 sm:gap-4 relative z-50">
+                    <button className="p-2.5 rounded-full hover:bg-primary/5 transition-colors hidden md:block">
+                        <Search className="w-5 h-5 text-foreground/70" />
+                    </button>
 
-            {/* Mobile Nav - Lazy loaded */}
-            <div className="lg:hidden">
-              <Suspense fallback={<div className="h-9 w-9" />}>
-                <MobileNav
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  handleSearch={handleSearch}
-                  categories={[]}
-                  serviceTypes={[]}
-                  servicesByType={{}}
-                  isAuthenticated={false}
-                  wishlistCount={undefined}
-                />
-              </Suspense>
+                    <ThemeToggle />
+
+                    <Link prefetch={false} href="/wishlist" className="p-2.5 rounded-full hover:bg-primary/5 transition-colors relative hidden sm:block">
+                        <Heart className="w-5 h-5 text-foreground/70" />
+                    </Link>
+
+                    <Link href="/cart" className="p-2.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all relative">
+                        <ShoppingCart className="w-5 h-5 text-primary" />
+                        {itemCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-primary text-foreground dark:text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
+                                {itemCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    <div className="h-6 w-px bg-border/40 mx-1 hidden sm:block" />
+
+                    <Link prefetch={false} href="/account" className="hidden sm:flex items-center gap-3 pl-2 group">
+                        <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:border-primary transition-all">
+                            <User className="w-5 h-5 text-accent group-hover:text-primary transition-colors" />
+                        </div>
+                    </Link>
+
+                    {/* Mobile Menu Trigger */}
+                    <button
+                        className="xl:hidden p-2.5 rounded-full bg-foreground/5"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    >
+                        <Menu className="w-5 h-5 text-foreground" />
+                    </button>
+                </div>
+
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Sub navigation */}
-      <div className="border-t border-muted/50 bg-muted/30 py-2">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
-            {SUB_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="group flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg border border-transparent bg-background/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-primary hover:shadow-md"
-              >
-                <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
+            {/* Sub-Navbar (Categories) - Always Visible */}
+            <div suppressHydrationWarning className="w-full border-t border-white/5 h-12 bg-black/20 backdrop-blur-md">
+                <HeaderSubNav />
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed inset-0 top-0 z-[60] bg-background p-6 pt-24"
+                    >
+                        <button
+                            className="absolute top-6 right-6 p-4 text-primary font-black uppercase tracking-widest"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            Đóng
+                        </button>
+                        <nav className="flex flex-col gap-6">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className="text-2xl font-black uppercase tracking-tighter"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    {link.name}
+                                </Link>
+                            ))}
+                        </nav>
+                        <div className="mt-20 pt-10 border-t border-border">
+                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Hotline hỗ trợ</p>
+                            <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary">{hotlineDisplay}</a>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </header>
+    );
 }
+
+export default AppHeader;

@@ -11,8 +11,7 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogMetadata {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -39,8 +38,7 @@ class Logger {
   /**
    * Filter sensitive data from logs
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private filterSensitiveData(data: any): any {
+  private filterSensitiveData(data: unknown): unknown {
     if (!data || typeof data !== 'object') {
       return data;
     }
@@ -58,17 +56,16 @@ class Logger {
       'accessToken',
     ];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filtered: any = Array.isArray(data) ? [] : {};
+    const filtered: Record<string, unknown> | unknown[] = Array.isArray(data) ? [] : {};
 
     for (const [key, value] of Object.entries(data)) {
       const lowerKey = key.toLowerCase();
       if (sensitiveKeys.some(sk => lowerKey.includes(sk))) {
-        filtered[key] = '[REDACTED]';
+        (filtered as Record<string, unknown>)[key] = '[REDACTED]';
       } else if (value && typeof value === 'object') {
-        filtered[key] = this.filterSensitiveData(value);
+        (filtered as Record<string, unknown>)[key] = this.filterSensitiveData(value);
       } else {
-        filtered[key] = value;
+        (filtered as Record<string, unknown>)[key] = value;
       }
     }
 
@@ -81,11 +78,14 @@ class Logger {
   private formatMessage(level: LogLevel, message: string, metadata?: LogMetadata): string {
     const timestamp = new Date().toISOString();
     const filteredMetadata = metadata ? this.filterSensitiveData(metadata) : {};
-    
+
     if (this.isDevelopment) {
-      return `[${timestamp}] [${level.toUpperCase()}] ${message}${Object.keys(filteredMetadata).length > 0 ? ` ${JSON.stringify(filteredMetadata)}` : ''}`;
+      const metadataStr = filteredMetadata && typeof filteredMetadata === 'object' && Object.keys(filteredMetadata).length > 0
+        ? ` ${JSON.stringify(filteredMetadata)}`
+        : '';
+      return `[${timestamp}] [${level.toUpperCase()}] ${message}${metadataStr}`;
     }
-    
+
     return message;
   }
 
@@ -94,7 +94,7 @@ class Logger {
    */
   debug(message: string, metadata?: LogMetadata): void {
     if (!this.shouldLog('debug')) return;
-    
+
     if (this.isDevelopment) {
       console.debug(this.formatMessage('debug', message, metadata));
     }
@@ -105,7 +105,7 @@ class Logger {
    */
   info(message: string, metadata?: LogMetadata): void {
     if (!this.shouldLog('info')) return;
-    
+
     if (this.isDevelopment) {
       console.info(this.formatMessage('info', message, metadata));
     }
@@ -116,9 +116,9 @@ class Logger {
    */
   warn(message: string, metadata?: LogMetadata): void {
     if (!this.shouldLog('warn')) return;
-    
+
     console.warn(this.formatMessage('warn', message, metadata));
-    
+
     // In production, you might want to send warnings to error tracking
     // Example: Sentry.captureMessage(message, 'warning');
   }
@@ -128,20 +128,20 @@ class Logger {
    */
   error(message: string, error?: Error | unknown, metadata?: LogMetadata): void {
     if (!this.shouldLog('error')) return;
-    
+
     const errorMetadata: LogMetadata = {
       ...metadata,
       ...(error instanceof Error
         ? {
-            errorMessage: error.message,
-            errorStack: error.stack,
-            errorName: error.name,
-          }
+          errorMessage: error.message,
+          errorStack: error.stack,
+          errorName: error.name,
+        }
         : { error: String(error) }),
     };
 
     console.error(this.formatMessage('error', message, errorMetadata));
-    
+
     // In production, send errors to error tracking service
     // Example: Sentry.captureException(error, { extra: errorMetadata });
   }
@@ -152,7 +152,7 @@ class Logger {
   performance(operation: string, duration: number, metadata?: LogMetadata): void {
     const level = duration > 1000 ? 'warn' : 'info';
     const message = `Performance: ${operation} took ${duration}ms`;
-    
+
     if (level === 'warn') {
       this.warn(message, metadata);
     } else {
@@ -170,10 +170,10 @@ class Logger {
       userId,
       timestamp: new Date().toISOString(),
     };
-    
+
     // In production, send to analytics service
     // Example: analytics.track(action, auditMetadata);
-    
+
     if (this.isDevelopment) {
       this.info(`Audit: ${action}`, auditMetadata);
     }

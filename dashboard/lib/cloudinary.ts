@@ -10,8 +10,12 @@ export interface CloudinaryUploadResult {
 }
 
 export class CloudinaryService {
-  private static readonly CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  // Support both public and server env var names so the value is available
+  // whether Next.js exposes it to the client (NEXT_PUBLIC_) or only server-side.
+  private static readonly CLOUD_NAME =
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME || '';
   private static readonly UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || 'audio-tailoc';
+  private static hasWarnedMissingCloudName = false;
 
   /**
    * Upload file to Cloudinary using API route (client-side)
@@ -109,8 +113,20 @@ export class CloudinaryService {
       format?: string;
     } = {}
   ): string {
+    if (!publicId) return '';
+    if (publicId.startsWith('http')) return publicId;
+    if (publicId.startsWith('/')) return publicId;
+    if (publicId.startsWith('uploads/')) return `/${publicId}`;
     if (!this.CLOUD_NAME) {
-      throw new Error('Cloudinary cloud name is not configured');
+      // Avoid crashing client-side code when Cloudinary isn't configured.
+      // Components that call this method already check for full URLs; returning
+      // an empty string will make `<img>` src empty and let UI handle fallback.
+      // Keep a console warning (once) to aid debugging in development.
+      if (!this.hasWarnedMissingCloudName && typeof console !== 'undefined' && console.warn) {
+        console.warn('Cloudinary cloud name is not configured. getOptimizedUrl returning empty string.');
+        this.hasWarnedMissingCloudName = true;
+      }
+      return '';
     }
 
     const transformations: string[] = [];

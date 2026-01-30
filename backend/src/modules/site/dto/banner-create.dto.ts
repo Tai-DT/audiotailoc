@@ -28,7 +28,19 @@ export class CreateBannerDto {
   @IsOptional()
   @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsString()
+  darkImageUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
   mobileImageUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsString()
+  darkMobileImageUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

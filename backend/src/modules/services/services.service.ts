@@ -5,13 +5,14 @@ import { CacheService } from '../caching/cache.service';
 import { ServiceBookingStatus } from '../../common/enums';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { slugify } from '../../common/utils/slug';
 
 @Injectable()
 export class ServicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   // Helper function to parse JSON string fields back to arrays
   private parseJsonFields(service: any): any {
@@ -40,7 +41,7 @@ export class ServicesService {
   // Service Management
   async createService(data: CreateServiceDto) {
     // Generate slug if not provided
-    const slug = data.slug || await this.generateSlug(data.name);
+    const slug = data.slug || (await this.generateUniqueSlug(data.name));
 
     // Validate typeId exist if provided
     if (data.typeId) {
@@ -58,18 +59,25 @@ export class ServicesService {
     };
 
     if (data.priceType === 'RANGE') {
-      priceData.minPrice = data.minPrice !== undefined ? Math.round(data.minPrice * 100) : null;
-      priceData.maxPrice = data.maxPrice !== undefined ? Math.round(data.maxPrice * 100) : null;
-      priceData.basePriceCents = priceData.minPrice || 0;
-      priceData.price = priceData.minPrice || 0;
+      priceData.minPrice =
+        data.minPrice !== undefined ? BigInt(Math.round(data.minPrice * 100)) : null;
+      priceData.maxPrice =
+        data.maxPrice !== undefined ? BigInt(Math.round(data.maxPrice * 100)) : null;
+      priceData.basePriceCents = priceData.minPrice || BigInt(0);
+      priceData.price = priceData.minPrice || BigInt(0);
     } else if (data.priceType === 'NEGOTIABLE' || data.priceType === 'CONTACT') {
-      priceData.basePriceCents = 0;
-      priceData.price = 0;
+      priceData.basePriceCents = BigInt(0);
+      priceData.price = BigInt(0);
       priceData.minPrice = null;
       priceData.maxPrice = null;
     } else {
       // FIXED price (default)
-      const basePriceCents = data.basePriceCents ?? (data.price ? Math.round(data.price * 100) : 0);
+      const basePriceCents =
+        data.basePriceCents !== undefined
+          ? BigInt(data.basePriceCents)
+          : data.price
+            ? BigInt(Math.round(data.price * 100))
+            : BigInt(0);
       priceData.basePriceCents = basePriceCents;
       priceData.price = basePriceCents;
       priceData.minPrice = null;
@@ -115,9 +123,9 @@ export class ServicesService {
     // Normalize returned price fields to full VND (divide cents by 100)
     return this.parseJsonFields({
       ...service,
-      price: service.basePriceCents ? service.basePriceCents / 100 : 0,
-      minPriceDisplay: service.minPrice ? service.minPrice / 100 : null,
-      maxPriceDisplay: service.maxPrice ? service.maxPrice / 100 : null,
+      price: service.basePriceCents ? Number(service.basePriceCents) / 100 : 0,
+      minPriceDisplay: service.minPrice ? Number(service.minPrice) / 100 : null,
+      maxPriceDisplay: service.maxPrice ? Number(service.maxPrice) / 100 : null,
       type: service.service_types,
     });
   }
@@ -147,7 +155,7 @@ export class ServicesService {
       return cached;
     }
 
-    const [total, services] = await this.prisma.$transaction([
+    const [total, services] = await Promise.all([
       this.prisma.services.count({ where }),
       this.prisma.services.findMany({
         where,
@@ -277,28 +285,28 @@ export class ServicesService {
     // Handle price based on type
     if (data.priceType === 'RANGE') {
       if (data.minPrice !== undefined) {
-        updateData.minPrice = Math.round(data.minPrice * 100);
+        updateData.minPrice = BigInt(Math.round(data.minPrice * 100));
         updateData.basePriceCents = updateData.minPrice;
         updateData.price = updateData.minPrice;
       }
       if (data.maxPrice !== undefined) {
-        updateData.maxPrice = Math.round(data.maxPrice * 100);
+        updateData.maxPrice = BigInt(Math.round(data.maxPrice * 100));
       }
     } else if (data.priceType === 'NEGOTIABLE' || data.priceType === 'CONTACT') {
-      updateData.basePriceCents = 0;
-      updateData.price = 0;
+      updateData.basePriceCents = BigInt(0);
+      updateData.price = BigInt(0);
       updateData.minPrice = null;
       updateData.maxPrice = null;
     } else if (data.priceType === 'FIXED' || data.priceType === undefined) {
       // Handle fixed price
       if (data.basePriceCents !== undefined) {
-        updateData.basePriceCents = data.basePriceCents;
-        updateData.price = data.basePriceCents;
+        updateData.basePriceCents = BigInt(data.basePriceCents);
+        updateData.price = BigInt(data.basePriceCents);
         updateData.minPrice = null;
         updateData.maxPrice = null;
       } else if (data.price !== undefined) {
         // incoming `price` expected in full VND -> convert to cents
-        const basePriceCents = Math.round(data.price * 100);
+        const basePriceCents = BigInt(Math.round(data.price * 100));
         updateData.basePriceCents = basePriceCents;
         updateData.price = basePriceCents;
         updateData.minPrice = null;
@@ -361,9 +369,9 @@ export class ServicesService {
 
     return this.parseJsonFields({
       ...updated,
-      price: updated.basePriceCents / 100,
-      minPriceDisplay: updated.minPrice ? updated.minPrice / 100 : null,
-      maxPriceDisplay: updated.maxPrice ? updated.maxPrice / 100 : null,
+      price: Number(updated.basePriceCents) / 100,
+      minPriceDisplay: updated.minPrice ? Number(updated.minPrice) / 100 : null,
+      maxPriceDisplay: updated.maxPrice ? Number(updated.maxPrice) / 100 : null,
       type: updated.service_types,
     });
   }
@@ -416,7 +424,7 @@ export class ServicesService {
         id: randomUUID(),
         serviceId,
         name: data.name,
-        price: data.priceCents,
+        price: BigInt(data.priceCents) as any,
         quantity: 1,
         updatedAt: new Date(),
       },
@@ -440,7 +448,7 @@ export class ServicesService {
 
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.priceCents !== undefined) updateData.price = data.priceCents;
+    if (data.priceCents !== undefined) updateData.price = BigInt(data.priceCents) as any;
 
     return this.prisma.service_items.update({
       where: { id: itemId },
@@ -502,44 +510,29 @@ export class ServicesService {
     return type;
   }
 
-  private async generateSlug(
+  private async generateUniqueSlug(
     name: string,
     scope: 'services' | 'service_types' = 'services',
   ): Promise<string> {
-    const baseSlug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
-      .trim();
+    const baseSlug = slugify(name);
 
     // Check if slug already exists in the requested scope
-    let existing: any = null;
-    if (scope === 'service_types') {
-      existing = await this.prisma.service_types.findFirst({ where: { slug: baseSlug } });
-    } else {
-      existing = await this.prisma.services.findFirst({ where: { slug: baseSlug } });
-    }
+    const getExisting = async (slug: string) => {
+      if (scope === 'service_types') {
+        return this.prisma.service_types.findUnique({ where: { slug } });
+      } else {
+        return this.prisma.services.findUnique({ where: { slug } });
+      }
+    };
 
-    if (!existing) return baseSlug;
-
-    // If slug exists, add suffix
+    let slug = baseSlug;
     let counter = 1;
-    let uniqueSlug = `${baseSlug}-${counter}`;
-
-    if (scope === 'service_types') {
-      while (await this.prisma.service_types.findFirst({ where: { slug: uniqueSlug } })) {
-        counter++;
-        uniqueSlug = `${baseSlug}-${counter}`;
-      }
-    } else {
-      while (await this.prisma.services.findFirst({ where: { slug: uniqueSlug } })) {
-        counter++;
-        uniqueSlug = `${baseSlug}-${counter}`;
-      }
+    while (await getExisting(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
     }
 
-    return uniqueSlug;
+    return slug;
   }
 
   // Statistics
@@ -571,7 +564,7 @@ export class ServicesService {
       totalBookings,
       pendingBookings,
       completedBookings,
-      totalRevenue: revenue._sum.price || 0,
+      totalRevenue: Number(revenue._sum.price || 0),
     };
   }
   // Service Items
@@ -597,7 +590,7 @@ export class ServicesService {
     description?: string;
     isActive?: boolean;
   }) {
-    const slug = data.slug || (await this.generateSlug(data.name, 'service_types'));
+    const slug = data.slug || (await this.generateUniqueSlug(data.name, 'service_types'));
 
     return this.prisma.service_types.create({
       data: {

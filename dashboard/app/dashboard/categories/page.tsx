@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCategories } from '@/hooks/use-categories';
 import type { Category, CreateCategoryData, UpdateCategoryData } from '@/types/category';
+import { getMediaUrl } from '@/lib/utils';
 import {
     Table,
     TableBody,
@@ -192,12 +193,14 @@ export default function CategoriesPage() {
                                     <TableCell>
                                         {category.imageUrl ? (
                                             <div className="relative w-10 h-10">
-                                                <img
-                                                    src={category.imageUrl}
+                                                <Image
+                                                    src={getMediaUrl(category.imageUrl)}
                                                     alt={category.name}
-                                                    className="w-full h-full object-cover rounded"
+                                                    fill
+                                                    sizes="40px"
+                                                    className="object-cover rounded"
                                                     onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
+                                                        // Fallback handled by parent or state if needed
                                                     }}
                                                 />
                                             </div>

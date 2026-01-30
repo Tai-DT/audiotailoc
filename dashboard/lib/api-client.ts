@@ -138,6 +138,18 @@ class ApiClient {
     this.token = null;
   }
 
+  private hydrateTokenFromStorage() {
+    if (this.token || typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem('accessToken');
+      if (stored) {
+        this.token = stored;
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }
+
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -336,6 +348,22 @@ class ApiClient {
 
   // Orders endpoints
   async getOrders(params?: { page?: number; limit?: number; status?: string }) {
+    if (typeof window !== 'undefined') {
+      const query = new URLSearchParams();
+      if (params?.page) query.append('page', params.page.toString());
+      if (params?.limit) query.append('pageSize', params.limit.toString());
+      if (params?.status) query.append('status', params.status.toString());
+
+      const response = await fetch(`/api/orders${query.toString() ? `?${query.toString()}` : ''}`, {
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error((data as { message?: string })?.message || 'Failed to fetch orders');
+      }
+      return data as ApiResponse<unknown>;
+    }
+
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('pageSize', params.limit.toString()); // Backend expects 'pageSize', not 'limit'
@@ -345,6 +373,16 @@ class ApiClient {
   }
 
   async getOrder(id: string) {
+    if (typeof window !== 'undefined') {
+      const response = await fetch(`/api/orders/${id}`, {
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error((data as { message?: string })?.message || 'Failed to fetch order');
+      }
+      return data as ApiResponse<unknown>;
+    }
     return this.request(`/orders/${id}`);
   }
 
@@ -356,6 +394,18 @@ class ApiClient {
     customerEmail?: string;
     notes?: string;
   }) {
+    if (typeof window !== 'undefined') {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(orderData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error((data as { message?: string })?.message || 'Failed to create order');
+      }
+      return data as ApiResponse<unknown>;
+    }
     return this.request('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
@@ -377,6 +427,18 @@ class ApiClient {
     notes?: string;
     items?: Array<{ productId: string; quantity: number; unitPrice?: number; name?: string }>;
   }) {
+    if (typeof window !== 'undefined') {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(orderData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error((data as { message?: string })?.message || 'Failed to update order');
+      }
+      return data as ApiResponse<unknown>;
+    }
     return this.request(`/orders/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(orderData),
@@ -384,6 +446,17 @@ class ApiClient {
   }
 
   async deleteOrder(id: string) {
+    if (typeof window !== 'undefined') {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error((data as { message?: string })?.message || 'Failed to delete order');
+      }
+      return data as ApiResponse<unknown>;
+    }
     return this.request(`/orders/${id}`, {
       method: 'DELETE',
     });
@@ -447,6 +520,48 @@ class ApiClient {
     return this.request(`/catalog/products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(productData)
+    });
+  }
+
+  // Promotions endpoints
+  async getPromotions(params?: { isActive?: boolean; type?: string; search?: string }) {
+    const query = new URLSearchParams();
+    if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
+    if (params?.type) query.append('type', params.type);
+    if (params?.search) query.append('search', params.search);
+    const queryString = query.toString();
+    return this.request(`/promotions${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async createPromotion(data: Record<string, unknown>) {
+    return this.request('/promotions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePromotion(id: string, data: Record<string, unknown>) {
+    return this.request(`/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePromotion(id: string) {
+    return this.request(`/promotions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async duplicatePromotion(id: string) {
+    return this.request(`/promotions/${id}/duplicate`, {
+      method: 'POST',
+    });
+  }
+
+  async togglePromotion(id: string) {
+    return this.request(`/promotions/${id}/toggle`, {
+      method: 'PUT',
     });
   }
 
@@ -541,7 +656,7 @@ class ApiClient {
 
   async updateService(id: string, serviceData: Partial<ServiceFormData>) {
     return this.request(`/services/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(serviceData)
     });
   }
@@ -1316,23 +1431,14 @@ class ApiClient {
   }
 
   async uploadImage(file: File) {
+    this.hydrateTokenFromStorage();
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseURL}/upload/image`, {
+    return this.request('/upload/image', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-      },
       body: formData,
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Lỗi khi upload ảnh');
-    }
-
-    return response.json();
   }
 }
 

@@ -53,8 +53,13 @@ export class ReviewsService {
       this.prisma.product_reviews.count({ where }),
     ]);
 
+    const mappedReviews = reviews.map(review => ({
+      ...review,
+      images: review.images ? JSON.parse(review.images) : null,
+    }));
+
     return {
-      data: reviews,
+      data: mappedReviews,
       total,
       page: params.page,
       pageSize: params.pageSize,
@@ -71,7 +76,11 @@ export class ReviewsService {
       },
     });
     if (!review) throw new NotFoundException('Review not found');
-    return review;
+
+    return {
+      ...review,
+      images: review.images ? JSON.parse(review.images) : null,
+    };
   }
 
   async create(dto: CreateReviewDto) {

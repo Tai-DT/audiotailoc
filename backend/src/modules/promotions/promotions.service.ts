@@ -38,7 +38,7 @@ export interface UpdatePromotionDto {
 
 @Injectable()
 export class PromotionsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async findAll(filters?: { isActive?: boolean; type?: string; search?: string }) {
     const where: any = {};
@@ -146,7 +146,7 @@ export class PromotionsService {
 
   async validateCode(
     code: string,
-    orderAmount: number = 0,
+    orderAmount: number | bigint = 0,
     userId?: string,
     items: any[] = [],
     tx?: any,
@@ -211,8 +211,11 @@ export class PromotionsService {
     }
 
     // 5. Minimum order amount
-    if (promotion.minOrderAmount && orderAmount < promotion.minOrderAmount) {
-      return { valid: false, error: `Đơn tối thiểu ${promotion.minOrderAmount.toLocaleString()}đ` };
+    if (promotion.minOrderAmount && BigInt(orderAmount) < BigInt(promotion.minOrderAmount)) {
+      return {
+        valid: false,
+        error: `Đơn tối thiểu ${Number(promotion.minOrderAmount).toLocaleString()}đ`,
+      };
     }
 
     // 6. Product/Category Restrictions
@@ -235,24 +238,32 @@ export class PromotionsService {
       }
 
       applicableAmount = applicableItems.reduce(
-        (sum, item) => sum + Number(item.price || item.priceCents) * item.quantity,
-        0,
+        (sum, item) => sum + BigInt(item.price || item.priceCents) * BigInt(item.quantity),
+        BigInt(0),
       );
     }
 
-    let discount = 0;
+    let discountBigInt = BigInt(0);
     const isFreeShipping = promotion.type === 'FREE_SHIPPING';
 
     if (promotion.type === 'PERCENTAGE') {
-      discount = Math.round(applicableAmount * (promotion.value / 100));
-      if (promotion.maxDiscount) discount = Math.min(discount, promotion.maxDiscount);
+      discountBigInt =
+        (BigInt(applicableAmount) * BigInt(Math.round(promotion.value))) / BigInt(100);
+      if (promotion.maxDiscount) {
+        const maxDiscount = BigInt(promotion.maxDiscount);
+        if (discountBigInt > maxDiscount) discountBigInt = maxDiscount;
+      }
     } else if (promotion.type === 'FIXED_AMOUNT') {
-      discount = promotion.value;
+      discountBigInt = BigInt(promotion.value);
     }
+
+    const discount = Number(
+      discountBigInt > BigInt(orderAmount) ? BigInt(orderAmount) : discountBigInt,
+    );
 
     return {
       valid: true,
-      discount: Math.round(Math.min(discount, orderAmount)),
+      discount,
       isFreeShipping,
       promotion: this.mapPromotion(promotion),
     };
@@ -262,7 +273,7 @@ export class PromotionsService {
     code: string,
     userId?: string,
     orderId?: string,
-    discountApplied?: number,
+    discountApplied?: number | bigint,
     tx?: any,
   ) {
     const client = tx || this.prisma;
@@ -289,7 +300,7 @@ export class PromotionsService {
           promotionId: promo.id,
           userId,
           orderId,
-          discountApplied,
+          discountApplied: BigInt(discountApplied || 0) as any,
           status: 'SUCCEEDED',
         },
       });
@@ -299,7 +310,7 @@ export class PromotionsService {
   async applyToCart(code: string, items: any[]) {
     const validation = await this.validateCode(
       code,
-      items.reduce((s, i) => s + i.priceCents * i.quantity, 0),
+      items.reduce((s, i) => s + BigInt(i.priceCents || 0) * BigInt(i.quantity || 1), BigInt(0)),
     );
     if (!validation.valid) return validation;
 
@@ -333,7 +344,7 @@ export class PromotionsService {
         // Simple proportional distribution
         itemDiscount = Math.round(
           ((Number(item.price || item.priceCents) * item.quantity) / applicableSubtotal) *
-          validation.discount,
+            validation.discount,
         );
         // Ensure we don't exceed remaining
         itemDiscount = Math.min(itemDiscount, remaining);

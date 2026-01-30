@@ -1,5 +1,14 @@
-import { IsString, IsOptional, IsArray, IsDateString, IsNumber, IsEmail } from 'class-validator';
-import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsDateString,
+  IsNumber,
+  IsEmail,
+  ValidateNested,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { CoordinatesDto } from './coordinates.dto';
 
 export class CreateBookingDto {
   @IsString()
@@ -60,4 +69,13 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CoordinatesDto)
+  coordinates?: CoordinatesDto;
+
+  @IsOptional()
+  @IsString()
+  goongPlaceId?: string;
 }

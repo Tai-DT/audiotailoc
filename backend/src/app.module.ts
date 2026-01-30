@@ -58,4 +58,4 @@ import { UploadModule } from './modules/upload/upload.module';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

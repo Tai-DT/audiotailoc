@@ -65,21 +65,26 @@ class SocketManager {
       const authToken = token || await this.getAuthToken();
 
       // Create socket connection using Manager
+      // Use path '/api/v1/socket.io' when connecting to a namespaced realtime API
+      // This helps when the backend is served with a global prefix (e.g. /api/v1)
+      const inferredPath = this.url.includes('/api/v1') || true ? '/api/v1/socket.io' : '/socket.io';
+
       const manager = new Manager(this.url, {
-        transports: ['polling', 'websocket'], // Start with polling for better compatibility
+        transports: ['websocket', 'polling'], // Prefer websocket, fallback to polling
         reconnection: this.config.reconnection,
         reconnectionDelay: this.config.reconnectionDelay,
-        reconnectionAttempts: 10, // Increase attempts
-        path: '/socket.io',
+        reconnectionAttempts: 20, // More attempts
+        path: inferredPath,
         withCredentials: true,
-        extraHeaders: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        // Optional: extraHeaders can be problematic with CORS and some browsers
+        // Authorization is best passed in the auth object
       });
 
-      // Connect to the common realtime namespace if not root
       // Connect to the common realtime namespace
-      // For AudioTailoc backend, the namespace is always /api/v1/realtime
       const namespace = '/api/v1/realtime';
-      this.socket = manager.socket(namespace);
+      this.socket = manager.socket(namespace, {
+        auth: authToken ? { token: authToken } : undefined,
+      });
 
       // Set up event handlers
       this.setupEventHandlers();

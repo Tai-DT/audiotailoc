@@ -9,9 +9,9 @@ import { initWebVitals } from '@/lib/web-vitals';
  * Should be placed in the root layout
  */
 export function WebVitalsReporter() {
-  useEffect(() => {
-    initWebVitals();
-  }, []);
+ useEffect(() => {
+ initWebVitals();
+ }, []);
 
-  return null;
+ return null;
 }

@@ -6,6 +6,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InventoryService } from '../inventory/inventory.service';
 import { ActivityLogService } from '../logging/activity-log.service';
 import { randomUUID } from 'crypto';
+import { slugify, removeVietnameseTones } from '../../common/utils/slug';
 
 export type ProductDto = {
   id: string;
@@ -47,7 +48,7 @@ export class CatalogService {
     private readonly inventory: InventoryService,
     private readonly cache: CacheService,
     private readonly activityLog: ActivityLogService,
-  ) { }
+  ) {}
 
   private safeParseJSON(data: any, defaultValue: any = null) {
     if (!data) return defaultValue;
@@ -74,11 +75,52 @@ export class CatalogService {
     return category;
   }
 
+  async checkSlugExists(
+    slug: string,
+    type: 'products' | 'categories',
+    excludeId?: string,
+  ): Promise<boolean> {
+    const where: any = { slug };
+    if (excludeId) where.id = { not: excludeId };
+
+    let count = 0;
+    if (type === 'products') {
+      count = await this.prisma.products.count({ where });
+    } else {
+      count = await this.prisma.categories.count({ where });
+    }
+
+    return count > 0;
+  }
+
+  async generateUniqueSlug(
+    baseName: string,
+    type: 'products' | 'categories',
+    excludeId?: string,
+  ): Promise<string> {
+    const baseSlug = slugify(baseName);
+    let slug = baseSlug;
+    let counter = 1;
+    while (await this.checkSlugExists(slug, type, excludeId)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    return slug;
+  }
+
   async createCategory(dto: any, userId?: string) {
+    const slug = dto.slug || (await this.generateUniqueSlug(dto.name, 'categories'));
+
+    // Double check if manually provided slug exists
+    if (dto.slug && (await this.checkSlugExists(slug, 'categories'))) {
+      throw new BadRequestException('Slug danh mục đã tồn tại');
+    }
+
     const category = await this.prisma.categories.create({
       data: {
         id: randomUUID(),
         ...dto,
+        slug,
         updatedAt: new Date(),
       },
     });
@@ -153,6 +195,11 @@ export class CatalogService {
     if (params.brand) where.brand = params.brand;
     if (params.featured !== undefined) where.featured = params.featured;
     if (params.isActive !== undefined) where.isActive = params.isActive;
+    if (params.minPrice !== undefined || params.maxPrice !== undefined) {
+      where.priceCents = {};
+      if (params.minPrice !== undefined) where.priceCents.gte = BigInt(params.minPrice);
+      if (params.maxPrice !== undefined) where.priceCents.lte = BigInt(params.maxPrice);
+    }
     if (params.q) {
       where.OR = [
         { name: { contains: params.q, mode: 'insensitive' } },
@@ -161,11 +208,14 @@ export class CatalogService {
       ];
     }
 
+    let orderByField = params.sortBy || 'createdAt';
+    if (orderByField === 'price') orderByField = 'priceCents';
+
     const [total, items] = await this.prisma.$transaction([
       this.prisma.products.count({ where }),
       this.prisma.products.findMany({
         where,
-        orderBy: { [params.sortBy || 'createdAt']: params.sortOrder || 'desc' },
+        orderBy: { [orderByField]: params.sortOrder || 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -242,8 +292,8 @@ export class CatalogService {
 
   async generateUniqueSku(baseName?: string): Promise<string> {
     const base =
-      baseName
-        ?.toUpperCase()
+      removeVietnameseTones(baseName || '')
+        .toUpperCase()
         .replace(/[^A-Z0-9]/g, '')
         .substring(0, 8) || 'PROD';
     let sku = base;
@@ -256,14 +306,11 @@ export class CatalogService {
   }
 
   async create(data: CreateProductDto, userId?: string): Promise<ProductDto> {
-    const slug =
-      data.slug ||
-      data.name
-        .toLowerCase()
-        .replace(/ /g, '-')
-        .replace(/[^\w-]+/g, '');
-    const existed = await this.prisma.products.findUnique({ where: { slug } });
-    if (existed) throw new BadRequestException('Slug đã tồn tại');
+    const slug = data.slug || (await this.generateUniqueSlug(data.name, 'products'));
+
+    if (data.slug && (await this.checkSlugExists(slug, 'products'))) {
+      throw new BadRequestException('Slug đã tồn tại');
+    }
 
     if (data.sku) {
       const skuExisted = await this.checkSkuExists(data.sku);

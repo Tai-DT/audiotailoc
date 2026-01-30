@@ -3,9 +3,8 @@
  * Run with: npx ts-node prisma/seed-faqs.ts
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from './seed-client';
+import { randomUUID } from 'crypto';
 
 interface FAQData {
     question: string;

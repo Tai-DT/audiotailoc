@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { authStorage } from '@/lib/auth-storage';
 
 export interface SystemHealthData {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -49,17 +49,48 @@ export interface SystemHealthData {
 export interface HealthCheck {
   status: 'healthy' | 'unhealthy' | 'degraded';
   message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  details?: any;
+  details?: Record<string, unknown> | string | number | boolean | null;
   responseTime?: number;
 }
+
+const parseHealthResponse = async <T,>(response: Response): Promise<T> => {
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json')
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const message = typeof data === 'object' && data !== null && 'message' in data
+      ? String((data as { message?: string }).message)
+      : 'Health request failed';
+    throw new Error(message);
+  }
+
+  return data as T;
+};
+
+const healthRequest = async <T,>(path: string): Promise<T> => {
+  const token = authStorage.getAccessToken();
+  const headers: HeadersInit = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`/api/health${path}`, {
+    headers,
+    credentials: 'same-origin',
+    cache: 'no-store',
+  });
+
+  return parseHealthResponse<T>(response);
+};
 
 export function useSystemHealth(options?: { refetchInterval?: number }) {
   return useQuery({
     queryKey: ['systemHealth'],
     queryFn: async () => {
-      const response = await apiClient.get<SystemHealthData>('/health/detailed');
-      return response.data;
+      return healthRequest<SystemHealthData>('/detailed');
     },
     refetchInterval: options?.refetchInterval || 30000, // Refetch every 30 seconds
     retry: 2,
@@ -71,8 +102,7 @@ export function useSystemPerformance() {
   return useQuery({
     queryKey: ['systemPerformance'],
     queryFn: async () => {
-      const response = await apiClient.get('/health/performance');
-      return response.data;
+      return healthRequest('/performance');
     },
     refetchInterval: 10000, // Refetch every 10 seconds
     retry: 1,
@@ -83,8 +113,7 @@ export function useSystemInfo() {
   return useQuery({
     queryKey: ['systemInfo'],
     queryFn: async () => {
-      const response = await apiClient.get('/health/system');
-      return response.data;
+      return healthRequest('/system');
     },
     staleTime: 300000, // System info doesn't change often, 5 minutes
   });
@@ -94,8 +123,7 @@ export function useMemoryUsage() {
   return useQuery({
     queryKey: ['memoryUsage'],
     queryFn: async () => {
-      const response = await apiClient.get('/health/memory');
-      return response.data;
+      return healthRequest('/memory');
     },
     refetchInterval: 15000, // Refetch every 15 seconds
   });
@@ -105,8 +133,7 @@ export function useRedisHealth() {
   return useQuery({
     queryKey: ['redisHealth'],
     queryFn: async () => {
-      const response = await apiClient.get<HealthCheck>('/health/redis');
-      return response.data;
+      return healthRequest<HealthCheck>('/redis');
     },
     refetchInterval: 60000, // Refetch every minute
     retry: 1,
@@ -117,8 +144,7 @@ export function useDatabaseHealth() {
   return useQuery({
     queryKey: ['databaseHealth'],
     queryFn: async () => {
-      const response = await apiClient.get<HealthCheck>('/health/database');
-      return response.data;
+      return healthRequest<HealthCheck>('/database');
     },
     refetchInterval: 30000,
     retry: 2,

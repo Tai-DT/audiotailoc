@@ -1,10 +1,134 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceBookingStatus } from '../../common/enums';
+import { TelegramService } from '../notifications/telegram.service';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(BookingService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly telegramService?: TelegramService,
+  ) {}
+
+  private readonly allowedTimeSlots = [
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+  ];
+
+  private validateSchedule(date: Date, time?: string) {
+    if (!time) {
+      throw new BadRequestException('Giờ đặt lịch là bắt buộc');
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+      throw new BadRequestException('Giờ đặt lịch không hợp lệ');
+    }
+
+    if (!this.allowedTimeSlots.includes(time)) {
+      throw new BadRequestException('Khung giờ không khả dụng');
+    }
+
+    const scheduleDate = new Date(date);
+    if (Number.isNaN(scheduleDate.getTime())) {
+      throw new BadRequestException('Ngày đặt lịch không hợp lệ');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const scheduledDay = new Date(scheduleDate);
+    scheduledDay.setHours(0, 0, 0, 0);
+
+    if (scheduledDay < today) {
+      throw new BadRequestException('Ngày đặt lịch phải từ hôm nay trở đi');
+    }
+
+    const [hour, minute] = time.split(':').map(value => parseInt(value, 10));
+    const scheduledDateTime = new Date(scheduleDate);
+    scheduledDateTime.setHours(hour, minute, 0, 0);
+
+    if (scheduledDateTime.getTime() < Date.now()) {
+      throw new BadRequestException('Giờ đặt lịch phải ở tương lai');
+    }
+  }
+
+  private parseScheduleDate(input: string | Date): Date {
+    if (input instanceof Date) {
+      return new Date(input);
+    }
+
+    if (typeof input === 'string') {
+      const trimmed = input.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const [year, month, day] = trimmed.split('-').map(value => parseInt(value, 10));
+        return new Date(year, month - 1, day);
+      }
+
+      return new Date(trimmed);
+    }
+
+    return new Date(input as unknown as string);
+  }
+
+  private async ensureSlotAvailable(
+    _serviceId: string,
+    date: Date,
+    time: string,
+    technicianId?: string | null,
+    excludeBookingId?: string,
+  ) {
+    if (!technicianId) {
+      // No technician assigned yet; allow multiple bookings for the same slot.
+      return;
+    }
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existing = await this.prisma.service_bookings.findFirst({
+      where: {
+        technicianId,
+        scheduledTime: time,
+        scheduledAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        status: {
+          notIn: [ServiceBookingStatus.CANCELLED, ServiceBookingStatus.COMPLETED],
+        },
+        ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException('Khung giờ này đã được đặt. Vui lòng chọn giờ khác');
+    }
+  }
+
+  private serializeCoordinates(
+    coordinates?: { lat: number; lng: number } | string | null,
+  ): string | null {
+    if (!coordinates) return null;
+    if (typeof coordinates === 'string') return coordinates;
+    return JSON.stringify(coordinates);
+  }
 
   async findAll() {
     return this.prisma.service_bookings.findMany({
@@ -55,6 +179,8 @@ export class BookingService {
             id: true,
             name: true,
             slug: true,
+            images: true,
+            duration: true,
           },
         },
         technicians: {
@@ -143,10 +269,18 @@ export class BookingService {
     }
 
     // Handle both scheduledAt and scheduledDate (frontend uses scheduledDate)
-    const scheduledDate = bookingData.scheduledAt || bookingData.scheduledDate;
-    if (!scheduledDate) {
+    const scheduledDateInput = bookingData.scheduledAt || bookingData.scheduledDate;
+    if (!scheduledDateInput) {
       throw new BadRequestException('Scheduled date is required');
     }
+    const scheduledDate = this.parseScheduleDate(scheduledDateInput);
+    this.validateSchedule(scheduledDate, bookingData.scheduledTime);
+    await this.ensureSlotAvailable(
+      bookingData.serviceId,
+      scheduledDate,
+      bookingData.scheduledTime,
+      bookingData.technicianId ?? null,
+    );
 
     // Create booking with items
     const booking = await this.prisma.service_bookings.create({
@@ -156,15 +290,19 @@ export class BookingService {
         userId: userId,
         technicianId: bookingData.technicianId || null,
         status: bookingData.status || 'PENDING',
-        scheduledAt: new Date(scheduledDate),
+        scheduledAt: scheduledDate,
         scheduledTime: bookingData.scheduledTime,
         notes: bookingData.notes || null,
         address: bookingData.address || null,
+        coordinates: this.serializeCoordinates(bookingData.coordinates),
+        goongPlaceId: bookingData.goongPlaceId || null,
         // Include customer info for record keeping (useful even for authenticated users)
         customerName: bookingData.customerName || user.name || null,
         customerPhone: bookingData.customerPhone || user.phone || null,
         customerEmail: bookingData.customerEmail || user.email || null,
-        estimatedCosts: bookingData.estimatedCosts || service.price || 0,
+        estimatedCosts: BigInt(
+          bookingData.estimatedCosts || service.basePriceCents || service.price || 0,
+        ) as any,
         updatedAt: new Date(),
         service_booking_items: items?.length
           ? {
@@ -172,7 +310,7 @@ export class BookingService {
                 id: crypto.randomUUID(),
                 serviceItemId: item.itemId,
                 quantity: item.quantity,
-                price: item.price || 0,
+                price: BigInt(item.price || 0),
                 updatedAt: new Date(),
               })),
             }
@@ -190,6 +328,7 @@ export class BookingService {
       },
     });
 
+    await this.notifyBookingCreated(booking, service.name, false);
     return booking;
   }
 
@@ -203,6 +342,8 @@ export class BookingService {
     scheduledDate: string;
     scheduledTime: string;
     notes?: string;
+    coordinates?: { lat: number; lng: number } | string;
+    goongPlaceId?: string;
   }) {
     // Verify service exists and is active
     const service = await this.prisma.services.findUnique({
@@ -216,13 +357,8 @@ export class BookingService {
     }
 
     // ✅ Validate scheduled date is in the future
-    const scheduledDate = new Date(guestBookingData.scheduledDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset to start of day
-
-    if (scheduledDate < today) {
-      throw new BadRequestException('Ngày đặt lịch phải từ hôm nay trở đi');
-    }
+    const scheduledDate = this.parseScheduleDate(guestBookingData.scheduledDate);
+    this.validateSchedule(scheduledDate, guestBookingData.scheduledTime);
 
     // ✅ Validate phone number format (Vietnamese phone)
     const phoneRegex = /^(0|\+84)[3-9][0-9]{8}$/;
@@ -239,6 +375,13 @@ export class BookingService {
     }
 
     // Create guest booking
+    await this.ensureSlotAvailable(
+      guestBookingData.serviceId,
+      scheduledDate,
+      guestBookingData.scheduledTime,
+      null,
+    );
+
     const booking = await this.prisma.service_bookings.create({
       data: {
         id: crypto.randomUUID(),
@@ -250,10 +393,12 @@ export class BookingService {
         scheduledTime: guestBookingData.scheduledTime,
         notes: guestBookingData.notes || null,
         address: guestBookingData.customerAddress || null,
+        coordinates: this.serializeCoordinates(guestBookingData.coordinates),
+        goongPlaceId: guestBookingData.goongPlaceId || null,
         customerName: guestBookingData.customerName,
         customerPhone: guestBookingData.customerPhone,
         customerEmail: guestBookingData.customerEmail || null,
-        estimatedCosts: service.price || 0,
+        estimatedCosts: (service.basePriceCents || service.price || BigInt(0)) as any,
         updatedAt: new Date(),
       },
       include: {
@@ -261,7 +406,40 @@ export class BookingService {
       },
     });
 
+    await this.notifyBookingCreated(booking, service.name, true);
     return booking;
+  }
+
+  private async notifyBookingCreated(booking: any, serviceName: string, isGuest: boolean) {
+    if (!this.telegramService) {
+      this.logger.debug('TelegramService not available, skipping booking notification');
+      return;
+    }
+
+    const scheduledDate = booking?.scheduledAt
+      ? new Date(booking.scheduledAt).toLocaleDateString('vi-VN')
+      : 'N/A';
+    const scheduledTime = booking?.scheduledTime || 'N/A';
+    const customerName = booking?.customerName || 'N/A';
+    const customerPhone = booking?.customerPhone || 'N/A';
+    const address = booking?.address || 'N/A';
+
+    const message = [
+      '🛠️ Đặt lịch dịch vụ mới',
+      `• Dịch vụ: ${serviceName || 'N/A'}`,
+      `• Mã booking: ${booking?.id || 'N/A'}`,
+      `• Thời gian: ${scheduledDate} ${scheduledTime}`,
+      `• Khách hàng: ${customerName}`,
+      `• SĐT: ${customerPhone}`,
+      `• Địa chỉ: ${address}`,
+      `• Loại: ${isGuest ? 'Khách' : 'Thành viên'}`,
+    ].join('\n');
+
+    try {
+      await this.telegramService.sendMessage(message);
+    } catch (error) {
+      this.logger.error('Failed to send booking Telegram notification', error);
+    }
   }
 
   async update(id: string, updateBookingDto: any) {
@@ -272,6 +450,8 @@ export class BookingService {
     }
 
     const { items: _items, ...bookingData } = updateBookingDto;
+    const scheduleChanged =
+      bookingData.scheduledAt || bookingData.scheduledDate || bookingData.scheduledTime;
 
     // Prepare update data
     const updateData: any = {};
@@ -280,12 +460,42 @@ export class BookingService {
     if (bookingData.userId !== undefined) updateData.userId = bookingData.userId;
     if (bookingData.technicianId !== undefined) updateData.technicianId = bookingData.technicianId;
     if (bookingData.status) updateData.status = bookingData.status;
-    if (bookingData.scheduledAt) updateData.scheduledAt = new Date(bookingData.scheduledAt);
-    if (bookingData.scheduledTime) updateData.scheduledTime = bookingData.scheduledTime;
+    const nextScheduledAtRaw = bookingData.scheduledAt || bookingData.scheduledDate;
+    const nextScheduledAt = nextScheduledAtRaw
+      ? this.parseScheduleDate(nextScheduledAtRaw)
+      : existingBooking.scheduledAt;
+    const nextScheduledTime = bookingData.scheduledTime ?? existingBooking.scheduledTime;
+    const nextTechnicianId = bookingData.technicianId ?? existingBooking.technicianId;
+
+    if (scheduleChanged) {
+      this.validateSchedule(nextScheduledAt, nextScheduledTime);
+      await this.ensureSlotAvailable(
+        existingBooking.serviceId,
+        nextScheduledAt,
+        nextScheduledTime,
+        nextTechnicianId,
+        id,
+      );
+      updateData.scheduledAt = nextScheduledAt;
+      updateData.scheduledTime = nextScheduledTime;
+    }
     if (bookingData.notes !== undefined) updateData.notes = bookingData.notes;
+    if (bookingData.address !== undefined) updateData.address = bookingData.address;
+    if (bookingData.customerName !== undefined) updateData.customerName = bookingData.customerName;
+    if (bookingData.customerPhone !== undefined)
+      updateData.customerPhone = bookingData.customerPhone;
+    if (bookingData.customerEmail !== undefined)
+      updateData.customerEmail = bookingData.customerEmail;
+    if (bookingData.coordinates !== undefined) {
+      updateData.coordinates = this.serializeCoordinates(bookingData.coordinates);
+    }
+    if (bookingData.goongPlaceId !== undefined) {
+      updateData.goongPlaceId = bookingData.goongPlaceId;
+    }
     if (bookingData.estimatedCosts !== undefined)
-      updateData.estimatedCosts = bookingData.estimatedCosts;
-    if (bookingData.actualCosts !== undefined) updateData.actualCosts = bookingData.actualCosts;
+      updateData.estimatedCosts = BigInt(bookingData.estimatedCosts);
+    if (bookingData.actualCosts !== undefined)
+      updateData.actualCosts = BigInt(bookingData.actualCosts);
     updateData.updatedAt = new Date();
 
     // Update booking
@@ -308,28 +518,31 @@ export class BookingService {
   }
 
   async delete(id: string) {
-    // Verify booking exists
-    const booking = await this.findOne(id);
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
+    try {
+      // Verify booking exists
+      const booking = await this.findOne(id);
+      if (!booking) {
+        throw new NotFoundException(`Booking with ID ${id} not found`);
+      }
+
+      this.logger.log(`Attempting to delete booking: ${id}`);
+
+      // Dependency cascades are now handled by Prisma at the database level (onDelete: Cascade)
+      await this.prisma.service_bookings.delete({
+        where: { id },
+      });
+
+      this.logger.log(`Successfully deleted booking: ${id}`);
+      return { success: true, message: 'Booking deleted successfully' };
+    } catch (error) {
+      this.logger.error(`Failed to delete booking ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Không thể xóa đặt lịch: ${error.message || 'Lỗi cơ sở dữ liệu'}`,
+      );
     }
-
-    // Delete related items first
-    await this.prisma.service_booking_items.deleteMany({
-      where: { bookingId: id },
-    });
-
-    // Delete related payments
-    await this.prisma.service_payments.deleteMany({
-      where: { bookingId: id },
-    });
-
-    // Delete the booking
-    await this.prisma.service_bookings.delete({
-      where: { id },
-    });
-
-    return { success: true, message: 'Booking deleted successfully' };
   }
 
   async updateStatus(id: string, status: string) {
@@ -339,9 +552,55 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
+    const currentStatus = String(
+      booking.status || ServiceBookingStatus.PENDING,
+    ) as ServiceBookingStatus;
+    const nextStatus = status as ServiceBookingStatus;
+    const allowedTransitions: Record<ServiceBookingStatus, ServiceBookingStatus[]> = {
+      [ServiceBookingStatus.PENDING]: [
+        ServiceBookingStatus.CONFIRMED,
+        ServiceBookingStatus.ASSIGNED,
+        ServiceBookingStatus.CANCELLED,
+        ServiceBookingStatus.RESCHEDULED,
+      ],
+      [ServiceBookingStatus.CONFIRMED]: [
+        ServiceBookingStatus.ASSIGNED,
+        ServiceBookingStatus.IN_PROGRESS,
+        ServiceBookingStatus.CANCELLED,
+        ServiceBookingStatus.RESCHEDULED,
+      ],
+      [ServiceBookingStatus.ASSIGNED]: [
+        ServiceBookingStatus.IN_PROGRESS,
+        ServiceBookingStatus.CANCELLED,
+        ServiceBookingStatus.RESCHEDULED,
+      ],
+      [ServiceBookingStatus.IN_PROGRESS]: [
+        ServiceBookingStatus.COMPLETED,
+        ServiceBookingStatus.CANCELLED,
+      ],
+      [ServiceBookingStatus.RESCHEDULED]: [
+        ServiceBookingStatus.CONFIRMED,
+        ServiceBookingStatus.ASSIGNED,
+        ServiceBookingStatus.IN_PROGRESS,
+        ServiceBookingStatus.CANCELLED,
+      ],
+      [ServiceBookingStatus.COMPLETED]: [],
+      [ServiceBookingStatus.CANCELLED]: [],
+    };
+
+    const allowed = allowedTransitions[currentStatus] || [];
+    if (!allowed.includes(nextStatus)) {
+      throw new BadRequestException('Chuyển đổi trạng thái không hợp lệ');
+    }
+
     return this.prisma.service_bookings.update({
       where: { id },
-      data: { status, updatedAt: new Date() },
+      data: {
+        status: nextStatus,
+        completedAt:
+          nextStatus === ServiceBookingStatus.COMPLETED ? new Date() : booking.completedAt,
+        updatedAt: new Date(),
+      },
       include: {
         services: true,
         technicians: true,
@@ -414,7 +673,7 @@ export class BookingService {
         bookingId,
         provider: sanitizedData.provider || 'COD',
         status: sanitizedData.status || 'PENDING',
-        amountCents: sanitizedData.amountCents || booking.estimatedCosts || 0,
+        amountCents: BigInt(sanitizedData.amountCents || booking.estimatedCosts || 0) as any,
         transactionId: sanitizedData.transactionId,
       },
     });

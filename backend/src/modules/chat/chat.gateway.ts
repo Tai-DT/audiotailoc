@@ -22,11 +22,15 @@ export interface ChatSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: (origin: string, callback: any) => {
+      callback(null, true);
+    },
+    credentials: true,
     methods: ['GET', 'POST'],
   },
   transports: ['websocket', 'polling'],
   namespace: '/api/v1/chat',
+  path: '/api/v1/socket.io',
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);

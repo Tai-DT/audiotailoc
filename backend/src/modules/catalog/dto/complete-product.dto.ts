@@ -765,6 +765,12 @@ export class ProductResponseDto {
   })
   images?: string[];
 
+  @ApiPropertyOptional({
+    description: 'Main image URL',
+    example: 'https://example.com/image.jpg',
+  })
+  imageUrl?: string;
+
   @ApiProperty({
     description: 'Is active',
     example: true,

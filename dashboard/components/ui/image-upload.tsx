@@ -9,6 +9,7 @@ import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { resolveBackendImageUrl } from "@/lib/utils/image-url"
 
 export interface ImageWithSEO {
   url: string;
@@ -52,6 +53,7 @@ export function ImageUpload({
   showSEOFields = false
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const normalizedValue = normalizeImages(value);
@@ -69,18 +71,35 @@ export function ImageUpload({
 
     setIsUploading(true)
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const response = await apiClient.uploadImage(file);
-        const imageUrl = response.data?.url || response.url;
-        return { url: imageUrl, alt: '', title: '' };
+      const uploadPromises: Array<Promise<ImageWithSEO>> = Array.from(files).map(
+        async (file): Promise<ImageWithSEO> => {
+        try {
+          const response = await apiClient.uploadImage(file);
+          const imageUrl = response.data?.url || (response as { url?: string }).url;
+          return { url: imageUrl, alt: '', title: '' };
+        } catch (error) {
+          setUploadErrors(prev => ({
+            ...prev,
+            [file.name]: error instanceof Error ? error.message : 'Upload failed'
+          }))
+          throw error
+        }
       })
 
-      const newImages = await Promise.all(uploadPromises)
-      onChange([...normalizedValue, ...newImages])
-      toast.success("Đã tải ảnh lên thành công")
+      const settled = await Promise.allSettled(uploadPromises)
+      const newImages = settled
+        .filter((result): result is PromiseFulfilledResult<ImageWithSEO> => result.status === 'fulfilled')
+        .map(result => result.value)
+      if (newImages.length > 0) {
+        onChange([...normalizedValue, ...newImages])
+        toast.success("Đã tải ảnh lên thành công")
+      }
+      if (newImages.length === 0) {
+        toast.error("Không thể tải ảnh lên Cloud")
+      }
     } catch (error) {
       console.error("Upload error:", error)
-      toast.error("Lỗi khi tải ảnh lên Cloud")
+      toast.error(error instanceof Error ? error.message : "Lỗi khi tải ảnh lên Cloud")
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -104,7 +123,7 @@ export function ImageUpload({
           <div key={img.url + index} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
             {img.url ? (
               <img
-                src={img.url}
+                src={resolveBackendImageUrl(img.url)}
                 alt={img.alt || "Image"}
                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
                 onError={(e) => {
@@ -195,6 +214,14 @@ export function ImageUpload({
           </div>
         )}
       </div>
+
+      {Object.keys(uploadErrors).length > 0 && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+          {Object.entries(uploadErrors).map(([filename, message]) => (
+            <div key={filename}>{filename}: {message}</div>
+          ))}
+        </div>
+      )}
 
       <input
         type="file"

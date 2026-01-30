@@ -1,175 +1,128 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Filter, X } from 'lucide-react';
+import { Search, X, Check, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
-export function ProjectFilters() {
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('');
-  const [selectedLocation, setSelectedLocation] = React.useState<string>('');
-  const [selectedStatus, setSelectedStatus] = React.useState<string>('');
+interface ProjectFiltersProps {
+ categories: string[];
+ statuses: Array<{ value: string; label: string }>;
+ selectedCategory: string;
+ selectedStatus: string;
+ searchQuery: string;
+ onCategoryChange: (value: string) => void;
+ onStatusChange: (value: string) => void;
+ onSearchChange: (value: string) => void;
+ onClear: () => void;
+}
 
-  const categories = [
-    'Tất cả',
-    'Hội trường',
-    'Studio',
-    'Sân khấu',
-    'Phòng họp',
-    'Nhà hát',
-    'Sự kiện'
-  ];
+export function ProjectFilters({
+ categories,
+ statuses,
+ selectedCategory,
+ selectedStatus,
+ searchQuery,
+ onCategoryChange,
+ onStatusChange,
+ onSearchChange,
+ onClear,
+}: ProjectFiltersProps) {
+ const categoryOptions = ['Tất cả', ...categories];
+ const statusOptions = [{ value: '', label: 'Tất cả' }, ...statuses];
+ const hasActiveFilters = Boolean(selectedCategory || selectedStatus || searchQuery.trim());
 
-  const locations = [
-    'Tất cả',
-    'Hà Nội',
-    'TP.HCM',
-    'Đà Nẵng',
-    'Cần Thơ',
-    'Hải Phòng',
-    'Khác'
-  ];
+ return (
+ <div className="space-y-10">
+ {/* Search Filter Redesign */}
+ <div className="space-y-4">
+ <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 dark:text-foreground/30 dark:text-foreground dark:text-white/30 flex items-center gap-2">
+ <Search className="w-3 h-3 text-primary" />
+ Truy vấn định danh
+ </label>
+ <div className="relative group/input">
+ <Input
+ value={searchQuery}
+ onChange={(e) => onSearchChange(e.target.value)}
+ placeholder="Tên dự án, khách hàng..."
+ className="h-12 bg-white/5 border-white/10 rounded-xl text-foreground dark:text-foreground dark:text-white placeholder:text-foreground/10 dark:text-foreground/10 dark:text-foreground dark:text-white/10 focus:border-primary/50 transition-all text-xs font-medium ring-0"
+ />
+ {searchQuery && (
+ <button
+ onClick={() => onSearchChange('')}
+ className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 hover:text-foreground dark:text-foreground dark:text-white transition-colors"
+ >
+ <X className="w-4 h-4" />
+ </button>
+ )}
+ </div>
+ </div>
 
-  const statuses = [
-    'Tất cả',
-    'Hoàn thành',
-    'Đang thực hiện',
-    'Sắp tới'
-  ];
+ {/* Category Filter Redesign */}
+ <div className="space-y-4">
+ <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 dark:text-foreground/30 dark:text-foreground dark:text-white/30 flex items-center gap-2">
+ <Filter className="w-3 h-3 text-accent" />
+ Phân loại Kiến trúc
+ </label>
+ <div className="space-y-2">
+ {categoryOptions.map((category) => (
+ <button
+ key={category}
+ onClick={() => onCategoryChange(category === 'Tất cả' ? '' : category)}
+ className={cn(
+ "w-full flex items-center justify-between h-11 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left",
+ selectedCategory === category || (!selectedCategory && category === 'Tất cả')
+ ? "bg-primary text-foreground dark:text-foreground dark:text-white shadow-lg shadow-primary/20"
+ : "bg-white/5 text-foreground/40 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 hover:bg-white/10 hover:text-foreground dark:text-foreground dark:text-white border border-white/5"
+ )}
+ >
+ <span className="truncate pr-2">{category}</span>
+ {(selectedCategory === category || (!selectedCategory && category === 'Tất cả')) && (
+ <Check className="w-3 h-3 flex-shrink-0" />
+ )}
+ </button>
+ ))}
+ </div>
+ </div>
 
-  const clearFilters = () => {
-    setSelectedCategory('');
-    setSelectedLocation('');
-    setSelectedStatus('');
-  };
+ {/* Status Filter Redesign */}
+ <div className="space-y-4">
+ <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 dark:text-foreground/30 dark:text-foreground dark:text-white/30 flex items-center gap-2">
+ <div className="w-3 h-3 rounded-full border-2 border-primary/40 animate-pulse" />
+ Tiến độ Triển khai
+ </label>
+ <div className="flex flex-wrap gap-2">
+ {statusOptions.map((status) => (
+ <button
+ key={status.value || status.label}
+ onClick={() => onStatusChange(status.value)}
+ className={cn(
+ "px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+ selectedStatus === status.value || (!selectedStatus && status.value === '')
+ ? "bg-accent text-foreground dark:text-foreground dark:text-white shadow-lg shadow-accent/20"
+ : "bg-white/5 text-foreground/40 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 hover:bg-white/10 hover:border-white/20 border border-white/5"
+ )}
+ >
+ {status.label}
+ </button>
+ ))}
+ </div>
+ </div>
 
-  const hasActiveFilters = selectedCategory || selectedLocation || selectedStatus;
-
-  return (
-    <div className="space-y-4">
-      {/* Filter Header */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center space-x-2">
-              <Filter className="h-5 w-5" />
-              <span>Bộ lọc</span>
-            </CardTitle>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Xóa
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Category Filter */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Loại dự án</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category || (!selectedCategory && category === 'Tất cả') ? "default" : "outline"}
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => setSelectedCategory(category === 'Tất cả' ? '' : category)}
-            >
-              {category}
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Location Filter */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Địa điểm</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {locations.map((location) => (
-            <Button
-              key={location}
-              variant={selectedLocation === location || (!selectedLocation && location === 'Tất cả') ? "default" : "outline"}
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => setSelectedLocation(location === 'Tất cả' ? '' : location)}
-            >
-              {location}
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Status Filter */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Trạng thái</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {statuses.map((status) => (
-            <Button
-              key={status}
-              variant={selectedStatus === status || (!selectedStatus && status === 'Tất cả') ? "default" : "outline"}
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => setSelectedStatus(status === 'Tất cả' ? '' : status)}
-            >
-              {status}
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Bộ lọc đang áp dụng</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {selectedCategory && (
-                <Badge variant="secondary" className="flex items-center space-x-1">
-                  <span>Danh mục: {selectedCategory}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setSelectedCategory('')}
-                  />
-                </Badge>
-              )}
-              {selectedLocation && (
-                <Badge variant="secondary" className="flex items-center space-x-1">
-                  <span>Địa điểm: {selectedLocation}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setSelectedLocation('')}
-                  />
-                </Badge>
-              )}
-              {selectedStatus && (
-                <Badge variant="secondary" className="flex items-center space-x-1">
-                  <span>Trạng thái: {selectedStatus}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setSelectedStatus('')}
-                  />
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+ {/* Footer / Clear Actions */}
+ {hasActiveFilters && (
+ <div className="pt-6 border-t border-white/5">
+ <Button
+ variant="ghost"
+ onClick={onClear}
+ className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:bg-primary/10 hover:text-primary transition-all border border-primary/20"
+ >
+ <X className="h-4 w-4 mr-2" />
+ Làm mới bộ lọc
+ </Button>
+ </div>
+ )}
+ </div>
+ );
 }

@@ -16,7 +16,7 @@ import { AdminGuard } from '../auth/admin.guard';
 
 /**
  * Search Controller
- * Handles search endpoints for products, services, blog, and knowledge base
+ * Handles search endpoints for products, services, and blog
  */
 @ApiTags('Search')
 @Controller('search')
@@ -32,13 +32,13 @@ export class SearchController {
   @Get()
   @ApiOperation({
     summary: 'Search across all content',
-    description: 'Unified search across products, services, blog articles, and knowledge base',
+    description: 'Unified search across products, services, and blog articles',
   })
   @ApiQuery({ name: 'q', description: 'Search query', type: String, required: true })
   @ApiQuery({
     name: 'type',
     description: 'Content type filter',
-    enum: ['product', 'service', 'blog', 'knowledge', 'all'],
+    enum: ['product', 'service', 'blog', 'all'],
     required: false,
   })
   @ApiQuery({ name: 'category', description: 'Category filter', type: String, required: false })
@@ -231,7 +231,7 @@ export class SearchController {
   @Get(':type')
   @ApiOperation({
     summary: 'Search specific content type',
-    description: 'Search for products, services, blog, or knowledge base entries',
+    description: 'Search for products, services, or blog articles',
   })
   @ApiQuery({ name: 'q', description: 'Search query', type: String, required: true })
   @ApiQuery({ name: 'page', description: 'Page number', type: Number, required: false })
@@ -245,7 +245,7 @@ export class SearchController {
     @Req() req?: any,
   ): Promise<SearchResponse> {
     try {
-      const validTypes = ['product', 'service', 'blog', 'knowledge'];
+      const validTypes = ['product', 'service', 'blog'];
       if (!validTypes.includes(type)) {
         throw new Error(`Invalid content type: ${type}`);
       }

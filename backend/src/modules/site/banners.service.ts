@@ -94,7 +94,10 @@ export class BannersService {
       if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
       if (data.description !== undefined) updateData.description = data.description;
       if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+      if (data.darkImageUrl !== undefined) updateData.darkImageUrl = data.darkImageUrl;
       if (data.mobileImageUrl !== undefined) updateData.mobileImageUrl = data.mobileImageUrl;
+      if (data.darkMobileImageUrl !== undefined)
+        updateData.darkMobileImageUrl = data.darkMobileImageUrl;
       if (data.linkUrl !== undefined) updateData.linkUrl = data.linkUrl;
       if (data.buttonLabel !== undefined) updateData.buttonLabel = data.buttonLabel;
       if (data.page !== undefined) updateData.page = data.page;

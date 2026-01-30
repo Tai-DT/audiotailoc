@@ -4,15 +4,18 @@
  */
 
 // API Base URLs
+const isBrowser = typeof window !== 'undefined';
+
 export const API_CONFIG = {
   // Backend API base URL
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1',
-  
+  // Use relative path in browser to leverage Next.js rewrites and avoid CORS
+  baseUrl: isBrowser ? '/api/v1' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1'),
+
   // Backend base (without /api/v1)
   backendUrl: (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1').replace(/\/api\/v1\/?$/, ''),
-  
+
   // WebSocket URL
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL ||
     (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010').replace(/\/api\/v1\/?$/, '').replace('http', 'ws'),
 } as const;
 
@@ -26,7 +29,7 @@ export const API_ENDPOINTS = {
     me: '/auth/me',
     refresh: '/auth/refresh',
   },
-  
+
   // Products
   products: {
     list: '/catalog/products',
@@ -34,7 +37,7 @@ export const API_ENDPOINTS = {
     bySlug: (slug: string) => `/catalog/products/slug/${slug}`,
     search: '/catalog/products/search',
   },
-  
+
   // Services
   services: {
     list: '/services',
@@ -42,7 +45,7 @@ export const API_ENDPOINTS = {
     bySlug: (slug: string) => `/services/slug/${slug}`,
     types: '/service-types',
   },
-  
+
   // Cart
   cart: {
     get: '/cart',
@@ -51,41 +54,41 @@ export const API_ENDPOINTS = {
     remove: '/cart/remove',
     clear: '/cart/clear',
   },
-  
+
   // Orders
   orders: {
     list: '/orders',
     detail: (id: string) => `/orders/${id}`,
     create: '/orders',
   },
-  
+
   // Payments
   payments: {
     create: '/payments/create',
     status: (id: string) => `/payments/${id}/status`,
     webhook: '/payments/webhook',
   },
-  
+
   // Blog
   blog: {
     articles: '/blog/articles',
     articleBySlug: (slug: string) => `/blog/articles/slug/${slug}`,
     categories: '/blog/categories',
   },
-  
+
   // Site
   site: {
     settings: '/site/settings',
     contactInfo: '/site/contact-info',
     banners: '/banners',
   },
-  
+
   // Support
   support: {
     tickets: '/support/tickets',
     kb: '/support/kb/articles',
   },
-  
+
   // Maps
   maps: {
     geocode: '/maps/geocode',
@@ -93,7 +96,7 @@ export const API_ENDPOINTS = {
     directions: '/maps/directions',
     placeDetail: '/maps/place-detail',
   },
-  
+
   // AI
   ai: {
     chat: '/ai/chat',

@@ -11,4 +11,4 @@ import { LoggingModule } from '../logging/logging.module';
   providers: [CatalogService],
   imports: [AuthModule, InventoryModule, LoggingModule],
 })
-export class CatalogModule { }
+export class CatalogModule {}

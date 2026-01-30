@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 
     // Forward the webhook to the real backend
-    const response = await fetch(`${backendUrl}/payments/webhook/payos`, {
+    const response = await fetch(`${backendUrl}/payments/payos/webhook`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

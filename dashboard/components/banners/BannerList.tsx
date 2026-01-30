@@ -3,52 +3,45 @@
 import { Banner } from "@/types/banner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import
-  {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-  } from "@/components/ui/table"
-import
-  {
-    Edit,
-    Trash2,
-    ExternalLink,
-    Image as ImageIcon
-  } from "lucide-react"
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from "@/components/ui/table"
+import {
+Edit,
+Trash2,
+Image as ImageIcon
+} from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface BannerListProps
-{
+interface BannerListProps {
   banners: Banner[]
   loading: boolean
-  onEdit: ( banner: Banner ) => void
-  onDelete: ( id: string ) => void
+  onEdit: (banner: Banner) => void
+  onDelete: (id: string) => void
 }
 
-export function BannerList ( {
+export function BannerList({
   banners,
   loading,
   onEdit,
   onDelete
-}: BannerListProps )
-{
-  if ( loading )
-  {
+}: BannerListProps) {
+  if (loading) {
     return (
       <div className="space-y-2">
-        {[ ...Array( 5 ) ].map( ( _, i ) => (
+        {[...Array(5)].map((_, i) => (
           <Skeleton key={i} className="h-12 w-full" />
-        ) )}
+        ))}
       </div>
     )
   }
 
-  if ( banners.length === 0 )
-  {
+  if (banners.length === 0) {
     return (
       <div className="text-center py-8">
         <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -70,7 +63,7 @@ export function BannerList ( {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {banners.map( ( banner ) => (
+        {banners.map((banner) => (
           <TableRow key={banner.id}>
             <TableCell>
               <div className="w-20 h-12 bg-gray-100 rounded overflow-hidden">
@@ -82,8 +75,7 @@ export function BannerList ( {
                   width={80}
                   height={48}
                   className="w-full h-full object-cover"
-                  onError={( e ) =>
-                  {
+                  onError={(e) => {
                     e.currentTarget.src = "https://via.placeholder.com/80x48"
                   }}
                   loading="lazy"
@@ -110,30 +102,20 @@ export function BannerList ( {
             </TableCell>
             <TableCell>
               <div className="flex space-x-2">
-                {banner.linkUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open( banner.linkUrl!, '_blank' )}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                )}
+
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onEdit( banner )}
+                  onClick={() => onEdit(banner)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                  {
-                    if ( confirm( 'Bạn có chắc muốn xóa banner này?' ) )
-                    {
-                      onDelete( banner.id )
+                  onClick={() => {
+                    if (confirm('Bạn có chắc muốn xóa banner này?')) {
+                      onDelete(banner.id)
                     }
                   }}
                 >
@@ -142,7 +124,7 @@ export function BannerList ( {
               </div>
             </TableCell>
           </TableRow>
-        ) )}
+        ))}
       </TableBody>
     </Table>
   )

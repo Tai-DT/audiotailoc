@@ -28,8 +28,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    if (paymentMethod === 'payos') {
-      const status = await checkPayOSStatus(orderId);
+    const normalizedMethod = paymentMethod === 'cos' ? 'cod' : paymentMethod;
+    const authHeader = getAuthHeader(request);
+    const adminKey = process.env.ADMIN_API_KEY;
+    const headers = buildOrderHeaders({
+      authHeader,
+      adminKey,
+      origin: request.headers.get('origin') || request.nextUrl.origin,
+      referer: request.headers.get('referer') || request.url,
+    });
+
+    if (normalizedMethod === 'payos') {
+      const status = await checkPayOSStatus(orderId, headers);
       return NextResponse.json({
         success: true,
         paymentMethod: 'payos',
@@ -39,8 +49,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (paymentMethod === 'cod') {
-      const status = await checkCODStatus(orderId);
+    if (normalizedMethod === 'cod') {
+      const status = await checkCODStatus(orderId, headers);
       return NextResponse.json({
         success: true,
         paymentMethod: 'cod',
@@ -64,28 +74,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function checkPayOSStatus(orderId: string) {
+async function checkPayOSStatus(orderId: string, headers: Record<string, string>) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
-    
+
     // Fetch order from backend (which includes payments)
     const response = await fetch(`${backendUrl}/orders/${orderId}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers
     });
 
     if (!response.ok) throw new Error('Failed to fetch order status from backend');
     const payload = (await response.json()) as { data?: BackendOrder } | BackendOrder;
-    
-    // Extract order from payload with proper typing
-    let order: BackendOrder;
-    if ('data' in payload && payload.data) {
-      order = payload.data;
-    } else if ('status' in payload) {
-      order = payload as BackendOrder;
-    } else {
-      order = {};
-    }
+    const order = normalizeOrderPayload(payload);
 
     // Map backend order/payment status to frontend format
     let status = 'PENDING';
@@ -116,27 +117,71 @@ async function checkPayOSStatus(orderId: string) {
   }
 }
 
-async function checkCODStatus(orderId: string) {
+async function checkCODStatus(orderId: string, headers: Record<string, string>) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
-    
+
     // Fetch order from backend
     const response = await fetch(`${backendUrl}/orders/${orderId}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers
     });
 
     if (!response.ok) throw new Error('Failed to fetch order status from backend');
-    const order = await response.json();
+    const payload = (await response.json()) as { data?: BackendOrder } | BackendOrder;
+    const order = normalizeOrderPayload(payload);
 
     return {
       status: order.status === 'CANCELLED' ? 'FAILED' : 'PENDING',
-      orderId: order.orderNo,
+      orderId: order.orderNo || orderId,
       createdAt: order.createdAt,
-      estimatedDelivery: new Date(new Date(order.createdAt).getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+      estimatedDelivery: order.createdAt
+        ? new Date(new Date(order.createdAt).getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
     };
   } catch (error) {
     console.error('COD status check error:', error);
     throw error;
   }
+}
+
+function getAuthHeader(request: NextRequest) {
+  const cookieToken = request.cookies.get('audiotailoc_token')?.value;
+  const header = request.headers.get('authorization');
+  const bearer = header && header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  const token = cookieToken || bearer;
+  return token ? `Bearer ${token}` : undefined;
+}
+
+function buildOrderHeaders({
+  authHeader,
+  adminKey,
+  origin,
+  referer,
+}: {
+  authHeader?: string;
+  adminKey?: string;
+  origin?: string;
+  referer?: string;
+}) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (authHeader) {
+    headers.Authorization = authHeader;
+  } else if (adminKey) {
+    headers['x-admin-key'] = adminKey;
+  }
+  if (origin) {
+    headers.Origin = origin;
+  }
+  if (referer) {
+    headers.Referer = referer;
+  }
+  return headers;
+}
+
+function normalizeOrderPayload(payload: { data?: BackendOrder } | BackendOrder) {
+  if (payload && typeof payload === 'object' && 'data' in payload && payload.data) {
+    return payload.data;
+  }
+  return payload as BackendOrder;
 }

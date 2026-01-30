@@ -17,7 +17,7 @@ export interface Project {
   youtubeVideoId?: string;
   youtubeVideoUrl?: string;
   liveUrl?: string;
-  demoUrl?: string;
+
   githubUrl?: string;
   startDate?: string;
   endDate?: string;
@@ -51,7 +51,7 @@ export interface CreateProjectRequest {
   images?: string[];
   youtubeVideoUrl?: string;
   liveUrl?: string;
-  demoUrl?: string;
+
   githubUrl?: string;
   startDate?: string;
   endDate?: string;

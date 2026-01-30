@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { slugify, removeVietnameseTones } from '../../../common/utils/slug';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -21,7 +22,7 @@ import {
 
 @Injectable()
 export class CompleteProductService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private safeParseJSON(data: any, defaultValue: any = null) {
     if (!data) return defaultValue;
@@ -564,7 +565,7 @@ export class CompleteProductService {
     if (invalidFields.length > 0) {
       throw new BadRequestException(
         `Invalid fields in bulk update: ${invalidFields.join(', ')}. ` +
-        `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`,
+          `Only the following fields are allowed: ${ALLOWED_UPDATE_FIELDS.join(', ')}`,
       );
     }
 
@@ -624,14 +625,7 @@ export class CompleteProductService {
     }
 
     // Generate new slug
-    const baseSlug = this.generateSlug(product.name);
-    let newSlug = `${baseSlug}-copy`;
-    let counter = 1;
-
-    while (await this.prisma.products.findUnique({ where: { slug: newSlug } })) {
-      newSlug = `${baseSlug}-copy-${counter}`;
-      counter++;
-    }
+    const newSlug = await this.generateUniqueSlug(`${product.name}-copy`);
 
     // Create duplicate
     const duplicatedProduct = await this.prisma.products.create({
@@ -971,13 +965,20 @@ export class CompleteProductService {
   }
 
   private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .trim()
-      .substring(0, 100); // Limit length
+    return slugify(name);
+  }
+
+  private async generateUniqueSlug(base: string): Promise<string> {
+    const baseSlug = slugify(base);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await this.prisma.products.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    return slug;
   }
 
   private mapToProductResponse(product: any): ProductResponseDto {
@@ -989,7 +990,14 @@ export class CompleteProductService {
       shortDescription: product.shortDescription,
       priceCents: product.priceCents,
       originalPriceCents: product.originalPriceCents,
-      images: this.safeParseJSON(product.images, []),
+      imageUrl: product.imageUrl,
+      images: (() => {
+        const parsedImages = this.safeParseJSON(product.images, []);
+        if (parsedImages.length === 0 && product.imageUrl) {
+          return [product.imageUrl];
+        }
+        return parsedImages;
+      })(),
       category: product.categories,
       brand: product.brand,
       model: product.model,
@@ -1067,8 +1075,8 @@ export class CompleteProductService {
 
   async generateUniqueSku(baseName?: string): Promise<string> {
     const base =
-      baseName
-        ?.toUpperCase()
+      removeVietnameseTones(baseName || '')
+        .toUpperCase()
         .replace(/[^A-Z0-9]/g, '')
         .substring(0, 8) || 'PROD';
     let sku = base;

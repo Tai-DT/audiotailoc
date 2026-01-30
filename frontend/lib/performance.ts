@@ -22,15 +22,20 @@ export function lazyLoad<T extends object>(
 }
 
 /**
- * Lazy loaded home page components
+ * Lazy loaded home page components - Updated for new components
  */
-export const LazyTestimonialsSection = dynamic(
-  () => import('@/components/home/testimonials-section').then(mod => ({ default: mod.TestimonialsSection })),
+export const LazyWhyChooseUsSection = dynamic(
+  () => import('@/components/home/why-choose-us-section').then(mod => ({ default: mod.WhyChooseUsSection })),
   { ssr: true }
 );
 
-export const LazyContactSection = dynamic(
-  () => import('@/components/home/contact-section').then(mod => ({ default: mod.ContactSection })),
+export const LazyCTASection = dynamic(
+  () => import('@/components/home/cta-section').then(mod => ({ default: mod.CTASection })),
+  { ssr: true }
+);
+
+export const LazyServicesSection = dynamic(
+  () => import('@/components/home/services-section').then(mod => ({ default: mod.ServicesSection })),
   { ssr: true }
 );
 
@@ -59,7 +64,7 @@ export function createIntersectionObserver(
   options?: IntersectionObserverInit
 ): IntersectionObserver | null {
   if (typeof window === 'undefined') return null;
-  
+
   return new IntersectionObserver(callback, {
     rootMargin: '100px',
     threshold: 0.1,

@@ -336,23 +336,6 @@ model inventory_reports {
   @@index([type])
 }
 
-model knowledge_base_entries {
-  id         String    @id
-  kind       String
-  title      String
-  content    String
-  productId  String?
-  tags       String?
-  embedding  String?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime
-  helpful    Int       @default(0)
-  notHelpful Int       @default(0)
-  slug       String?   @unique
-  viewCount  Int       @default(0)
-  products   products? @relation(fields: [productId], references: [id])
-}
 
 model loyalty_accounts {
   id                 String               @id
@@ -628,7 +611,6 @@ model products {
   inventory              inventory?
   inventory_alerts       inventory_alerts[]
   inventory_movements    inventory_movements[]
-  knowledge_base_entries knowledge_base_entries[]
   order_items            order_items[]
   product_reviews        product_reviews[]
   product_views          product_views[]
@@ -658,7 +640,6 @@ model projects {
   coverImage       String?
   youtubeVideoId   String?
   youtubeVideoUrl  String?
-  demoUrl          String?
   githubUrl        String?
   liveUrl          String?
   startDate        DateTime?

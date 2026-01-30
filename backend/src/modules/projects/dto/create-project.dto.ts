@@ -100,11 +100,6 @@ export class CreateProjectDto {
   @IsOptional()
   youtubeVideoUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Demo URL' })
-  @IsUrl()
-  @IsOptional()
-  demoUrl?: string;
-
   @ApiPropertyOptional({ description: 'GitHub repository URL' })
   @IsUrl()
   @IsOptional()

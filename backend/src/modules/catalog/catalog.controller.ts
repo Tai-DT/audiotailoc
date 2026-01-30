@@ -2,8 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Post,
   UseGuards,
@@ -12,20 +10,18 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { JwtGuard } from '../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
 
 @ApiTags('Catalog')
 @ApiBearerAuth()
 @Controller('catalog/categories')
 export class CatalogCategoriesController {
-  constructor(private readonly catalog: CatalogService) { }
+  constructor(private readonly catalog: CatalogService) {}
 
   @Get()
   listCategories() {
@@ -34,6 +30,11 @@ export class CatalogCategoriesController {
 
   @Get('slug/:slug')
   getCategoryBySlug(@Param('slug') slug: string) {
+    return this.catalog.getCategoryBySlug(slug);
+  }
+
+  @Get(':slug')
+  getCategory(@Param('slug') slug: string) {
     return this.catalog.getCategoryBySlug(slug);
   }
 

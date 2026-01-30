@@ -43,6 +43,8 @@ export class CsrfMiddleware implements NestMiddleware {
       '/api/v1/health',
       '/api/v1/auth/login',
       '/api/v1/auth/register',
+      '/api/v1/socket.io',
+      '/socket.io',
     ];
     if (publicPaths.some(path => req.path.startsWith(path))) {
       return next();

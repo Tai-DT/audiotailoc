@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -392,13 +391,7 @@ export default function InventoryPage() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
                                 {item.productImage ? (
-                                  <Image
-                                    src={item.productImage}
-                                    alt={item.productName}
-                                    width={40}
-                                    height={40}
-                                    className="w-full h-full object-cover"
-                                  />
+                                  <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
                                 ) : (
                                   <Package className="h-5 w-5 text-gray-500" />
                                 )}

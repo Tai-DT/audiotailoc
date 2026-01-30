@@ -110,10 +110,15 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     return `${keyPrefix}:${hashedKey}`;
   }
 
+  // Helper to stringify with BigInt support
+  private jsonStringify(value: any): string {
+    return JSON.stringify(value, (key, val) => (typeof val === 'bigint' ? val.toString() : val));
+  }
+
   // Generate key from object
   generateKeyFromObject(obj: any, prefix?: string): string {
     const sortedObj = this.sortObjectKeys(obj);
-    const key = JSON.stringify(sortedObj);
+    const key = this.jsonStringify(sortedObj);
     return this.generateKey(key, prefix);
   }
 
@@ -168,7 +173,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       };
 
       // Set cache entry
-      await this.redis.setex(cacheKey, ttl, JSON.stringify(entry));
+      await this.redis.setex(cacheKey, ttl, this.jsonStringify(entry));
 
       // Store tags for invalidation
       if (options?.tags) {
@@ -383,7 +388,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
           tags: options?.tags,
         };
 
-        pipeline.setex(cacheKey, ttl, JSON.stringify(entry));
+        pipeline.setex(cacheKey, ttl, this.jsonStringify(entry));
 
         // Add to tags
         if (options?.tags) {

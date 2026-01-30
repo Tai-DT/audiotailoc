@@ -4,58 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, API_ENDPOINTS, handleApiResponse } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-// Types
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  shortDescription?: string;
-  priceCents: number;
-  originalPriceCents?: number;
-  imageUrl?: string;
-  images?: string[];
-  categoryId?: string;
-  category?: {
-    id: string;
-    name: string;
-  };
-  brand?: string;
-  model?: string;
-  sku?: string;
-  specifications?: Record<string, string>;
-  features?: string;
-  warranty?: string;
-  weight?: number;
-  dimensions?: string;
-  stockQuantity: number;
-  minOrderQuantity?: number;
-  maxOrderQuantity?: number;
-  maxStock?: number;
-  tags?: string[];
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string[];
-  canonicalUrl?: string;
-  featured?: boolean;
-  isActive: boolean;
-  isDeleted?: boolean;
-  viewCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Product, ProductFilters } from '@/lib/types';
+export type { Product, ProductFilters };
 
-export interface ProductFilters {
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  search?: string;
-  q?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: 'name' | 'price' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
-}
 
 interface ApiError {
   message: string;

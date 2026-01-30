@@ -128,8 +128,13 @@ export class PromotionAdvancedService {
     promotionId: string,
     userId: string,
     cartData: {
-      items: Array<{ productId: string; categoryId?: string; quantity: number; price: number }>;
-      total: number;
+      items: Array<{
+        productId: string;
+        categoryId?: string;
+        quantity: number;
+        price: number | bigint;
+      }>;
+      total: number | bigint;
     },
   ): Promise<{ valid: boolean; reason?: string }> {
     const promotion = await this.prisma.promotions.findUnique({
@@ -167,14 +172,14 @@ export class PromotionAdvancedService {
     }
 
     // Check order value conditions
-    if (conditions.minOrderValue && cartData.total < conditions.minOrderValue) {
+    if (conditions.minOrderValue && BigInt(cartData.total) < BigInt(conditions.minOrderValue)) {
       return {
         valid: false,
         reason: `Minimum order value is ${conditions.minOrderValue.toLocaleString('vi-VN')}đ`,
       };
     }
 
-    if (conditions.maxOrderValue && cartData.total > conditions.maxOrderValue) {
+    if (conditions.maxOrderValue && BigInt(cartData.total) > BigInt(conditions.maxOrderValue)) {
       return {
         valid: false,
         reason: `Maximum order value is ${conditions.maxOrderValue.toLocaleString('vi-VN')}đ`,
@@ -272,7 +277,7 @@ export class PromotionAdvancedService {
   calculateTieredDiscount(
     conditions: PromotionConditions,
     quantity: number,
-    basePrice: number,
+    basePrice: number | bigint,
   ): { discount: number; tier: TierDiscount | null } {
     if (!conditions.tierDiscounts || conditions.tierDiscounts.length === 0) {
       return { discount: 0, tier: null };
@@ -290,7 +295,7 @@ export class PromotionAdvancedService {
 
     let discount = 0;
     if (applicableTier.discountType === 'PERCENTAGE') {
-      discount = (basePrice * applicableTier.discountValue) / 100;
+      discount = Number((BigInt(basePrice) * BigInt(applicableTier.discountValue)) / BigInt(100));
     } else {
       discount = applicableTier.discountValue;
     }
@@ -458,11 +463,17 @@ export class PromotionAdvancedService {
    */
   async getSmartRecommendations(userId: string, limit: number = 5) {
     // Get user's order history
-    const userOrders = await this.prisma.orders.findMany({
+    // Get user's order history
+    const userOrdersRaw = await this.prisma.orders.findMany({
       where: { userId },
       select: { totalCents: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
+
+    const userOrders = userOrdersRaw.map(o => ({
+      ...o,
+      totalCents: BigInt(o.totalCents),
+    }));
 
     // TODO: customer_promotions table does not exist
     const usedPromotions: any[] = []; // await this.prisma.customer_promotions.findMany({
@@ -491,7 +502,9 @@ export class PromotionAdvancedService {
       totalOrders: userOrders.length,
       averageOrderValue:
         userOrders.length > 0
-          ? userOrders.reduce((sum, o) => sum + o.totalCents, 0) / userOrders.length / 100
+          ? Number(userOrders.reduce((sum, o) => sum + BigInt(o.totalCents || 0), BigInt(0))) /
+            userOrders.length /
+            100
           : 0,
       recommendations: recommendations.map(promo => ({
         ...promo,
@@ -506,14 +519,15 @@ export class PromotionAdvancedService {
    */
   private calculateRelevance(
     promotion: any,
-    userOrders: Array<{ totalCents: number; createdAt: Date }>,
+    userOrders: Array<{ totalCents: bigint; createdAt: Date }>,
   ): number {
     let score = 50; // Base score
 
     // Adjust based on user's average order value
     if (userOrders.length > 0) {
       const avgOrderValue =
-        userOrders.reduce((sum, o) => sum + o.totalCents, 0) / userOrders.length;
+        Number(userOrders.reduce((sum, o) => sum + BigInt(o.totalCents || 0), BigInt(0))) /
+        userOrders.length;
 
       if (promotion.min_order_amount && avgOrderValue >= promotion.min_order_amount) {
         score += 20;

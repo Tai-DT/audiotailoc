@@ -112,7 +112,7 @@ export default function ProfilePage ()
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user.avatarUrl || '/avatars/admin.jpg'} alt={user.name} />
+                    <AvatarImage src={user.avatarUrl || '/images/logo/logo-dark.svg'} alt={user.name} />
                     <AvatarFallback className="text-lg">
                       {user.name ? user.name.split( ' ' ).map( n => n[ 0 ] ).join( '' ).substring( 0, 2 ).toUpperCase() : 'U'}
                     </AvatarFallback>

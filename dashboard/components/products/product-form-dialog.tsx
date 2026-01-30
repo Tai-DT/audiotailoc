@@ -668,9 +668,6 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
               }}
               placeholder="Kéo thả hình ảnh hoặc nhấn để chọn"
               folder="products"
-              width={300}
-              height={200}
-              maxSize={10}
               maxFiles={10}
               showSEOFields={true}
             />

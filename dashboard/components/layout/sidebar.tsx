@@ -136,12 +136,7 @@ const sidebarGroups = [
         icon: BookOpen,
         badge: null,
       },
-      {
-        title: "Kiến thức",
-        href: "/dashboard/knowledge",
-        icon: GraduationCap,
-        badge: null,
-      },
+
       {
         title: "Dự án",
         href: "/dashboard/projects",

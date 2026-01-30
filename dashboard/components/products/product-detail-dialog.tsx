@@ -7,8 +7,6 @@ import { Separator } from "@/components/ui/separator"
 import { apiClient } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { Star, Image as ImageIcon, Calendar, Eye, Package, Tag, Settings, Hash, Scale, Ruler, Shield } from "lucide-react"
-import Image from "next/image"
-
 interface Product {
   id: string
   slug?: string
@@ -18,7 +16,7 @@ interface Product {
   priceCents: number
   originalPriceCents?: number | null
   imageUrl?: string | null
-  images?: string[]
+  images?: Array<string | { url?: string }> | string
   categoryId?: string | null
   brand?: string | null
   model?: string | null
@@ -100,6 +98,41 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
     })
   }
 
+  const getProductImages = (productData: Product): string[] => {
+    const rawImages = productData.images
+    if (typeof rawImages === 'string') {
+      try {
+        const parsed = JSON.parse(rawImages) as unknown
+        if (Array.isArray(parsed)) {
+          const urls: string[] = []
+          for (const item of parsed) {
+            if (typeof item === 'string' && item) urls.push(item)
+            if (item && typeof item === 'object' && typeof (item as { url?: string }).url === 'string') {
+              urls.push((item as { url: string }).url)
+            }
+          }
+          return urls
+        }
+        if (typeof parsed === 'string') return [parsed]
+      } catch {
+        return [rawImages]
+      }
+    }
+
+    if (Array.isArray(rawImages) && rawImages.length > 0) {
+      const urls: string[] = []
+      for (const item of rawImages) {
+        if (typeof item === 'string' && item) urls.push(item)
+        if (item && typeof item === 'object' && typeof (item as { url?: string }).url === 'string') {
+          urls.push((item as { url: string }).url)
+        }
+      }
+      if (urls.length > 0) return urls
+    }
+
+    return productData.imageUrl ? [productData.imageUrl] : []
+  }
+
   if (!product) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -137,26 +170,11 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
             <div className="flex gap-2 overflow-x-auto">
               {(() => {
                 // Handle different image data formats safely
-                const imageUrls: string[] = []
-
-                // Ưu tiên sử dụng images array trước
-                if (Array.isArray(product.images) && product.images.length > 0) {
-                  imageUrls.push(...product.images)
-                } else if (product.imageUrl) {
-                  // Chỉ sử dụng imageUrl khi không có images array
-                  imageUrls.push(product.imageUrl)
-                }
+                const imageUrls = getProductImages(product)
 
                 return imageUrls.length > 0 ? (
                   imageUrls.map((image, index) => (
-                    <Image
-                      key={index}
-                      src={image}
-                      alt={`${product.name} - ${index + 1}`}
-                      width={96}
-                      height={96}
-                      className="h-24 w-24 rounded-lg object-cover flex-shrink-0"
-                    />
+                    <img key={index} src={image} alt={`${product.name}`} className="h-24 w-24 rounded-lg object-cover flex-shrink-0" />
                   ))
                 ) : (
                   <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center">
@@ -249,7 +267,7 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                     <label className="text-sm font-medium text-muted-foreground">Tồn kho</label>
                     <div className="flex items-center gap-2">
                       <p className={`font-medium ${product.stockQuantity === 0 ? 'text-red-600' :
-                          product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                        product.stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600'
                         }`}>
                         {product.stockQuantity}
                       </p>

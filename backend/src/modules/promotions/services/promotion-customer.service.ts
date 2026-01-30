@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { randomUUID } from 'crypto';
 
 export interface CustomerPromotionUsage {
   promotionId: string;
@@ -17,48 +18,44 @@ export class PromotionCustomerService {
   /**
    * Record a customer's promotion usage
    */
-  async recordUsage(_data: CustomerPromotionUsage) {
-    // TODO: customer_promotions table does not exist in schema
-    throw new Error('customer_promotions table does not exist in schema');
-    // return this.prisma.customer_promotions.create({
-    //   data: {
-    //     id: uuidv4(),
-    //     promotionId: data.promotionId,
-    //     userId: data.userId,
-    //     orderId: data.orderId,
-    //     discountApplied: data.discountApplied,
-    //     status: data.status || 'APPLIED',
-    //     metadata: data.metadata,
-    //     usedAt: new Date(),
-    //     createdAt: new Date(),
-    //   },
-    //   include: {
-    //     promotion: true,
-    //     user: {
-    //       select: {
-    //         id: true,
-    //         email: true,
-    //         name: true,
-    //       },
-    //     },
-    //   },
-    // });
+  async recordUsage(data: CustomerPromotionUsage) {
+    return this.prisma.customer_promotions.create({
+      data: {
+        id: randomUUID(),
+        promotionId: data.promotionId,
+        userId: data.userId,
+        orderId: data.orderId,
+        discountApplied: data.discountApplied ? BigInt(data.discountApplied) : null,
+        status: data.status || 'APPLIED',
+        metadata: data.metadata || {},
+        usedAt: new Date(),
+        createdAt: new Date(),
+      },
+      include: {
+        promotions: true,
+        users: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
   }
 
   /**
    * Check if a customer has already used a promotion
    */
-  async hasCustomerUsedPromotion(_promotionId: string, _userId: string): Promise<boolean> {
-    // TODO: customer_promotions table does not exist
-    return false;
-    // const usage = await this.prisma.customer_promotions.findFirst({
-    //   where: {
-    //     promotionId,
-    //     userId,
-    //     status: 'APPLIED',
-    //   },
-    // });
-    // return !!usage;
+  async hasCustomerUsedPromotion(promotionId: string, userId: string): Promise<boolean> {
+    const usage = await this.prisma.customer_promotions.findFirst({
+      where: {
+        promotionId,
+        userId,
+        status: 'APPLIED',
+      },
+    });
+    return !!usage;
   }
 
   /**
@@ -91,35 +88,26 @@ export class PromotionCustomerService {
       if (filters.endDate) where.usedAt.lte = filters.endDate;
     }
 
-    // TODO: customer_promotions table does not exist
-    const usage: any[] = [];
-    const total = 0;
-    // const [usage, total] = await Promise.all([
-    //   this.prisma.customer_promotions.findMany({
-    //     where,
-    //     orderBy: { usedAt: 'desc' },
-    //     take: filters?.limit || 50,
-    //     skip: filters?.offset || 0,
-    //     include: {
-    //       promotion: {
-    //         select: {
-    //           id: true,
-    //           code: true,
-    //           name: true,
-    //           type: true,
-    //           value: true,
-    //         },
-    //       },
-    //     },
-    //   }),
-    //   this.prisma.customer_promotions.count({ where }),
-    // ]);
+    const [usage, total] = await Promise.all([
+      this.prisma.customer_promotions.findMany({
+        where,
+        orderBy: { usedAt: 'desc' },
+        take: filters?.limit || 20,
+        skip: filters?.offset || 0,
+        include: {
+          promotions: true,
+        },
+      }),
+      this.prisma.customer_promotions.count({ where }),
+    ]);
 
     return {
-      data: usage,
+      data: usage.map(u => ({
+        ...u,
+        discountApplied: u.discountApplied ? Number(u.discountApplied) : 0,
+        promotionName: u.promotions?.name,
+      })),
       total,
-      limit: filters?.limit || 50,
-      offset: filters?.offset || 0,
     };
   }
 
@@ -148,34 +136,31 @@ export class PromotionCustomerService {
       if (filters.endDate) where.usedAt.lte = filters.endDate;
     }
 
-    // TODO: customer_promotions table does not exist
-    const users: any[] = [];
-    const total = 0;
-    // const [users, total] = await Promise.all([
-    //   this.prisma.customer_promotions.findMany({
-    //     where,
-    //     orderBy: { usedAt: 'desc' },
-    //     take: filters?.limit || 50,
-    //     skip: filters?.offset || 0,
-    //     distinct: ['userId'],
-    //     include: {
-    //       user: {
-    //         select: {
-    //           id: true,
-    //           email: true,
-    //           name: true,
-    //           phone: true,
-    //         },
-    //       },
-    //     },
-    //   }),
-    //   this.prisma.customer_promotions
-    //     .findMany({
-    //       where,
-    //       distinct: ['userId'],
-    //     })
-    //     .then(result => result.length),
-    // ]);
+    const [users, total] = await Promise.all([
+      this.prisma.customer_promotions.findMany({
+        where,
+        orderBy: { usedAt: 'desc' },
+        take: filters?.limit || 50,
+        skip: filters?.offset || 0,
+        distinct: ['userId'],
+        include: {
+          users: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              phone: true,
+            },
+          },
+        },
+      }),
+      this.prisma.customer_promotions
+        .findMany({
+          where,
+          distinct: ['userId'],
+        })
+        .then(result => result.length),
+    ]);
 
     return {
       data: users,
@@ -202,22 +187,18 @@ export class PromotionCustomerService {
       // Add more conditions based on customerSegment
     };
 
-    // TODO: customerSegment field does not exist
-    // if (promotion.customerSegment) {
-    //   // Implement custom logic based on customer segment
-    //   // This could be based on user properties like tier, region, etc.
-    // }
+    if (promotion.customerSegment) {
+      where.role = promotion.customerSegment;
+    }
 
     // Get users who haven't used this promotion yet
-    // TODO: customer_promotions table does not exist
-    const usedUserIds: string[] = [];
-    // const usedUserIds = await this.prisma.customer_promotions
-    //   .findMany({
-    //     where: { promotionId },
-    //     select: { userId: true },
-    //     distinct: ['userId'],
-    //   })
-    //   .then(results => results.map(r => r.userId));
+    const usedUserIds = await this.prisma.customer_promotions
+      .findMany({
+        where: { promotionId },
+        select: { userId: true },
+        distinct: ['userId'],
+      })
+      .then(results => results.map(r => r.userId));
 
     const eligibleUsers = await this.prisma.users.findMany({
       where: {
@@ -242,60 +223,58 @@ export class PromotionCustomerService {
   /**
    * Get customer promotion statistics
    */
-  async getCustomerStats(_userId: string) {
-    // TODO: customer_promotions table does not exist
-    const totalPromotionsUsed = 0;
-    const totalSavings = { _sum: { discountApplied: 0 } };
-    const averageDiscount = { _avg: { discountApplied: 0 } };
-    const lastUsed = null;
-    const promotionsByType: any[] = [];
-    // const [totalPromotionsUsed, totalSavings, averageDiscount, lastUsed, promotionsByType] =
-    //   await Promise.all([
-    //     this.prisma.customer_promotions.count({
-    //       where: {
-    //         userId,
-    //         status: 'APPLIED',
-    //       },
-    //     }),
-    //     this.prisma.customer_promotions.aggregate({
-    //       where: {
-    //         userId,
-    //         status: 'APPLIED',
-    //       },
-    //       _sum: {
-    //         discountApplied: true,
-    //       },
-    //     }),
-    //     this.prisma.customer_promotions.aggregate({
-    //       where: {
-    //         userId,
-    //         status: 'APPLIED',
-    //       },
-    //       _avg: {
-    //         discountApplied: true,
-    //       },
-    //     }),
-    //     this.prisma.customer_promotions.findFirst({
-    //       where: { userId },
-    //       orderBy: { usedAt: 'desc' },
-    //     }),
-    //     this.prisma.customer_promotions.groupBy({
-    //       by: ['promotionId'],
-    //       where: { userId, status: 'APPLIED' },
-    //       _count: true,
-    //       orderBy: {
-    //         _count: {
-    //           id: 'desc',
-    //         },
-    //       },
-    //       take: 5,
-    //     }),
-    // ]);
+  async getCustomerStats(userId: string) {
+    const [totalPromotionsUsed, totalSavings, averageDiscount, lastUsed, promotionsByType] =
+      await Promise.all([
+        this.prisma.customer_promotions.count({
+          where: {
+            userId,
+            status: 'APPLIED',
+          },
+        }),
+        this.prisma.customer_promotions.aggregate({
+          where: {
+            userId,
+            status: 'APPLIED',
+          },
+          _sum: {
+            discountApplied: true,
+          },
+        }),
+        this.prisma.customer_promotions.aggregate({
+          where: {
+            userId,
+            status: 'APPLIED',
+          },
+          _avg: {
+            discountApplied: true,
+          },
+        }),
+        this.prisma.customer_promotions.findFirst({
+          where: { userId },
+          orderBy: { usedAt: 'desc' },
+        }),
+        this.prisma.customer_promotions.groupBy({
+          by: ['promotionId'],
+          where: { userId, status: 'APPLIED' },
+          _count: true,
+          orderBy: {
+            _count: {
+              promotionId: 'desc',
+            },
+          },
+          take: 5,
+        }),
+      ]);
 
     return {
       totalPromotionsUsed,
-      totalSavings: totalSavings._sum.discountApplied || 0,
-      averageDiscount: averageDiscount._avg.discountApplied || 0,
+      totalSavings: totalSavings._sum.discountApplied
+        ? Number(totalSavings._sum.discountApplied)
+        : 0,
+      averageDiscount: averageDiscount._avg.discountApplied
+        ? Number(averageDiscount._avg.discountApplied)
+        : 0,
       lastUsed: lastUsed?.usedAt,
       topPromotions: promotionsByType.length,
     };
@@ -304,46 +283,44 @@ export class PromotionCustomerService {
   /**
    * Reverse a promotion usage (for returns/cancellations)
    */
-  async reverseUsage(_customerPromotionId: string, _reason?: string) {
-    // TODO: customer_promotions table does not exist
-    throw new Error('customer_promotions table does not exist');
-    // return this.prisma.customer_promotions.update({
-    //   where: { id: customerPromotionId },
-    //   data: {
-    //     status: 'REVERSED',
-    //     metadata: {
-    //       reversedAt: new Date().toISOString(),
-    //       reversalReason: reason,
-    //     },
-    //   },
-    // });
+  async reverseUsage(customerPromotionId: string, reason?: string) {
+    return this.prisma.customer_promotions.update({
+      where: { id: customerPromotionId },
+      data: {
+        status: 'REVERSED',
+        metadata: {
+          reversedAt: new Date(),
+          reason,
+        },
+      },
+      include: {
+        promotions: true,
+      },
+    });
   }
-
   /**
    * Get promotion adoption rate
    */
-  async getAdoptionRate(_promotionId: string) {
+  async getAdoptionRate(promotionId: string) {
     const totalUsers = await this.prisma.users.count({
       where: { role: 'USER' },
     });
 
-    // TODO: customer_promotions table does not exist
-    const usedUsers = 0;
-    // const usedUsers = await this.prisma.customer_promotions
-    //   .findMany({
-    //     where: {
-    //       promotionId,
-    //       status: 'APPLIED',
-    //     },
-    //     distinct: ['userId'],
-    //   })
-    //   .then(results => results.length);
+    const usedUsers = await this.prisma.customer_promotions
+      .findMany({
+        where: {
+          promotionId,
+          status: 'APPLIED',
+        },
+        distinct: ['userId'],
+      })
+      .then(results => results.length);
 
     return {
       totalUsers,
       usedUsers,
       adoptionRate: totalUsers > 0 ? (usedUsers / totalUsers) * 100 : 0,
-      percentage: `${((usedUsers / totalUsers) * 100).toFixed(2)}%`,
+      percentage: `${totalUsers > 0 ? ((usedUsers / totalUsers) * 100).toFixed(2) : 0}%`,
     };
   }
 
@@ -359,15 +336,14 @@ export class PromotionCustomerService {
       },
     });
 
-    // TODO: customer_promotions table does not exist
-    const promotionUsage: any[] = [];
-    // const promotionUsage = await this.prisma.customer_promotions.findMany({
-    //   where: { userId, status: 'APPLIED' },
-    // });
+    const promotionUsage = await this.prisma.customer_promotions.findMany({
+      where: { userId, status: 'APPLIED' },
+    });
 
-    const totalSpent = orders.reduce((sum, order) => sum + order.totalCents, 0) / 100;
+    const totalSpent =
+      Number(orders.reduce((sum, order) => sum + BigInt(order.totalCents || 0), BigInt(0))) / 100;
     const totalDiscount = promotionUsage.reduce(
-      (sum, usage) => sum + (usage.discountApplied || 0),
+      (sum, usage) => sum + Number(usage.discountApplied || 0),
       0,
     );
 

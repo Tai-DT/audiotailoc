@@ -5,5 +5,5 @@ export { generateMetadata };
 
 export default function CategoryDetailLayout ( { children }: { children: ReactNode } )
 {
-    return <>{children}</>;
+ return <>{children}</>;
 }

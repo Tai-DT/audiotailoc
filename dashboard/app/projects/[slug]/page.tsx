@@ -1,91 +1,80 @@
 
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, ArrowLeft, ExternalLink, Github, Layers, CheckCircle, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Github, Layers, CheckCircle, AlertTriangle, Lightbulb } from 'lucide-react';
 import { format } from 'date-fns';
 
-async function getProject ( slug: string )
-{
-    const res = await fetch( `${ process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1' }/projects/by-slug/${ slug }`, {
+async function getProject(slug: string) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1'}/projects/by-slug/${slug}`, {
         next: { revalidate: 60 } // Revalidate every minute
-    } );
-    if ( !res.ok )
-    {
-        if ( res.status === 404 ) return null;
-        throw new Error( 'Failed to fetch project' );
+    });
+    if (!res.ok) {
+        if (res.status === 404) return null;
+        throw new Error('Failed to fetch project');
     }
     return res.json();
 }
 
-function parseStringArrayField ( value: unknown ): string[]
-{
-    if ( !value ) return [];
-    if ( Array.isArray( value ) ) return value.filter( Boolean ).map( String );
-    if ( typeof value !== 'string' ) return [];
+function parseStringArrayField(value: unknown): string[] {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.filter(Boolean).map(String);
+    if (typeof value !== 'string') return [];
 
     const trimmed = value.trim();
-    if ( !trimmed ) return [];
+    if (!trimmed) return [];
 
-    if ( trimmed.startsWith( '[' ) )
-    {
-        try
-        {
-            const parsed = JSON.parse( trimmed );
-            if ( Array.isArray( parsed ) ) return parsed.filter( Boolean ).map( String );
-        } catch
-        {
+    if (trimmed.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+        } catch {
             // fall through
         }
     }
 
-    if ( trimmed.includes( ',' ) )
-    {
+    if (trimmed.includes(',')) {
         return trimmed
-            .split( ',' )
-            .map( ( item ) => item.trim() )
-            .filter( Boolean );
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
     }
 
-    return [ trimmed ];
+    return [trimmed];
 }
 
 type Props = {
     params: Promise<{ slug: string }>
 };
 
-export async function generateMetadata (
+export async function generateMetadata(
     { params }: Props
-): Promise<Metadata>
-{
+): Promise<Metadata> {
     const { slug } = await params;
-    const data = await getProject( slug );
-    if ( !data ) return { title: 'Project Not Found' };
+    const data = await getProject(slug);
+    if (!data) return { title: 'Project Not Found' };
 
     const project = data.data || data; // Handle likely wrapper
 
     return {
-        title: project.metaTitle || `${ project.name } | Audio Tai Loc Projects`,
-        description: project.metaDescription || project.shortDescription || project.description?.slice( 0, 160 ),
+        title: project.metaTitle || `${project.name} | Audio Tai Loc Projects`,
+        description: project.metaDescription || project.shortDescription || project.description?.slice(0, 160),
         openGraph: {
             title: project.ogTitle || project.name,
             description: project.ogDescription || project.shortDescription,
-            images: project.ogImage ? [ project.ogImage ] : ( project.thumbnailImage ? [ project.thumbnailImage ] : [] ),
+            images: project.ogImage ? [project.ogImage] : (project.thumbnailImage ? [project.thumbnailImage] : []),
         },
     };
 }
 
-export default async function ProjectDetailPage ( { params }: Props )
-{
+export default async function ProjectDetailPage({ params }: Props) {
     const { slug } = await params;
-    const data = await getProject( slug );
+    const data = await getProject(slug);
 
-    if ( !data )
-    {
+    if (!data) {
         return (
             <div className="container mx-auto py-20 text-center">
                 <h1 className="text-2xl font-bold">Project Not Found</h1>
@@ -99,14 +88,14 @@ export default async function ProjectDetailPage ( { params }: Props )
 
     const project = data.data || data;
 
-    const technologies = parseStringArrayField( project.technologies );
-    const galleryImages = parseStringArrayField( project.images );
+    const technologies = parseStringArrayField(project.technologies);
+    const galleryImages = parseStringArrayField(project.images);
 
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: project.name,
-        image: project.thumbnailImage ? [ project.thumbnailImage, ...( galleryImages || [] ) ] : undefined,
+        image: project.thumbnailImage ? [project.thumbnailImage, ...(galleryImages || [])] : undefined,
         datePublished: project.createdAt,
         dateModified: project.updatedAt,
         author: {
@@ -120,7 +109,7 @@ export default async function ProjectDetailPage ( { params }: Props )
         <article className="container mx-auto py-12 px-4 max-w-5xl">
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify( jsonLd ) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
             {/* Header */}
@@ -137,13 +126,7 @@ export default async function ProjectDetailPage ( { params }: Props )
                     </div>
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-4 md:mt-0">
-                        {project.liveUrl && (
-                            <Button asChild variant="default">
-                                <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="mr-2 h-4 w-4" /> Live Site
-                                </a>
-                            </Button>
-                        )}
+
                         {project.githubUrl && (
                             <Button asChild variant="outline">
                                 <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
@@ -159,7 +142,7 @@ export default async function ProjectDetailPage ( { params }: Props )
             <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 mb-12 shadow-md">
                 {project.youtubeVideoUrl ? (
                     <iframe
-                        src={project.youtubeVideoUrl.replace( 'watch?v=', 'embed/' )}
+                        src={project.youtubeVideoUrl.replace('watch?v=', 'embed/')}
                         title={`${project.name} video`}
                         className="w-full h-full"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -167,13 +150,7 @@ export default async function ProjectDetailPage ( { params }: Props )
                     />
                 ) : (
                     project.coverImage ? (
-                        <Image
-                            src={project.coverImage}
-                            alt={project.name + ' Cover'}
-                            fill
-                            className="object-cover"
-                            priority
-                        />
+                        <img src={project.coverImage} alt={project.name + ' Cover'} className="object-cover" />
                     ) : (
                         <div className="flex items-center justify-center h-full text-slate-400">No Cover Image</div>
                     )
@@ -192,7 +169,7 @@ export default async function ProjectDetailPage ( { params }: Props )
                     </section>
 
                     {/* Case Study Sections */}
-                    {( project.challenges || project.solutions || project.results ) && (
+                    {(project.challenges || project.solutions || project.results) && (
                         <section className="space-y-6">
                             <h2 className="text-2xl font-semibold">Case Study</h2>
 
@@ -230,11 +207,11 @@ export default async function ProjectDetailPage ( { params }: Props )
                         <section>
                             <h2 className="text-2xl font-semibold mb-6">Gallery</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {galleryImages.map( ( img: string, idx: number ) => (
+                                {galleryImages.map((img: string, idx: number) => (
                                     <div key={idx} className="relative aspect-video rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                        <Image src={img} alt={`${ project.name } gallery ${ idx }`} fill className="object-cover" />
+                                        <img src={img} alt={`${project.name}`} className="object-cover" />
                                     </div>
-                                ) )}
+                                ))}
                             </div>
                         </section>
                     )}
@@ -253,7 +230,7 @@ export default async function ProjectDetailPage ( { params }: Props )
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground flex items-center"><Calendar className="h-4 w-4 mr-2" /> Date</span>
                                 <span className="font-medium">
-                                    {project.completionDate ? format( new Date( project.completionDate ), 'MMM yyyy' ) : 'Ongoing'}
+                                    {project.completionDate ? format(new Date(project.completionDate), 'MMM yyyy') : 'Ongoing'}
                                 </span>
                             </div>
                             {project.role && (
@@ -274,16 +251,16 @@ export default async function ProjectDetailPage ( { params }: Props )
                                 <Layers className="mr-2 h-5 w-5" /> Tech Stack
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                                {technologies.map( ( tech: string ) => (
+                                {technologies.map((tech: string) => (
                                     <Badge key={tech} variant="secondary">{tech}</Badge>
-                                ) )}
+                                ))}
                             </div>
                         </div>
                     )}
 
                     {project.clientLogo && (
                         <div className="p-6 flex justify-center">
-                            <Image src={project.clientLogo} alt="Client Logo" width={150} height={80} className="object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                            <img src={project.clientLogo} alt="Client Logo" className="object-contain opacity-80 hover:opacity-100 transition-opacity" />
                         </div>
                     )}
                 </div>

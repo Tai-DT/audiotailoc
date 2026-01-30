@@ -11,8 +11,6 @@ import { useAuth } from "@/lib/auth-context"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
-import Image from "next/image"
-
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth()
   const router = useRouter()
@@ -86,14 +84,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center mb-4">
               {mounted ? (
                 <div className="relative h-16 w-auto">
-                  <Image
-                    src={logoSrc}
-                    alt="Audio Tài Lộc"
-                    width={200}
-                    height={55}
-                    className="h-16 w-auto object-contain"
-                    priority
-                  />
+                  <img src={logoSrc} alt="Audio Tài Lộc" className="h-16 w-auto object-contain" />
                 </div>
               ) : (
                 <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">

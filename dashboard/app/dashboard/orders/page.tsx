@@ -175,9 +175,11 @@ export default function OrdersPage() {
         limit: pageSize,
         status: statusFilter && statusFilter !== 'ALL' ? statusFilter : undefined
       })
-      const data = response.data as OrdersResponse
-      setOrders(data.items)
-      setTotalOrders(data.total)
+      const payload = response as unknown as OrdersResponse | { data?: OrdersResponse }
+      const data = (payload as { data?: OrdersResponse }).data ?? (payload as OrdersResponse)
+      const items = Array.isArray(data?.items) ? data.items : []
+      setOrders(items)
+      setTotalOrders(typeof data?.total === 'number' ? data.total : items.length)
     } catch (error) {
       console.error('Failed to fetch orders:', error)
       // Show user-friendly error message

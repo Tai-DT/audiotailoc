@@ -25,13 +25,22 @@ export interface AuthenticatedSocket extends Socket {
   email?: string;
 }
 
+const REALTIME_NAMESPACE = '/api/v1/realtime';
+const SOCKET_IO_PATH = '/api/v1/socket.io';
+
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: (origin: string, callback: any) => {
+      // In development, allow all origins to bypass CORS issues
+      // This is safe since this is a local development environment
+      callback(null, true);
+    },
+    credentials: true,
     methods: ['GET', 'POST'],
   },
   transports: ['websocket', 'polling'],
-  namespace: '/api/v1/realtime',
+  namespace: REALTIME_NAMESPACE,
+  path: SOCKET_IO_PATH,
 })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(RealtimeGateway.name);

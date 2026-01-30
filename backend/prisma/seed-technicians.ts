@@ -3,10 +3,8 @@
  * Run with: npx ts-node prisma/seed-technicians.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './seed-client';
 import { randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
 
 interface TechnicianData {
     name: string;

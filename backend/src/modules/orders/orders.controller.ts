@@ -1,20 +1,38 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
   Param,
   Patch,
+  Post,
   Query,
-  UseGuards,
-  Delete,
   Req,
-  ForbiddenException,
+  UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { AdminOrKeyGuard } from '../auth/admin-or-key.guard';
+import { OptionalJwtGuard } from '../auth/optional-jwt.guard';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
+import { IsEmail, IsOptional, IsString, Matches } from 'class-validator';
+
+class CancelOrderDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @Matches(/^[0-9+\-\s()]+$/, { message: 'Invalid phone format' })
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -33,22 +51,14 @@ export class OrdersController {
   }
 
   @Post()
+  @UseGuards(OptionalJwtGuard)
   // SECURITY: Allow public order creation for guest checkout
   // Note: This endpoint intentionally allows unauthenticated requests to support guest orders
   // The service will create a guest user if no userId is provided
   // Consider adding rate limiting or CAPTCHA for additional protection
   create(
     @Body()
-    createOrderDto: {
-      items: Array<{ productId: string; quantity: number }>;
-      shippingAddress: string;
-      shippingCoordinates?: { lat: number; lng: number };
-      customerName?: string;
-      customerPhone?: string;
-      customerEmail?: string;
-      notes?: string;
-      userId?: string; // Optional: authenticated users can provide their userId
-    },
+    createOrderDto: CreateOrderDto,
     @Req() req?: any,
   ) {
     // SECURITY: If user is authenticated, force using their own userId
@@ -70,25 +80,58 @@ export class OrdersController {
     return this.orders.getStats();
   }
 
+  @UseGuards(OptionalJwtGuard)
   @Post(':id/cancel')
-  async cancel(@Param('id') id: string, @Req() req: any) {
-    if (!req.user) throw new ForbiddenException('Bạn phải đăng nhập để hủy đơn hàng');
-
-    const userId = req.user.sub || req.user.id;
+  async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id;
     const order = await this.orders.get(id);
+    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
 
-    if (order.userId !== userId && req.user.role !== 'ADMIN') {
-      throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này');
+    if (userId) {
+      if (order.userId !== userId && !isAdmin) {
+        throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này');
+      }
+    } else {
+      if (!dto.email && !dto.phone) {
+        throw new ForbiddenException(
+          'Vui lòng cung cấp email hoặc số điện thoại để xác thực hủy đơn hàng',
+        );
+      }
+
+      const normalizeEmail = (value?: string) => (value ? value.toLowerCase().trim() : '');
+      const normalizePhone = (value?: string) => (value || '').replace(/\D/g, '');
+
+      const expectedEmails = new Set<string>();
+      const expectedPhones = new Set<string>();
+
+      [order.users?.email, order.customerEmail]
+        .filter(Boolean)
+        .forEach(email => expectedEmails.add(normalizeEmail(email)));
+      [order.users?.phone, order.customerPhone].filter(Boolean).forEach(phone => {
+        const normalized = normalizePhone(phone);
+        if (normalized) expectedPhones.add(normalized);
+      });
+
+      const providedEmail = normalizeEmail(dto.email);
+      const providedPhone = normalizePhone(dto.phone);
+
+      const emailMatches = providedEmail && expectedEmails.has(providedEmail);
+      const phoneMatches = providedPhone && expectedPhones.has(providedPhone);
+
+      if (!emailMatches && !phoneMatches) {
+        throw new ForbiddenException('Thông tin xác thực không khớp với đơn hàng');
+      }
     }
 
-    if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
-      throw new BadRequestException('Chỉ có thể hủy đơn hàng khi đang chờ xử lý hoặc đã xác nhận');
+    if (!['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status)) {
+      throw new BadRequestException('Chỉ có thể hủy đơn hàng trước khi giao hàng');
     }
 
-    return this.orders.updateStatus(id, 'CANCELLED');
+    return this.orders.updateStatus(order.id, 'CANCELLED');
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtGuard)
   async get(@Param('id') id: string, @Req() req: any) {
     // Check if it's an admin request using headers (AdminOrKeyGuard logic)
     const adminKey = req.headers['x-admin-key'];
@@ -128,15 +171,7 @@ export class OrdersController {
   update(
     @Param('id') id: string,
     @Body()
-    updateOrderDto: {
-      customerName?: string;
-      customerPhone?: string;
-      customerEmail?: string;
-      shippingAddress?: string;
-      shippingCoordinates?: { lat: number; lng: number };
-      notes?: string;
-      items?: Array<{ productId: string; quantity: number; unitPrice?: number; name?: string }>;
-    },
+    updateOrderDto: UpdateOrderDto,
   ) {
     return this.orders.update(id, updateOrderDto);
   }

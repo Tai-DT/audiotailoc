@@ -1,6 +1,5 @@
 import { Banner } from '@/lib/types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.audiotailoc.com/api/v1';
+import { buildApiUrl } from '@/lib/api-config';
 
 /**
  * Fetch active banners from the API on the server side.
@@ -9,7 +8,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.audiotailoc.com
  */
 export async function fetchHomeBanners(): Promise<Banner[]> {
   try {
-    const response = await fetch(`${API_BASE}/content/banners/active?page=home`, {
+    const url = new URL(buildApiUrl('/content/banners/active'));
+    url.searchParams.set('page', 'home');
+    const response = await fetch(url.toString(), {
       next: {
         // Cache for 5 minutes - banners don't change often
         revalidate: 300,

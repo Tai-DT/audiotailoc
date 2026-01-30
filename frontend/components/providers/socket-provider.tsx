@@ -5,72 +5,70 @@ import { io, Socket } from "socket.io-client";
 import { authStorage } from "@/lib/auth-storage";
 
 interface SocketContextType {
-    socket: Socket | null;
-    isConnected: boolean;
+ socket: Socket | null;
+ isConnected: boolean;
 }
 
 const SocketContext = createContext<SocketContextType>({
-    socket: null,
-    isConnected: false,
+ socket: null,
+ isConnected: false,
 });
 
 export const useSocket = () => {
-    return useContext(SocketContext);
+ return useContext(SocketContext);
 };
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-    const [socket, setSocket] = useState<Socket | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
+ const [socket, setSocket] = useState<Socket | null>(null);
+ const [isConnected, setIsConnected] = useState(false);
 
-    useEffect(() => {
-        // Determine the socket URL
-        // If NEXT_PUBLIC_API_URL is defined, use it (stripping /api/v1 if present)
-        // Otherwise default to http://localhost:3010
-        let socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
-        
-        // Remove trailing /api/v1 or /api if present to get the root URL
-        socketUrl = socketUrl.replace(/\/api\/v1\/?$/, "").replace(/\/api\/?$/, "");
-        
-        // Ensure no trailing slash
-        if (socketUrl.endsWith("/")) {
-            socketUrl = socketUrl.slice(0, -1);
-        }
+ useEffect(() => {
+ // Determine the socket URL
+ // If NEXT_PUBLIC_API_URL is defined, use it (stripping /api/v1 if present)
+ // Otherwise default to http://localhost:3010
+ let socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
+  // Remove trailing /api/v1 or /api if present to get the root URL
+ socketUrl = socketUrl.replace(/\/api\/v1\/?$/, "").replace(/\/api\/?$/, "");
+  // Ensure no trailing slash
+ if (socketUrl.endsWith("/")) {
+ socketUrl = socketUrl.slice(0, -1);
+ }
 
-        const token = authStorage.getAccessToken();
+ const token = authStorage.getAccessToken();
 
-        const socketInstance = io(socketUrl, {
-            path: "/socket.io",
-            transports: ["websocket"],
-            autoConnect: true,
-            auth: {
-                token: token ? `Bearer ${token}` : undefined,
-            },
-        });
+ const socketInstance = io(socketUrl, {
+ path: "/socket.io",
+ transports: ["websocket"],
+ autoConnect: true,
+ auth: {
+ token: token ? `Bearer ${token}` : undefined,
+ },
+ });
 
-        socketInstance.on("connect", () => {
-            setIsConnected(true);
-        });
+ socketInstance.on("connect", () => {
+ setIsConnected(true);
+ });
 
-        socketInstance.on("disconnect", () => {
-            setIsConnected(false);
-        });
+ socketInstance.on("disconnect", () => {
+ setIsConnected(false);
+ });
 
-        socketInstance.on("connect_error", (err) => {
-            if (process.env.NODE_ENV === 'development') {
-                console.error("Socket connection error:", err);
-            }
-        });
+ socketInstance.on("connect_error", (err) => {
+ if (process.env.NODE_ENV === 'development') {
+ console.error("Socket connection error:", err);
+ }
+ });
 
-        setSocket(socketInstance);
+ setSocket(socketInstance);
 
-        return () => {
-            socketInstance.disconnect();
-        };
-    }, []);
+ return () => {
+ socketInstance.disconnect();
+ };
+ }, []);
 
-    return (
-        <SocketContext.Provider value={{ socket, isConnected }}>
-            {children}
-        </SocketContext.Provider>
-    );
+ return (
+ <SocketContext.Provider value={{ socket, isConnected }}>
+ {children}
+ </SocketContext.Provider>
+ );
 };

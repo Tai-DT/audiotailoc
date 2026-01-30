@@ -12,7 +12,7 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly inventoryMovementService: InventoryMovementService,
     private readonly inventoryAlertService: InventoryAlertService,
-  ) { }
+  ) {}
 
   async list(params: { page?: number; pageSize?: number; lowStockOnly?: boolean }) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
@@ -57,9 +57,9 @@ export class InventoryService {
       ...item,
       product: item.products
         ? {
-          ...item.products,
-          priceCents: item.products.priceCents ? Number(item.products.priceCents) : null,
-        }
+            ...item.products,
+            priceCents: item.products.priceCents ? Number(item.products.priceCents) : null,
+          }
         : null,
     }));
     return { total, page, pageSize, items };
@@ -99,7 +99,7 @@ export class InventoryService {
       // First check if product exists and is active
       const product = await client.products.findUnique({
         where: { id: productId },
-        select: { id: true, isActive: true, isDeleted: true, name: true },
+        select: { id: true, isActive: true, isDeleted: true, name: true, stockQuantity: true },
       });
 
       if (!product) {
@@ -110,74 +110,80 @@ export class InventoryService {
         throw new Error(`Product ${product.name} is not active or has been deleted`);
       }
 
-      // When inside a transaction, lock the inventory row to prevent race conditions
-      try {
-        // Use FOR UPDATE to lock the row in the current transaction
-        // Note: Column names in PostgreSQL are case-sensitive when quoted
-        await client.$queryRaw`SELECT id FROM inventory WHERE "productId" = ${productId} FOR UPDATE`;
-      } catch (e) {
-        // Some Prisma clients or DBs may not support raw queries in mocked tests; ignore failures gracefully
-        this.logger.debug(`FOR UPDATE lock failed for product ${productId}: ${e}`);
-      }
+      // Prepare deltas - ensure they are numbers or 0
+      const stockDeltaValue = delta.stockDelta || 0;
+      const reservedDeltaValue = delta.reservedDelta || 0;
 
-      // Get current inventory to track changes
-      const currentInventory = await client.inventory.findUnique({
-        where: { productId },
-        select: { stock: true, reserved: true, lowStockThreshold: true },
-      });
-
-      const previousStock = currentInventory?.stock || 0;
-      const previousReserved = currentInventory?.reserved || 0;
-
-      const data: any = {};
-
-      // Handle absolute values vs deltas
+      // Prepare increment/absolute update data
+      const updateData: any = { updatedAt: new Date() };
       if (typeof delta.stock === 'number') {
-        data.stock = delta.stock;
-      } else if (typeof delta.stockDelta === 'number') {
-        data.stock = { increment: delta.stockDelta };
+        updateData.stock = delta.stock;
+      } else if (stockDeltaValue !== 0) {
+        updateData.stock = { increment: stockDeltaValue };
       }
 
       if (typeof delta.reserved === 'number') {
-        data.reserved = delta.reserved;
-      } else if (typeof delta.reservedDelta === 'number') {
-        data.reserved = { increment: delta.reservedDelta };
+        updateData.reserved = delta.reserved;
+      } else if (reservedDeltaValue !== 0) {
+        updateData.reserved = { increment: reservedDeltaValue };
       }
 
       if (typeof delta.lowStockThreshold === 'number') {
-        data.lowStockThreshold = delta.lowStockThreshold;
+        updateData.lowStockThreshold = delta.lowStockThreshold;
       }
 
-      // Use upsert to create inventory record if it doesn't exist
-      const inv = await client.inventory.upsert({
-        where: { productId },
-        update: data,
-        create: {
-          id: randomUUID(),
-          productId,
-          stock:
-            typeof delta.stock === 'number'
-              ? delta.stock
-              : typeof delta.stockDelta === 'number'
-                ? delta.stockDelta
-                : 0,
-          reserved:
-            typeof delta.reserved === 'number'
-              ? delta.reserved
-              : typeof delta.reservedDelta === 'number'
-                ? delta.reservedDelta
-                : 0,
-          lowStockThreshold: delta.lowStockThreshold || 0,
-          updatedAt: new Date(),
-        },
-        include: { products: { select: { name: true, sku: true } } },
-      });
+      // Use a single upsert for atomicity. If it fails due to race, we'll catch and retry once.
+      let inv: any;
+      try {
+        inv = await client.inventory.upsert({
+          where: { productId },
+          update: updateData,
+          create: {
+            id: randomUUID(),
+            productId,
+            stock:
+              typeof delta.stock === 'number'
+                ? delta.stock
+                : (product.stockQuantity || 0) + stockDeltaValue,
+            reserved: typeof delta.reserved === 'number' ? delta.reserved : reservedDeltaValue,
+            lowStockThreshold: delta.lowStockThreshold || 0,
+            updatedAt: new Date(),
+          },
+          include: { products: { select: { name: true, sku: true } } },
+        });
+      } catch (err) {
+        // If we hit a unique constraint race (P2002), retry exactly once as it should now exist
+        if (err.code === 'P2002') {
+          this.logger.warn(`Race condition detected for product ${productId}, retrying adjust...`);
+          inv = await client.inventory.upsert({
+            where: { productId },
+            update: updateData,
+            create: {
+              id: randomUUID(),
+              productId,
+              stock:
+                typeof delta.stock === 'number'
+                  ? delta.stock
+                  : (product.stockQuantity || 0) + stockDeltaValue,
+              reserved: typeof delta.reserved === 'number' ? delta.reserved : reservedDeltaValue,
+              lowStockThreshold: delta.lowStockThreshold || 0,
+              updatedAt: new Date(),
+            },
+            include: { products: { select: { name: true, sku: true } } },
+          });
+        } else {
+          throw err;
+        }
+      }
 
-      // Calculate actual changes for movement tracking
+      // Calculate previous values for movement tracking
+      // Note: If an absolute value was set, we don't know the exact delta unless we fetch before.
+      // But for most operations (like orders), we use deltas.
       const newStock = inv.stock;
-      const newReserved = inv.reserved;
-      const stockDelta = newStock - previousStock;
-      const reservedDelta = newReserved - previousReserved;
+      const _newReserved = inv.reserved;
+      const actualStockDelta = typeof delta.stock === 'number' ? 0 : stockDeltaValue;
+      const actualReservedDelta = typeof delta.reserved === 'number' ? 0 : reservedDeltaValue;
+      const previousStock = newStock - actualStockDelta;
 
       // Safety Check: Prevent negative stock (overselling protection)
       if (inv.stock < 0) {
@@ -187,15 +193,14 @@ export class InventoryService {
         throw new Error(`Số lượng tồn kho không đủ (Sản phẩm: ${inv.products?.name || productId})`);
       }
 
-      // Record movements if there are stock changes
-      if (stockDelta !== 0 || reservedDelta !== 0) {
-        // Record stock movement
-        if (stockDelta !== 0) {
+      // Record movements if there were changes
+      if (actualStockDelta !== 0 || actualReservedDelta !== 0) {
+        if (actualStockDelta !== 0) {
           await this.inventoryMovementService.create(
             {
               productId,
-              type: stockDelta > 0 ? 'STOCK_IN' : 'STOCK_OUT',
-              quantity: Math.abs(stockDelta),
+              type: actualStockDelta > 0 ? 'STOCK_IN' : 'STOCK_OUT',
+              quantity: Math.abs(actualStockDelta),
               previousStock,
               newStock,
               reason: delta.reason || 'Manual adjustment',
@@ -208,14 +213,13 @@ export class InventoryService {
           );
         }
 
-        // Record reserved movement if changed
-        if (reservedDelta !== 0) {
+        if (actualReservedDelta !== 0) {
           await this.inventoryMovementService.create(
             {
               productId,
-              type: reservedDelta > 0 ? 'RESERVED' : 'RELEASED',
-              quantity: Math.abs(reservedDelta),
-              previousStock: newStock, // Use current stock as previous for reserved changes
+              type: actualReservedDelta > 0 ? 'RESERVED' : 'RELEASED',
+              quantity: Math.abs(actualReservedDelta),
+              previousStock: newStock,
               newStock,
               reason: delta.reason || 'Reservation adjustment',
               referenceId: delta.referenceId,
@@ -228,13 +232,13 @@ export class InventoryService {
         }
       }
 
-      // Check and create alerts for this specific product after stock changes
-      if (stockDelta !== 0) {
+      // Check and create alerts
+      if (actualStockDelta !== 0) {
         await this.inventoryAlertService.checkProductAlerts(productId, client);
       }
 
-      // Sync to Products table if requested
-      if (options.syncToProduct && stockDelta !== 0) {
+      // Sync to Products table
+      if (options.syncToProduct && actualStockDelta !== 0) {
         await client.products.update({
           where: { id: productId },
           data: { stockQuantity: newStock },
@@ -296,8 +300,11 @@ export class InventoryService {
     // Create inventory records for products that don't have them
     const createdInventories = [];
     for (const product of productsWithoutInventory) {
-      const inventory = await this.prisma.inventory.create({
-        data: {
+      // Use upsert instead of create to be safe against race conditions
+      const inventory = await this.prisma.inventory.upsert({
+        where: { productId: product.id },
+        update: {}, // No changes needed if already exists
+        create: {
           id: randomUUID(),
           productId: product.id,
           stock: product.stockQuantity || 0,

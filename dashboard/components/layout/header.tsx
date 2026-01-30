@@ -94,7 +94,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-lg hover:bg-muted/70">
               <Avatar className="h-7 w-7 ring-1 ring-border/60">
-                <AvatarImage src="/avatars/admin.jpg" alt={user?.name || "User"} />
+                <AvatarImage src="/images/logo/logo-dark.svg" alt={user?.name || "User"} />
                 <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-800 dark:from-slate-500 dark:to-slate-700 text-white font-semibold">
                   {user?.name?.split(' ').map(n => n[0]).join('') || 'AT'}
                 </AvatarFallback>

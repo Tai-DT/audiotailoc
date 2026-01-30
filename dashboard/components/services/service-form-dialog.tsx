@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload, getImageUrls } from "@/components/ui/image-upload"
-import Image from "next/image"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Service, ServiceType, ServiceFormData } from "@/types/service"
+import { resolveBackendImageUrl } from "@/lib/utils/image-url"
 
 interface ServiceFormDialogProps {
   service?: Partial<Service> | null
@@ -23,6 +23,22 @@ interface ServiceFormDialogProps {
 
 export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit }: ServiceFormDialogProps) {
   const [loading, setLoading] = useState(false)
+  const normalizeImageStrings = (value: unknown): string[] => {
+    if (Array.isArray(value)) {
+      return value.map(item => String(item)).filter(Boolean)
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if (!trimmed) return []
+      try {
+        const parsed = JSON.parse(trimmed) as unknown
+        if (Array.isArray(parsed)) return parsed.map(item => String(item)).filter(Boolean)
+      } catch {
+        return [trimmed]
+      }
+    }
+    return []
+  }
   const [formData, setFormData] = useState<ServiceFormData>(() => {
     const defaultValues: ServiceFormData = {
       name: '',
@@ -92,11 +108,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
             ? service.includedServices
             : String(service.includedServices).split('\n').filter(Boolean)
           : [],
-        images: service?.images
-          ? Array.isArray(service.images)
-            ? service.images
-            : [String(service.images)]
-          : [],
+        images: normalizeImageStrings(service?.images),
         isActive: service?.isActive ?? true,
         isFeatured: service?.isFeatured ?? false,
         equipmentSpecs: service?.equipmentSpecs || {
@@ -220,7 +232,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
         typeId: formData.typeId,
         priceType: formData.priceType || 'FIXED',
         duration: formData.duration,
-        images: formData.images || [],
+        images: (formData.images || []).filter(Boolean),
         isActive: formData.isActive ?? true,
         isFeatured: formData.isFeatured ?? false,
         requirements: formData.requirements,
@@ -445,15 +457,9 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
           <div className="space-y-2">
             <Label>Hình ảnh dịch vụ</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {(Array.isArray(formData.images) ? formData.images : []).map((image, index) => (
+              {(Array.isArray(formData.images) ? formData.images : []).filter(Boolean).map((image, index) => (
                 <div key={index} className="relative group">
-                  <Image
-                    src={image}
-                    alt={`Hình ảnh ${index + 1}`}
-                    width={200}
-                    height={128}
-                    className="rounded-md w-full h-32 object-cover"
-                  />
+                  <img src={resolveBackendImageUrl(image)} alt={`Hình ảnh ${index + 1}`} className="rounded-md w-[200px] h-[128px] object-cover" />
                   <Button
                     type="button"
                     variant="destructive"
@@ -467,7 +473,7 @@ export function ServiceFormDialog({ service, open, onOpenChange, types, onSubmit
               ))}
               <ImageUpload
                 value={Array.isArray(formData.images) ? formData.images : []}
-                onChange={(images) => setFormData(prev => ({ ...prev, images: getImageUrls(images) }))}
+                onChange={(images) => setFormData(prev => ({ ...prev, images: getImageUrls(images).filter(Boolean) }))}
                 onRemove={(index) => removeImage(index)}
                 folder="services"
                 maxFiles={5}

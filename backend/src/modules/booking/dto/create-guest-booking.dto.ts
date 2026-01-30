@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsEmail, Matches, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  Matches,
+  IsDateString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CoordinatesDto } from './coordinates.dto';
 
 export class CreateGuestBookingDto {
   @IsString()
@@ -30,4 +39,13 @@ export class CreateGuestBookingDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CoordinatesDto)
+  coordinates?: CoordinatesDto;
+
+  @IsOptional()
+  @IsString()
+  goongPlaceId?: string;
 }

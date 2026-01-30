@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
@@ -19,17 +19,28 @@ export class PaymentsService {
     private readonly ordersService: OrdersService,
   ) {}
 
-  async createIntent(params: {
-    orderId: string;
-    provider: 'PAYOS' | 'COD';
-    idempotencyKey?: string;
-    returnUrl?: string;
-  }) {
+  async createIntent(
+    params: {
+      orderId: string;
+      provider: 'PAYOS' | 'COD';
+      idempotencyKey?: string;
+      returnUrl?: string;
+    },
+    requester?: { userId?: string; isAdmin?: boolean; isAdminKey?: boolean },
+  ) {
     const order = await this.prisma.orders.findUnique({ where: { id: params.orderId } });
     if (!order) throw new BadRequestException('Order not found');
 
     if (!params.idempotencyKey || params.idempotencyKey.length < 8) {
       throw new BadRequestException('idempotencyKey is required');
+    }
+
+    const requesterId = requester?.userId;
+    const isPrivileged = Boolean(requester?.isAdmin || requester?.isAdminKey);
+    if (!isPrivileged && requesterId) {
+      if (!order.userId || order.userId !== requesterId) {
+        throw new ForbiddenException('You do not have permission to pay for this order');
+      }
     }
 
     // Idempotency: if an intent already exists for this order+provider+key, return it
@@ -95,7 +106,7 @@ export class PaymentsService {
 
       const payosResult = await this.payos.createPaymentLink({
         orderCode: order.orderNo,
-        amount: order.totalCents,
+        amount: Number(order.totalCents),
         description: `Thanh toan ${order.orderNo}`,
         buyerName: user?.name || user?.email || 'Customer',
         buyerEmail: user?.email || 'no-reply@audiotailoc.com',
@@ -128,14 +139,14 @@ export class PaymentsService {
       // fallback
       const redirectUrl = await this.buildRedirectUrl(
         { ...intent, provider: intent.provider as 'PAYOS' },
-        order,
+        { ...order, totalCents: Number(order.totalCents) },
       );
       return { intentId: intent.id, redirectUrl };
     }
   }
 
   private async buildRedirectUrl(
-    intent: { id: string; provider: string; amountCents: number; returnUrl: string | null },
+    intent: { id: string; provider: string; amountCents: bigint; returnUrl: string | null },
     order: { id: string; orderNo: string; totalCents: number },
   ): Promise<string> {
     const baseReturn =
@@ -180,12 +191,12 @@ export class PaymentsService {
       try {
         const payload: any = {
           orderCode: order.orderNo || intent.id,
-          amount: intent.amountCents,
+          amount: Number(intent.amountCents),
           currency: 'VND',
           returnUrl: baseReturn,
           cancelUrl: baseReturn,
           description: `Thanh toan don hang ${order.orderNo}`,
-          items: [{ name: 'Audio Tai Loc', quantity: 1, price: intent.amountCents }],
+          items: [{ name: 'Audio Tai Loc', quantity: 1, price: Number(intent.amountCents) }],
         };
         if (partnerCode) {
           payload.partnerCode = partnerCode;
@@ -223,7 +234,7 @@ export class PaymentsService {
   }
 
   private async createMomoPayment(
-    intent: { id: string; amountCents: number },
+    intent: { id: string; amountCents: bigint },
     order: { id: string; orderNo: string },
     returnUrl: string,
   ): Promise<string> {
@@ -240,7 +251,7 @@ export class PaymentsService {
       const orderInfo = `Thanh toán đơn hàng ${order.orderNo}`;
       const redirectUrl = returnUrl;
       const ipnUrl = `${this.config.get('API_BASE_URL')}/webhooks/momo`;
-      const amount = intent.amountCents;
+      const amount = Number(intent.amountCents);
       const requestType = 'payWithATM';
       const extraData = '';
 
@@ -313,7 +324,7 @@ export class PaymentsService {
 
     // SECURITY: Verify that the paid amount matches the intended amount
     if (amountCents !== undefined && amountCents !== null) {
-      if (amountCents !== intent.amountCents) {
+      if (BigInt(amountCents) !== intent.amountCents) {
         this.logger.error(
           `Payment amount mismatch for intent ${intent.id}: expected ${intent.amountCents}, received ${amountCents}`,
         );
@@ -329,7 +340,7 @@ export class PaymentsService {
           provider,
           orderId: intent.orderId,
           intentId: intent.id,
-          amountCents: amountCents || intent.amountCents,
+          amountCents: amountCents ? BigInt(amountCents) : intent.amountCents,
           status: 'SUCCEEDED',
           transactionId: transactionId || txnRef,
           updatedAt: new Date(),
@@ -367,7 +378,7 @@ export class PaymentsService {
       throw new BadRequestException('Refund amount must be a positive number');
     }
 
-    if (amountCents > payment.amountCents) {
+    if (BigInt(amountCents) > payment.amountCents) {
       throw new BadRequestException('Refund amount cannot exceed payment amount');
     }
 
@@ -375,9 +386,12 @@ export class PaymentsService {
     const existingRefunds = await this.prisma.refunds.findMany({
       where: { paymentId: payment.id },
     });
-    const totalRefunded = existingRefunds.reduce((sum, refund) => sum + refund.amountCents, 0);
+    const totalRefunded = existingRefunds.reduce(
+      (sum, refund) => sum + BigInt(refund.amountCents),
+      BigInt(0),
+    );
 
-    if (totalRefunded + amountCents > payment.amountCents) {
+    if (totalRefunded + BigInt(amountCents) > payment.amountCents) {
       throw new BadRequestException('Total refund amount would exceed payment amount');
     }
 
@@ -386,7 +400,7 @@ export class PaymentsService {
       data: {
         id: randomUUID(),
         paymentId: payment.id,
-        amountCents: amountCents,
+        amountCents: BigInt(amountCents),
         reason: reason || 'Customer request',
         status: 'PENDING',
         updatedAt: new Date(),
@@ -723,7 +737,8 @@ export class PaymentsService {
       await this.markFailed('PAYOS', result.intentId);
       return { error: 0, message: 'Payment failed' };
     } else if (result.status === 'CANCELLED') {
-      // Logic for cancelled could be added here if needed
+      // Treat cancel as failed for stock restore + status update
+      await this.markFailed('PAYOS', result.intentId);
       this.logger.log(`PayOS payment cancelled for intent ${result.intentId}`);
       return { error: 0, message: 'Payment cancelled' };
     }
@@ -746,7 +761,14 @@ export class PaymentsService {
       data: { status: 'FAILED' },
     });
 
-    const _order = await this.prisma.orders.findUnique({ where: { id: intent.orderId } });
+    // Best-effort: cancel order to restore inventory if payment failed
+    try {
+      await this.ordersService.updateStatus(intent.orderId, 'CANCELLED');
+    } catch (err) {
+      this.logger.warn(
+        `Failed to cancel order ${intent.orderId} after ${provider} payment failure: ${(err as Error).message}`,
+      );
+    }
     // if (order?.userId) {
     //   this.websocketGateway.notifyOrderUpdate(order.id, order.userId, 'PAYMENT_FAILED', {
     //     orderNo: order.orderNo,

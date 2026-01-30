@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,32 +16,28 @@ type ProjectsApiResponse = {
     data?: any;
 };
 
-async function getProjects ()
-{
-    try
-    {
-        const res = await fetch( `${ process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1' }/projects?limit=100`, {
+async function getProjects() {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1'}/projects?limit=100`, {
             next: { revalidate: 60 } // Revalidate every minute
-        } );
+        });
 
-        if ( !res.ok )
-        {
+        if (!res.ok) {
             return { projects: [], total: 0 };
         }
 
-        const payload = ( await res.json() ) as ProjectsApiResponse;
+        const payload = (await res.json()) as ProjectsApiResponse;
         const inner = payload?.data ?? payload;
 
         // Backend format (common): { success, data: { data: Project[], meta: ... } }
-        const projects = ( inner?.data ?? inner?.items ?? [] ) as any[];
+        const projects = (inner?.data ?? inner?.items ?? []) as any[];
         const total =
-            ( inner?.meta?.total as number | undefined ) ??
-            ( inner?.total as number | undefined ) ??
+            (inner?.meta?.total as number | undefined) ??
+            (inner?.total as number | undefined) ??
             projects.length;
 
-        return { projects: Array.isArray( projects ) ? projects : [], total: Number( total ) || 0 };
-    } catch
-    {
+        return { projects: Array.isArray(projects) ? projects : [], total: Number(total) || 0 };
+    } catch {
         return { projects: [], total: 0 };
     }
 }
@@ -53,12 +48,11 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Our Projects - Audio Tai Loc',
         description: 'Browse our portfolio of high-end audio installations.',
-        images: [ 'https://placehold.co/1200x630/2563eb/FFF?text=Projects+Gallery' ],
+        images: ['https://placehold.co/1200x630/2563eb/FFF?text=Projects+Gallery'],
     },
 };
 
-export default async function ProjectsPage ()
-{
+export default async function ProjectsPage() {
     const data = await getProjects();
     const projects = data.projects || [];
 
@@ -69,14 +63,14 @@ export default async function ProjectsPage ()
         description: 'A collection of our audio installation projects.',
         mainEntity: {
             '@type': 'ItemList',
-            itemListElement: projects.map( ( project: any, index: number ) => ( {
+            itemListElement: projects.map((project: any, index: number) => ({
                 '@type': 'ListItem',
                 position: index + 1,
-                url: `https://audiotailoc.com/projects/${ project.slug }`, // Assumption
+                url: `https://audiotailoc.com/projects/${project.slug}`, // Assumption
                 name: project.name,
                 image: project.thumbnailImage,
                 description: project.shortDescription
-            } ) )
+            }))
         }
     };
 
@@ -85,7 +79,7 @@ export default async function ProjectsPage ()
             {/* SEO Schema */}
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify( jsonLd ) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
             <div className="text-center mb-12">
@@ -96,16 +90,11 @@ export default async function ProjectsPage ()
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map( ( project: any ) => (
+                {projects.map((project: any) => (
                     <Card key={project.id} className="overflow-hidden flex flex-col hover:shadow-lg transition-shadow duration-300">
                         <div className="relative h-48 w-full">
                             {project.thumbnailImage ? (
-                                <Image
-                                    src={project.thumbnailImage}
-                                    alt={project.name}
-                                    fill
-                                    className="object-cover"
-                                />
+                                <img src={project.thumbnailImage} alt={project.name} className="object-cover" />
                             ) : (
                                 <div className="h-full w-full bg-slate-200 flex items-center justify-center text-slate-400">
                                     No Image
@@ -133,12 +122,12 @@ export default async function ProjectsPage ()
                             {project.completionDate && (
                                 <div className="flex items-center gap-2 w-full">
                                     <Calendar className="h-4 w-4" />
-                                    <span>Completed: {format( new Date( project.completionDate ), 'MMM yyyy' )}</span>
+                                    <span>Completed: {format(new Date(project.completionDate), 'MMM yyyy')}</span>
                                 </div>
                             )}
                         </CardFooter>
                     </Card>
-                ) )}
+                ))}
             </div>
 
             {projects.length === 0 && (

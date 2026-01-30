@@ -24,7 +24,7 @@ export interface SearchFacets {
 
 export interface SearchResult {
   id: string;
-  type: 'product' | 'service' | 'blog' | 'knowledge';
+  type: 'product' | 'service' | 'blog';
   title: string;
   description?: string;
   slug: string;
@@ -46,7 +46,7 @@ export interface SearchResponse {
 }
 
 export interface SearchFilters {
-  type?: 'product' | 'service' | 'blog' | 'knowledge' | 'all';
+  type?: 'product' | 'service' | 'blog' | 'all';
   category?: string;
   priceMin?: number;
   priceMax?: number;
@@ -103,9 +103,7 @@ export class SearchService {
 
       // Determine search types
       const searchTypes =
-        filters.type === 'all' || !filters.type
-          ? ['product', 'service', 'blog', 'knowledge']
-          : [filters.type];
+        filters.type === 'all' || !filters.type ? ['product', 'service', 'blog'] : [filters.type];
 
       // Execute parallel searches
       // We still get total count for pagination info
@@ -176,10 +174,6 @@ export class SearchService {
       searchPromises.push(this.searchBlogArticles(query, filters, skip, limitPerType));
     }
 
-    if (searchTypes.includes('knowledge')) {
-      searchPromises.push(this.searchKnowledgeBase(query, filters, skip, limitPerType));
-    }
-
     const resultsArray = await Promise.all(searchPromises);
     const combinedResults = resultsArray.flat();
 
@@ -236,20 +230,6 @@ export class SearchService {
         this.prisma.blog_articles.count({
           where: {
             status: 'PUBLISHED',
-            OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { content: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-        }),
-      );
-    }
-
-    if (searchTypes.includes('knowledge')) {
-      countPromises.push(
-        this.prisma.knowledge_base_entries.count({
-          where: {
-            isActive: true,
             OR: [
               { title: { contains: query, mode: 'insensitive' } },
               { content: { contains: query, mode: 'insensitive' } },
@@ -470,59 +450,6 @@ export class SearchService {
       }));
     } catch (error) {
       this.logger.error('Error searching blog articles:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Search knowledge base entries
-   */
-  private async searchKnowledgeBase(
-    query: string,
-    filters: SearchFilters,
-    skip: number,
-    pageSize: number,
-  ): Promise<SearchResult[]> {
-    try {
-      const where: Prisma.knowledge_base_entriesWhereInput = {
-        AND: [
-          { isActive: true },
-          {
-            OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { content: { contains: query, mode: 'insensitive' } },
-              { tags: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-        ],
-      };
-
-      const entries = await this.prisma.knowledge_base_entries.findMany({
-        where,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          content: true,
-          viewCount: true,
-        },
-        take: pageSize,
-        skip,
-      });
-
-      return entries.map(entry => ({
-        id: entry.id,
-        type: 'knowledge',
-        title: entry.title,
-        description: entry.content ? entry.content.substring(0, 200) : undefined,
-        slug: entry.slug,
-        relevanceScore: this.calculateRelevance(entry.title, query),
-        metadata: {
-          viewCount: entry.viewCount,
-        },
-      }));
-    } catch (error) {
-      this.logger.error('Error searching knowledge base:', error);
       return [];
     }
   }

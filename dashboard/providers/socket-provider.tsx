@@ -26,11 +26,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
 
         const socketInstance = io(socketUrl, {
-            path: "/socket.io",
-            transports: ["polling", "websocket"],
+            path: "/api/v1/socket.io",
+            transports: ["websocket", "polling"],
             autoConnect: true,
             reconnection: true,
-            reconnectionAttempts: 10,
+            reconnectionAttempts: 20,
+            auth: typeof window !== 'undefined' ? { token: localStorage.getItem('accessToken') } : {},
         });
 
         socketInstance.on("connect", () => {
