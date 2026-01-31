@@ -37,12 +37,12 @@ export function AppHeader() {
     }, []);
 
     const navLinks = [
-        { name: 'Trang chủ', href: '/', icon: <Home className="w-5 h-5" /> },
-        { name: 'Sản phẩm', href: '/products', icon: <Box className="w-5 h-5" /> },
-        { name: 'Dịch vụ', href: '/services', icon: <Wrench className="w-5 h-5" /> },
-        { name: 'Dự án', href: '/projects', icon: <Layout className="w-5 h-5" /> },
-        { name: 'Tin tức', href: '/blog', icon: <Newspaper className="w-5 h-5" /> },
-        { name: 'Liên hệ', href: '/contact', icon: <Mail className="w-5 h-5" /> },
+        { name: 'Trang chủ', href: '/' },
+        { name: 'Sản phẩm', href: '/products' },
+        { name: 'Dịch vụ', href: '/services' },
+        { name: 'Dự án', href: '/projects' },
+        { name: 'Tin tức', href: '/blog' },
+        { name: 'Liên hệ', href: '/contact' },
     ];
 
     return (
@@ -156,9 +156,9 @@ export function AppHeader() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-1 sm:gap-3 relative z-50">
-                    <a href={`tel:${hotlineNumber}`} className="p-2 rounded-full hover:bg-primary/5 transition-colors sm:hidden">
-                        <Phone className="w-5 h-5 text-primary animate-pulse" />
+                <div className="flex items-center gap-2 sm:gap-3 relative z-50">
+                    <a href={`tel:${hotlineNumber}`} className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary sm:hidden uppercase tracking-tighter">
+                        Hotline
                     </a>
 
                     <button className="p-2 rounded-full hover:bg-primary/5 transition-colors">
@@ -201,7 +201,7 @@ export function AppHeader() {
             </div>
 
             {/* Sub-Navbar (Categories) - Always Visible */}
-            <div suppressHydrationWarning className="w-full border-t border-white/5 h-12 bg-black/20 backdrop-blur-md">
+            <div suppressHydrationWarning className="w-full border-t border-white/5 min-h-[44px] bg-black/20 backdrop-blur-md">
                 <HeaderSubNav />
             </div>
 
@@ -239,17 +239,11 @@ export function AppHeader() {
                                     <Link
                                         href={link.href}
                                         className={cn(
-                                            "flex items-center gap-6 text-3xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2",
+                                            "text-4xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2 py-2",
                                             pathname === link.href ? "text-primary" : "text-foreground"
                                         )}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        <div className={cn(
-                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-                                            pathname === link.href ? "bg-primary text-white" : "bg-foreground/5 text-foreground/40"
-                                        )}>
-                                            {link.icon}
-                                        </div>
                                         {link.name}
                                     </Link>
                                 </motion.div>
