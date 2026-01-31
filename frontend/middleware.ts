@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Protect some routes on the frontend. This previously used the `middleware.ts`
-// convention; Next.js 16 recommends `proxy.ts` files. The logic is unchanged.
+// Next.js Middleware for route protection and redirection.
 
 const protectedRoutes = [
   '/profile',
@@ -18,7 +17,7 @@ const adminRoutes = ['/admin']
 
 const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl
 
