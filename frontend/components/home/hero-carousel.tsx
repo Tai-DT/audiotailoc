@@ -81,7 +81,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
     if (!displayBanners.length) return null;
 
     return (
-        <section className="relative h-screen w-full overflow-hidden bg-background pt-20 transition-colors duration-1000">
+        <section className="relative h-[85vh] md:h-screen w-full overflow-hidden bg-background pt-16 md:pt-20 transition-colors duration-1000">
             {/* Background Ambience */}
             {/* Background Ambience removed for maximum image clarity */}
 
@@ -131,7 +131,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.5, duration: 0.8 }}
-                                className="text-5xl md:text-7xl lg:text-8xl xl:text-[9rem] font-black tracking-tight leading-[0.95] uppercase transition-colors duration-1000 flex flex-wrap gap-x-6 md:gap-x-8 gap-y-4"
+                                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-[9rem] font-black tracking-tight leading-[1.1] md:leading-[0.95] uppercase transition-colors duration-1000 flex flex-wrap gap-x-4 md:gap-x-8 gap-y-2"
                             >
                                 {displayBanners[current].title.split(' ').map((word, i) => (
                                     <span key={i} className={cn(i % 2 === 0 ? "text-primary" : "text-hollow text-foreground opacity-90")}>
@@ -157,7 +157,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                             >
                                 <a
                                     href={displayBanners[current].linkUrl || '/catalog/products'}
-                                    className="group relative px-10 py-5 bg-primary text-foreground dark:text-foreground dark:text-white text-xs font-black uppercase tracking-widest overflow-hidden rounded-full transition-all hover:scale-105 active:scale-95"
+                                    className="group relative px-8 py-4 md:px-10 md:py-5 bg-primary text-foreground dark:text-white text-[10px] md:text-xs font-black uppercase tracking-widest overflow-hidden rounded-full transition-all hover:scale-105 active:scale-95"
                                 >
                                     <span className="relative z-10">Khám phá ngay</span>
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />

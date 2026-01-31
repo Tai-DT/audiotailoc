@@ -186,7 +186,7 @@ function ServiceCard({ service }: ServiceCardProps) {
                 <div className="absolute top-0 left-0 w-full h-1 red-elite-gradient opacity-0 group-hover:opacity-100 transition-opacity z-20" />
 
                 {/* Content */}
-                <div className="relative p-10 h-full flex flex-col z-10">
+                <div className="relative p-6 md:p-10 h-full flex flex-col z-10">
                     {/* Icon */}
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 bg-secondary dark:bg-white/5 text-primary border border-border dark:border-white/10 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-primary group-hover:text-black transition-all duration-500 shadow-xl">
                         {React.cloneElement(icon as React.ReactElement, { size: 28 })}

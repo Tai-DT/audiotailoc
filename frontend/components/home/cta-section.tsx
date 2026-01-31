@@ -58,7 +58,7 @@ export function CTASection() {
                         </div>
 
                         {/* Title with Dramatic Impact */}
-                        <h2 className="text-5xl md:text-8xl font-black text-foreground tracking-tighter leading-[0.85] font-display">
+                        <h2 className="text-4xl md:text-8xl font-black text-foreground tracking-tighter leading-[1.1] md:leading-[0.85] font-display">
                             Đặc quyền <br />
                             <span className="premium-text-gradient italic">Tư vấn</span> <br />
                             Đẳng Cấp

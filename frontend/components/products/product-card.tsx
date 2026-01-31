@@ -83,7 +83,7 @@ export function ProductCard({
                         src={getProductImage()}
                         alt={product.name}
                         fill
-                        className="object-contain p-8 transition-all duration-700 group-hover:scale-105 group-hover:-rotate-1 drop-shadow-2xl grayscale-[0.3] group-hover:grayscale-0 dark:grayscale-0"
+                        className="object-contain p-4 md:p-8 transition-all duration-700 group-hover:scale-105 group-hover:-rotate-1 drop-shadow-2xl grayscale-[0.3] group-hover:grayscale-0 dark:grayscale-0"
                         priority={priority}
                         logoSize="sm"
                         logoPosition="bottom-right"
@@ -134,7 +134,7 @@ export function ProductCard({
             </div>
 
             {/* Content Area - Optimized for spacing */}
-            <CardContent className="p-7 flex-1 flex flex-col justify-between relative overflow-hidden">
+            <CardContent className="p-4 md:p-7 flex-1 flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 dark:to-primary/10 opacity-50 pointer-events-none" />
 
                 <div className="space-y-4 relative z-10">
@@ -147,7 +147,7 @@ export function ProductCard({
                         </div>
                     )}
                     <Link href={`/products/${product.slug}`} className="block group/title">
-                        <h3 className="font-display font-black text-xl md:text-2xl text-foreground group-hover/title:text-primary transition-colors line-clamp-2 leading-[1.35] tracking-tight min-h-[2.7em]">
+                        <h3 className="font-display font-black text-lg md:text-2xl text-foreground group-hover/title:text-primary transition-colors line-clamp-2 leading-[1.35] tracking-tight min-h-[2.7em]">
                             {product.name}
                         </h3>
                     </Link>
@@ -162,7 +162,7 @@ export function ProductCard({
                                     {formatPrice(product.originalPriceCents)}
                                 </span>
                             )}
-                            <span className="text-3xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
+                            <span className="text-xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
                                 {formatPrice(product.priceCents)}
                             </span>
                         </div>

@@ -165,7 +165,7 @@ export function AppHeader() {
                     <Link href="/cart" className="p-2.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all relative">
                         <ShoppingCart className="w-5 h-5 text-primary" />
                         {itemCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-primary text-foreground dark:text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
+                            <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
                                 {itemCount}
                             </span>
                         )}
