@@ -93,42 +93,42 @@ export function ProductCard({
                 </Link>
 
                 {/* Elegant Tags */}
-                <div className="absolute top-6 left-6 z-10 flex flex-col gap-3">
+                <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10 flex flex-col gap-2 md:gap-3">
                     {product.featured && (
-                        <Badge className="bg-primary text-foreground dark:text-white font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-lg shadow-xl border-none">
+                        <Badge className="bg-primary text-foreground dark:text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] px-2 md:px-4 py-1 md:py-2 rounded-md md:rounded-lg shadow-xl border-none">
                             Nổi bật
                         </Badge>
                     )}
                     {discount > 0 && (
-                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-lg shadow-xl border-none">
+                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] px-2 md:px-4 py-1 md:py-2 rounded-md md:rounded-lg shadow-xl border-none">
                             -{discount}%
                         </Badge>
                     )}
                 </div>
 
                 {/* Floating Actions - Premium Circle Buttons - Always visible on mobile, hover on desktop */}
-                <div className="absolute top-6 right-6 z-20 flex flex-col gap-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 translate-x-0 lg:translate-x-6 lg:group-hover:translate-x-0 transition-all duration-500 ease-out">
+                <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 flex flex-col gap-2 md:gap-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 translate-x-0 lg:translate-x-6 lg:group-hover:translate-x-0 transition-all duration-500 ease-out">
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="h-11 w-11 rounded-2xl glass-panel text-foreground dark:text-white hover:bg-primary dark:hover:bg-accent hover:text-foreground dark:text-white dark:hover:text-black transition-all shadow-xl hover:rotate-12"
+                        className="h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl glass-panel text-foreground dark:text-white hover:bg-primary dark:hover:bg-accent hover:text-foreground dark:text-white dark:hover:text-black transition-all shadow-xl hover:rotate-12"
                         onClick={handleViewProduct}
                         title="Xem nhanh"
                     >
-                        <Eye size={20} />
+                        <Eye size={16} className="md:size-5" />
                     </Button>
                     <Button
                         variant="secondary"
                         size="icon"
                         className={cn(
-                            "h-11 w-11 rounded-2xl glass-panel text-foreground dark:text-white transition-all shadow-xl hover:-rotate-12",
+                            "h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl glass-panel text-foreground dark:text-white transition-all shadow-xl hover:-rotate-12",
                             isInWishlist ? "text-primary dark:text-accent border-primary/50 dark:border-accent/50 bg-primary/5 dark:bg-accent/5" : "hover:text-primary dark:hover:text-accent"
                         )}
                         onClick={() => toggleWishlist(product.id, isInWishlist)}
                         disabled={isWishlistLoading}
                         title="Thêm vào yêu thích"
                     >
-                        <Heart size={20} className={isInWishlist ? "fill-current" : ""} />
+                        <Heart size={16} className={cn("md:size-5", isInWishlist ? "fill-current" : "")} />
                     </Button>
                 </div>
             </div>
@@ -137,10 +137,10 @@ export function ProductCard({
             <CardContent className="p-4 md:p-7 flex-1 flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 dark:to-primary/10 opacity-50 pointer-events-none" />
 
-                <div className="space-y-4 relative z-10">
+                <div className="space-y-3 md:space-y-4 relative z-10">
                     {product.category && (
-                        <div className="flex items-center gap-3">
-                            <span className="w-8 h-[2px] bg-primary/30 dark:bg-accent/30" />
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <span className="w-4 md:w-8 h-[2px] bg-primary/30 dark:bg-accent/30" />
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-accent/70 truncate font-display">
                                 {product.category.name}
                             </span>
@@ -153,7 +153,7 @@ export function ProductCard({
                     </Link>
                 </div>
 
-                <div className="space-y-8 pt-4 relative z-10">
+                <div className="space-y-4 md:space-y-8 pt-3 md:pt-4 relative z-10">
                     {/* Price Section - Maximum Visibility */}
                     <div className="flex items-end justify-between">
                         <div className="flex flex-col">
@@ -167,14 +167,14 @@ export function ProductCard({
                             </span>
                         </div>
 
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 dark:bg-white/5 border border-border dark:border-white/10">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 dark:bg-white/5 border border-border dark:border-white/10">
                             <Eye size={12} className="text-primary" />
                             <span className="text-[10px] font-black text-foreground/80 dark:text-white/80 uppercase tracking-widest font-display">{product.viewCount}</span>
                         </div>
                     </div>
 
                     <Button
-                        className="w-full h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
+                        className="w-full h-11 md:h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-[10px] md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
                         disabled={isOutOfStock}
                         onClick={() => onAddToCart?.(product.id)}
                     >
