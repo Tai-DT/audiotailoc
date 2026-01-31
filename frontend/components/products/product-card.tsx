@@ -100,7 +100,7 @@ export function ProductCard({
                         </Badge>
                     )}
                     {discount > 0 && (
-                        <Badge className="bg-yellow-400 text-red-600 dark:text-red-500 font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-lg shadow-xl border-none">
+                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-lg shadow-xl border-none">
                             -{discount}%
                         </Badge>
                     )}
@@ -174,12 +174,12 @@ export function ProductCard({
                     </div>
 
                     <Button
-                        className="w-full h-14 red-elite-gradient hover:scale-[1.02] text-foreground dark:text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-2xl transition-all duration-500 shadow-xl hover:shadow-primary/40 dark:hover:shadow-primary/60 border border-primary/20 group/btn active:scale-95 relative overflow-hidden"
+                        className="w-full h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
                         disabled={isOutOfStock}
                         onClick={() => onAddToCart?.(product.id)}
                     >
-                        <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
-                        <ShoppingCart size={20} className="mr-3 transition-transform group-hover/btn:scale-110 relative z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                        <ShoppingCart size={18} className="mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
                         <span className="relative z-10">{isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}</span>
                     </Button>
                 </div>
