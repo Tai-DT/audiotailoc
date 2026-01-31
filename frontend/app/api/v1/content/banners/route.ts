@@ -21,3 +21,4 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, message: 'Proxy fetch banners failed', error: String(error) }, { status: 500 });
     }
 }
+// deployment trigger 1769848188
