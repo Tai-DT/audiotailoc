@@ -42,7 +42,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
     }
 
     return (
-        <section className="py-24 md:py-40 relative overflow-hidden bg-background">
+        <section className="py-16 md:py-28 relative overflow-hidden bg-background">
             {/* Background Aesthetic Layers */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(180,140,50,0.03),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(220,38,38,0.03),transparent_40%)]" />
             <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
@@ -64,7 +64,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
 
                 {/* Categories Bento Grid */}
                 {/* Dynamic Grid for all categories */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {displayCategories.map((category, index) => (
                         <motion.div
                             key={category.id}
@@ -72,7 +72,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className="h-[300px] md:h-[350px]"
+                            className="h-[220px] md:h-[350px]"
                         >
                             <CategoryCard
                                 category={category}
@@ -101,7 +101,7 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
 
     return (
         <Link href={`/products?category=${category.slug}`} className={cn("block group h-full", className)}>
-            <div className="relative h-full rounded-[3rem] overflow-hidden red-elite-card border border-white/5 dark:border-white/10">
+            <div className="relative h-full rounded-2xl md:rounded-[3rem] overflow-hidden red-elite-card border border-white/5 dark:border-white/10">
                 {/* Background Image Layer */}
                 <div className="absolute inset-0 z-0">
                     {imageUrl ? (
@@ -129,17 +129,17 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
                 {/* Content Overlay */}
                 <div className={cn(
                     "relative z-10 h-full flex flex-col justify-between",
-                    isLarge ? "p-12 md:p-14" : isSmall ? "p-8" : "p-10"
+                    isLarge ? "p-12 md:p-14" : isSmall ? "p-4 md:p-8" : "p-5 md:p-10"
                 )}>
                     {/* Top Row */}
                     <div className="flex items-start justify-between">
                         <div className={cn(
-                            "rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-yellow-400 dark:text-yellow-300 shadow-2xl transition-all duration-700",
+                            "rounded-xl md:rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-yellow-400 dark:text-yellow-300 shadow-2xl transition-all duration-700",
                             "group-hover:scale-110 group-hover:bg-yellow-400 dark:group-hover:bg-yellow-300 group-hover:text-black group-hover:rotate-6",
-                            isLarge ? "w-20 h-20" : isSmall ? "w-12 h-12" : "w-16 h-16"
+                            isLarge ? "w-20 h-20" : isSmall ? "w-8 h-8 md:w-12 md:h-12" : "w-10 h-10 md:w-16 md:h-16"
                         )}>
                             {React.cloneElement(icon as React.ReactElement, {
-                                className: isLarge ? "w-10 h-10" : isSmall ? "w-6 h-6" : "w-8 h-8"
+                                className: isLarge ? "w-10 h-10" : isSmall ? "w-4 h-4 md:w-6 md:h-6" : "w-5 h-5 md:w-8 md:h-8"
                             })}
                         </div>
 
@@ -162,7 +162,7 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
 
                         <h3 className={cn(
                             "font-black text-yellow-400 drop-shadow-sm group-hover:text-yellow-300 transition-colors duration-500 leading-none font-display tracking-tighter",
-                            isLarge ? "text-4xl md:text-6xl" : isSmall ? "text-xl md:text-2xl" : "text-3xl md:text-4xl"
+                            isLarge ? "text-4xl md:text-6xl" : isSmall ? "text-lg md:text-2xl" : "text-xl md:text-4xl"
                         )}>
                             {category.name}
                         </h3>

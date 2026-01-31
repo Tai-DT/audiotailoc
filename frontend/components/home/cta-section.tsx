@@ -19,7 +19,7 @@ export function CTASection() {
     const zaloLink = contactInfo?.social?.zalo || (hotlineNumber ? `https://zalo.me/${hotlineNumber}` : '');
 
     return (
-        <section className="py-24 md:py-48 relative overflow-hidden bg-background">
+        <section className="py-16 md:py-32 relative overflow-hidden bg-background">
             {/* Cinematic Background Layer */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.05),transparent_70%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.08),transparent_70%)]" />
@@ -48,7 +48,7 @@ export function CTASection() {
             </div>
 
             <div className="container mx-auto px-6 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-20 md:gap-32 items-center">
+                <div className="grid lg:grid-cols-2 gap-16 md:gap-32 items-center">
                     {/* Elite Content - Authority & Trust */}
                     <div className="space-y-12">
                         {/* Elite Badge */}
@@ -88,7 +88,7 @@ export function CTASection() {
                             <Link href={`tel:${hotlineNumber}`} className="w-full sm:w-auto overflow-hidden rounded-[2rem] group/btn">
                                 <Button
                                     size="lg"
-                                    className="w-full h-20 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-14 text-sm font-black uppercase tracking-[0.3em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
+                                    className="w-full h-16 md:h-20 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-8 md:px-14 text-sm font-black uppercase tracking-[0.3em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
                                 >
                                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                                     <div className="absolute inset-0 gold-royal-grain opacity-10" />
@@ -100,7 +100,7 @@ export function CTASection() {
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="w-full h-20 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-2xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-14 text-sm font-black uppercase tracking-[0.3em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
+                                    className="w-full h-16 md:h-20 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-2xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-8 md:px-14 text-sm font-black uppercase tracking-[0.3em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
                                 >
                                     <Mail className="mr-4 h-6 w-6 text-primary dark:text-accent group-hover:text-foreground dark:text-foreground dark:text-white transition-colors" />
                                     Để lại lời nhắn
@@ -114,7 +114,7 @@ export function CTASection() {
                         <div className="absolute -inset-6 bg-gradient-to-br from-primary/30 to-accent/30 blur-[120px] opacity-20 dark:opacity-30 animate-pulse" />
                         <div className="relative space-y-10">
                             {/* Primary Contact Console */}
-                            <div className="red-elite-card rounded-[4rem] p-12 md:p-20 group overflow-hidden">
+                            <div className="red-elite-card rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-20 group overflow-hidden">
                                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 dark:bg-primary/20 blur-[100px] -translate-y-1/2 translate-x-1/2" />
                                 <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
                                 <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover:opacity-10 transition-opacity" />
@@ -124,7 +124,7 @@ export function CTASection() {
                                         <div className="text-[11px] font-black uppercase tracking-[0.5em] text-primary dark:text-accent font-display">Đường dây ưu tiên Elite</div>
                                         <a
                                             href={`tel:${hotlineNumber}`}
-                                            className="block text-5xl md:text-8xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter drop-shadow-sm group-hover:scale-105"
+                                            className="block text-4xl md:text-8xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter drop-shadow-sm group-hover:scale-105"
                                         >
                                             {hotlineDisplay}
                                         </a>
@@ -138,7 +138,7 @@ export function CTASection() {
                                     </div>
 
                                     {/* Action Grid */}
-                                    <div className="grid grid-cols-2 gap-8">
+                                    <div className="grid grid-cols-2 gap-4 md:gap-8">
                                         <ContactButton
                                             href={zaloLink}
                                             icon={MessageCircle}
@@ -156,7 +156,7 @@ export function CTASection() {
                             </div>
 
                             {/* Secondary Navigation Grid */}
-                            <div className="grid grid-cols-2 gap-10">
+                            <div className="grid grid-cols-2 gap-4 md:gap-10">
                                 <EliteNavLink href="/products" label="Bộ sưu tập" />
                                 <EliteNavLink href="/services" label="Dịch vụ Elite" />
                             </div>
@@ -171,7 +171,7 @@ export function CTASection() {
 function EliteNavLink({ href, label }: { href: string; label: string }) {
     return (
         <Link href={href}>
-            <div className="group p-10 rounded-[3rem] glass-panel hover:border-primary/50 dark:hover:border-accent/40 transition-all duration-700 hover:shadow-2xl overflow-hidden relative active:scale-95">
+            <div className="group p-6 md:p-10 rounded-2xl md:rounded-[3rem] glass-panel hover:border-primary/50 dark:hover:border-accent/40 transition-all duration-700 hover:shadow-2xl overflow-hidden relative active:scale-95">
                 <div className="absolute inset-0 gold-royal-grain opacity-[0.03] group-hover:opacity-[0.08] transition-opacity" />
                 <div className="absolute inset-x-0 bottom-0 h-1.5 red-elite-gradient translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
                 <div className="flex items-center justify-between relative z-10">
@@ -191,7 +191,7 @@ interface InfoCardProps {
 
 function InfoCard({ icon: Icon, title, content }: InfoCardProps) {
     return (
-        <div className="flex items-center gap-8 p-10 rounded-[2.5rem] glass-panel group hover:border-primary/40 dark:hover:border-accent/30 transition-all duration-700 shadow-sm hover:shadow-xl relative overflow-hidden">
+        <div className="flex items-center gap-4 md:gap-8 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] glass-panel group hover:border-primary/40 dark:hover:border-accent/30 transition-all duration-700 shadow-sm hover:shadow-xl relative overflow-hidden">
             <div className="absolute inset-0 gold-royal-grain opacity-[0.02] group-hover:opacity-[0.05] transition-opacity" />
             <div className="w-16 h-16 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center flex-shrink-0 border border-border dark:border-white/10 text-primary dark:text-accent group-hover:scale-110 group-hover:bg-primary dark:group-hover:bg-accent group-hover:text-foreground dark:text-foreground dark:text-white dark:group-hover:text-black transition-all duration-700 shadow-lg relative z-10">
                 <Icon size={30} />
@@ -218,7 +218,7 @@ function ContactButton({ href, icon: Icon, label, className }: ContactButtonProp
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-                "flex flex-col items-center justify-center gap-4 py-8 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] font-display relative overflow-hidden group/cbtn",
+                "flex flex-col items-center justify-center gap-3 md:gap-4 py-6 md:py-8 rounded-2xl md:rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] font-display relative overflow-hidden group/cbtn",
                 "transition-all duration-700 hover:scale-105 active:scale-95 shadow-lg",
                 className
             )}

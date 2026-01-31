@@ -39,7 +39,7 @@ export function ElitePolicyBar() {
                 <div className="absolute inset-0 gold-royal-grain opacity-[0.03] pointer-events-none" />
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border-white/5 divide-white/5">
+                <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border-white/5 divide-white/5">
                     {POLICIES.map((item, idx) => (
                         <motion.div
                             key={idx}
@@ -47,13 +47,13 @@ export function ElitePolicyBar() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: idx * 0.1 }}
-                            className="p-6 md:p-10 flex items-center gap-6 group/item hover:bg-primary/5 transition-colors duration-500"
+                            className="p-4 md:p-10 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-3 sm:gap-6 group/item hover:bg-primary/5 transition-colors duration-500"
                         >
-                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center transition-all duration-500 group-hover/item:scale-110 group-hover/item:bg-primary group-hover/item:text-black ${item.color}`}>
-                                <item.icon size={28} className="md:size-32" />
+                            <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center transition-all duration-500 group-hover/item:scale-110 group-hover/item:bg-primary group-hover/item:text-black ${item.color}`}>
+                                <item.icon size={22} className="md:size-32" />
                             </div>
                             <div className="flex flex-col">
-                                <h4 className="text-sm md:text-base font-black uppercase tracking-widest text-foreground group-hover/item:text-primary transition-colors font-display">
+                                <h4 className="text-[10px] md:text-base font-black uppercase tracking-widest text-foreground group-hover/item:text-primary transition-colors font-display leading-tight">
                                     {item.title}
                                 </h4>
                                 <p className="text-[10px] md:text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">
