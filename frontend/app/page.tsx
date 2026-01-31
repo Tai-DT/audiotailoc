@@ -63,7 +63,7 @@ export default function Home() {
             {/* 2. Featured Showcase - New Arrivals */}
             <section className="py-16 md:py-28 bg-background relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-                <div className="container mx-auto px-6">
+                <div className="container mx-auto px-4 md:px-6">
                     <EliteSectionHeading
                         badge="Sưu tập mới nhất"
                         title="Curated Selection"
@@ -81,7 +81,7 @@ export default function Home() {
             {/* 4. Best Sellers Showcase */}
             <section className="py-16 md:py-28 bg-background relative overflow-hidden">
                 <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent/5 blur-[120px] rounded-full pointer-events-none" />
-                <div className="container mx-auto px-6">
+                <div className="container mx-auto px-4 md:px-6">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
                         <EliteSectionHeading
                             badge="Sản phẩm tiêu biểu"
