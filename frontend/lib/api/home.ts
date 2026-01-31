@@ -55,13 +55,23 @@ function createUrl(path: string, params: Record<string, string> = {}): string {
     }
 
     // Server-side: use absolute URL with backend API
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
     const cleanBase = baseUrl.replace(/\/$/, '');
 
-    // Ensure full path includes /api/v1
+    // Check if base URL already includes /api/v1
+    const hasApiPrefix = cleanBase.includes('/api/v1');
+
+    // Normalize the path
     let fullPath = path.startsWith('/') ? path : `/${path}`;
-    if (!fullPath.startsWith('/api/v1')) {
+
+    // Only add /api/v1 if base URL doesn't have it and path doesn't have it
+    if (!hasApiPrefix && !fullPath.startsWith('/api/v1')) {
         fullPath = `/api/v1${fullPath}`;
+    }
+
+    // If path already has /api/v1 and base also has it, remove from path
+    if (hasApiPrefix && fullPath.startsWith('/api/v1')) {
+        fullPath = fullPath.replace('/api/v1', '');
     }
 
     let fullUrl = `${cleanBase}${fullPath}`;
