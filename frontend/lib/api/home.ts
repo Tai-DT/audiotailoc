@@ -190,18 +190,23 @@ export async function fetchNewArrivals(limit: number = 8): Promise<Product[]> {
             limit: String(limit)
         });
 
+        console.log('[fetchNewArrivals] Fetching from:', url);
+
         const res = await fetch(url, {
-            next: { revalidate: 300 },
-            cache: 'force-cache',
+            next: { revalidate: 0 },
+            cache: 'no-store',
         });
         if (!res.ok) {
-            console.warn('New arrivals API returned non-OK status:', res.status);
+            console.warn('[fetchNewArrivals] API returned non-OK status:', res.status);
             return [];
         }
         const data = await res.json();
-        return extractData<Product>(data);
+        console.log('[fetchNewArrivals] Raw response keys:', Object.keys(data));
+        const products = extractData<Product>(data);
+        console.log('[fetchNewArrivals] Extracted products count:', products.length);
+        return products;
     } catch (error) {
-        console.error('Error fetching new arrivals:', error);
+        console.error('[fetchNewArrivals] Error:', error);
         return [];
     }
 }
@@ -212,18 +217,23 @@ export async function fetchBestSellers(limit: number = 8): Promise<Product[]> {
             limit: String(limit)
         });
 
+        console.log('[fetchBestSellers] Fetching from:', url);
+
         const res = await fetch(url, {
-            next: { revalidate: 300 },
-            cache: 'force-cache',
+            next: { revalidate: 0 },
+            cache: 'no-store',
         });
         if (!res.ok) {
-            console.warn('Best sellers API returned non-OK status:', res.status);
+            console.warn('[fetchBestSellers] API returned non-OK status:', res.status);
             return [];
         }
         const data = await res.json();
-        return extractData<Product>(data);
+        console.log('[fetchBestSellers] Raw response keys:', Object.keys(data));
+        const products = extractData<Product>(data);
+        console.log('[fetchBestSellers] Extracted products count:', products.length);
+        return products;
     } catch (error) {
-        console.error('Error fetching best sellers:', error);
+        console.error('[fetchBestSellers] Error:', error);
         return [];
     }
 }
