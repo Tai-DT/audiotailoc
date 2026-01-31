@@ -22,7 +22,7 @@ import {
 
 function ServicesLoading() {
  return (
- <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-12">
+ <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-6 sm:p-12">
  <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center animate-pulse mb-6">
  <Music4 className="w-8 h-8 text-primary" />
  </div>
@@ -150,7 +150,7 @@ function ServicesPageContent() {
  return (
  <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30" role="main">
  {/* Cinematic Hero */}
- <section className="relative pt-32 pb-24 overflow-hidden">
+ <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 overflow-hidden">
  <div className="absolute inset-0 z-0">
  <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[150px] animate-pulse" />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
@@ -185,7 +185,7 @@ function ServicesPageContent() {
  </div>
 
  {/* Hero Stats */}
- <div className="flex items-center gap-12">
+ <div className="flex items-center gap-6 sm:gap-12">
  {heroStats.map((stat, idx) => (
  <div key={idx} className="space-y-1">
  <div className="text-3xl font-black text-foreground dark:text-white tracking-tighter tabular-nums">{stat.value}</div>
@@ -255,7 +255,7 @@ function ServicesPageContent() {
  {/* Trust Line */}
  <section className="py-12 border-y border-white/5 bg-white/[0.02]">
  <div className="container mx-auto px-6">
- <div className="flex flex-wrap justify-between gap-12  font-black italic uppercase text-[10px] tracking-[0.4em]">
+ <div className="flex flex-wrap justify-between gap-6 sm:gap-12 font-black italic uppercase text-[10px] tracking-[0.4em]">
  {[
  { icon: Star, label: 'Thang điểm 5.0' },
  { icon: Clock, label: 'Linh hoạt 24/7' },

@@ -21,15 +21,17 @@ function extractData<T>(responseData: unknown): T[] {
             // Handle { success: true, data: { items: [...], services: [...] } }
             if (typeof obj.data === 'object' && obj.data !== null) {
                 const dataObj = obj.data as Record<string, unknown>;
-                if (Array.isArray(dataObj.items)) return dataObj.items;
+                // Prioritize 'services' if present, then 'items', then 'products'
                 if (Array.isArray(dataObj.services)) return dataObj.services;
+                if (Array.isArray(dataObj.items)) return dataObj.items;
                 if (Array.isArray(dataObj.products)) return dataObj.products;
             }
         }
 
         // Handle { items: [...] } directly
-        if (Array.isArray(obj.items)) return obj.items;
+        // Prioritize 'services' if present, then 'items'
         if (Array.isArray(obj.services)) return obj.services;
+        if (Array.isArray(obj.items)) return obj.items;
     }
 
     return [];

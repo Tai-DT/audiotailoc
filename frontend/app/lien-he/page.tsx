@@ -184,7 +184,7 @@ export default function ContactPage() {
  return (
  <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-32">
  {/* Cinematic Hero */}
- <section className="relative pt-32 pb-20 overflow-hidden">
+ <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
  <div className="absolute inset-0 z-0">
  <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[150px] animate-pulse" />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
@@ -239,7 +239,7 @@ export default function ContactPage() {
  <div className="grid lg:grid-cols-2 gap-20 items-stretch">
  {/* Contact Form - Glass Effect */}
  <BlurFade delay={0.2} direction="right" inView>
- <div className="h-full p-12 bg-white/5 border border-white/10 rounded-[3rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+ <div className="h-full p-6 sm:p-10 lg:p-12 bg-white/5 border border-white/10 rounded-[2rem] sm:rounded-[3rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
  <div className="absolute top-0 right-1/4 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
 
  <div className="relative z-10 space-y-12">
@@ -374,7 +374,7 @@ export default function ContactPage() {
  <section className="py-24">
  <div className="container mx-auto px-6">
  <BlurFade delay={0.6} inView>
- <div className="flex flex-col items-center gap-12 text-center">
+ <div className="flex flex-col items-center gap-6 sm:gap-12 text-center">
  <div className="space-y-4">
  <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px]">Showroom Experience</p>
  <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-none uppercase italic">Tìm đường đến <span className="text-foreground/40 dark:text-zinc-300">Thánh đường</span></h2>
@@ -382,7 +382,7 @@ export default function ContactPage() {
 
  <div className="w-full max-w-6xl aspect-video rounded-[3rem] overflow-hidden border-2 border-white/5 relative group p-1 bg-white/5 backdrop-blur-3xl shadow-3xl">
  <div className="absolute inset-0 z-0">
- <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-12 text-center group-hover:bg-slate-800 transition-colors">
+ <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 sm:p-12 text-center group-hover:bg-slate-800 transition-colors">
  <MapPin className="h-20 w-20 text-foreground/5 dark:text-white/5 mb-8 animate-bounce" />
  <div className="space-y-4">
  <p className="text-xl font-bold uppercase tracking-tight">{contactInfo?.address?.full || "Khu vực trung tâm TP. Hồ Chí Minh"}</p>

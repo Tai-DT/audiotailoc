@@ -20,7 +20,7 @@ export function EliteSectionHeading({
 }: EliteSectionHeadingProps) {
     return (
         <div className={cn(
-            "mb-12 md:mb-20 space-y-4",
+            "mb-8 md:mb-20 space-y-3 md:space-y-4",
             centered ? "text-center mx-auto" : "text-left",
             className
         )}>
@@ -40,7 +40,7 @@ export function EliteSectionHeading({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-black tracking-tight leading-[1.1] uppercase"
+                className="text-2xl sm:text-4xl md:text-6xl lg:text-8xl font-black tracking-tight leading-[1.1] uppercase"
             >
                 {title}
             </motion.h2>
@@ -51,7 +51,7 @@ export function EliteSectionHeading({
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 }}
-                    className="text-lg md:text-xl text-muted-foreground leading-[1.6] max-w-2xl font-light"
+                    className="text-base md:text-xl text-muted-foreground leading-[1.6] max-w-2xl font-light"
                 >
                     {subtitle}
                 </motion.p>

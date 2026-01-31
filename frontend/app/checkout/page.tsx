@@ -265,16 +265,16 @@ export default function CheckoutPage() {
  <div className="absolute inset-0 bg-studio-grid opacity-10" />
  </div>
 
- <div className="container mx-auto px-6 relative z-10">
+ <div className="container mx-auto px-4 sm:px-6 relative z-10">
  {/* Header Section */}
  <BlurFade delay={0.1} inView>
- <div className="pt-32 pb-16 flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 mb-16">
+ <div className="pt-24 sm:pt-32 pb-12 sm:pb-16 flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 mb-16">
  <div className="space-y-4">
  <div className="flex items-center gap-3 px-4 py-2 bg-zinc-50 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10 w-fit">
  <Lock className="w-4 h-4 text-primary animate-pulse" />
  <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Secure Checkout Protocol</span>
  </div>
- <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
+ <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
  Hoàn <span className="text-primary italic">Tất</span> Đơn hàng
  </h1>
  <p className="text-foreground/40 dark:text-zinc-300 font-medium italic">
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
  <div className="lg:col-span-8 space-y-12">
  {/* Elite Stepper */}
  <BlurFade delay={0.2} inView>
- <nav className="flex items-center justify-between bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-6 rounded-[2rem] backdrop-blur-3xl">
+ <nav className="flex items-center justify-between bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-4 sm:p-6 rounded-[2rem] backdrop-blur-3xl">
  {[
  { step: 1, icon: User, label: 'Khai báo Giao hàng' },
  { step: 2, icon: CreditCard, label: 'Chọn Phương thức' },
@@ -339,7 +339,7 @@ export default function CheckoutPage() {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  exit={{ opacity: 0, y: -20 }}
- className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl space-y-10"
+ className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 backdrop-blur-3xl space-y-8 sm:space-y-10"
  >
  <div className="space-y-2">
  <h3 className="text-2xl font-black uppercase tracking-tight italic">Danh tính <span className="text-primary">&</span> Địa điểm</h3>
@@ -434,7 +434,7 @@ export default function CheckoutPage() {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  exit={{ opacity: 0, y: -20 }}
- className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl space-y-12"
+ className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 backdrop-blur-3xl space-y-10 sm:space-y-12"
  >
  <div className="space-y-2">
  <h3 className="text-2xl font-black uppercase tracking-tight italic">Lựa chọn <span className="text-primary">Thanh khoản</span></h3>
@@ -448,7 +448,7 @@ export default function CheckoutPage() {
  <Label
  htmlFor={method.id}
  className={cn(
- "flex flex-col p-8 rounded-[2rem] border transition-all duration-500 cursor-pointer h-full",
+ "flex flex-col p-5 sm:p-8 rounded-[2rem] border transition-all duration-500 cursor-pointer h-full",
  "bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 peer-checked:bg-primary/10 peer-checked:border-primary group-hover:border-primary/50"
  )}
  >
@@ -479,7 +479,7 @@ export default function CheckoutPage() {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  exit={{ opacity: 0, y: -20 }}
- className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl space-y-12"
+ className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 backdrop-blur-3xl space-y-10 sm:space-y-12"
  >
  <div className="space-y-2">
  <h3 className="text-2xl font-black uppercase tracking-tight italic">Kiểm duyệt <span className="text-primary">Ủy thác</span></h3>

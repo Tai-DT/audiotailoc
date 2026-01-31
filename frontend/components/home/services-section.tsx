@@ -64,21 +64,21 @@ export function ServicesSection({ services }: ServicesSectionProps) {
             <div className="container mx-auto px-6 relative z-10">
                 {/* Section Header */}
                 <BlurFade delay={0.1} inView>
-                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-16">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-10 md:mb-16">
                         <div className="space-y-6">
                             <div className="section-badge group">
                                 <Sparkles className="w-4 h-4 text-primary animate-pulse group-hover:rotate-12 transition-transform" />
                                 <span>Dịch vụ kỹ thuật chuyên sâu</span>
                             </div>
 
-                            <h2 className="text-4xl md:text-7xl font-black text-foreground tracking-tighter leading-[0.85] font-display">
+                            <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[1] md:leading-[0.85] font-display">
                                 Dịch vụ <br />
                                 <span className="premium-text-gradient italic">
                                     Âm Thanh Red Elite
                                 </span>
                             </h2>
 
-                            <p className="text-xl text-muted-foreground dark:text-zinc-300 max-w-xl font-medium leading-relaxed italic border-l-4 border-primary/30 pl-8">
+                            <p className="text-base md:text-xl text-muted-foreground dark:text-zinc-300 max-w-xl font-medium leading-relaxed italic border-l-4 border-primary/30 pl-6 md:pl-8">
                                 Đội ngũ kỹ thuật viên tinh hoa, sẵn sàng mang đến trải nghiệm âm thanh hoàn hảo nhất cho không gian của bạn.
                             </p>
                         </div>
@@ -87,7 +87,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="h-16 px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display uppercase text-xs tracking-[0.2em] transition-all duration-300"
+                                className="w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display uppercase text-xs tracking-[0.2em] transition-all duration-300"
                             >
                                 Khám phá tinh hoa
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -97,7 +97,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                 </BlurFade>
 
                 {/* Services Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {displayServices.map((service, index) => (
                         <BlurFade key={service.id} delay={0.15 + index * 0.05} inView>
                             <ServiceCard service={service} index={index} />
@@ -107,7 +107,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
 
                 {/* Quick Contact CTA */}
                 <BlurFade delay={0.4} inView>
-                    <div className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-10 p-10 rounded-[2.5rem] glass-panel border border-border dark:border-white/10 shadow-2xl relative overflow-hidden group/cta">
+                    <div className="mt-12 md:mt-20 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] glass-panel border border-border dark:border-white/10 shadow-2xl relative overflow-hidden group/cta">
                         <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover/cta:opacity-10 transition-opacity" />
 
                         <div className="flex items-center gap-4 relative z-10">
@@ -125,7 +125,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                         <a href={`tel:${hotlineNumber}`} className="relative z-10">
                             <Button
                                 size="lg"
-                                className="red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-4 shadow-xl shadow-primary/20 rounded-2xl h-16 px-12 font-display uppercase tracking-[0.2em] text-sm active:scale-95 transition-all duration-300"
+                                className="w-full sm:w-auto red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-4 shadow-xl shadow-primary/20 rounded-2xl h-14 md:h-16 px-8 md:px-12 font-display uppercase tracking-[0.2em] text-sm active:scale-[0.98] transition-all duration-300"
                             >
                                 <Phone className="w-5 h-5" />
                                 {hotlineDisplay}
@@ -186,10 +186,10 @@ function ServiceCard({ service }: ServiceCardProps) {
                 <div className="absolute top-0 left-0 w-full h-1 red-elite-gradient opacity-0 group-hover:opacity-100 transition-opacity z-20" />
 
                 {/* Content */}
-                <div className="relative p-6 md:p-10 h-full flex flex-col z-10">
+                <div className="relative p-5 md:p-10 h-full flex flex-col z-10">
                     {/* Icon */}
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 bg-secondary dark:bg-white/5 text-primary border border-border dark:border-white/10 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-primary group-hover:text-black transition-all duration-500 shadow-xl">
-                        {React.cloneElement(icon as React.ReactElement, { size: 28 })}
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center mb-6 md:mb-8 bg-secondary dark:bg-white/5 text-primary border border-border dark:border-white/10 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-primary group-hover:text-black transition-all duration-500 shadow-xl">
+                        {React.cloneElement(icon as React.ReactElement, { size: 24 })}
                     </div>
 
                     {/* Category/Type Badge */}
@@ -201,12 +201,12 @@ function ServiceCard({ service }: ServiceCardProps) {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-2xl md:text-3xl font-black text-foreground mb-4 group-hover:text-primary transition-colors font-display tracking-tight leading-[1.1] uppercase">
+                    <h3 className="text-xl md:text-3xl font-black text-foreground mb-3 md:mb-4 group-hover:text-primary transition-colors font-display tracking-tight leading-[1.1] uppercase">
                         {service.name}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-sm text-foreground/80 dark:text-zinc-300 line-clamp-3 mb-8 flex-grow leading-relaxed font-medium italic">
+                    <p className="text-xs md:text-sm text-foreground/80 dark:text-zinc-300 line-clamp-3 mb-6 md:mb-8 flex-grow leading-relaxed font-medium italic">
                         {service.shortDescription || service.description}
                     </p>
 
@@ -226,7 +226,7 @@ function ServiceCard({ service }: ServiceCardProps) {
                     <div className="pt-8 border-t border-white/10 flex items-center justify-between mt-auto">
                         <div>
                             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-zinc-400 mb-1.5 font-display">Tư vấn từ</div>
-                            <div className="text-3xl font-black text-primary tracking-tighter font-display leading-none">
+                            <div className="text-2xl md:text-3xl font-black text-primary tracking-tighter font-display leading-none">
                                 {price > 0 ? formatPrice(price) : 'Báo giá tinh hoa'}
                             </div>
                         </div>

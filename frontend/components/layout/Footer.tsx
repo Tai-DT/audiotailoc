@@ -141,7 +141,7 @@ export function Footer() {
                             <div className="space-y-8">
                                 {/* Logo */}
                                 <Link href="/" className="inline-block group transition-all duration-500 hover:scale-105 active:scale-95">
-                                    <div className="relative h-[74px] w-[260px]">
+                                    <div className="relative h-[60px] w-[200px] md:h-[74px] md:w-[260px]">
                                         <Image
                                             src="/images/logo/logo-dark.svg"
                                             alt="Audio Tài Lộc"
@@ -186,7 +186,7 @@ export function Footer() {
                                 </div>
 
                                 {/* Newsletter - High-end Membership Feel */}
-                                <div className="p-8 rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 backdrop-blur-xl relative overflow-hidden group">
+                                <div className="p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 backdrop-blur-xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors" />
                                     <h4 className="text-[10px] font-black mb-5 uppercase tracking-[0.3em] text-primary font-display flex items-center gap-2">
                                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -220,7 +220,7 @@ export function Footer() {
                     {/* Navigation Columns */}
                     <div className="lg:col-span-2 space-y-8">
                         <BlurFade delay={0.2} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-10 font-display border-b border-primary/10 pb-2">Khám phá</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Khám phá</h3>
                             <nav className="flex flex-col gap-5">
                                 {[
                                     { href: '/about', label: 'Giới thiệu' },
@@ -249,7 +249,7 @@ export function Footer() {
 
                     <div className="lg:col-span-2 space-y-8">
                         <BlurFade delay={0.25} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-10 font-display border-b border-primary/10 pb-2">Danh mục</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Danh mục</h3>
                             <nav className="flex flex-col gap-5">
                                 {categoriesLoading ? (
                                     [...Array(5)].map((_, index) => (
@@ -298,24 +298,24 @@ export function Footer() {
                     {/* Contact Details - Elegant & Clear */}
                     <div className="lg:col-span-4 space-y-10">
                         <BlurFade delay={0.3} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-10 font-display border-b border-primary/10 pb-2">Hub & Support</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Hub & Support</h3>
                             <div className="space-y-6">
                                 <a
                                     href={`tel:${hotlineNumber}`}
                                     className={cn(
-                                        "flex items-center gap-6 p-6 rounded-[2.5rem]",
+                                        "flex items-center gap-5 md:gap-6 p-5 md:p-6 rounded-3xl md:rounded-[2.5rem]",
                                         "bg-gradient-to-r from-primary via-primary/5 to-transparent",
                                         "border border-primary/20",
                                         "transition-all duration-700 group relative overflow-hidden active:scale-95"
                                     )}
                                 >
                                     <div className="absolute inset-0 bg-primary/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-1000" />
-                                    <div className="relative flex-shrink-0 p-4 rounded-2xl bg-primary shadow-lg shadow-primary/20 text-primary-foreground group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                        <Phone className="h-6 w-6" />
+                                    <div className="relative flex-shrink-0 p-3.5 md:p-4 rounded-2xl bg-primary shadow-lg shadow-primary/20 text-primary-foreground group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                        <Phone className="h-5 w-5 md:h-6 md:w-6" />
                                     </div>
                                     <div className="relative">
-                                        <p className="text-foreground font-black text-2xl tracking-tighter group-hover:text-primary transition-colors">{hotlineDisplay}</p>
-                                        <p className="text-[11px] uppercase tracking-[0.2em] font-black text-muted-foreground/70">Hotline Exclusive</p>
+                                        <p className="text-foreground font-black text-xl md:text-2xl tracking-tighter group-hover:text-primary transition-colors">{hotlineDisplay}</p>
+                                        <p className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-black text-muted-foreground/70">Hotline Exclusive</p>
                                     </div>
                                 </a>
 
@@ -369,10 +369,10 @@ export function Footer() {
                             <p className="text-muted-foreground/60 text-[11px] font-black uppercase tracking-[0.2em]" suppressHydrationWarning>
                                 © {mounted ? new Date().getFullYear() : '2026'} Audio Tài Lộc Heritage. All rights reserved.
                             </p>
-                            <div className="flex items-center gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.3em] font-bold">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.3em] font-bold">
                                 <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
                                 <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-                                <Link href="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link>
+                                <Link href="/sitemap.xml" className="hover:text-primary transition-colors">Sitemap</Link>
                             </div>
                         </div>
 

@@ -327,7 +327,7 @@ export function ChatWidget({
                         exit={{ opacity: 0, scale: 0.8, y: 20 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                         className={cn(
-                            'absolute bottom-16 mb-2 w-[340px] sm:w-[380px] rounded-2xl shadow-2xl overflow-hidden',
+                            'absolute bottom-16 mb-2 w-[92vw] max-w-[380px] rounded-2xl shadow-2xl overflow-hidden',
                             'bg-background border border-border',
                             position === 'bottom-right' ? 'right-0' : 'left-0'
                         )}
@@ -357,7 +357,7 @@ export function ChatWidget({
                         </div>
 
                         {/* Content */}
-                        <div className="h-[400px] flex flex-col">
+                        <div className="h-[60vh] min-h-[320px] max-h-[520px] flex flex-col">
                             {mode === 'menu' && !conversation && (
                                 <motion.div
                                     initial={{ opacity: 0 }}

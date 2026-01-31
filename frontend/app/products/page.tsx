@@ -143,7 +143,7 @@ function ProductsPageContent() {
                     <div className="absolute inset-0 bg-studio-grid opacity-20" />
                 </div>
 
-                <div className="container mx-auto px-6 relative z-10">
+                <div className="container mx-auto px-4 md:px-6 relative z-10">
                     <BlurFade delay={0.1} inView>
                         <div className="flex flex-col items-center text-center space-y-8">
                             {/* Specialized Tag */}
@@ -152,7 +152,7 @@ function ProductsPageContent() {
                                 <span className="text-[10px] uppercase font-black tracking-[0.3em] text-white/80">Elite Collection</span>
                             </div>
 
-                            <h1 id="products-title" className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1] max-w-5xl">
+                            <h1 id="products-title" className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1.1] md:leading-[1] max-w-5xl">
                                 {currentCategory ? (
                                     <>
                                         <span className="text-primary italic inline-block mr-4 italic">Elite</span>
@@ -166,7 +166,7 @@ function ProductsPageContent() {
                                 )}
                             </h1>
 
-                            <p className="text-zinc-300 text-lg md:text-xl max-w-3xl font-medium leading-relaxed italic">
+                            <p className="text-zinc-300 text-base md:text-xl max-w-3xl font-medium leading-relaxed italic px-4">
                                 {currentCategory?.description || 'Tuyển tập những thiết bị trình diễn đỉnh cao, mang tinh hoa âm nhạc vào không gian sống của bạn.'}
                             </p>
 
@@ -186,9 +186,9 @@ function ProductsPageContent() {
             </section>
 
             {/* Advanced Filter & Search Bar */}
-            <section className="sticky top-[80px] z-40 bg-slate-950/80 backdrop-blur-3xl border-b border-white/10">
-                <div className="container mx-auto px-6 py-4">
-                    <div className="flex flex-col xl:row gap-6 items-stretch xl:items-center justify-between">
+            <section className="sticky top-[64px] sm:top-[80px] z-40 bg-slate-950/80 backdrop-blur-3xl border-b border-white/10">
+                <div className="container mx-auto px-4 md:px-6 py-4">
+                    <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-stretch lg:items-center justify-between">
                         {/* Search */}
                         <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl">
                             <div className="relative group">
@@ -205,13 +205,13 @@ function ProductsPageContent() {
 
                         {/* Elite Controls */}
                         <div className="flex items-center gap-4">
-                            {/* Desktop Filters Selection */}
-                            <div className="hidden lg:flex items-center gap-4">
+                            {/* Desktop & Mobile Filters Selection */}
+                            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                                 <Select
                                     value={filters.categoryId || 'all'}
                                     onValueChange={(value: string) => handleCategoryChange(value === 'all' ? undefined : value)}
                                 >
-                                    <SelectTrigger className="w-52 h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl hover:bg-white/10">
+                                    <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[9px] sm:text-[10px] tracking-widest rounded-xl hover:bg-white/10">
                                         <SelectValue placeholder="Chuyên mục" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-slate-900 border-white/10 text-white">
@@ -234,7 +234,7 @@ function ProductsPageContent() {
                                         });
                                     }}
                                 >
-                                    <SelectTrigger className="w-52 h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl hover:bg-white/10">
+                                    <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[9px] sm:text-[10px] tracking-widest rounded-xl hover:bg-white/10">
                                         <ArrowUpDown className="w-3 h-3 mr-2 text-primary" />
                                         <SelectValue placeholder="Sắp xếp" />
                                     </SelectTrigger>
@@ -278,8 +278,8 @@ function ProductsPageContent() {
             </section>
 
             {/* Products Display */}
-            <section className="py-16 md:py-24">
-                <div className="container mx-auto px-6">
+            <section className="py-10 md:py-24">
+                <div className="container mx-auto px-4 md:px-6">
                     <BlurFade delay={0.2} inView>
                         <ProductGrid
                             products={data?.items || []}

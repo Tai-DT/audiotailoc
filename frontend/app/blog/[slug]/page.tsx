@@ -103,7 +103,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <BlogStructuredData article={article} />
 
  {/* Article Hero Header */}
- <section className="relative pt-32 pb-20 overflow-hidden">
+ <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
  {/* Cinematic Backdrop */}
  <div className="absolute inset-0 z-0">
  <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[150px] animate-pulse" />
@@ -116,7 +116,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  )}
  </div>
 
- <div className="container mx-auto px-6 relative z-10">
+ <div className="container mx-auto px-4 sm:px-6 relative z-10">
  <BlurFade delay={0.1} inView>
  <div className="max-w-4xl mx-auto space-y-8">
  <Link
@@ -141,18 +141,18 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  )}
  </div>
 
- <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-[1.1] font-display">
+ <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-[1.1] font-display">
  {article.title}
  </h1>
 
  {article.excerpt && (
- <p className="text-foreground/40 dark:text-zinc-300 text-xl font-medium italic leading-relaxed border-l-2 border-primary/30 pl-6">
+ <p className="text-foreground/40 dark:text-zinc-300 text-base sm:text-lg md:text-xl font-medium italic leading-relaxed border-l-2 border-primary/30 pl-4 sm:pl-6">
  {article.excerpt}
  </p>
  )}
 
  <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-white/5">
- <div className="flex items-center gap-10">
+ <div className="flex items-center gap-6 sm:gap-10">
  <div className="flex items-center gap-4">
  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
  <User className="h-6 w-6 text-foreground/20 dark:text-zinc-500" />

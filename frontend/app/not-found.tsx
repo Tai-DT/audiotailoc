@@ -10,12 +10,12 @@ export default function NotFound() {
             <div className="max-w-2xl mx-auto text-center">
                 {/* 404 Number with Animation */}
                 <div className="relative mb-8">
-                    <h1 className="text-[180px] md:text-[240px] font-black text-primary/10 leading-none select-none">
+                    <h1 className="text-[120px] sm:text-[160px] md:text-[240px] font-black text-primary/10 leading-none select-none">
                         404
                     </h1>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-full p-8 shadow-2xl shadow-primary/30">
-                            <Search className="w-16 h-16" />
+                        <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-full p-6 sm:p-8 shadow-2xl shadow-primary/30">
+                            <Search className="w-12 h-12 sm:w-16 sm:h-16" />
                         </div>
                     </div>
                 </div>

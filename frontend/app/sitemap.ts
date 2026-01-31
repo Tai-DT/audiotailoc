@@ -50,8 +50,8 @@ async function getProducts(): Promise<Product[]> {
     const response = await apiClient.get('/catalog/products', {
       params: { page: 1, limit: 1000, isActive: true }
     });
-    const data = handleApiResponse<PaginatedResponse<Product>>(response);
-    return Array.isArray(data?.items) ? data.items : [];
+    const data = handleApiResponse<any>(response);
+    return Array.isArray(data?.items) ? data.items : (Array.isArray(data?.products) ? data.products : []);
   } catch (error) {
     console.error('Failed to fetch products for sitemap:', error);
     return [];
@@ -63,8 +63,9 @@ async function getServices(): Promise<Service[]> {
     const response = await apiClient.get('/services', {
       params: { page: 1, limit: 1000, isActive: true }
     });
-    const data = handleApiResponse<PaginatedResponse<Service>>(response);
-    return Array.isArray(data?.items) ? data.items : [];
+    const data = handleApiResponse<any>(response);
+    // Backend returns { services: [...] } instead of items
+    return Array.isArray(data?.services) ? data.services : (Array.isArray(data?.items) ? data.items : []);
   } catch (error) {
     console.error('Failed to fetch services for sitemap:', error);
     return [];

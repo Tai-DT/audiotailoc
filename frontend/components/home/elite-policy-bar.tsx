@@ -47,16 +47,16 @@ export function ElitePolicyBar() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: idx * 0.1 }}
-                            className="p-4 md:p-10 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-3 sm:gap-6 group/item hover:bg-primary/5 transition-colors duration-500"
+                            className="p-5 md:p-10 flex flex-col items-center text-center lg:flex-row lg:text-left gap-4 lg:gap-6 group/item hover:bg-primary/5 transition-colors duration-500"
                         >
-                            <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center transition-all duration-500 group-hover/item:scale-110 group-hover/item:bg-primary group-hover/item:text-black ${item.color}`}>
-                                <item.icon size={22} className="md:size-32" />
+                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center transition-all duration-500 group-hover/item:scale-110 group-hover/item:bg-primary group-hover/item:text-black ${item.color}`}>
+                                <item.icon className="w-8 h-8" />
                             </div>
                             <div className="flex flex-col">
-                                <h4 className="text-[10px] md:text-base font-black uppercase tracking-widest text-foreground group-hover/item:text-primary transition-colors font-display leading-tight">
+                                <h4 className="text-[11px] md:text-base font-black uppercase tracking-widest text-foreground group-hover/item:text-primary transition-colors font-display leading-tight">
                                     {item.title}
                                 </h4>
-                                <p className="text-[10px] md:text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">
+                                <p className="hidden xs:block text-[9px] md:text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1.5 uppercase tracking-wider">
                                     {item.desc}
                                 </p>
                             </div>

@@ -58,7 +58,7 @@ export default function ProjectDetailPage() {
 
  if (isLoading) {
  return (
- <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-12">
+ <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-6 sm:p-12">
  <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center animate-pulse mb-8 overflow-hidden relative">
  <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-accent/40 animate-spin-slow opacity-50" />
  <Music4 className="w-10 h-10 text-primary relative z-10" />
@@ -102,7 +102,7 @@ export default function ProjectDetailPage() {
  return (
  <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-32">
  {/* Immersive Header Backdrop */}
- <section className="relative pt-32 pb-20 overflow-hidden min-h-[70vh] flex flex-col justify-end">
+ <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden min-h-[70vh] flex flex-col justify-end">
  <div className="absolute inset-0 z-0">
  {images[0] || project.coverImage ? (
  <div className="absolute inset-0">

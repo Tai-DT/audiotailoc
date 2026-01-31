@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart, Box, Wrench, Layout, Newspaper, Mail, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/providers/cart-provider';
 import { useContactInfo } from '@/lib/hooks/use-contact-info';
@@ -37,11 +37,12 @@ export function AppHeader() {
     }, []);
 
     const navLinks = [
-        { name: 'Sản phẩm', href: '/products' },
-        { name: 'Dịch vụ', href: '/services' },
-        { name: 'Dự án', href: '/projects' },
-        { name: 'Tin tức', href: '/blog' },
-        { name: 'Liên hệ', href: '/contact' },
+        { name: 'Trang chủ', href: '/', icon: <Home className="w-5 h-5" /> },
+        { name: 'Sản phẩm', href: '/products', icon: <Box className="w-5 h-5" /> },
+        { name: 'Dịch vụ', href: '/services', icon: <Wrench className="w-5 h-5" /> },
+        { name: 'Dự án', href: '/projects', icon: <Layout className="w-5 h-5" /> },
+        { name: 'Tin tức', href: '/blog', icon: <Newspaper className="w-5 h-5" /> },
+        { name: 'Liên hệ', href: '/contact', icon: <Mail className="w-5 h-5" /> },
     ];
 
     return (
@@ -81,14 +82,19 @@ export function AppHeader() {
             )}
 
             <div className={cn(
-                "container mx-auto px-4 lg:px-6 flex items-center justify-between gap-8 transition-all duration-500",
-                isScrolled ? "h-16" : "h-20"
+                "container mx-auto px-4 lg:px-6 flex items-center justify-between gap-4 sm:gap-6 lg:gap-8 transition-all duration-500",
+                isScrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"
             )}>
                 {/* Logo Section */}
-                <Link href="/" className="relative z-50 transition-transform active:scale-95 group">
+                <Link href="/" className={cn(
+                    "relative z-50 transition-transform active:scale-95 group flex-shrink-0",
+                    isScrolled ? "hidden sm:flex" : "flex"
+                )}>
                     <div className={cn(
                         "relative transition-all duration-500",
-                        isScrolled ? "h-[52px] w-[148px]" : "h-[68px] w-[212px]"
+                        isScrolled
+                            ? "h-[32px] w-[100px] sm:h-[48px] sm:w-[140px] lg:h-[52px] lg:w-[148px]"
+                            : "h-[40px] w-[120px] sm:h-[58px] sm:w-[176px] lg:h-[68px] lg:w-[212px]"
                     )}>
                         <Image
                             src="/images/logo/logo-dark.svg"
@@ -107,7 +113,6 @@ export function AppHeader() {
                             unoptimized
                         />
                     </div>
-                    <div className="absolute -inset-4 bg-primary/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 </Link>
 
                 {/* Desktop Navigation */}
@@ -151,37 +156,42 @@ export function AppHeader() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 sm:gap-4 relative z-50">
-                    <button className="p-2.5 rounded-full hover:bg-primary/5 transition-colors hidden md:block">
+                <div className="flex items-center gap-1 sm:gap-3 relative z-50">
+                    <a href={`tel:${hotlineNumber}`} className="p-2 rounded-full hover:bg-primary/5 transition-colors sm:hidden">
+                        <Phone className="w-5 h-5 text-primary animate-pulse" />
+                    </a>
+
+                    <button className="p-2 rounded-full hover:bg-primary/5 transition-colors">
                         <Search className="w-5 h-5 text-foreground/70" />
                     </button>
 
-                    <ThemeToggle />
+                    <div className="hidden xs:block">
+                        <ThemeToggle />
+                    </div>
 
-                    <Link prefetch={false} href="/wishlist" className="p-2.5 rounded-full hover:bg-primary/5 transition-colors relative hidden sm:block">
+                    <Link prefetch={false} href="/wishlist" className="p-2 rounded-full hover:bg-primary/5 transition-colors relative hidden sm:block">
                         <Heart className="w-5 h-5 text-foreground/70" />
                     </Link>
 
-                    <Link href="/cart" className="p-2.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all relative">
+                    <Link href="/cart" className="p-2 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all relative">
                         <ShoppingCart className="w-5 h-5 text-primary" />
                         {itemCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
+                            <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-lg">
                                 {itemCount}
                             </span>
                         )}
                     </Link>
 
-                    <div className="h-6 w-px bg-border/40 mx-1 hidden sm:block" />
+                    <div className="h-5 w-px bg-border/40 mx-0.5 hidden sm:block" />
 
-                    <Link prefetch={false} href="/account" className="hidden sm:flex items-center gap-3 pl-2 group">
-                        <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:border-primary transition-all">
-                            <User className="w-5 h-5 text-accent group-hover:text-primary transition-colors" />
+                    <Link prefetch={false} href="/account" className="hidden xs:flex items-center gap-2 group">
+                        <div className="w-9 h-9 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:border-primary transition-all">
+                            <User className="w-4 h-4 text-accent group-hover:text-primary transition-colors" />
                         </div>
                     </Link>
 
-                    {/* Mobile Menu Trigger */}
                     <button
-                        className="xl:hidden p-2.5 rounded-full bg-foreground/5"
+                        className="xl:hidden p-2 rounded-lg bg-foreground/5 active:scale-95 transition-transform"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     >
                         <Menu className="w-5 h-5 text-foreground" />
@@ -199,32 +209,68 @@ export function AppHeader() {
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="fixed inset-0 top-0 z-[60] bg-background p-6 pt-24"
+                        initial={{ opacity: 0, x: '100%' }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: '100%' }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="fixed inset-0 z-[60] bg-background/98 backdrop-blur-2xl p-8 flex flex-col"
                     >
-                        <button
-                            className="absolute top-6 right-6 p-4 text-primary font-black uppercase tracking-widest"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Đóng
-                        </button>
-                        <nav className="flex flex-col gap-6">
-                            {navLinks.map((link) => (
-                                <Link
+                        <div className="flex justify-between items-center mb-16">
+                            <div className="relative h-10 w-32 translate-y-2">
+                                <Image src="/images/logo/logo-dark.svg" alt="Logo" fill className="object-contain dark:hidden" />
+                                <Image src="/images/logo/logo-light.svg" alt="Logo" fill className="object-contain hidden dark:block brightness-110" />
+                            </div>
+                            <button
+                                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <Menu className="w-6 h-6 rotate-90" />
+                            </button>
+                        </div>
+
+                        <nav className="flex flex-col gap-8">
+                            {navLinks.map((link, idx) => (
+                                <motion.div
                                     key={link.name}
-                                    href={link.href}
-                                    className="text-2xl font-black uppercase tracking-tighter"
-                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.1 }}
                                 >
-                                    {link.name}
-                                </Link>
+                                    <Link
+                                        href={link.href}
+                                        className={cn(
+                                            "flex items-center gap-6 text-3xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2",
+                                            pathname === link.href ? "text-primary" : "text-foreground"
+                                        )}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <div className={cn(
+                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
+                                            pathname === link.href ? "bg-primary text-white" : "bg-foreground/5 text-foreground/40"
+                                        )}>
+                                            {link.icon}
+                                        </div>
+                                        {link.name}
+                                    </Link>
+                                </motion.div>
                             ))}
                         </nav>
-                        <div className="mt-20 pt-10 border-t border-border">
-                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Hotline hỗ trợ</p>
-                            <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary">{hotlineDisplay}</a>
+
+                        <div className="mt-auto space-y-8">
+                            <div className="p-8 rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 relative overflow-hidden">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 mb-3">Hotline Hỗ Trợ 24/7</p>
+                                <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary tracking-tighter block">{hotlineDisplay}</a>
+                            </div>
+
+                            <div className="flex justify-between items-center px-4">
+                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Tai Loc Elite Heritage</span>
+                                <div className="flex gap-4">
+                                    <ThemeToggle />
+                                    <Link href="/account" className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+                                        <User className="w-5 h-5 text-accent" />
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
                 )}

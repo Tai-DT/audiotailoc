@@ -70,13 +70,13 @@ export function WhyChooseUsSection() {
 
             <div className="container mx-auto px-6 relative z-10">
                 {/* Section Header */}
-                <div className="text-center max-w-4xl mx-auto mb-16 md:mb-20">
+                <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20">
                     <div className="section-badge mx-auto mb-8">
                         <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                         <span>Sứ mệnh & Tinh hoa</span>
                     </div>
 
-                    <h2 className="text-5xl md:text-8xl font-black tracking-tighter mb-10 font-display leading-[0.85] text-foreground">
+                    <h2 className="text-3xl sm:text-5xl md:text-8xl font-black tracking-tighter mb-6 md:mb-10 font-display leading-[1] md:leading-[0.85] text-foreground">
                         Kiến tạo{' '}
                         <span className="premium-text-gradient italic">
                             Âm Thanh
@@ -84,7 +84,7 @@ export function WhyChooseUsSection() {
                         Vượt Thời Gian
                     </h2>
 
-                    <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-medium leading-relaxed italic border-x-4 border-primary/20 dark:border-accent/20 px-12">
+                    <p className="text-base md:text-2xl text-muted-foreground max-w-3xl mx-auto font-medium leading-relaxed italic border-x-4 border-primary/20 dark:border-accent/20 px-6 md:px-12">
                         Audio Tài Lộc tự hào là đối tác chiến thuật, mang trọn vẹn tinh hoa âm nhạc và công nghệ đỉnh cao vào không gian sống thượng lưu của bạn.
                     </p>
                 </div>
@@ -100,15 +100,15 @@ export function WhyChooseUsSection() {
                 {stats.length > 0 && (
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 rounded-[3.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                        <div className="relative glass-panel rounded-[4rem] p-12 md:p-24 shadow-2xl overflow-hidden group/stats">
+                        <div className="relative glass-panel rounded-3xl md:rounded-[4rem] p-6 md:p-24 shadow-2xl overflow-hidden group/stats">
                             {/* Decorative Grid */}
                             <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
                             <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover/stats:opacity-10 transition-opacity" />
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 relative z-10">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 relative z-10">
                                 {stats.map((stat, index) => (
                                     <div key={index} className="text-center group/stat">
-                                        <div className="text-5xl md:text-8xl font-black text-primary dark:text-primary font-display mb-6 tracking-tighter drop-shadow-sm group-hover/stat:scale-110 group-hover/stat:text-accent transition-all duration-700">
+                                        <div className="text-4xl md:text-8xl font-black text-primary dark:text-primary font-display mb-3 md:mb-6 tracking-tighter drop-shadow-sm group-hover/stat:scale-110 group-hover/stat:text-accent transition-all duration-700">
                                             {stat.value}
                                         </div>
                                         <div className="text-zinc-400 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 font-black uppercase tracking-[0.4em] text-[11px] font-display group-hover/stat:text-primary dark:group-hover/stat:text-foreground dark:text-foreground dark:text-white transition-colors">
@@ -122,13 +122,13 @@ export function WhyChooseUsSection() {
                 )}
 
                 {/* Trust Logos - Cinema Style */}
-                <div className="mt-48 text-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.5em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-16 font-display">Đối tác ủy quyền toàn cầu</p>
-                    <div className="flex flex-wrap justify-center items-center gap-14 md:gap-28 opacity-40 dark:opacity-20 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 saturate-[0.5] hover:saturate-100 px-6">
+                <div className="mt-20 md:mt-48 text-center">
+                    <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-8 md:mb-16 font-display">Đối tác ủy quyền toàn cầu</p>
+                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-28 opacity-40 dark:opacity-20 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 saturate-[0.5] hover:saturate-100 px-6">
                         {['JBL', 'Bose', 'Shure', 'Yamaha', 'Pioneer', 'Sony'].map((brand) => (
                             <div
                                 key={brand}
-                                className="text-4xl md:text-7xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter cursor-default drop-shadow-sm"
+                                className="text-2xl md:text-7xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter cursor-default drop-shadow-sm"
                             >
                                 {brand}
                             </div>
@@ -150,7 +150,7 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
 
     return (
         <article
-            className="group relative p-12 overflow-hidden red-elite-card rounded-[3.5rem]"
+            className="group relative p-6 md:p-12 overflow-hidden red-elite-card rounded-3xl md:rounded-[3.5rem]"
             style={{ animationDelay: `${index * 100}ms` }}
         >
             {/* Luxury Background Glow */}
@@ -162,16 +162,16 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
                 {/* Icon with Premium Container */}
                 <div
                     className={cn(
-                        "w-20 h-20 rounded-2xl flex items-center justify-center mb-10 transition-all duration-700",
+                        "w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl flex items-center justify-center mb-6 md:mb-10 transition-all duration-700",
                         "group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-[0_20px_40px_rgba(220,38,38,0.2)]",
                         "bg-secondary dark:bg-white/5 text-primary dark:text-accent border border-border dark:border-white/10 group-hover:bg-primary dark:group-hover:bg-accent group-hover:text-foreground dark:text-foreground dark:text-white dark:group-hover:text-black"
                     )}
                 >
-                    <Icon size={36} className="group-hover:animate-pulse" />
+                    <Icon size={24} className="md:size-9 group-hover:animate-pulse" />
                 </div>
 
                 {/* Title */}
-                <h3 className="text-2xl md:text-3xl font-black mb-6 group-hover:text-primary transition-colors font-display tracking-tight leading-none relative overflow-hidden h-9">
+                <h3 className="text-xl md:text-3xl font-black mb-4 md:mb-6 group-hover:text-primary transition-colors font-display tracking-tight leading-none relative overflow-hidden h-7 md:h-9">
                     <span className="absolute inset-0 translate-y-0 group-hover:-translate-y-full transition-transform duration-500 flex items-center">{feature.title}</span>
                     <span className="absolute inset-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-primary dark:text-accent italic flex items-center">{feature.title}</span>
                 </h3>

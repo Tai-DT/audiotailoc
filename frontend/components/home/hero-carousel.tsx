@@ -113,7 +113,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                     </div>
 
                     {/* Content Overlay */}
-                    <div className="container relative h-full mx-auto px-6 flex flex-col justify-center">
+                    <div className="container relative h-full mx-auto px-4 md:px-6 flex flex-col justify-center">
                         <div className="max-w-4xl space-y-8">
                             <motion.div
                                 initial={{ opacity: 0, x: -50 }}
@@ -153,17 +153,17 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.9, duration: 0.8 }}
-                                className="flex flex-wrap items-center gap-6 pt-6"
+                                className="flex flex-col sm:flex-row items-center sm:items-center gap-4 md:gap-6 pt-4 md:pt-6"
                             >
                                 <a
                                     href={displayBanners[current].linkUrl || '/catalog/products'}
-                                    className="group relative px-8 py-4 md:px-10 md:py-5 bg-primary text-foreground dark:text-white text-[10px] md:text-xs font-black uppercase tracking-widest overflow-hidden rounded-full transition-all hover:scale-105 active:scale-95"
+                                    className="w-full sm:w-auto text-center group relative px-8 py-4 md:px-10 md:py-5 bg-primary text-foreground dark:text-white text-[10px] md:text-xs font-black uppercase tracking-widest overflow-hidden rounded-full transition-all hover:scale-105 active:scale-95"
                                 >
                                     <span className="relative z-10">Khám phá ngay</span>
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
                                 </a>
 
-                                <div className="flex items-center gap-4 px-6 py-4 rounded-full border border-primary/10 backdrop-blur-md bg-background/40 transition-all duration-1000">
+                                <div className="hidden sm:flex items-center gap-4 px-6 py-4 rounded-full border border-primary/10 backdrop-blur-md bg-background/40 transition-all duration-1000">
                                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
                                         <Volume2 className="w-5 h-5 text-primary" />
                                     </div>
@@ -187,8 +187,8 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
             </div>
 
             {/* Controls & Mini Thumbnails */}
-            <div className="absolute bottom-12 right-12 flex items-center gap-12 z-20">
-                <div className="flex items-center gap-4">
+            <div className="absolute bottom-6 md:bottom-12 right-4 md:right-12 flex items-center gap-6 md:gap-12 z-20">
+                <div className="hidden md:flex items-center gap-4">
                     {displayBanners.map((_, i) => (
                         <button
                             key={i}
@@ -207,7 +207,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                     ))}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 scale-90 md:scale-100">
                     <button
                         onClick={() => setCurrent((prev) => (prev - 1 + displayBanners.length) % displayBanners.length)}
                         className="w-12 h-12 rounded-full border border-border flex items-center justify-center hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white transition-all duration-300"
@@ -224,9 +224,9 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
             </div>
 
             {/* Footer Branding */}
-            <div className="absolute bottom-12 left-12 flex items-center gap-4 z-20 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-default">
+            <div className="absolute bottom-6 md:bottom-12 left-4 md:left-12 flex items-center gap-3 md:gap-4 z-20 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-default scale-75 md:scale-100 origin-left">
                 <Sparkles className="w-5 h-5 text-accent" />
-                <span className="text-[10px] font-black uppercase tracking-[0.5em]">Tài Lộc Elite Foundation</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.5em]">Tài Lộc Elite</span>
             </div>
         </section>
     );

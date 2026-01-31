@@ -4,7 +4,7 @@ const getBackendUrl = () => {
     return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1').replace(/\/$/, '');
 };
 
-async function proxyRequest(req: Request, method: string) {
+export async function proxyRequest(req: Request, method: string) {
     const url = new URL(req.url);
     const path = url.pathname.replace('/api/v1', '');
     const search = url.searchParams.toString();

@@ -229,7 +229,7 @@ function OrderSuccessContent() {
  {/* Footer Contact */}
  <div className="pt-8 text-center space-y-3 opacity-30 hover:opacity-100 transition-opacity duration-700">
  <p className="text-[10px] font-black uppercase tracking-[0.2em] italic">Artisan Support Network</p>
- <div className="flex items-center justify-center gap-6 text-[11px] font-medium text-foreground/60 dark:text-zinc-200">
+ <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-medium text-foreground/60 dark:text-zinc-200">
  <span className="flex items-center gap-2 italic"><Mail className="w-3 h-3 text-primary" /> {contactEmail}</span>
  <span className="flex items-center gap-2 italic"><Phone className="w-3 h-3 text-primary" /> {hotlineDisplay}</span>
  </div>
@@ -244,7 +244,7 @@ function OrderSuccessContent() {
 export default function OrderSuccessPage() {
  return (
  <Suspense fallback={
- <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-12">
+ <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-6 sm:p-12">
  <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center animate-pulse mb-6">
  <Music4 className="w-8 h-8 text-primary" />
  </div>

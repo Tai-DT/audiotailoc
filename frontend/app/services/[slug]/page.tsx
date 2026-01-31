@@ -304,7 +304,7 @@ export default function ServiceDetailPage() {
                 <BlurFade delay={0.3} inView>
                     <div className="mb-24">
                         <Tabs defaultValue="description" className="w-full">
-                            <TabsList className="w-full justify-center border-b border-border dark:border-white/10 rounded-none h-auto p-0 bg-transparent gap-12 mb-12">
+                            <TabsList className="w-full justify-start sm:justify-center border-b border-border dark:border-white/10 rounded-none h-auto p-0 bg-transparent gap-4 sm:gap-12 mb-8 sm:mb-12 overflow-x-auto">
                                 <TabsTrigger
                                     value="description"
                                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-6 text-xs uppercase font-black tracking-[0.4em] font-display transition-all"

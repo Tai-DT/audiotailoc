@@ -56,7 +56,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                         className="mb-0"
                     />
                     <Link href="/categories" className="pb-4">
-                        <button className="elite-button px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-foreground dark:text-foreground dark:text-white hover:scale-105 transition-all">
+                        <button className="w-full sm:w-auto elite-button px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-foreground dark:text-foreground dark:text-white hover:scale-105 transition-all">
                             Tất cả bộ sưu tập
                         </button>
                     </Link>
@@ -167,9 +167,10 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
                             {category.name}
                         </h3>
 
+                        {/* Hidden on mobile to reduce clutter */}
                         {!isSmall && category.description && (
                             <p className={cn(
-                                "text-yellow-200/80 drop-shadow-sm line-clamp-2 font-medium opacity-90 group-hover:opacity-100 transition-opacity leading-relaxed max-w-sm",
+                                "hidden md:line-clamp-2 text-yellow-200/80 drop-shadow-sm font-medium opacity-90 group-hover:opacity-100 transition-opacity leading-relaxed max-w-sm",
                                 isLarge ? "text-base md:text-lg" : "text-sm"
                             )}>
                                 {category.description}
