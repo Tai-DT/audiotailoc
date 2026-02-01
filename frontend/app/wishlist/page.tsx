@@ -142,21 +142,21 @@ function WishlistPageContent() {
  src={productImageUrl || '/placeholder-product.svg'}
  alt={productName}
  fill
- className="object-cover group-hover:scale-105 transition-transform duration-300"
+ className="object-contain p-2 sm:p-4 group-hover:scale-105 transition-transform duration-300"
  onError={(e) => {
  const target = e.target as HTMLImageElement;
  target.src = '/placeholder-product.svg';
  }}
  />
- <div className="absolute top-3 right-3">
+ <div className="absolute top-2 right-2">
  <Button
  size="icon"
  variant="destructive"
- className="w-8 h-8 rounded-full"
+ className="w-7 h-7 md:w-8 md:h-8 rounded-full"
  onClick={() => handleRemoveFromWishlist(productId)}
  aria-label={`Xóa ${productName} khỏi danh sách yêu thích`}
  >
- <Trash2 className="w-4 h-4" aria-hidden="true" />
+ <Trash2 className="w-3 h-3 md:w-4 md:h-4" aria-hidden="true" />
  </Button>
  </div>
  </div>

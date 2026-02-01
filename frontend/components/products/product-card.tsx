@@ -83,7 +83,7 @@ export function ProductCard({
                         src={getProductImage()}
                         alt={product.name}
                         fill
-                        className="object-contain p-4 md:p-8 transition-all duration-700 group-hover:scale-105 group-hover:-rotate-1 drop-shadow-2xl grayscale-[0.3] group-hover:grayscale-0 dark:grayscale-0"
+                        className="object-contain p-2 sm:p-4 md:p-8 transition-all duration-700 group-hover:scale-105 group-hover:-rotate-1 drop-shadow-2xl grayscale-[0.3] group-hover:grayscale-0 dark:grayscale-0"
                         priority={priority}
                         logoSize="sm"
                         logoPosition="bottom-right"
@@ -92,43 +92,43 @@ export function ProductCard({
                     <div className="absolute inset-0 cinematic-overlay" />
                 </Link>
 
-                {/* Elegant Tags */}
-                <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10 flex flex-col gap-2 md:gap-3">
+                {/* Elegant Tags - Compact on mobile */}
+                <div className="absolute top-1.5 left-1.5 md:top-6 md:left-6 z-10 flex flex-col gap-1 md:gap-3">
                     {product.featured && (
-                        <Badge className="bg-primary text-foreground dark:text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] px-2 md:px-4 py-1 md:py-2 rounded-md md:rounded-lg shadow-xl border-none">
+                        <Badge className="bg-primary text-foreground dark:text-white font-black text-[7px] md:text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 md:px-4 md:py-2 rounded md:rounded-lg shadow-xl border-none">
                             Nổi bật
                         </Badge>
                     )}
                     {discount > 0 && (
-                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] px-2 md:px-4 py-1 md:py-2 rounded-md md:rounded-lg shadow-xl border-none">
+                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-black text-[7px] md:text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 md:px-4 md:py-2 rounded md:rounded-lg shadow-xl border-none">
                             -{discount}%
                         </Badge>
                     )}
                 </div>
 
-                {/* Floating Actions - Premium Circle Buttons - Always visible on mobile, hover on desktop */}
-                <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 flex flex-col gap-2 md:gap-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 translate-x-0 lg:translate-x-6 lg:group-hover:translate-x-0 transition-all duration-500 ease-out">
+                {/* Floating Actions - Bottom right on mobile, top right on desktop */}
+                <div className="absolute bottom-2 right-2 md:top-6 md:right-6 md:bottom-auto z-20 flex flex-row md:flex-col gap-1.5 md:gap-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 translate-x-0 lg:translate-x-6 lg:group-hover:translate-x-0 transition-all duration-500 ease-out">
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl glass-panel text-foreground dark:text-white hover:bg-primary dark:hover:bg-accent hover:text-foreground dark:text-white dark:hover:text-black transition-all shadow-xl hover:rotate-12"
+                        className="h-7 w-7 md:h-11 md:w-11 rounded-lg md:rounded-2xl glass-panel text-foreground dark:text-white hover:bg-primary dark:hover:bg-accent hover:text-foreground dark:text-white dark:hover:text-black transition-all shadow-xl hover:rotate-12"
                         onClick={handleViewProduct}
                         title="Xem nhanh"
                     >
-                        <Eye size={16} className="md:size-5" />
+                        <Eye size={14} className="md:size-5" />
                     </Button>
                     <Button
                         variant="secondary"
                         size="icon"
                         className={cn(
-                            "h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl glass-panel text-foreground dark:text-white transition-all shadow-xl hover:-rotate-12",
+                            "h-7 w-7 md:h-11 md:w-11 rounded-lg md:rounded-2xl glass-panel text-foreground dark:text-white transition-all shadow-xl hover:-rotate-12",
                             isInWishlist ? "text-primary dark:text-accent border-primary/50 dark:border-accent/50 bg-primary/5 dark:bg-accent/5" : "hover:text-primary dark:hover:text-accent"
                         )}
                         onClick={() => toggleWishlist(product.id, isInWishlist)}
                         disabled={isWishlistLoading}
                         title="Thêm vào yêu thích"
                     >
-                        <Heart size={16} className={cn("md:size-5", isInWishlist ? "fill-current" : "")} />
+                        <Heart size={14} className={cn("md:size-5", isInWishlist ? "fill-current" : "")} />
                     </Button>
                 </div>
             </div>

@@ -166,16 +166,16 @@ export default function DealsPage() {
                                                 src={product.imageUrl}
                                                 alt={product.name}
                                                 fill
-                                                className="object-contain p-4 group-hover:scale-105 transition-transform"
+                                                className="object-contain p-2 sm:p-4 group-hover:scale-105 transition-transform"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
                                                 <Sparkles className="w-12 h-12 text-muted-foreground" />
                                             </div>
                                         )}
-                                        {/* Discount Badge */}
+                                        {/* Discount Badge - Compact on mobile */}
                                         {product.discountPercent && (
-                                            <Badge className="absolute top-2 left-2 bg-primary text-white">
+                                            <Badge className="absolute top-1 left-1 md:top-2 md:left-2 bg-primary text-white text-[8px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-1">
                                                 -{product.discountPercent}%
                                             </Badge>
                                         )}

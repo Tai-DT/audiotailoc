@@ -1045,3 +1045,41 @@ img[loading="lazy"] {
   background-color: var(--auth-ink);
   border-color: var(--auth-ink);
 }
+
+/* ==================== MOBILE RESPONSIVE IMPROVEMENTS ==================== */
+/* Product card mobile optimizations */
+@media (max-width: 640px) {
+  /* Reduce image padding on mobile */
+  .product-card-mobile-image {
+    padding: 0.5rem !important;
+  }
+
+  /* Compact badges on mobile */
+  .badge-mobile-compact {
+    font-size: 7px;
+    padding: 2px 6px;
+  }
+
+  /* Smaller buttons on mobile */
+  .btn-mobile-compact {
+    height: 1.75rem;
+    width: 1.75rem;
+  }
+
+  /* Prevent elements from overlapping images */
+  .product-card-overlay-safe {
+    pointer-events: none;
+  }
+
+  .product-card-overlay-safe > * {
+    pointer-events: auto;
+  }
+}
+
+/* Touch-friendly tap targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

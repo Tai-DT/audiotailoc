@@ -160,20 +160,20 @@ export default function ComparePage() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="absolute top-2 right-2 h-6 w-6"
+                                            className="absolute top-1 right-1 md:top-2 md:right-2 h-5 w-5 md:h-6 md:w-6"
                                             onClick={() => removeProduct(index)}
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
-                                        <div className="w-20 h-20 mx-auto mb-3 bg-muted rounded-lg flex items-center justify-center">
+                                        <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 bg-muted rounded-lg flex items-center justify-center">
                                             {product.imageUrl ? (
                                                 <img
                                                     src={product.imageUrl}
                                                     alt={product.name}
-                                                    className="w-full h-full object-contain p-2"
+                                                    className="w-full h-full object-contain p-1 md:p-2"
                                                 />
                                             ) : (
-                                                <Sparkles className="w-8 h-8 text-muted-foreground" />
+                                                <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
                                             )}
                                         </div>
                                         <h3 className="font-semibold text-sm line-clamp-2 mb-2">

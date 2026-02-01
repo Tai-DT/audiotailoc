@@ -24,19 +24,21 @@ export default function HeaderSubNav() {
     }
 
     return (
-        <div className="container mx-auto px-4 lg:px-6 h-full flex items-center justify-start md:justify-center gap-3 md:gap-6 overflow-x-auto scrollbar-hide py-1">
-            {SUB_CATEGORIES.map((cat) => (
-                <Link
-                    key={cat.name}
-                    href={cat.href}
-                    className="group flex items-center px-4 py-2 hover:bg-white/10 transition-all relative h-full whitespace-nowrap"
-                >
-                    <span className="text-[12px] md:text-[13px] font-bold uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
-                        {cat.name}
-                    </span>
-                    <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" />
-                </Link>
-            ))}
+        <div className="w-full h-full overflow-x-auto scrollbar-hide">
+            <div className="container mx-auto px-2 sm:px-4 lg:px-6 h-full flex items-center justify-start md:justify-center gap-1 sm:gap-2 md:gap-4 py-1 min-w-max md:min-w-0">
+                {SUB_CATEGORIES.map((cat) => (
+                    <Link
+                        key={cat.name}
+                        href={cat.href}
+                        className="group flex items-center px-2 sm:px-3 md:px-4 py-2 hover:bg-white/10 rounded-lg transition-all relative h-full whitespace-nowrap"
+                    >
+                        <span className="text-[11px] sm:text-[12px] md:text-[14px] font-bold uppercase tracking-wide text-foreground group-hover:text-primary transition-colors">
+                            {cat.name}
+                        </span>
+                        <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" />
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }

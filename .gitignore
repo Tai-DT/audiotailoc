@@ -1,3 +1,13 @@
+# Development runner files
+*.log
+*.pid
+frontend/dev.log
+frontend/dev.pid
+backend/dev.log
+backend/dev.pid
+dashboard/dev.log
+dashboard/dev.pid
+
 # Dependencies
 node_modules/
 npm-debug.log*

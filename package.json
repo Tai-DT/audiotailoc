@@ -11,6 +11,14 @@
     "postinstall": "cd backend && npm install",
     "build": "cd backend && npm run build",
     "start": "cd backend && npm start",
-    "heroku-postbuild": "cd backend && npm run build"
+    "heroku-postbuild": "cd backend && npm run build",
+    "dev": "./dev-runner.sh start",
+    "dev:stop": "./dev-runner.sh stop",
+    "dev:restart": "./dev-runner.sh restart",
+    "dev:status": "./dev-runner.sh status",
+    "dev:logs": "./dev-runner.sh logs",
+    "dev:clean": "./dev-runner.sh clean",
+    "build:all": "npm run build --workspace=frontend && npm run build --workspace=backend && npm run build --workspace=dashboard",
+    "install:all": "npm install --workspace=frontend && npm install --workspace=backend && npm install --workspace=dashboard"
   }
 }

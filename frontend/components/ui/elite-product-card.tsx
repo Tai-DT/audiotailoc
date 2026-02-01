@@ -24,16 +24,16 @@ export function EliteProductCard({ product, className }: EliteProductCardProps) 
  viewport={{ once: true }}
  className={cn("red-elite-card group", className)}
  >
- {/* Badge container */}
- <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+ {/* Badge container - Compact on mobile */}
+ <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex flex-col gap-1 md:gap-2">
  {discount > 0 && (
- <div className="bg-yellow-400 text-red-600 dark:text-red-500 text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-yellow-400/20">
+ <div className="bg-yellow-400 text-red-600 dark:text-red-500 text-[8px] md:text-[10px] font-black px-2 py-0.5 md:px-3 md:py-1 rounded-full shadow-lg shadow-yellow-400/20">
  -{discount}%
  </div>
  )}
  {product.featured && (
- <div className="bg-accent text-black text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-accent/20 flex items-center gap-1">
- <Star className="w-2.5 h-2.5 fill-black" />
+ <div className="bg-accent text-black text-[8px] md:text-[10px] font-black px-2 py-0.5 md:px-3 md:py-1 rounded-full shadow-lg shadow-accent/20 flex items-center gap-1">
+ <Star className="w-2 h-2 md:w-2.5 md:h-2.5 fill-black" />
  ELITE
  </div>
  )}
@@ -43,7 +43,7 @@ export function EliteProductCard({ product, className }: EliteProductCardProps) 
  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
  <Link href={`/products/${product.slug}`} className="block h-full w-full relative">
  <div className="absolute inset-0 bg-noise opacity-5" />
- <div className="p-8 h-full flex items-center justify-center transition-transform duration-700 group-hover:scale-110">
+ <div className="p-4 md:p-8 h-full flex items-center justify-center transition-transform duration-700 group-hover:scale-110">
  <WatermarkedImage
  src={product.imageUrl || '/images/product-placeholder.png'}
  alt={product.name}
@@ -54,8 +54,8 @@ export function EliteProductCard({ product, className }: EliteProductCardProps) 
  </div>
  </Link>
 
- {/* Quick Action Overlay */}
-      <div className="absolute inset-0 bg-foreground/40 dark:bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-4 pointer-events-none group-hover:pointer-events-auto">
+ {/* Quick Action Overlay - Hidden on mobile */}
+      <div className="hidden md:flex absolute inset-0 bg-foreground/40 dark:bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 items-center justify-center gap-4 pointer-events-none group-hover:pointer-events-auto">
  <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-primary hover:text-foreground dark:text-white transition-colors transform translate-y-4 group-hover:translate-y-0 duration-500">
  <ShoppingCart className="w-5 h-5" />
  </button>
