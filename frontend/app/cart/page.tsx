@@ -29,7 +29,7 @@ export default function CartPage() {
                     <div className="absolute inset-0 bg-studio-grid opacity-20" />
                 </div>
 
-                <div className="relative z-10 space-y-12">
+                <div className="relative z-10 space-y-6">
                     <BlurFade delay={0.1} inView>
                         <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -39,14 +39,14 @@ export default function CartPage() {
 
                     <BlurFade delay={0.2} inView>
                         <div className="space-y-4">
-                            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic">Giỏ hàng <span className="text-foreground/20 dark:text-zinc-500">Trống</span></h1>
-                            <p className="text-foreground/40 dark:text-zinc-300 max-w-md mx-auto italic font-medium">Hệ thống của chúng tôi chưa ghi nhận kiệt tác nào trong giỏ hàng của quý khách.</p>
+                            <h1 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter italic">Giỏ hàng <span className="text-foreground/20 dark:text-zinc-500">Trống</span></h1>
+                            <p className="text-foreground/40 dark:text-zinc-300 text-sm sm:text-base max-w-md mx-auto italic font-medium">Hệ thống của chúng tôi chưa ghi nhận kiệt tác nào trong giỏ hàng của quý khách.</p>
                         </div>
                     </BlurFade>
 
                     <BlurFade delay={0.3} inView>
                         <Link href="/products">
-                            <button className="h-16 px-12 bg-primary text-foreground dark:text-white font-black uppercase tracking-widest rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center gap-4 mx-auto">
+                            <button className="h-12 px-6 bg-primary text-foreground dark:text-white font-black uppercase tracking-widest rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center gap-3 mx-auto text-xs">
                                 Khai phá Bộ sưu tập
                                 <ArrowRight className="w-5 h-5" />
                             </button>
@@ -64,19 +64,19 @@ export default function CartPage() {
                 <div className="absolute inset-0 bg-studio-grid opacity-10" />
             </div>
 
-            <div className="container mx-auto px-4 md:px-6 py-20 md:py-32 relative z-10">
+            <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 relative z-10">
                 {/* Cinematic Header */}
                 <BlurFade delay={0.1} inView>
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8 border-b border-white/5 pb-12">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4 md:gap-8 border-b border-white/5 pb-6 md:pb-10">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 w-fit">
                                 <Music4 className="w-4 h-4 text-primary animate-pulse" />
                                 <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Selected Collection</span>
                             </div>
-                            <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
+                            <h1 className="text-2xl sm:text-3xl md:text-6xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
                                 Giỏ <span className="text-primary italic">Hàng</span>
                             </h1>
-                            <p className="text-foreground/40 dark:text-zinc-300 font-medium italic">
+                            <p className="text-foreground/40 dark:text-zinc-300 text-sm md:text-base font-medium italic">
                                 Đang lưu trữ <span className="text-foreground dark:text-white font-bold">{items.length} tinh hoa</span> âm thanh
                             </p>
                         </div>
@@ -90,11 +90,11 @@ export default function CartPage() {
                     </div>
                 </BlurFade>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12">
                     {/* Cart Items Area */}
-                    <div className="lg:col-span-8 space-y-8">
+                    <div className="lg:col-span-8 space-y-6">
                         <BlurFade delay={0.2} inView>
-                            <div className="bg-white/5 border border-white/10 rounded-[2.5rem] md:rounded-[3rem] backdrop-blur-3xl shadow-3xl overflow-hidden">
+                            <div className="bg-white/5 border border-white/10 rounded-[2rem] md:rounded-[3rem] backdrop-blur-3xl shadow-3xl overflow-hidden">
                                 {/* Desktop Columns Header */}
                                 <div className="hidden md:grid grid-cols-12 gap-8 p-8 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 dark:text-zinc-400">
                                     <div className="col-span-6">Thông tin Sản phẩm</div>
@@ -105,11 +105,11 @@ export default function CartPage() {
                                 {/* Items Iteration */}
                                 <div className="divide-y divide-white/5">
                                     {items.map((item) => (
-                                        <div key={item.id} className="group p-5 md:p-10 hover:bg-white/[0.02] transition-colors relative">
-                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                                        <div key={item.id} className="group p-4 md:p-8 hover:bg-white/[0.02] transition-colors relative">
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                                                 {/* Item Visual & Title */}
-                                                <div className="col-span-12 md:col-span-6 flex gap-5 md:gap-8">
-                                                    <Link href={`/products/${item.id}`} className="relative w-20 h-20 md:w-32 md:h-32 rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 flex-shrink-0 group-hover:border-primary/50 transition-all duration-500 hover:scale-105">
+                                                <div className="col-span-12 md:col-span-6 flex gap-4 md:gap-8">
+                                                    <Link href={`/products/${item.id}`} className="relative w-16 h-16 md:w-32 md:h-32 rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 flex-shrink-0 group-hover:border-primary/50 transition-all duration-500 hover:scale-105">
                                                         <Image
                                                             src={item.image || '/placeholder-product.jpg'}
                                                             alt={item.name}
@@ -117,16 +117,16 @@ export default function CartPage() {
                                                             className="object-contain p-4 transition-transform duration-700 group-hover:scale-110"
                                                         />
                                                     </Link>
-                                                    <div className="flex flex-col justify-center space-y-3">
+                                                    <div className="flex flex-col justify-center space-y-2">
                                                         <div className="space-y-1">
-                                                            <Link href={`/products/${item.id}`} className="text-lg md:text-xl font-black text-foreground dark:text-white leading-tight uppercase tracking-tight hover:text-primary transition-colors block font-display">
+                                                            <Link href={`/products/${item.id}`} className="text-base md:text-xl font-black text-foreground dark:text-white leading-tight uppercase tracking-tight hover:text-primary transition-colors block font-display">
                                                                 {item.name}
                                                             </Link>
                                                             <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 italic">
                                                                 {item.category || 'High-End Gear'}
                                                             </p>
                                                         </div>
-                                                        <div className="md:hidden font-black text-primary text-lg">
+                                                        <div className="md:hidden font-black text-primary text-base">
                                                             {formatCurrency(item.price)}
                                                         </div>
                                                     </div>
@@ -138,16 +138,16 @@ export default function CartPage() {
                                                         <button
                                                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                                                             disabled={item.quantity <= 1}
-                                                            className="w-10 h-10 flex items-center justify-center text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white disabled:opacity-10 transition-colors"
+                                                            className="w-9 h-9 flex items-center justify-center text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white disabled:opacity-10 transition-colors"
                                                         >
                                                             <Minus className="h-4 w-4" />
                                                         </button>
-                                                        <div className="w-12 text-center text-sm font-black text-foreground dark:text-white tabular-nums">
+                                                        <div className="w-10 text-center text-sm font-black text-foreground dark:text-white tabular-nums">
                                                             {item.quantity}
                                                         </div>
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                            className="w-10 h-10 flex items-center justify-center text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white transition-colors"
+                                                            className="w-9 h-9 flex items-center justify-center text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white transition-colors"
                                                         >
                                                             <Plus className="h-4 w-4" />
                                                         </button>
@@ -162,9 +162,9 @@ export default function CartPage() {
                                                 </div>
 
                                                 {/* Pricing & Desktop Actions */}
-                                                <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-6 text-right">
+                                                <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-4 text-right">
                                                     <div>
-                                                        <div className="text-xl md:text-2xl font-black text-primary tracking-tighter tabular-nums drop-shadow-2xl">
+                                                        <div className="text-lg md:text-2xl font-black text-primary tracking-tighter tabular-nums drop-shadow-2xl">
                                                             {formatCurrency(item.price * item.quantity)}
                                                         </div>
                                                         {item.quantity > 1 && (
@@ -188,9 +188,9 @@ export default function CartPage() {
                         </BlurFade>
 
                         {/* Policy Highlights */}
-                        <div className="grid md:grid-cols-2 gap-8">
+                        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                             <BlurFade delay={0.3} inView>
-                                <div className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-[2.5rem] flex gap-5 md:gap-6 group hover:border-primary/40 transition-colors">
+                                <div className="p-4 md:p-6 bg-white/5 border border-white/10 rounded-[2rem] flex gap-4 md:gap-6 group hover:border-primary/40 transition-colors">
                                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 text-primary">
                                         <ShieldCheck className="h-6 w-6 md:h-7 md:w-7 group-hover:scale-110 transition-transform" />
                                     </div>

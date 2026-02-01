@@ -52,7 +52,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  if (isLoading) {
  return (
  <div className="min-h-screen bg-background">
- <main className="container mx-auto px-4 py-8">
+ <main className="container mx-auto px-4 py-6 md:py-8">
  <div className="max-w-4xl mx-auto">
  <div className="animate-pulse space-y-6">
  <div className="h-8 bg-muted rounded w-1/3" />
@@ -100,8 +100,8 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  <main className="container mx-auto px-4 py-8">
  <div className="max-w-4xl mx-auto">
  {/* Header */}
- <div className="flex items-center justify-between mb-8">
- <div className="flex items-center gap-4">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+ <div className="flex items-center gap-3">
  <Link href="/orders">
  <Button variant="outline" size="sm">
  <ArrowLeft className="h-4 w-4 mr-2" />
@@ -109,7 +109,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  </Button>
  </Link>
  <div>
- <h1 className="text-3xl font-bold">
+ <h1 className="text-2xl sm:text-3xl font-bold">
  Đơn hàng #{order.orderNo}
  </h1>
  <p className="text-muted-foreground">
@@ -126,9 +126,9 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  </div>
  </div>
 
- <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+ <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
  {/* Order Items */}
- <div className="lg:col-span-2 space-y-6">
+ <div className="lg:col-span-2 space-y-4">
  <Card>
  <CardHeader>
  <CardTitle className="flex items-center gap-2">
@@ -136,10 +136,10 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  Sản phẩm đã đặt
  </CardTitle>
  </CardHeader>
- <CardContent className="space-y-4">
+ <CardContent className="space-y-3">
  {order.items?.map((item: OrderItem) => (
- <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
- <div className="relative w-16 h-16 flex-shrink-0">
+ <div key={item.id} className="flex gap-3 p-3 border rounded-lg">
+ <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
  <Image
  src={item.imageUrl || '/placeholder-product.svg'}
  alt={item.name || 'Sản phẩm'}
@@ -148,7 +148,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  />
  </div>
  <div className="flex-1 min-w-0">
- <h3 className="font-semibold text-lg">{item.name}</h3>
+ <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
  <p className="text-sm text-muted-foreground">
  Số lượng: {item.quantity}
  </p>
@@ -191,7 +191,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  </div>
 
  {/* Order Summary & Details */}
- <div className="space-y-6">
+ <div className="space-y-4">
  {/* Order Summary */}
  <Card>
  <CardHeader>
@@ -203,20 +203,20 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
  <CardContent className="space-y-4">
  <div className="flex justify-between">
  <span>Tạm tính:</span>
- <span>{formatPrice(order.subtotalCents / 100)}</span>
+ <span>{formatPrice(order.subtotalCents)}</span>
  </div>
 
  <div className="flex justify-between">
  <span>Phí vận chuyển:</span>
  <span>
- {order.shippingCents === 0 ? 'Miễn phí' : formatPrice(order.shippingCents / 100)}
+ {order.shippingCents === 0 ? 'Miễn phí' : formatPrice(order.shippingCents)}
  </span>
  </div>
 
  {order.discountCents > 0 && (
  <div className="flex justify-between text-success">
  <span>Giảm giá:</span>
- <span>-{formatPrice(order.discountCents / 100)}</span>
+ <span>-{formatPrice(order.discountCents)}</span>
  </div>
  )}
 
@@ -224,7 +224,7 @@ function OrderDetailPageContent({ params }: OrderDetailPageProps) {
 
  <div className="flex justify-between font-semibold text-lg">
  <span>Tổng cộng:</span>
- <span>{formatPrice(order.totalCents / 100)}</span>
+ <span>{formatPrice(order.totalCents)}</span>
  </div>
  </CardContent>
  </Card>

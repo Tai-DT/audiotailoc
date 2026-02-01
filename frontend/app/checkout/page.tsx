@@ -268,22 +268,22 @@ export default function CheckoutPage() {
  <div className="container mx-auto px-4 sm:px-6 relative z-10">
  {/* Header Section */}
  <BlurFade delay={0.1} inView>
- <div className="pt-24 sm:pt-32 pb-12 sm:pb-16 flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 mb-16">
+ <div className="pt-16 sm:pt-24 pb-8 sm:pb-12 flex flex-col md:flex-row justify-between items-end gap-4 md:gap-8 border-b border-white/5 mb-8 md:mb-12">
  <div className="space-y-4">
  <div className="flex items-center gap-3 px-4 py-2 bg-zinc-50 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10 w-fit">
  <Lock className="w-4 h-4 text-primary animate-pulse" />
  <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Secure Checkout Protocol</span>
  </div>
- <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
+ <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
  Hoàn <span className="text-primary italic">Tất</span> Đơn hàng
  </h1>
- <p className="text-foreground/40 dark:text-zinc-300 font-medium italic">
+ <p className="text-foreground/40 dark:text-zinc-300 text-sm md:text-base font-medium italic">
  Giai đoạn cuối trong hành trình sở hữu <span className="text-foreground dark:text-white font-bold">tinh hoa âm nhạc</span>
  </p>
  </div>
 
  <Link href="/cart">
- <button className="h-14 px-8 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-foreground dark:text-white rounded-xl font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-4 text-xs italic">
+ <button className="h-12 px-6 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-foreground dark:text-white rounded-xl font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 text-xs italic">
  <ArrowLeft className="w-4 h-4" />
  Hiệu chỉnh Giỏ hàng
  </button>
@@ -291,11 +291,11 @@ export default function CheckoutPage() {
  </div>
  </BlurFade>
 
- <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
- <div className="lg:col-span-8 space-y-12">
+ <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
+ <div className="lg:col-span-8 space-y-6 md:space-y-10">
  {/* Elite Stepper */}
  <BlurFade delay={0.2} inView>
- <nav className="flex items-center justify-between bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-4 sm:p-6 rounded-[2rem] backdrop-blur-3xl">
+ <nav className="flex items-center justify-between bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] backdrop-blur-3xl">
  {[
  { step: 1, icon: User, label: 'Khai báo Giao hàng' },
  { step: 2, icon: CreditCard, label: 'Chọn Phương thức' },
@@ -304,12 +304,12 @@ export default function CheckoutPage() {
  <React.Fragment key={item.step}>
  <div className="flex flex-col items-center gap-3 group relative">
  <div className={cn(
- "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border",
+ "w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border",
  currentStep >= item.step
  ? "bg-primary border-primary text-foreground dark:text-white shadow-lg shadow-primary/30 scale-110"
  : "bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-foreground/20 dark:text-zinc-500"
  )}>
- <item.icon className="w-5 h-5" />
+ <item.icon className="w-4 h-4 md:w-5 md:h-5" />
  </div>
  <span className={cn(
  "text-[9px] font-black uppercase tracking-widest transition-colors",
@@ -317,7 +317,7 @@ export default function CheckoutPage() {
  )}>{item.label}</span>
  </div>
  {idx < 2 && (
- <div className="flex-1 h-[2px] mx-8 bg-zinc-50 dark:bg-white/5 relative overflow-hidden rounded-full">
+ <div className="flex-1 h-[2px] mx-4 md:mx-8 bg-zinc-50 dark:bg-white/5 relative overflow-hidden rounded-full">
  <motion.div
  className="absolute inset-0 bg-primary"
  initial={{ x: "-100%" }}
@@ -339,14 +339,14 @@ export default function CheckoutPage() {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  exit={{ opacity: 0, y: -20 }}
- className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 backdrop-blur-3xl space-y-8 sm:space-y-10"
+ className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-8 backdrop-blur-3xl space-y-5 sm:space-y-8"
  >
  <div className="space-y-2">
- <h3 className="text-2xl font-black uppercase tracking-tight italic">Danh tính <span className="text-primary">&</span> Địa điểm</h3>
- <p className="text-xs text-foreground/30 dark:text-zinc-400 italic">Cung cấp thông tin chính xác để quá trình vận chuyển diễn ra hoàn hảo nhất.</p>
+ <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight italic">Danh tính <span className="text-primary">&</span> Địa điểm</h3>
+ <p className="text-[11px] md:text-xs text-foreground/30 dark:text-zinc-400 italic">Cung cấp thông tin chính xác để quá trình vận chuyển diễn ra hoàn hảo nhất.</p>
  </div>
 
- <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
  <div className="space-y-4">
  <Label className="text-[10px] uppercase font-black tracking-widest text-zinc-400 dark:text-zinc-300">Họ và tên *</Label>
  <Input
@@ -354,7 +354,7 @@ export default function CheckoutPage() {
  value={shippingInfo.fullName}
  onChange={handleShippingInfoChange}
  placeholder="Ex: NGUYEN VAN A"
- className="h-14 bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 rounded-xl focus:border-primary/50 transition-all font-bold"
+ className="h-11 md:h-14 bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 rounded-xl focus:border-primary/50 transition-all font-bold"
  />
  </div>
  <div className="space-y-4">

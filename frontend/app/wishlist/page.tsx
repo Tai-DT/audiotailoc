@@ -165,19 +165,19 @@ function WishlistPageContent() {
  <div className="p-4">
  {productSlug ? (
  <Link href={`/products/${productSlug}`}>
- <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
+ <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
  {productName}
  </h3>
  </Link>
  ) : (
- <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+ <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
  {productName}
  </h3>
  )}
 
  <div className="flex items-center space-x-2 mb-3">
  {product?.category?.name && (
- <Badge variant="outline" className="text-xs">
+ <Badge variant="outline" className="text-[10px] sm:text-xs">
  {product.category.name}
  </Badge>
  )}
@@ -185,12 +185,12 @@ function WishlistPageContent() {
 
  <div className="flex items-center justify-between mb-4">
  <div className="flex flex-col">
- <span className="text-lg font-bold text-success">
- {formatPrice((productPriceCents || 0) / 100)}
+ <span className="text-base sm:text-lg font-bold text-success">
+ {formatPrice(productPriceCents || 0)}
  </span>
  {productOriginalPriceCents && productPriceCents && productOriginalPriceCents > productPriceCents && (
- <span className="text-sm text-muted-foreground line-through">
- {formatPrice(productOriginalPriceCents / 100)}
+ <span className="text-xs sm:text-sm text-muted-foreground line-through">
+ {formatPrice(productOriginalPriceCents)}
  </span>
  )}
  </div>

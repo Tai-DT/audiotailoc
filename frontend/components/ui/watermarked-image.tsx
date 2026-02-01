@@ -52,17 +52,17 @@ export function WatermarkedImage({
 
  // Logo size mapping (in pixels for Image component)
  const logoSizeMap = {
- sm: { width: 48, height: 25 },
- md: { width: 64, height: 33 },
- lg: { width: 80, height: 42 },
+ sm: { width: 40, height: 20 },
+ md: { width: 52, height: 27 },
+ lg: { width: 68, height: 36 },
  };
 
  // Position mapping
  const positionMap = {
- 'bottom-right': 'bottom-6 right-6',
- 'bottom-left': 'bottom-6 left-6',
- 'top-right': 'top-6 right-6',
- 'top-left': 'top-6 left-6',
+ 'bottom-right': 'bottom-3 right-3 sm:bottom-6 sm:right-6',
+ 'bottom-left': 'bottom-3 left-3 sm:bottom-6 sm:left-6',
+ 'top-right': 'top-3 right-3 sm:top-6 sm:right-6',
+ 'top-left': 'top-3 left-3 sm:top-6 sm:left-6',
  'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
  };
 
@@ -81,7 +81,7 @@ export function WatermarkedImage({
  <div
  data-testid="watermark-container"
  className={cn(
- 'absolute z-[50] flex items-center gap-3 px-4 py-2 rounded-full',
+ 'absolute z-[50] flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full',
  isDark
  ? 'bg-background/80 dark:bg-background dark:bg-slate-950/80 border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)]'
  : 'bg-white/80 border-black/10 shadow-[0_0_20px_rgba(0,0,0,0.1)]',
@@ -92,7 +92,7 @@ export function WatermarkedImage({
  >
  {/* Phone number */}
  <span className={cn(
- "font-bold text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap drop-shadow-sm flex items-center gap-1.5",
+ "font-bold text-[9px] sm:text-[11px] tracking-tight whitespace-nowrap drop-shadow-sm flex items-center gap-1.5",
  isDark ? "text-foreground dark:text-white" : "text-slate-900"
  )}>
  <span className="text-primary brightness-110">📞</span> {CONTACT_CONFIG.phone.display}
@@ -105,13 +105,13 @@ export function WatermarkedImage({
  )} />
 
  {/* Domain name */}
- <span className="text-primary font-black text-[10px] sm:text-[11px] tracking-widest uppercase whitespace-nowrap drop-shadow-sm">
+ <span className="text-primary font-black text-[9px] sm:text-[11px] tracking-widest uppercase whitespace-nowrap drop-shadow-sm">
  audiotailoc.com
  </span>
 
  {/* Premium Separator */}
  <div className={cn(
- "w-[1px] h-3 bg-gradient-to-b from-transparent to-transparent",
+ "w-[1px] h-2 sm:h-3 bg-gradient-to-b from-transparent to-transparent",
  isDark ? "via-white/30" : "via-black/20"
  )} />
 

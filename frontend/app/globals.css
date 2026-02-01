@@ -1074,6 +1074,63 @@ img[loading="lazy"] {
   .product-card-overlay-safe > * {
     pointer-events: auto;
   }
+
+  /* Global compact spacing for mobile */
+  .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .py-32 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .py-28 {
+    padding-top: 2.75rem;
+    padding-bottom: 2.75rem;
+  }
+
+  .py-24 {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .py-20 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .py-16 {
+    padding-top: 1.75rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .pt-32 { padding-top: 3rem; }
+  .pb-32 { padding-bottom: 3rem; }
+  .pt-24 { padding-top: 2.5rem; }
+  .pb-24 { padding-bottom: 2.5rem; }
+  .pt-20 { padding-top: 2rem; }
+  .pb-20 { padding-bottom: 2rem; }
+  .pt-16 { padding-top: 1.75rem; }
+  .pb-16 { padding-bottom: 1.75rem; }
+
+  .gap-16 { gap: 2rem; }
+  .gap-12 { gap: 1.5rem; }
+  .gap-10 { gap: 1.25rem; }
+  .gap-8 { gap: 1rem; }
+
+  .space-y-12 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.5rem;
+  }
+
+  .space-y-10 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.25rem;
+  }
+
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem;
+  }
 }
 
 /* Touch-friendly tap targets for mobile */

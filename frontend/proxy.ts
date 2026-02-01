@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Next.js Middleware for route protection and redirection.
+// Next.js proxy handler for route protection and redirection.
 
 const protectedRoutes = [
   '/profile',
@@ -17,7 +17,7 @@ const adminRoutes = ['/admin']
 
 const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl
 

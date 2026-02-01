@@ -204,14 +204,14 @@ export default function BlogNewPage() {
  )}
  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
 
- <div className="absolute top-6 left-6">
+ <div className="absolute top-3 left-3 md:top-6 md:left-6">
  <Badge className={cn("px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md", getCategoryColor(article.category?.name || 'Uncategorized'))}>
  {article.category?.name || 'Uncategorized'}
  </Badge>
  </div>
 
  {article.featured && (
- <div className="absolute top-6 right-6">
+ <div className="absolute top-3 right-3 md:top-6 md:right-6">
  <div className="bg-accent/20 border border-accent/30 text-accent p-2 rounded-full backdrop-blur-md">
  <Sparkles className="w-4 h-4 animate-pulse" />
  </div>
@@ -219,7 +219,7 @@ export default function BlogNewPage() {
  )}
  </div>
 
- <CardContent className="p-8 flex flex-col flex-1 space-y-6">
+ <CardContent className="p-5 md:p-8 flex flex-col flex-1 space-y-4">
  <div className="flex items-center gap-4 text-foreground/40 dark:text-zinc-300 text-[10px] font-black uppercase tracking-widest">
  <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
  <Clock className="w-3 h-3 text-primary" />
@@ -243,7 +243,7 @@ export default function BlogNewPage() {
  </p>
  )}
 
- <div className="pt-6 mt-auto border-t border-white/5 flex items-center justify-between">
+ <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
  <Link
  href={`/blog/${article.slug}`}
  className="group/link flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary hover:text-foreground dark:text-white transition-all"
@@ -268,9 +268,9 @@ export default function BlogNewPage() {
 
  {/* Pagination Redesign */}
  {articlesData && articlesData.pagination.totalPages > 1 && (
- <div className="flex flex-col items-center gap-8 mt-16">
+ <div className="flex flex-col items-center gap-4 mt-10 md:mt-16">
  <div className="w-32 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
- <Button variant="outline" size="lg" className="h-16 px-12 rounded-2xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-black uppercase tracking-[0.2em] italic text-xs">
+ <Button variant="outline" size="lg" className="h-12 px-6 rounded-2xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-black uppercase tracking-[0.2em] italic text-xs">
  Xem thêm tâm đắc
  </Button>
  </div>
@@ -278,7 +278,7 @@ export default function BlogNewPage() {
  </div>
 
  {/* Sidebar - Premium Refinement */}
- <div className="lg:w-96 space-y-10">
+ <div className="lg:w-96 space-y-6">
  {/* Categories Card */}
  <BlurFade delay={0.3} inView>
  <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl overflow-hidden shadow-2xl">
@@ -290,7 +290,7 @@ export default function BlogNewPage() {
  Chuyên mục
  </CardTitle>
  </CardHeader>
- <CardContent className="p-6">
+ <CardContent className="p-4 md:p-6">
  <div className="space-y-3">
  <Button
  variant="ghost"
@@ -337,7 +337,7 @@ export default function BlogNewPage() {
  Tâm điểm
  </CardTitle>
  </CardHeader>
- <CardContent className="p-6">
+ <CardContent className="p-4 md:p-6">
  <div className="space-y-6">
  {articles.slice(0, 5).map((article: BlogArticle) => (
  <div key={article.id} className="group/item flex gap-4 items-center">

@@ -16,6 +16,11 @@ const eslintConfig = [
     ],
   },
   ...config,
+  {
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

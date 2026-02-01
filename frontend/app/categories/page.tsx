@@ -66,7 +66,7 @@ export default function CategoriesPage() {
             </div>
           </div>
         </div>
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-4">
           <div className="animate-pulse" role="status" aria-label="Đang tải danh mục">
             <div className="h-6 bg-muted rounded mb-4"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -94,8 +94,8 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="container mx-auto px-4 py-4 space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex-1 max-w-md">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -108,7 +108,7 @@ export default function CategoriesPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'createdAt')}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sắp xếp" />
@@ -141,16 +141,16 @@ export default function CategoriesPage() {
         </div>
 
         {filteredCategories.length === 0 ? (
-          <div className="text-center text-muted-foreground py-16">
+          <div className="text-center text-muted-foreground py-10">
             Không tìm thấy danh mục phù hợp.
           </div>
         ) : viewMode === 'list' ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredCategories.map((category) => (
               <Card key={category.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex gap-4">
-                    <div className="relative w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                       {renderCategoryImage(category)}
                     </div>
                     <div className="flex-1 space-y-2">
@@ -177,11 +177,11 @@ export default function CategoriesPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCategories.map((category) => (
               <Card key={category.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="p-0">
-                  <div className="relative h-48 rounded-t-lg overflow-hidden bg-muted">
+                  <div className="relative h-36 sm:h-40 md:h-48 rounded-t-lg overflow-hidden bg-muted">
                     {renderCategoryImage(category)}
                     <Badge className="absolute top-3 left-3 bg-primary text-foreground">Danh mục</Badge>
                   </div>

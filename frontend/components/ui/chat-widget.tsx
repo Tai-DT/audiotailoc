@@ -16,6 +16,7 @@ import { apiClient, API_ENDPOINTS } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 interface ChatWidgetProps {
     zaloPhoneNumber: string;
@@ -318,7 +319,7 @@ export function ChatWidget({
     };
 
     return (
-        <div className={cn('fixed z-50', positionClasses[position])}>
+        <div suppressHydrationWarning className={cn('fixed z-[9999] bottom-4 right-4 flex flex-col items-end gap-3', position === 'bottom-left' && 'right-auto left-4 items-start')}>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -333,25 +334,29 @@ export function ChatWidget({
                         )}
                     >
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-primary to-primary/80 p-4 text-primary-foreground">
-                            <div className="flex items-center justify-between">
+                        <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 p-5 text-primary-foreground relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                            <div className="flex items-center justify-between relative z-10">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-full bg-white/20">
+                                    <div className="p-2.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20">
                                         <Headphones className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-sm">Audio Tài Lộc</h3>
-                                        <p className="text-xs opacity-90">Hỗ trợ trực tuyến 24/7</p>
+                                        <h3 className="font-bold text-sm tracking-tight uppercase">Audio Tài Lộc</h3>
+                                        <div className="flex items-center gap-1.5 leading-none">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                                            <p className="text-[10px] uppercase font-bold tracking-[0.1em] opacity-80">Support Online</p>
+                                        </div>
                                     </div>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-primary-foreground hover:bg-white/20"
+                                    className="h-10 w-10 text-primary-foreground hover:bg-white/20 rounded-full transition-all"
                                     onClick={handleClose}
                                     aria-label="Đóng cửa sổ chat"
                                 >
-                                    <X className="w-4 h-4" aria-hidden="true" />
+                                    <X className="w-5 h-5" aria-hidden="true" />
                                 </Button>
                             </div>
                         </div>
@@ -360,60 +365,68 @@ export function ChatWidget({
                         <div className="h-[60vh] min-h-[320px] max-h-[520px] flex flex-col">
                             {mode === 'menu' && !conversation && (
                                 <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="flex-1 p-4 space-y-3"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex-1 p-5 space-y-4"
                                 >
-                                    <p className="text-sm text-muted-foreground text-center mb-4">
-                                        Chọn phương thức liên hệ
-                                    </p>
+                                    <div className="text-center space-y-1 mb-6">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tư vấn chuyên nghiệp</p>
+                                        <h4 className="text-lg font-bold tracking-tight">Chào bạn! Chúng tôi có thể giúp gì?</h4>
+                                    </div>
 
                                     {/* Zalo Option */}
                                     <motion.button
-                                        whileHover={{ scale: 1.02 }}
+                                        whileHover={{ scale: 1.02, y: -2 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleZaloClick}
-                                        className="w-full p-4 rounded-xl border-2 border-[#0068FF]/20 bg-gradient-to-r from-[#0068FF]/5 to-[#0084FF]/5 hover:border-[#0068FF]/50 transition-all group"
+                                        className="w-full p-4 rounded-2xl border border-[#0068FF]/20 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md hover:border-[#0068FF]/50 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-[#0068FF] flex items-center justify-center flex-shrink-0">
-                                                <svg className="w-7 h-7" viewBox="0 0 48 48" fill="none">
-                                                    <path d="M24 4C12.96 4 4 12.96 4 24c0 9.52 6.64 17.52 15.52 19.52V48l4.48-4.48c11.04 0 20-8.96 20-20S35.04 4 24 4z" fill="white" />
-                                                    <path d="M17.28 27.76c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.32 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.8 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88zm4.32 0c-.48 0-.88-.4-.88-.88v-5.76c0-.48.4-.88.88-.88s.88.4.88.88v5.76c0 .48-.4.88-.88.88z" fill="#0068FF" />
-                                                </svg>
+                                            <div className="w-12 h-12 rounded-2xl bg-[#0068FF] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#0068FF]/20 overflow-hidden">
+                                                <Image
+                                                    src="/images/logo/zalo.png"
+                                                    alt="Zalo"
+                                                    width={32}
+                                                    height={32}
+                                                    className="w-8 h-8 object-contain"
+                                                />
                                             </div>
                                             <div className="text-left flex-1">
-                                                <div className="font-semibold text-foreground flex items-center gap-2">
-                                                    Chat qua Zalo
-                                                    <ExternalLink className="w-3 h-3 opacity-50" />
+                                                <div className="font-bold text-foreground flex items-center gap-2 group-hover:text-[#0068FF] transition-colors leading-tight">
+                                                    Zalo Chat
+                                                    <ExternalLink className="w-3 h-3 opacity-40" />
                                                 </div>
-                                                <p className="text-xs text-muted-foreground mt-0.5">Mở ứng dụng Zalo để nhắn tin</p>
+                                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Kết nối nhanh qua Zalo</p>
                                             </div>
                                         </div>
                                     </motion.button>
 
                                     {/* Direct Chat Option */}
                                     <motion.button
-                                        whileHover={{ scale: 1.02 }}
+                                        whileHover={{ scale: 1.02, y: -2 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={() => setMode('direct')}
-                                        className="w-full p-4 rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 hover:border-primary/50 transition-all group"
+                                        className="w-full p-4 rounded-2xl border border-primary/20 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md hover:border-primary/50 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                                                <MessageSquareMore className="w-6 h-6 text-foreground dark:text-white" />
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20 text-white">
+                                                <MessageSquareMore className="w-6 h-6" />
                                             </div>
                                             <div className="text-left flex-1">
-                                                <div className="font-semibold text-foreground">Chat trực tiếp</div>
-                                                <p className="text-xs text-muted-foreground mt-0.5">Nhắn tin ngay trên website</p>
+                                                <div className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">Chat Trực Tiếp</div>
+                                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Hỗ trợ ngay trên web</p>
                                             </div>
                                         </div>
                                     </motion.button>
 
-                                    <div className="pt-4 text-center">
-                                        <p className="text-xs text-muted-foreground">
-                                            Hotline: <a href={`tel:${zaloPhoneNumber}`} className="text-primary font-medium hover:underline">{zaloPhoneNumber}</a>
-                                        </p>
+                                    <div className="pt-6 text-center">
+                                        <a
+                                            href={`tel:${zaloPhoneNumber}`}
+                                            className="inline-flex flex-col items-center gap-1 group"
+                                        >
+                                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 group-hover:text-primary transition-colors">Hoặc gọi Hotline</span>
+                                            <span className="text-lg font-black text-foreground group-hover:text-primary transition-colors tracking-tight">{zaloPhoneNumber}</span>
+                                        </a>
                                     </div>
                                 </motion.div>
                             )}
@@ -426,53 +439,56 @@ export function ChatWidget({
                                 >
                                     {!conversation ? (
                                         // Start conversation form
-                                        <div className="flex-1 p-4 space-y-3 overflow-auto">
+                                        <div className="flex-1 p-6 space-y-4 overflow-auto">
                                             <button
                                                 onClick={() => setMode('menu')}
-                                                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mb-2"
+                                                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary flex items-center gap-1.5 transition-all mb-2"
                                             >
-                                                ← Quay lại
+                                                ← Quay lại menu
                                             </button>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-medium text-muted-foreground">Họ tên *</label>
-                                                <Input
-                                                    value={guestName}
-                                                    onChange={(e) => { setGuestName(e.target.value); if (formErrors.includes('Họ tên')) setFormErrors(prev => prev.filter(err => err !== 'Họ tên')); }}
-                                                    placeholder="Nguyễn Văn A"
-                                                    className={cn("h-9 text-sm", formErrors.includes('Họ tên') && "border-red-500 focus-visible:ring-red-500")}
-                                                />
+
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Họ tên của bạn *</label>
+                                                    <Input
+                                                        value={guestName}
+                                                        onChange={(e) => { setGuestName(e.target.value); if (formErrors.includes('Họ tên')) setFormErrors(prev => prev.filter(err => err !== 'Họ tên')); }}
+                                                        placeholder="Nguyễn Văn A"
+                                                        className={cn("h-11 rounded-xl text-sm border-border/60 bg-background/50 focus:bg-background shadow-sm transition-all", formErrors.includes('Họ tên') && "border-red-500/50 focus-visible:ring-red-500/10")}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Số điện thoại *</label>
+                                                    <Input
+                                                        value={guestPhone}
+                                                        onChange={(e) => { setGuestPhone(e.target.value); if (formErrors.includes('Số điện thoại')) setFormErrors(prev => prev.filter(err => err !== 'Số điện thoại')); }}
+                                                        placeholder="0912 345 678"
+                                                        className={cn("h-11 rounded-xl text-sm border-border/60 bg-background/50 focus:bg-background shadow-sm transition-all", formErrors.includes('Số điện thoại') && "border-red-500/50 focus-visible:ring-red-500/10")}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Bạn cần hỗ trợ gì? *</label>
+                                                    <Input
+                                                        value={initialMessage}
+                                                        onChange={(e) => { setInitialMessage(e.target.value); if (formErrors.includes('Tin nhắn')) setFormErrors(prev => prev.filter(err => err !== 'Tin nhắn')); }}
+                                                        onKeyPress={handleKeyPress}
+                                                        placeholder="Tôi muốn tư vấn bộ dàn karaoke..."
+                                                        className={cn("h-11 rounded-xl text-sm border-border/60 bg-background/50 focus:bg-background shadow-sm transition-all", formErrors.includes('Tin nhắn') && "border-red-500/50 focus-visible:ring-red-500/10")}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    onClick={startConversation}
+                                                    disabled={loading}
+                                                    className="w-full h-11 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20 mt-4 elite-button"
+                                                >
+                                                    {loading ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                                    ) : (
+                                                        <Send className="w-4 h-4 mr-2" />
+                                                    )}
+                                                    Kết nối ngay
+                                                </Button>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-medium text-muted-foreground">Số điện thoại *</label>
-                                                <Input
-                                                    value={guestPhone}
-                                                    onChange={(e) => { setGuestPhone(e.target.value); if (formErrors.includes('Số điện thoại')) setFormErrors(prev => prev.filter(err => err !== 'Số điện thoại')); }}
-                                                    placeholder="0912345678"
-                                                    className={cn("h-9 text-sm", formErrors.includes('Số điện thoại') && "border-red-500 focus-visible:ring-red-500")}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-medium text-muted-foreground">Tin nhắn *</label>
-                                                <Input
-                                                    value={initialMessage}
-                                                    onChange={(e) => { setInitialMessage(e.target.value); if (formErrors.includes('Tin nhắn')) setFormErrors(prev => prev.filter(err => err !== 'Tin nhắn')); }}
-                                                    onKeyPress={handleKeyPress}
-                                                    placeholder="Mình cần tư vấn..."
-                                                    className={cn("h-9 text-sm", formErrors.includes('Tin nhắn') && "border-red-500 focus-visible:ring-red-500")}
-                                                />
-                                            </div>
-                                            <Button
-                                                onClick={startConversation}
-                                                disabled={loading}
-                                                className="w-full mt-2"
-                                            >
-                                                {loading ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                ) : (
-                                                    <Send className="w-4 h-4 mr-2" />
-                                                )}
-                                                Bắt đầu chat
-                                            </Button>
                                         </div>
                                     ) : (
                                         // Chat messages
@@ -566,74 +582,105 @@ export function ChatWidget({
                 )}
             </AnimatePresence>
 
-            {/* Main Chat Button */}
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
-                className="relative"
-            >
-                {/* Pulse rings */}
-                {showPulse && !isOpen && (
-                    <>
-                        <motion.div
-                            className="absolute inset-0 rounded-full bg-primary/30"
-                            animate={{ scale: [1, 1.5, 2], opacity: [0.4, 0.2, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
-                        />
-                        <motion.div
-                            className="absolute inset-0 rounded-full bg-primary/20"
-                            animate={{ scale: [1, 1.3, 1.6], opacity: [0.3, 0.15, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, delay: 0.5, ease: 'easeOut' }}
-                        />
-                    </>
-                )}
-
+            {/* Zalo + Direct Chat Buttons */}
+            <div className="flex flex-col gap-3 relative pointer-events-auto">
+                {/* Zalo button */}
                 <motion.button
-                    whileHover={{ scale: 1.1 }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileHover={{ scale: 1.1, translateY: -3 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsOpen(!isOpen)}
-                    aria-label={isOpen ? 'Đóng cửa sổ chat' : 'Mở cửa sổ chat hỗ trợ'}
-                    aria-expanded={isOpen}
+                    onClick={handleZaloClick}
+                    aria-label="Chat qua Zalo"
                     className={cn(
-                        'relative w-14 h-14 rounded-full shadow-lg transition-all duration-300',
-                        'bg-gradient-to-br from-primary via-primary to-accent',
-                        'hover:shadow-xl hover:shadow-primary/30',
+                        'w-14 h-14 rounded-full shadow-2xl transition-all duration-300',
+                        'bg-gradient-to-br from-[#0068FF] to-[#0052CC]',
+                        'hover:shadow-xl hover:shadow-[#0068FF]/30',
                         'flex items-center justify-center',
-                        'border-2 border-white/20',
-                        isOpen && 'rotate-0'
+                        'border-2 border-white/30 ring-4 ring-[#0068FF]/10 relative overflow-hidden'
                     )}
                 >
-                    <AnimatePresence mode="wait">
-                        {isOpen ? (
+                    <div className="relative z-10 w-8 h-8 overflow-hidden rounded-lg shadow-sm">
+                        <Image
+                            src="/images/logo/zalo.png"
+                            alt="Zalo"
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-contain"
+                        />
+                    </div>
+
+                    {!isOpen && (
+                        <>
                             <motion.div
-                                key="close"
-                                initial={{ rotate: -90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: 90, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <X className="w-6 h-6 text-foreground dark:text-white" aria-hidden="true" />
-                            </motion.div>
-                        ) : (
+                                className="absolute inset-0 rounded-full border-2 border-[#0068FF]/40"
+                                animate={{ scale: [1, 1.4, 1.8], opacity: [0.6, 0.2, 0] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
                             <motion.div
-                                key="chat"
-                                initial={{ rotate: 90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: -90, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <MessageSquareMore className="w-6 h-6 text-foreground dark:text-white" aria-hidden="true" />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                className="absolute inset-0 rounded-full border-2 border-[#0068FF]/20"
+                                animate={{ scale: [1, 1.2, 1.4], opacity: [0.4, 0.1, 0] }}
+                                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                            />
+                        </>
+                    )}
                 </motion.button>
 
-                {/* Unread badge - can be used later */}
-                {/* <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-foreground dark:text-white font-bold border-2 border-white">
- 1
- </div> */}
-            </motion.div>
+                {/* Direct chat button */}
+                <div className="relative">
+                    <motion.button
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        whileHover={{ scale: 1.1, translateY: -3 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                            setMode('direct');
+                            setIsOpen(!isOpen);
+                        }}
+                        aria-label="Chat trực tiếp"
+                        aria-expanded={isOpen}
+                        className={cn(
+                            'w-14 h-14 rounded-full shadow-2xl transition-all duration-300',
+                            'bg-gradient-to-br from-primary via-primary/95 to-primary/90',
+                            'hover:shadow-xl hover:shadow-primary/30',
+                            'flex items-center justify-center',
+                            'border-2 border-white/30 ring-4 ring-primary/10 relative overflow-hidden'
+                        )}
+                    >
+                        <AnimatePresence mode="wait">
+                            {isOpen ? (
+                                <motion.div
+                                    key="close"
+                                    initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                                    exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <X className="w-6 h-6 text-white" strokeWidth={3} />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="chat"
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <MessageSquareMore className="w-6 h-6 text-white" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.button>
+
+                    {!isOpen && showPulse && (
+                        <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-primary/40"
+                            animate={{ scale: [1, 1.4, 1.8], opacity: [0.6, 0.2, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

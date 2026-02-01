@@ -97,7 +97,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
  if (isCategoryLoading) {
  return (
  <div className="min-h-screen bg-background">
- <main className="container mx-auto px-4 py-8">
+ <main className="container mx-auto px-4 py-6 md:py-8">
  <div className="animate-pulse">
  <div className="h-8 bg-muted rounded w-64 mb-4"></div>
  <div className="h-4 bg-muted rounded w-96 mb-8"></div>
@@ -120,7 +120,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
  <div className="min-h-screen bg-background">
  <main className="container mx-auto px-4 py-8">
  {/* Breadcrumb */}
- <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
+ <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-5">
  <Link href="/" className="hover:text-primary">Trang chủ</Link>
  <span>/</span>
  <Link href="/danh-muc" className="hover:text-primary">Danh mục</Link>
@@ -129,9 +129,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
  </nav>
 
  {/* Header */}
- <div className="flex items-center justify-between mb-8">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
  <div>
- <h1 className="text-3xl md:text-4xl font-bold mb-2">
+ <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1">
  <AnimatedGradientText className="text-3xl md:text-4xl font-bold p-0">
  {category.name}
  </AnimatedGradientText>
@@ -154,7 +154,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
  </div>
 
  {/* Products Grid */}
- <div className="mb-8">
+ <div className="mb-6">
  <ProductGrid
  products={(productsData?.items || []) as Product[]}
  loading={isProductsLoading}
@@ -165,7 +165,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
  {/* Pagination */}
  {productsData && productsData.totalPages > 1 && (
- <div className="flex justify-center space-x-2">
+ <div className="flex flex-wrap justify-center gap-2">
  <Button
  variant="outline"
  disabled={currentPage <= 1}

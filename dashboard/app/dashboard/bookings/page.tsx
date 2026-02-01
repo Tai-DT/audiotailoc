@@ -141,9 +141,9 @@ export default function BookingsPage() {
     fetchServices();
     fetchTechnicians();
     fetchUsers();
-  }, [token]);
+  }, [fetchBookings, fetchServices, fetchTechnicians, fetchUsers]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/bookings', {
@@ -201,9 +201,9 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const response = await fetch('/api/services?limit=100', {
         headers: getAuthHeaders(),
@@ -256,9 +256,9 @@ export default function BookingsPage() {
       console.error('Error fetching services:', error instanceof Error ? error.message : 'Unknown error');
       setServices([]);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchTechnicians = async () => {
+  const fetchTechnicians = useCallback(async () => {
     try {
       const response = await fetch('/api/technicians?pageSize=100', {
         headers: getAuthHeaders(),
@@ -362,9 +362,9 @@ export default function BookingsPage() {
       console.error('Error fetching technicians:', error instanceof Error ? error.message : 'Unknown error');
       setTechnicians([]);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch('/api/users?limit=100', {
         headers: getAuthHeaders(),
@@ -428,7 +428,7 @@ export default function BookingsPage() {
       console.error('Error fetching users:', error);
       setUsers([]);
     }
-  };
+  }, [getAuthHeaders]);
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {

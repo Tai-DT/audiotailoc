@@ -119,7 +119,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                                 initial={{ opacity: 0, x: -50 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3, duration: 0.8 }}
-                                className="flex items-center gap-3"
+                                className="flex items-center gap-3 w-fit bg-background/60 backdrop-blur-md px-3 py-2 rounded-full border border-white/10 shadow-lg"
                             >
                                 <div className="h-0.5 w-12 bg-primary" />
                                 <span className="text-xs md:text-sm font-black uppercase tracking-[0.4em] text-primary">
@@ -131,7 +131,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.5, duration: 0.8 }}
-                                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-[9rem] font-black tracking-tight leading-[1.1] md:leading-[0.95] uppercase transition-colors duration-1000 flex flex-wrap gap-x-4 md:gap-x-8 gap-y-2"
+                                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-[9rem] font-black tracking-tight leading-[1.1] md:leading-[0.95] uppercase transition-colors duration-1000 inline-flex flex-wrap gap-x-4 md:gap-x-8 gap-y-2 w-fit bg-background/60 backdrop-blur-md px-3 sm:px-4 md:px-6 py-2 md:py-3 rounded-2xl border border-white/10 shadow-lg"
                             >
                                 {displayBanners[current].title.split(' ').map((word, i) => (
                                     <span key={i} className={cn(i % 2 === 0 ? "text-primary" : "text-hollow text-foreground opacity-90")}>
@@ -144,7 +144,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.7, duration: 0.8 }}
-                                className="text-lg md:text-xl text-muted-foreground font-light max-w-xl leading-[1.6] transition-colors duration-1000"
+                                className="text-lg md:text-xl text-muted-foreground font-light max-w-xl leading-[1.6] transition-colors duration-1000 inline-block w-fit bg-background/60 backdrop-blur-md px-3 sm:px-4 py-2 rounded-xl border border-white/10 shadow-lg"
                             >
                                 {displayBanners[current].description || 'Khám phá thế giới âm thanh đẳng cấp với những thiết bị hàng đầu từ các thương hiệu danh tiếng.'}
                             </motion.p>

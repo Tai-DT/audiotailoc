@@ -213,21 +213,21 @@ export default function GuidesPage() {
 
                 {/* Guides Grid */}
                 {isLoading ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="h-64 bg-card animate-pulse rounded-xl" />
                         ))}
                     </div>
                 ) : filteredGuides.length === 0 ? (
-                    <div className="text-center py-16">
-                        <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-xl font-bold mb-2">Không tìm thấy hướng dẫn</h3>
-                        <p className="text-muted-foreground">
+                    <div className="text-center py-10">
+                        <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <h3 className="text-lg sm:text-xl font-bold mb-2">Không tìm thấy hướng dẫn</h3>
+                        <p className="text-muted-foreground text-sm sm:text-base">
                             Thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác
                         </p>
                     </div>
                 ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredGuides.map((guide) => (
                             <Card key={guide.id} className="group overflow-hidden hover:border-primary/50 transition-all">
                                 <div className="relative aspect-video bg-muted/30 overflow-hidden">
@@ -287,22 +287,22 @@ export default function GuidesPage() {
                 )}
 
                 {/* CTA */}
-                <Card className="mt-16 bg-primary/5 border-primary/20">
-                    <CardContent className="py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <Card className="mt-10 md:mt-16 bg-primary/5 border-primary/20">
+                    <CardContent className="py-6 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <h3 className="text-2xl font-bold mb-2">Cần hỗ trợ thêm?</h3>
-                            <p className="text-muted-foreground">
+                            <h3 className="text-xl md:text-2xl font-bold mb-2">Cần hỗ trợ thêm?</h3>
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Đội ngũ kỹ thuật của chúng tôi sẵn sàng hỗ trợ bạn
                             </p>
                         </div>
-                        <div className="flex gap-4">
-                            <Button asChild size="lg">
+                        <div className="flex gap-3">
+                            <Button asChild size="lg" className="h-11">
                                 <Link href="/technical-support">
                                     Hỗ trợ kỹ thuật
                                     <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
                             </Button>
-                            <Button asChild variant="outline" size="lg">
+                            <Button asChild variant="outline" size="lg" className="h-11">
                                 <Link href="/contact">Liên hệ</Link>
                             </Button>
                         </div>

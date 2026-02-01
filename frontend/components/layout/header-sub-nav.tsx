@@ -2,22 +2,46 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useCategories, useProductAnalytics } from '@/lib/hooks/use-api';
 
-const SUB_CATEGORIES = [
+const FALLBACK_CATEGORIES = [
     { name: 'Loa Karaoke', href: '/products?category=loa-karaoke' },
     { name: 'Cục Đẩy', href: '/products?category=amply-cuc-day' },
     { name: 'Microphone', href: '/products?category=microphone' },
     { name: 'Vang Số & Mixer', href: '/products?category=vang-so-mixer' },
-    { name: 'Dàn Karaoke', href: '/products?category=dan-karaoke' },
-    { name: 'Loa Sub', href: '/products?category=loa-sub' },
 ];
 
 export default function HeaderSubNav() {
     const [mounted, setMounted] = React.useState(false);
+    const { data: categories } = useCategories();
+    const { data: productAnalytics } = useProductAnalytics();
 
     React.useEffect(() => {
         setMounted(true);
     }, []);
+
+    const topCategories = React.useMemo(() => {
+        if (!productAnalytics?.topCategories?.length || !categories?.length) {
+            return FALLBACK_CATEGORIES;
+        }
+
+        const mapped = productAnalytics.topCategories
+            .slice()
+            .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+            .map((stat) => {
+                const match = categories.find((cat) => cat.name === stat.name);
+                if (!match) return null;
+                const slugOrId = match.slug || match.id;
+                return {
+                    name: match.name,
+                    href: `/products?category=${slugOrId}`,
+                };
+            })
+            .filter((item): item is { name: string; href: string } => Boolean(item))
+            .slice(0, 4);
+
+        return mapped.length === 4 ? mapped : FALLBACK_CATEGORIES;
+    }, [productAnalytics, categories]);
 
     if (!mounted) {
         return <div className="container mx-auto px-4 lg:px-6 h-full" />;
@@ -26,7 +50,7 @@ export default function HeaderSubNav() {
     return (
         <div className="w-full h-full overflow-x-auto scrollbar-hide">
             <div className="container mx-auto px-2 sm:px-4 lg:px-6 h-full flex items-center justify-start md:justify-center gap-1 sm:gap-2 md:gap-4 py-1 min-w-max md:min-w-0">
-                {SUB_CATEGORIES.map((cat) => (
+                {topCategories.map((cat) => (
                     <Link
                         key={cat.name}
                         href={cat.href}

@@ -103,7 +103,7 @@ export default function DealsPage() {
     }, []);
 
     const formatPrice = (cents: number) =>
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cents / 100);
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cents);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-primary/5">
@@ -182,16 +182,16 @@ export default function DealsPage() {
                                     </div>
                                     <CardContent className="p-4 space-y-3">
                                         <Link href={`/products/${product.slug}`}>
-                                            <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                                            <h3 className="font-semibold text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors">
                                                 {product.name}
                                             </h3>
                                         </Link>
                                         <div className="space-y-1">
-                                            <div className="text-lg font-black text-primary">
+                                            <div className="text-base sm:text-lg font-black text-primary">
                                                 {formatPrice(product.priceCents)}
                                             </div>
                                             {product.originalPriceCents && (
-                                                <div className="text-sm text-muted-foreground line-through">
+                                                <div className="text-xs sm:text-sm text-muted-foreground line-through">
                                                     {formatPrice(product.originalPriceCents)}
                                                 </div>
                                             )}

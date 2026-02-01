@@ -27,13 +27,13 @@ export function ServiceStructuredData({ service }: ServiceStructuredDataProps) {
  switch (service.priceType) {
  case 'FIXED':
  return {
- price: (service.price! / 100).toFixed(2),
+ price: service.price!.toFixed(2),
  priceCurrency: 'VND',
  };
  case 'RANGE':
  if (service.minPrice && service.maxPrice) {
  return {
- price: (service.minPrice / 100).toFixed(2),
+ price: service.minPrice.toFixed(2),
  priceCurrency: 'VND',
  // Note: Schema.org doesn't have a direct way to represent price ranges
  // We'll use the minimum price as the main price

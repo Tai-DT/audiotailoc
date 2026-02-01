@@ -100,9 +100,9 @@ export default function ProjectDetailPage() {
  const features = parseStringArray(project.features);
 
  return (
- <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-32">
+ <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-16 md:pb-24">
  {/* Immersive Header Backdrop */}
- <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden min-h-[70vh] flex flex-col justify-end">
+ <section className="relative pt-16 sm:pt-24 pb-10 sm:pb-16 overflow-hidden min-h-[60vh] flex flex-col justify-end">
  <div className="absolute inset-0 z-0">
  {images[0] || project.coverImage ? (
  <div className="absolute inset-0">
@@ -122,10 +122,10 @@ export default function ProjectDetailPage() {
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
  </div>
 
- <div className="container mx-auto px-6 relative z-10">
+ <div className="container mx-auto px-4 md:px-6 relative z-10">
  <BlurFade delay={0.1} inView>
- <div className="max-w-5xl space-y-10">
- <nav className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40 dark:text-zinc-300 mb-12">
+ <div className="max-w-5xl space-y-6 md:space-y-8">
+ <nav className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 dark:text-zinc-300 mb-6">
  <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
  <span className="w-1 h-1 rounded-full bg-white/20" />
  <Link href="/du-an" className="hover:text-primary transition-colors">Kiệt tác</Link>
@@ -152,13 +152,13 @@ export default function ProjectDetailPage() {
  </div>
  </div>
 
- <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1] font-display">
+ <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1] font-display">
  {project.name}
  </h1>
 
- <div className="flex flex-wrap items-center gap-10 pt-6 border-t border-white/5">
+ <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-white/5">
  <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+ <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
  <User className="w-6 h-6 text-primary" />
  </div>
  <div>
@@ -167,7 +167,7 @@ export default function ProjectDetailPage() {
  </div>
  </div>
  <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+ <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
  <Calendar className="w-6 h-6 text-accent" />
  </div>
  <div>
@@ -176,7 +176,7 @@ export default function ProjectDetailPage() {
  </div>
  </div>
  <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+ <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
  <Eye className="w-6 h-6 text-foreground/40 dark:text-zinc-300" />
  </div>
  <div>
@@ -192,11 +192,11 @@ export default function ProjectDetailPage() {
  </section>
 
  {/* Main Content Grid */}
- <section className="relative py-24">
- <div className="container mx-auto px-6">
- <div className="grid lg:grid-cols-12 gap-16">
+ <section className="relative py-12 md:py-20">
+ <div className="container mx-auto px-4 md:px-6">
+ <div className="grid lg:grid-cols-12 gap-8 md:gap-12">
  {/* Left Column: Visual Showcase */}
- <div className="lg:col-span-8 space-y-16">
+ <div className="lg:col-span-8 space-y-8 md:space-y-12">
  {/* Main Visualizer */}
  <BlurFade delay={0.2} inView>
  <div className="space-y-8">

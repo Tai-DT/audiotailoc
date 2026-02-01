@@ -42,13 +42,13 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
     }
 
     return (
-        <section className="py-16 md:py-28 relative overflow-hidden bg-background">
+        <section className="py-10 md:py-20 relative overflow-hidden bg-background">
             {/* Background Aesthetic Layers */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(180,140,50,0.03),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(220,38,38,0.03),transparent_40%)]" />
             <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
 
-            <div className="container mx-auto px-6 relative z-10">
-                <div className="flex flex-col lg:flex-row items-end justify-between gap-8 mb-16 md:mb-24">
+            <div className="container mx-auto px-4 md:px-6 relative z-10">
+                <div className="flex flex-col lg:flex-row items-end justify-between gap-4 mb-8 md:mb-14">
                     <EliteSectionHeading
                         badge="Danh mục Elite"
                         title="Âm Thanh Thượng Lưu"
@@ -56,7 +56,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                         className="mb-0"
                     />
                     <Link href="/categories" className="pb-4">
-                        <button className="w-full sm:w-auto elite-button px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-foreground dark:text-foreground dark:text-white hover:scale-105 transition-all">
+                        <button className="w-full sm:w-auto elite-button px-6 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-primary text-foreground dark:text-foreground dark:text-white hover:scale-105 transition-all">
                             Tất cả bộ sưu tập
                         </button>
                     </Link>
@@ -72,7 +72,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className="h-[220px] md:h-[350px]"
+                            className="h-[180px] sm:h-[200px] md:h-[300px]"
                         >
                             <CategoryCard
                                 category={category}
@@ -129,7 +129,7 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
                 {/* Content Overlay */}
                 <div className={cn(
                     "relative z-10 h-full flex flex-col justify-between",
-                    isLarge ? "p-12 md:p-14" : isSmall ? "p-4 md:p-8" : "p-5 md:p-10"
+                    isLarge ? "p-10 md:p-12" : isSmall ? "p-3 md:p-6" : "p-4 md:p-8"
                 )}>
                     {/* Top Row */}
                     <div className="flex items-start justify-between">
@@ -151,7 +151,7 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
                     </div>
 
                     {/* Bottom Row */}
-                    <div className={cn("space-y-4", isSmall ? "space-y-2" : "space-y-4")}>
+                    <div className={cn("space-y-3", isSmall ? "space-y-2" : "space-y-3")}>
                         <div className="flex items-center gap-3">
                             <span className={cn(
                                 "h-[2px] bg-yellow-400/40 transition-all duration-700",
@@ -162,7 +162,7 @@ function CategoryCard({ category, className, isLarge, isSmall }: CategoryCardPro
 
                         <h3 className={cn(
                             "font-black text-yellow-400 drop-shadow-sm group-hover:text-yellow-300 transition-colors duration-500 leading-none font-display tracking-tighter",
-                            isLarge ? "text-4xl md:text-6xl" : isSmall ? "text-lg md:text-2xl" : "text-xl md:text-4xl"
+                            isLarge ? "text-3xl md:text-5xl" : isSmall ? "text-base md:text-xl" : "text-lg md:text-3xl"
                         )}>
                             {category.name}
                         </h3>

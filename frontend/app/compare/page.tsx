@@ -1,20 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import {
     ArrowLeftRight,
     Plus,
     X,
     Search,
-    CheckCircle2,
-    XCircle,
     Sparkles
 } from 'lucide-react';
 import { apiClient, handleApiResponse } from '@/lib/api';
@@ -125,7 +122,7 @@ export default function ComparePage() {
     );
 
     const formatPrice = (cents: number) =>
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cents / 100);
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cents);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-primary/5 py-12">
@@ -167,9 +164,11 @@ export default function ComparePage() {
                                         </Button>
                                         <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 bg-muted rounded-lg flex items-center justify-center">
                                             {product.imageUrl ? (
-                                                <img
+                                                <Image
                                                     src={product.imageUrl}
                                                     alt={product.name}
+                                                    width={80}
+                                                    height={80}
                                                     className="w-full h-full object-contain p-1 md:p-2"
                                                 />
                                             ) : (

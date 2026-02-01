@@ -600,10 +600,10 @@ function mapServicesApiPayload(raw: RawServicesPayload): PaginatedResponse<Servi
     const tags = parseArray(s.tags);
     const images = parseArray(s.images) || (typeof s.images === 'string' ? [s.images] : undefined);
 
-    // Backend maps price: already provided as number (VND) via services.service.ts mapping: price = basePriceCents / 100
+    // Backend maps price: already provided as number (VND)
     // Range price display fields: minPriceDisplay / maxPriceDisplay
-    const minPrice = s.minPriceDisplay ?? (typeof s.minPrice === 'number' ? s.minPrice / 100 : undefined);
-    const maxPrice = s.maxPriceDisplay ?? (typeof s.maxPrice === 'number' ? s.maxPrice / 100 : undefined);
+    const minPrice = s.minPriceDisplay ?? (typeof s.minPrice === 'number' ? s.minPrice : undefined);
+    const maxPrice = s.maxPriceDisplay ?? (typeof s.maxPrice === 'number' ? s.maxPrice : undefined);
 
     const normalized: Service = {
       id: String(s.id ?? ''),
@@ -611,7 +611,7 @@ function mapServicesApiPayload(raw: RawServicesPayload): PaginatedResponse<Servi
       name: s.name || '(No name)',
       description: s.description || s.shortDescription,
       shortDescription: s.shortDescription,
-      price: typeof s.price === 'number' ? s.price : (typeof s.basePriceCents === 'number' ? s.basePriceCents / 100 : 0),
+      price: typeof s.price === 'number' ? s.price : (typeof s.basePriceCents === 'number' ? s.basePriceCents : 0),
       minPrice,
       maxPrice,
       priceType: ((): Service['priceType'] => {

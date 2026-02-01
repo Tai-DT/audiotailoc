@@ -166,7 +166,7 @@ export default function SupportPage() {
  <div className="min-h-screen bg-background">
  <main role="main" aria-labelledby="support-hero-title">
  {/* Hero Section */}
- <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20 overflow-hidden">
+ <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12 overflow-hidden">
  <div className="absolute inset-0 opacity-5">
  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)),transparent_50%)] blur-3xl"></div>
  </div>
@@ -178,11 +178,11 @@ export default function SupportPage() {
  Trung tâm hỗ trợ
  </div>
 
- <h1 id="support-hero-title" className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+ <h1 id="support-hero-title" className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
  Hỗ trợ khách hàng
  </h1>
 
- <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+ <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
  Chúng tôi luôn sẵn sàng hỗ trợ bạn với đội ngũ kỹ thuật chuyên nghiệp
  và hệ thống kiến thức phong phú.
  </p>
@@ -191,10 +191,10 @@ export default function SupportPage() {
  </section>
 
  {/* Search Section */}
- <section className="py-12 bg-muted/30">
+ <section className="py-8 bg-muted/30">
  <div className="container mx-auto px-4">
  <div className="max-w-4xl mx-auto">
- <div className="flex gap-4">
+ <div className="flex flex-col sm:flex-row gap-3">
  <div className="flex-1 relative">
  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
  <Input

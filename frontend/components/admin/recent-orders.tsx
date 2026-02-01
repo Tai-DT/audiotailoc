@@ -132,7 +132,7 @@ export function RecentOrders() {
  </div>
   <div className="text-right space-y-2">
  <p className="font-semibold text-lg">
- {formatCurrency(order.totalCents / 100)}
+ {formatCurrency(order.totalCents)}
  </p>
   <div className="flex gap-1">
  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">

@@ -73,38 +73,38 @@ export default function StoresPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-primary/5 py-12">
+        <div className="min-h-screen bg-gradient-to-b from-background to-primary/5 py-8 md:py-12">
             <div className="container max-w-5xl mx-auto px-4">
                 {/* Header */}
-                <div className="text-center mb-12">
+                <div className="text-center mb-8">
                     <Badge variant="outline" className="mb-4 px-4 py-1 border-primary/30">
                         <MapPin className="w-3 h-3 mr-1" />
                         Hệ Thống Showroom
                     </Badge>
-                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">
+                    <h1 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight mb-3">
                         Địa Chỉ <span className="text-primary">Cửa Hàng</span>
                     </h1>
-                    <p className="text-muted-foreground max-w-2xl mx-auto">
+                    <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto">
                         Ghé thăm showroom để trải nghiệm trực tiếp các sản phẩm âm thanh cao cấp
                         và nhận tư vấn từ đội ngũ chuyên gia.
                     </p>
                 </div>
 
                 {/* Search */}
-                <div className="max-w-md mx-auto mb-8">
+                <div className="max-w-md mx-auto mb-6">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                             placeholder="Tìm kiếm showroom..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 h-12 rounded-full"
+                            className="pl-10 h-10 rounded-full"
                         />
                     </div>
                 </div>
 
                 {/* Stores List */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {filteredStores.map((store) => (
                         <Card
                             key={store.id}
@@ -122,8 +122,8 @@ export default function StoresPage() {
                                     <span>{store.name}</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid md:grid-cols-2 gap-4">
+                            <CardContent className="space-y-3">
+                                <div className="grid md:grid-cols-2 gap-3">
                                     <div className="space-y-3">
                                         <div className="flex items-start gap-3">
                                             <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
@@ -154,7 +154,7 @@ export default function StoresPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4 border-t">
+                                <div className="flex gap-3 pt-3 border-t">
                                     <Button asChild className="flex-1">
                                         <a href={`tel:${store.phone.replace(/\s/g, '')}`}>
                                             <Phone className="w-4 h-4 mr-2" />
@@ -176,17 +176,17 @@ export default function StoresPage() {
                 </div>
 
                 {/* CTA */}
-                <Card className="mt-12 bg-primary/5 border-primary/20">
-                    <CardContent className="py-8 text-center">
-                        <h3 className="text-2xl font-bold mb-4">Không thể đến showroom?</h3>
-                        <p className="text-muted-foreground mb-6">
+                <Card className="mt-8 md:mt-12 bg-primary/5 border-primary/20">
+                    <CardContent className="py-6 text-center">
+                        <h3 className="text-xl md:text-2xl font-bold mb-3">Không thể đến showroom?</h3>
+                        <p className="text-muted-foreground text-sm md:text-base mb-4">
                             Liên hệ để được tư vấn trực tuyến hoặc đặt lịch hẹn tại nhà
                         </p>
-                        <div className="flex gap-4 justify-center">
-                            <Button asChild size="lg">
+                        <div className="flex gap-3 justify-center">
+                            <Button asChild size="lg" className="h-11">
                                 <Link href="/contact">Liên hệ ngay</Link>
                             </Button>
-                            <Button asChild variant="outline" size="lg">
+                            <Button asChild variant="outline" size="lg" className="h-11">
                                 <Link href="/service-booking">Đặt lịch kỹ thuật</Link>
                             </Button>
                         </div>

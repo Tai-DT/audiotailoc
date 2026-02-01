@@ -82,11 +82,11 @@ export function EliteProductCard({ product, className }: EliteProductCardProps) 
  <div className="space-y-1">
  {product.originalPriceCents && (
  <p className="text-xs text-muted-foreground line-through decoration-primary/50">
- {formatVND(Number(product.originalPriceCents) / 100)}
+ {formatVND(Number(product.originalPriceCents))}
  </p>
  )}
  <p className="text-xl font-black text-primary tracking-tighter">
- {formatVND(Number(product.priceCents) / 100)}
+ {formatVND(Number(product.priceCents))}
  </p>
  </div>
 

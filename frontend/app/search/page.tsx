@@ -89,9 +89,9 @@ function SearchContent ()
 
  return (
  <div className="min-h-screen bg-background">
- <main className="container mx-auto px-4 py-8">
+ <main className="container mx-auto px-4 py-6 md:py-8">
  {/* Search Header */}
- <div className="mb-8">
+ <div className="mb-6">
  <div className="flex items-center space-x-4 mb-6">
  <Link href="/" aria-label="Về trang chủ">
  <Button variant="ghost" size="sm">
@@ -104,7 +104,7 @@ function SearchContent ()
  </div>
 
  {/* Search Form */}
- <form onSubmit={handleSearch} className="flex gap-4 mb-6" role="search" aria-label="Tìm kiếm sản phẩm">
+ <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-4" role="search" aria-label="Tìm kiếm sản phẩm">
  <div className="flex-1 relative">
  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
  <Input
@@ -116,12 +116,12 @@ function SearchContent ()
  aria-label="Nhập từ khóa tìm kiếm"
  />
  </div>
- <Button type="submit" disabled={!query.trim()} aria-label="Bắt đầu tìm kiếm">
+ <Button type="submit" disabled={!query.trim()} aria-label="Bắt đầu tìm kiếm" className="h-11">
  <Search className="mr-2 h-4 w-4" aria-hidden="true" />
  Tìm kiếm
  </Button>
  {query && (
- <Button variant="outline" onClick={handleClearSearch} aria-label="Xóa từ khóa tìm kiếm">
+ <Button variant="outline" onClick={handleClearSearch} aria-label="Xóa từ khóa tìm kiếm" className="h-11">
  <X className="mr-2 h-4 w-4" aria-hidden="true" />
  Xóa
  </Button>
@@ -163,7 +163,7 @@ function SearchContent ()
  )}
  </div>
 
- <div className="grid lg:grid-cols-4 gap-8">
+ <div className="grid lg:grid-cols-4 gap-6">
  {/* Filters Sidebar */}
  {showFilters && (
  <div className="lg:col-span-1">
@@ -191,7 +191,7 @@ function SearchContent ()
  {/* Search Results */}
  <div className={showFilters ? "lg:col-span-3" : "lg:col-span-4"}>
  {isLoading ? (
- <div  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+ <div  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
  role="status"
  aria-label="Đang tải kết quả tìm kiếm"
  >

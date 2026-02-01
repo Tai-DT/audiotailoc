@@ -19,7 +19,7 @@ export function CTASection() {
     const zaloLink = contactInfo?.social?.zalo || (hotlineNumber ? `https://zalo.me/${hotlineNumber}` : '');
 
     return (
-        <section className="py-16 md:py-32 relative overflow-hidden bg-background">
+        <section className="py-10 md:py-24 relative overflow-hidden bg-background">
             {/* Cinematic Background Layer */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.05),transparent_70%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.08),transparent_70%)]" />
@@ -47,10 +47,10 @@ export function CTASection() {
                 </div>
             </div>
 
-            <div className="container mx-auto px-6 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-16 md:gap-32 items-center">
+            <div className="container mx-auto px-4 md:px-6 relative z-10">
+                <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center">
                     {/* Elite Content - Authority & Trust */}
-                    <div className="space-y-12">
+                    <div className="space-y-6 md:space-y-10">
                         {/* Elite Badge */}
                         <div className="section-badge">
                             <Volume2 className="w-5 h-5 text-primary animate-pulse" />
@@ -58,19 +58,19 @@ export function CTASection() {
                         </div>
 
                         {/* Title with Dramatic Impact */}
-                        <h2 className="text-4xl md:text-8xl font-black text-foreground tracking-tighter leading-[1.1] md:leading-[0.85] font-display">
+                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-[1.1] md:leading-[0.85] font-display">
                             Đặc quyền <br />
                             <span className="premium-text-gradient italic">Tư vấn</span> <br />
                             Đẳng Cấp
                         </h2>
 
                         {/* High-End Subtext */}
-                        <p className="text-xl md:text-2xl text-muted-foreground max-w-xl font-medium leading-relaxed border-l-4 border-primary/30 dark:border-accent/30 pl-10 italic">
+                        <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-xl font-medium leading-relaxed border-l-4 border-primary/30 dark:border-accent/30 pl-4 md:pl-8 italic">
                             Hãy để chuyên gia của chúng tôi thiết kế bản giao hưởng riêng cho không gian sống của bạn.
                         </p>
 
                         {/* Cinematic Info Grid */}
-                        <div className="grid sm:grid-cols-2 gap-8">
+                        <div className="grid sm:grid-cols-2 gap-4">
                             <InfoCard
                                 icon={MapPin}
                                 title="Luxury Showroom"
@@ -84,11 +84,11 @@ export function CTASection() {
                         </div>
 
                         {/* Command Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-8 pt-8">
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <Link href={`tel:${hotlineNumber}`} className="w-full sm:w-auto overflow-hidden rounded-[2rem] group/btn">
                                 <Button
                                     size="lg"
-                                    className="w-full h-16 md:h-20 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-8 md:px-14 text-sm font-black uppercase tracking-[0.3em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
+                                    className="w-full h-12 md:h-16 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-6 md:px-10 text-xs font-black uppercase tracking-[0.3em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
                                 >
                                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                                     <div className="absolute inset-0 gold-royal-grain opacity-10" />
@@ -100,7 +100,7 @@ export function CTASection() {
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="w-full h-16 md:h-20 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-2xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-8 md:px-14 text-sm font-black uppercase tracking-[0.3em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
+                                    className="w-full h-12 md:h-16 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-2xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-6 md:px-10 text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
                                 >
                                     <Mail className="mr-4 h-6 w-6 text-primary dark:text-accent group-hover:text-foreground dark:text-foreground dark:text-white transition-colors" />
                                     Để lại lời nhắn
@@ -112,19 +112,19 @@ export function CTASection() {
                     {/* Elite Contact Console */}
                     <div className="relative">
                         <div className="absolute -inset-6 bg-gradient-to-br from-primary/30 to-accent/30 blur-[120px] opacity-20 dark:opacity-30 animate-pulse" />
-                        <div className="relative space-y-10">
+                        <div className="relative space-y-6 md:space-y-10">
                             {/* Primary Contact Console */}
-                            <div className="red-elite-card rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-20 group overflow-hidden">
+                            <div className="red-elite-card rounded-[2.5rem] md:rounded-[4rem] p-5 md:p-12 group overflow-hidden">
                                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 dark:bg-primary/20 blur-[100px] -translate-y-1/2 translate-x-1/2" />
                                 <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
                                 <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover:opacity-10 transition-opacity" />
 
-                                <div className="text-center space-y-12 relative z-10">
+                                <div className="text-center space-y-6 md:space-y-10 relative z-10">
                                     <div className="space-y-6">
-                                        <div className="text-[11px] font-black uppercase tracking-[0.5em] text-primary dark:text-accent font-display">Đường dây ưu tiên Elite</div>
+                                        <div className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-primary dark:text-accent font-display">Đường dây ưu tiên Elite</div>
                                         <a
                                             href={`tel:${hotlineNumber}`}
-                                            className="block text-4xl md:text-8xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter drop-shadow-sm group-hover:scale-105"
+                                            className="block text-2xl sm:text-3xl md:text-6xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter drop-shadow-sm group-hover:scale-105"
                                         >
                                             {hotlineDisplay}
                                         </a>
@@ -138,7 +138,7 @@ export function CTASection() {
                                     </div>
 
                                     {/* Action Grid */}
-                                    <div className="grid grid-cols-2 gap-4 md:gap-8">
+                                    <div className="grid grid-cols-2 gap-3 md:gap-6">
                                         <ContactButton
                                             href={zaloLink}
                                             icon={MessageCircle}
@@ -156,7 +156,7 @@ export function CTASection() {
                             </div>
 
                             {/* Secondary Navigation Grid */}
-                            <div className="grid grid-cols-2 gap-4 md:gap-10">
+                            <div className="grid grid-cols-2 gap-3 md:gap-6">
                                 <EliteNavLink href="/products" label="Bộ sưu tập" />
                                 <EliteNavLink href="/services" label="Dịch vụ Elite" />
                             </div>

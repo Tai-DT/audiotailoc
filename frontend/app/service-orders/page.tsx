@@ -240,7 +240,7 @@ export default function ServiceOrdersPage() {
  <div className="flex justify-between items-center pt-4 border-t">
  <span className="font-semibold">Tổng cộng:</span>
  <span className="text-xl font-bold text-primary">
- {(order.totalCents / 100).toLocaleString('vi-VN')}₫
+ {order.totalCents.toLocaleString('vi-VN')}₫
  </span>
  </div>
  </div>

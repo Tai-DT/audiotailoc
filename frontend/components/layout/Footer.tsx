@@ -145,16 +145,20 @@ export function Footer() {
                                         <Image
                                             src="/images/logo/logo-dark.svg"
                                             alt="Audio Tài Lộc"
-                                            fill
-                                            className="object-contain dark:hidden"
+                                            width={260}
+                                            height={74}
+                                            className="h-full w-full object-contain dark:hidden"
                                             unoptimized
+                                            priority
                                         />
                                         <Image
                                             src="/images/logo/logo-light.svg"
                                             alt="Audio Tài Lộc"
-                                            fill
-                                            className="object-contain hidden dark:block brightness-110 drop-shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+                                            width={260}
+                                            height={74}
+                                            className="h-full w-full object-contain hidden dark:block brightness-110 drop-shadow-[0_0_15px_rgba(220,38,38,0.2)]"
                                             unoptimized
+                                            priority
                                         />
                                     </div>
                                 </Link>
@@ -364,12 +368,12 @@ export function Footer() {
             {/* Legacy & Legal Bottom Bar */}
             <div className="relative border-t border-border/40 bg-muted/20 backdrop-blur-md">
                 <div className="container mx-auto px-6 py-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div className="flex flex-col items-center md:items-start gap-2">
-                            <p className="text-muted-foreground/60 text-[11px] font-black uppercase tracking-[0.2em]" suppressHydrationWarning>
-                                © {mounted ? new Date().getFullYear() : '2026'} Audio Tài Lộc Heritage. All rights reserved.
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-8" suppressHydrationWarning>
+                        <div className="flex flex-col items-center md:items-start gap-2" suppressHydrationWarning>
+                            <p className="text-muted-foreground/60 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.08em] sm:tracking-[0.2em] leading-relaxed" suppressHydrationWarning>
+                                © 2026 Audio Tài Lộc Heritage. All rights reserved.
                             </p>
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.3em] font-bold">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.12em] sm:tracking-[0.3em] font-bold" suppressHydrationWarning>
                                 <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
                                 <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
                                 <Link href="/sitemap.xml" className="hover:text-primary transition-colors">Sitemap</Link>

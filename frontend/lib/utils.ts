@@ -5,11 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatPrice(cents: number) {
+export function formatPrice(value: number) {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
-  }).format(Math.floor(cents / 100));
+  }).format(Math.floor(value));
 }
 
 // Backward-compatible alias used across components

@@ -88,33 +88,33 @@ export default function ProjectsPage() {
  }
 
  return (
- <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-24">
+ <main className="min-h-screen bg-background dark:bg-slate-950 text-foreground dark:text-white selection:bg-primary/30 pb-12 md:pb-20">
  {/* Cinematic Hero Banner */}
- <section className="relative py-24 md:py-32 overflow-hidden border-b border-white/5">
+ <section className="relative py-16 md:py-24 overflow-hidden border-b border-white/5">
  <div className="absolute inset-0 z-0">
  <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[150px] animate-pulse" />
  <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
  </div>
 
- <div className="container mx-auto px-6 relative z-10">
+ <div className="container mx-auto px-4 md:px-6 relative z-10">
  <BlurFade delay={0.1} inView>
- <div className="flex flex-col items-center text-center space-y-8">
+ <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
  <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-xl">
  <Music4 className="w-4 h-4 text-primary animate-pulse" />
  <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Portfolio of Excellence</span>
  </div>
 
- <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1] max-w-5xl">
+ <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1] max-w-5xl">
  Kiến Tạo <span className="text-primary italic">Không Gian</span><br />
  Trình Diễn <span className="bg-gradient-to-br from-primary via-red-500 to-red-800 bg-clip-text text-transparent italic inline-block">Độc Bản</span>
  </h1>
 
- <p className="text-foreground/40 dark:text-zinc-300 text-lg md:text-xl max-w-3xl font-medium leading-relaxed italic">
+ <p className="text-foreground/40 dark:text-zinc-300 text-sm sm:text-base md:text-lg max-w-3xl font-medium leading-relaxed italic">
  Chiêm ngưỡng những tuyệt tác âm thanh được Audio Tài Lộc thiết kế và thi công. Từ các khán phòng tráng lệ đến những hệ thống giải trí gia đình High-End.
  </p>
 
- <div className="flex flex-wrap justify-center gap-6 pt-4">
+ <div className="flex flex-wrap justify-center gap-4 pt-2">
  <div className="flex items-center gap-3 group">
  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60 dark:text-zinc-200">Professional Installation</span>
@@ -130,13 +130,13 @@ export default function ProjectsPage() {
  </section>
 
  {/* Projects Content */}
- <section className="py-12">
- <div className="container mx-auto px-6">
+ <section className="py-8 md:py-12">
+ <div className="container mx-auto px-4 md:px-6">
  {/* Mobile Filter Trigger */}
- <div className="mb-8 lg:hidden">
+ <div className="mb-6 lg:hidden">
  <Button
  variant="outline"
- className="w-full justify-between h-14 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+ className="w-full justify-between h-11 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest"
  onClick={() => setShowFilters((prev) => !prev)}
  >
  <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ export default function ProjectsPage() {
 
  {showFilters && (
  <BlurFade delay={0.1}>
- <div className="mt-4 p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-3xl">
+ <div className="mt-3 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-3xl">
  <ProjectFilters
  categories={categoryOptions}
  statuses={statusOptions}
@@ -165,12 +165,12 @@ export default function ProjectsPage() {
  )}
  </div>
 
- <div className="grid gap-12 lg:grid-cols-4">
+ <div className="grid gap-6 md:gap-10 lg:grid-cols-4">
  {/* Filters Sidebar - Desktop */}
  <div className="hidden lg:block lg:col-span-1">
  <BlurFade delay={0.2} inView>
- <div className="sticky top-32 space-y-8">
- <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+ <div className="sticky top-32 space-y-6">
+ <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2" />
  <div className="relative z-10 space-y-8">
  <div>

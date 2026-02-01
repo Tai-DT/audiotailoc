@@ -113,7 +113,7 @@ export function ProductList({  onViewProduct,  onEditProduct,  onDeleteProduct }
  },
  cell: ({ row }) => {
  const priceCents = row.getValue('priceCents') as number;
- return <div className="font-medium">{formatPrice(priceCents / 100)}</div>;
+ return <div className="font-medium">{formatPrice(priceCents)}</div>;
  },
  },
  {

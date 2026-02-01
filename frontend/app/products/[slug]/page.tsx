@@ -224,11 +224,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <ProductStructuredData product={product} />
 
             {/* Product Hero Section */}
-            <section className="relative pt-4 lg:pt-12 pb-12 lg:pb-20 z-10">
+            <section className="relative pt-4 lg:pt-12 pb-8 lg:pb-16 z-10">
                 <div className="container mx-auto px-4 md:px-6">
                     {/* Breadcrumb - Minimalist Style */}
                     <BlurFade delay={0.05} inView>
-                        <Breadcrumb className="mb-6 md:mb-10">
+                        <Breadcrumb className="mb-4 md:mb-8">
                             <BreadcrumbList className="text-[10px] font-black uppercase tracking-[0.3em]">
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
@@ -266,7 +266,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                         </Breadcrumb>
                     </BlurFade>
 
-                    <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-20">
+                    <div className="grid lg:grid-cols-12 gap-6 lg:gap-10 xl:gap-16">
                         {/* Left Column: Gallery (Spans 7 columns on Desktop) */}
                         <div className="lg:col-span-7">
                             <BlurFade delay={0.1} inView>
@@ -282,7 +282,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                         {/* Right Column: Product Info (Spans 5 columns on Desktop) */}
                         <div className="lg:col-span-5">
                             <BlurFade delay={0.2} inView>
-                                <div className="space-y-8 lg:sticky lg:top-32">
+                                <div className="space-y-5 md:space-y-7 lg:sticky lg:top-32">
                                     {/* Category & Status */}
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -338,18 +338,18 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                     </div>
 
                                     {/* Price Block - High Impact */}
-                                    <div className="relative p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-gradient-to-br from-card to-muted/20 border border-primary/20 overflow-hidden group hover:border-primary/50 transition-all duration-500 hover:shadow-[0_0_50px_-20px_rgba(220,38,38,0.3)]">
+                                    <div className="relative p-4 md:p-8 rounded-[1.25rem] md:rounded-[2rem] bg-gradient-to-br from-card to-muted/20 border border-primary/20 overflow-hidden group hover:border-primary/50 transition-all duration-500 hover:shadow-[0_0_50px_-20px_rgba(220,38,38,0.3)]">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-all duration-500" />
                                         <div className="relative flex flex-col gap-2">
                                             {/* Label for Price */}
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Giá niêm yết</span>
 
-                                            <div className="flex items-baseline gap-4 mt-1">
-                                                <span className="text-4xl md:text-6xl font-black tracking-tighter text-primary drop-shadow-sm">
+                                            <div className="flex items-baseline gap-3 mt-1">
+                                                <span className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-primary drop-shadow-sm">
                                                     {formatPrice(product.priceCents)}
                                                 </span>
                                                 {product.originalPriceCents && product.originalPriceCents > product.priceCents && (
-                                                    <span className="text-xl text-muted-foreground line-through decoration-primary/40 font-bold decoration-2 opacity-60">
+                                                    <span className="text-base sm:text-lg md:text-xl text-muted-foreground line-through decoration-primary/40 font-bold decoration-2 opacity-60">
                                                         {formatPrice(product.originalPriceCents)}
                                                     </span>
                                                 )}
@@ -364,10 +364,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                     </div>
 
                                     {/* Actions Area */}
-                                    <div className="space-y-6">
-                                        <div className="flex items-center gap-6 p-4 rounded-2xl border border-border bg-card/40">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-4 p-3 rounded-2xl border border-border bg-card/40">
                                             <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground w-20">Số lượng:</span>
-                                            <div className="flex items-center bg-background border border-border rounded-xl h-12 w-full max-w-[140px] shadow-sm">
+                                            <div className="flex items-center bg-background border border-border rounded-xl h-10 w-full max-w-[140px] shadow-sm">
                                                 <button
                                                     onClick={() => handleQuantityChange(-1)}
                                                     disabled={quantity <= 1}
@@ -390,7 +390,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                             <Button
                                                 size="lg"
                                                 className={cn(
-                                                    "h-14 md:h-16 rounded-xl md:rounded-2xl font-black text-[10px] md:text-sm uppercase tracking-[0.2em]",
+                                                    "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em]",
                                                     "bg-gradient-to-r from-red-600 to-primary hover:from-red-500 hover:to-red-600 text-foreground dark:text-white shadow-[0_10px_30px_-10px_rgba(220,38,38,0.5)]",
                                                     "transition-all active:scale-95 group hover:-translate-y-1"
                                                 )}
@@ -404,7 +404,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                             <Button
                                                 size="lg"
                                                 className={cn(
-                                                    "h-14 md:h-16 rounded-xl md:rounded-2xl font-black text-[10px] md:text-sm uppercase tracking-[0.2em] italic",
+                                                    "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
                                                     "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
                                                     "transition-all active:scale-95 border border-border"
                                                 )}

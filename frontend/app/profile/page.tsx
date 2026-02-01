@@ -428,7 +428,7 @@ function ProfilePageContent() {
                                                         </div>
                                                         <h5 className="font-semibold line-clamp-1">{item.product?.name}</h5>
                                                         <p className="text-primary font-bold">
-                                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((item.product?.priceCents ?? 0) / 100)}
+                                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.product?.priceCents ?? 0)}
                                                         </p>
                                                     </div>
                                                 ))}
@@ -583,7 +583,7 @@ function ProfilePageContent() {
                                                                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
                                                                         typeof payment.amount === 'number'
                                                                             ? payment.amount
-                                                                            : (payment.amountCents ?? 0) / 100
+                                                                            : payment.amountCents ?? 0
                                                                     )}
                                                                 </td>
                                                                 <td className="py-4 px-2">

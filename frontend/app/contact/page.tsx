@@ -182,9 +182,9 @@ export default function ContactPage() {
     }
 
     return (
-        <main className="min-h-screen bg-background dark:bg-background text-foreground selection:bg-primary/30 pb-20 md:pb-32">
+        <main className="min-h-screen bg-background dark:bg-background text-foreground selection:bg-primary/30 pb-12 md:pb-24">
             {/* Cinematic Hero */}
-            <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
+            <section className="relative pt-16 sm:pt-24 pb-10 sm:pb-16 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[150px] animate-pulse" />
                     <div className="absolute inset-0 bg-studio-grid opacity-20" />
@@ -192,17 +192,17 @@ export default function ContactPage() {
 
                 <div className="container mx-auto px-4 md:px-6 relative z-10">
                     <BlurFade delay={0.1} inView>
-                        <div className="text-center space-y-8">
-                            <div className="flex flex-col items-center gap-6">
+                        <div className="text-center space-y-4 sm:space-y-6">
+                            <div className="flex flex-col items-center gap-4">
                                 <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-xl">
                                     <Headphones className="w-4 h-4 text-primary animate-pulse" />
                                     <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Professional Support</span>
                                 </div>
-                                <h1 className="text-3xl sm:text-5xl md:text-8xl font-black tracking-tighter leading-none font-display">
+                                <h1 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-none font-display">
                                     Kết nối <span className="text-primary italic">Chuyên gia</span><br />
                                     Tư vấn <span className="text-accent italic">Tận tâm</span>
                                 </h1>
-                                <p className="text-foreground/40 dark:text-zinc-300 text-sm md:text-xl max-w-3xl mx-auto font-medium leading-relaxed italic px-4 md:px-12 border-l border-r border-white/5">
+                                <p className="text-foreground/40 dark:text-zinc-300 text-sm sm:text-base md:text-lg max-w-3xl mx-auto font-medium leading-relaxed italic px-4 md:px-8 border-l border-r border-white/5">
                                     Đội ngũ kỹ thuật của Audio Tài Lộc luôn sẵn sàng giải đáp mọi thắc mắc và đưa ra giải pháp âm thanh tối ưu nhất cho không gian của bạn.
                                 </p>
                             </div>
@@ -212,14 +212,14 @@ export default function ContactPage() {
             </section>
 
             {/* Primary Contact Options */}
-            <section className="py-8 md:py-12 relative z-10">
+            <section className="py-6 md:py-10 relative z-10">
                 <div className="container mx-auto px-4 md:px-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         {contactCards.map((info, index) => (
                             <BlurFade key={index} delay={0.1 * index} inView>
-                                <div className="group relative p-6 md:p-10 bg-white/5 border border-white/10 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden hover:border-primary/50 transition-all duration-500 hover:-translate-y-2">
+                                <div className="group relative p-4 md:p-8 bg-white/5 border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden hover:border-primary/50 transition-all duration-500 hover:-translate-y-2">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
-                                    <info.icon className="h-8 w-8 md:h-10 md:w-10 text-primary mb-6 md:mb-8 group-hover:scale-110 transition-transform duration-500" />
+                                    <info.icon className="h-7 w-7 md:h-10 md:w-10 text-primary mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500" />
                                     <div className="space-y-4">
                                         <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">{info.label}</p>
                                         <h3 className="text-lg font-black uppercase tracking-tight">{info.title}</h3>
@@ -234,22 +234,22 @@ export default function ContactPage() {
             </section>
 
             {/* Main Form Section */}
-            <section className="py-12 md:py-24 relative overflow-hidden">
+            <section className="py-8 md:py-16 relative overflow-hidden">
                 <div className="container mx-auto px-4 md:px-6">
-                    <div className="grid lg:grid-cols-2 gap-20 items-stretch">
+                    <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
                         {/* Contact Form - Glass Effect */}
                         <BlurFade delay={0.2} direction="right" inView>
-                            <div className="h-full p-6 sm:p-10 lg:p-12 bg-white/5 border border-white/10 rounded-[2rem] sm:rounded-[3rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+                            <div className="h-full p-4 sm:p-8 lg:p-10 bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-[2.5rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-1/4 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
 
-                                <div className="relative z-10 space-y-12">
+                                <div className="relative z-10 space-y-6 md:space-y-10">
                                     <div className="space-y-4">
-                                        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic">Gửi <span className="text-primary">Yêu cầu</span></h2>
+                                        <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Gửi <span className="text-primary">Yêu cầu</span></h2>
                                         <p className="text-foreground/40 dark:text-zinc-300 text-[11px] md:text-sm font-medium italic">Chúng tôi sẽ hồi đạt tới quý khách trong tối đa 24 giờ làm việc.</p>
                                     </div>
 
-                                    <form onSubmit={handleSubmit} className="space-y-8">
-                                        <div className="grid md:grid-cols-2 gap-8">
+                                    <form onSubmit={handleSubmit} className="space-y-5">
+                                        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                                             <div className="space-y-3">
                                                 <label className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 ml-4">Danh tính của bạn</label>
                                                 <Input
@@ -258,7 +258,7 @@ export default function ContactPage() {
                                                     onChange={handleInputChange}
                                                     required
                                                     placeholder="Họ và tên..."
-                                                    className="h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-6 text-xs ring-0"
+                                                    className="h-11 md:h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-5 text-xs ring-0"
                                                 />
                                             </div>
                                             <div className="space-y-3">
@@ -270,7 +270,7 @@ export default function ContactPage() {
                                                     onChange={handleInputChange}
                                                     required
                                                     placeholder="Số điện thoại..."
-                                                    className="h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-6 text-xs ring-0"
+                                                    className="h-11 md:h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-5 text-xs ring-0"
                                                 />
                                             </div>
                                         </div>
@@ -284,7 +284,7 @@ export default function ContactPage() {
                                                 onChange={handleInputChange}
                                                 required
                                                 placeholder="email@example.com"
-                                                className="h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-6 text-xs ring-0"
+                                                className="h-11 md:h-14 bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-5 text-xs ring-0"
                                             />
                                         </div>
 
@@ -297,14 +297,14 @@ export default function ContactPage() {
                                                 required
                                                 rows={5}
                                                 placeholder="Mô tả nhu cầu của bạn về giải pháp âm thanh chuyên nghiệp..."
-                                                className="bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-6 py-4 text-xs ring-0"
+                                                className="bg-white/5 border-white/10 rounded-2xl text-foreground dark:text-white placeholder:text-foreground/10 dark:text-white/10 focus:border-primary/50 transition-all px-5 py-3 text-xs ring-0"
                                             />
                                         </div>
 
                                         <button
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="w-full h-14 md:h-16 bg-primary text-foreground dark:text-white font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-4 group/btn"
+                                            className="w-full h-12 md:h-14 bg-primary text-foreground dark:text-white font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 group/btn"
                                         >
                                             {isSubmitting ? "Đang gửi đi..." : (
                                                 <>

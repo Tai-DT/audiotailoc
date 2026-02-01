@@ -59,7 +59,7 @@ export function WhyChooseUsSection() {
         .map((stat) => ({ value: stat.value, label: stat.label }));
 
     return (
-        <section className="py-16 md:py-32 bg-background relative overflow-hidden">
+        <section className="py-10 md:py-24 bg-background relative overflow-hidden">
             {/* Cinematic Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/2 left-0 w-[800px] h-[800px] rounded-full bg-primary/5 dark:bg-primary/5 blur-[180px] animate-pulse" />
@@ -68,15 +68,15 @@ export function WhyChooseUsSection() {
                 <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             </div>
 
-            <div className="container mx-auto px-6 relative z-10">
+            <div className="container mx-auto px-4 md:px-6 relative z-10">
                 {/* Section Header */}
-                <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20">
+                <div className="text-center max-w-4xl mx-auto mb-6 md:mb-12">
                     <div className="section-badge mx-auto mb-8">
                         <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                         <span>Sứ mệnh & Tinh hoa</span>
                     </div>
 
-                    <h2 className="text-3xl sm:text-5xl md:text-8xl font-black tracking-tighter mb-6 md:mb-10 font-display leading-[1] md:leading-[0.85] text-foreground">
+                    <h2 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tighter mb-4 md:mb-8 font-display leading-[1.05] md:leading-[0.85] text-foreground">
                         Kiến tạo{' '}
                         <span className="premium-text-gradient italic">
                             Âm Thanh
@@ -84,13 +84,13 @@ export function WhyChooseUsSection() {
                         Vượt Thời Gian
                     </h2>
 
-                    <p className="text-base md:text-2xl text-muted-foreground max-w-3xl mx-auto font-medium leading-relaxed italic border-x-4 border-primary/20 dark:border-accent/20 px-6 md:px-12">
+                    <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto font-medium leading-relaxed italic border-x-4 border-primary/20 dark:border-accent/20 px-4 md:px-8">
                         Audio Tài Lộc tự hào là đối tác chiến thuật, mang trọn vẹn tinh hoa âm nhạc và công nghệ đỉnh cao vào không gian sống thượng lưu của bạn.
                     </p>
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14 mb-20 md:mb-28">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-10 md:mb-16">
                     {features.map((feature, index) => (
                         <FeatureCard key={index} feature={feature} index={index} />
                     ))}
@@ -100,18 +100,18 @@ export function WhyChooseUsSection() {
                 {stats.length > 0 && (
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 rounded-[3.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                        <div className="relative glass-panel rounded-3xl md:rounded-[4rem] p-6 md:p-24 shadow-2xl overflow-hidden group/stats">
+                        <div className="relative glass-panel rounded-3xl md:rounded-[4rem] p-4 md:p-12 shadow-2xl overflow-hidden group/stats">
                             {/* Decorative Grid */}
                             <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
                             <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover/stats:opacity-10 transition-opacity" />
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 relative z-10">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10 relative z-10">
                                 {stats.map((stat, index) => (
                                     <div key={index} className="text-center group/stat">
-                                        <div className="text-4xl md:text-8xl font-black text-primary dark:text-primary font-display mb-3 md:mb-6 tracking-tighter drop-shadow-sm group-hover/stat:scale-110 group-hover/stat:text-accent transition-all duration-700">
+                                        <div className="text-2xl sm:text-3xl md:text-6xl font-black text-primary dark:text-primary font-display mb-2 md:mb-5 tracking-tighter drop-shadow-sm group-hover/stat:scale-110 group-hover/stat:text-accent transition-all duration-700">
                                             {stat.value}
                                         </div>
-                                        <div className="text-zinc-400 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 font-black uppercase tracking-[0.4em] text-[11px] font-display group-hover/stat:text-primary dark:group-hover/stat:text-foreground dark:text-foreground dark:text-white transition-colors">
+                                        <div className="text-zinc-400 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 font-black uppercase tracking-[0.3em] text-[9px] md:text-[11px] font-display group-hover/stat:text-primary dark:group-hover/stat:text-foreground dark:text-foreground dark:text-white transition-colors">
                                             {stat.label}
                                         </div>
                                     </div>
@@ -122,13 +122,13 @@ export function WhyChooseUsSection() {
                 )}
 
                 {/* Trust Logos - Cinema Style */}
-                <div className="mt-20 md:mt-48 text-center">
-                    <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-8 md:mb-16 font-display">Đối tác ủy quyền toàn cầu</p>
+                <div className="mt-10 md:mt-24 text-center">
+                    <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-6 md:mb-12 font-display">Đối tác ủy quyền toàn cầu</p>
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-28 opacity-40 dark:opacity-20 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 saturate-[0.5] hover:saturate-100 px-6">
                         {['JBL', 'Bose', 'Shure', 'Yamaha', 'Pioneer', 'Sony'].map((brand) => (
                             <div
                                 key={brand}
-                                className="text-2xl md:text-7xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter cursor-default drop-shadow-sm"
+                                className="text-xl sm:text-2xl md:text-5xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter cursor-default drop-shadow-sm"
                             >
                                 {brand}
                             </div>
@@ -150,7 +150,7 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
 
     return (
         <article
-            className="group relative p-6 md:p-12 overflow-hidden red-elite-card rounded-3xl md:rounded-[3.5rem]"
+            className="group relative p-4 md:p-8 overflow-hidden red-elite-card rounded-3xl md:rounded-[3.5rem]"
             style={{ animationDelay: `${index * 100}ms` }}
         >
             {/* Luxury Background Glow */}
@@ -171,18 +171,18 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl md:text-3xl font-black mb-4 md:mb-6 group-hover:text-primary transition-colors font-display tracking-tight leading-none relative overflow-hidden h-7 md:h-9">
+                <h3 className="text-lg md:text-2xl font-black mb-3 md:mb-6 group-hover:text-primary transition-colors font-display tracking-tight leading-none relative overflow-hidden h-6 md:h-9">
                     <span className="absolute inset-0 translate-y-0 group-hover:-translate-y-full transition-transform duration-500 flex items-center">{feature.title}</span>
                     <span className="absolute inset-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-primary dark:text-accent italic flex items-center">{feature.title}</span>
                 </h3>
 
                 {/* Description */}
-                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium text-base">
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium text-sm">
                     {feature.description}
                 </p>
 
                 {/* Elite Badge - Fixed at bottom */}
-                <div className="mt-10 pt-8 border-t border-border dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-700">
+                <div className="mt-6 pt-6 border-t border-border dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-700">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary dark:text-accent font-display">Tiêu chuẩn Audio Tài Lộc</span>

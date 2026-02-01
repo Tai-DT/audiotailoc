@@ -56,29 +56,29 @@ export function ServicesSection({ services }: ServicesSectionProps) {
     if (displayServices.length === 0) return null;
 
     return (
-        <section className="py-16 md:py-24 relative overflow-hidden bg-background">
+        <section className="py-10 md:py-20 relative overflow-hidden bg-background">
             {/* Background Aesthetic Layers */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.02),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(220,38,38,0.03),transparent_40%)]" />
             <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
 
-            <div className="container mx-auto px-6 relative z-10">
+            <div className="container mx-auto px-4 md:px-6 relative z-10">
                 {/* Section Header */}
                 <BlurFade delay={0.1} inView>
-                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-10 md:mb-16">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 md:mb-10">
                         <div className="space-y-6">
                             <div className="section-badge group">
                                 <Sparkles className="w-4 h-4 text-primary animate-pulse group-hover:rotate-12 transition-transform" />
                                 <span>Dịch vụ kỹ thuật chuyên sâu</span>
                             </div>
 
-                            <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[1] md:leading-[0.85] font-display">
+                            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-[1.05] md:leading-[0.85] font-display">
                                 Dịch vụ <br />
                                 <span className="premium-text-gradient italic">
                                     Âm Thanh Red Elite
                                 </span>
                             </h2>
 
-                            <p className="text-base md:text-xl text-muted-foreground dark:text-zinc-300 max-w-xl font-medium leading-relaxed italic border-l-4 border-primary/30 pl-6 md:pl-8">
+                            <p className="text-sm sm:text-base md:text-xl text-muted-foreground dark:text-zinc-300 max-w-xl font-medium leading-relaxed italic border-l-4 border-primary/30 pl-4 md:pl-8">
                                 Đội ngũ kỹ thuật viên tinh hoa, sẵn sàng mang đến trải nghiệm âm thanh hoàn hảo nhất cho không gian của bạn.
                             </p>
                         </div>
@@ -87,7 +87,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display uppercase text-xs tracking-[0.2em] transition-all duration-300"
+                                className="w-full sm:w-auto h-12 md:h-14 px-6 md:px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display uppercase text-xs tracking-[0.2em] transition-all duration-300"
                             >
                                 Khám phá tinh hoa
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -97,7 +97,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                 </BlurFade>
 
                 {/* Services Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {displayServices.map((service, index) => (
                         <BlurFade key={service.id} delay={0.15 + index * 0.05} inView>
                             <ServiceCard service={service} index={index} />
@@ -107,7 +107,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
 
                 {/* Quick Contact CTA */}
                 <BlurFade delay={0.4} inView>
-                    <div className="mt-12 md:mt-20 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] glass-panel border border-border dark:border-white/10 shadow-2xl relative overflow-hidden group/cta">
+                    <div className="mt-8 md:mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] glass-panel border border-border dark:border-white/10 shadow-2xl relative overflow-hidden group/cta">
                         <div className="absolute inset-0 gold-royal-grain opacity-5 group-hover/cta:opacity-10 transition-opacity" />
 
                         <div className="flex items-center gap-4 relative z-10">
@@ -125,7 +125,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                         <a href={`tel:${hotlineNumber}`} className="relative z-10">
                             <Button
                                 size="lg"
-                                className="w-full sm:w-auto red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-4 shadow-xl shadow-primary/20 rounded-2xl h-14 md:h-16 px-8 md:px-12 font-display uppercase tracking-[0.2em] text-sm active:scale-[0.98] transition-all duration-300"
+                                className="w-full sm:w-auto red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-3 shadow-xl shadow-primary/20 rounded-2xl h-12 md:h-14 px-6 md:px-10 font-display uppercase tracking-[0.2em] text-xs active:scale-[0.98] transition-all duration-300"
                             >
                                 <Phone className="w-5 h-5" />
                                 {hotlineDisplay}
@@ -156,7 +156,7 @@ function ServiceCard({ service }: ServiceCardProps) {
         }).format(value);
     };
 
-    const price = service.price || (service.basePriceCents ? service.basePriceCents / 100 : 0);
+    const price = service.price || (service.basePriceCents ? service.basePriceCents : 0);
 
     return (
         <Link href={`/services/${service.slug}`} className="block h-full">

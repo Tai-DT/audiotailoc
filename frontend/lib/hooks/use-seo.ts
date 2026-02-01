@@ -153,7 +153,7 @@ export const useProductSEO = (productId: string, product?: Product) => {
           },
           offers: (('price' in product && product.price) || product.priceCents) ? {
             '@type': 'Offer',
-            price: ('price' in product && product.price) || (product.priceCents / 100),
+            price: ('price' in product && product.price) || product.priceCents,
             priceCurrency: 'VND',
             availability: product.isActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           } : undefined,

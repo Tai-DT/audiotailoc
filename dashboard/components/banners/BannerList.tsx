@@ -68,7 +68,6 @@ export function BannerList({
             <TableCell>
               <div className="w-20 h-12 bg-gray-100 rounded overflow-hidden">
                 {/* Use a plain <img> here to avoid Next/Image remote host restrictions in admin UI */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={banner.imageUrl || "https://via.placeholder.com/80x48?text=No+Image"}
                   alt={banner.title}

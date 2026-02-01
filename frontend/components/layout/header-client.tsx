@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart, Box, Wrench, Layout, Newspaper, Mail, Home } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/providers/cart-provider';
 import { useContactInfo } from '@/lib/hooks/use-contact-info';
@@ -86,10 +86,7 @@ export function AppHeader() {
                 isScrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"
             )}>
                 {/* Logo Section */}
-                <Link href="/" className={cn(
-                    "relative z-50 transition-transform active:scale-95 group flex-shrink-0",
-                    isScrolled ? "hidden sm:flex" : "flex"
-                )}>
+                <Link href="/" className="flex flex-shrink-0 relative z-50 transition-transform active:scale-95 group">
                     <div className={cn(
                         "relative transition-all duration-500",
                         isScrolled
@@ -99,16 +96,18 @@ export function AppHeader() {
                         <Image
                             src="/images/logo/logo-dark.svg"
                             alt="Audio Tài Lộc"
-                            fill
-                            className="object-contain dark:hidden"
+                            width={212}
+                            height={68}
+                            className="h-full w-full object-contain dark:hidden"
                             priority
                             unoptimized
                         />
                         <Image
                             src="/images/logo/logo-light.svg"
                             alt="Audio Tài Lộc"
-                            fill
-                            className="object-contain hidden dark:block"
+                            width={212}
+                            height={68}
+                            className="h-full w-full object-contain hidden dark:block"
                             priority
                             unoptimized
                         />
@@ -217,8 +216,20 @@ export function AppHeader() {
                     >
                         <div className="flex justify-between items-center mb-16">
                             <div className="relative h-10 w-32 translate-y-2">
-                                <Image src="/images/logo/logo-dark.svg" alt="Logo" fill className="object-contain dark:hidden" />
-                                <Image src="/images/logo/logo-light.svg" alt="Logo" fill className="object-contain hidden dark:block brightness-110" />
+                                <Image
+                                    src="/images/logo/logo-dark.svg"
+                                    alt="Logo"
+                                    width={128}
+                                    height={40}
+                                    className="h-full w-full object-contain dark:hidden"
+                                />
+                                <Image
+                                    src="/images/logo/logo-light.svg"
+                                    alt="Logo"
+                                    width={128}
+                                    height={40}
+                                    className="h-full w-full object-contain hidden dark:block brightness-110"
+                                />
                             </div>
                             <button
                                 className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
@@ -269,7 +280,7 @@ export function AppHeader() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </header>
+        </header >
     );
 }
 

@@ -119,7 +119,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
 
-  const normalizeProductImages = (images: unknown, imageUrl?: string): string[] => {
+  const normalizeProductImages = useCallback((images: unknown, imageUrl?: string): string[] => {
     if (Array.isArray(images)) {
       const urls = images
         .map((item) => {
@@ -145,7 +145,7 @@ export default function ProductsPage() {
     }
 
     return imageUrl ? [imageUrl] : []
-  }
+  }, [])
 
   const getFirstImageUrl = (product: Product): string => {
     const first = product.images?.[0]
@@ -252,7 +252,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, pageSize, categoryFilter, searchTerm, statusFilter, minPrice, maxPrice])
+  }, [currentPage, pageSize, categoryFilter, searchTerm, statusFilter, minPrice, maxPrice, normalizeProductImages])
 
   useEffect(() => {
     if (token) {

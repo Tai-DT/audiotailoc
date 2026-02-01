@@ -71,7 +71,7 @@ export default function FAQPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20 overflow-hidden">
+            <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12 overflow-hidden">
                 <div className="absolute inset-0 opacity-5">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)),transparent_50%)] blur-3xl"></div>
                 </div>
@@ -83,11 +83,11 @@ export default function FAQPage() {
                             FAQ
                         </div>
 
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+                        <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
                             Câu hỏi thường gặp
                         </h1>
 
-                        <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                        <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
                             Tìm câu trả lời cho những thắc mắc phổ biến về sản phẩm, dịch vụ và chính sách của Audio Tài Lộc.
                         </p>
                     </div>
@@ -95,20 +95,20 @@ export default function FAQPage() {
             </section>
 
             {/* FAQ Content */}
-            <section className="py-16">
+            <section className="py-10">
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
                         {Object.entries(groupedFaqs).length > 0 ? (
                             Object.entries(groupedFaqs).map(([category, categoryFaqs]) => (
-                                <div key={category} className="mb-12">
-                                    <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                                <div key={category} className="mb-8">
+                                    <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4 flex items-center gap-3">
                                         <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                                             <HelpCircle className="h-4 w-4" />
                                         </span>
                                         {category}
                                     </h2>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         {categoryFaqs.map((faq) => (
                                             <Card
                                                 key={faq.id}
@@ -117,8 +117,8 @@ export default function FAQPage() {
                                                 role="button"
                                                 aria-expanded={expandedFaq === faq.id}
                                             >
-                                                <CardHeader className="pb-3">
-                                                    <CardTitle className="text-lg text-foreground flex items-center justify-between">
+                                                <CardHeader className="pb-2">
+                                                    <CardTitle className="text-base md:text-lg text-foreground flex items-center justify-between">
                                                         <span>{faq.question}</span>
                                                         <ArrowRight
                                                             className={`h-5 w-5 text-primary transition-transform duration-300 ${expandedFaq === faq.id ? 'rotate-90' : ''
@@ -137,25 +137,25 @@ export default function FAQPage() {
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-16">
-                                <HelpCircle className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
-                                <h2 className="text-2xl font-bold text-foreground mb-4">Chưa có câu hỏi nào</h2>
-                                <p className="text-muted-foreground mb-8">
+                            <div className="text-center py-10">
+                                <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">Chưa có câu hỏi nào</h2>
+                                <p className="text-muted-foreground text-sm md:text-base mb-6">
                                     Nếu bạn có thắc mắc, vui lòng liên hệ với chúng tôi.
                                 </p>
                             </div>
                         )}
 
                         {/* CTA to Support */}
-                        <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border border-primary/20 text-center">
-                            <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
-                            <h3 className="text-2xl font-bold text-foreground mb-3">
+                        <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border border-primary/20 text-center">
+                            <MessageSquare className="h-10 w-10 text-primary mx-auto mb-3" />
+                            <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2">
                                 Không tìm thấy câu trả lời?
                             </h3>
-                            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                            <p className="text-muted-foreground text-sm md:text-base mb-4 max-w-xl mx-auto">
                                 Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn với bất kỳ thắc mắc nào.
                             </p>
-                            <Button size="lg" onClick={() => router.push('/support')}>
+                            <Button size="lg" className="h-11" onClick={() => router.push('/support')}>
                                 Liên hệ hỗ trợ
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>

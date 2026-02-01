@@ -141,13 +141,13 @@ export function ProductCard({
                     {product.category && (
                         <div className="flex items-center gap-2 md:gap-3">
                             <span className="w-4 md:w-8 h-[2px] bg-primary/30 dark:bg-accent/30" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-accent/70 truncate font-display">
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-accent/70 truncate font-display">
                                 {product.category.name}
                             </span>
                         </div>
                     )}
                     <Link href={`/products/${product.slug}`} className="block group/title">
-                        <h3 className="font-display font-black text-lg md:text-2xl text-foreground group-hover/title:text-primary transition-colors line-clamp-2 leading-[1.35] tracking-tight min-h-[2.7em]">
+                        <h3 className="font-display font-black text-base sm:text-lg md:text-2xl text-foreground group-hover/title:text-primary transition-colors line-clamp-2 leading-[1.35] tracking-tight min-h-[2.7em]">
                             {product.name}
                         </h3>
                     </Link>
@@ -158,11 +158,11 @@ export function ProductCard({
                     <div className="flex items-end justify-between">
                         <div className="flex flex-col">
                             {product.originalPriceCents && product.originalPriceCents > product.priceCents && (
-                                <span className="text-sm text-muted-foreground dark:text-zinc-500 line-through font-bold mb-1">
+                                <span className="text-xs sm:text-sm text-muted-foreground dark:text-zinc-500 line-through font-bold mb-1">
                                     {formatPrice(product.originalPriceCents)}
                                 </span>
                             )}
-                            <span className="text-xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
+                            <span className="text-lg sm:text-xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
                                 {formatPrice(product.priceCents)}
                             </span>
                         </div>
@@ -174,13 +174,17 @@ export function ProductCard({
                     </div>
 
                     <Button
-                        className="w-full h-11 md:h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-[10px] md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
+                        className="w-full h-11 md:h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-[9px] sm:text-[10px] md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
                         disabled={isOutOfStock}
                         onClick={() => onAddToCart?.(product.id)}
+                        aria-label={isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
+                        title={isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
                     >
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                        <ShoppingCart size={18} className="mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
-                        <span className="relative z-10">{isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}</span>
+                        <ShoppingCart size={18} className="sm:mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
+                        <span className="relative z-10 hidden sm:inline">
+                            {isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
+                        </span>
                     </Button>
                 </div>
             </CardContent>

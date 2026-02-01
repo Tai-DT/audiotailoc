@@ -63,13 +63,13 @@ export function ProductPromotionBadge({ productId, categoryId }: ProductPromotio
  switch (bestPromotion.type) {
  case 'PERCENTAGE':
  if (bestPromotion.maxDiscount) {
- const maxDiscountFormatted = (bestPromotion.maxDiscount / 100).toLocaleString('vi-VN');
+ const maxDiscountFormatted = bestPromotion.maxDiscount.toLocaleString('vi-VN');
  return `-${bestPromotion.value}% (Max ${maxDiscountFormatted}₫)`;
  }
  return `-${bestPromotion.value}%`;
 
  case 'FIXED_AMOUNT':
- const discountAmount = (bestPromotion.value / 100).toLocaleString('vi-VN');
+ const discountAmount = bestPromotion.value.toLocaleString('vi-VN');
  return `-${discountAmount}₫`;
 
  case 'FREE_SHIPPING':

@@ -134,12 +134,12 @@ function OrdersPageContent() {
 
  return (
  <div className="min-h-screen bg-background">
- <main className="container mx-auto px-4 py-8">
+ <main className="container mx-auto px-4 py-6 md:py-8">
  <div className="max-w-6xl mx-auto">
  {/* Header */}
- <header className="flex items-center justify-between mb-8">
+ <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
  <div>
- <h1 id="orders-title" className="text-3xl font-bold mb-2">Đơn hàng của tôi</h1>
+ <h1 id="orders-title" className="text-2xl sm:text-3xl font-bold mb-1">Đơn hàng của tôi</h1>
  <p className="text-muted-foreground">
  Quản lý và theo dõi tất cả đơn hàng của bạn
  </p>
@@ -155,10 +155,10 @@ function OrdersPageContent() {
  {/* Orders List */}
  {!orders?.items || orders.items.length === 0 ? (
  <Card>
- <CardContent className="text-center py-16">
- <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
- <h3 className="text-xl font-semibold mb-2">Chưa có đơn hàng nào</h3>
- <p className="text-muted-foreground mb-6">
+ <CardContent className="text-center py-10">
+ <ShoppingBag className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+ <h3 className="text-lg sm:text-xl font-semibold mb-2">Chưa có đơn hàng nào</h3>
+ <p className="text-muted-foreground text-sm sm:text-base mb-4">
  Bạn chưa đặt đơn hàng nào. Hãy khám phá sản phẩm của chúng tôi!
  </p>
  <Button asChild size="lg">
@@ -169,7 +169,7 @@ function OrdersPageContent() {
  </CardContent>
  </Card>
  ) : (
- <div className="space-y-6">
+ <div className="space-y-4">
  {orders.items.map((order: Order) => {
  const normalizedStatus = (order.status?.toUpperCase?.() || 'PENDING') as OrderStatus;
  const status = statusConfig[normalizedStatus] ?? statusConfig.PENDING;
@@ -181,8 +181,8 @@ function OrdersPageContent() {
  return (
  <Card key={orderId} className="hover:shadow-md transition-shadow" role="article" aria-labelledby={`order-${orderId}`}>
  <CardHeader>
- <div className="flex items-center justify-between">
- <div className="flex items-center space-x-4">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+ <div className="flex flex-wrap items-center gap-3">
  <div className="flex items-center space-x-2">
  <StatusIcon className={`w-5 h-5 ${status.color} text-foreground dark:text-white rounded-full p-1`} />
  <Badge variant="outline" className="flex items-center space-x-1">
@@ -194,9 +194,9 @@ function OrdersPageContent() {
  {formatDate(order.createdAt)}
  </div>
  </div>
- <div className="text-right">
- <div className="text-lg font-semibold text-success">
- {formatPrice(orderTotalCents / 100)}
+ <div className="text-left sm:text-right">
+ <div className="text-base sm:text-lg font-semibold text-success">
+ {formatPrice(orderTotalCents)}
  </div>
  <div className="text-sm text-muted-foreground">
  Mã đơn: #{order.orderNo || 'N/A'}

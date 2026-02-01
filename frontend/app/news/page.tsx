@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Newspaper,
     Calendar,
@@ -240,9 +240,9 @@ export default function NewsPage() {
                 )}
 
                 {/* All News with Tabs */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {/* Search & Tabs */}
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                         <Tabs value={activeTab} onValueChange={setActiveTab}>
                             <TabsList>
                                 <TabsTrigger value="all">Tất cả</TabsTrigger>
@@ -265,19 +265,19 @@ export default function NewsPage() {
 
                     {/* News List */}
                     {isLoading ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[...Array(6)].map((_, i) => (
                                 <div key={i} className="h-64 bg-card animate-pulse rounded-xl" />
                             ))}
                         </div>
                     ) : filteredNews.length === 0 ? (
-                        <div className="text-center py-16">
-                            <Newspaper className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                            <h3 className="text-xl font-bold mb-2">Không tìm thấy tin tức</h3>
-                            <p className="text-muted-foreground">Thử tìm kiếm với từ khóa khác</p>
+                        <div className="text-center py-10">
+                            <Newspaper className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                            <h3 className="text-lg sm:text-xl font-bold mb-2">Không tìm thấy tin tức</h3>
+                            <p className="text-muted-foreground text-sm sm:text-base">Thử tìm kiếm với từ khóa khác</p>
                         </div>
                     ) : (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredNews.map((item) => (
                                 <Card key={item.id} className="group overflow-hidden hover:border-primary/50 transition-all">
                                     <div className="relative aspect-video bg-muted/30 overflow-hidden">
@@ -330,10 +330,10 @@ export default function NewsPage() {
                 </div>
 
                 {/* Newsletter CTA */}
-                <Card className="mt-16 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-                    <CardContent className="py-8 text-center">
-                        <h3 className="text-2xl font-bold mb-4">Đăng ký nhận tin tức</h3>
-                        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <Card className="mt-10 md:mt-16 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+                    <CardContent className="py-6 text-center">
+                        <h3 className="text-xl md:text-2xl font-bold mb-3">Đăng ký nhận tin tức</h3>
+                        <p className="text-muted-foreground text-sm md:text-base mb-4 max-w-md mx-auto">
                             Nhận thông tin về sản phẩm mới và ưu đãi độc quyền
                         </p>
                         <Button asChild size="lg">

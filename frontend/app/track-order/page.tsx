@@ -199,7 +199,7 @@ export default function TrackOrderPage() {
                                 {/* Progress Timeline */}
                                 <div className="relative">
                                     <div className="flex justify-between items-center">
-                                        {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].map((status, index) => {
+                                        {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].map((status) => {
                                             const stepInfo = statusMap[status];
                                             const isCompleted = ['DELIVERED', 'SHIPPED', 'PROCESSING', 'CONFIRMED', 'PENDING']
                                                 .indexOf(order.status) <= ['DELIVERED', 'SHIPPED', 'PROCESSING', 'CONFIRMED', 'PENDING'].indexOf(status);
@@ -255,7 +255,7 @@ export default function TrackOrderPage() {
                                         </h4>
                                         <p className="text-2xl font-bold text-primary">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-                                                .format(order.totalCents / 100)}
+                                                .format(order.totalCents)}
                                         </p>
                                     </div>
                                 </div>
