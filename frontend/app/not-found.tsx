@@ -43,12 +43,12 @@ export default function NotFound() {
                             Tìm Sản Phẩm
                         </Link>
                     </Button>
-                    <Button asChild variant="ghost" size="lg" className="rounded-full">
-                        <Link href="/contact">
-                            <Phone className="w-5 h-5 mr-2" />
-                            Liên Hệ
-                        </Link>
-                    </Button>
+	                    <Button asChild variant="ghost" size="lg" className="rounded-full">
+	                        <Link href="/lien-he">
+	                            <Phone className="w-5 h-5 mr-2" />
+	                            Liên Hệ
+	                        </Link>
+	                    </Button>
                 </div>
 
                 {/* Quick Links */}
@@ -59,10 +59,10 @@ export default function NotFound() {
                             { label: 'Dàn Karaoke', href: '/categories/dan-karaoke' },
                             { label: 'Loa', href: '/categories/loa' },
                             { label: 'Ampli', href: '/categories/ampli' },
-                            { label: 'Micro', href: '/categories/micro' },
-                            { label: 'Dịch Vụ', href: '/services' },
-                            { label: 'Dự Án', href: '/projects' },
-                        ].map((link) => (
+	                            { label: 'Micro', href: '/categories/micro' },
+	                            { label: 'Dịch Vụ', href: '/services' },
+	                            { label: 'Dự Án', href: '/du-an' },
+	                        ].map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}

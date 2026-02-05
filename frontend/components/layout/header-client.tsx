@@ -47,14 +47,14 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const navLinks = [
+ const navLinks = [
         { name: 'Trang chủ', href: '/' },
         { name: 'Sản phẩm', href: '/products' },
         { name: 'Phần mềm', href: '/software' },
         { name: 'Dịch vụ', href: '/services' },
-        { name: 'Dự án', href: '/projects' },
+        { name: 'Dự án', href: '/du-an' },
         { name: 'Tin tức', href: '/blog' },
-        { name: 'Liên hệ', href: '/contact' },
+        { name: 'Liên hệ', href: '/lien-he' },
     ];
 
     return (

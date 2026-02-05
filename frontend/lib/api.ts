@@ -125,7 +125,16 @@ apiClient.interceptors.response.use(
         error.message?.includes('401') ||
         error.response?.data?.message === 'Token has expired';
 
-      if (error.response?.status !== 429 && !isTokenExpired && !(error.response?.status === 404 && isKnownMissingEndpoint)) {
+      const status = error.response?.status;
+      const method = (error.config?.method || 'get').toLowerCase();
+      const isReadRequest = method === 'get' || method === 'head';
+      const isNotFound = status === 404 || status === 410;
+
+      // For read requests, 404/410 is usually an expected control-flow (e.g. slug pages calling `notFound()`).
+      // Avoid polluting the console with error-level logs for these.
+      const shouldSuppressNotFoundLog = isNotFound && (isKnownMissingEndpoint || isReadRequest);
+
+      if (status !== 429 && !isTokenExpired && !shouldSuppressNotFoundLog) {
         // Only log if errorInfo has meaningful content
         // Check for actual values, not just existence of keys
         const hasType = errorInfo.type && typeof errorInfo.type === 'string' && errorInfo.type.trim() !== '';

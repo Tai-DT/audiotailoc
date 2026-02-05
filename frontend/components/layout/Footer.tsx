@@ -228,7 +228,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                     { href: '/services', label: 'Dịch vụ' },
                                     { href: '/du-an', label: 'Dự án' },
                                     { href: '/blog', label: 'Blog' },
-                                    { href: '/contact', label: 'Liên hệ' },
+                                    { href: '/lien-he', label: 'Liên hệ' },
                                 ].map((link) => (
                                     <Link
                                         key={link.href}

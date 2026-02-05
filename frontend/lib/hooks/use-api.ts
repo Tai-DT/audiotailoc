@@ -1247,6 +1247,18 @@ export const useBlogArticleBySlug = (slug: string) => {
       const response = await apiClient.get(`/blog/articles/${slug}`);
       return handleApiResponse<BlogArticle>(response);
     },
+    retry: (failureCount, err) => {
+      const status =
+        typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+
+      // Not found should render 404 quickly (no retries).
+      if (status === 404 || status === 410) return false;
+
+      // Keep a small retry budget for transient network/server issues.
+      return failureCount < 2;
+    },
     enabled: !!slug,
   });
 };
