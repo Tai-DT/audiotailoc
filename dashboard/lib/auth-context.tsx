@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     clearStoredTokens()
     apiClient.clearToken()
-    
+
     // Redirect to login if we're in the browser
     if (typeof window !== 'undefined') {
       if (redirectToOverride && redirectToOverride.trim().length > 0) {
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [logout])
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     const now = Date.now()
     // throttle and skip concurrent fetches to avoid rate limits
     if (isFetchingUser.current || now - lastUserFetch.current < 5000) {
@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.getCurrentUser()
       // Backend response can vary; keep this defensive.
       const userData = response.data as { userId: string; email: string; role?: string; name?: string }
-      
+
       if (userData.userId && userData.email) {
         setUser((prev) => {
           const derivedName = userData.email.split("@")[0]
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       }
     } catch (error) {
-       
+
       const status = (error as any)?.status ?? (error as any)?.response?.status
       if (status === 401 || status === 403) {
         // Token is missing/expired/invalid. Clear locally without spamming console errors.
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lastUserFetch.current = Date.now()
       isFetchingUser.current = false
     }
-  }
+  }, [])
 
   const login = async (email: string, password: string) => {
     try {
@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-       
+
       const status = (error as any)?.status ?? (error as any)?.response?.status
       if (status === 429) {
         logger.warn('Login throttled by rate limit', { email })
@@ -268,7 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedTokens?.accessToken) {
           setToken(storedTokens.accessToken)
           apiClient.setToken(storedTokens.accessToken)
-          
+
           try {
             await refreshUser()
           } catch (error) {
@@ -288,7 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     initAuth()
-  }, [logout])
+  }, [logout, refreshUser])
 
   // Auto refresh token before expiration
   useEffect(() => {

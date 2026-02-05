@@ -29,6 +29,7 @@
     scrollbar-width: thin;
     scrollbar-color: rgb(209 213 219) transparent;
   }
+
   .dark .custom-scrollbar {
     scrollbar-color: rgb(75 85 99) transparent;
   }
@@ -107,7 +108,7 @@
   --muted-foreground: oklch(0.48 0.025 45);
   --accent: oklch(0.70 0.22 40);
   --accent-foreground: oklch(0.99 0.005 45);
-  
+
   /* Status colors - synced with frontend */
   --tertiary: oklch(0.82 0.14 70);
   --tertiary-foreground: oklch(0.18 0.02 20);
@@ -153,7 +154,7 @@
   --muted-foreground: oklch(0.62 0.025 45);
   --accent: oklch(0.72 0.24 40);
   --accent-foreground: oklch(0.10 0.03 15);
-  
+
   /* Status colors - synced with frontend */
   --tertiary: oklch(0.80 0.12 70);
   --tertiary-foreground: oklch(0.16 0.02 20);
@@ -185,9 +186,14 @@
 }
 
 @layer base {
+  html {
+    font-size: 14px;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -200,6 +206,7 @@
 
 /* Enhanced UI/UX Styles */
 @layer utilities {
+
   /* Smooth transitions for interactive elements (avoid global * transitions) */
   :where(a, button, input, textarea, select, [role="button"]) {
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
@@ -270,6 +277,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -286,6 +294,7 @@
       opacity: 0;
       transform: translateX(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -316,6 +325,7 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -419,6 +429,7 @@
       scrollbar-width: thin;
       scrollbar-color: rgb(203 213 225) transparent;
     }
+
     .dark .table-responsive-wrapper {
       scrollbar-color: rgb(75 85 99) transparent;
     }
@@ -468,7 +479,7 @@
     @apply flex flex-col sm:flex-row gap-2 w-full sm:w-auto;
   }
 
-  .btn-group-responsive > * {
+  .btn-group-responsive>* {
     @apply w-full sm:w-auto;
   }
 

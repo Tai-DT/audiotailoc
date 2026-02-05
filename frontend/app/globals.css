@@ -96,6 +96,7 @@
 
 /* Smooth Scroll Behavior */
 html {
+  font-size: 14px;
   scroll-behavior: smooth;
   scroll-padding-top: 4rem;
 }
@@ -174,15 +175,23 @@ html {
     @apply border-border outline-ring/40;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     min-width: 0;
   }
 
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 
-  img, video, canvas, iframe, embed, object {
+  img,
+  video,
+  canvas,
+  iframe,
+  embed,
+  object {
     max-width: 100%;
     height: auto;
   }
@@ -192,7 +201,13 @@ html {
     border-collapse: collapse;
   }
 
-  table, thead, tbody, tfoot, tr, th, td {
+  table,
+  thead,
+  tbody,
+  tfoot,
+  tr,
+  th,
+  td {
     max-width: 100%;
   }
 
@@ -1049,6 +1064,7 @@ img[loading="lazy"] {
 /* ==================== MOBILE RESPONSIVE IMPROVEMENTS ==================== */
 /* Product card mobile optimizations */
 @media (max-width: 640px) {
+
   /* Reduce image padding on mobile */
   .product-card-mobile-image {
     padding: 0.5rem !important;
@@ -1071,7 +1087,7 @@ img[loading="lazy"] {
     pointer-events: none;
   }
 
-  .product-card-overlay-safe > * {
+  .product-card-overlay-safe>* {
     pointer-events: auto;
   }
 
@@ -1106,29 +1122,63 @@ img[loading="lazy"] {
     padding-bottom: 1.75rem;
   }
 
-  .pt-32 { padding-top: 3rem; }
-  .pb-32 { padding-bottom: 3rem; }
-  .pt-24 { padding-top: 2.5rem; }
-  .pb-24 { padding-bottom: 2.5rem; }
-  .pt-20 { padding-top: 2rem; }
-  .pb-20 { padding-bottom: 2rem; }
-  .pt-16 { padding-top: 1.75rem; }
-  .pb-16 { padding-bottom: 1.75rem; }
+  .pt-32 {
+    padding-top: 3rem;
+  }
 
-  .gap-16 { gap: 2rem; }
-  .gap-12 { gap: 1.5rem; }
-  .gap-10 { gap: 1.25rem; }
-  .gap-8 { gap: 1rem; }
+  .pb-32 {
+    padding-bottom: 3rem;
+  }
 
-  .space-y-12 > :not([hidden]) ~ :not([hidden]) {
+  .pt-24 {
+    padding-top: 2.5rem;
+  }
+
+  .pb-24 {
+    padding-bottom: 2.5rem;
+  }
+
+  .pt-20 {
+    padding-top: 2rem;
+  }
+
+  .pb-20 {
+    padding-bottom: 2rem;
+  }
+
+  .pt-16 {
+    padding-top: 1.75rem;
+  }
+
+  .pb-16 {
+    padding-bottom: 1.75rem;
+  }
+
+  .gap-16 {
+    gap: 2rem;
+  }
+
+  .gap-12 {
+    gap: 1.5rem;
+  }
+
+  .gap-10 {
+    gap: 1.25rem;
+  }
+
+  .gap-8 {
+    gap: 1rem;
+  }
+
+  .space-y-12> :not([hidden])~ :not([hidden]) {
     margin-top: 1.5rem;
   }
 
-  .space-y-10 > :not([hidden]) ~ :not([hidden]) {
+  .space-y-10> :not([hidden])~ :not([hidden]) {
     margin-top: 1.25rem;
   }
 
-  .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  .space-y-8> :not([hidden])~ :not([hidden]) {
     margin-top: 1rem;
   }
 }

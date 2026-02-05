@@ -60,7 +60,7 @@ export function ProtectedRoute({ children, requireAuth = true, requireRole }: Pr
         }
       }
     }
-  }, [user, isLoading, requireAuth, requireRole, router, redirectTarget, logout])
+  }, [user, isLoading, token, requireAuth, requireRole, router, redirectTarget, logout])
 
   if (isLoading && requireAuth) {
     return (
@@ -83,7 +83,7 @@ export function ProtectedRoute({ children, requireAuth = true, requireRole }: Pr
       return null // Will redirect in useEffect
     }
   }
-  
+
   if (!requireAuth) {
     return <>{children}</>
   }
