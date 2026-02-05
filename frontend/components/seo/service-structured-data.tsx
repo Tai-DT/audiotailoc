@@ -71,11 +71,6 @@ export function ServiceStructuredData({ service }: ServiceStructuredDataProps) {
  name: 'Duration',
  value: `${service.duration} minutes`,
  },
- {
- '@type': 'PropertyValue',
- name: 'View Count',
- value: service.viewCount,
- },
  ],
  };
 

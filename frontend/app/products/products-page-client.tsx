@@ -171,11 +171,8 @@ export default function ProductsPageClient({
       {/* Cinematic Hero Banner */}
       <section className="relative py-20 md:py-28 overflow-hidden border-b border-white/5">
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[150px] animate-pulse" />
-          <div
-            className="absolute bottom-0 left-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[120px] animate-pulse"
-            style={{ animationDelay: '2s' }}
-          />
+          <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[110px]" />
+          <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[90px]" />
           <div className="absolute inset-0 bg-studio-grid opacity-20" />
         </div>
 
@@ -183,8 +180,8 @@ export default function ProductsPageClient({
           <BlurFade delay={0.1} inView>
             <div className="flex flex-col items-center text-center space-y-6">
               <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-xl">
-                <Package className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">
+                <Package className="w-4 h-4 text-primary" />
+                <span className="text-[10px] font-semibold tracking-[0.14em] text-foreground/60 dark:text-zinc-200">
                   Elite Collection
                 </span>
               </div>
@@ -217,7 +214,7 @@ export default function ProductsPageClient({
       </section>
 
       {/* Advanced Filter & Search Bar */}
-      <section className="sticky top-[64px] sm:top-[80px] z-40 bg-slate-950/80 backdrop-blur-3xl border-b border-white/10">
+      <section className="sticky top-[64px] sm:top-[80px] z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/10">
         <div className="container mx-auto px-4 md:px-6 py-3">
           <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-stretch lg:items-center justify-between">
             {/* Search */}
@@ -239,7 +236,7 @@ export default function ProductsPageClient({
               {/* Desktop & Mobile Filters Selection */}
               <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                 <Select value={categorySlug || 'all'} onValueChange={(value: string) => handleCategoryChange(value === 'all' ? undefined : value)}>
-                  <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[9px] sm:text-[10px] tracking-widest rounded-xl hover:bg-white/10">
+                  <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-semibold text-[9px] sm:text-[10px] tracking-wide rounded-xl hover:bg-white/10">
                     <SelectValue placeholder="Chuyên mục" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-white/10 text-white">
@@ -253,7 +250,7 @@ export default function ProductsPageClient({
                 </Select>
 
                 <Select value={sort} onValueChange={(value: string) => handleSortChange(value as ProductSort)}>
-                  <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-bold uppercase text-[9px] sm:text-[10px] tracking-widest rounded-xl hover:bg-white/10">
+                  <SelectTrigger className="w-[140px] sm:w-52 h-10 sm:h-11 bg-white/5 border-white/10 text-white font-semibold text-[9px] sm:text-[10px] tracking-wide rounded-xl hover:bg-white/10">
                     <ArrowUpDown className="w-3 h-3 mr-2 text-primary" />
                     <SelectValue placeholder="Sắp xếp" />
                   </SelectTrigger>
@@ -310,7 +307,7 @@ export default function ProductsPageClient({
 
               {/* Status Indicator */}
               <div className="hidden md:flex flex-col justify-center text-right pl-4 border-l border-white/10">
-                <span className="text-[10px] font-black uppercase text-primary tracking-widest">Live Status</span>
+                <span className="text-[10px] font-semibold text-primary tracking-wide">Live status</span>
                 <span className="text-sm font-black text-white">{total} Sản phẩm</span>
               </div>
             </div>
@@ -342,7 +339,7 @@ export default function ProductsPageClient({
                   Chúng tôi không tìm thấy sản phẩm nào khớp với tiêu chí của bạn. Vui lòng làm mới bộ lọc hoặc liên hệ chuyên gia để được tư vấn.
                 </p>
               </div>
-              <Button onClick={handleClearFilters} className="h-12 px-8 bg-white text-slate-950 rounded-2xl font-black uppercase tracking-widest hover:bg-white/90">
+              <Button onClick={handleClearFilters} className="h-12 px-8 bg-white text-slate-950 rounded-2xl font-semibold tracking-wide hover:bg-white/90">
                 Làm mới Bộ sưu tập
               </Button>
             </div>
@@ -352,4 +349,3 @@ export default function ProductsPageClient({
     </main>
   );
 }
-

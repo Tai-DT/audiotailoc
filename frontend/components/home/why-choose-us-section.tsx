@@ -62,8 +62,8 @@ export function WhyChooseUsSection() {
         <section className="py-10 md:py-24 bg-background relative overflow-hidden">
             {/* Cinematic Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/2 left-0 w-[800px] h-[800px] rounded-full bg-primary/5 dark:bg-primary/5 blur-[180px] animate-pulse" />
-                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-accent/5 dark:bg-accent/5 blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
+                <div className="absolute top-1/2 left-0 w-[800px] h-[800px] rounded-full bg-primary/5 dark:bg-primary/5 blur-[140px]" />
+                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-accent/5 dark:bg-accent/5 blur-[110px]" />
                 <div className="absolute inset-0 bg-noise opacity-[0.02] dark:opacity-[0.03]" />
                 <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             </div>
@@ -72,7 +72,7 @@ export function WhyChooseUsSection() {
                 {/* Section Header */}
                 <div className="text-center max-w-4xl mx-auto mb-6 md:mb-12">
                     <div className="section-badge mx-auto mb-8">
-                        <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                        <Sparkles className="w-4 h-4 text-primary" />
                         <span>Sứ mệnh & Tinh hoa</span>
                     </div>
 
@@ -111,7 +111,7 @@ export function WhyChooseUsSection() {
                                         <div className="text-2xl sm:text-3xl md:text-6xl font-black text-primary dark:text-primary font-display mb-2 md:mb-5 tracking-tighter drop-shadow-sm group-hover/stat:scale-110 group-hover/stat:text-accent transition-all duration-700">
                                             {stat.value}
                                         </div>
-                                        <div className="text-zinc-400 dark:text-foreground/40 dark:text-foreground dark:text-zinc-300 font-black uppercase tracking-[0.3em] text-[9px] md:text-[11px] font-display group-hover/stat:text-primary dark:group-hover/stat:text-foreground dark:text-foreground dark:text-white transition-colors">
+                                        <div className="text-zinc-400 dark:text-zinc-300 font-semibold tracking-[0.14em] text-[9px] md:text-[11px] font-display group-hover/stat:text-primary transition-colors">
                                             {stat.label}
                                         </div>
                                     </div>
@@ -123,7 +123,7 @@ export function WhyChooseUsSection() {
 
                 {/* Trust Logos - Cinema Style */}
                 <div className="mt-10 md:mt-24 text-center">
-                    <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-6 md:mb-12 font-display">Đối tác ủy quyền toàn cầu</p>
+                    <p className="text-[9px] md:text-[11px] font-semibold tracking-[0.14em] md:tracking-[0.16em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 mb-6 md:mb-12 font-display">Đối tác ủy quyền toàn cầu</p>
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-28 opacity-40 dark:opacity-20 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 saturate-[0.5] hover:saturate-100 px-6">
                         {['JBL', 'Bose', 'Shure', 'Yamaha', 'Pioneer', 'Sony'].map((brand) => (
                             <div
@@ -167,7 +167,7 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
                         "bg-secondary dark:bg-white/5 text-primary dark:text-accent border border-border dark:border-white/10 group-hover:bg-primary dark:group-hover:bg-accent group-hover:text-foreground dark:text-foreground dark:text-white dark:group-hover:text-black"
                     )}
                 >
-                    <Icon size={24} className="md:size-9 group-hover:animate-pulse" />
+                    <Icon size={24} className="md:size-9" />
                 </div>
 
                 {/* Title */}
@@ -184,8 +184,8 @@ function FeatureCard({ feature, index }: FeatureCardProps) {
                 {/* Elite Badge - Fixed at bottom */}
                 <div className="mt-6 pt-6 border-t border-border dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-700">
                     <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary dark:text-accent font-display">Tiêu chuẩn Audio Tài Lộc</span>
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <span className="text-[10px] font-semibold tracking-[0.14em] text-primary dark:text-accent font-display">Tiêu chuẩn Audio Tài Lộc</span>
                     </div>
                 </div>
             </div>

@@ -91,9 +91,9 @@ export default function Error({
  <span>Báo lỗi kỹ thuật</span>
  </Link>
  <span className="w-1 h-1 rounded-full bg-white/10" />
- <Link href="/contact" className="flex items-center gap-2 text-foreground/60 dark:text-zinc-200 hover:text-foreground dark:text-white transition-all">
- <MessageCircle className="h-4 w-4" />
- <span>Liên hệ hỗ trợ</span>
+ <Link href="/lien-he" className="flex items-center gap-2 text-foreground/60 dark:text-zinc-200 hover:text-foreground dark:text-white transition-all">
+  <MessageCircle className="h-4 w-4" />
+  <span>Liên hệ hỗ trợ</span>
  </Link>
  </div>
  </div>

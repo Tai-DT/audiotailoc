@@ -8,7 +8,6 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
   Search,
-  Eye,
   ThumbsUp,
   BookOpen,
   Filter,
@@ -112,11 +111,8 @@ export default function BlogPageClient({
       {/* Cinematic Hero Banner */}
       <section className="relative py-24 md:py-32 overflow-hidden border-b border-white/5">
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 left-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[150px] animate-pulse" />
-          <div
-            className="absolute bottom-0 right-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[120px] animate-pulse"
-            style={{ animationDelay: '2s' }}
-          />
+          <div className="absolute top-0 left-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[110px]" />
+          <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[90px]" />
           <div className="absolute inset-0 bg-studio-grid opacity-20" />
         </div>
 
@@ -124,8 +120,8 @@ export default function BlogPageClient({
           <BlurFade delay={0.1} inView>
             <div className="flex flex-col items-center text-center space-y-8">
               <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-xl">
-                <Music4 className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">
+                <Music4 className="w-4 h-4 text-primary" />
+                <span className="text-[10px] font-semibold tracking-[0.14em] text-foreground/60 dark:text-zinc-200">
                   Elite Insights
                 </span>
               </div>
@@ -149,7 +145,7 @@ export default function BlogPageClient({
           <div className="flex-1">
             {/* Search and Filters Bar */}
             <BlurFade delay={0.2} inView>
-              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-12 backdrop-blur-3xl shadow-2xl overflow-hidden relative group">
+              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-12 backdrop-blur-xl shadow-2xl overflow-hidden relative group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-700" />
 
                 <div className="flex flex-col xl:flex-row gap-6">
@@ -169,7 +165,7 @@ export default function BlogPageClient({
                       variant="ghost"
                       onClick={() => handleSelectCategory('')}
                       className={cn(
-                        'whitespace-nowrap h-14 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all snap-start',
+                        'whitespace-nowrap h-14 px-8 rounded-2xl text-[10px] font-semibold tracking-wide transition-all snap-start',
                         selectedCategory === ''
                           ? 'bg-primary text-foreground dark:text-white shadow-lg shadow-primary/25'
                           : 'hover:bg-white/10 text-foreground/60 dark:text-zinc-200',
@@ -184,7 +180,7 @@ export default function BlogPageClient({
                         variant="ghost"
                         onClick={() => handleSelectCategory(category.slug)}
                         className={cn(
-                          'whitespace-nowrap h-14 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all snap-start',
+                          'whitespace-nowrap h-14 px-8 rounded-2xl text-[10px] font-semibold tracking-wide transition-all snap-start',
                           selectedCategory === category.slug
                             ? 'bg-primary text-foreground dark:text-white shadow-lg shadow-primary/25'
                             : 'hover:bg-white/10 text-foreground/60 dark:text-zinc-200',
@@ -205,7 +201,7 @@ export default function BlogPageClient({
                   <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
                   <BookOpen className="h-20 w-20 text-foreground/10 dark:text-white/10 relative z-10 mx-auto" />
                 </div>
-                <h3 className="text-3xl font-black tracking-tight mb-4 uppercase">Chưa có kiệt tác nào</h3>
+                <h3 className="text-3xl font-black tracking-tight mb-4">Chưa có kiệt tác nào</h3>
                 <p className="text-foreground/40 dark:text-zinc-300 max-w-sm mx-auto font-medium italic">
                   Chúng tôi đang biên soạn những nội dung chất lượng nhất. Hãy quay lại sau nhé!
                 </p>
@@ -233,7 +229,7 @@ export default function BlogPageClient({
                         <div className="absolute top-3 left-3 md:top-6 md:left-6">
                           <Badge
                             className={cn(
-                              'px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md',
+                              'px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide border backdrop-blur-md',
                               getCategoryColor(article.category?.name || 'Uncategorized'),
                             )}
                           >
@@ -244,14 +240,14 @@ export default function BlogPageClient({
                         {article.featured && (
                           <div className="absolute top-3 right-3 md:top-6 md:right-6">
                             <div className="bg-accent/20 border border-accent/30 text-accent p-2 rounded-full backdrop-blur-md">
-                              <Sparkles className="w-4 h-4 animate-pulse" />
+                              <Sparkles className="w-4 h-4" />
                             </div>
                           </div>
                         )}
                       </div>
 
                       <CardContent className="p-5 md:p-8 flex flex-col flex-1 space-y-4">
-                        <div className="flex items-center gap-4 text-foreground/40 dark:text-zinc-300 text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-4 text-foreground/40 dark:text-zinc-300 text-[10px] font-semibold tracking-wide">
                           <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
                             <Clock className="w-3 h-3 text-primary" />
                             <span>
@@ -259,10 +255,6 @@ export default function BlogPageClient({
                                 ? format(new Date(article.publishedAt), 'dd MMM, yyyy', { locale: vi })
                                 : 'Sắp ra mắt'}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                            <Eye className="w-3 h-3 text-accent" />
-                            <span>{article.viewCount} Lượt xem</span>
                           </div>
                         </div>
 
@@ -279,7 +271,7 @@ export default function BlogPageClient({
                         <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
                           <Link
                             href={`/blog/${article.slug}`}
-                            className="group/link flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary hover:text-foreground dark:text-white transition-all"
+                            className="group/link flex items-center gap-3 text-[10px] font-semibold tracking-wide text-primary hover:text-foreground dark:text-white transition-all"
                           >
                             <span>Khám phá ngay</span>
                             <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover/link:bg-primary group-hover/link:border-primary transition-all scale-90 group-hover/link:scale-100">
@@ -306,7 +298,7 @@ export default function BlogPageClient({
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-12 px-6 rounded-2xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-black uppercase tracking-[0.2em] italic text-xs"
+                  className="h-12 px-6 rounded-2xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-semibold tracking-[0.14em] italic text-xs"
                 >
                   Xem thêm tâm đắc
                 </Button>
@@ -318,9 +310,9 @@ export default function BlogPageClient({
           <div className="lg:w-96 space-y-6">
             {/* Categories Card */}
             <BlurFade delay={0.3} inView>
-              <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl overflow-hidden shadow-2xl">
+              <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-xl overflow-hidden shadow-2xl">
                 <CardHeader className="pb-4 border-b border-white/10 bg-white/5">
-                  <CardTitle className="flex items-center gap-4 text-sm font-black uppercase tracking-[0.3em]">
+                  <CardTitle className="flex items-center gap-4 text-sm font-semibold tracking-[0.14em]">
                     <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
                       <Filter className="h-4 w-4 text-primary" />
                     </div>
@@ -333,7 +325,7 @@ export default function BlogPageClient({
                       variant="ghost"
                       onClick={() => handleSelectCategory('')}
                       className={cn(
-                        'w-full justify-between h-12 rounded-xl px-5 text-[10px] font-black uppercase tracking-widest transition-all',
+                        'w-full justify-between h-12 rounded-xl px-5 text-[10px] font-semibold tracking-wide transition-all',
                         selectedCategory === ''
                           ? 'bg-primary text-foreground dark:text-white shadow-lg shadow-primary/20'
                           : 'hover:bg-white/10 text-foreground/60 dark:text-zinc-200',
@@ -349,7 +341,7 @@ export default function BlogPageClient({
                         variant="ghost"
                         onClick={() => handleSelectCategory(category.slug)}
                         className={cn(
-                          'w-full justify-between h-12 rounded-xl px-5 text-[10px] font-black uppercase tracking-widest transition-all',
+                          'w-full justify-between h-12 rounded-xl px-5 text-[10px] font-semibold tracking-wide transition-all',
                           selectedCategory === category.slug
                             ? 'bg-primary text-foreground dark:text-white shadow-lg shadow-primary/20'
                             : 'hover:bg-white/10 text-foreground/60 dark:text-zinc-200',
@@ -375,9 +367,9 @@ export default function BlogPageClient({
 
             {/* Popular Articles - Cinematic Style */}
             <BlurFade delay={0.4} inView>
-              <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl overflow-hidden shadow-2xl">
+              <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-xl overflow-hidden shadow-2xl">
                 <CardHeader className="pb-4 border-b border-white/10 bg-white/5">
-                  <CardTitle className="flex items-center gap-4 text-sm font-black uppercase tracking-[0.3em]">
+                  <CardTitle className="flex items-center gap-4 text-sm font-semibold tracking-[0.14em]">
                     <div className="p-2.5 rounded-xl bg-accent/10 border border-accent/20">
                       <ThumbsUp className="h-4 w-4 text-accent" />
                     </div>
@@ -407,12 +399,7 @@ export default function BlogPageClient({
                           <h4 className="font-bold text-xs line-clamp-2 leading-tight group-hover/item:text-primary transition-colors">
                             <Link href={`/blog/${article.slug}`}>{article.title}</Link>
                           </h4>
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-foreground/40 dark:text-zinc-300 group-hover/item:text-accent transition-colors">
-                              <Eye className="h-3 w-3" />
-                              <span>{article.viewCount} Lượt</span>
-                            </div>
-                            <div className="w-1 h-1 rounded-full bg-white/10" />
+                          <div className="flex items-center gap-2">
                             <div className="text-[9px] font-black text-foreground/20 dark:text-zinc-500">#{index + 1}</div>
                           </div>
                         </div>
@@ -431,7 +418,7 @@ export default function BlogPageClient({
                   <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-xl shadow-primary/20 group hover:rotate-12 transition-transform">
                     <Music4 className="w-6 h-6 text-foreground dark:text-white" />
                   </div>
-                  <h4 className="text-xl font-black uppercase tracking-tight">Audio V.I.P List</h4>
+                  <h4 className="text-xl font-bold tracking-tight">Audio V.I.P List</h4>
                   <p className="text-foreground/40 dark:text-zinc-300 text-xs font-medium italic leading-relaxed">
                     Đăng ký nhận những bản tin về thiết bị mới nhất và các sự kiện âm thanh đẳng cấp.
                   </p>
@@ -450,4 +437,3 @@ export default function BlogPageClient({
     </main>
   );
 }
-

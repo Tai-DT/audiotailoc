@@ -80,9 +80,9 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
             {/* Background Effects - Deep & Atmospheric */}
             <div className="absolute inset-0 pointer-events-none">
                 {/* Gradient Orbs */}
-                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/20 blur-[120px] animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/15 blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/10 blur-[180px]" />
+                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/20 blur-[90px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/15 blur-[110px]" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/10 blur-[160px]" />
 
                 {/* Grid Pattern */}
                 <div
@@ -118,7 +118,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                         <item.icon className="w-7 h-7 text-primary group-hover:rotate-12 transition-transform duration-500" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-[11px] font-bold text-foreground uppercase tracking-[0.2em] font-display group-hover:text-primary transition-colors">{item.title}</h4>
+	                                        <h4 className="text-[11px] font-semibold text-foreground tracking-wide font-display group-hover:text-primary transition-colors">{item.title}</h4>
                                         <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">{item.desc}</p>
                                     </div>
                                 </div>
@@ -136,28 +136,28 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                         <BlurFade delay={0.1} inView>
                             <div className="space-y-8">
                                 {/* Logo */}
-                                <Link href="/" className="inline-block group transition-all duration-500 hover:scale-105 active:scale-95">
-                                    <div className="relative h-[60px] w-[200px] md:h-[74px] md:w-[260px]">
-                                        <Image
-                                            src="/images/logo/logo-dark.svg"
-                                            alt="Audio Tài Lộc"
-                                            width={260}
-                                            height={74}
-                                            className="h-full w-full object-contain dark:hidden"
-                                            unoptimized
-                                            priority
-                                        />
-                                        <Image
-                                            src="/images/logo/logo-light.svg"
-                                            alt="Audio Tài Lộc"
-                                            width={260}
-                                            height={74}
-                                            className="h-full w-full object-contain hidden dark:block brightness-110 drop-shadow-[0_0_15px_rgba(220,38,38,0.2)]"
-                                            unoptimized
-                                            priority
-                                        />
-                                    </div>
-                                </Link>
+	                                <Link href="/" className="inline-block group transition-all duration-500 hover:scale-105 active:scale-95">
+	                                    <div className="relative h-[60px] w-[200px] md:h-[74px] md:w-[260px]">
+	                                        <Image
+	                                            src="/images/logo/logo-dark.svg"
+	                                            alt="Audio Tài Lộc"
+	                                            fill
+	                                            sizes="(min-width: 768px) 260px, 200px"
+	                                            className="object-contain dark:hidden"
+	                                            unoptimized
+	                                            priority
+	                                        />
+	                                        <Image
+	                                            src="/images/logo/logo-light.svg"
+	                                            alt="Audio Tài Lộc"
+	                                            fill
+	                                            sizes="(min-width: 768px) 260px, 200px"
+	                                            className="object-contain hidden dark:block brightness-110 drop-shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+	                                            unoptimized
+	                                            priority
+	                                        />
+	                                    </div>
+	                                </Link>
 
                                 <p className="text-muted-foreground text-[13px] leading-relaxed font-medium max-w-sm">
                                     Đỉnh cao công nghệ âm thanh chuyên nghiệp. Audio Tài Lộc kiến tạo không gian âm nhạc đẳng cấp Hi-End, mang đến trải nghiệm thính giác tuyệt đỉnh cho mọi công trình.
@@ -188,10 +188,10 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                 {/* Newsletter - High-end Membership Feel */}
                                 <div className="p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 backdrop-blur-xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors" />
-                                    <h4 className="text-[10px] font-black mb-5 uppercase tracking-[0.3em] text-primary font-display flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                        Bản tin đặc quyền
-                                    </h4>
+	                                    <h4 className="text-[10px] font-semibold mb-5 tracking-[0.14em] text-primary font-display flex items-center gap-2">
+	                                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+	                                        Bản tin đặc quyền
+	                                    </h4>
                                     <p className="text-[11px] text-muted-foreground/80 mb-6 font-medium">Nhận thông báo về các sản phẩm giới hạn và ưu đãi dành riêng cho VIP.</p>
                                     <form onSubmit={handleSubscribe} className="flex gap-2">
                                         <Input
@@ -220,7 +220,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                     {/* Navigation Columns */}
                     <div className="lg:col-span-2 space-y-8">
                         <BlurFade delay={0.2} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Khám phá</h3>
+	                            <h3 className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Khám phá</h3>
                             <nav className="flex flex-col gap-5">
                                 {[
                                     { href: '/about', label: 'Giới thiệu' },
@@ -235,7 +235,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                         href={link.href}
                                         className={cn(
                                             "group flex items-center gap-3 text-muted-foreground/70 hover:text-primary",
-                                            "text-[11px] font-black uppercase tracking-widest transition-all duration-500",
+	                                            "text-[11px] font-semibold tracking-wide transition-all duration-500",
                                             "hover:translate-x-2"
                                         )}
                                     >
@@ -249,7 +249,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
 
                     <div className="lg:col-span-2 space-y-8">
                         <BlurFade delay={0.25} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Danh mục</h3>
+	                            <h3 className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Danh mục</h3>
                             <nav className="flex flex-col gap-5">
                                 {displayCategories.length > 0 ? (
                                     displayCategories.map((category: { id: string; name: string; slug: string }) => (
@@ -258,7 +258,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                             href={`/products?category=${category.slug}`}
                                             className={cn(
                                                 "group flex items-center gap-3 text-muted-foreground/70 hover:text-primary",
-                                                "text-[11px] font-black uppercase tracking-widest transition-all duration-500",
+	                                                "text-[11px] font-semibold tracking-wide transition-all duration-500",
                                                 "hover:translate-x-2"
                                             )}
                                         >
@@ -278,7 +278,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                             href={link.href}
                                             className={cn(
                                                 "group flex items-center gap-3 text-muted-foreground/70 hover:text-primary",
-                                                "text-[11px] font-black uppercase tracking-widest transition-all duration-500",
+	                                                "text-[11px] font-semibold tracking-wide transition-all duration-500",
                                                 "hover:translate-x-2"
                                             )}
                                         >
@@ -294,7 +294,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                     {/* Contact Details - Elegant & Clear */}
                     <div className="lg:col-span-4 space-y-10">
                         <BlurFade delay={0.3} inView>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Hub & Support</h3>
+	                            <h3 className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Hub & Support</h3>
                             <div className="space-y-6">
                                 <a
                                     href={`tel:${hotlineNumber}`}
@@ -311,7 +311,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                     </div>
                                     <div className="relative">
                                         <p className="text-foreground font-black text-xl md:text-2xl tracking-tighter group-hover:text-primary transition-colors">{hotlineDisplay}</p>
-                                        <p className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-black text-muted-foreground/70">Hotline Exclusive</p>
+	                                        <p className="text-[10px] md:text-[11px] tracking-[0.14em] font-semibold text-muted-foreground/70">Hotline Exclusive</p>
                                     </div>
                                 </a>
 
@@ -325,7 +325,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                                 <Mail className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Email tư vấn</span>
+	                                                <span className="text-[10px] font-semibold tracking-wide text-zinc-400">Email tư vấn</span>
                                                 <span className="text-sm font-bold">{contactEmail}</span>
                                             </div>
                                         </a>
@@ -335,7 +335,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                                 <Clock className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Thời gian phục vụ</span>
+	                                                <span className="text-[10px] font-semibold tracking-wide text-zinc-400">Thời gian phục vụ</span>
                                                 <span className="text-sm font-bold">{contactHours}</span>
                                             </div>
                                         </div>
@@ -345,7 +345,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                                 <MapPin className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Hệ thống Showroom</span>
+	                                                <span className="text-[10px] font-semibold tracking-wide text-zinc-400">Hệ thống Showroom</span>
                                                 <span className="text-sm font-bold leading-relaxed max-w-[200px]">{contactAddress}</span>
                                             </div>
                                         </div>
@@ -362,10 +362,10 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                 <div className="container mx-auto px-6 py-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8" suppressHydrationWarning>
                         <div className="flex flex-col items-center md:items-start gap-2" suppressHydrationWarning>
-                            <p className="text-muted-foreground/60 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.08em] sm:tracking-[0.2em] leading-relaxed" suppressHydrationWarning>
+                            <p className="text-muted-foreground/60 text-[10px] sm:text-[11px] font-semibold tracking-wide leading-relaxed" suppressHydrationWarning>
                                 © 2026 Audio Tài Lộc Heritage. All rights reserved.
                             </p>
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.12em] sm:tracking-[0.3em] font-bold" suppressHydrationWarning>
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-[9px] text-muted-foreground/50 tracking-wide font-semibold" suppressHydrationWarning>
                                 <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
                                 <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
                                 <Link href="/sitemap.xml" className="hover:text-primary transition-colors">Sitemap</Link>
@@ -386,7 +386,7 @@ export function Footer({ categories, contactInfo }: { categories: Category[]; co
                                         title={method.label}
                                     >
                                         <method.icon className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                                        <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 group-hover:text-foreground transition-colors">{method.label}</span>
+                                        <span className="hidden sm:inline text-[10px] font-semibold tracking-wide text-muted-foreground/60 group-hover:text-foreground transition-colors">{method.label}</span>
                                     </div>
                                 ))}
                             </div>

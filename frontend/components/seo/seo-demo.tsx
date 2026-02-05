@@ -80,9 +80,6 @@ export function SEODemo({ slug }: SEODemoProps) {
  <div>
  <strong>Price:</strong> {service.price ? `${service.price.toLocaleString()} VND` : service.priceType}
  </div>
- <div>
- <strong>View Count:</strong> {service.viewCount}
- </div>
  </div>
  </div>
  )}

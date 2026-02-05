@@ -23,7 +23,7 @@ import {
 function ServicesLoading() {
  return (
  <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-6 sm:p-12">
- <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center animate-pulse mb-6">
+ <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center ring-1 ring-primary/20 mb-6">
  <Music4 className="w-8 h-8 text-primary" />
  </div>
  <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
@@ -152,7 +152,7 @@ function ServicesPageContent() {
  {/* Cinematic Hero */}
  <section className="relative pt-16 sm:pt-24 pb-12 sm:pb-20 overflow-hidden">
  <div className="absolute inset-0 z-0">
- <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[150px] animate-pulse" />
+ <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[110px]" />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
  </div>
 
@@ -161,11 +161,11 @@ function ServicesPageContent() {
  <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
  <div className="space-y-6 md:space-y-10">
  <div className="space-y-6">
- <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 w-fit backdrop-blur-3xl">
- <Wrench className="w-4 h-4 text-primary animate-pulse" />
- <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Expert Craftsmanship</span>
+ <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 w-fit backdrop-blur-xl">
+ <Wrench className="w-4 h-4 text-primary" />
+ <span className="text-[10px] font-semibold tracking-[0.14em] text-foreground/60 dark:text-zinc-200">Expert Craftsmanship</span>
  </div>
- <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white uppercase italic">
+ <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-none font-display text-foreground dark:text-white italic">
  {currentServiceType ? (
  <>
  {currentServiceType.name} <br />
@@ -189,20 +189,20 @@ function ServicesPageContent() {
  {heroStats.map((stat, idx) => (
  <div key={idx} className="space-y-1">
  <div className="text-xl md:text-3xl font-black text-foreground dark:text-white tracking-tighter tabular-nums">{stat.value}</div>
- <p className="text-[10px] font-black uppercase tracking-widest text-primary">{stat.label}</p>
+ <p className="text-[10px] font-semibold tracking-wide text-primary">{stat.label}</p>
  </div>
  ))}
  </div>
 
  <div className="flex flex-wrap gap-4 text-center">
  <a href={`tel:${hotlineNumber}`} className="group">
- <button className="h-12 px-6 bg-primary text-foreground dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center gap-3">
+ <button className="h-12 px-6 bg-primary text-foreground dark:text-white rounded-2xl font-semibold tracking-wide hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center gap-3">
  <Phone className="w-4 h-4" />
  Kết nối Chuyên gia
  </button>
  </a>
  <Link href="#services-grid">
- <button className="h-12 px-6 bg-white/5 border border-white/10 text-foreground dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
+ <button className="h-12 px-6 bg-white/5 border border-white/10 text-foreground dark:text-white rounded-2xl font-semibold tracking-wide hover:bg-white/10 transition-all flex items-center gap-3">
  Duyệt Danh mục
  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
  </button>
@@ -224,7 +224,7 @@ function ServicesPageContent() {
  onClick={() => handleFiltersChange({ typeId: isActive ? undefined : type.id })}
  className={cn(
  "group p-8 rounded-[2.5rem] text-left transition-all duration-700",
- "border backdrop-blur-3xl",
+ "border backdrop-blur-xl",
  isActive
  ? "bg-primary/10 border-primary/50 shadow-2xl shadow-primary/20 translate-y-[-8px]"
  : "bg-white/5 border-white/10 hover:border-primary/40 hover:-translate-y-2",
@@ -238,8 +238,8 @@ function ServicesPageContent() {
  )}>
  <Icon className="w-7 h-7" />
  </div>
- <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/30 dark:text-zinc-300 mb-2 group-hover:text-primary transition-colors">Specialty Service</p>
- <h3 className="text-lg font-black text-foreground dark:text-white uppercase tracking-tight italic mb-3">{type.name}</h3>
+ <p className="text-[9px] font-semibold tracking-[0.14em] text-foreground/30 dark:text-zinc-300 mb-2 group-hover:text-primary transition-colors">Specialty Service</p>
+ <h3 className="text-lg font-black text-foreground dark:text-white tracking-tight italic mb-3">{type.name}</h3>
  <p className="text-[11px] text-foreground/40 dark:text-zinc-300 italic line-clamp-2 leading-relaxed font-medium">
  {type.description || 'Tiêu chuẩn quốc tế'}
  </p>
@@ -255,7 +255,7 @@ function ServicesPageContent() {
  {/* Trust Line */}
  <section className="py-8 border-y border-white/5 bg-white/[0.02]">
  <div className="container mx-auto px-4 md:px-6">
- <div className="flex flex-wrap justify-between gap-4 sm:gap-8 font-black italic uppercase text-[9px] sm:text-[10px] tracking-[0.3em] sm:tracking-[0.4em]">
+ <div className="flex flex-wrap justify-between gap-4 sm:gap-8 font-semibold italic text-[9px] sm:text-[10px] tracking-[0.14em] sm:tracking-[0.16em]">
  {[
  { icon: Star, label: 'Thang điểm 5.0' },
  { icon: Clock, label: 'Linh hoạt 24/7' },
@@ -279,7 +279,7 @@ function ServicesPageContent() {
  <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
  <SheetTrigger asChild>
  <button
- className="lg:hidden h-10 px-4 flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-foreground dark:text-white hover:bg-white/10 transition-all"
+ className="lg:hidden h-10 px-4 flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold tracking-wide text-foreground dark:text-white hover:bg-white/10 transition-all"
  >
  <SlidersHorizontal className="h-4 w-4 text-primary" />
  Filter
@@ -292,7 +292,7 @@ function ServicesPageContent() {
  </SheetTrigger>
  <SheetContent side="left" className="w-full max-w-sm bg-background dark:bg-slate-950 border-white/10 text-foreground dark:text-white">
  <SheetHeader>
- <SheetTitle className="text-foreground dark:text-white font-black uppercase tracking-tight">Tùy biến bộ lọc</SheetTitle>
+ <SheetTitle className="text-foreground dark:text-white font-black tracking-tight">Tùy biến bộ lọc</SheetTitle>
  </SheetHeader>
  <div className="mt-5">
  <ServiceFilters
@@ -309,7 +309,7 @@ function ServicesPageContent() {
  <button
  onClick={() => handleFiltersChange({ typeId: undefined })}
  className={cn(
- "h-10 px-8 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+ "h-10 px-8 rounded-xl text-[10px] font-semibold tracking-wide transition-all",
  !filters.typeId ? "bg-primary text-foreground dark:text-white shadow-lg" : "text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white"
  )}
  >
@@ -320,7 +320,7 @@ function ServicesPageContent() {
  key={type.id}
  onClick={() => handleFiltersChange({ typeId: type.id })}
  className={cn(
- "h-10 px-8 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+ "h-10 px-8 rounded-xl text-[10px] font-semibold tracking-wide transition-all whitespace-nowrap",
  filters.typeId === type.id ? "bg-primary text-foreground dark:text-white shadow-lg" : "text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white"
  )}
  >
@@ -330,14 +330,14 @@ function ServicesPageContent() {
  </div>
 
  <div className="ml-auto flex items-center gap-8">
- <div className="text-[10px] uppercase font-black tracking-widest text-foreground/20 dark:text-zinc-700 whitespace-nowrap">
+ <div className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 whitespace-nowrap">
  Displaying <span className="text-foreground dark:text-white">{totalItems}</span> Artisans
  </div>
 
  {activeFilterCount > 0 && (
  <button
  onClick={handleClearFilters}
- className="h-10 px-6 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/40 dark:text-zinc-300 hover:text-primary transition-all"
+ className="h-10 px-6 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl text-[9px] font-semibold tracking-wide text-foreground/40 dark:text-zinc-300 hover:text-primary transition-all"
  >
  <X className="w-3 h-3" />
  Clear Focus
@@ -356,8 +356,8 @@ function ServicesPageContent() {
  <aside className="hidden lg:block space-y-8">
  <BlurFade delay={0.2} direction="right" inView>
  <div className="space-y-8 sticky top-40">
- <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-3xl">
- <h2 className="text-lg font-black uppercase tracking-tight mb-5 flex items-center gap-3">
+ <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-xl">
+ <h2 className="text-lg font-black tracking-tight mb-5 flex items-center gap-3">
  <SlidersHorizontal className="w-5 h-5 text-primary" />
  Tiêu chí <span className="text-foreground/20 dark:text-zinc-700">Lọc</span>
  </h2>
@@ -371,12 +371,12 @@ function ServicesPageContent() {
  <div className="p-6 bg-gradient-to-br from-primary via-primary to-red-800 rounded-[2rem] text-foreground dark:text-white shadow-2xl relative overflow-hidden group">
  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
  <Music4 className="w-10 h-10 text-foreground/20 dark:text-zinc-700 mb-4" />
- <h3 className="text-xl font-black uppercase tracking-tight italic mb-2 leading-none">Cần hỗ trợ cá nhân hóa?</h3>
+ <h3 className="text-xl font-black tracking-tight italic mb-2 leading-none">Cần hỗ trợ cá nhân hóa?</h3>
  <p className="text-foreground/70 dark:text-white/70 text-sm font-medium italic mb-8">
  Kỹ thuật viên của chúng tôi luôn trực máy để tư vấn trực tiếp cho quý khách.
  </p>
  <a href={`tel:${hotlineNumber}`} className="block">
- <button className="h-12 px-6 w-full bg-white text-primary rounded-xl font-black uppercase tracking-widest hover:scale-[1.02] transition-transform">
+ <button className="h-12 px-6 w-full bg-white text-primary rounded-xl font-semibold tracking-wide hover:scale-[1.02] transition-transform">
  Call {hotlineDisplay}
  </button>
  </a>

@@ -39,8 +39,8 @@ export default function AboutPage() {
  {/* Hero Section */}
  <section className="relative overflow-hidden pt-16 sm:pt-24 md:pt-40 pb-10 sm:pb-16 md:pb-28">
  <div className="absolute inset-0 z-0">
- <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 dark:bg-primary/10 blur-[150px] animate-pulse" />
- <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
+ <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 dark:bg-primary/10 blur-[110px]" />
+ <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] rounded-full bg-accent/5 blur-[110px]" />
  <div className="absolute inset-0 bg-studio-grid opacity-20 dark:opacity-30" />
  <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
  </div>
@@ -49,7 +49,7 @@ export default function AboutPage() {
  <BlurFade delay={0.1} inView>
  <div className="flex flex-col items-center space-y-4 sm:space-y-8">
  <div className="section-badge mx-auto">
- <Music4 className="w-4 h-4 text-primary animate-pulse" />
+ <Music4 className="w-4 h-4 text-primary" />
  <span>Tầm nhìn & Sứ mệnh</span>
  </div>
  <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.9] sm:leading-[0.85] font-display">
@@ -77,7 +77,7 @@ export default function AboutPage() {
  <stat.icon size={28} />
  </div>
  <div className="text-2xl sm:text-3xl md:text-5xl font-black text-foreground mb-2 tracking-tighter tabular-nums drop-shadow-sm group-hover:text-primary transition-colors">{stat.value}</div>
- <div className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 group-hover:text-primary transition-colors font-display">{stat.label}</div>
+ <div className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground/60 group-hover:text-primary transition-colors font-display">{stat.label}</div>
  </div>
  </BlurFade>
  ))}
@@ -95,9 +95,9 @@ export default function AboutPage() {
  <div className="space-y-6">
  <div className="inline-flex items-center gap-2 text-primary">
  <Sparkles size={16} />
- <span className="font-black uppercase tracking-[0.4em] text-[11px] font-display">Lịch sử hình thành</span>
+ <span className="font-semibold tracking-[0.16em] text-[11px] font-display">Lịch sử hình thành</span>
  </div>
- <h2 className="text-2xl sm:text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] sm:leading-[0.85] font-display uppercase italic">Di sản <br /><span className="text-foreground/40">Âm thanh Elite</span></h2>
+ <h2 className="text-2xl sm:text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] sm:leading-[0.85] font-display italic">Di sản <br /><span className="text-foreground/40">Âm thanh Elite</span></h2>
  </div>
 
  <div className="space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base md:text-lg font-medium leading-relaxed italic border-l-4 border-primary/20 pl-4 sm:pl-8">
@@ -118,8 +118,8 @@ export default function AboutPage() {
  ].map((item, idx) => (
  <div key={idx} className="space-y-3 group">
  <div className="flex items-center gap-3">
- <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
- <span className="text-[10px] font-black uppercase tracking-widest text-foreground font-display">{item.title}</span>
+ <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+ <span className="text-[10px] font-semibold tracking-wide text-foreground font-display">{item.title}</span>
  </div>
  <p className="text-xs text-muted-foreground italic pl-6 group-hover:text-primary transition-colors">{item.desc}</p>
  </div>
@@ -145,15 +145,15 @@ export default function AboutPage() {
 
  <div className="absolute bottom-8 left-8 right-8 space-y-4">
  <div className="w-20 h-1.5 bg-primary/60 rounded-full" />
- <p className="text-xl sm:text-2xl md:text-4xl font-black italic text-foreground dark:text-white leading-tight uppercase tracking-tighter font-display drop-shadow-2xl">
+ <p className="text-xl sm:text-2xl md:text-4xl font-black italic text-foreground dark:text-white leading-tight tracking-tighter font-display drop-shadow-2xl">
  &ldquo;Âm thanh đỉnh cao -<br />
  <span className="text-accent">Nâng tầm cuộc sống</span>&rdquo;
  </p>
  <div className="flex items-center gap-4 pt-4">
  <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-xl">
- <Sparkles className="w-5 h-5 text-accent animate-pulse" />
+ <Sparkles className="w-5 h-5 text-accent" />
  </div>
- <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-foreground/60 dark:text-zinc-200 font-display">Since 2014 • Elite Experience</span>
+ <span className="text-[9px] sm:text-[10px] font-semibold tracking-[0.14em] text-foreground/60 dark:text-zinc-200 font-display">Since 2014 • Elite Experience</span>
  </div>
  </div>
  </div>
@@ -169,18 +169,18 @@ export default function AboutPage() {
  <div className="container mx-auto px-4 sm:px-6 relative z-10">
  <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 text-center md:text-left">
  <div className="space-y-6">
- <h3 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter italic font-display">Trải nghiệm <br /><span className="premium-text-gradient">Tinh hoa Trực tiếp</span></h3>
+ <h3 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tighter italic font-display">Trải nghiệm <br /><span className="premium-text-gradient">Tinh hoa Trực tiếp</span></h3>
  <p className="text-muted-foreground text-sm sm:text-base md:text-lg font-medium italic max-w-lg">Khám phá không gian âm nhạc đích thực tại hệ thống showroom hiện đại nhất Việt Nam.</p>
  </div>
  <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
- <Link href="/contact">
- <Button className="h-12 md:h-16 px-6 md:px-10 bg-foreground text-background hover:bg-primary hover:text-foreground dark:text-white rounded-[1.5rem] md:rounded-[2rem] font-black uppercase tracking-widest transition-all text-[10px] flex items-center gap-3 shadow-2xl">
+ <Link href="/lien-he">
+ <Button className="h-12 md:h-16 px-6 md:px-10 bg-foreground text-background hover:bg-primary hover:text-foreground dark:text-white rounded-[1.5rem] md:rounded-[2rem] font-semibold tracking-wide transition-all text-[10px] flex items-center gap-3 shadow-2xl">
  Khám phá Showroom
  <ChevronRight className="w-5 h-5" />
  </Button>
  </Link>
- <Link href="/contact">
- <Button variant="outline" className="h-12 md:h-16 px-6 md:px-10 border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white rounded-[1.5rem] md:rounded-[2rem] font-black uppercase tracking-widest transition-all text-[10px] shadow-xl">
+ <Link href="/lien-he">
+ <Button variant="outline" className="h-12 md:h-16 px-6 md:px-10 border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white rounded-[1.5rem] md:rounded-[2rem] font-semibold tracking-wide transition-all text-[10px] shadow-xl">
  Liên hệ Chuyên gia
  </Button>
  </Link>

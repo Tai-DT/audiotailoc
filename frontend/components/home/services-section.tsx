@@ -67,7 +67,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 md:mb-10">
                         <div className="space-y-6">
                             <div className="section-badge group">
-                                <Sparkles className="w-4 h-4 text-primary animate-pulse group-hover:rotate-12 transition-transform" />
+                                <Sparkles className="w-4 h-4 text-primary group-hover:rotate-12 transition-transform" />
                                 <span>Dịch vụ kỹ thuật chuyên sâu</span>
                             </div>
 
@@ -87,7 +87,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="w-full sm:w-auto h-12 md:h-14 px-6 md:px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display uppercase text-xs tracking-[0.2em] transition-all duration-300"
+                                className="w-full sm:w-auto h-12 md:h-14 px-6 md:px-10 border-primary/20 text-foreground hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-red-600 gap-3 rounded-2xl font-display text-xs tracking-[0.14em] font-semibold transition-all duration-300"
                             >
                                 Khám phá tinh hoa
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -115,7 +115,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                                 <Phone className="w-6 h-6 text-primary" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-zinc-400 font-display">Tư vấn khẩn cấp</p>
+                                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground dark:text-zinc-400 font-display">Tư vấn khẩn cấp</p>
                                 <p className="text-foreground font-black text-sm font-display">Sẵn sàng 24/7 cho mọi yêu cầu</p>
                             </div>
                         </div>
@@ -125,7 +125,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                         <a href={`tel:${hotlineNumber}`} className="relative z-10">
                             <Button
                                 size="lg"
-                                className="w-full sm:w-auto red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-3 shadow-xl shadow-primary/20 rounded-2xl h-12 md:h-14 px-6 md:px-10 font-display uppercase tracking-[0.2em] text-xs active:scale-[0.98] transition-all duration-300"
+                                className="w-full sm:w-auto red-elite-gradient hover:scale-105 text-foreground dark:text-foreground dark:text-white gap-3 shadow-xl shadow-primary/20 rounded-2xl h-12 md:h-14 px-6 md:px-10 font-display font-semibold tracking-[0.14em] text-xs active:scale-[0.98] transition-all duration-300"
                             >
                                 <Phone className="w-5 h-5" />
                                 {hotlineDisplay}
@@ -195,13 +195,13 @@ function ServiceCard({ service }: ServiceCardProps) {
                     {/* Category/Type Badge */}
                     <div className="flex items-center gap-3 mb-4">
                         <span className="w-6 h-[2px] bg-primary/30" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 font-display">
+                        <span className="text-[10px] font-semibold tracking-[0.14em] text-primary/80 font-display">
                             {service.type?.name || 'Elite Service'}
                         </span>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl md:text-3xl font-black text-foreground mb-3 md:mb-4 group-hover:text-primary transition-colors font-display tracking-tight leading-[1.1] uppercase">
+                    <h3 className="text-xl md:text-3xl font-black text-foreground mb-3 md:mb-4 group-hover:text-primary transition-colors font-display tracking-tight leading-[1.1]">
                         {service.name}
                     </h3>
 
@@ -216,7 +216,7 @@ function ServiceCard({ service }: ServiceCardProps) {
                             {service.features.slice(0, 2).map((feature, i) => (
                                 <div key={i} className="flex items-center gap-2 text-[9px] text-foreground/70 dark:text-white/70 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
                                     <CheckCircle2 className="w-3 h-3 text-primary" />
-                                    <span className="font-bold uppercase tracking-widest font-display">{feature}</span>
+                                    <span className="font-semibold tracking-wide font-display">{feature}</span>
                                 </div>
                             ))}
                         </div>
@@ -225,7 +225,7 @@ function ServiceCard({ service }: ServiceCardProps) {
                     {/* Price & Duration */}
                     <div className="pt-8 border-t border-white/10 flex items-center justify-between mt-auto">
                         <div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-zinc-400 mb-1.5 font-display">Tư vấn từ</div>
+                            <div className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground dark:text-zinc-400 mb-1.5 font-display">Tư vấn từ</div>
                             <div className="text-2xl md:text-3xl font-black text-primary tracking-tighter font-display leading-none">
                                 {price > 0 ? formatPrice(price) : 'Báo giá tinh hoa'}
                             </div>

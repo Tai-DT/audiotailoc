@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  title: 'Liên hệ | Audio Tài Lộc',
  description: 'Liên hệ Audio Tài Lộc để được tư vấn về thiết bị và dịch vụ âm thanh chuyên nghiệp.',
  type: 'website',
- url: '/contact',
+ url: '/lien-he',
  },
 };
 

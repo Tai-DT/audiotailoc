@@ -309,15 +309,15 @@ export default function ProductDetailPage() {
             {/* Product Hero Section */}
             <section className="relative pt-4 lg:pt-12 pb-8 lg:pb-16 z-10">
                 <div className="container mx-auto px-4 md:px-6">
-                    {/* Breadcrumb - Minimalist Style */}
-                    <BlurFade delay={0.05} inView>
-                        <Breadcrumb className="mb-4 md:mb-8">
-                            <BreadcrumbList className="text-[10px] font-black uppercase tracking-[0.3em]">
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink asChild>
-                                        <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
+	                    {/* Breadcrumb - Minimalist Style */}
+	                    <BlurFade delay={0.05} inView>
+	                        <Breadcrumb className="mb-4 md:mb-8">
+	                            <BreadcrumbList className="text-[11px] font-medium tracking-wide text-muted-foreground">
+	                                <BreadcrumbItem>
+	                                    <BreadcrumbLink asChild>
+	                                        <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
+	                                    </BreadcrumbLink>
+	                                </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
@@ -352,55 +352,55 @@ export default function ProductDetailPage() {
                     <div className="grid lg:grid-cols-12 gap-6 lg:gap-10 xl:gap-16">
                         {/* Left Column: Gallery (Spans 7 columns on Desktop) */}
                         <div className="lg:col-span-7">
-                            <BlurFade delay={0.1} inView>
-                                <div className="relative group">
-                                    <div className="absolute -inset-2 md:-inset-4 bg-primary/10 rounded-[1.5rem] md:rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                    <div className="relative bg-muted/40 border border-border rounded-2xl md:rounded-[2rem] p-3 md:p-4 backdrop-blur-3xl">
-                                        <ProductGallery images={images} productName={product.name} />
-                                    </div>
-                                </div>
-                            </BlurFade>
-                        </div>
+	                            <BlurFade delay={0.1} inView>
+	                                <div className="relative group">
+	                                    <div className="absolute -inset-2 md:-inset-4 bg-primary/10 rounded-[1.5rem] md:rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+	                                    <div className="relative bg-muted/40 border border-border rounded-2xl md:rounded-[2rem] p-3 md:p-4 backdrop-blur-xl">
+	                                        <ProductGallery images={images} productName={product.name} />
+	                                    </div>
+	                                </div>
+	                            </BlurFade>
+	                        </div>
 
                         {/* Right Column: Product Info (Spans 5 columns on Desktop) */}
                         <div className="lg:col-span-5">
                             <BlurFade delay={0.2} inView>
                                 <div className="space-y-5 md:space-y-7 lg:sticky lg:top-32">
                                     {/* Category & Status */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            {product.category && (
-                                                <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">{product.category.name}</span>
-                                                </div>
-                                            )}
-                                            {product.featured && (
-                                                <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-1.5">
-                                                    <Sparkles className="w-3 h-3 text-primary" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Phiên bản Elite</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className={cn(
-                                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
-                                            isDigitalProduct
-                                                ? "text-primary"
-                                                : product.stockQuantity > 0
-                                                    ? "text-green-500"
+	                                    <div className="flex items-center justify-between">
+	                                        <div className="flex items-center gap-3">
+	                                            {product.category && (
+	                                                <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+	                                                    <span className="text-[11px] font-semibold tracking-wide text-primary">{product.category.name}</span>
+	                                                </div>
+	                                            )}
+	                                            {product.featured && (
+	                                                <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-1.5">
+	                                                    <Sparkles className="w-3 h-3 text-primary" />
+	                                                    <span className="text-[11px] font-semibold tracking-wide text-primary">Phiên bản Elite</span>
+	                                                </div>
+	                                            )}
+	                                        </div>
+	                                        <div className={cn(
+	                                            "flex items-center gap-2 text-[11px] font-semibold tracking-wide",
+	                                            isDigitalProduct
+	                                                ? "text-primary"
+	                                                : product.stockQuantity > 0
+	                                                    ? "text-green-500"
                                                     : "text-red-500"
                                         )}>
-                                            <div
-                                                className={cn(
-                                                    "w-1.5 h-1.5 rounded-full",
-                                                    isDigitalProduct
-                                                        ? "bg-primary animate-pulse"
-                                                        : product.stockQuantity > 0
-                                                            ? "bg-green-500 animate-pulse"
-                                                            : "bg-red-500",
-                                                )}
-                                            />
-                                            {isDigitalProduct
-                                                ? 'Tải ngay sau thanh toán'
+	                                            <div
+	                                                className={cn(
+	                                                    "w-1.5 h-1.5 rounded-full",
+	                                                    isDigitalProduct
+	                                                        ? "bg-primary"
+	                                                        : product.stockQuantity > 0
+	                                                            ? "bg-green-500"
+	                                                            : "bg-red-500",
+	                                                )}
+	                                            />
+	                                            {isDigitalProduct
+	                                                ? 'Tải ngay sau thanh toán'
                                                 : product.stockQuantity > 0
                                                     ? `Còn hàng (${product.stockQuantity})`
                                                     : 'Hết hàng'}
@@ -417,8 +417,8 @@ export default function ProductDetailPage() {
                                         )}
                                     </div>
 
-                                    {/* Ratings */}
-                                    <div className="flex items-center gap-6 py-2 border-y border-border">
+	                                    {/* Ratings */}
+	                                    <div className="flex items-center gap-6 py-2 border-y border-border">
                                         <div className="flex items-center gap-2">
                                             <div className="flex">
                                                 {[1, 2, 3, 4, 5].map((s) => (
@@ -433,16 +433,16 @@ export default function ProductDetailPage() {
                                             </div>
                                             <span className="text-sm font-bold">{averageRating.toFixed(1)}</span>
                                         </div>
-                                        <div className="h-4 w-px bg-border" />
-                                        <span className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{totalReviews} Đánh giá</span>
-                                    </div>
+	                                        <div className="h-4 w-px bg-border" />
+	                                        <span className="text-muted-foreground text-xs font-semibold tracking-wide">{totalReviews} đánh giá</span>
+	                                    </div>
 
                                     {/* Price Block - High Impact */}
                                     <div className="relative p-4 md:p-8 rounded-[1.25rem] md:rounded-[2rem] bg-gradient-to-br from-card to-muted/20 border border-primary/20 overflow-hidden group hover:border-primary/50 transition-all duration-500 hover:shadow-[0_0_50px_-20px_rgba(220,38,38,0.3)]">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-all duration-500" />
-                                        <div className="relative flex flex-col gap-2">
-                                            {/* Label for Price */}
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Giá niêm yết</span>
+	                                        <div className="relative flex flex-col gap-2">
+	                                            {/* Label for Price */}
+	                                            <span className="text-[11px] font-semibold tracking-wide text-primary/80">Giá niêm yết</span>
 
                                             <div className="flex items-baseline gap-3 mt-1">
                                                 <span className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-primary drop-shadow-sm">
@@ -454,28 +454,30 @@ export default function ProductDetailPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            {discount > 0 && (
-                                                <div className="flex items-center gap-3 mt-2">
-                                                    <Badge className="bg-red-600 text-foreground dark:text-white font-black text-xs tracking-widest px-3 py-1 rounded-sm shadow-md animate-pulse">-{discount}% OFF</Badge>
-                                                    <span className="text-xs font-bold text-green-500 uppercase tracking-widest italic">Tiết kiệm {formatPrice(product.originalPriceCents! - product.priceCents)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+	                                            {discount > 0 && (
+	                                                <div className="flex items-center gap-3 mt-2">
+	                                                    <Badge className="bg-red-600 text-foreground dark:text-white font-semibold text-xs tracking-wide px-3 py-1 rounded-sm shadow-md">
+	                                                        Giảm {discount}%
+	                                                    </Badge>
+	                                                    <span className="text-xs font-semibold text-green-500 tracking-wide italic">Tiết kiệm {formatPrice(product.originalPriceCents! - product.priceCents)}</span>
+	                                                </div>
+	                                            )}
+	                                        </div>
+	                                    </div>
 
                                     {/* Actions Area */}
                                     <div className="space-y-4">
                                         {isDigitalProduct ? (
                                             <div className="space-y-4">
-                                                <div className="rounded-2xl border border-border bg-card/40 p-4 space-y-3">
-                                                    <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
-                                                        Sản phẩm tải về (phần mềm)
-                                                    </p>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                        <div className="space-y-2">
-                                                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
-                                                                Email nhận link *
-                                                            </span>
+	                                                <div className="rounded-2xl border border-border bg-card/40 p-4 space-y-3">
+	                                                    <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+	                                                        Sản phẩm tải về (phần mềm)
+	                                                    </p>
+	                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+	                                                        <div className="space-y-2">
+	                                                            <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+	                                                                Email nhận link *
+	                                                            </span>
                                                             <Input
                                                                 value={digitalEmail}
                                                                 onChange={(e) => setDigitalEmail(e.target.value)}
@@ -483,10 +485,10 @@ export default function ProductDetailPage() {
                                                                 type="email"
                                                             />
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
-                                                                Tên (tuỳ chọn)
-                                                            </span>
+	                                                        <div className="space-y-2">
+	                                                            <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+	                                                                Tên (tuỳ chọn)
+	                                                            </span>
                                                             <Input
                                                                 value={digitalName}
                                                                 onChange={(e) => setDigitalName(e.target.value)}
@@ -496,13 +498,13 @@ export default function ProductDetailPage() {
                                                     </div>
                                                 </div>
 
-                                                <Button
-                                                    size="lg"
-                                                    className={cn(
-                                                        "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
-                                                        "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
-                                                        "transition-all active:scale-95 border border-border"
-                                                    )}
+	                                                <Button
+	                                                    size="lg"
+	                                                    className={cn(
+	                                                        "h-12 md:h-14 rounded-xl md:rounded-2xl font-semibold text-[11px] md:text-sm tracking-wide",
+	                                                        "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
+	                                                        "transition-all active:scale-95 border border-border"
+	                                                    )}
                                                     onClick={handlePayDigital}
                                                     disabled={isPayingDigital}
                                                 >
@@ -512,9 +514,9 @@ export default function ProductDetailPage() {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="flex items-center gap-4 p-3 rounded-2xl border border-border bg-card/40">
-                                                    <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground w-20">Số lượng:</span>
-                                                    <div className="flex items-center bg-background border border-border rounded-xl h-10 w-full max-w-[140px] shadow-sm">
+	                                                <div className="flex items-center gap-4 p-3 rounded-2xl border border-border bg-card/40">
+	                                                    <span className="text-[11px] font-semibold tracking-wide text-muted-foreground w-20">Số lượng:</span>
+	                                                    <div className="flex items-center bg-background border border-border rounded-xl h-10 w-full max-w-[140px] shadow-sm">
                                                         <button
                                                             onClick={() => handleQuantityChange(-1)}
                                                             disabled={quantity <= 1}
@@ -533,14 +535,14 @@ export default function ProductDetailPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <Button
-                                                        size="lg"
-                                                        className={cn(
-                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em]",
-                                                            "bg-gradient-to-r from-red-600 to-primary hover:from-red-500 hover:to-red-600 text-foreground dark:text-white shadow-[0_10px_30px_-10px_rgba(220,38,38,0.5)]",
-                                                            "transition-all active:scale-95 group hover:-translate-y-1"
-                                                        )}
+	                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+	                                                    <Button
+	                                                        size="lg"
+	                                                        className={cn(
+	                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-semibold text-[11px] md:text-sm tracking-wide",
+	                                                            "bg-gradient-to-r from-red-600 to-primary hover:from-red-500 hover:to-red-600 text-foreground dark:text-white shadow-[0_10px_30px_-10px_rgba(220,38,38,0.5)]",
+	                                                            "transition-all active:scale-95 group hover:-translate-y-1"
+	                                                        )}
                                                         onClick={handleAddToCart}
                                                         disabled={isAdding || product.stockQuantity === 0}
                                                     >
@@ -548,39 +550,39 @@ export default function ProductDetailPage() {
                                                         <ShoppingCart className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform relative z-10" />
                                                         <span className="relative z-10">Thêm vào giỏ</span>
                                                     </Button>
-                                                    <Button
-                                                        size="lg"
-                                                        className={cn(
-                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
-                                                            "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
-                                                            "transition-all active:scale-95 border border-border"
-                                                        )}
-                                                        onClick={handleBuyNow}
-                                                        disabled={isAdding || product.stockQuantity === 0}
-                                                    >
-                                                        <Zap className="w-5 h-5 mr-3 fill-primary text-primary animate-pulse" />
-                                                        Mua ngay
-                                                    </Button>
-                                                </div>
+	                                                    <Button
+	                                                        size="lg"
+	                                                        className={cn(
+	                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-semibold text-[11px] md:text-sm tracking-wide",
+	                                                            "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
+	                                                            "transition-all active:scale-95 border border-border"
+	                                                        )}
+	                                                        onClick={handleBuyNow}
+	                                                        disabled={isAdding || product.stockQuantity === 0}
+	                                                    >
+	                                                        <Zap className="w-5 h-5 mr-3 fill-primary text-primary" />
+	                                                        Mua ngay
+	                                                    </Button>
+	                                                </div>
                                             </>
                                         )}
 
-                                        <div className="flex gap-4 pt-2">
-                                            <button
+	                                        <div className="flex gap-4 pt-2">
+	                                            <button
                                                 onClick={handleAddToWishlist}
                                                 disabled={isTogglingWishlist}
-                                                className={cn(
-                                                    "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest transition-all hover:bg-muted/40",
-                                                    isInWishlist ? "bg-primary/5 border-primary/30 text-primary" : ""
-                                                )}
-                                            >
+	                                                className={cn(
+	                                                    "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl border border-border text-[11px] font-semibold tracking-wide transition-all hover:bg-muted/40",
+	                                                    isInWishlist ? "bg-primary/5 border-primary/30 text-primary" : ""
+	                                                )}
+	                                            >
                                                 <Heart className={cn("w-4 h-4", isInWishlist && "fill-current")} />
                                                 {isInWishlist ? 'Đã yêu thích' : 'Yêu thích'}
                                             </button>
-                                            <button
-                                                onClick={handleShare}
-                                                className="flex-1 flex items-center justify-center gap-3 h-12 rounded-2xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted/40 transition-all"
-                                            >
+	                                            <button
+	                                                onClick={handleShare}
+	                                                className="flex-1 flex items-center justify-center gap-3 h-12 rounded-2xl border border-border text-[11px] font-semibold tracking-wide hover:bg-muted/40 transition-all"
+	                                            >
                                                 <Share2 className="w-4 h-4" />
                                                 Chia sẻ
                                             </button>
@@ -591,23 +593,23 @@ export default function ProductDetailPage() {
                                     <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
                                         {isDigitalProduct ? (
                                             <>
-                                                <div className="flex items-center gap-4 group">
+	                                                <div className="flex items-center gap-4 group">
                                                     <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
                                                         <Download className="h-4 w-4 text-primary" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tải xuống</p>
-                                                        <p className="text-xs font-bold leading-tight">Link gửi qua email</p>
-                                                    </div>
+	                                                    <div>
+	                                                        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">Tải xuống</p>
+	                                                        <p className="text-xs font-bold leading-tight">Link gửi qua email</p>
+	                                                    </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 group">
                                                     <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
                                                         <Headphones className="h-4 w-4 text-primary" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hỗ trợ</p>
-                                                        <p className="text-xs font-bold leading-tight">Kỹ thuật 24/7</p>
-                                                    </div>
+	                                                    <div>
+	                                                        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">Hỗ trợ</p>
+	                                                        <p className="text-xs font-bold leading-tight">Kỹ thuật 24/7</p>
+	                                                    </div>
                                                 </div>
                                             </>
                                         ) : (
@@ -616,19 +618,19 @@ export default function ProductDetailPage() {
                                                     <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
                                                         <Truck className="h-4 w-4 text-primary" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Giao hàng</p>
-                                                        <p className="text-xs font-bold leading-tight">Vận chuyển toàn quốc</p>
-                                                    </div>
+	                                                    <div>
+	                                                        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">Giao hàng</p>
+	                                                        <p className="text-xs font-bold leading-tight">Vận chuyển toàn quốc</p>
+	                                                    </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 group">
                                                     <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
                                                         <Shield className="h-4 w-4 text-primary" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bảo hành</p>
-                                                        <p className="text-xs font-bold leading-tight">Chính hãng 24 tháng</p>
-                                                    </div>
+	                                                    <div>
+	                                                        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">Bảo hành</p>
+	                                                        <p className="text-xs font-bold leading-tight">Chính hãng 24 tháng</p>
+	                                                    </div>
                                                 </div>
                                             </>
                                         )}
@@ -645,22 +647,22 @@ export default function ProductDetailPage() {
                 <div className="container mx-auto px-4 md:px-6">
                     <BlurFade delay={0.3} inView>
                         <Tabs defaultValue="description" className="w-full">
-                            <div className="flex justify-center mb-12">
-                                <TabsList className="bg-muted/40 border border-border p-1 md:p-1.5 rounded-xl md:rounded-2xl h-12 md:h-16 w-full max-w-2xl">
-                                    {[
-                                        { value: 'description', label: 'TỔNG QUAN' },
-                                        { value: 'specifications', label: 'THÔNG SỐ KỸ THUẬT' },
-                                        { value: 'reviews', label: `ĐÁNH GIÁ (${totalReviews})` },
-                                    ].map((tab) => (
-                                        <TabsTrigger
+	                            <div className="flex justify-center mb-12">
+	                                <TabsList className="bg-muted/40 border border-border p-1 md:p-1.5 rounded-xl md:rounded-2xl h-12 md:h-16 w-full max-w-2xl">
+	                                    {[
+	                                        { value: 'description', label: 'Tổng quan' },
+	                                        { value: 'specifications', label: 'Thông số kỹ thuật' },
+	                                        { value: 'reviews', label: `Đánh giá (${totalReviews})` },
+	                                    ].map((tab) => (
+	                                        <TabsTrigger
                                             key={tab.value}
                                             value={tab.value}
-                                            className={cn(
-                                                "flex-1 h-full rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest leading-none",
-                                                "data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white data-[state=active]:shadow-xl",
-                                                "transition-all duration-500"
-                                            )}
-                                        >
+	                                            className={cn(
+	                                                "flex-1 h-full rounded-lg md:rounded-xl text-[10px] font-semibold tracking-[0.14em] leading-none",
+	                                                "data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white data-[state=active]:shadow-xl",
+	                                                "transition-all duration-500"
+	                                            )}
+	                                        >
                                             {tab.label}
                                         </TabsTrigger>
                                     ))}
@@ -668,60 +670,60 @@ export default function ProductDetailPage() {
                             </div>
 
                             <div className="max-w-5xl mx-auto">
-                                <TabsContent value="description" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700">
-                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-3xl prose prose-slate max-w-none">
-                                        {product.description ? (
-                                            <div className="leading-relaxed text-muted-foreground italic text-base md:text-lg" dangerouslySetInnerHTML={{ __html: product.description }} />
-                                        ) : (
-                                            <div className="flex flex-col items-center py-20 text-muted-foreground">
-                                                <Package className="w-12 h-12 mb-4 opacity-50" />
-                                                <p className="font-black uppercase tracking-widest text-xs">Đang cập nhật mô tả</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </TabsContent>
+	                                <TabsContent value="description" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700">
+	                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-xl prose prose-slate max-w-none">
+	                                        {product.description ? (
+	                                            <div className="leading-relaxed text-muted-foreground italic text-base md:text-lg" dangerouslySetInnerHTML={{ __html: product.description }} />
+	                                        ) : (
+	                                            <div className="flex flex-col items-center py-20 text-muted-foreground">
+	                                                <Package className="w-12 h-12 mb-4 opacity-50" />
+	                                                <p className="font-semibold tracking-wide text-xs">Đang cập nhật mô tả</p>
+	                                            </div>
+	                                        )}
+	                                    </div>
+	                                </TabsContent>
 
-                                <TabsContent value="specifications" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700 focus-visible:outline-none">
-                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-3xl focus-visible:outline-none">
-                                        <h3 className="text-lg md:text-xl font-bold uppercase tracking-widest mb-6 md:mb-8 border-l-4 border-primary pl-4 md:pl-6">Kiến trúc kỹ thuật</h3>
-                                        {specifications.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
+	                                <TabsContent value="specifications" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700 focus-visible:outline-none">
+	                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-xl focus-visible:outline-none">
+	                                        <h3 className="text-lg md:text-xl font-semibold tracking-wide mb-6 md:mb-8 border-l-4 border-primary pl-4 md:pl-6">Kiến trúc kỹ thuật</h3>
+	                                        {specifications.length > 0 ? (
+	                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
                                                 {specifications.map((spec, index) => (
-                                                    <div
-                                                        key={`${spec.label}-${index}`}
-                                                        className="flex items-center justify-between py-4 border-b border-border group hover:bg-muted/40 transition-colors rounded-lg px-4"
-                                                    >
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">{spec.label}</span>
-                                                        <span className="text-sm font-bold text-foreground">{spec.value}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center py-20 text-muted-foreground">
-                                                <SlidersHorizontal className="w-12 h-12 mb-4 opacity-50" />
-                                                <p className="font-black uppercase tracking-widest text-xs">Thông số đang cập nhật</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </TabsContent>
+	                                                    <div
+	                                                        key={`${spec.label}-${index}`}
+	                                                        className="flex items-center justify-between py-4 border-b border-border group hover:bg-muted/40 transition-colors rounded-lg px-4"
+	                                                    >
+	                                                        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground group-hover:text-primary transition-colors">{spec.label}</span>
+	                                                        <span className="text-sm font-bold text-foreground">{spec.value}</span>
+	                                                    </div>
+	                                                ))}
+	                                            </div>
+	                                        ) : (
+	                                            <div className="flex flex-col items-center py-20 text-muted-foreground">
+	                                                <SlidersHorizontal className="w-12 h-12 mb-4 opacity-50" />
+	                                                <p className="font-semibold tracking-wide text-xs">Thông số đang cập nhật</p>
+	                                            </div>
+	                                        )}
+	                                    </div>
+	                                </TabsContent>
 
-                                <TabsContent value="reviews" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700">
-                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-3xl">
-                                        <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center justify-between mb-8 md:mb-12 border-b border-border pb-8 md:pb-10">
-                                            <div>
-                                                <h3 className="text-2xl font-black uppercase tracking-tight">Xác thực khách hàng</h3>
-                                                <p className="text-muted-foreground text-sm font-bold mt-2 uppercase tracking-widest">
-                                                    {totalReviews > 0
-                                                        ? `Đã nhận ${totalReviews} phản hồi từ chuyên gia`
-                                                        : 'Hãy là người đầu tiên đánh giá'}
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={() => setShowCreateReview(!showCreateReview)}
-                                                className="h-12 px-8 rounded-xl bg-white text-slate-950 font-black text-[10px] uppercase tracking-widest hover:bg-white/90"
-                                            >
-                                                {showCreateReview ? 'Đóng' : 'Viết đánh giá'}
-                                            </Button>
+	                                <TabsContent value="reviews" className="animate-in fade-in-50 slide-in-from-bottom-5 duration-700">
+	                                    <div className="p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] bg-card border border-border backdrop-blur-xl">
+	                                        <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center justify-between mb-8 md:mb-12 border-b border-border pb-8 md:pb-10">
+	                                            <div>
+	                                                <h3 className="text-2xl font-bold tracking-tight">Xác thực khách hàng</h3>
+	                                                <p className="text-muted-foreground text-sm font-semibold mt-2 tracking-wide">
+	                                                    {totalReviews > 0
+	                                                        ? `Đã nhận ${totalReviews} phản hồi từ chuyên gia`
+	                                                        : 'Hãy là người đầu tiên đánh giá'}
+	                                                </p>
+	                                            </div>
+	                                            <Button
+	                                                onClick={() => setShowCreateReview(!showCreateReview)}
+	                                                className="h-12 px-8 rounded-xl bg-white text-slate-950 font-semibold text-[11px] tracking-wide hover:bg-white/90"
+	                                            >
+	                                                {showCreateReview ? 'Đóng' : 'Viết đánh giá'}
+	                                            </Button>
                                         </div>
 
                                         {showCreateReview && (
@@ -742,25 +744,25 @@ export default function ProductDetailPage() {
                 </div>
             </section>
 
-            {/* Featured Recommendations */}
-            <section className="relative py-12 md:py-24 z-10">
+	            {/* Featured Recommendations */}
+	            <section className="relative py-12 md:py-24 z-10">
                 <div className="container mx-auto px-4 md:px-6">
-                    <BlurFade delay={0.4} inView>
-                        <div className="flex items-center justify-between mb-12">
-                            <div>
-                                <p className="text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-2">Gợi ý từ chuyên gia</p>
-                                <h2 className="text-3xl font-black tracking-tight uppercase">
-                                    {isSoftwareContext ? 'Phần mềm' : 'Sản phẩm'}{' '}
-                                    <span className="text-muted-foreground">{isSoftwareContext ? 'Liên quan' : 'Tương thích'}</span>
-                                </h2>
-                            </div>
-                            <Link href={collectionHref} className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all">
-                                Xem tất cả
-                                <div className="p-2 rounded-lg bg-muted/40 border border-border group-hover:bg-primary transition-all">
-                                    <ChevronRight className="w-3 h-3 text-foreground group-hover:text-foreground dark:text-white" />
-                                </div>
-                            </Link>
-                        </div>
+	                    <BlurFade delay={0.4} inView>
+	                        <div className="flex items-center justify-between mb-12">
+	                            <div>
+	                                <p className="text-primary font-semibold tracking-[0.14em] text-[11px] mb-2">Gợi ý từ chuyên gia</p>
+	                                <h2 className="text-3xl font-black tracking-tight">
+	                                    {isSoftwareContext ? 'Phần mềm' : 'Sản phẩm'}{' '}
+	                                    <span className="text-muted-foreground">{isSoftwareContext ? 'Liên quan' : 'Tương thích'}</span>
+	                                </h2>
+	                            </div>
+	                            <Link href={collectionHref} className="group flex items-center gap-3 text-[11px] font-semibold tracking-wide text-muted-foreground hover:text-foreground transition-all">
+	                                Xem tất cả
+	                                <div className="p-2 rounded-lg bg-muted/40 border border-border group-hover:bg-primary transition-all">
+	                                    <ChevronRight className="w-3 h-3 text-foreground group-hover:text-foreground dark:text-white" />
+	                                </div>
+	                            </Link>
+	                        </div>
                         <RelatedProducts
                             categoryId={product.categoryId}
                             currentProductId={product.id}

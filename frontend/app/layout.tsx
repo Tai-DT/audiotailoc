@@ -15,7 +15,7 @@ import { ResourceHints } from "@/components/performance/resource-hints";
 const bodyFont = Be_Vietnam_Pro({
     variable: "--font-be-vietnam-pro",
     subsets: ["latin", "latin-ext"],
-    weight: ["300", "400", "500", "600", "700", "800", "900"],
+    weight: ["400", "500", "600", "700", "800"],
     display: "swap",
     preload: true,
 });
@@ -23,9 +23,9 @@ const bodyFont = Be_Vietnam_Pro({
 const displayFont = Outfit({
     variable: "--font-outfit",
     subsets: ["latin", "latin-ext"],
-    weight: ["400", "500", "600", "700", "800", "900"],
+    weight: ["500", "600", "700", "800"],
     display: "swap",
-    preload: true,
+    preload: false,
 });
 
 const geistMono = Geist_Mono({

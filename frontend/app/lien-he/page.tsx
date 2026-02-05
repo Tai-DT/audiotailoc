@@ -174,7 +174,7 @@ export default function ContactPage() {
  if (!mounted) {
  return (
  <main className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-8">
- <div className="w-16 h-16 rounded-2xl bg-primary/20 animate-pulse mb-6" />
+ <div className="w-16 h-16 rounded-2xl bg-primary/20 ring-1 ring-primary/20 mb-6" />
  <div className="h-6 w-64 rounded-full bg-muted/40 mb-4" />
  <div className="h-4 w-80 rounded-full bg-muted/30" />
  </main>
@@ -186,7 +186,7 @@ export default function ContactPage() {
  {/* Cinematic Hero */}
  <section className="relative pt-16 sm:pt-24 pb-10 sm:pb-16 overflow-hidden">
  <div className="absolute inset-0 z-0">
- <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[150px] animate-pulse" />
+ <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] bg-primary/5 blur-[110px]" />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
  </div>
 
@@ -195,8 +195,8 @@ export default function ContactPage() {
  <div className="text-center space-y-4 sm:space-y-6">
  <div className="flex flex-col items-center gap-4">
  <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-xl">
- <Headphones className="w-4 h-4 text-primary animate-pulse" />
- <span className="text-[10px] uppercase font-black tracking-[0.3em] text-foreground/60 dark:text-zinc-200">Professional Support</span>
+ <Headphones className="w-4 h-4 text-primary" />
+ <span className="text-[10px] font-semibold tracking-[0.14em] text-foreground/60 dark:text-zinc-200">Professional Support</span>
  </div>
  <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-none font-display">
  Kết nối <span className="text-primary italic">Chuyên gia</span><br />
@@ -221,8 +221,8 @@ export default function ContactPage() {
  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
  <info.icon className="h-7 w-7 md:h-9 md:w-9 text-primary mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500" />
  <div className="space-y-4">
- <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">{info.label}</p>
- <h3 className="text-lg font-black uppercase tracking-tight">{info.title}</h3>
+ <p className="text-[9px] font-semibold tracking-[0.14em] text-primary">{info.label}</p>
+ <h3 className="text-lg font-black tracking-tight">{info.title}</h3>
  <p className="text-foreground dark:text-white font-bold tracking-tight text-sm truncate">{info.content}</p>
  <p className="text-[10px] text-foreground/40 dark:text-zinc-300 font-medium italic">{info.details}</p>
  </div>
@@ -239,19 +239,19 @@ export default function ContactPage() {
  <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
  {/* Contact Form - Glass Effect */}
  <BlurFade delay={0.2} direction="right" inView>
- <div className="h-full p-4 sm:p-8 lg:p-10 bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-[2.5rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+ <div className="h-full p-4 sm:p-8 lg:p-10 bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-[2.5rem] backdrop-blur-xl shadow-2xl relative overflow-hidden group">
  <div className="absolute top-0 right-1/4 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
 
  <div className="relative z-10 space-y-6 md:space-y-10">
  <div className="space-y-4">
- <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Gửi <span className="text-primary">Yêu cầu</span></h2>
+ <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic">Gửi <span className="text-primary">Yêu cầu</span></h2>
  <p className="text-foreground/40 dark:text-zinc-300 text-sm font-medium italic">Chúng tôi sẽ hồi đạt tới quý khách trong tối đa 24 giờ làm việc.</p>
  </div>
 
  <form onSubmit={handleSubmit} className="space-y-5">
  <div className="grid md:grid-cols-2 gap-4 md:gap-6">
  <div className="space-y-3">
- <label className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 ml-4">Danh tính của bạn</label>
+ <label className="text-[9px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 ml-4">Danh tính của bạn</label>
  <Input
  name="name"
  value={formData.name}
@@ -262,7 +262,7 @@ export default function ContactPage() {
  />
  </div>
  <div className="space-y-3">
- <label className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 ml-4">Phương thức liên hệ</label>
+ <label className="text-[9px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 ml-4">Phương thức liên hệ</label>
  <Input
  name="phone"
  type="tel"
@@ -276,7 +276,7 @@ export default function ContactPage() {
  </div>
 
  <div className="space-y-3">
- <label className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 ml-4">Hòm thư điện tử</label>
+ <label className="text-[9px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 ml-4">Hòm thư điện tử</label>
  <Input
  name="email"
  type="email"
@@ -289,7 +289,7 @@ export default function ContactPage() {
  </div>
 
  <div className="space-y-3">
- <label className="text-[9px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 ml-4">Thông điệp cần gửi</label>
+ <label className="text-[9px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 ml-4">Thông điệp cần gửi</label>
  <Textarea
  name="message"
  value={formData.message}
@@ -304,7 +304,7 @@ export default function ContactPage() {
  <button
  type="submit"
  disabled={isSubmitting}
- className="w-full h-12 md:h-14 bg-primary text-foreground dark:text-white font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 group/btn"
+ className="w-full h-12 md:h-14 bg-primary text-foreground dark:text-white font-semibold tracking-[0.16em] rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 group/btn"
  >
  {isSubmitting ? "Đang gửi đi..." : (
  <>
@@ -325,8 +325,8 @@ export default function ContactPage() {
  {/* Services Card */}
  <div className="p-10 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-8 hover:border-accent/40 transition-colors">
  <div>
- <p className="text-accent font-black uppercase tracking-[0.3em] text-[10px] mb-2">Service Pillars</p>
- <h3 className="text-2xl font-black uppercase tracking-tight leading-none">Dịch vụ Đặc quyền</h3>
+ <p className="text-accent font-semibold tracking-[0.14em] text-[10px] mb-2">Service Pillars</p>
+ <h3 className="text-2xl font-black tracking-tight leading-none">Dịch vụ Đặc quyền</h3>
  </div>
  <div className="space-y-8">
  {supportServices.map((service, index) => (
@@ -346,7 +346,7 @@ export default function ContactPage() {
  {/* FAQ Minimal Redesign */}
  <div className="p-10 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-8">
  <div className="flex items-center justify-between">
- <h3 className="text-2xl font-black uppercase tracking-tight">Giải đáp <span className="text-foreground/40 dark:text-zinc-300 font-medium italic lowercase">FAQ</span></h3>
+ <h3 className="text-2xl font-black tracking-tight">Giải đáp <span className="text-foreground/40 dark:text-zinc-300 font-medium italic lowercase">FAQ</span></h3>
  <button className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
  <ChevronRight className="w-4 h-4" />
  </button>
@@ -376,21 +376,21 @@ export default function ContactPage() {
  <BlurFade delay={0.6} inView>
  <div className="flex flex-col items-center gap-6 sm:gap-12 text-center">
  <div className="space-y-4">
- <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px]">Showroom Experience</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-none uppercase italic">Tìm đường đến <span className="text-foreground/40 dark:text-zinc-300">Thánh đường</span></h2>
+ <p className="text-primary font-semibold tracking-[0.16em] text-[10px]">Showroom Experience</p>
+ <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-none italic">Tìm đường đến <span className="text-foreground/40 dark:text-zinc-300">Thánh đường</span></h2>
  </div>
 
- <div className="w-full max-w-6xl aspect-video rounded-[3rem] overflow-hidden border-2 border-white/5 relative group p-1 bg-white/5 backdrop-blur-3xl shadow-3xl">
+ <div className="w-full max-w-6xl aspect-video rounded-[3rem] overflow-hidden border-2 border-white/5 relative group p-1 bg-white/5 backdrop-blur-xl shadow-3xl">
  <div className="absolute inset-0 z-0">
  <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 sm:p-12 text-center group-hover:bg-slate-800 transition-colors">
- <MapPin className="h-20 w-20 text-foreground/5 dark:text-white/5 mb-8 animate-bounce" />
+ <MapPin className="h-20 w-20 text-foreground/5 dark:text-white/5 mb-8" />
  <div className="space-y-4">
- <p className="text-xl font-bold uppercase tracking-tight">{contactInfo?.address?.full || "Khu vực trung tâm TP. Hồ Chí Minh"}</p>
+ <p className="text-xl font-bold tracking-tight">{contactInfo?.address?.full || "Khu vực trung tâm TP. Hồ Chí Minh"}</p>
  <p className="text-foreground/40 dark:text-zinc-300 italic">Bản đồ đang được tối ưu hóa để dẫn lối quý khách đến showroom nhanh nhất.</p>
  </div>
  <Button
  variant="outline"
- className="mt-12 h-14 px-12 rounded-2xl border-primary/40 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white font-black uppercase tracking-widest transition-all"
+ className="mt-12 h-14 px-12 rounded-2xl border-primary/40 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white font-semibold tracking-wide transition-all"
  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactInfo?.address?.full || 'Audio Tài Lộc')}`, '_blank')}
  >
  Mở Google Maps

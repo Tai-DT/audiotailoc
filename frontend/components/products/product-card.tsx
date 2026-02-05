@@ -162,23 +162,18 @@ export function ProductCard({
 
                 <div className="space-y-4 md:space-y-8 pt-3 md:pt-4 relative z-10">
                     {/* Price Section - Maximum Visibility */}
-                    <div className="flex items-end justify-between">
-                        <div className="flex flex-col">
-                            {product.originalPriceCents && product.originalPriceCents > product.priceCents && (
-                                <span className="text-xs sm:text-sm text-muted-foreground dark:text-zinc-500 line-through font-bold mb-1">
-                                    {formatPrice(product.originalPriceCents)}
-                                </span>
-                            )}
-                            <span className="text-lg sm:text-xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
-                                {formatPrice(product.priceCents)}
-                            </span>
-                        </div>
-
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 dark:bg-white/5 border border-border dark:border-white/10">
-                            <Eye size={12} className="text-primary" />
-                            <span className="text-[10px] font-black text-foreground/80 dark:text-white/80 uppercase tracking-widest font-display">{product.viewCount}</span>
-                        </div>
-                    </div>
+	                    <div className="flex items-end justify-between">
+	                        <div className="flex flex-col">
+	                            {product.originalPriceCents && product.originalPriceCents > product.priceCents && (
+	                                <span className="text-xs sm:text-sm text-muted-foreground dark:text-zinc-500 line-through font-bold mb-1">
+	                                    {formatPrice(product.originalPriceCents)}
+	                                </span>
+	                            )}
+	                            <span className="text-lg sm:text-xl md:text-4xl font-black text-primary tracking-tighter leading-none drop-shadow-sm font-display">
+	                                {formatPrice(product.priceCents)}
+	                            </span>
+	                        </div>
+	                    </div>
 
                     <Button
                         className="w-full h-11 md:h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-[9px] sm:text-[10px] md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"

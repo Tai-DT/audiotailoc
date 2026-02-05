@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Truck, Shield, Wrench, FileText, Lock, Calendar, Eye } from 'lucide-react';
+import { ArrowLeft, Truck, Shield, Wrench, FileText, Lock, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -134,16 +134,12 @@ export default function PolicyDetailPage() {
  {policy.summary && (
  <p className="text-xl text-muted-foreground">{policy.summary}</p>
  )}
- <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
- <div className="flex items-center gap-1">
- <Calendar className="h-4 w-4" />
- Cập nhật: {new Date(policy.updatedAt).toLocaleDateString('vi-VN')}
- </div>
- <div className="flex items-center gap-1">
- <Eye className="h-4 w-4" />
- {policy.viewCount} lượt xem
- </div>
- </div>
+	 <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+	 <div className="flex items-center gap-1">
+	 <Calendar className="h-4 w-4" />
+	 Cập nhật: {new Date(policy.updatedAt).toLocaleDateString('vi-VN')}
+	 </div>
+	 </div>
  </div>
  </div>
  </div>

@@ -46,7 +46,7 @@ async function fetchContactInfo(): Promise<ContactInfo | null> {
 }
 
 export async function OrganizationStructuredData() {
- const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com';
+ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com').trim().replace(/\/$/, '');
  const contactInfo = await fetchContactInfo();
  const hotlineNumber = contactInfo?.phone?.hotline
  || contactInfo?.phone?.display?.replace(/\s+/g, '')
@@ -59,7 +59,7 @@ export async function OrganizationStructuredData() {
  contactInfo?.social?.youtube,
  contactInfo?.social?.zalo,
  ].filter(Boolean);
-  const organizationData = {
+ const organizationData = {
  '@context': 'https://schema.org',
  '@type': 'Organization',
  name: 'Audio Tài Lộc',

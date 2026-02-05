@@ -258,17 +258,14 @@ export default function SupportPage() {
  {post.excerpt}
  </p>
  )}
- <div className="flex items-center justify-between text-xs text-muted-foreground">
- <div className="flex items-center gap-2">
- <span className="flex items-center gap-1">
- <span>{post.viewCount} lượt xem</span>
- </span>
- {post.likeCount && post.likeCount > 0 && (
- <span className="flex items-center gap-1">
- <span>❤️ {post.likeCount}</span>
- </span>
- )}
- </div>
+	 <div className="flex items-center justify-between text-xs text-muted-foreground">
+	 <div className="flex items-center gap-2">
+	 {post.likeCount && post.likeCount > 0 && (
+	 <span className="flex items-center gap-1">
+	 <span>❤️ {post.likeCount}</span>
+	 </span>
+	 )}
+	 </div>
  <span>{new Date(post.publishedAt).toLocaleDateString('vi-VN')}</span>
  </div>
  </CardContent>

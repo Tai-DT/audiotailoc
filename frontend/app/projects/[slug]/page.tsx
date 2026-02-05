@@ -16,7 +16,6 @@ import {
  Play,
  User,
  CheckCircle,
- Eye,
  Music4,
  Sparkles,
  ArrowRight,
@@ -59,12 +58,12 @@ export default function ProjectDetailPage() {
  if (isLoading) {
  return (
  <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center p-6 sm:p-12">
- <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center animate-pulse mb-8 overflow-hidden relative">
+ <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center ring-1 ring-primary/20 mb-8 overflow-hidden relative">
  <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-accent/40 animate-spin-slow opacity-50" />
  <Music4 className="w-10 h-10 text-primary relative z-10" />
  </div>
  <div className="text-center space-y-4">
- <h3 className="text-xs font-black uppercase tracking-[0.5em] text-foreground/20 dark:text-zinc-500">Archiving Masterpiece</h3>
+ <h3 className="text-xs font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Đang tải dự án</h3>
  <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden mx-auto">
  <div className="h-full bg-primary animate-progress duration-3000" style={{ width: '70%' }} />
  </div>
@@ -79,14 +78,14 @@ export default function ProjectDetailPage() {
  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10">
  <Layers className="w-10 h-10 text-primary/40" />
  </div>
- <h1 className="text-4xl font-black uppercase tracking-tight mb-4 leading-none">
+ <h1 className="text-4xl font-black tracking-tight mb-4 leading-none">
  Kiến trúc <span className="text-primary italic">Vắng mặt</span>
  </h1>
  <p className="text-foreground/40 dark:text-zinc-300 max-w-md italic mb-10 leading-relaxed font-medium">
  Dự án này hiện đang trong quá trình bảo mật hoặc đã được lưu trữ nội bộ. Quý khách vui lòng khám phá các kiệt tác khác.
  </p>
  <Link href="/du-an">
- <Button className="bg-primary text-foreground dark:text-white font-black uppercase tracking-[0.2em] px-10 h-14 rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
+ <Button className="bg-primary text-foreground dark:text-white font-semibold tracking-wide px-10 h-14 rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
  <ArrowLeft className="mr-3 h-5 w-5" />
  Về Tủ sách Portfolio
  </Button>
@@ -118,14 +117,14 @@ export default function ProjectDetailPage() {
  ) : (
  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-black" />
  )}
- <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[150px] animate-pulse" />
+ <div className="absolute top-0 right-1/4 w-[1000px] h-[1000px] rounded-full bg-primary/5 blur-[110px]" />
  <div className="absolute inset-0 bg-studio-grid opacity-20" />
  </div>
 
  <div className="container mx-auto px-4 md:px-6 relative z-10">
  <BlurFade delay={0.1} inView>
  <div className="max-w-5xl space-y-6 md:space-y-8">
- <nav className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 dark:text-zinc-300 mb-6">
+ <nav className="flex items-center gap-4 text-[9px] font-semibold tracking-[0.14em] text-foreground/40 dark:text-zinc-300 mb-6">
  <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
  <span className="w-1 h-1 rounded-full bg-white/20" />
  <Link href="/du-an" className="hover:text-primary transition-colors">Kiệt tác</Link>
@@ -135,18 +134,18 @@ export default function ProjectDetailPage() {
 
  <div className="space-y-6">
  <div className="flex flex-wrap items-center gap-4">
- <Badge className="bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
+ <Badge className="bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide backdrop-blur-md">
  {project.category || 'Professional Elite'}
  </Badge>
  {project.isFeatured && (
- <Badge className="bg-accent/10 border-accent/20 text-accent px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+ <Badge className="bg-accent/10 border-accent/20 text-accent px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide flex items-center gap-2">
  <Sparkles className="w-3 h-3" />
  Signature Collection
  </Badge>
  )}
  <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full backdrop-blur-md">
- <div className={cn("w-2 h-2 rounded-full animate-pulse", project.status === 'COMPLETED' ? "bg-green-500" : "bg-primary")} />
- <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/60 dark:text-zinc-200">
+ <div className={cn("w-2 h-2 rounded-full", project.status === 'COMPLETED' ? "bg-green-500" : "bg-primary")} />
+ <span className="text-[9px] font-semibold tracking-wide text-foreground/60 dark:text-zinc-200">
  {project.status === 'COMPLETED' ? 'Tuyệt phẩm Hoàn tất' : 'Đang triển khai'}
  </span>
  </div>
@@ -162,7 +161,7 @@ export default function ProjectDetailPage() {
  <User className="w-6 h-6 text-primary" />
  </div>
  <div>
- <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Chủ đầu tư</p>
+ <p className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Chủ đầu tư</p>
  <p className="font-bold tracking-tight text-foreground dark:text-white">{project.client || 'Hạng mục Cao cấp'}</p>
  </div>
  </div>
@@ -171,22 +170,13 @@ export default function ProjectDetailPage() {
  <Calendar className="w-6 h-6 text-accent" />
  </div>
  <div>
- <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Thời điểm</p>
+ <p className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Thời điểm</p>
  <p className="font-bold tracking-tight text-foreground dark:text-white">{formatDate(project.createdAt)}</p>
  </div>
  </div>
- <div className="flex items-center gap-4">
- <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
- <Eye className="w-6 h-6 text-foreground/40 dark:text-zinc-300" />
- </div>
- <div>
- <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Sự quan tâm</p>
- <p className="font-bold tracking-tight text-foreground dark:text-white">{project.viewCount} Chuyên gia</p>
- </div>
- </div>
- </div>
- </div>
- </div>
+	 </div>
+	 </div>
+	 </div>
  </BlurFade>
  </div>
  </section>
@@ -238,7 +228,7 @@ export default function ProjectDetailPage() {
  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
  <Play className="w-5 h-5 text-primary fill-current" />
  </div>
- <h3 className="text-2xl font-black uppercase tracking-tight">Hé lộ Công trình</h3>
+ <h3 className="text-2xl font-black tracking-tight">Hé lộ Công trình</h3>
  </div>
  <div className="aspect-video relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black">
  <iframe
@@ -258,9 +248,9 @@ export default function ProjectDetailPage() {
  <div className="pt-16">
  <Tabs defaultValue="description" className="w-full">
  <TabsList className="bg-white/5 border border-white/10 p-1.5 rounded-2xl inline-flex mb-12">
- <TabsTrigger value="description" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">Luận cứ Kỹ thuật</TabsTrigger>
- <TabsTrigger value="features" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">Tính năng Cốt lõi</TabsTrigger>
- <TabsTrigger value="gallery" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">Biên niên ảnh</TabsTrigger>
+ <TabsTrigger value="description" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-semibold tracking-wide transition-all">Luận cứ kỹ thuật</TabsTrigger>
+ <TabsTrigger value="features" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-semibold tracking-wide transition-all">Tính năng cốt lõi</TabsTrigger>
+ <TabsTrigger value="gallery" className="h-12 px-8 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-foreground dark:text-white text-[10px] font-semibold tracking-wide transition-all">Biên niên ảnh</TabsTrigger>
  </TabsList>
 
  <TabsContent value="description" className="mt-0 outline-none">
@@ -319,25 +309,25 @@ export default function ProjectDetailPage() {
  <BlurFade delay={0.4} inView>
  <div className="sticky top-32 space-y-10">
  {/* Abstract Insight Card */}
- <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-3xl overflow-hidden relative group">
+ <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-xl overflow-hidden relative group">
  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
  <CardContent className="p-0 space-y-8 relative z-10">
  <div>
- <p className="text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-2">Technical Insight</p>
- <h3 className="text-2xl font-black uppercase tracking-tight">Hồ sơ Công trình</h3>
+ <p className="text-primary font-semibold tracking-[0.14em] text-[10px] mb-2">Technical Insight</p>
+ <h3 className="text-2xl font-black tracking-tight">Hồ sơ Công trình</h3>
  </div>
 
  <div className="space-y-6">
  <div className="flex justify-between items-center py-4 border-b border-white/5 group-hover:border-white/10 transition-colors">
- <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Thời gian thi công</span>
+ <span className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Thời gian thi công</span>
  <span className="text-sm font-bold text-foreground dark:text-white italic">{project.duration || '60 Ngày'}</span>
  </div>
  <div className="flex justify-between items-center py-4 border-b border-white/5 group-hover:border-white/10 transition-colors">
- <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Cấp độ Dự án</span>
- <Badge className="bg-accent/10 border-accent/20 text-accent text-[8px] font-black uppercase px-3">Platinum Elite</Badge>
+ <span className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Cấp độ Dự án</span>
+ <Badge className="bg-accent/10 border-accent/20 text-accent text-[8px] font-semibold tracking-wide px-3">Platinum Elite</Badge>
  </div>
  <div className="flex justify-between items-center py-4 border-b border-white/5 group-hover:border-white/10 transition-colors">
- <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400">Chuẩn Kiểm định</span>
+ <span className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Chuẩn Kiểm định</span>
  <span className="text-sm font-bold text-foreground dark:text-white italic">Acoustics ISO 3382</span>
  </div>
  </div>
@@ -345,13 +335,13 @@ export default function ProjectDetailPage() {
  {/* Technologies Cloud */}
  {technologies.length > 0 && (
  <div className="pt-4 space-y-4">
- <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 dark:text-zinc-400 flex items-center gap-2">
+ <p className="text-[10px] font-semibold tracking-wide text-foreground/30 dark:text-zinc-400 flex items-center gap-2">
  <Layers className="w-3 h-3 text-primary" />
  Hệ sinh thái Thiết bị
  </p>
  <div className="flex flex-wrap gap-2">
  {technologies.map((tech, idx) => (
- <span key={idx} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest text-foreground/60 dark:text-zinc-200 hover:text-foreground dark:text-white hover:border-primary/40 transition-all cursor-default">
+ <span key={idx} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-semibold tracking-wide text-foreground/60 dark:text-zinc-200 hover:text-foreground dark:text-white hover:border-primary/40 transition-all cursor-default">
  {tech}
  </span>
  ))}
@@ -363,7 +353,7 @@ export default function ProjectDetailPage() {
  <div className="pt-8 space-y-4">
  {project.liveUrl && (
  <Button
- className="w-full h-14 bg-primary text-foreground dark:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+ className="w-full h-14 bg-primary text-foreground dark:text-white font-semibold tracking-wide text-[10px] rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
  onClick={() => window.open(project.liveUrl, '_blank')}
  >
  <ExternalLink className="mr-3 h-4 w-4" />
@@ -372,7 +362,7 @@ export default function ProjectDetailPage() {
  )}
  <Button
  variant="outline"
- className="w-full h-14 bg-white/5 border-white/10 text-foreground dark:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-white/10 transition-all"
+ className="w-full h-14 bg-white/5 border-white/10 text-foreground dark:text-white font-semibold tracking-wide text-[10px] rounded-2xl hover:bg-white/10 transition-all"
  onClick={() => window.location.href = '#cta'}
  >
  Tư vấn giải pháp tương đương
@@ -384,9 +374,9 @@ export default function ProjectDetailPage() {
  {/* Professional Contact Micro-CTA */}
  <div className="p-8 bg-accent/5 border border-accent/20 rounded-[2rem] space-y-4 relative overflow-hidden">
  <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/10 blur-3xl rounded-full" />
- <h4 className="text-lg font-black uppercase tracking-tight relative z-10">Bắt đầu <span className="text-accent italic">Kiệt tác</span> của bạn</h4>
+ <h4 className="text-lg font-black tracking-tight relative z-10">Bắt đầu <span className="text-accent italic">Kiệt tác</span> của bạn</h4>
  <p className="text-[10px] font-medium text-foreground/40 dark:text-zinc-300 leading-relaxed italic relative z-10">Đội ngũ kỹ sư âm học hàng đầu của chúng tôi sẵn sàng đồng hành cùng ý tưởng của bạn.</p>
- <Link href="/lien-he" className="flex items-center gap-3 text-accent font-black uppercase tracking-widest text-[10px] group relative z-10">
+ <Link href="/lien-he" className="flex items-center gap-3 text-accent font-semibold tracking-wide text-[10px] group relative z-10">
  Kết nối ngay chuyên gia
  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
  </Link>
@@ -404,11 +394,11 @@ export default function ProjectDetailPage() {
  <BlurFade delay={0.5} inView>
  <div className="text-center space-y-12">
  <div className="space-y-4">
- <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px]">Hành trình Đẳng cấp</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">Mở rộng <span className="text-foreground/40 dark:text-zinc-300">Tầm nhìn</span> Nghệ thuật</h2>
+ <p className="text-primary font-semibold tracking-[0.16em] text-[10px]">Hành trình Đẳng cấp</p>
+ <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic">Mở rộng <span className="text-foreground/40 dark:text-zinc-300">Tầm nhìn</span> Nghệ thuật</h2>
  </div>
  <Link href="/du-an" className="inline-block group">
- <Button variant="outline" className="h-20 px-16 rounded-3xl border-white/10 bg-white/5 text-foreground dark:text-white font-black uppercase tracking-[0.3em] hover:bg-primary hover:border-primary transition-all duration-500 shadow-2xl">
+ <Button variant="outline" className="h-20 px-16 rounded-3xl border-white/10 bg-white/5 text-foreground dark:text-white font-semibold tracking-[0.16em] hover:bg-primary hover:border-primary transition-all duration-500 shadow-2xl">
  <ArrowLeft className="mr-4 h-5 w-5 group-hover:-translate-x-2 transition-transform" />
  Danh sách Kiệt tác Portfolio
  </Button>

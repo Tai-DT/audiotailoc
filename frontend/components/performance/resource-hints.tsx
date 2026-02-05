@@ -15,7 +15,9 @@ export function ResourceHints() {
  const prefetchAfterIdle = () => {
  const criticalPaths = [
  '/products',
- '/services',  '/contact',
+ '/services',
+ '/lien-he',
+ '/du-an',
  ];
 
  criticalPaths.forEach((path) => {

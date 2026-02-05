@@ -8,7 +8,6 @@ import { vi } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
 import {
  Calendar,
- Eye,
  ThumbsUp,
  ArrowLeft,
  Share2,
@@ -49,11 +48,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  if (isLoading) {
  return (
  <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col items-center justify-center gap-8">
- <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center animate-pulse">
+ <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center ring-1 ring-primary/20">
  <Music4 className="w-10 h-10 text-primary" />
  </div>
  <div className="text-center space-y-2">
- <p className="text-xs font-black uppercase tracking-[0.5em] text-foreground/20 dark:text-zinc-500">Loading Article</p>
+ <p className="text-xs font-semibold tracking-wide text-foreground/30 dark:text-zinc-400">Đang tải bài viết</p>
  <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
  <div className="h-full bg-primary animate-progress" style={{ width: '60%' }} />
  </div>
@@ -112,8 +111,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
  {/* Cinematic Backdrop */}
  <div className="absolute inset-0 z-0">
- <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[150px] animate-pulse" />
- <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 blur-[120px] animate-pulse" style={{ animationDelay: '3s' }} />
+ <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[110px]" />
+ <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 blur-[90px]" />
  <div className="absolute inset-0 bg-studio-grid opacity-10" />
  {article.imageUrl && (
  <div className="absolute inset-0 w-full h-full opacity-10 blur-3xl scale-110 grayscale pointer-events-none">
@@ -127,7 +126,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <div className="max-w-4xl mx-auto space-y-8">
  <Link
  href="/blog"
- className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40 dark:text-zinc-300 hover:text-primary transition-all mb-8"
+ className="group flex items-center gap-3 text-[10px] font-semibold tracking-[0.14em] text-foreground/40 dark:text-zinc-300 hover:text-primary transition-all mb-8"
  >
  <div className="p-2 rounded-lg bg-white/5 border border-white/10 group-hover:bg-primary group-hover:border-primary transition-all">
  <ArrowLeft className="h-3 w-3 text-foreground dark:text-white" />
@@ -136,11 +135,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  </Link>
 
  <div className="flex flex-wrap items-center gap-4">
- <Badge className={cn("px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md", getCategoryColor(article.category?.name || 'Uncategorized'))}>
+ <Badge className={cn("px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide border backdrop-blur-md", getCategoryColor(article.category?.name || 'Uncategorized'))}>
  {article.category?.name || 'Uncategorized'}
  </Badge>
  {article.featured && (
- <Badge className="bg-accent/10 border-accent/20 text-accent px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+ <Badge className="bg-accent/10 border-accent/20 text-accent px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide flex items-center gap-2">
  <Sparkles className="w-3 h-3" />
  Phiên bản đặc biệt
  </Badge>
@@ -164,12 +163,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <User className="h-6 w-6 text-foreground/20 dark:text-zinc-500" />
  </div>
  <div>
- <p className="text-[10px] font-black uppercase tracking-widest text-primary">Biên tập bởi</p>
+ <p className="text-[10px] font-semibold tracking-wide text-primary">Biên tập bởi</p>
  <p className="font-bold text-foreground dark:text-white tracking-wide">{article.author?.name || 'Audio Tài Lộc'}</p>
  </div>
  </div>
 
- <div className="hidden sm:flex items-center gap-6 text-foreground/30 dark:text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em]">
+ <div className="hidden sm:flex items-center gap-6 text-foreground/30 dark:text-zinc-400 text-[10px] font-semibold tracking-wide">
  <div className="flex items-center gap-2">
  <Clock className="w-4 h-4 text-primary" />
  <span>{readingTime} Phút đọc</span>
@@ -188,7 +187,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
  <Button
  variant="outline"
- className="h-12 px-6 rounded-xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest"
+ className="h-12 px-6 rounded-xl border-white/10 bg-white/5 text-foreground dark:text-white hover:bg-white/10 font-semibold text-[10px] tracking-wide"
  onClick={handleShare}
  >
  <Share2 className="mr-3 h-4 w-4 text-primary" />
@@ -232,10 +231,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <Button variant="ghost" size="icon" className="w-12 h-12 rounded-full hover:bg-white/10">
  <ThumbsUp className="w-5 h-5 text-primary" />
  </Button>
- <span className="text-xs font-black uppercase tracking-widest pr-4 border-r border-white/10">Tâm đắc ({article.likeCount})</span>
- <span className="text-xs font-black uppercase tracking-widest pl-2 pr-6">{article.viewCount} Chuyên gia đã đọc</span>
- </div>
- </div>
+	 <span className="text-xs font-semibold tracking-wide">Tâm đắc ({article.likeCount})</span>
+	 </div>
+	 </div>
  </div>
  </BlurFade>
  </div>
@@ -249,10 +247,10 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <div className="max-w-6xl mx-auto">
  <div className="flex items-center justify-between mb-12">
  <div>
- <p className="text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-2">Chủ đề liên quan</p>
- <h2 className="text-3xl font-black tracking-tight uppercase">Khám phá <span className="text-foreground/40 dark:text-zinc-300 italic">Tiếp tục</span></h2>
+ <p className="text-primary font-semibold tracking-[0.14em] text-[10px] mb-2">Chủ đề liên quan</p>
+ <h2 className="text-3xl font-black tracking-tight">Khám phá <span className="text-foreground/40 dark:text-zinc-300 italic">Tiếp tục</span></h2>
  </div>
- <Link href="/blog" className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white transition-all">
+ <Link href="/blog" className="group flex items-center gap-3 text-[10px] font-semibold tracking-wide text-foreground/40 dark:text-zinc-300 hover:text-foreground dark:text-white transition-all">
  Xem tất cả
  <div className="p-2 rounded-lg bg-white/5 border border-white/10 group-hover:bg-primary group-hover:border-primary transition-all">
  <ChevronRight className="w-3 h-3 text-foreground dark:text-white" />
@@ -283,20 +281,17 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  {relatedArticle.title}
  </Link>
  </h3>
- <div className="mt-auto flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-foreground/20 dark:text-zinc-500">
+ <div className="mt-auto flex items-center justify-between text-[9px] font-semibold tracking-wide text-foreground/20 dark:text-zinc-500">
  <span>
  {relatedArticle.publishedAt
  ? format(new Date(relatedArticle.publishedAt), 'dd MMM, yyyy', { locale: vi })
  : format(new Date(relatedArticle.createdAt), 'dd MMM, yyyy', { locale: vi })
  }
  </span>
- <div className="flex items-center gap-1">
- <Eye className="w-3 h-3" />
- <span>{relatedArticle.viewCount}</span>
- </div>
- </div>
- </CardContent>
- </Card>
+	 <span aria-hidden="true">—</span>
+	 </div>
+	 </CardContent>
+	 </Card>
  ))}
  </div>
  </div>
@@ -310,13 +305,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  <div className="container mx-auto px-6">
  <BlurFade delay={0.4} inView>
  <div className="max-w-xl mx-auto space-y-8">
- <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-bounce">
+ <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8">
  <Music4 className="w-10 h-10 text-primary" />
  </div>
- <h3 className="text-3xl font-black uppercase tracking-tight italic">Lan tỏa niềm đam mê</h3>
+ <h3 className="text-3xl font-black tracking-tight italic">Lan tỏa niềm đam mê</h3>
  <p className="text-foreground/40 dark:text-zinc-300 font-medium italic">Tiếp tục hành trình khám phá những thiết bị âm thanh đỉnh cao cùng Audio Tài Lộc.</p>
  <Link href="/blog#list" className="inline-block pt-4">
- <Button variant="outline" size="lg" className="h-16 px-12 rounded-2xl border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white font-black uppercase tracking-[0.2em] transition-all">
+ <Button variant="outline" size="lg" className="h-16 px-12 rounded-2xl border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-foreground dark:text-white font-semibold tracking-[0.14em] transition-all">
  Về tủ sách kiến thức
  </Button>
  </Link>

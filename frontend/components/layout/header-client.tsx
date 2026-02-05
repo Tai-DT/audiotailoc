@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/providers/cart-provider';
@@ -19,6 +19,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
     const [searchQuery, setSearchQuery] = useState('');
     const { itemCount } = useCart();
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         setHasMounted(true);
@@ -47,7 +48,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
- const navLinks = [
+    const navLinks = [
         { name: 'Trang chủ', href: '/' },
         { name: 'Sản phẩm', href: '/products' },
         { name: 'Phần mềm', href: '/software' },
@@ -56,6 +57,12 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
         { name: 'Tin tức', href: '/blog' },
         { name: 'Liên hệ', href: '/lien-he' },
     ];
+
+    const submitSearch = () => {
+        const query = searchQuery.trim();
+        if (!query) return;
+        router.push(`/search?q=${encodeURIComponent(query)}`);
+    };
 
     return (
         <header
@@ -71,7 +78,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
             {!isScrolled && (
                 <div className="bg-primary/5 border-b border-white/5 py-1 hidden lg:block" translate="no">
                     {hasMounted ? (
-                        <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+	                        <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
                             <div className="flex items-center gap-6">
                                 <a href={`tel:${hotlineNumber}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                                     <Phone className="w-3 h-3 text-primary" />
@@ -104,27 +111,27 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
                         isScrolled
                             ? "h-[32px] w-[100px] sm:h-[48px] sm:w-[140px] lg:h-[52px] lg:w-[148px]"
                             : "h-[40px] w-[120px] sm:h-[58px] sm:w-[176px] lg:h-[68px] lg:w-[212px]"
-                    )}>
-                        <Image
-                            src="/images/logo/logo-dark.svg"
-                            alt="Audio Tài Lộc"
-                            width={212}
-                            height={68}
-                            className="h-full w-full object-contain dark:hidden"
-                            priority
-                            unoptimized
-                        />
-                        <Image
-                            src="/images/logo/logo-light.svg"
-                            alt="Audio Tài Lộc"
-                            width={212}
-                            height={68}
-                            className="h-full w-full object-contain hidden dark:block"
-                            priority
-                            unoptimized
-                        />
-                    </div>
-                </Link>
+	                    )}>
+	                        <Image
+	                            src="/images/logo/logo-dark.svg"
+	                            alt="Audio Tài Lộc"
+	                            fill
+	                            sizes="(min-width: 1024px) 212px, (min-width: 640px) 176px, 120px"
+	                            className="object-contain dark:hidden"
+	                            priority
+	                            unoptimized
+	                        />
+	                        <Image
+	                            src="/images/logo/logo-light.svg"
+	                            alt="Audio Tài Lộc"
+	                            fill
+	                            sizes="(min-width: 1024px) 212px, (min-width: 640px) 176px, 120px"
+	                            className="object-contain hidden dark:block"
+	                            priority
+	                            unoptimized
+	                        />
+	                    </div>
+	                </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="hidden xl:flex items-center gap-8">
@@ -133,7 +140,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
                             key={link.name}
                             href={link.href}
                             className={cn(
-                                "text-xs font-black uppercase tracking-[0.2em] transition-all relative py-2 group",
+	                                "text-xs font-semibold tracking-[0.10em] transition-all relative py-2 group",
                                 pathname === link.href ? "text-primary" : "text-foreground/70 hover:text-primary"
                             )}
                         >
@@ -150,29 +157,47 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
                 {!isScrolled && (
                     <div className="hidden lg:flex flex-1 max-w-md relative group">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-full opacity-20 blur group-focus-within:opacity-40 transition-opacity" />
-                        <div className="relative w-full flex items-center bg-card/40 backdrop-blur-md border border-white/10 rounded-full px-4 py-2">
-                            <Search className="w-4 h-4 text-muted-foreground mr-3" />
+                        <form
+                            className="relative w-full flex items-center bg-card/40 backdrop-blur-md border border-white/10 rounded-full px-4 py-2"
+                            role="search"
+                            aria-label="Tìm kiếm sản phẩm"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                submitSearch();
+                            }}
+                        >
+                            <Search className="w-4 h-4 text-muted-foreground mr-3" aria-hidden="true" />
                             <input
-                                type="text"
+                                type="search"
                                 placeholder="Tìm kiếm sản phẩm..."
+                                aria-label="Nhập từ khóa tìm kiếm"
                                 className="bg-transparent border-none outline-none text-xs font-medium w-full placeholder:text-muted-foreground/50"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <button className="text-[10px] font-black uppercase tracking-widest text-primary ml-2 hover:scale-105 transition-transform">
+                            <button
+                                type="submit"
+                                disabled={!searchQuery.trim()}
+	                                className="text-[10px] font-semibold tracking-wide text-primary ml-2 hover:scale-105 transition-transform disabled:opacity-40 disabled:hover:scale-100"
+                            >
                                 Tìm ngay
                             </button>
-                        </div>
+                        </form>
                     </div>
                 )}
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 sm:gap-3 relative z-50">
-                    <a href={`tel:${hotlineNumber}`} className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary sm:hidden uppercase tracking-tighter">
-                        Hotline
-                    </a>
+	                    <a href={`tel:${hotlineNumber}`} className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-semibold text-primary sm:hidden tracking-wide">
+	                        Hotline
+	                    </a>
 
-                    <button className="p-2 rounded-full hover:bg-primary/5 transition-colors">
+                    <button
+                        type="button"
+                        aria-label="Mở trang tìm kiếm"
+                        className="p-2 rounded-full hover:bg-primary/5 transition-colors"
+                        onClick={() => router.push(searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : '/search')}
+                    >
                         <Search className="w-5 h-5 text-foreground/70" />
                     </button>
 
@@ -220,7 +245,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
             {shouldRenderMobileMenu && (
                 <div
                     className={cn(
-                        "fixed inset-0 z-[60] bg-background/98 backdrop-blur-2xl p-8 flex flex-col transition-all duration-300 ease-out",
+	                        "fixed inset-0 z-[60] bg-background/98 backdrop-blur-xl p-8 flex flex-col transition-all duration-300 ease-out",
                         isMobileMenuOpen
                             ? "opacity-100 translate-x-0"
                             : "opacity-0 translate-x-full pointer-events-none"
@@ -229,23 +254,23 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
                     aria-modal="true"
                     aria-label="Mobile menu"
                 >
-                    <div className="flex justify-between items-center mb-16">
-                        <div className="relative h-10 w-32 translate-y-2">
-                            <Image
-                                src="/images/logo/logo-dark.svg"
-                                alt="Logo"
-                                width={128}
-                                height={40}
-                                className="h-full w-full object-contain dark:hidden"
-                            />
-                            <Image
-                                src="/images/logo/logo-light.svg"
-                                alt="Logo"
-                                width={128}
-                                height={40}
-                                className="h-full w-full object-contain hidden dark:block brightness-110"
-                            />
-                        </div>
+	                    <div className="flex justify-between items-center mb-16">
+	                        <div className="relative h-10 w-32 translate-y-2">
+	                            <Image
+	                                src="/images/logo/logo-dark.svg"
+	                                alt="Logo"
+	                                fill
+	                                sizes="128px"
+	                                className="object-contain dark:hidden"
+	                            />
+	                            <Image
+	                                src="/images/logo/logo-light.svg"
+	                                alt="Logo"
+	                                fill
+	                                sizes="128px"
+	                                className="object-contain hidden dark:block brightness-110"
+	                            />
+	                        </div>
                         <button
                             className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
                             onClick={() => setIsMobileMenuOpen(false)}
@@ -267,7 +292,7 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
                                 <Link
                                     href={link.href}
                                     className={cn(
-                                        "text-4xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2 py-2",
+	                                        "text-4xl font-black tracking-tight transition-all active:text-primary active:translate-x-2 py-2",
                                         pathname === link.href ? "text-primary" : "text-foreground"
                                     )}
                                     onClick={() => setIsMobileMenuOpen(false)}
@@ -280,12 +305,12 @@ export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
 
                     <div className="mt-auto space-y-8">
                         <div className="p-8 rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 relative overflow-hidden">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 mb-3">Hotline Hỗ Trợ 24/7</p>
+	                            <p className="text-[10px] font-semibold tracking-[0.14em] text-primary/60 mb-3">Hotline hỗ trợ 24/7</p>
                             <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary tracking-tighter block">{hotlineDisplay}</a>
                         </div>
 
                         <div className="flex justify-between items-center px-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Tai Loc Elite Heritage</span>
+	                            <span className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground/40">Tai Loc Elite Heritage</span>
                             <div className="flex gap-4">
                                 <ThemeToggle />
                                 <Link href="/account" className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">

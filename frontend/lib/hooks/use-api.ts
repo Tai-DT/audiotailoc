@@ -185,7 +185,16 @@ export const useProductSearch = (query: string, limit = 10) => {
       const response = await apiClient.get('/catalog/products/search', {
         params: { q: query, limit },
       });
-      return handleApiResponse<Product[]>(response);
+      const data = handleApiResponse<unknown>(response);
+
+      // Backend may return either an array or a paginated-like object `{ items: [...] }`.
+      if (Array.isArray(data)) return data as Product[];
+      if (data && typeof data === 'object' && 'items' in data) {
+        const items = (data as { items?: unknown }).items;
+        if (Array.isArray(items)) return items as Product[];
+      }
+
+      return [];
     },
     enabled: !!query && query.length > 2,
     staleTime: 2 * 60 * 1000, // 2 minutes

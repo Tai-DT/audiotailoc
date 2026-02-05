@@ -23,8 +23,8 @@ export function CTASection() {
             {/* Cinematic Background Layer */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.05),transparent_70%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.08),transparent_70%)]" />
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 dark:bg-primary/5 blur-[180px] animate-pulse" />
-                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 dark:bg-accent/5 blur-[150px] animate-pulse" style={{ animationDelay: '3s' }} />
+                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 dark:bg-primary/5 blur-[140px]" />
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 dark:bg-accent/5 blur-[110px]" />
                 <div className="absolute inset-0 bg-noise opacity-[0.02] dark:opacity-[0.03]" />
 
                 {/* Kinetic Audio Wave */}
@@ -53,7 +53,7 @@ export function CTASection() {
                     <div className="space-y-6 md:space-y-10">
                         {/* Elite Badge */}
                         <div className="section-badge">
-                            <Volume2 className="w-5 h-5 text-primary animate-pulse" />
+                            <Volume2 className="w-5 h-5 text-primary" />
                             <span>Đặc quyền Red Elite</span>
                         </div>
 
@@ -88,7 +88,7 @@ export function CTASection() {
                             <Link href={`tel:${hotlineNumber}`} className="w-full sm:w-auto overflow-hidden rounded-[2rem] group/btn">
                                 <Button
                                     size="lg"
-                                    className="w-full h-12 md:h-16 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-6 md:px-10 text-xs font-black uppercase tracking-[0.3em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
+                                    className="w-full h-12 md:h-16 red-elite-gradient text-foreground dark:text-foreground dark:text-white px-6 md:px-10 text-xs font-semibold tracking-[0.16em] relative transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl font-display rounded-full sm:rounded-[2rem] border border-primary/20"
                                 >
                                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                                     <div className="absolute inset-0 gold-royal-grain opacity-10" />
@@ -96,11 +96,11 @@ export function CTASection() {
                                     <span className="relative z-10">{hotlineDisplay}</span>
                                 </Button>
                             </Link>
-                            <Link href="/contact" className="w-full sm:w-auto">
+                            <Link href="/lien-he" className="w-full sm:w-auto">
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="w-full h-12 md:h-16 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-2xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-6 md:px-10 text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
+                                    className="w-full h-12 md:h-16 border-border dark:border-white/10 bg-secondary dark:bg-white/5 backdrop-blur-xl text-foreground dark:text-foreground dark:text-white hover:bg-primary hover:text-foreground dark:text-foreground dark:text-white dark:hover:bg-accent dark:hover:text-black px-6 md:px-10 text-xs font-semibold tracking-[0.16em] transition-all duration-500 rounded-full sm:rounded-[2rem] font-display hover:border-primary/40"
                                 >
                                     <Mail className="mr-4 h-6 w-6 text-primary dark:text-accent group-hover:text-foreground dark:text-foreground dark:text-white transition-colors" />
                                     Để lại lời nhắn
@@ -111,7 +111,7 @@ export function CTASection() {
 
                     {/* Elite Contact Console */}
                     <div className="relative">
-                        <div className="absolute -inset-6 bg-gradient-to-br from-primary/30 to-accent/30 blur-[120px] opacity-20 dark:opacity-30 animate-pulse" />
+                        <div className="absolute -inset-6 bg-gradient-to-br from-primary/30 to-accent/30 blur-[110px] opacity-20 dark:opacity-30" />
                         <div className="relative space-y-6 md:space-y-10">
                             {/* Primary Contact Console */}
                             <div className="red-elite-card rounded-[2.5rem] md:rounded-[4rem] p-5 md:p-12 group overflow-hidden">
@@ -121,7 +121,7 @@ export function CTASection() {
 
                                 <div className="text-center space-y-6 md:space-y-10 relative z-10">
                                     <div className="space-y-6">
-                                        <div className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-primary dark:text-accent font-display">Đường dây ưu tiên Elite</div>
+                                        <div className="text-[9px] md:text-[10px] font-semibold tracking-[0.16em] text-primary dark:text-accent font-display">Đường dây ưu tiên Elite</div>
                                         <a
                                             href={`tel:${hotlineNumber}`}
                                             className="block text-2xl sm:text-3xl md:text-6xl font-black text-foreground dark:text-foreground dark:text-white hover:text-primary transition-all duration-700 font-display tracking-tighter drop-shadow-sm group-hover:scale-105"
@@ -133,7 +133,7 @@ export function CTASection() {
                                     {/* Ornamental Divider */}
                                     <div className="flex items-center gap-8">
                                         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border dark:via-white/10 to-transparent" />
-                                        <div className="w-3 h-3 rounded-full border-2 border-primary/50 dark:border-accent/50 animate-ping" />
+                                        <div className="w-3 h-3 rounded-full border-2 border-primary/50 dark:border-accent/50" />
                                         <div className="flex-1 h-px bg-gradient-to-l from-transparent via-border dark:via-white/10 to-transparent" />
                                     </div>
 
@@ -175,7 +175,7 @@ function EliteNavLink({ href, label }: { href: string; label: string }) {
                 <div className="absolute inset-0 gold-royal-grain opacity-[0.03] group-hover:opacity-[0.08] transition-opacity" />
                 <div className="absolute inset-x-0 bottom-0 h-1.5 red-elite-gradient translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
                 <div className="flex items-center justify-between relative z-10">
-                    <span className="text-foreground dark:text-foreground dark:text-white font-black uppercase tracking-[0.3em] text-[10px] font-display">{label}</span>
+                    <span className="text-foreground dark:text-foreground dark:text-white font-semibold tracking-[0.14em] text-[10px] font-display">{label}</span>
                     <ArrowRight className="w-6 h-6 text-primary dark:text-accent opacity-40 group-hover:opacity-100 group-hover:translate-x-3 transition-all duration-500" />
                 </div>
             </div>
@@ -191,13 +191,13 @@ interface InfoCardProps {
 
 function InfoCard({ icon: Icon, title, content }: InfoCardProps) {
     return (
-        <div className="flex items-center gap-4 md:gap-8 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] glass-panel group hover:border-primary/40 dark:hover:border-accent/30 transition-all duration-700 shadow-sm hover:shadow-xl relative overflow-hidden">
-            <div className="absolute inset-0 gold-royal-grain opacity-[0.02] group-hover:opacity-[0.05] transition-opacity" />
-            <div className="w-16 h-16 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center flex-shrink-0 border border-border dark:border-white/10 text-primary dark:text-accent group-hover:scale-110 group-hover:bg-primary dark:group-hover:bg-accent group-hover:text-foreground dark:text-foreground dark:text-white dark:group-hover:text-black transition-all duration-700 shadow-lg relative z-10">
-                <Icon size={30} />
-            </div>
+            <div className="flex items-center gap-4 md:gap-8 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] glass-panel group hover:border-primary/40 dark:hover:border-accent/30 transition-all duration-700 shadow-sm hover:shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 gold-royal-grain opacity-[0.02] group-hover:opacity-[0.05] transition-opacity" />
+                <div className="w-16 h-16 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center flex-shrink-0 border border-border dark:border-white/10 text-primary dark:text-accent group-hover:scale-110 group-hover:bg-primary dark:group-hover:bg-accent group-hover:text-foreground dark:text-foreground dark:text-white dark:group-hover:text-black transition-all duration-700 shadow-lg relative z-10">
+                    <Icon size={30} />
+                </div>
             <div className="space-y-1.5 relative z-10">
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 font-display">{title}</div>
+                <div className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground/20 dark:text-foreground/20 dark:text-foreground dark:text-white/20 font-display">{title}</div>
                 <div className="text-foreground dark:text-foreground dark:text-white font-black tracking-tight text-base md:text-lg leading-snug">{content}</div>
             </div>
         </div>
@@ -218,7 +218,7 @@ function ContactButton({ href, icon: Icon, label, className }: ContactButtonProp
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-                "flex flex-col items-center justify-center gap-3 md:gap-4 py-6 md:py-8 rounded-2xl md:rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] font-display relative overflow-hidden group/cbtn",
+                "flex flex-col items-center justify-center gap-3 md:gap-4 py-6 md:py-8 rounded-2xl md:rounded-3xl font-semibold tracking-[0.14em] text-[10px] font-display relative overflow-hidden group/cbtn",
                 "transition-all duration-700 hover:scale-105 active:scale-95 shadow-lg",
                 className
             )}
