@@ -125,7 +125,9 @@ export class AuthController {
           id: user?.id,
           email: user?.email,
           name: user?.name,
-          role: (user as any)?.role ?? 'USER',
+          role: String((user as any)?.role ?? 'USER')
+            .trim()
+            .toUpperCase(),
         },
       };
     } catch (error) {
@@ -195,7 +197,15 @@ export class AuthController {
     const userId = req.user?.sub as string | undefined;
     if (!userId) return { userId: null };
     const u = await this.users.findById(userId);
-    return { userId, email: u?.email ?? null, role: (u as any)?.role ?? null };
+    return {
+      userId,
+      email: u?.email ?? null,
+      role: u
+        ? String((u as any)?.role ?? 'USER')
+            .trim()
+            .toUpperCase()
+        : null,
+    };
   }
 
   @UseGuards(JwtGuard)
@@ -214,7 +224,9 @@ export class AuthController {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: (user as any)?.role ?? 'USER',
+      role: String((user as any)?.role ?? 'USER')
+        .trim()
+        .toUpperCase(),
       phone: (user as any)?.phone ?? null,
       avatar: (user as any)?.avatar ?? null,
       address: (user as any)?.address ?? null,
@@ -236,7 +248,9 @@ export class AuthController {
       id: updatedUser.id,
       email: updatedUser.email,
       name: updatedUser.name,
-      role: (updatedUser as any)?.role ?? 'USER',
+      role: String((updatedUser as any)?.role ?? 'USER')
+        .trim()
+        .toUpperCase(),
       phone: (updatedUser as any)?.phone ?? null,
       avatar: (updatedUser as any)?.avatar ?? null,
       address: (updatedUser as any)?.address ?? null,

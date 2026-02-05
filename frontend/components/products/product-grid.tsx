@@ -14,6 +14,8 @@ interface ProductGridProps {
     loading?: boolean;
     onAddToCart?: (productId: string) => void;
     onViewProduct?: (productSlug: string) => void;
+    /** Base path for product detail links (e.g. /products, /software) */
+    basePath?: string;
     /** ID for the grid, useful for aria-labelledby */
     id?: string;
     /** Label for screen readers */
@@ -29,17 +31,19 @@ export function ProductGrid({
     loading = false,
     onAddToCart,
     onViewProduct,
+    basePath = '/products',
     id,
     ariaLabel = 'Danh sách sản phẩm',
     columns = 4,
 }: ProductGridProps) {
     const router = useRouter();
+    const normalizedBasePath = basePath.startsWith('/') ? basePath.replace(/\/$/, '') : `/${basePath.replace(/\/$/, '')}`;
 
     const handleViewProduct = (slug: string) => {
         if (onViewProduct) {
             onViewProduct(slug);
         } else {
-            router.push(`/products/${slug}`);
+            router.push(`${normalizedBasePath}/${slug}`);
         }
     };
 
@@ -76,7 +80,7 @@ export function ProductGrid({
                 description="Hãy thử tìm kiếm với từ khóa khác hoặc lọc theo danh mục để khám phá thêm sản phẩm."
                 action={{
                     label: 'Xem tất cả sản phẩm',
-                    href: '/products',
+                    href: normalizedBasePath,
                 }}
             />
         );
@@ -106,6 +110,7 @@ export function ProductGrid({
                         product={product}
                         onAddToCart={onAddToCart}
                         onViewProduct={handleViewProduct}
+                        basePath={normalizedBasePath}
                         priority={index < 4} // First 4 products load with priority
                     />
                 </div>

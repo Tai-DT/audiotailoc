@@ -72,7 +72,8 @@ export const API_ENDPOINTS = {
   // Blog
   blog: {
     articles: '/blog/articles',
-    articleBySlug: (slug: string) => `/blog/articles/slug/${slug}`,
+    // Backend uses /blog/articles/:slugOrId (slug first, then id)
+    articleBySlug: (slug: string) => `/blog/articles/${slug}`,
     categories: '/blog/categories',
   },
 

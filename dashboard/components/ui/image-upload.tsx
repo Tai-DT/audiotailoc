@@ -75,7 +75,7 @@ export function ImageUpload({
         async (file): Promise<ImageWithSEO> => {
         try {
           const response = await apiClient.uploadImage(file);
-          const imageUrl = response.data?.url || (response as { url?: string }).url;
+          const imageUrl = response.data.url;
           return { url: imageUrl, alt: '', title: '' };
         } catch (error) {
           setUploadErrors(prev => ({

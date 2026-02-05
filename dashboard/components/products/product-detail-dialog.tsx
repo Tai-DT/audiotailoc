@@ -36,6 +36,8 @@ interface Product {
   canonicalUrl?: string | null
   featured?: boolean
   isActive?: boolean
+  isDigital?: boolean
+  downloadUrl?: string | null
   isDeleted?: boolean
   viewCount?: number
   createdAt: string
@@ -198,12 +200,34 @@ export function ProductDetailDialog({ productId, open, onOpenChange, categories 
                     Slug: {product.slug}
                   </Badge>
                 )}
+                {product.isDigital && (
+                  <Badge variant="secondary" className="text-xs">
+                    Digital
+                  </Badge>
+                )}
               </div>
               {product.shortDescription && (
                 <p className="text-muted-foreground mt-2">{product.shortDescription}</p>
               )}
               {product.description && (
                 <p className="text-muted-foreground mt-2">{product.description}</p>
+              )}
+              {product.isDigital && (
+                <div className="mt-4 rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-medium text-muted-foreground">Link tải (Google Drive)</p>
+                  {product.downloadUrl ? (
+                    <a
+                      href={product.downloadUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-primary break-all hover:underline"
+                    >
+                      {product.downloadUrl}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Chưa cấu hình</p>
+                  )}
+                </div>
               )}
             </div>
 

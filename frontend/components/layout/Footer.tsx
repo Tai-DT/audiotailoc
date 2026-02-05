@@ -9,23 +9,19 @@ import {
     MessageCircle, CreditCard, Wallet, Landmark,
     ArrowUp
 } from 'lucide-react';
-import { useCategories } from '@/lib/hooks/use-api';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
 import { toast } from 'react-hot-toast';
-import { useContactInfo } from '@/lib/hooks/use-contact-info';
 import { BlurFade } from '@/components/ui/blur-fade';
+import type { Category } from '@/lib/types';
+import type { ContactInfo } from '@/lib/contact-info';
 
 /**
  * Premium Footer - Modern design with gradients, glassmorphism, and animations
  */
-export function Footer() {
-    // Force HMR update to clear zombie dependency
-    const { data: categories, isLoading: categoriesLoading } = useCategories();
-    const { data: contactInfo } = useContactInfo();
+export function Footer({ categories, contactInfo }: { categories: Category[]; contactInfo?: ContactInfo }) {
     const [email, setEmail] = React.useState('');
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [mounted, setMounted] = React.useState(false);
@@ -255,11 +251,7 @@ export function Footer() {
                         <BlurFade delay={0.25} inView>
                             <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-6 md:mb-10 font-display border-b border-primary/10 pb-2">Danh mục</h3>
                             <nav className="flex flex-col gap-5">
-                                {categoriesLoading ? (
-                                    [...Array(5)].map((_, index) => (
-                                        <Skeleton key={index} className="h-5 w-full bg-muted/40 rounded-xl" />
-                                    ))
-                                ) : displayCategories.length > 0 ? (
+                                {displayCategories.length > 0 ? (
                                     displayCategories.map((category: { id: string; name: string; slug: string }) => (
                                         <Link
                                             key={category.id}

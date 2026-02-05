@@ -1,8 +1,17 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../notifications/mail.service';
 import { CacheService } from '../caching/cache.service';
 import { randomUUID, randomBytes } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { InventoryMovementService } from '../inventory/inventory-movement.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { InventoryService } from '../inventory/inventory.service';
@@ -100,6 +109,64 @@ export class OrdersService {
     };
   }
 
+  async getDigitalDownloads(idOrOrderNo: string, options?: { intentId?: string }) {
+    const order = await this.prisma.orders.findFirst({
+      where: { OR: [{ id: idOrOrderNo }, { orderNo: idOrOrderNo }] },
+      include: {
+        payments: true,
+        payment_intents: true,
+        order_items: {
+          include: {
+            products: { include: { digital_products: true } },
+          },
+        },
+      },
+    });
+
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+
+    const requestedIntentId = options?.intentId?.trim();
+
+    if (requestedIntentId) {
+      const intent = order.payment_intents.find(i => i.id === requestedIntentId);
+      if (!intent) {
+        throw new ForbiddenException('Invalid download token');
+      }
+      if (intent.status !== 'SUCCEEDED') {
+        throw new HttpException('Payment is not completed', HttpStatus.PAYMENT_REQUIRED);
+      }
+    } else {
+      const isPaid =
+        order.payments.some(p => p.status === 'SUCCEEDED') ||
+        order.payment_intents.some(i => i.status === 'SUCCEEDED');
+
+      if (!isPaid) {
+        throw new HttpException('Payment is not completed', HttpStatus.PAYMENT_REQUIRED);
+      }
+    }
+
+    const downloads = order.order_items
+      .map(item => ({
+        productId: item.productId,
+        name: item.products?.name || item.name || 'Digital product',
+        quantity: item.quantity,
+        downloadUrl: item.products?.digital_products?.downloadUrl || null,
+        isDigital: Boolean((item.products as any)?.isDigital),
+      }))
+      .filter(item => item.isDigital && item.downloadUrl);
+
+    return {
+      orderId: order.id,
+      orderNo: order.orderNo,
+      downloads: downloads.map(d => ({
+        productId: d.productId,
+        name: d.name,
+        quantity: d.quantity,
+        downloadUrl: d.downloadUrl,
+      })),
+    };
+  }
+
   private safeParseJSON(data: any, defaultValue: any = null) {
     if (!data) return defaultValue;
     if (typeof data !== 'string') return data;
@@ -119,6 +186,7 @@ export class OrdersService {
       async tx => {
         let subtotalCents = BigInt(0);
         const finalItems = [];
+        let hasPhysicalItem = false;
 
         for (const item of itemsToProcess) {
           const product = await tx.products.findUnique({ where: { id: item.productId } });
@@ -127,22 +195,28 @@ export class OrdersService {
           }
 
           const quantity = Math.max(1, item.quantity || 1);
-          if (product.stockQuantity < quantity) {
-            throw new BadRequestException(`Sản phẩm ${product.name} hết hàng`);
-          }
+          const isDigital = Boolean((product as any).isDigital);
 
-          // Deduct Stock via InventoryService (handles movements, alerts, and sync)
-          await this.inventory.adjust(
-            product.id,
-            {
-              stockDelta: -quantity,
-              reason: `Order ${orderNo}`,
-              referenceId: orderNo,
-              referenceType: 'ORDER',
-            },
-            { syncToProduct: true },
-            tx,
-          );
+          // Digital products (software) do not require stock/inventory movements.
+          if (!isDigital) {
+            hasPhysicalItem = true;
+            if (product.stockQuantity < quantity) {
+              throw new BadRequestException(`Sản phẩm ${product.name} hết hàng`);
+            }
+
+            // Deduct Stock via InventoryService (handles movements, alerts, and sync)
+            await this.inventory.adjust(
+              product.id,
+              {
+                stockDelta: -quantity,
+                reason: `Order ${orderNo}`,
+                referenceId: orderNo,
+                referenceType: 'ORDER',
+              },
+              { syncToProduct: true },
+              tx,
+            );
+          }
 
           subtotalCents += product.priceCents * BigInt(quantity);
           finalItems.push({
@@ -178,14 +252,23 @@ export class OrdersService {
 
         // Guest User Handling: Link order to user by email or create a guest user
         if (!finalUserId && orderData.customerEmail) {
+          const normalizedEmail = String(orderData.customerEmail).trim().toLowerCase();
           let user = await tx.users.findUnique({
-            where: { email: orderData.customerEmail },
+            where: { email: normalizedEmail },
           });
           if (!user) {
+            // Some deployments have `users.password` as NOT NULL in the database.
+            // To support guest checkout, generate a strong random password and store its hash.
+            const bcryptRounds = Number(process.env.BCRYPT_ROUNDS || 12);
+            const rounds = Number.isFinite(bcryptRounds) ? bcryptRounds : 12;
+            const randomPassword = `${randomUUID()}${randomUUID()}`;
+            const passwordHash = await bcrypt.hash(randomPassword, rounds);
+
             user = await tx.users.create({
               data: {
                 id: randomUUID(),
-                email: orderData.customerEmail,
+                email: normalizedEmail,
+                password: passwordHash,
                 name: orderData.customerName || 'Guest Customer',
                 phone: orderData.customerPhone || null,
                 role: 'USER',
@@ -198,9 +281,13 @@ export class OrdersService {
         }
 
         // Shipping Calculation (Sync with CartService)
-        // Free shipping if subtotal > 10M VND or promo provides free shipping
-        const shippingCents =
-          subtotalCents > BigInt(10000000) || isFreeShipping ? BigInt(0) : BigInt(50000);
+        // Digital-only orders have no shipping fee.
+        // Otherwise, free shipping if subtotal > 10M VND or promo provides free shipping.
+        const shippingCents = !hasPhysicalItem
+          ? BigInt(0)
+          : subtotalCents > BigInt(10000000) || isFreeShipping
+            ? BigInt(0)
+            : BigInt(50000);
 
         const totalCents =
           subtotalCents - discountCents + shippingCents > BigInt(0)
@@ -250,7 +337,12 @@ export class OrdersService {
 
         return { ...order, items: finalItems };
       },
-      { timeout: 15000 },
+      {
+        // Prisma interactive transactions default maxWait is 2s, which can be too low for
+        // managed Postgres poolers (e.g., Neon) under occasional connection-acquisition latency.
+        maxWait: Number(process.env.DB_TRANSACTION_MAX_WAIT_MS || 10000),
+        timeout: 15000,
+      },
     );
 
     // Notify via Telegram (post-transaction)

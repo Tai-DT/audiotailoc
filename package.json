@@ -18,7 +18,7 @@
     "dev:status": "./dev-runner.sh status",
     "dev:logs": "./dev-runner.sh logs",
     "dev:clean": "./dev-runner.sh clean",
-    "build:all": "npm run build --workspace=frontend && npm run build --workspace=backend && npm run build --workspace=dashboard",
-    "install:all": "npm install --workspace=frontend && npm install --workspace=backend && npm install --workspace=dashboard"
+    "build:all": "npm --prefix frontend run build && npm --prefix backend run build && npm --prefix dashboard run build",
+    "install:all": "npm --prefix frontend install && npm --prefix backend install && npm --prefix dashboard install"
   }
 }

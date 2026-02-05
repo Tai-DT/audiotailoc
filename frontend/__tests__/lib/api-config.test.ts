@@ -23,7 +23,8 @@ describe('buildApiUrl', () => {
   it('should build full URL from endpoint', () => {
     const result = buildApiUrl('/products');
     expect(result).toContain('/products');
-    expect(result).toContain('http');
+    // In browser/jsdom we use a relative base path to leverage Next.js rewrites.
+    expect(result).toContain('/api/v1');
   });
 
   it('should handle endpoints with leading slash', () => {

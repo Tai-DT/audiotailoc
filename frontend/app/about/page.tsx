@@ -135,7 +135,7 @@ export default function AboutPage() {
 
  <div className="relative rounded-[4rem] overflow-hidden border border-white/10 dark:border-white/5 shadow-3xl aspect-[4/5] red-elite-card">
  <Image
- src="/images/banners/home-hero.png"
+ src="https://res.cloudinary.com/dib7tbv7w/image/upload/v1769766278/audiotailoc/banners/about-hero.jpg"
  alt="Audio Tài Lộc Showroom"
  fill
  className="object-cover transition-transform duration-[4000ms] group-hover:scale-110 opacity-80"

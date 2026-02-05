@@ -48,6 +48,23 @@ check_port() {
     return 0
 }
 
+# Function to kill any process listening on a port (best-effort)
+kill_port() {
+    local port=$1
+    local name=$2
+    local pids
+    pids=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null || true)
+    if [ -n "$pids" ]; then
+        print_warning "Stopping processes on port $port ($name): $pids"
+        kill -TERM $pids 2>/dev/null || true
+        sleep 1
+        pids=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null || true)
+        if [ -n "$pids" ]; then
+            kill -KILL $pids 2>/dev/null || true
+        fi
+    fi
+}
+
 # Function to wait for service to be ready
 wait_for_service() {
     local url=$1
@@ -72,26 +89,57 @@ wait_for_service() {
     return 1
 }
 
+# Function to read value from a dotenv file (basic KEY=VALUE parsing)
+read_dotenv() {
+    local file=$1
+    local key=$2
+    local default_value=$3
+
+    if [ -f "$file" ]; then
+        # Get last matching assignment for key (ignore comments)
+        local line
+        line=$(grep -E "^[[:space:]]*${key}=" "$file" | tail -n 1 2>/dev/null || true)
+        if [ -n "$line" ]; then
+            local value="${line#*=}"
+            # Strip surrounding quotes if present
+            value="${value%\"}"
+            value="${value#\"}"
+            value="${value%\'}"
+            value="${value#\'}"
+            echo "$value"
+            return 0
+        fi
+    fi
+
+    echo "$default_value"
+}
+
 # Function to start a service in background
 start_service() {
     local dir=$1
     local command=$2
     local service_name=$3
-    local log_file="$dir/${service_name,,}.log"
+    local log_file="dev.log"
 
     print_status "Starting $service_name in $dir..."
 
     cd "$dir"
 
     # Start service in background and redirect output to log file
-    nohup $command > "$log_file" 2>&1 &
+    if command -v setsid >/dev/null 2>&1; then
+        # Run each service in its own session/process group so we can stop the whole tree reliably.
+        setsid bash -lc "$command" > "$log_file" 2>&1 < /dev/null &
+    else
+        # Fallback: still run in background, but stopping may leave orphaned children on some platforms.
+        nohup bash -lc "$command" > "$log_file" 2>&1 < /dev/null &
+    fi
     local pid=$!
 
     # Save PID for cleanup
-    echo $pid > "${service_name,,}.pid"
+    echo $pid > "dev.pid"
 
     print_success "$service_name started with PID: $pid"
-    print_status "Logs: $log_file"
+    print_status "Logs: $dir/$log_file"
 
     cd - > /dev/null
 }
@@ -100,35 +148,53 @@ start_service() {
 stop_services() {
     print_warning "Stopping all services..."
 
+    local backend_port
+    backend_port=$(read_dotenv "backend/.env" "PORT" "3010")
+
     # Stop frontend
     if [ -f "frontend/dev.pid" ]; then
         local pid=$(cat frontend/dev.pid)
         if kill -0 $pid 2>/dev/null; then
-            kill $pid
+            kill -TERM -- -$pid 2>/dev/null || kill -TERM $pid 2>/dev/null || true
+            sleep 1
+            if kill -0 $pid 2>/dev/null; then
+                kill -KILL -- -$pid 2>/dev/null || kill -KILL $pid 2>/dev/null || true
+            fi
             print_status "Frontend stopped (PID: $pid)"
         fi
         rm -f frontend/dev.pid
     fi
+    kill_port 3000 "Frontend"
 
     # Stop backend
     if [ -f "backend/dev.pid" ]; then
         local pid=$(cat backend/dev.pid)
         if kill -0 $pid 2>/dev/null; then
-            kill $pid
+            kill -TERM -- -$pid 2>/dev/null || kill -TERM $pid 2>/dev/null || true
+            sleep 1
+            if kill -0 $pid 2>/dev/null; then
+                kill -KILL -- -$pid 2>/dev/null || kill -KILL $pid 2>/dev/null || true
+            fi
             print_status "Backend stopped (PID: $pid)"
         fi
         rm -f backend/dev.pid
     fi
+    kill_port "$backend_port" "Backend"
 
     # Stop dashboard
     if [ -f "dashboard/dev.pid" ]; then
         local pid=$(cat dashboard/dev.pid)
         if kill -0 $pid 2>/dev/null; then
-            kill $pid
+            kill -TERM -- -$pid 2>/dev/null || kill -TERM $pid 2>/dev/null || true
+            sleep 1
+            if kill -0 $pid 2>/dev/null; then
+                kill -KILL -- -$pid 2>/dev/null || kill -KILL $pid 2>/dev/null || true
+            fi
             print_status "Dashboard stopped (PID: $pid)"
         fi
         rm -f dashboard/dev.pid
     fi
+    kill_port 3001 "Dashboard"
 
     print_success "All services stopped"
 }
@@ -258,9 +324,14 @@ case "${1:-start}" in
         fi
 
         # Check ports
-        check_port 3000 "Frontend" || exit 1
-        check_port 4000 "Backend" || exit 1
-        check_port 3001 "Dashboard" || exit 1
+        FRONTEND_PORT=3000
+        DASHBOARD_PORT=3001
+        BACKEND_PORT=$(read_dotenv "backend/.env" "PORT" "3010")
+        BACKEND_URL="http://localhost:${BACKEND_PORT}/api/v1"
+
+        check_port $FRONTEND_PORT "Frontend" || exit 1
+        check_port $BACKEND_PORT "Backend" || exit 1
+        check_port $DASHBOARD_PORT "Dashboard" || exit 1
 
         # Install dependencies if needed
         print_status "Installing dependencies..."
@@ -281,13 +352,14 @@ case "${1:-start}" in
         fi
 
         # Start services
-        start_service "frontend" "npm run dev" "Frontend"
+        # Ensure frontend/dashboard point at the same backend port as backend/.env
+        start_service "frontend" "NEXT_PUBLIC_API_URL='${BACKEND_URL}' npm run dev" "Frontend"
         sleep 3
 
         start_service "backend" "npm run start:dev" "Backend"
         sleep 3
 
-        start_service "dashboard" "npm run dev" "Dashboard"
+        start_service "dashboard" "NEXT_PUBLIC_API_URL='${BACKEND_URL}' npm run dev" "Dashboard"
         sleep 3
 
         # Wait for services to be ready
@@ -300,12 +372,19 @@ case "${1:-start}" in
         print_success "All services started successfully!"
         echo ""
         echo -e "${CYAN}Access URLs:${NC}"
-        echo -e "  Frontend:  ${GREEN}http://localhost:3000${NC}"
-        echo -e "  Backend:   ${GREEN}http://localhost:4000${NC}"
-        echo -e "  Dashboard: ${GREEN}http://localhost:3001${NC}"
+        echo -e "  Frontend:  ${GREEN}http://localhost:${FRONTEND_PORT}${NC}"
+        echo -e "  Backend:   ${GREEN}http://localhost:${BACKEND_PORT}${NC}"
+        echo -e "  Dashboard: ${GREEN}http://localhost:${DASHBOARD_PORT}${NC}"
         echo ""
         echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
         echo ""
+
+        # In detached mode, exit after starting services (services continue via nohup).
+        # Useful for CI/non-interactive shells.
+        if [ "${DEV_RUNNER_DETACH:-}" = "1" ] || [ "${DEV_RUNNER_DETACH:-}" = "true" ]; then
+            print_success "Detached mode enabled. Services will keep running in background."
+            exit 0
+        fi
 
         # Wait for Ctrl+C
         trap stop_services SIGINT SIGTERM

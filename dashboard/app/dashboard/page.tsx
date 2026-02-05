@@ -927,7 +927,7 @@ function DashboardPage() {
 
 export default function DashboardPageWrapper() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireRole="ADMIN">
       <DashboardPage />
     </ProtectedRoute>
   )

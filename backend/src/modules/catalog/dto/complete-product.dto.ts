@@ -16,6 +16,26 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
+const transformBoolean = ({ value, obj, key }: { value: any; obj: any; key: string }) => {
+  // When enableImplicitConversion is true globally, class-transformer may already
+  // coerce strings like "false" into boolean true via Boolean("false") === true.
+  // Prefer reading the raw value from the source object when available.
+  const raw = obj && typeof obj === 'object' && key in obj ? (obj as any)[key] : undefined;
+  const input = raw !== undefined ? raw : value;
+
+  if (input === undefined || input === null || input === '') return undefined;
+  if (typeof input === 'boolean') return input;
+  if (typeof input === 'number') {
+    if (input === 1) return true;
+    if (input === 0) return false;
+    return input;
+  }
+  const normalized = String(input).trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1') return true;
+  if (normalized === 'false' || normalized === '0') return false;
+  return input;
+};
+
 // Enums
 export enum ProductSortBy {
   CREATED_AT = 'createdAt',
@@ -237,6 +257,24 @@ export class CreateProductDto {
   @IsBoolean()
   @Type(() => Boolean)
   featured?: boolean = false;
+
+  @ApiPropertyOptional({
+    description: 'Is digital product (software)',
+    example: true,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isDigital?: boolean = false;
+
+  @ApiPropertyOptional({
+    description: 'Download URL (e.g., Google Drive link). Only used for digital products.',
+    example: 'https://drive.google.com/file/d/FILE_ID/view?usp=sharing',
+  })
+  @IsOptional()
+  @IsUrl({ require_protocol: true })
+  downloadUrl?: string;
 
   @ApiPropertyOptional({
     description: 'Meta title for SEO',
@@ -473,6 +511,23 @@ export class UpdateProductDto {
   featured?: boolean;
 
   @ApiPropertyOptional({
+    description: 'Is digital product (software)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isDigital?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Download URL (e.g., Google Drive link). Only used for digital products.',
+    example: 'https://drive.google.com/file/d/FILE_ID/view?usp=sharing',
+  })
+  @IsOptional()
+  @IsUrl({ require_protocol: true })
+  downloadUrl?: string;
+
+  @ApiPropertyOptional({
     description: 'Meta title for SEO',
     example: 'Premium Audio Cable - High Quality Audio Equipment',
   })
@@ -594,7 +649,7 @@ export class ProductListQueryDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(transformBoolean)
   isActive?: boolean;
 
   @ApiPropertyOptional({
@@ -603,8 +658,17 @@ export class ProductListQueryDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(transformBoolean)
   featured?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by digital product flag (software)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(transformBoolean)
+  isDigital?: boolean;
 
   @ApiPropertyOptional({
     description: 'Minimum price in cents',
@@ -640,7 +704,7 @@ export class ProductListQueryDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(transformBoolean)
   inStock?: boolean;
 }
 
@@ -782,6 +846,19 @@ export class ProductResponseDto {
     example: false,
   })
   featured!: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Is digital product (software)',
+    example: true,
+  })
+  isDigital?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Download URL for digital product (only returned for admin-authenticated requests)',
+    example: 'https://drive.google.com/file/d/FILE_ID/view?usp=sharing',
+  })
+  downloadUrl?: string | null;
 
   @ApiProperty({
     description: 'View count',

@@ -113,21 +113,32 @@ export function useBackups() {
     try {
       setLoading(true)
       let endpoint = ''
+      let payload: any = undefined
       
       switch (type) {
         case 'full':
           endpoint = '/backup/full'
+          // Full backup should also include assets (public/uploads/logs) so banner/category images
+          // are not lost when restoring to a new server.
+          payload = { includeFiles: true, compress: true }
           break
         case 'incremental':
           endpoint = '/backup/incremental'
+          payload = { compress: true }
           break
         case 'files':
           endpoint = '/backup/files'
           break
       }
 
-      await apiClient.post(endpoint)
-      toast.success(`Đã bắt đầu backup ${type === 'full' ? 'toàn bộ' : type === 'incremental' ? 'tăng dần' : 'files'}`)
+      if (payload) await apiClient.post(endpoint, payload)
+      else await apiClient.post(endpoint)
+
+      toast.success(
+        `Đã bắt đầu backup ${
+          type === 'full' ? 'toàn bộ' : type === 'incremental' ? 'tăng dần' : 'tệp'
+        }`,
+      )
       
       // Refresh data
       await fetchBackups()

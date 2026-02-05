@@ -246,7 +246,18 @@ export class PaymentsController {
     @Headers('x-admin-key') adminKey?: string,
   ) {
     const userId = req.user?.sub || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const normalizedRole = String(req.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const normalizedEmail = String(req.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const isAdmin =
+      normalizedRole === 'ADMIN' ||
+      (normalizedAdminEmail && normalizedEmail === normalizedAdminEmail);
     const isAdminKey = Boolean(adminKey && adminKey === process.env.ADMIN_API_KEY);
 
     if (!userId && !isAdminKey && dto.provider !== 'PAYOS') {

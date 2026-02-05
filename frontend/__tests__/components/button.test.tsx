@@ -31,8 +31,7 @@ describe('Button', () => {
 
   it('should apply size classes', () => {
     const { container } = render(<Button size="lg">Large</Button>);
-    // h-12 is the lg size class
-    expect(container.firstChild).toHaveClass('h-12');
+    expect(container.firstChild).toHaveClass('h-14');
   });
 
   it('should render as child component when asChild is true', () => {

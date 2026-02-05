@@ -18,7 +18,7 @@ describe('Separator', () => {
 
   it('should have bg-border styling', () => {
     const { container } = render(<Separator />);
-    expect(container.firstChild).toHaveClass('bg-border');
+    expect(container.firstChild).toHaveClass('bg-border/40');
   });
 
   it('should accept custom className', () => {

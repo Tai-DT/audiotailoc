@@ -19,7 +19,7 @@ describe('Badge', () => {
 
   it('should apply secondary variant', () => {
     const { container } = render(<Badge variant="secondary">Secondary</Badge>);
-    expect(container.firstChild).toHaveClass('bg-secondary');
+    expect(container.firstChild).toHaveClass('bg-accent/10');
   });
 
   it('should apply destructive variant', () => {
@@ -39,6 +39,6 @@ describe('Badge', () => {
 
   it('should have text-xs font size', () => {
     const { container } = render(<Badge>Small</Badge>);
-    expect(container.firstChild).toHaveClass('text-xs');
+    expect(container.firstChild).toHaveClass('text-[10px]');
   });
 });

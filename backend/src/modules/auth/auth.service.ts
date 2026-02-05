@@ -73,8 +73,11 @@ export class AuthService {
     if (!accessSecret || !refreshSecret) {
       throw new Error('JWT secrets are not configured');
     }
+    const normalizedRole = String((user as { role?: string }).role ?? 'USER')
+      .trim()
+      .toUpperCase();
     const accessToken = jwt.sign(
-      { sub: user.id, email: user.email, role: (user as { role?: string }).role ?? 'USER' },
+      { sub: user.id, email: user.email, role: normalizedRole },
       accessSecret,
       { expiresIn: '30m' }, // Extended to 30 minutes for better admin UX
     );
@@ -102,8 +105,11 @@ export class AuthService {
       if (!user) throw new UnauthorizedException('Người dùng không tồn tại');
 
       // Validate user is still active and not disabled
-      const userRole = (user as { role?: string }).role;
-      if (userRole === 'DISABLED') {
+      const rawUserRole = (user as { role?: string }).role;
+      const normalizedRole = String(rawUserRole ?? 'USER')
+        .trim()
+        .toUpperCase();
+      if (normalizedRole === 'DISABLED') {
         throw new ForbiddenException('Tài khoản đã bị vô hiệu hóa');
       }
 
@@ -113,7 +119,7 @@ export class AuthService {
       }
 
       const newAccessToken = jwt.sign(
-        { sub: user.id, email: user.email, role: userRole ?? 'USER' },
+        { sub: user.id, email: user.email, role: normalizedRole },
         accessSecret,
         { expiresIn: '30m' },
       );

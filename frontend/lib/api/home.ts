@@ -204,7 +204,7 @@ export async function fetchNewArrivals(limit: number = 8): Promise<Product[]> {
         }
         const data = await res.json();
         console.log('[fetchNewArrivals] Raw response keys:', Object.keys(data));
-        const products = extractData<Product>(data);
+        const products = extractData<Product>(data).filter((p) => !p?.isDigital);
         console.log('[fetchNewArrivals] Extracted products count:', products.length);
         return products;
     } catch (error) {
@@ -231,11 +231,41 @@ export async function fetchBestSellers(limit: number = 8): Promise<Product[]> {
         }
         const data = await res.json();
         console.log('[fetchBestSellers] Raw response keys:', Object.keys(data));
-        const products = extractData<Product>(data);
+        const products = extractData<Product>(data).filter((p) => !p?.isDigital);
         console.log('[fetchBestSellers] Extracted products count:', products.length);
         return products;
     } catch (error) {
         console.error('[fetchBestSellers] Error:', error);
+        return [];
+    }
+}
+
+export async function fetchSoftware(limit: number = 4): Promise<Product[]> {
+    try {
+        const url = createUrl('/catalog/products', {
+            page: '1',
+            pageSize: String(limit),
+            sortBy: 'createdAt',
+            sortOrder: 'desc',
+            isDigital: 'true',
+            isActive: 'true',
+        });
+
+        const res = await fetch(url, {
+            next: { revalidate: 0 },
+            cache: 'no-store',
+        });
+
+        if (!res.ok) {
+            console.warn('[fetchSoftware] API returned non-OK status:', res.status);
+            return [];
+        }
+
+        const data = await res.json();
+        const products = extractData<Product>(data).filter((p) => Boolean(p?.isDigital));
+        return products;
+    } catch (error) {
+        console.error('[fetchSoftware] Error:', error);
         return [];
     }
 }

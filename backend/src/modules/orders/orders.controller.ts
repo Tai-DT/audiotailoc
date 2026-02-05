@@ -85,7 +85,18 @@ export class OrdersController {
   async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: any) {
     const userId = req.user?.sub || req.user?.id;
     const order = await this.orders.get(id);
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.email === process.env.ADMIN_EMAIL;
+    const normalizedRole = String(req.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const normalizedEmail = String(req.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const isAdmin =
+      normalizedRole === 'ADMIN' ||
+      (normalizedAdminEmail && normalizedEmail === normalizedAdminEmail);
 
     if (userId) {
       if (order.userId !== userId && !isAdmin) {
@@ -142,7 +153,18 @@ export class OrdersController {
     // If authenticated user, check if they own the order
     if (req?.user) {
       const userId = req.user.sub || req.user.id;
-      const isAdminByRole = req.user.role === 'ADMIN' || req.user.email === process.env.ADMIN_EMAIL;
+      const normalizedRole = String(req.user?.role || '')
+        .trim()
+        .toUpperCase();
+      const normalizedEmail = String(req.user?.email || '')
+        .trim()
+        .toLowerCase();
+      const normalizedAdminEmail = String(process.env.ADMIN_EMAIL || '')
+        .trim()
+        .toLowerCase();
+      const isAdminByRole =
+        normalizedRole === 'ADMIN' ||
+        (normalizedAdminEmail && normalizedEmail === normalizedAdminEmail);
 
       if (isAdminByRole || isAdminByKey || order.userId === userId) {
         return order;
@@ -158,6 +180,51 @@ export class OrdersController {
 
     // Default: throw unauthorized if no identification
     throw new ForbiddenException('Unauthorized access to order details');
+  }
+
+  @Get(':id/downloads')
+  @UseGuards(OptionalJwtGuard)
+  async getDownloads(
+    @Param('id') id: string,
+    @Query('intentId') intentId: string | undefined,
+    @Req() req: any,
+  ) {
+    const adminKey = req.headers['x-admin-key'];
+    const isAdminByKey = adminKey && adminKey === process.env.ADMIN_API_KEY;
+
+    if (req?.user) {
+      const order = await this.orders.get(id);
+      const userId = req.user.sub || req.user.id;
+      const normalizedRole = String(req.user?.role || '')
+        .trim()
+        .toUpperCase();
+      const normalizedEmail = String(req.user?.email || '')
+        .trim()
+        .toLowerCase();
+      const normalizedAdminEmail = String(process.env.ADMIN_EMAIL || '')
+        .trim()
+        .toLowerCase();
+      const isAdminByRole =
+        normalizedRole === 'ADMIN' ||
+        (normalizedAdminEmail && normalizedEmail === normalizedAdminEmail);
+
+      if (isAdminByRole || isAdminByKey || order.userId === userId) {
+        return this.orders.getDigitalDownloads(id);
+      }
+
+      throw new ForbiddenException('You do not have permission to view downloads for this order');
+    }
+
+    if (isAdminByKey) {
+      return this.orders.getDigitalDownloads(id);
+    }
+
+    // Guest download access: require a paid intentId as a proof of purchase.
+    if (intentId) {
+      return this.orders.getDigitalDownloads(id, { intentId });
+    }
+
+    throw new ForbiddenException('Unauthorized access to order downloads');
   }
 
   @UseGuards(AdminOrKeyGuard)

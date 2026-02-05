@@ -65,8 +65,8 @@ export function ChatWidget({
     const inputRef = useRef<HTMLInputElement>(null);
 
     const positionClasses = {
-        'bottom-right': 'bottom-4 right-4',
-        'bottom-left': 'bottom-4 left-4',
+        'bottom-right': 'bottom-4 right-4 items-end',
+        'bottom-left': 'bottom-4 left-4 items-start',
     };
 
     // Hide pulse after first interaction
@@ -319,7 +319,10 @@ export function ChatWidget({
     };
 
     return (
-        <div suppressHydrationWarning className={cn('fixed z-[9999] bottom-4 right-4 flex flex-col items-end gap-3', position === 'bottom-left' && 'right-auto left-4 items-start')}>
+        <div
+            suppressHydrationWarning
+            className={cn('fixed z-[9999] flex flex-col gap-3', positionClasses[position])}
+        >
             <AnimatePresence>
                 {isOpen && (
                     <motion.div

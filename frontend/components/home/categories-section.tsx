@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Speaker, Mic2, Headphones, Zap, Settings, Music, Sparkles, MonitorPlay, TabletSmartphone } from 'lucide-react';
+import { ArrowRight, Speaker, Mic, Headphones, Zap, Settings, Music, Sparkles, MonitorPlay, TabletSmartphone } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 import { cn, getMediaUrl } from '@/lib/utils';
@@ -25,7 +25,7 @@ interface CategoriesSectionProps {
 const categoryIcons: Record<string, React.ReactNode> = {
     'loa-karaoke': <Speaker className="w-7 h-7" />,
     'amply-cuc-day': <Zap className="w-7 h-7" />,
-    'microphone': <Mic2 className="w-7 h-7" />,
+    'microphone': <Mic className="w-7 h-7" />,
     'vang-so-mixer': <Settings className="w-7 h-7" />,
     'dan-karaoke': <Music className="w-7 h-7" />,
     'loa-sub': <Headphones className="w-7 h-7" />,

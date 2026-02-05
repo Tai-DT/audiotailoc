@@ -10,6 +10,8 @@ interface ProductGridProps {
     products: Product[];
     columns?: 2 | 3 | 4;
     className?: string;
+    /** Base path for product detail links (e.g. /products, /software) */
+    basePath?: string;
 }
 
 import { useRouter } from 'next/navigation';
@@ -17,9 +19,11 @@ import { useRouter } from 'next/navigation';
 export function ProductGrid({
     products,
     columns = 4,
-    className
+    className,
+    basePath = '/products',
 }: ProductGridProps) {
     const router = useRouter();
+    const normalizedBasePath = basePath.startsWith('/') ? basePath.replace(/\/$/, '') : `/${basePath.replace(/\/$/, '')}`;
 
     if (products.length === 0) return null;
 
@@ -30,7 +34,7 @@ export function ProductGrid({
     };
 
     const handleViewProduct = (slug: string) => {
-        router.push(`/products/${slug}`);
+        router.push(`${normalizedBasePath}/${slug}`);
     };
 
     return (
@@ -47,6 +51,7 @@ export function ProductGrid({
                     product={product}
                     index={index}
                     onViewProduct={handleViewProduct}
+                    basePath={normalizedBasePath}
                 />
             ))}
         </div>

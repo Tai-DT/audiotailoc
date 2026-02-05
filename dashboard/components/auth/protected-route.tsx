@@ -7,10 +7,27 @@ import { useAuth } from "@/lib/auth-context"
 interface ProtectedRouteProps {
   children: React.ReactNode
   requireAuth?: boolean
+  requireRole?: string
 }
 
-export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  const { user, isLoading, token } = useAuth()
+function getRoleFromJwt(accessToken: string | null): string | null {
+  if (!accessToken) return null
+  const parts = accessToken.split('.')
+  if (parts.length < 2) return null
+
+  try {
+    // base64url -> base64
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, '=')
+    const json = JSON.parse(atob(padded)) as { role?: string } | null
+    return json?.role ? String(json.role) : null
+  } catch {
+    return null
+  }
+}
+
+export function ProtectedRoute({ children, requireAuth = true, requireRole }: ProtectedRouteProps) {
+  const { user, isLoading, token, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -25,11 +42,25 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
       if (requireAuth && !user) {
         const redirectParam = encodeURIComponent(redirectTarget)
         router.replace(`/login?redirect=${redirectParam}`)
+        return
       } else if (!requireAuth && user) {
         router.replace('/dashboard')
+        return
+      }
+
+      if (requireAuth && requireRole && user) {
+        const normalizedRequiredRole = String(requireRole).trim().toUpperCase()
+        const tokenRole = getRoleFromJwt(token)
+        const normalizedUserRole = String(user.role || tokenRole || '').trim().toUpperCase()
+
+        if (!normalizedUserRole || normalizedUserRole !== normalizedRequiredRole) {
+          // Clear auth state and send user back to login with an explicit reason.
+          const redirectParam = encodeURIComponent(redirectTarget)
+          logout(`/login?redirect=${redirectParam}&error=forbidden`)
+        }
       }
     }
-  }, [user, isLoading, requireAuth, router, redirectTarget])
+  }, [user, isLoading, requireAuth, requireRole, router, redirectTarget, logout])
 
   if (isLoading && requireAuth) {
     return (
@@ -42,6 +73,15 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
 
   if (requireAuth && (!user || !token)) {
     return null // Will redirect in useEffect
+  }
+
+  if (requireAuth && requireRole && user) {
+    const normalizedRequiredRole = String(requireRole).trim().toUpperCase()
+    const tokenRole = getRoleFromJwt(token)
+    const normalizedUserRole = String(user.role || tokenRole || '').trim().toUpperCase()
+    if (!normalizedUserRole || normalizedUserRole !== normalizedRequiredRole) {
+      return null // Will redirect in useEffect
+    }
   }
   
   if (!requireAuth) {

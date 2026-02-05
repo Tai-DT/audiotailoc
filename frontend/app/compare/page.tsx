@@ -56,7 +56,7 @@ export default function ComparePage() {
         setIsSearching(true);
         try {
             const response = await apiClient.get('/catalog/products', {
-                params: { q: query, limit: 5 }
+                params: { q: query, limit: 5, isDigital: false }
             });
             const data = handleApiResponse<{ items: Product[] }>(response);
             if (data?.items) {

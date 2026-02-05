@@ -22,7 +22,7 @@ interface OrderData {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderData, paymentMethod } = body;
+    const { orderData, paymentMethod, successPath } = body;
 
     // Validate required fields
     if (!orderData || !paymentMethod) {
@@ -50,14 +50,17 @@ export async function POST(request: NextRequest) {
 
     // For PayOS payment
     if (paymentMethod === 'payos') {
-      const paymentUrl = await createPayOSPayment(orderData, authHeader, {
+      const payment = await createPayOSPayment(orderData, authHeader, {
         origin: requestOrigin,
         referer: requestReferer,
+        successPath,
       });
       return NextResponse.json({
         success: true,
         paymentMethod: 'payos',
-        paymentUrl,
+        paymentUrl: payment.paymentUrl,
+        orderId: payment.orderId,
+        intentId: payment.intentId,
         message: 'Redirecting to PayOS payment'
       });
     }
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
 async function createPayOSPayment(
   orderData: OrderData,
   authHeader?: string,
-  headersContext?: { origin?: string; referer?: string },
+  headersContext?: { origin?: string; referer?: string; successPath?: string },
 ) {
   try {
     const backendUrl = getBackendUrl();
@@ -125,6 +128,7 @@ async function createPayOSPayment(
     const orderPayload = await orderRes.json();
     const order = normalizeOrderPayload(orderPayload);
     if (!order?.id) throw new Error('Order response missing id');
+    const orderIdForRedirect = String(order.orderNo || order.id);
 
     // 2. Create payment intent in backend
     const intentRes = await fetch(`${backendUrl}/payments/intents`, {
@@ -134,7 +138,18 @@ async function createPayOSPayment(
         orderId: order.id,
         provider: 'PAYOS',
         idempotencyKey: `payos_${order.id}_${Date.now()}`,
-        returnUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/order-success?method=payos&orderId=${order.orderNo}`
+        returnUrl: (() => {
+          const base = process.env.FRONTEND_URL || 'http://localhost:3000';
+          const path =
+            typeof headersContext?.successPath === 'string' &&
+            headersContext.successPath.trim().startsWith('/')
+              ? headersContext.successPath.trim()
+              : '/order-success';
+          const url = new URL(path, base);
+          url.searchParams.set('method', 'payos');
+          url.searchParams.set('orderId', orderIdForRedirect);
+          return url.toString();
+        })()
       })
     });
 
@@ -148,8 +163,11 @@ async function createPayOSPayment(
     if (!redirectUrl) {
       throw new Error('Missing PayOS redirect URL');
     }
+    if (!intent.intentId) {
+      throw new Error('Missing PayOS intentId');
+    }
 
-    return redirectUrl;
+    return { paymentUrl: redirectUrl, orderId: orderIdForRedirect, intentId: intent.intentId };
   } catch (error) {
     console.error('PayOS payment creation error:', error);
     throw error;
@@ -276,6 +294,7 @@ function normalizeOrderPayload(payload: unknown): NormalizedOrder {
 }
 
 type NormalizedIntent = {
+  intentId?: string | null;
   redirectUrl?: string | null;
   checkoutUrl?: string | null;
 };

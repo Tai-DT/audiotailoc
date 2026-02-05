@@ -1,34 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, handleApiResponse } from '@/lib/api';
-
-export interface ContactInfo {
-    phone: {
-        hotline: string;
-        display: string;
-    };
-    email: string;
-    address: {
-        full: string;
-        street: string;
-        ward: string;
-        district: string;
-        city: string;
-        country: string;
-    };
-    social: {
-        facebook: string;
-        instagram: string;
-        youtube: string;
-        zalo: string;
-    };
-    businessHours: {
-        display: string;
-    };
-    zalo: {
-        phoneNumber: string;
-        displayName: string;
-    };
-}
+import type { ContactInfo } from '@/lib/contact-info';
 
 export function useContactInfo() {
     return useQuery({
@@ -41,3 +13,5 @@ export function useContactInfo() {
         gcTime: 1000 * 60 * 60 * 24, // 24 hours
     });
 }
+
+export type { ContactInfo };

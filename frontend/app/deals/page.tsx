@@ -80,7 +80,7 @@ export default function DealsPage() {
 
                 // Fetch sale products
                 const productsResponse = await apiClient.get('/catalog/products', {
-                    params: { onSale: true, limit: 12 }
+                    params: { onSale: true, limit: 12, isDigital: false }
                 });
                 const productsData = handleApiResponse<{ items: Product[] }>(productsResponse);
                 if (productsData?.items) setFlashSaleProducts(productsData.items);

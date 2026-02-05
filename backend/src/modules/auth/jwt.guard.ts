@@ -18,27 +18,11 @@ export class JwtGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const path = req.route?.path || req.path;
 
-    // Allow public auth routes without authentication
-    const publicRoutes = [
-      '/auth/register',
-      '/auth/login',
-      '/auth/refresh',
-      '/auth/forgot-password',
-      '/auth/reset-password',
-      '/auth/status',
-      '/catalog/products',
-      '/catalog/categories',
-      '/services',
-      '/service-types',
-      '/services/types',
-      '/health',
-      '/testimonials',
-      '/homepage-stats',
-      '/chat/conversations',
-      '/chat/messages',
-    ];
-
-    if (publicRoutes.some(route => path.includes(route))) {
+    // Allow requests authenticated via admin API key (server-to-server / dashboard SSR).
+    // This avoids brittle route allowlists that can accidentally make protected endpoints public.
+    const headerKey = (req.headers['x-admin-key'] || req.headers['X-Admin-Key'] || '') as string;
+    const envKey = this.config.get<string>('ADMIN_API_KEY') || '';
+    if (envKey && headerKey && headerKey === envKey) {
       return true;
     }
 

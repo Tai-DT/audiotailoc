@@ -13,6 +13,7 @@ import {
   Play,
   Clock,
   HardDrive,
+  FolderArchive,
   CheckCircle,
   XCircle,
   AlertCircle
@@ -40,7 +41,7 @@ export default function BackupsPage() {
     fetchStatus()
   }, [fetchBackups, fetchStatus])
 
-  const handleCreateBackup = async (type: 'full' | 'incremental') => {
+  const handleCreateBackup = async (type: 'full' | 'incremental' | 'files') => {
     setCreating(true)
     try {
       await createBackup(type)
@@ -84,6 +85,10 @@ export default function BackupsPage() {
               <Button onClick={() => handleCreateBackup('incremental')} disabled={creating || status?.isBackupInProgress}>
                 <Database className="h-4 w-4 mr-2" />
                 Sao lưu tăng dần
+              </Button>
+              <Button onClick={() => handleCreateBackup('files')} disabled={creating || status?.isBackupInProgress}>
+                <FolderArchive className="h-4 w-4 mr-2" />
+                Sao lưu tệp
               </Button>
               <Button onClick={() => handleCreateBackup('full')} disabled={creating || status?.isBackupInProgress}>
                 <HardDrive className="h-4 w-4 mr-2" />
@@ -201,8 +206,8 @@ export default function BackupsPage() {
                         <TableRow key={backup.id}>
                           <TableCell className="font-medium">{backup.name}</TableCell>
                           <TableCell>
-                            <Badge variant={backup.type === 'full' ? 'default' : 'secondary'}>
-                              {backup.type === 'full' ? 'Toàn bộ' : 'Tăng dần'}
+                            <Badge variant={backup.type === 'full' ? 'default' : backup.type === 'files' ? 'outline' : 'secondary'}>
+                              {backup.type === 'full' ? 'Toàn bộ' : backup.type === 'incremental' ? 'Tăng dần' : 'Tệp'}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatFileSize(backup.size)}</TableCell>

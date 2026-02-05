@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Download, Eye, Heart, ShoppingCart } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,8 @@ interface ProductCardProps {
     product: Product;
     onAddToCart?: (productId: string) => void;
     onViewProduct?: (productSlug: string) => void;
+    /** Base path for product detail links (e.g. /products, /software) */
+    basePath?: string;
     /** When true, image loads with higher priority (for above-the-fold products) */
     priority?: boolean;
     /** Index for staggered animations */
@@ -27,6 +29,7 @@ export function ProductCard({
     product,
     onAddToCart,
     onViewProduct,
+    basePath = '/products',
     priority = false,
     index = 0,
 }: ProductCardProps) {
@@ -39,7 +42,7 @@ export function ProductCard({
         if (onViewProduct) {
             onViewProduct(product.slug);
         } else {
-            router.push(`/products/${product.slug}`);
+            router.push(`${normalizedBasePath}/${product.slug}`);
         }
     };
 
@@ -55,6 +58,10 @@ export function ProductCard({
 
     const discount = calculateDiscount();
     const isOutOfStock = product.stockQuantity === 0;
+    const isDigitalProduct = Boolean(product.isDigital);
+    const normalizedBasePath = basePath.startsWith('/') ? basePath.replace(/\/$/, '') : `/${basePath.replace(/\/$/, '')}`;
+    const productHref = `${normalizedBasePath}/${product.slug}`;
+    const hasAddToCart = typeof onAddToCart === 'function';
 
     const getProductImage = () => {
         const images = parseImages(product.images, product.imageUrl);
@@ -78,7 +85,7 @@ export function ProductCard({
                 {/* Dynamic Glow Effect on Hover */}
                 <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.1),transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(180,140,50,0.15),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                <Link href={`/products/${product.slug}`} className="block w-full h-full relative z-10">
+                <Link href={productHref} className="block w-full h-full relative z-10">
                     <WatermarkedImage
                         src={getProductImage()}
                         alt={product.name}
@@ -146,7 +153,7 @@ export function ProductCard({
                             </span>
                         </div>
                     )}
-                    <Link href={`/products/${product.slug}`} className="block group/title">
+                    <Link href={productHref} className="block group/title">
                         <h3 className="font-display font-black text-base sm:text-lg md:text-2xl text-foreground group-hover/title:text-primary transition-colors line-clamp-2 leading-[1.35] tracking-tight min-h-[2.7em]">
                             {product.name}
                         </h3>
@@ -175,16 +182,34 @@ export function ProductCard({
 
                     <Button
                         className="w-full h-11 md:h-14 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:via-red-400 hover:to-red-500 text-white font-black text-[9px] sm:text-[10px] md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/30 border-0 group/btn active:scale-[0.98] relative overflow-hidden"
-                        disabled={isOutOfStock}
-                        onClick={() => onAddToCart?.(product.id)}
-                        aria-label={isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
-                        title={isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
+                        disabled={hasAddToCart ? isOutOfStock : false}
+                        onClick={() => {
+                            if (hasAddToCart) onAddToCart?.(product.id);
+                            else handleViewProduct();
+                        }}
+                        aria-label={hasAddToCart ? (isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ') : 'Xem chi tiết'}
+                        title={hasAddToCart ? (isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ') : 'Xem chi tiết'}
                     >
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                        <ShoppingCart size={18} className="sm:mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
-                        <span className="relative z-10 hidden sm:inline">
-                            {isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
-                        </span>
+                        {hasAddToCart ? (
+                            <>
+                                <ShoppingCart size={18} className="sm:mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
+                                <span className="relative z-10 hidden sm:inline">
+                                    {isOutOfStock ? 'Liên hệ đặt hàng' : 'Thêm vào giỏ'}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                {isDigitalProduct ? (
+                                    <Download size={18} className="sm:mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
+                                ) : (
+                                    <ShoppingCart size={18} className="sm:mr-2 transition-transform group-hover/btn:scale-110 relative z-10" />
+                                )}
+                                <span className="relative z-10 hidden sm:inline">
+                                    Xem chi tiết
+                                </span>
+                            </>
+                        )}
                     </Button>
                 </div>
             </CardContent>

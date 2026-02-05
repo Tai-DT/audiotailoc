@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: BlogDetailLayoutProps): Promi
  const { slug } = await params;
 
  try {
- const response = await apiClient.get(`/blog/articles/slug/${slug}`);
- const article = response.data;
+ const response = await apiClient.get(`/blog/articles/${slug}`);
+ const article = response.data?.data ?? response.data;
 
  if (!article) {
  return {
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: BlogDetailLayoutProps): Promi
  openGraph: {
  title: title,
  description: description.substring(0, 160),
- url: `https://audiotailoc.com/blog-new/${article.slug}`,
+ url: `https://audiotailoc.com/blog/${article.slug}`,
  siteName: 'Audio Tài Lộc',
  images: article.imageUrl ? [
  {
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: BlogDetailLayoutProps): Promi
  site: '@audiotailoc',
  },
  alternates: {
- canonical: `https://audiotailoc.com/blog-new/${article.slug}`,
+ canonical: `https://audiotailoc.com/blog/${article.slug}`,
  },
  robots: {
  index: article.status === 'PUBLISHED',
@@ -78,6 +78,18 @@ export async function generateMetadata({ params }: BlogDetailLayoutProps): Promi
 
  return metadata;
  } catch (error) {
+ // Avoid noisy dev console for expected 404s.
+ const status =
+  typeof error === 'object' && error !== null && 'response' in error
+   ? (error as { response?: { status?: number } }).response?.status
+   : undefined;
+ if (status === 404) {
+  return {
+   title: 'Bài viết không tồn tại | Audio Tài Lộc',
+   description: 'Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa.',
+  };
+ }
+
  console.error('Error generating metadata for blog article:', error);
  return {
  title: 'Bài viết | Audio Tài Lộc',

@@ -236,6 +236,17 @@ export default function CheckoutPage() {
 
  if (result.success) {
  if (paymentMethod === 'payos' && result.paymentUrl) {
+ try {
+ const orderId = typeof result?.orderId === 'string' ? result.orderId : '';
+ const intentId = typeof result?.intentId === 'string' ? result.intentId : '';
+ if (orderId && intentId) {
+ localStorage.setItem(`atl_payos_intent_${orderId}`, intentId);
+ localStorage.setItem('atl_last_payos_order', orderId);
+ localStorage.setItem('atl_last_payos_intent', intentId);
+ }
+ } catch (_err) {
+ // ignore storage errors
+ }
  toast.success('Khởi tạo thanh toán hỏa tốc...');
  window.location.href = result.paymentUrl;
  return;

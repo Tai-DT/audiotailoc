@@ -136,13 +136,6 @@ export default function BookingsPage() {
     return { Authorization: `Bearer ${token}` };
   }, [token]);
 
-  useEffect(() => {
-    fetchBookings();
-    fetchServices();
-    fetchTechnicians();
-    fetchUsers();
-  }, [fetchBookings, fetchServices, fetchTechnicians, fetchUsers]);
-
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
@@ -429,6 +422,13 @@ export default function BookingsPage() {
       setUsers([]);
     }
   }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchBookings();
+    fetchServices();
+    fetchTechnicians();
+    fetchUsers();
+  }, [fetchBookings, fetchServices, fetchTechnicians, fetchUsers]);
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {

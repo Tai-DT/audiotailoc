@@ -20,8 +20,12 @@ export class AdminGuard implements CanActivate {
       return false;
     }
 
-    // If user has role in JWT payload, check it directly
-    if (user.role === 'ADMIN') {
+    const normalizedRole = String(user?.role || '')
+      .trim()
+      .toUpperCase();
+
+    // If user has role in JWT payload, check it directly (case-insensitive)
+    if (normalizedRole === 'ADMIN') {
       this.logger.debug('AdminGuard: User has ADMIN role in JWT');
       return true;
     }
@@ -36,7 +40,7 @@ export class AdminGuard implements CanActivate {
         .split(',')
         .map(email => email.trim().toLowerCase())
         .filter(email => email.length > 0);
-      const isAllowed = allowedEmails.includes(user.email.toLowerCase());
+      const isAllowed = allowedEmails.includes(String(user.email).trim().toLowerCase());
       this.logger.debug(
         `AdminGuard: Checking email whitelist - email=${user.email}, allowed=${isAllowed}`,
       );

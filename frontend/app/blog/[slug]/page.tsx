@@ -32,7 +32,7 @@ import { toast } from 'react-hot-toast';
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
  const { slug } = React.use(params);
- const { data: article, isLoading } = useBlogArticleBySlug(slug);
+ const { data: article, isLoading, error } = useBlogArticleBySlug(slug);
 
  // Fetch related articles from same category
  const { data: relatedData } = useBlogArticles({
@@ -63,7 +63,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
  }
 
  if (!article) {
- notFound();
+   const status =
+     typeof error === 'object' && error !== null && 'response' in error
+       ? (error as { response?: { status?: number } }).response?.status
+       : undefined;
+
+   if (status === 404 || status === 410) notFound();
+   notFound();
  }
 
  const readingTime = Math.ceil(article.content.split(' ').length / 200);

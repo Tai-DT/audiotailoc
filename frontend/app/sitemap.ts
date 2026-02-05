@@ -45,10 +45,10 @@ interface PaginatedResponse<T> {
   };
 }
 
-async function getProducts(): Promise<Product[]> {
+async function getProducts(params: { isDigital: boolean }): Promise<Product[]> {
   try {
     const response = await apiClient.get('/catalog/products', {
-      params: { page: 1, limit: 1000, isActive: true }
+      params: { page: 1, pageSize: 1000, isActive: true, isDigital: params.isDigital }
     });
     const data = handleApiResponse<any>(response);
     return Array.isArray(data?.items) ? data.items : (Array.isArray(data?.products) ? data.products : []);
@@ -147,6 +147,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/software`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/services`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
@@ -208,13 +214,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic product pages
-  const products = await getProducts();
+  // Dynamic product pages (physical)
+  const products = await getProducts({ isDigital: false });
   const productPages = products.map((product) => ({
     url: `${baseUrl}/products/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
+  }));
+
+  // Dynamic software pages (digital)
+  const software = await getProducts({ isDigital: true });
+  const softwarePages = software.map((product) => ({
+    url: `${baseUrl}/software/${product.slug}`,
+    lastModified: new Date(product.updatedAt),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
   }));
 
   // Dynamic service pages
@@ -259,6 +274,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticPages,
     ...productPages,
+    ...softwarePages,
     ...servicePages,
     ...categoryPages,
     ...projectPages,

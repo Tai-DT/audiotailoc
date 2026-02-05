@@ -24,6 +24,13 @@ import {
 export class CompleteProductService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeOptions(options?: { includeDownloadUrl?: boolean; includeInactive?: boolean }) {
+    return {
+      includeDownloadUrl: Boolean(options?.includeDownloadUrl),
+      includeInactive: Boolean(options?.includeInactive),
+    };
+  }
+
   private safeParseJSON(data: any, defaultValue: any = null) {
     if (!data) return defaultValue;
     if (typeof data !== 'string') return data;
@@ -58,11 +65,17 @@ export class CompleteProductService {
       images,
       isActive = true,
       featured = false,
+      isDigital = false,
+      downloadUrl,
       metaTitle,
       metaDescription,
       metaKeywords,
       canonicalUrl,
     } = createProductDto;
+
+    if (isDigital && !downloadUrl) {
+      throw new BadRequestException('downloadUrl is required for digital products');
+    }
 
     // Generate slug if not provided
     const finalSlug = slug || this.generateSlug(name);
@@ -87,53 +100,90 @@ export class CompleteProductService {
       }
     }
 
-    // Create product
-    const product = await this.prisma.products.create({
-      data: {
-        id: randomUUID(),
-        name,
-        slug: finalSlug,
-        description,
-        shortDescription,
-        priceCents,
-        originalPriceCents,
-        stockQuantity,
-        sku,
-        warranty,
-        features,
-        minOrderQuantity,
-        maxOrderQuantity,
-        tags,
-        categoryId: categoryId && categoryId.trim() !== '' ? categoryId : null,
-        brand,
-        model,
-        weight,
-        dimensions,
-        specifications: specifications ? JSON.stringify(specifications) : null,
-        images: images ? JSON.stringify(images) : null,
-        isActive,
-        featured,
-        metaTitle,
-        metaDescription,
-        metaKeywords,
-        canonicalUrl,
-        updatedAt: new Date(),
-      },
-      include: {
-        categories: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+    const product = await this.prisma.$transaction(async tx => {
+      const created = await tx.products.create({
+        data: {
+          id: randomUUID(),
+          name,
+          slug: finalSlug,
+          description,
+          shortDescription,
+          priceCents,
+          originalPriceCents,
+          stockQuantity,
+          sku,
+          warranty,
+          features,
+          minOrderQuantity,
+          maxOrderQuantity,
+          tags,
+          categoryId: categoryId && categoryId.trim() !== '' ? categoryId : null,
+          brand,
+          model,
+          weight,
+          dimensions,
+          specifications: specifications ? JSON.stringify(specifications) : null,
+          images: images ? JSON.stringify(images) : null,
+          isActive,
+          featured,
+          isDigital,
+          metaTitle,
+          metaDescription,
+          metaKeywords,
+          canonicalUrl,
+          updatedAt: new Date(),
+        },
+        include: {
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
           },
         },
-      },
+      });
+
+      if (isDigital) {
+        await tx.digital_products.upsert({
+          where: { productId: created.id },
+          update: {
+            downloadUrl: downloadUrl || null,
+            updatedAt: new Date(),
+          },
+          create: {
+            productId: created.id,
+            downloadUrl: downloadUrl || null,
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      const reloaded = await tx.products.findUnique({
+        where: { id: created.id },
+        include: {
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          digital_products: true,
+        },
+      });
+
+      return reloaded || created;
     });
 
-    return this.mapToProductResponse(product);
+    return this.mapToProductResponse(product, { includeDownloadUrl: true });
   }
 
-  async findProducts(query: ProductListQueryDto): Promise<ProductListResponseDto> {
+  async findProducts(
+    query: ProductListQueryDto,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean },
+  ): Promise<ProductListResponseDto> {
+    const normalizedOptions = this.normalizeOptions(options);
     const {
       page = 1,
       pageSize = 20,
@@ -146,6 +196,7 @@ export class CompleteProductService {
       categoryId,
       brand,
       featured,
+      isDigital,
       isActive,
       inStock: _inStock,
     } = query;
@@ -158,6 +209,15 @@ export class CompleteProductService {
     const where: any = {
       isDeleted: false,
     };
+
+    // Public listing should only include active products unless explicitly allowed.
+    if (normalizedOptions.includeInactive) {
+      if (isActive !== undefined) {
+        where.isActive = isActive;
+      }
+    } else {
+      where.isActive = true;
+    }
 
     if (searchTerm) {
       where.OR = [
@@ -185,8 +245,8 @@ export class CompleteProductService {
       where.featured = featured;
     }
 
-    if (isActive !== undefined) {
-      where.isActive = isActive;
+    if (isDigital !== undefined) {
+      where.isDigital = isDigital;
     }
 
     if (brand) {
@@ -202,18 +262,24 @@ export class CompleteProductService {
     orderBy[sortBy] = sortOrder;
 
     // Execute query
+    const include: any = {
+      categories: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    };
+
+    if (normalizedOptions.includeDownloadUrl) {
+      include.digital_products = true;
+    }
+
     const [products, total] = await Promise.all([
       this.prisma.products.findMany({
         where,
-        include: {
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
+        include,
         orderBy,
         skip,
         take: pageSize,
@@ -224,7 +290,7 @@ export class CompleteProductService {
     const totalPages = Math.ceil(total / pageSize);
 
     return {
-      items: products.map(product => this.mapToProductResponse(product)),
+      items: products.map(product => this.mapToProductResponse(product, normalizedOptions)),
       total,
       page,
       pageSize,
@@ -234,11 +300,11 @@ export class CompleteProductService {
     };
   }
 
-  async searchProducts(query: ProductListQueryDto): Promise<ProductListResponseDto> {
-    return this.findProducts({
-      ...query,
-      isActive: query.isActive !== undefined ? query.isActive : true,
-    });
+  async searchProducts(
+    query: ProductListQueryDto,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean },
+  ): Promise<ProductListResponseDto> {
+    return this.findProducts(query, options);
   }
 
   async getSearchSuggestions(
@@ -293,9 +359,17 @@ export class CompleteProductService {
     return suggestions.slice(0, searchLimit);
   }
 
-  async findProductById(id: string): Promise<ProductResponseDto> {
+  async findProductById(
+    id: string,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean },
+  ): Promise<ProductResponseDto> {
+    const normalizedOptions = this.normalizeOptions(options);
     const product = await this.prisma.products.findUnique({
-      where: { id, isDeleted: false },
+      where: {
+        id,
+        isDeleted: false,
+        ...(normalizedOptions.includeInactive ? {} : { isActive: true }),
+      },
       include: {
         categories: {
           select: {
@@ -304,6 +378,7 @@ export class CompleteProductService {
             slug: true,
           },
         },
+        ...(normalizedOptions.includeDownloadUrl ? { digital_products: true } : {}),
       },
     });
 
@@ -311,12 +386,20 @@ export class CompleteProductService {
       throw new NotFoundException(`Product with ID '${id}' not found`);
     }
 
-    return this.mapToProductResponse(product);
+    return this.mapToProductResponse(product, normalizedOptions);
   }
 
-  async findProductBySlug(slug: string): Promise<ProductResponseDto> {
+  async findProductBySlug(
+    slug: string,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean },
+  ): Promise<ProductResponseDto> {
+    const normalizedOptions = this.normalizeOptions(options);
     const product = await this.prisma.products.findUnique({
-      where: { slug, isDeleted: false },
+      where: {
+        slug,
+        isDeleted: false,
+        ...(normalizedOptions.includeInactive ? {} : { isActive: true }),
+      },
       include: {
         categories: {
           select: {
@@ -325,6 +408,7 @@ export class CompleteProductService {
             slug: true,
           },
         },
+        ...(normalizedOptions.includeDownloadUrl ? { digital_products: true } : {}),
       },
     });
 
@@ -332,18 +416,21 @@ export class CompleteProductService {
       throw new NotFoundException(`Product with slug '${slug}' not found`);
     }
 
-    // Increment view count
-    await this.prisma.products.update({
-      where: { id: product.id },
-      data: { viewCount: { increment: 1 } },
-    });
+    // Increment view count for public traffic only.
+    if (!normalizedOptions.includeInactive) {
+      await this.prisma.products.update({
+        where: { id: product.id },
+        data: { viewCount: { increment: 1 } },
+      });
+    }
 
-    return this.mapToProductResponse(product);
+    return this.mapToProductResponse(product, normalizedOptions);
   }
 
   async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<ProductResponseDto> {
     const product = await this.prisma.products.findUnique({
       where: { id, isDeleted: false },
+      include: { digital_products: true },
     });
 
     if (!product) {
@@ -373,11 +460,27 @@ export class CompleteProductService {
       images,
       isActive,
       featured,
+      isDigital,
+      downloadUrl,
       metaTitle,
       metaDescription,
       metaKeywords,
       canonicalUrl,
     } = updateProductDto;
+
+    const nextIsDigital = isDigital !== undefined ? isDigital : Boolean((product as any).isDigital);
+    const storedDownloadUrl = product.digital_products?.downloadUrl ?? null;
+    const effectiveDownloadUrl = downloadUrl !== undefined ? downloadUrl : storedDownloadUrl;
+
+    if (nextIsDigital) {
+      if (!effectiveDownloadUrl) {
+        throw new BadRequestException('downloadUrl is required for digital products');
+      }
+    } else {
+      if (downloadUrl !== undefined) {
+        throw new BadRequestException('downloadUrl is only allowed for digital products');
+      }
+    }
 
     // Check slug uniqueness if updating slug
     if (slug && slug !== product.slug) {
@@ -401,49 +504,80 @@ export class CompleteProductService {
       }
     }
 
-    // Update product
-    const updatedProduct = await this.prisma.products.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(slug && { slug }),
-        ...(description !== undefined && { description }),
-        ...(shortDescription !== undefined && { shortDescription }),
-        ...(priceCents && { priceCents }),
-        ...(originalPriceCents !== undefined && { originalPriceCents }),
-        ...(stockQuantity !== undefined && { stockQuantity }),
-        ...(sku !== undefined && { sku }),
-        ...(warranty !== undefined && { warranty }),
-        ...(features !== undefined && { features }),
-        ...(minOrderQuantity && { minOrderQuantity }),
-        ...(maxOrderQuantity !== undefined && { maxOrderQuantity }),
-        ...(tags !== undefined && { tags }),
-        ...(categoryId && { categoryId }),
-        ...(brand !== undefined && { brand }),
-        ...(model !== undefined && { model }),
-        ...(weight !== undefined && { weight }),
-        ...(dimensions !== undefined && { dimensions }),
-        ...(specifications && { specifications: JSON.stringify(specifications) }),
-        ...(images && { images: JSON.stringify(images) }),
-        ...(isActive !== undefined && { isActive }),
-        ...(featured !== undefined && { featured }),
-        ...(metaTitle !== undefined && { metaTitle }),
-        ...(metaDescription !== undefined && { metaDescription }),
-        ...(metaKeywords !== undefined && { metaKeywords }),
-        ...(canonicalUrl !== undefined && { canonicalUrl }),
-      },
-      include: {
-        categories: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
+    const updatedProduct = await this.prisma.$transaction(async tx => {
+      await tx.products.update({
+        where: { id },
+        data: {
+          ...(name && { name }),
+          ...(slug && { slug }),
+          ...(description !== undefined && { description }),
+          ...(shortDescription !== undefined && { shortDescription }),
+          ...(priceCents && { priceCents }),
+          ...(originalPriceCents !== undefined && { originalPriceCents }),
+          ...(stockQuantity !== undefined && { stockQuantity }),
+          ...(sku !== undefined && { sku }),
+          ...(warranty !== undefined && { warranty }),
+          ...(features !== undefined && { features }),
+          ...(minOrderQuantity && { minOrderQuantity }),
+          ...(maxOrderQuantity !== undefined && { maxOrderQuantity }),
+          ...(tags !== undefined && { tags }),
+          ...(categoryId && { categoryId }),
+          ...(brand !== undefined && { brand }),
+          ...(model !== undefined && { model }),
+          ...(weight !== undefined && { weight }),
+          ...(dimensions !== undefined && { dimensions }),
+          ...(specifications && { specifications: JSON.stringify(specifications) }),
+          ...(images && { images: JSON.stringify(images) }),
+          ...(isActive !== undefined && { isActive }),
+          ...(featured !== undefined && { featured }),
+          ...(isDigital !== undefined && { isDigital }),
+          ...(metaTitle !== undefined && { metaTitle }),
+          ...(metaDescription !== undefined && { metaDescription }),
+          ...(metaKeywords !== undefined && { metaKeywords }),
+          ...(canonicalUrl !== undefined && { canonicalUrl }),
+          updatedAt: new Date(),
         },
-      },
+      });
+
+      if (nextIsDigital) {
+        await tx.digital_products.upsert({
+          where: { productId: id },
+          update: {
+            downloadUrl: effectiveDownloadUrl,
+            updatedAt: new Date(),
+          },
+          create: {
+            productId: id,
+            downloadUrl: effectiveDownloadUrl,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.digital_products.deleteMany({ where: { productId: id } });
+      }
+
+      const reloaded = await tx.products.findUnique({
+        where: { id },
+        include: {
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          digital_products: true,
+        },
+      });
+
+      if (!reloaded) {
+        throw new NotFoundException(`Product with ID '${id}' not found`);
+      }
+
+      return reloaded;
     });
 
-    return this.mapToProductResponse(updatedProduct);
+    return this.mapToProductResponse(updatedProduct, { includeDownloadUrl: true });
   }
 
   async deleteProduct(id: string): Promise<{ deleted: boolean; message?: string }> {
@@ -617,6 +751,7 @@ export class CompleteProductService {
             slug: true,
           },
         },
+        digital_products: true,
       },
     });
 
@@ -649,6 +784,7 @@ export class CompleteProductService {
         model: product.model,
         weight: product.weight,
         dimensions: product.dimensions,
+        isDigital: Boolean((product as any).isDigital),
         specifications: product.specifications
           ? JSON.parse(JSON.stringify(product.specifications))
           : null,
@@ -672,7 +808,31 @@ export class CompleteProductService {
       },
     });
 
-    return this.mapToProductResponse(duplicatedProduct);
+    const isDigital = Boolean((product as any).isDigital);
+    if (isDigital) {
+      await this.prisma.digital_products.upsert({
+        where: { productId: duplicatedProduct.id },
+        update: {
+          downloadUrl: product.digital_products?.downloadUrl || null,
+          updatedAt: new Date(),
+        },
+        create: {
+          productId: duplicatedProduct.id,
+          downloadUrl: product.digital_products?.downloadUrl || null,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    const reloaded = await this.prisma.products.findUnique({
+      where: { id: duplicatedProduct.id },
+      include: {
+        categories: { select: { id: true, name: true, slug: true } },
+        digital_products: true,
+      },
+    });
+
+    return this.mapToProductResponse(reloaded || duplicatedProduct, { includeDownloadUrl: true });
   }
 
   async incrementProductView(id: string): Promise<void> {
@@ -705,7 +865,9 @@ export class CompleteProductService {
       this.prisma.products.count({ where: { isDeleted: false } }),
       this.prisma.products.count({ where: { isDeleted: false, isActive: true } }),
       this.prisma.products.count({ where: { isDeleted: false, featured: true } }),
-      this.prisma.products.count({ where: { isDeleted: false, stockQuantity: { lte: 0 } } }),
+      this.prisma.products.count({
+        where: { isDeleted: false, isDigital: false, stockQuantity: { lte: 0 } },
+      }),
       this.prisma.products.aggregate({
         where: { isDeleted: false },
         _sum: { viewCount: true },
@@ -771,9 +933,19 @@ export class CompleteProductService {
     };
   }
 
-  async getTopViewedProducts(limit: number = 10): Promise<ProductResponseDto[]> {
+  async getTopViewedProducts(
+    limit: number = 10,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean; isDigital?: boolean },
+  ): Promise<ProductResponseDto[]> {
+    const normalizedOptions = this.normalizeOptions(options);
+    const where: any = normalizedOptions.includeInactive
+      ? { isDeleted: false }
+      : { isDeleted: false, isActive: true };
+    if (typeof options?.isDigital === 'boolean') {
+      where.isDigital = options.isDigital;
+    }
     const products = await this.prisma.products.findMany({
-      where: { isDeleted: false },
+      where,
       include: {
         categories: {
           select: { id: true, name: true, slug: true },
@@ -783,12 +955,22 @@ export class CompleteProductService {
       take: Math.min(Math.max(limit, 1), 50),
     });
 
-    return products.map(product => this.mapToProductResponse(product));
+    return products.map(product => this.mapToProductResponse(product, normalizedOptions));
   }
 
-  async getRecentProducts(limit: number = 10): Promise<ProductResponseDto[]> {
+  async getRecentProducts(
+    limit: number = 10,
+    options?: { includeDownloadUrl?: boolean; includeInactive?: boolean; isDigital?: boolean },
+  ): Promise<ProductResponseDto[]> {
+    const normalizedOptions = this.normalizeOptions(options);
+    const where: any = normalizedOptions.includeInactive
+      ? { isDeleted: false }
+      : { isDeleted: false, isActive: true };
+    if (typeof options?.isDigital === 'boolean') {
+      where.isDigital = options.isDigital;
+    }
     const products = await this.prisma.products.findMany({
-      where: { isDeleted: false },
+      where,
       include: {
         categories: {
           select: { id: true, name: true, slug: true },
@@ -798,7 +980,7 @@ export class CompleteProductService {
       take: Math.min(Math.max(limit, 1), 50),
     });
 
-    return products.map(product => this.mapToProductResponse(product));
+    return products.map(product => this.mapToProductResponse(product, normalizedOptions));
   }
 
   async exportProductsToCsv(): Promise<string> {
@@ -981,7 +1163,10 @@ export class CompleteProductService {
     return slug;
   }
 
-  private mapToProductResponse(product: any): ProductResponseDto {
+  private mapToProductResponse(
+    product: any,
+    options?: { includeDownloadUrl?: boolean },
+  ): ProductResponseDto {
     return {
       id: product.id,
       slug: product.slug,
@@ -1015,6 +1200,10 @@ export class CompleteProductService {
       canonicalUrl: product.canonicalUrl,
       featured: product.featured,
       isActive: product.isActive,
+      isDigital: Boolean(product.isDigital),
+      ...(options?.includeDownloadUrl
+        ? { downloadUrl: product.digital_products?.downloadUrl ?? null }
+        : {}),
       viewCount: product.viewCount,
       stockQuantity: product.stockQuantity,
       createdAt: product.createdAt.toISOString(),

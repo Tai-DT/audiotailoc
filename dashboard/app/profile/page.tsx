@@ -94,7 +94,7 @@ export default function ProfilePage ()
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireRole="ADMIN">
       <DashboardLayout>
         <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
@@ -120,7 +120,10 @@ export default function ProfilePage ()
                 </div>
                 <CardTitle>{user.name}</CardTitle>
                 <CardDescription>{user.email}</CardDescription>
-                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="mt-2">
+                <Badge
+                  variant={String(user.role || '').trim().toUpperCase() === 'ADMIN' ? 'default' : 'secondary'}
+                  className="mt-2"
+                >
                   <Shield className="w-3 h-3 mr-1" />
                   {user.role || 'User'}
                 </Badge>

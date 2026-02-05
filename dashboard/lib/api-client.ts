@@ -81,6 +81,8 @@ export interface CreateProductData {
   slug?: string;
   featured?: boolean;
   isActive?: boolean;
+  isDigital?: boolean;
+  downloadUrl?: string;
 }
 
 export interface UpdateProductData {
@@ -110,6 +112,8 @@ export interface UpdateProductData {
   slug?: string;
   featured?: boolean;
   isActive?: boolean;
+  isDigital?: boolean;
+  downloadUrl?: string;
 }
 
 // Debug logger is disabled to avoid noisy network errors during tests (hydration/ERR_EMPTY_RESPONSE).
@@ -468,7 +472,7 @@ class ApiClient {
   }
 
   // Products endpoints
-  async getProducts(params?: { page?: number; limit?: number; category?: string; search?: string; isActive?: boolean; featured?: boolean; minPrice?: number; maxPrice?: number }) {
+  async getProducts(params?: { page?: number; limit?: number; category?: string; search?: string; isActive?: boolean; featured?: boolean; isDigital?: boolean; minPrice?: number; maxPrice?: number }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('pageSize', params.limit.toString());
@@ -476,6 +480,7 @@ class ApiClient {
     if (params?.search) query.append('q', params.search.toString());
     if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
     if (params?.featured !== undefined) query.append('featured', params.featured.toString());
+    if (params?.isDigital !== undefined) query.append('isDigital', params.isDigital.toString());
     if (params?.minPrice !== undefined) query.append('minPrice', params.minPrice.toString());
     if (params?.maxPrice !== undefined) query.append('maxPrice', params.maxPrice.toString());
 
@@ -1435,7 +1440,7 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.request('/upload/image', {
+    return this.request<{ url: string; success: boolean }>('/upload/image', {
       method: 'POST',
       body: formData,
     });

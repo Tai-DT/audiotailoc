@@ -4,8 +4,8 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CartProvider } from "@/components/providers/cart-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import HeaderClientShell from "@/components/layout/header-client-shell";
-import { Footer } from "@/components/layout/Footer";
+import HeaderShell from "@/components/layout/header-shell";
+import FooterShell from "@/components/layout/footer-shell";
 import { OrganizationStructuredData } from "@/components/seo/organization-structured-data";
 import { LazyAnalytics } from "@/components/analytics/lazy-analytics";
 import { LazyChatWidget } from "@/components/ui/lazy-chat-widget";
@@ -143,7 +143,7 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
@@ -187,13 +187,11 @@ export default function RootLayout({
                     <QueryProvider>
                         <CartProvider>
 
-
-
-                            <HeaderClientShell />
+                            <HeaderShell />
                             <main id="main-content" tabIndex={-1}>
                                 {children}
                             </main>
-                            <Footer />
+                            <FooterShell />
                             <LazyToaster />
                             <LazyChatWidget />
                         </CartProvider>

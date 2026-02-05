@@ -29,7 +29,7 @@ describe('Avatar', () => {
   });
 
   it('renders OptimizedImage with fallback when no src provided', () => {
-    render(<OptimizedImage alt="test" />);
+    render(<OptimizedImage alt="test" width={40} height={40} />);
     const img = screen.getByAltText('test');
     expect(img).toBeInTheDocument();
   });

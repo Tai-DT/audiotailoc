@@ -37,6 +37,7 @@ export type ProductDto = {
   canonicalUrl?: string | null;
   featured?: boolean;
   isActive?: boolean;
+  isDigital?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -188,13 +189,14 @@ export class CatalogService {
 
   async listProducts(params: any) {
     const page = Math.max(1, Math.floor(params.page ?? 1));
-    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? 20)));
+    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize ?? params.limit ?? 20)));
 
     const where: any = { isDeleted: false };
     if (params.categoryId) where.categoryId = params.categoryId;
     if (params.brand) where.brand = params.brand;
     if (params.featured !== undefined) where.featured = params.featured;
     if (params.isActive !== undefined) where.isActive = params.isActive;
+    if (params.isDigital !== undefined) where.isDigital = params.isDigital;
     if (params.minPrice !== undefined || params.maxPrice !== undefined) {
       where.priceCents = {};
       if (params.minPrice !== undefined) where.priceCents.gte = BigInt(params.minPrice);
@@ -221,13 +223,17 @@ export class CatalogService {
       }),
     ]);
 
-    const mappedItems = items.map(product => ({
-      ...product,
-      priceCents: Number(product.priceCents),
-      originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
-      images: this.safeParseJSON(product.images, []),
-      specifications: this.safeParseJSON(product.specifications, {}),
-    }));
+    const mappedItems = items.map(product => {
+      // SECURITY: never expose downloadUrl via public catalog endpoints
+      const { downloadUrl: _downloadUrl, ...rest } = product as any;
+      return {
+        ...rest,
+        priceCents: Number(product.priceCents),
+        originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
+        images: this.safeParseJSON(product.images, []),
+        specifications: this.safeParseJSON(product.specifications, {}),
+      };
+    });
 
     return {
       items: mappedItems,
@@ -238,9 +244,17 @@ export class CatalogService {
     };
   }
 
-  async getProductsByCategory(slug: string, params: { page?: number; limit?: number }) {
+  async getProductsByCategory(
+    slug: string,
+    params: { page?: number; limit?: number; isDigital?: boolean },
+  ) {
     const category = await this.getCategoryBySlug(slug);
-    return this.listProducts({ categoryId: category.id, ...params });
+    // Categories pages are for physical products by default.
+    return this.listProducts({
+      categoryId: category.id,
+      ...params,
+      isDigital: params.isDigital ?? false,
+    });
   }
 
   async getById(id: string): Promise<ProductDto> {
@@ -252,7 +266,10 @@ export class CatalogService {
     if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
 
     const result = {
-      ...product,
+      ...(() => {
+        const { downloadUrl: _downloadUrl, ...rest } = product as any;
+        return rest;
+      })(),
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: this.safeParseJSON(product.images, []),
@@ -272,7 +289,10 @@ export class CatalogService {
     if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
 
     const result = {
-      ...product,
+      ...(() => {
+        const { downloadUrl: _downloadUrl, ...rest } = product as any;
+        return rest;
+      })(),
       priceCents: Number(product.priceCents),
       originalPriceCents: product.originalPriceCents ? Number(product.originalPriceCents) : null,
       images: this.safeParseJSON(product.images, []),
@@ -337,8 +357,24 @@ export class CatalogService {
         metaDescription: data.metaDescription || data.shortDescription,
         featured: data.featured || false,
         isActive: data.isActive ?? true,
+        isDigital: data.isDigital ?? false,
       } as any,
     });
+
+    if (data.isDigital) {
+      await this.prisma.digital_products.upsert({
+        where: { productId: product.id },
+        update: {
+          downloadUrl: data.downloadUrl || null,
+          updatedAt: new Date(),
+        },
+        create: {
+          productId: product.id,
+          downloadUrl: data.downloadUrl || null,
+          updatedAt: new Date(),
+        },
+      });
+    }
 
     await this.inventory.create(product.id, { stock: data.stockQuantity || 0 });
 
@@ -358,8 +394,21 @@ export class CatalogService {
   }
 
   async update(id: string, data: UpdateProductDto, userId?: string): Promise<ProductDto> {
-    const existing = await this.prisma.products.findUnique({ where: { id } });
+    const existing = await this.prisma.products.findUnique({
+      where: { id },
+      include: { digital_products: true },
+    });
     if (!existing) throw new NotFoundException('Sản phẩm không tồn tại');
+
+    const nextIsDigital =
+      data.isDigital !== undefined ? Boolean(data.isDigital) : Boolean((existing as any).isDigital);
+    const storedDownloadUrl = existing.digital_products?.downloadUrl ?? null;
+    const effectiveDownloadUrl =
+      data.downloadUrl !== undefined ? data.downloadUrl : storedDownloadUrl;
+
+    if (nextIsDigital && !effectiveDownloadUrl) {
+      throw new BadRequestException('downloadUrl is required for digital products');
+    }
 
     // Check SKU uniqueness if SKU is being updated
     if (data.sku && data.sku !== existing.sku) {
@@ -368,6 +417,8 @@ export class CatalogService {
     }
 
     const updateData: any = { ...data };
+    // downloadUrl is stored in digital_products, not in products.
+    delete updateData.downloadUrl;
     if (data.priceCents !== undefined) updateData.priceCents = BigInt(data.priceCents);
     if (data.originalPriceCents !== undefined && data.originalPriceCents !== null) {
       updateData.originalPriceCents = BigInt(data.originalPriceCents);
@@ -384,6 +435,23 @@ export class CatalogService {
       where: { id },
       data: updateData,
     });
+
+    if (nextIsDigital) {
+      await this.prisma.digital_products.upsert({
+        where: { productId: product.id },
+        update: {
+          downloadUrl: effectiveDownloadUrl,
+          updatedAt: new Date(),
+        },
+        create: {
+          productId: product.id,
+          downloadUrl: effectiveDownloadUrl,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      await this.prisma.digital_products.deleteMany({ where: { productId: product.id } });
+    }
 
     if (userId) {
       await this.activityLog.logActivity({

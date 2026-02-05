@@ -18,7 +18,7 @@ export class AdminOrKeyGuard implements CanActivate {
     const envKey = this.config.get<string>('ADMIN_API_KEY') || '';
 
     this.logger.debug(
-      `AdminOrKeyGuard: headerKey=${headerKey}, envKey=${envKey}, path=${req.path}`,
+      `AdminOrKeyGuard: hasHeaderKey=${Boolean(headerKey)}, hasEnvKey=${Boolean(envKey)}, path=${req.path}`,
     );
 
     if (envKey && headerKey && headerKey === envKey) {

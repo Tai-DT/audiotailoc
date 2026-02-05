@@ -603,11 +603,13 @@ model products {
   canonicalUrl           String?
   featured               Boolean                  @default(false)
   isActive               Boolean                  @default(true)
+  isDigital              Boolean                  @default(false)
   isDeleted              Boolean                  @default(false)
   viewCount              Int                      @default(0)
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime
   cart_items             cart_items[]
+  digital_products       digital_products?
   inventory              inventory?
   inventory_alerts       inventory_alerts[]
   inventory_movements    inventory_movements[]
@@ -621,7 +623,16 @@ model products {
   @@index([categoryId])
   @@index([featured])
   @@index([isActive])
+  @@index([isDigital])
   @@index([isDeleted])
+}
+
+model digital_products {
+  productId   String   @id
+  downloadUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  products    products @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model projects {

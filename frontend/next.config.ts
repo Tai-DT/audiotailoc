@@ -3,6 +3,7 @@ import path from "path";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010/api/v1';
 const backendBase = apiUrl.replace(/\/api\/v1\/?$/, '');
+const isDev = process.env.NODE_ENV === 'development';
 
 let backendImagePattern:
   | {
@@ -42,10 +43,7 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Temporarily disable TypeScript checking to focus on connectivity
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Keep TypeScript validation enabled during builds for safety.
 
   // Performance optimizations
   experimental: {
@@ -87,7 +85,7 @@ const nextConfig: NextConfig = {
       'recharts',
       'react-markdown',
       'zod',
-    ],
+    ].filter((pkg) => (isDev ? pkg !== 'lucide-react' : true)),
   },
 
   // Modularize imports for better tree-shaking
@@ -116,6 +114,18 @@ const nextConfig: NextConfig = {
 
   // Custom domain configuration with aggressive caching
   async headers() {
+    const staticCacheControl = isDev
+      ? 'no-store, must-revalidate'
+      : 'public, max-age=31536000, immutable';
+
+    const imageCacheControl = isDev
+      ? 'no-store, must-revalidate'
+      : 'public, max-age=2592000, stale-while-revalidate=86400';
+
+    const publicAssetCacheControl = isDev
+      ? 'no-store, must-revalidate'
+      : 'public, max-age=604800, stale-while-revalidate=86400';
+
     return [
       {
         source: '/(.*)',
@@ -140,7 +150,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: staticCacheControl,
           },
         ],
       },
@@ -150,7 +160,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+            value: imageCacheControl,
           },
         ],
       },
@@ -170,7 +180,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=604800, stale-while-revalidate=86400',
+            value: publicAssetCacheControl,
           },
         ],
       },

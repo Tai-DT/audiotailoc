@@ -13,6 +13,7 @@ import {
   UsePipes,
   Patch,
   Logger,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtGuard } from '../../auth/jwt.guard';
 import { AdminOrKeyGuard } from '../../auth/admin-or-key.guard';
+import { OptionalJwtGuard } from '../../auth/optional-jwt.guard';
 import { CompleteProductService } from '../services/complete-product.service';
 import {
   CreateProductDto,
@@ -154,6 +156,12 @@ export class CompleteProductController {
     description: 'Filter by active status',
   })
   @ApiQuery({
+    name: 'isDigital',
+    required: false,
+    type: Boolean,
+    description: 'Filter by digital product flag (software)',
+  })
+  @ApiQuery({
     name: 'inStock',
     required: false,
     type: Boolean,
@@ -165,9 +173,32 @@ export class CompleteProductController {
     type: String,
     description: 'Filter by tags (comma-separated)',
   })
-  async findAll(@Query() query: ProductListQueryDto): Promise<ProductListResponseDto> {
+  @UseGuards(OptionalJwtGuard)
+  async findAll(
+    @Query() query: ProductListQueryDto,
+    @Req() req: any,
+  ): Promise<ProductListResponseDto> {
     this.logger.debug('DEBUG: CompleteProductController.findAll hit');
-    return this.catalogService.findProducts(query);
+    const adminKey = String(req?.headers?.['x-admin-key'] || '').trim();
+    const configuredAdminKey = String(process.env.ADMIN_API_KEY || '').trim();
+    const isAdminByKey = Boolean(configuredAdminKey && adminKey && adminKey === configuredAdminKey);
+
+    const configuredAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const requestEmail = String(req?.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedRole = String(req?.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const isAdminByRole =
+      normalizedRole === 'ADMIN' ||
+      Boolean(configuredAdminEmail && requestEmail === configuredAdminEmail);
+    const isAdmin = Boolean(isAdminByKey || isAdminByRole);
+    const includeDownloadUrl = isAdmin;
+    const includeInactive = isAdmin;
+    return this.catalogService.findProducts(query, { includeDownloadUrl, includeInactive });
   }
 
   @Get('search')
@@ -180,10 +211,33 @@ export class CompleteProductController {
     description: 'Search results retrieved successfully',
     type: ProductListResponseDto,
   })
-  async search(@Query() query: ProductListQueryDto): Promise<ProductListResponseDto> {
+  @UseGuards(OptionalJwtGuard)
+  async search(
+    @Query() query: ProductListQueryDto,
+    @Req() req: any,
+  ): Promise<ProductListResponseDto> {
     const searchTerm = query.search || query.q;
     this.logger.debug(`search called with query="${searchTerm}"`);
-    return this.catalogService.searchProducts(query);
+    const adminKey = String(req?.headers?.['x-admin-key'] || '').trim();
+    const configuredAdminKey = String(process.env.ADMIN_API_KEY || '').trim();
+    const isAdminByKey = Boolean(configuredAdminKey && adminKey && adminKey === configuredAdminKey);
+
+    const configuredAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const requestEmail = String(req?.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedRole = String(req?.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const isAdminByRole =
+      normalizedRole === 'ADMIN' ||
+      Boolean(configuredAdminEmail && requestEmail === configuredAdminEmail);
+    const isAdmin = Boolean(isAdminByKey || isAdminByRole);
+    const includeDownloadUrl = isAdmin;
+    const includeInactive = isAdmin;
+    return this.catalogService.searchProducts(query, { includeDownloadUrl, includeInactive });
   }
 
   @Get('suggestions')
@@ -233,7 +287,7 @@ export class CompleteProductController {
     type: [ProductResponseDto],
   })
   async getRecentPublic(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
-    return this.catalogService.getRecentProducts(Math.min(limit || 10, 20));
+    return this.catalogService.getRecentProducts(Math.min(limit || 10, 20), { isDigital: false });
   }
 
   @Get('top-viewed')
@@ -253,7 +307,9 @@ export class CompleteProductController {
     type: [ProductResponseDto],
   })
   async getTopViewedPublic(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
-    return this.catalogService.getTopViewedProducts(Math.min(limit || 10, 20));
+    return this.catalogService.getTopViewedProducts(Math.min(limit || 10, 20), {
+      isDigital: false,
+    });
   }
 
   @Get('overview')
@@ -288,7 +344,7 @@ export class CompleteProductController {
       totalProducts: analytics.totalProducts,
       featuredProducts: analytics.featuredProducts,
       categoriesCount: Object.keys(analytics.productsByCategory || {}).length,
-      recentProducts: await this.catalogService.getRecentProducts(5),
+      recentProducts: await this.catalogService.getRecentProducts(5, { isDigital: false }),
     };
   }
 
@@ -331,8 +387,28 @@ export class CompleteProductController {
     status: HttpStatus.NOT_FOUND,
     description: 'Product not found',
   })
-  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
-    return this.catalogService.findProductById(id);
+  @UseGuards(OptionalJwtGuard)
+  async findOne(@Param('id') id: string, @Req() req: any): Promise<ProductResponseDto> {
+    const adminKey = String(req?.headers?.['x-admin-key'] || '').trim();
+    const configuredAdminKey = String(process.env.ADMIN_API_KEY || '').trim();
+    const isAdminByKey = Boolean(configuredAdminKey && adminKey && adminKey === configuredAdminKey);
+
+    const configuredAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const requestEmail = String(req?.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedRole = String(req?.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const isAdminByRole =
+      normalizedRole === 'ADMIN' ||
+      Boolean(configuredAdminEmail && requestEmail === configuredAdminEmail);
+    const isAdmin = Boolean(isAdminByKey || isAdminByRole);
+    const includeDownloadUrl = isAdmin;
+    const includeInactive = isAdmin;
+    return this.catalogService.findProductById(id, { includeDownloadUrl, includeInactive });
   }
 
   @Get('slug/:slug')
@@ -354,8 +430,28 @@ export class CompleteProductController {
     status: HttpStatus.NOT_FOUND,
     description: 'Product not found',
   })
-  async findBySlug(@Param('slug') slug: string): Promise<ProductResponseDto> {
-    return this.catalogService.findProductBySlug(slug);
+  @UseGuards(OptionalJwtGuard)
+  async findBySlug(@Param('slug') slug: string, @Req() req: any): Promise<ProductResponseDto> {
+    const adminKey = String(req?.headers?.['x-admin-key'] || '').trim();
+    const configuredAdminKey = String(process.env.ADMIN_API_KEY || '').trim();
+    const isAdminByKey = Boolean(configuredAdminKey && adminKey && adminKey === configuredAdminKey);
+
+    const configuredAdminEmail = String(process.env.ADMIN_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    const requestEmail = String(req?.user?.email || '')
+      .trim()
+      .toLowerCase();
+    const normalizedRole = String(req?.user?.role || '')
+      .trim()
+      .toUpperCase();
+    const isAdminByRole =
+      normalizedRole === 'ADMIN' ||
+      Boolean(configuredAdminEmail && requestEmail === configuredAdminEmail);
+    const isAdmin = Boolean(isAdminByKey || isAdminByRole);
+    const includeDownloadUrl = isAdmin;
+    const includeInactive = isAdmin;
+    return this.catalogService.findProductBySlug(slug, { includeDownloadUrl, includeInactive });
   }
 
   @Patch(':id')
@@ -601,7 +697,7 @@ export class CompleteProductController {
     description: 'Unauthorized - Admin access required',
   })
   async getTopViewed(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
-    return this.catalogService.getTopViewedProducts(limit);
+    return this.catalogService.getTopViewedProducts(limit, { includeInactive: true });
   }
 
   @Get('analytics/recent')
@@ -627,7 +723,7 @@ export class CompleteProductController {
     description: 'Unauthorized - Admin access required',
   })
   async getRecent(@Query('limit') limit?: number): Promise<ProductResponseDto[]> {
-    return this.catalogService.getRecentProducts(limit);
+    return this.catalogService.getRecentProducts(limit, { includeInactive: true });
   }
 
   @Get('export/csv')

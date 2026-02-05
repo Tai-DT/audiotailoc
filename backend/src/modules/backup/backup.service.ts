@@ -100,14 +100,21 @@ export class BackupService {
       };
 
       // Save backup metadata
+      // If requested, create a companion file backup (public/uploads/logs/metadata)
+      // as a separate backup entry to avoid overwriting the DB backup metadata file.
+      const associatedFileBackupId = options.includeFiles ? `files_${backupId}` : undefined;
+      if (associatedFileBackupId) {
+        backupMetadata.associatedFileBackupId = associatedFileBackupId;
+      }
+
       await this.saveBackupMetadata(backupMetadata);
 
       // Clean up old backups if needed
       await this.cleanupOldBackups();
 
-      // Create file backup if requested
-      if (options.includeFiles) {
-        await this.createFileBackup(backupId, options);
+      // Create file backup if requested (as a separate metadata entry)
+      if (associatedFileBackupId) {
+        await this.createFileBackup(associatedFileBackupId, {});
       }
 
       this.logger.log(`Full database backup completed: ${backupId} (${finalSize} bytes)`);
@@ -286,17 +293,45 @@ export class BackupService {
         };
       }
 
-      // Preflight checks
-      await this.preflightChecks(['pg_restore', 'tar']);
+      // Preflight checks - only require commands we actually need.
+      const requiredCommands = new Set<string>();
+      const isDbRestore = backupMetadata.type === 'full' || backupMetadata.type === 'incremental';
+      const isFileRestore =
+        backupMetadata.type === 'files' || Array.isArray(backupMetadata.directories);
+
+      if (isDbRestore) requiredCommands.add('pg_restore');
+      if (isFileRestore) requiredCommands.add('tar');
+
+      // If restoring a full DB backup, also restore its associated file backup (if present).
+      const associatedFileBackupId =
+        backupMetadata.type === 'full'
+          ? backupMetadata.associatedFileBackupId || `files_${backupId}`
+          : null;
+      const associatedFileBackup = associatedFileBackupId
+        ? await this.getBackupMetadata(associatedFileBackupId)
+        : null;
+      if (backupMetadata.type === 'full' && associatedFileBackup) {
+        requiredCommands.add('tar');
+      }
+
+      await this.preflightChecks([...requiredCommands]);
 
       let pathToRestore = backupMetadata.path;
-      let isTempFile = false;
+      const tempFiles: string[] = [];
 
       // Handle decryption if needed
       if (backupMetadata.encrypted) {
         this.logger.log(`Decrypting backup for restore: ${backupId}`);
         pathToRestore = await this.decryptBackup(backupMetadata.path);
-        isTempFile = true;
+        tempFiles.push(pathToRestore);
+      }
+
+      // Handle gzip compression for database backups (pg_restore cannot read .gz directly)
+      if (isDbRestore && backupMetadata.compressed) {
+        this.logger.log(`Decompressing backup for restore: ${backupId}`);
+        const decompressed = await this.decompressBackup(pathToRestore);
+        tempFiles.push(decompressed);
+        pathToRestore = decompressed;
       }
 
       try {
@@ -311,13 +346,18 @@ export class BackupService {
         if (backupMetadata.type === 'files' || backupMetadata.directories) {
           await this.restoreFileBackup(metadataToRestore);
         }
+
+        // Restore associated files for full DB backups (if available)
+        if (backupMetadata.type === 'full' && associatedFileBackup) {
+          await this.restoreFileBackup(associatedFileBackup);
+        }
       } finally {
-        // Clean up temporary decrypted file
-        if (isTempFile && pathToRestore !== backupMetadata.path) {
+        // Clean up temporary decrypted/decompressed files
+        for (const file of [...tempFiles].reverse()) {
           try {
-            await fs.unlink(pathToRestore);
+            await fs.unlink(file);
           } catch (err) {
-            this.logger.warn(`Failed to delete temporary decrypted file: ${pathToRestore}`, err);
+            this.logger.warn(`Failed to delete temporary restore file: ${file}`, err);
           }
         }
       }
@@ -678,6 +718,21 @@ export class BackupService {
     });
   }
 
+  private async decompressBackup(filePath: string): Promise<string> {
+    const decompressedPath = `${filePath}_decompressed`;
+
+    return new Promise((resolve, reject) => {
+      const input = createReadStream(filePath);
+      const output = createWriteStream(decompressedPath);
+
+      input.pipe(zlib.createGunzip()).pipe(output);
+
+      output.on('finish', () => resolve(decompressedPath));
+      input.on('error', reject);
+      output.on('error', reject);
+    });
+  }
+
   private async encryptBackup(filePath: string, _backupId: string): Promise<string> {
     const encryptedPath = `${filePath}.enc`;
     const key = this.getEncryptionKey();
@@ -991,6 +1046,33 @@ export class BackupService {
       const metadataPath = path.join(this.backupDir, 'metadata', `${backupId}.json`);
       await fs.unlink(metadataPath);
 
+      // If this is a full DB backup, also delete its associated file backup if present.
+      if (backup.type === 'full') {
+        const associatedId = backup.associatedFileBackupId || `files_${backupId}`;
+        const associated = await this.getBackupMetadata(associatedId);
+        if (associated) {
+          try {
+            await fs.unlink(associated.path);
+          } catch (err) {
+            this.logger.warn(`Failed to delete associated file backup data: ${associatedId}`, err);
+          }
+
+          try {
+            const associatedMetadataPath = path.join(
+              this.backupDir,
+              'metadata',
+              `${associatedId}.json`,
+            );
+            await fs.unlink(associatedMetadataPath);
+          } catch (err) {
+            this.logger.warn(
+              `Failed to delete associated file backup metadata: ${associatedId}`,
+              err,
+            );
+          }
+        }
+      }
+
       this.logger.log(`Deleted backup: ${backupId}`);
       return true;
     } catch (error) {
@@ -1196,6 +1278,11 @@ export interface BackupMetadata {
   compressed?: boolean;
   encrypted?: boolean;
   comment?: string;
+  /**
+   * If present, restoring this full backup should also restore the companion
+   * file backup (public/uploads/logs/etc).
+   */
+  associatedFileBackupId?: string;
 
   // Database-specific metadata
   databaseVersion?: string;

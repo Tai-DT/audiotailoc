@@ -42,14 +42,14 @@ import {
   ShieldCheck,
   Info,
   Bot,
-  LayoutList
+  LayoutList,
+  Download
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useMemo, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useTheme } from "next-themes"
-import Image from "next/image"
 
 const sidebarGroups = [
   {
@@ -82,6 +82,12 @@ const sidebarGroups = [
         title: "Sản phẩm",
         href: "/dashboard/products",
         icon: Package,
+        badge: null,
+      },
+      {
+        title: "Phần mềm",
+        href: "/dashboard/software",
+        icon: Download,
         badge: null,
       },
       {
@@ -364,13 +370,11 @@ export function Sidebar({ className }: SidebarProps) {
             <Link href="/dashboard" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
               {mounted ? (
                 <div className="relative h-8 w-auto shrink-0">
-                  <Image
+                  {/* Use <img> for local SVG to avoid Next image optimizer 404s */}
+                  <img
                     src={logoSrc}
                     alt="Audio Tài Lộc"
-                    width={120}
-                    height={33}
                     className="h-8 w-auto object-contain"
-                    priority
                   />
                 </div>
               ) : (
@@ -392,13 +396,11 @@ export function Sidebar({ className }: SidebarProps) {
             <Link href="/dashboard" className="hover:opacity-80 transition-opacity flex items-center justify-center">
               {mounted ? (
                 <div className="relative h-7 w-7 shrink-0">
-                  <Image
+                  {/* Use <img> for local SVG to avoid Next image optimizer 404s */}
+                  <img
                     src={logoSrc}
                     alt="Audio Tài Lộc"
-                    width={28}
-                    height={28}
                     className="h-7 w-7 object-contain"
-                    priority
                   />
                 </div>
               ) : (

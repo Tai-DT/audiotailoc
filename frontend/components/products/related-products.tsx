@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useProducts, Product as HookProduct } from '@/lib/hooks/use-products';
+import { useProducts } from '@/lib/hooks/use-api';
 import { ProductGrid } from '@/components/products/product-grid';
 import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,25 +10,26 @@ import { Product } from '@/lib/types';
 interface RelatedProductsProps {
  categoryId?: string;
  currentProductId: string;
+ isDigital?: boolean;
+ basePath?: string;
 }
 
-export function RelatedProducts({ categoryId, currentProductId }: RelatedProductsProps) {
+export function RelatedProducts({ categoryId, currentProductId, isDigital, basePath }: RelatedProductsProps) {
  // If no category, we can't really show related products effectively
  // Alternatively, we could show "Featured" or "New" products
  const { data, isLoading } = useProducts({
  categoryId: categoryId,
- limit: 5,
- // We might want to exclude the current product, but the API might not support exclusion directly.
- // We'll filter it out on the client side if needed, but fetching 5 to be safe.
- page: 1
+ isDigital: isDigital,
+ isActive: true,
+ page: 1,
+ pageSize: 8,
  });
 
  if (!categoryId) return null;
 
- // Cast to compatible Product type
- const relatedProducts = (data?.products
- ?.filter((p: HookProduct) => p.id !== currentProductId)
- .slice(0, 4) || []) as unknown as Product[];
+ const relatedProducts = (data?.items || [])
+  .filter((p: Product) => p.id !== currentProductId)
+  .slice(0, 4);
 
  if (!isLoading && relatedProducts.length === 0) {
  return null;
@@ -39,11 +40,11 @@ export function RelatedProducts({ categoryId, currentProductId }: RelatedProduct
  <div className="mb-8">
  <h2 className="text-2xl font-bold mb-2">
  <AnimatedGradientText className="text-2xl font-bold p-0">
- Sản phẩm liên quan
+ {isDigital ? 'Phần mềm liên quan' : 'Sản phẩm liên quan'}
  </AnimatedGradientText>
  </h2>
  <p className="text-muted-foreground">
- Có thể bạn cũng quan tâm đến những sản phẩm này
+ Có thể bạn cũng quan tâm đến những mục này
  </p>
  </div>
 
@@ -61,6 +62,7 @@ export function RelatedProducts({ categoryId, currentProductId }: RelatedProduct
  <ProductGrid
  products={relatedProducts}
  loading={false}
+ basePath={basePath}
  // We don't need pagination for this section
  />
  )}

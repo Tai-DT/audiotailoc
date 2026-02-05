@@ -23,7 +23,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: (redirectTo?: string) => void
   refreshToken: () => Promise<void>
   refreshUser: () => Promise<void>
   setUser: (user: User | null) => void
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return fullPath || '/dashboard'
   }
 
-  const logout = useCallback(() => {
+  const logout = useCallback((redirectToOverride?: string) => {
     setUser(null)
     setToken(null)
     clearStoredTokens()
@@ -92,6 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Redirect to login if we're in the browser
     if (typeof window !== 'undefined') {
+      if (redirectToOverride && redirectToOverride.trim().length > 0) {
+        window.location.href = redirectToOverride
+        return
+      }
+
       const redirect = encodeURIComponent(getCurrentPath())
       window.location.href = `/login?redirect=${redirect}`
     }
@@ -151,6 +156,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
        
       const status = (error as any)?.status ?? (error as any)?.response?.status
+      if (status === 401 || status === 403) {
+        // Token is missing/expired/invalid. Clear locally without spamming console errors.
+        try {
+          clearStoredTokens()
+        } catch {
+          // ignore
+        }
+        apiClient.clearToken()
+        setUser(null)
+        setToken(null)
+        return
+      }
       if (status === 429) {
         logger.warn('Skipped user refresh due to rate limiting', { status })
         return
@@ -173,44 +190,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(response.message || 'Login failed')
       }
 
-      // Handle nested response structure from backend
-      // Format: { data: { data: { data: { token, user } } } }
-      const respData = response?.data ?? response
-      let accessToken: string | null = null
-      let refreshTokenValue: string | null = null
-      let userData: { id: string; email: string; name?: string; role?: string } | null = null
-
-      // Extract token from nested structure
-       
-      if ((respData as any)?.data?.data?.data) {
-         
-        const inner = (respData as any).data.data.data
-        accessToken = inner.token
-        refreshTokenValue = inner.refreshToken ?? inner.refresh_token ?? null
-        userData = inner.user
-         
-      } else if ((respData as any)?.data?.data) {
-         
-        const inner = (respData as any).data.data
-        accessToken = inner.token
-        refreshTokenValue = inner.refreshToken ?? inner.refresh_token ?? null
-        userData = inner.user
-         
-      } else if ((respData as any)?.data) {
-         
-        accessToken = (respData as any).data.token
-         
-        refreshTokenValue = (respData as any).data.refreshToken ?? (respData as any).data.refresh_token ?? null
-         
-        userData = (respData as any).data.user
-      } else {
-         
-        accessToken = (respData as any)?.token
-         
-        refreshTokenValue = (respData as any)?.refreshToken ?? (respData as any)?.refresh_token ?? null
-         
-        userData = (respData as any)?.user
-      }
+      // Backend API shape: { success, data: { token, refreshToken, user, ... }, ... }
+      const respData = response as any
+      const inner = respData?.data ?? respData
+      let accessToken: string | null = inner?.token ?? null
+      let refreshTokenValue: string | null = inner?.refreshToken ?? inner?.refresh_token ?? null
+      let userData: { id: string; email: string; name?: string; role?: string } | null =
+        inner?.user ?? null
 
       if (!accessToken) {
         logger.error('Invalid tokens in response', undefined, { response: { success: response.success, message: response.message } })

@@ -193,13 +193,27 @@ export const useProductSearch = (query: string, limit = 10) => {
 };
 
 export const useProductAnalytics = () => {
+  const user = authStorage.getUser();
+  const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN';
+  const token = authStorage.getAccessToken();
+  const expiry = authStorage.getTokenExpiry();
+  const hasValidToken = Boolean(token) && (typeof expiry !== 'number' || Date.now() < expiry - 60_000);
+
   return useQuery({
     queryKey: queryKeys.products.analytics,
+    enabled: Boolean(isAdmin && hasValidToken),
     queryFn: async () => {
       const response = await apiClient.get('/catalog/products/analytics/overview');
       return handleApiResponse<ProductAnalytics>(response);
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) return false;
+      return failureCount < 2;
+    },
   });
 };
 
@@ -1229,26 +1243,25 @@ export const useBlogArticleBySlug = (slug: string) => {
   return useQuery({
     queryKey: ['blog-article-slug', slug],
     queryFn: async () => {
-      const response = await apiClient.get(`/blog/articles/slug/${slug}`);
+      // Backend route resolves both slug and id at /blog/articles/:slugOrId
+      const response = await apiClient.get(`/blog/articles/${slug}`);
       return handleApiResponse<BlogArticle>(response);
     },
     enabled: !!slug,
   });
 };
 
-export const useBlogCategories = (filters?: { published?: boolean; parentId?: string; page?: number; limit?: number }) => {
+export const useBlogCategories = (filters?: { published?: boolean; limit?: number }) => {
   return useQuery({
     queryKey: ['blog-categories', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
 
       if (filters?.published !== undefined) params.append('published', filters.published.toString());
-      if (filters?.parentId !== undefined) params.append('parentId', filters.parentId || '');
-      if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.limit) params.append('limit', filters.limit.toString());
 
       const response = await apiClient.get(`/blog/categories?${params.toString()}`);
-      return handleApiResponse<PaginatedBlogResponse<BlogCategory>>(response);
+      return handleApiResponse<BlogCategory[]>(response);
     },
   });
 };

@@ -171,6 +171,22 @@ export class CreateProductDto {
   isActive?: boolean = true;
 
   @ApiPropertyOptional({
+    description: 'Is this a digital product (downloadable software)?',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isDigital?: boolean = false;
+
+  @ApiPropertyOptional({
+    description: 'Download URL for digital products (e.g., Google Drive share link)',
+    example: 'https://drive.google.com/file/d/<fileId>/view',
+  })
+  @IsOptional()
+  @IsString()
+  downloadUrl?: string;
+
+  @ApiPropertyOptional({
     description: 'Is product featured?',
     default: false,
   })

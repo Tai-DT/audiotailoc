@@ -2,8 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProduct } from '@/lib/hooks/use-products';
 import { useIsInWishlist, useToggleWishlist } from '@/lib/hooks/use-wishlist';
@@ -11,7 +13,7 @@ import { useProductReviews } from '@/lib/hooks/use-api';
 import {
     Heart, ShoppingCart, Star, Truck, Shield,
     Plus, Minus, Share2, ChevronRight, Package,
-    Sparkles, Zap, SlidersHorizontal
+    Sparkles, Zap, SlidersHorizontal, Download, Headphones
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useCart } from '@/components/providers/cart-provider';
@@ -31,19 +33,21 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-interface ProductDetailPageProps {
-    params: Promise<{ slug: string }> | { slug: string };
-}
+export default function ProductDetailPage() {
+    const params = useParams<{ slug?: string | string[] }>();
+    const slugParam = params?.slug;
+    const slug = Array.isArray(slugParam) ? slugParam[0] : (slugParam || '');
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-    // Handle both Promise params (new pattern) and direct object
-    const isPromise = typeof (params as unknown as { then?: unknown }).then === 'function';
-    const resolvedParams = isPromise ? React.use(params as Promise<{ slug: string }>) : (params as { slug: string });
-    const slug = resolvedParams.slug;
+    const router = useRouter();
+    const pathname = usePathname();
+    const isSoftwareRoute = pathname.startsWith('/software');
 
     const [quantity, setQuantity] = React.useState(1);
     const [isAdding, setIsAdding] = React.useState(false);
     const [showCreateReview, setShowCreateReview] = React.useState(false);
+    const [digitalEmail, setDigitalEmail] = React.useState('');
+    const [digitalName, setDigitalName] = React.useState('');
+    const [isPayingDigital, setIsPayingDigital] = React.useState(false);
 
     const { data: product, isLoading: isProductLoading, error: productError } = useProduct(slug);
     const { data: wishlistData, isLoading: _isWishlistLoading } = useIsInWishlist(product?.id || '');
@@ -52,6 +56,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     const { addItem: addCartItem } = useCart();
 
     const isInWishlist = wishlistData?.isInWishlist ?? false;
+
+    React.useEffect(() => {
+        if (!product?.slug) return;
+        if (product.isDigital && !isSoftwareRoute) {
+            router.replace(`/software/${product.slug}`);
+            return;
+        }
+        if (!product.isDigital && isSoftwareRoute) {
+            router.replace(`/products/${product.slug}`);
+        }
+    }, [product?.slug, product?.isDigital, isSoftwareRoute, router]);
 
     const handleAddToCart = () => {
         if (!product) return;
@@ -120,6 +135,69 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         }
     };
 
+    const handlePayDigital = async () => {
+        if (!product) return;
+
+        const email = digitalEmail.trim().toLowerCase();
+        if (!email || !email.includes('@')) {
+            toast.error('Vui lòng nhập email hợp lệ để nhận link tải');
+            return;
+        }
+
+        setIsPayingDigital(true);
+        try {
+            const response = await fetch('/api/payment/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    paymentMethod: 'payos',
+                    successPath: '/software/download',
+                    orderData: {
+                        customerName: (digitalName || email.split('@')[0] || 'Customer').trim(),
+                        customerEmail: email,
+                        notes: `Digital download: ${product.name}`,
+                        shippingAddress: 'DIGITAL_DOWNLOAD',
+                        finalTotal: 0,
+                        items: [
+                            {
+                                productId: product.id,
+                                name: product.name,
+                                quantity: 1,
+                                unitPrice: product.priceCents ?? 0,
+                            },
+                        ],
+                    },
+                }),
+            });
+
+            const result = await response.json();
+            if (!result?.success || !result?.paymentUrl) {
+                throw new Error(result?.error || 'Không thể khởi tạo thanh toán PayOS');
+            }
+
+            const orderId = typeof result?.orderId === 'string' ? result.orderId : '';
+            const intentId = typeof result?.intentId === 'string' ? result.intentId : '';
+            if (orderId && intentId) {
+                try {
+                    localStorage.setItem(`atl_payos_intent_${orderId}`, intentId);
+                    localStorage.setItem('atl_last_payos_order', orderId);
+                    localStorage.setItem('atl_last_payos_intent', intentId);
+                } catch (_err) {
+                    // ignore storage errors (private mode, quota, etc.)
+                }
+            }
+
+            toast.success('Đang chuyển đến PayOS…');
+            window.location.href = result.paymentUrl;
+        } catch (err) {
+            console.error('Digital payment error:', err);
+            const message = err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo thanh toán';
+            toast.error(message);
+        } finally {
+            setIsPayingDigital(false);
+        }
+    };
+
     if (isProductLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background">
@@ -159,7 +237,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                         <h1 className="text-2xl font-bold mb-2">Không tìm thấy sản phẩm</h1>
                         <p className="text-muted-foreground">Sản phẩm này có thể đã bị xóa hoặc đường dẫn không đúng</p>
                     </div>
-                    <Link href="/products">
+                    <Link href={isSoftwareRoute ? "/software" : "/products"}>
                         <Button size="lg" className="gap-2">
                             <ShoppingCart className="w-4 h-4" />
                             Quay lại cửa hàng
@@ -171,6 +249,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     }
 
     const images = parseImages(product.images, product.imageUrl);
+    const isSoftwareContext = isSoftwareRoute || Boolean(product.isDigital);
+    const collectionHref = isSoftwareContext ? '/software' : '/products';
+    const collectionLabel = isSoftwareContext ? 'Phần mềm' : 'Bộ sưu tập';
     if (images.length === 0) {
         images.push('/placeholder-product.svg');
     }
@@ -219,6 +300,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         });
     })();
 
+    const isDigitalProduct = Boolean(product.isDigital);
+
     return (
         <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 relative">
             <ProductStructuredData product={product} />
@@ -238,7 +321,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/products" className="hover:text-primary transition-colors">Bộ sưu tập</Link>
+                                        <Link href={collectionHref} className="hover:text-primary transition-colors">{collectionLabel}</Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {product.category && (
@@ -247,7 +330,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                         <BreadcrumbItem>
                                             <BreadcrumbLink asChild>
                                                 <Link
-                                                    href={`/products?category=${product.category.slug || product.category.id}`}
+                                                    href={`${collectionHref}?category=${product.category.slug || product.category.id}`}
                                                     className="hover:text-primary transition-colors"
                                                 >
                                                     {product.category.name}
@@ -300,10 +383,27 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                         </div>
                                         <div className={cn(
                                             "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
-                                            product.stockQuantity > 0 ? "text-green-500" : "text-red-500"
+                                            isDigitalProduct
+                                                ? "text-primary"
+                                                : product.stockQuantity > 0
+                                                    ? "text-green-500"
+                                                    : "text-red-500"
                                         )}>
-                                            <div className={cn("w-1.5 h-1.5 rounded-full", product.stockQuantity > 0 ? "bg-green-500 animate-pulse" : "bg-red-500")} />
-                                            {product.stockQuantity > 0 ? `Còn hàng (${product.stockQuantity})` : 'Hết hàng'}
+                                            <div
+                                                className={cn(
+                                                    "w-1.5 h-1.5 rounded-full",
+                                                    isDigitalProduct
+                                                        ? "bg-primary animate-pulse"
+                                                        : product.stockQuantity > 0
+                                                            ? "bg-green-500 animate-pulse"
+                                                            : "bg-red-500",
+                                                )}
+                                            />
+                                            {isDigitalProduct
+                                                ? 'Tải ngay sau thanh toán'
+                                                : product.stockQuantity > 0
+                                                    ? `Còn hàng (${product.stockQuantity})`
+                                                    : 'Hết hàng'}
                                         </div>
                                     </div>
 
@@ -365,56 +465,105 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
                                     {/* Actions Area */}
                                     <div className="space-y-4">
-                                        <div className="flex items-center gap-4 p-3 rounded-2xl border border-border bg-card/40">
-                                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground w-20">Số lượng:</span>
-                                            <div className="flex items-center bg-background border border-border rounded-xl h-10 w-full max-w-[140px] shadow-sm">
-                                                <button
-                                                    onClick={() => handleQuantityChange(-1)}
-                                                    disabled={quantity <= 1}
-                                                    className="flex-1 flex justify-center items-center text-muted-foreground hover:text-primary disabled:opacity-20 transition-colors active:scale-90"
-                                                >
-                                                    <Minus className="w-4 h-4" />
-                                                </button>
-                                                <span className="w-10 text-center font-black text-lg select-none">{quantity}</span>
-                                                <button
-                                                    onClick={() => handleQuantityChange(1)}
-                                                    disabled={quantity >= product.stockQuantity}
-                                                    className="flex-1 flex justify-center items-center text-muted-foreground hover:text-primary disabled:opacity-20 transition-colors active:scale-90"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
+                                        {isDigitalProduct ? (
+                                            <div className="space-y-4">
+                                                <div className="rounded-2xl border border-border bg-card/40 p-4 space-y-3">
+                                                    <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
+                                                        Sản phẩm tải về (phần mềm)
+                                                    </p>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        <div className="space-y-2">
+                                                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
+                                                                Email nhận link *
+                                                            </span>
+                                                            <Input
+                                                                value={digitalEmail}
+                                                                onChange={(e) => setDigitalEmail(e.target.value)}
+                                                                placeholder="you@example.com"
+                                                                type="email"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
+                                                                Tên (tuỳ chọn)
+                                                            </span>
+                                                            <Input
+                                                                value={digitalName}
+                                                                onChange={(e) => setDigitalName(e.target.value)}
+                                                                placeholder="Nguyễn Văn A"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <Button
-                                                size="lg"
-                                                className={cn(
-                                                    "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em]",
-                                                    "bg-gradient-to-r from-red-600 to-primary hover:from-red-500 hover:to-red-600 text-foreground dark:text-white shadow-[0_10px_30px_-10px_rgba(220,38,38,0.5)]",
-                                                    "transition-all active:scale-95 group hover:-translate-y-1"
-                                                )}
-                                                onClick={handleAddToCart}
-                                                disabled={isAdding || product.stockQuantity === 0}
-                                            >
-                                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 skew-y-12" />
-                                                <ShoppingCart className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform relative z-10" />
-                                                <span className="relative z-10">Thêm vào giỏ</span>
-                                            </Button>
-                                            <Button
-                                                size="lg"
-                                                className={cn(
-                                                    "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
-                                                    "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
-                                                    "transition-all active:scale-95 border border-border"
-                                                )}
-                                                onClick={handleBuyNow}
-                                                disabled={isAdding || product.stockQuantity === 0}
-                                            >
-                                                <Zap className="w-5 h-5 mr-3 fill-primary text-primary animate-pulse" />
-                                                Mua ngay
-                                            </Button>
-                                        </div>
+                                                <Button
+                                                    size="lg"
+                                                    className={cn(
+                                                        "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
+                                                        "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
+                                                        "transition-all active:scale-95 border border-border"
+                                                    )}
+                                                    onClick={handlePayDigital}
+                                                    disabled={isPayingDigital}
+                                                >
+                                                    <Download className="w-5 h-5 mr-3 text-primary" />
+                                                    {isPayingDigital ? 'Đang tạo thanh toán…' : 'Thanh toán & Tải'}
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center gap-4 p-3 rounded-2xl border border-border bg-card/40">
+                                                    <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground w-20">Số lượng:</span>
+                                                    <div className="flex items-center bg-background border border-border rounded-xl h-10 w-full max-w-[140px] shadow-sm">
+                                                        <button
+                                                            onClick={() => handleQuantityChange(-1)}
+                                                            disabled={quantity <= 1}
+                                                            className="flex-1 flex justify-center items-center text-muted-foreground hover:text-primary disabled:opacity-20 transition-colors active:scale-90"
+                                                        >
+                                                            <Minus className="w-4 h-4" />
+                                                        </button>
+                                                        <span className="w-10 text-center font-black text-lg select-none">{quantity}</span>
+                                                        <button
+                                                            onClick={() => handleQuantityChange(1)}
+                                                            disabled={quantity >= product.stockQuantity}
+                                                            className="flex-1 flex justify-center items-center text-muted-foreground hover:text-primary disabled:opacity-20 transition-colors active:scale-90"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <Button
+                                                        size="lg"
+                                                        className={cn(
+                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em]",
+                                                            "bg-gradient-to-r from-red-600 to-primary hover:from-red-500 hover:to-red-600 text-foreground dark:text-white shadow-[0_10px_30px_-10px_rgba(220,38,38,0.5)]",
+                                                            "transition-all active:scale-95 group hover:-translate-y-1"
+                                                        )}
+                                                        onClick={handleAddToCart}
+                                                        disabled={isAdding || product.stockQuantity === 0}
+                                                    >
+                                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 skew-y-12" />
+                                                        <ShoppingCart className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform relative z-10" />
+                                                        <span className="relative z-10">Thêm vào giỏ</span>
+                                                    </Button>
+                                                    <Button
+                                                        size="lg"
+                                                        className={cn(
+                                                            "h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-[9px] md:text-sm uppercase tracking-[0.2em] italic",
+                                                            "bg-white text-black hover:bg-slate-50 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.1)]",
+                                                            "transition-all active:scale-95 border border-border"
+                                                        )}
+                                                        onClick={handleBuyNow}
+                                                        disabled={isAdding || product.stockQuantity === 0}
+                                                    >
+                                                        <Zap className="w-5 h-5 mr-3 fill-primary text-primary animate-pulse" />
+                                                        Mua ngay
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
 
                                         <div className="flex gap-4 pt-2">
                                             <button
@@ -440,24 +589,49 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
                                     {/* Trust Footer */}
                                     <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
-                                        <div className="flex items-center gap-4 group">
-                                            <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-                                                <Truck className="h-4 w-4 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Giao hàng</p>
-                                                <p className="text-xs font-bold leading-tight">Vận chuyển toàn quốc</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 group">
-                                            <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-                                                <Shield className="h-4 w-4 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bảo hành</p>
-                                                <p className="text-xs font-bold leading-tight">Chính hãng 24 tháng</p>
-                                            </div>
-                                        </div>
+                                        {isDigitalProduct ? (
+                                            <>
+                                                <div className="flex items-center gap-4 group">
+                                                    <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+                                                        <Download className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tải xuống</p>
+                                                        <p className="text-xs font-bold leading-tight">Link gửi qua email</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 group">
+                                                    <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+                                                        <Headphones className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hỗ trợ</p>
+                                                        <p className="text-xs font-bold leading-tight">Kỹ thuật 24/7</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center gap-4 group">
+                                                    <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+                                                        <Truck className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Giao hàng</p>
+                                                        <p className="text-xs font-bold leading-tight">Vận chuyển toàn quốc</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 group">
+                                                    <div className="p-3 rounded-xl bg-muted/40 border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+                                                        <Shield className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bảo hành</p>
+                                                        <p className="text-xs font-bold leading-tight">Chính hãng 24 tháng</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </BlurFade>
@@ -575,16 +749,24 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                         <div className="flex items-center justify-between mb-12">
                             <div>
                                 <p className="text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-2">Gợi ý từ chuyên gia</p>
-                                <h2 className="text-3xl font-black tracking-tight uppercase">Sản phẩm <span className="text-muted-foreground">Tương thích</span></h2>
+                                <h2 className="text-3xl font-black tracking-tight uppercase">
+                                    {isSoftwareContext ? 'Phần mềm' : 'Sản phẩm'}{' '}
+                                    <span className="text-muted-foreground">{isSoftwareContext ? 'Liên quan' : 'Tương thích'}</span>
+                                </h2>
                             </div>
-                            <Link href="/products" className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all">
+                            <Link href={collectionHref} className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all">
                                 Xem tất cả
                                 <div className="p-2 rounded-lg bg-muted/40 border border-border group-hover:bg-primary transition-all">
                                     <ChevronRight className="w-3 h-3 text-foreground group-hover:text-foreground dark:text-white" />
                                 </div>
                             </Link>
                         </div>
-                        <RelatedProducts categoryId={product.categoryId} currentProductId={product.id} />
+                        <RelatedProducts
+                            categoryId={product.categoryId}
+                            currentProductId={product.id}
+                            isDigital={Boolean(product.isDigital)}
+                            basePath={collectionHref}
+                        />
                     </BlurFade>
                 </div>
             </section>

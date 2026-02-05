@@ -29,6 +29,14 @@ export default function LoginPage() {
     setMounted(true)
   }, [])
 
+  // Surface access-denied redirects (e.g. non-admin accounts)
+  useEffect(() => {
+    const authError = searchParams.get('error')
+    if (authError === 'forbidden') {
+      setError('Tài khoản của bạn không có quyền truy cập Dashboard. Vui lòng đăng nhập bằng tài khoản Admin.')
+    }
+  }, [searchParams])
+
   // Determine which logo to use based on theme
   const logoSrc = mounted && (resolvedTheme === 'dark' || theme === 'dark')
     ? '/images/logo/logo-dark.svg'

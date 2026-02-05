@@ -52,6 +52,8 @@ interface Product {
   canonicalUrl?: string | null
   featured?: boolean
   isActive?: boolean
+  isDigital?: boolean
+  downloadUrl?: string | null
   isDeleted?: boolean
   viewCount?: number
   createdAt: string
@@ -70,6 +72,7 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void
   categories: Category[]
   onSuccess: () => void
+  defaultIsDigital?: boolean
 }
 
 interface ProductFormData {
@@ -98,11 +101,21 @@ interface ProductFormData {
   canonicalUrl: string
   featured: boolean
   isActive: boolean
+  isDigital: boolean
+  downloadUrl: string
 }
 
-export function ProductFormDialog({ product, open, onOpenChange, categories, onSuccess }: ProductFormDialogProps) {
+export function ProductFormDialog({
+  product,
+  open,
+  onOpenChange,
+  categories,
+  onSuccess,
+  defaultIsDigital = false,
+}: ProductFormDialogProps) {
   const { } = useAuth()
   const [loading, setLoading] = useState(false)
+  const resolvedDefaultIsDigital = Boolean(defaultIsDigital)
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -128,7 +141,9 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
     metaKeywords: '',
     canonicalUrl: '',
     featured: false,
-    isActive: true
+    isActive: true,
+    isDigital: resolvedDefaultIsDigital,
+    downloadUrl: ''
   })
 
   // SEO state
@@ -178,7 +193,9 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
         metaKeywords: product.metaKeywords || '',
         canonicalUrl: product.canonicalUrl || '',
         featured: product.featured || false,
-        isActive: product.isActive !== undefined ? product.isActive : true
+        isActive: product.isActive !== undefined ? product.isActive : true,
+        isDigital: Boolean(product.isDigital),
+        downloadUrl: product.downloadUrl || ''
       })
 
       // Sync SEO data
@@ -221,7 +238,9 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
         metaKeywords: '',
         canonicalUrl: '',
         featured: false,
-        isActive: true
+        isActive: true,
+        isDigital: resolvedDefaultIsDigital,
+        downloadUrl: ''
       })
 
       // Reset SEO data
@@ -234,7 +253,7 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
       })
       setSpecsString('{}')
     }
-  }, [product])
+  }, [product, resolvedDefaultIsDigital])
 
   // Auto-generate SKU when name is entered for new products
   useEffect(() => {
@@ -429,7 +448,11 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
         canonicalUrl: formData.canonicalUrl || undefined,
         slug: seoData.slug || removeVietnameseTones(formData.name),
         featured: Boolean(formData.featured),
-        isActive: Boolean(formData.isActive)
+        isActive: Boolean(formData.isActive),
+        isDigital: Boolean(formData.isDigital),
+        downloadUrl: formData.isDigital
+          ? (formData.downloadUrl ? formData.downloadUrl.trim() : undefined)
+          : undefined
       }
 
       if (product) {
@@ -777,7 +800,39 @@ export function ProductFormDialog({ product, open, onOpenChange, categories, onS
               />
               <Label htmlFor="isActive">Hoạt động</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isDigital"
+                checked={formData.isDigital}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    isDigital: e.target.checked,
+                    downloadUrl: e.target.checked ? prev.downloadUrl : '',
+                  }))
+                }
+                className="h-4 w-4"
+                aria-label="Sản phẩm tải về"
+              />
+              <Label htmlFor="isDigital">Sản phẩm tải về</Label>
+            </div>
           </div>
+
+          {formData.isDigital && (
+            <div className="space-y-2">
+              <Label htmlFor="downloadUrl">Link tải (Google Drive)</Label>
+              <Input
+                id="downloadUrl"
+                value={formData.downloadUrl}
+                onChange={(e) => setFormData(prev => ({ ...prev, downloadUrl: e.target.value }))}
+                placeholder="https://drive.google.com/file/d/<fileId>/view"
+              />
+              <p className="text-xs text-muted-foreground">
+                Link này sẽ chỉ hiển thị cho khách sau khi PayOS xác nhận thanh toán thành công.
+              </p>
+            </div>
+          )}
 
           {/* SEO Section */}
           <div className="border-t pt-4">

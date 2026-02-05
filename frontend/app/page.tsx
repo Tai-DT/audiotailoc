@@ -6,7 +6,8 @@ import {
     fetchNewArrivals,
     fetchBestSellers,
     fetchFeaturedServices,
-    fetchFeaturedCategories
+    fetchFeaturedCategories,
+    fetchSoftware
 } from '@/lib/api/home';
 
 import { HeroCarousel } from '@/components/home/hero-carousel';
@@ -24,6 +25,7 @@ export default function Home() {
         banners: Banner[];
         newArrivals: Product[];
         bestSellers: Product[];
+        software: Product[];
         featuredServices: Service[];
         featuredCategories: Category[];
     } | null>(null);
@@ -34,16 +36,18 @@ export default function Home() {
                 banners,
                 newArrivals,
                 bestSellers,
+                software,
                 featuredServices,
                 featuredCategories
             ] = await Promise.all([
                 fetchBanners('home'),
                 fetchNewArrivals(12),
                 fetchBestSellers(12),
+                fetchSoftware(8),
                 fetchFeaturedServices(),
                 fetchFeaturedCategories()
             ]);
-            setData({ banners, newArrivals, bestSellers, featuredServices, featuredCategories });
+            setData({ banners, newArrivals, bestSellers, software, featuredServices, featuredCategories });
         }
         loadData();
     }, []);
@@ -93,6 +97,21 @@ export default function Home() {
                     <ProductGrid products={data.bestSellers} />
                 </div>
             </section>
+
+            {/* 4.5 Digital Software Section (Separate from physical products) */}
+            {data.software.length > 0 && (
+                <section className="py-10 md:py-24 bg-muted/10 relative overflow-hidden border-y border-border/60">
+                    <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="container mx-auto px-4 md:px-6">
+                        <EliteSectionHeading
+                            badge="Digital"
+                            title="Phần mềm"
+                            subtitle="Thanh toán PayOS và tải xuống ngay sau khi giao dịch hoàn tất."
+                        />
+                        <ProductGrid products={data.software} basePath="/software" />
+                    </div>
+                </section>
+            )}
 
             {/* 5. Professional Services */}
             <ServicesSection services={data.featuredServices} />

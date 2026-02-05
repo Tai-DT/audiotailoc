@@ -7,23 +7,34 @@ import { usePathname } from 'next/navigation';
 import { Search, ShoppingCart, User, Menu, Phone, Sparkles, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/providers/cart-provider';
-import { useContactInfo } from '@/lib/hooks/use-contact-info';
+import type { ContactInfo } from '@/lib/contact-info';
 import { ThemeToggle } from './theme-toggle';
 import HeaderSubNav from './header-sub-nav';
-import { motion, AnimatePresence } from 'framer-motion';
 
-export function AppHeader() {
+export function AppHeader({ contactInfo }: { contactInfo?: ContactInfo }) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [shouldRenderMobileMenu, setShouldRenderMobileMenu] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const { itemCount } = useCart();
-    const { data: contactInfo } = useContactInfo();
     const pathname = usePathname();
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            setShouldRenderMobileMenu(true);
+            return;
+        }
+
+        if (shouldRenderMobileMenu) {
+            const timer = setTimeout(() => setShouldRenderMobileMenu(false), 280);
+            return () => clearTimeout(timer);
+        }
+    }, [isMobileMenuOpen, shouldRenderMobileMenu]);
 
     const hotlineDisplay = contactInfo?.phone?.display || '0768 426 262';
     const hotlineNumber = hotlineDisplay.replace(/\s+/g, '');
@@ -39,6 +50,7 @@ export function AppHeader() {
     const navLinks = [
         { name: 'Trang chủ', href: '/' },
         { name: 'Sản phẩm', href: '/products' },
+        { name: 'Phần mềm', href: '/software' },
         { name: 'Dịch vụ', href: '/services' },
         { name: 'Dự án', href: '/projects' },
         { name: 'Tin tức', href: '/blog' },
@@ -200,86 +212,90 @@ export function AppHeader() {
             </div>
 
             {/* Sub-Navbar (Categories) - Always Visible */}
-            <div suppressHydrationWarning className="w-full border-t border-white/5 min-h-[44px] bg-black/20 backdrop-blur-md">
+            <div suppressHydrationWarning className="w-full border-t border-white/5 h-11 sm:h-12 bg-black/20 backdrop-blur-md">
                 <HeaderSubNav />
             </div>
 
             {/* Mobile Menu Overlay */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, x: '100%' }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: '100%' }}
-                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed inset-0 z-[60] bg-background/98 backdrop-blur-2xl p-8 flex flex-col"
-                    >
-                        <div className="flex justify-between items-center mb-16">
-                            <div className="relative h-10 w-32 translate-y-2">
-                                <Image
-                                    src="/images/logo/logo-dark.svg"
-                                    alt="Logo"
-                                    width={128}
-                                    height={40}
-                                    className="h-full w-full object-contain dark:hidden"
-                                />
-                                <Image
-                                    src="/images/logo/logo-light.svg"
-                                    alt="Logo"
-                                    width={128}
-                                    height={40}
-                                    className="h-full w-full object-contain hidden dark:block brightness-110"
-                                />
-                            </div>
-                            <button
-                                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
-                                onClick={() => setIsMobileMenuOpen(false)}
+            {shouldRenderMobileMenu && (
+                <div
+                    className={cn(
+                        "fixed inset-0 z-[60] bg-background/98 backdrop-blur-2xl p-8 flex flex-col transition-all duration-300 ease-out",
+                        isMobileMenuOpen
+                            ? "opacity-100 translate-x-0"
+                            : "opacity-0 translate-x-full pointer-events-none"
+                    )}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile menu"
+                >
+                    <div className="flex justify-between items-center mb-16">
+                        <div className="relative h-10 w-32 translate-y-2">
+                            <Image
+                                src="/images/logo/logo-dark.svg"
+                                alt="Logo"
+                                width={128}
+                                height={40}
+                                className="h-full w-full object-contain dark:hidden"
+                            />
+                            <Image
+                                src="/images/logo/logo-light.svg"
+                                alt="Logo"
+                                width={128}
+                                height={40}
+                                className="h-full w-full object-contain hidden dark:block brightness-110"
+                            />
+                        </div>
+                        <button
+                            className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            <Menu className="w-6 h-6 rotate-90" />
+                        </button>
+                    </div>
+
+                    <nav className="flex flex-col gap-8">
+                        {navLinks.map((link, idx) => (
+                            <div
+                                key={link.name}
+                                className={cn(
+                                    "transition-all duration-300 ease-out",
+                                    isMobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+                                )}
+                                style={{ transitionDelay: `${idx * 60}ms` }}
                             >
-                                <Menu className="w-6 h-6 rotate-90" />
-                            </button>
-                        </div>
-
-                        <nav className="flex flex-col gap-8">
-                            {navLinks.map((link, idx) => (
-                                <motion.div
-                                    key={link.name}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: idx * 0.1 }}
+                                <Link
+                                    href={link.href}
+                                    className={cn(
+                                        "text-4xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2 py-2",
+                                        pathname === link.href ? "text-primary" : "text-foreground"
+                                    )}
+                                    onClick={() => setIsMobileMenuOpen(false)}
                                 >
-                                    <Link
-                                        href={link.href}
-                                        className={cn(
-                                            "text-4xl font-black uppercase tracking-tighter transition-all active:text-primary active:translate-x-2 py-2",
-                                            pathname === link.href ? "text-primary" : "text-foreground"
-                                        )}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        {link.name}
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </nav>
-
-                        <div className="mt-auto space-y-8">
-                            <div className="p-8 rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 relative overflow-hidden">
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 mb-3">Hotline Hỗ Trợ 24/7</p>
-                                <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary tracking-tighter block">{hotlineDisplay}</a>
+                                    {link.name}
+                                </Link>
                             </div>
+                        ))}
+                    </nav>
 
-                            <div className="flex justify-between items-center px-4">
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Tai Loc Elite Heritage</span>
-                                <div className="flex gap-4">
-                                    <ThemeToggle />
-                                    <Link href="/account" className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
-                                        <User className="w-5 h-5 text-accent" />
-                                    </Link>
-                                </div>
+                    <div className="mt-auto space-y-8">
+                        <div className="p-8 rounded-[2.5rem] bg-primary/[0.08] border border-primary/20 relative overflow-hidden">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 mb-3">Hotline Hỗ Trợ 24/7</p>
+                            <a href={`tel:${hotlineNumber}`} className="text-3xl font-black text-primary tracking-tighter block">{hotlineDisplay}</a>
+                        </div>
+
+                        <div className="flex justify-between items-center px-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Tai Loc Elite Heritage</span>
+                            <div className="flex gap-4">
+                                <ThemeToggle />
+                                <Link href="/account" className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+                                    <User className="w-5 h-5 text-accent" />
+                                </Link>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </div>
+            )}
         </header >
     );
 }

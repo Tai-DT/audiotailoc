@@ -9,7 +9,7 @@ export default function DashboardRootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireRole="ADMIN">
       <div suppressHydrationWarning>
         <DashboardLayout>
           {children}

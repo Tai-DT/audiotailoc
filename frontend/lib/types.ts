@@ -5,6 +5,35 @@ export interface ProductSpecification {
   value: string;
 }
 
+export interface SoftwareProductRef {
+  id: string;
+  slug: string;
+  name: string;
+  priceCents: number;
+  imageUrl?: string | null;
+}
+
+export interface Software {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  category?: string | null;
+  platform?: string | null;
+  version?: string | null;
+  priceCents: number;
+  isPaidRequired: boolean;
+  downloadUrl?: string | null;
+  websiteUrl?: string | null;
+  imageUrl?: string | null;
+  features?: unknown;
+  productId?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  product?: SoftwareProductRef | null;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -47,6 +76,8 @@ export interface Product {
   minOrderQuantity?: number;
   maxOrderQuantity?: number;
   tags?: string[];
+  isDigital?: boolean;
+  downloadUrl?: string | null;
 
   // SEO Fields
   metaTitle?: string;
@@ -568,6 +599,7 @@ export interface ProductFilters {
   categoryId?: string;
   brand?: string;
   featured?: boolean;
+  isDigital?: boolean;
   isActive?: boolean;
   inStock?: boolean;
   tags?: string;
@@ -615,4 +647,3 @@ export interface Technician {
   createdAt: string;
   updatedAt?: string;
 }
-

@@ -74,6 +74,8 @@ interface Product {
   model?: string
   sku?: string
   stockQuantity?: number
+  isDigital?: boolean
+  downloadUrl?: string | null
   featured: boolean
   isActive: boolean
   isDeleted: boolean
@@ -187,7 +189,7 @@ export default function ProductsPage() {
   const fetchStats = useCallback(async () => {
     try {
       // Fetch all products in one request for stats calculation
-      const response = await apiClient.getProducts({ page: 1, limit: 10000 })
+      const response = await apiClient.getProducts({ page: 1, limit: 10000, isDigital: false })
       const data = response.data as ProductsResponse
       const allProducts = data.items
 
@@ -213,11 +215,13 @@ export default function ProductsPage() {
         search?: string
         isActive?: boolean
         featured?: boolean
+        isDigital?: boolean
         minPrice?: number
         maxPrice?: number
       } = {
         page: currentPage,
         limit: pageSize,
+        isDigital: false,
         category: categoryFilter === "all" ? undefined : categoryFilter || undefined,
         search: searchTerm || undefined
       }
@@ -339,7 +343,7 @@ export default function ProductsPage() {
       toast({ title: "Đang xuất...", description: "Đang lấy dữ liệu sản phẩm" })
 
       // Fetch ALL products for export
-      const response = await apiClient.getProducts({ page: 1, limit: 10000 })
+      const response = await apiClient.getProducts({ page: 1, limit: 10000, isDigital: false })
       const data = response.data as ProductsResponse
       const allProducts = data.items
 
@@ -709,7 +713,14 @@ export default function ProductsPage() {
                           </TableCell>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{product.name}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium">{product.name}</div>
+                                {product.isDigital && (
+                                  <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest">
+                                    Digital
+                                  </Badge>
+                                )}
+                              </div>
                               <div className="text-sm text-muted-foreground">
                                 {product.sku && `SKU: ${product.sku}`}
                               </div>
