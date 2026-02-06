@@ -234,13 +234,17 @@ export class BookingService {
 
     // ✅ Validate booking items exist if provided
     if (items?.length) {
-      for (const item of items) {
-        const serviceItem = await this.prisma.service_items.findUnique({
-          where: { id: item.itemId },
-        });
-        if (!serviceItem) {
-          throw new NotFoundException(`Service item not found: ${item.itemId}`);
-        }
+      const itemIds = items.map(item => item.itemId);
+      const serviceItems = await this.prisma.service_items.findMany({
+        where: {
+          id: { in: itemIds },
+        },
+      });
+      const foundItemIds = serviceItems.map(item => item.id);
+
+      if (foundItemIds.length !== itemIds.length) {
+        const missingItemIds = itemIds.filter(id => !foundItemIds.includes(id));
+        throw new NotFoundException(`Service items not found: ${missingItemIds.join(', ')}`);
       }
     }
 
