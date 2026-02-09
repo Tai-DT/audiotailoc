@@ -15,7 +15,18 @@ export const metadata: Metadata = {
  title: 'Dự án | Audio Tài Lộc',
  description: 'Xem các dự án âm thanh đã được Audio Tài Lộc triển khai',
  type: 'website',
- url: '/du-an',
+ url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/du-an`,
+ images: [
+  {
+   url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/og-image.jpg`,
+   width: 1200,
+   height: 630,
+   alt: 'Dự án Audio Tài Lộc',
+  },
+ ],
+ },
+ alternates: {
+ canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/du-an`,
  },
 };
 
