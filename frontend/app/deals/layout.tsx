@@ -20,10 +20,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://audiotailoc.com'}/deals`,
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 };
 
 export default function DealsLayout({
