@@ -1,8 +1,17 @@
-'use client';
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Search, ArrowLeft, Phone } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
+import { Home, Search, Phone } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '404 - Không Tìm Thấy Trang | Audio Tài Lộc',
+  description: 'Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. Hãy quay lại trang chủ hoặc liên hệ chúng tôi để được hỗ trợ.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function NotFound() {
     return (
@@ -56,10 +65,10 @@ export default function NotFound() {
                     <p className="text-sm text-muted-foreground mb-4">Có thể bạn muốn tìm:</p>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {[
-                            { label: 'Dàn Karaoke', href: '/categories/dan-karaoke' },
-                            { label: 'Loa', href: '/categories/loa' },
-                            { label: 'Ampli', href: '/categories/ampli' },
-	                            { label: 'Micro', href: '/categories/micro' },
+                            { label: 'Dàn Karaoke', href: '/danh-muc/dan-karaoke' },
+                            { label: 'Loa', href: '/danh-muc/loa' },
+                            { label: 'Ampli', href: '/danh-muc/ampli' },
+	                            { label: 'Micro', href: '/danh-muc/micro' },
 	                            { label: 'Dịch Vụ', href: '/services' },
 	                            { label: 'Dự Án', href: '/du-an' },
 	                        ].map((link) => (
@@ -75,13 +84,7 @@ export default function NotFound() {
                 </div>
 
                 {/* Back Button */}
-                <button
-                    onClick={() => window.history.back()}
-                    className="mt-8 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Quay lại trang trước
-                </button>
+                <BackButton />
             </div>
         </div>
     );

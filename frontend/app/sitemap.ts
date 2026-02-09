@@ -2,8 +2,7 @@ import { MetadataRoute } from 'next';
 import { apiClient, handleApiResponse } from '@/lib/api';
 import type { BlogArticle, PaginatedBlogResponse } from '@/lib/types';
 
-// Make sitemap dynamic to allow API calls
-export const dynamic = 'force-dynamic';
+// Use static generation with revalidation instead of force-dynamic for better performance
 export const revalidate = 3600; // Revalidate every hour
 
 interface Product {
